@@ -1,45 +1,45 @@
 ## Purpose
 
-Define o mecanismo de decisão de modo de execução do PRD (§5.3): separação entre intenção declarada pelo usuário e plano resolvido por operação, resolução pura e determinística com contexto injetável, e falha dura para pedidos explícitos incompatíveis com o padrão de acesso do algoritmo.
+Defines the PRD execution-mode decision mechanism (§5.3): separation between the user-declared intent and the plan resolved per operation, pure deterministic resolution with injectable context, and hard failure for explicit requests incompatible with the algorithm's access pattern.
 
 ## ADDED Requirements
 
-### Requirement: Intenção e plano são conceitos distintos
-A biblioteca SHALL distinguir a intenção de execução declarada pelo consumidor — incluindo o modo automático como padrão — do plano efetivo resolvido no momento da operação, que consolida modo escolhido, paralelismo e tamanho de lote.
+### Requirement: Intent and plan are distinct concepts
+The library SHALL distinguish the consumer-declared execution intent — including automatic as default mode — from the effective plan resolved at operation time, which consolidates chosen mode, parallelism and batch size.
 
-#### Scenario: Intenção automática produz plano concreto
-- **WHEN** uma operação executa com intenção automática sobre um contexto conhecido
-- **THEN** um plano concreto é produzido antes do processamento dos dados
+#### Scenario: Automatic intent produces a concrete plan
+- **WHEN** an operation runs with automatic intent over a known context
+- **THEN** a concrete plan is produced before any data processing
 
-#### Scenario: Intenção explícita preservada quando compatível
-- **WHEN** o consumidor declara explicitamente um modo compatível com o padrão de acesso do algoritmo
-- **THEN** o plano resolvido reflete exatamente esse modo
+#### Scenario: Explicit intent preserved when compatible
+- **WHEN** the consumer explicitly declares a mode compatible with the algorithm's access pattern
+- **THEN** the resolved plan reflects exactly that mode
 
-### Requirement: Resolução pura, determinística e injetável
-A resolução SHALL ser função pura sobre a intenção e um contexto explícito — memória disponível, núcleos de CPU, tamanho do conjunto, padrão de acesso declarado pelo algoritmo e dica de lote opcional — sem acesso a estado global; o contexto SHALL poder ser fornecido pelo chamador, permitindo testes determinísticos independentes da máquina.
+### Requirement: Pure, deterministic, injectable resolution
+Resolution SHALL be a pure function over the intent and an explicit context — available memory, CPU cores, dataset size, access pattern declared by the algorithm and optional batch hint — with no global state access; the context SHALL be providable by the caller, enabling deterministic tests independent of the machine.
 
-#### Scenario: Mesmo contexto produz mesmo plano
-- **WHEN** a resolução é executada duas vezes com intenção e contexto idênticos
-- **THEN** os planos resultantes são idênticos em todos os campos
+#### Scenario: Same context produces same plan
+- **WHEN** resolution runs twice with identical intent and context
+- **THEN** the resulting plans are identical in every field
 
-#### Scenario: Contexto simulado dispensa máquina real
-- **WHEN** os testes exercitam a resolução com valores simulados de memória e núcleos
-- **THEN** os planos obtidos refletem exclusivamente os valores simulados, sem leitura do ambiente físico
+#### Scenario: Simulated context dispenses with a real machine
+- **WHEN** tests exercise resolution with simulated memory and core values
+- **THEN** the obtained plans reflect exclusively the simulated values, without reading the physical environment
 
-### Requirement: Falha dura para incompatibilidade explícita
-Pedido explícito de modo incompatível com o padrão de acesso declarado pelo algoritmo SHALL falhar com erro específico nomeando o modo pedido e o padrão declarado, verificado antes do processamento de qualquer dado; o modo automático SHALL NUNCA produzir tal erro.
+### Requirement: Hard failure for explicit incompatibility
+Explicitly requesting a mode incompatible with the declared access pattern SHALL fail with a specific error naming both requested mode and declared pattern, checked before processing any data; automatic mode SHALL NEVER produce such an error.
 
-#### Scenario: Streaming sequencial recusado para algoritmo de acesso aleatório
-- **WHEN** o consumidor pede explicitamente streaming sequencial a um algoritmo cujo padrão declarado é acesso aleatório
-- **THEN** a operação falha imediatamente com o erro de incompatibilidade, identificando ambos os lados do conflito
+#### Scenario: Sequential streaming refused for a random-access algorithm
+- **WHEN** the consumer explicitly requests sequential streaming for an algorithm whose declared pattern is random access
+- **THEN** the operation fails immediately with the incompatibility error, identifying both sides of the conflict
 
-#### Scenario: Automático nunca conflita com o padrão declarado
-- **WHEN** a intenção é automática, quaisquer que sejam contexto e algoritmo
-- **THEN** a resolução sempre escolhe modo compatível com o padrão declarado e não falha por incompatibilidade
+#### Scenario: Automatic never conflicts with the declared pattern
+- **WHEN** intent is automatic, whatever the context and algorithm
+- **THEN** resolution always picks a mode compatible with the declared pattern and never fails on incompatibility
 
-### Requirement: Resolução ocorre por operação
-Cada operação pesada SHALL resolver seu próprio plano a partir da intenção armazenada e do contexto daquele momento — ajuste e predição resolvem independentemente, pois o tamanho do dado só se torna conhecido na entrada de cada operação.
+### Requirement: Resolution happens per operation
+Each heavy operation SHALL resolve its own plan from the stored intent and that moment's context — fit and prediction resolve independently, because data size only becomes known at each operation's input.
 
-#### Scenario: Predição sobre volume maior que o ajuste resolve próprio plano
-- **WHEN** o ajuste processa um conjunto pequeno em memória e a predição posterior recebe volume que excede a memória disponível simulada
-- **THEN** o plano da predição difere do plano do ajuste, refletindo o novo contexto sem reconfiguração manual
+#### Scenario: Prediction on larger volume than fit resolves its own plan
+- **WHEN** fit processes a small in-memory set and subsequent prediction receives volume exceeding simulated available memory
+- **THEN** prediction's plan differs from fit's plan, reflecting the new context without manual reconfiguration

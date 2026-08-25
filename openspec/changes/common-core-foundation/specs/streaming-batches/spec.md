@@ -1,34 +1,34 @@
 ## Purpose
 
-Define o contrato de streaming out-of-core do PRD (§4.4): blocos de dados owned com metadados mínimos, atravessáveis entre threads para permitir o pipeline I/O ∥ CPU, e as duas fontes complementares — sequencial por iteração e acesso aleatório abstrato (memmap chega na interop).
+Defines the PRD out-of-core streaming contract (§4.4): owned data blocks with minimal metadata, transferable across threads enabling the I/O ∥ CPU pipeline, and the two complementary sources — sequential by iteration and abstract random access (memmap arrives at interop).
 
 ## ADDED Requirements
 
-### Requirement: Batches owned com metadados mínimos
-Cada bloco de streaming SHALL possuir integralmente seus dados (sem empréstimo da fonte), carregando posição na sequência e indicação de bloco final, de modo a poder ser movido para outra thread enquanto a fonte avança.
+### Requirement: Owned batches with minimal metadata
+Each streaming block SHALL fully own its data (no borrowing from the source), carrying its position in the sequence and final-block indication, so it can be moved to another thread while the source advances.
 
-#### Scenario: Bloco sobrevive à fonte
-- **WHEN** um bloco é extraído do iterador da fonte e a referência ao iterador é descartada em seguida
-- **THEN** os dados do bloco permanecem íntegros e utilizáveis — propriedade que habilita processamento assíncrono fora da thread de leitura
+#### Scenario: Block survives the source
+- **WHEN** a block is extracted from the source's iterator and the reference to the iterator is dropped right after
+- **THEN** the block's data remains intact and usable — the property enabling asynchronous processing off the reading thread
 
-#### Scenario: Último bloco é identificável
-- **WHEN** uma fonte finita é consumida até o fim
-- **THEN** exatamente um bloco é marcado como final
+#### Scenario: Last block is identifiable
+- **WHEN** a finite source is consumed to the end
+- **THEN** exactly one block is marked as final
 
-### Requirement: Fonte sequencial como iterador falível
-A fonte de streaming sequencial SHALL expor-se como iteração de blocos com erros da taxonomia central, permitindo falhas de leitura intermediárias sem pânico.
+### Requirement: Sequential source as a fallible iterator
+The sequential streaming source SHALL expose itself as block iteration with errors from the central taxonomy, allowing intermediate read failures without panicking.
 
-#### Scenario: Falha de leitura interrompe com erro estruturado
-- **WHEN** a leitura de um bloco intermediário falha
-- **THEN** a iteração produz o erro da taxonomia central e o consumidor decide encerrar ou tratar
+#### Scenario: Read failure stops with a structured error
+- **WHEN** reading an intermediate block fails
+- **THEN** iteration yields the central taxonomy error and the consumer decides whether to stop or handle it
 
-### Requirement: Fonte de acesso aleatório abstrata
-A biblioteca SHALL definir o contrato de fonte com acesso posicional direto às unidades de dados, independente do mecanismo de armazenamento; implementações concretas mapeadas em memória pertencem à camada de interop.
+### Requirement: Abstract random-access source
+The library SHALL define the contract of a source with direct positional access to data units, independent of the storage mechanism; concrete memory-mapped implementations belong to the interop layer.
 
-#### Scenario: Acesso posicional direto sem varredura
-- **WHEN** uma unidade arbitrária é solicitada pelo índice a uma fonte de acesso aleatório
-- **THEN** o acesso não exige percorrer unidades anteriores
+#### Scenario: Direct positional access without scanning
+- **WHEN** an arbitrary unit is requested by index from a random-access source
+- **THEN** access does not require traversing previous units
 
-#### Scenario: Contrato não acopla mecanismo de armazenamento
-- **WHEN** um provedor implementa a fonte sobre qualquer mecanismo persistente próprio
-- **THEN** nenhuma dependência específica de mapeamento de memória é exigida pela definição do contrato
+#### Scenario: Contract does not couple storage mechanism
+- **WHEN** a provider implements the source over any own persistence mechanism
+- **THEN** no memory-mapping-specific dependency is required by the contract definition

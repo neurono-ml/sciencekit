@@ -1,34 +1,34 @@
 ## Purpose
 
-Estabelece a taxonomia central de erros compartilhada por toda a biblioteca: variantes comuns nomeadas e precisas, conversão uniforme para erros específicos de algoritmo e ausência de tipos de erro ad hoc nos contratos centrais.
+Establishes the central error taxonomy shared across the whole library: common variants named precisely, uniform conversion into algorithm-specific errors, and absence of ad-hoc error types in central contracts.
 
 ## ADDED Requirements
 
-### Requirement: Erro central com variantes acordadas
-A biblioteca SHALL expor um enum central de erro cobrindo, no mínimo: incompatibilidade de forma (com dimensões esperadas e encontradas), representação de dados não suportada pelo algoritmo, hiperparâmetro inválido (identificável), modo de execução incompatível com o padrão de acesso declarado, não convergência (com contagem de iterações executadas), erro de entrada/saída e falha de conversão na fronteira de dados.
+### Requirement: Central error with agreed variants
+The library SHALL expose a central error enum covering at minimum: shape mismatch (with expected and found dimensions), data representation unsupported by the algorithm, invalid hyperparameter (identifiable), execution mode incompatible with the declared access pattern, non-convergence (with executed iteration count), input/output error and conversion failure at the data boundary.
 
-#### Scenario: Incompatibilidade de forma identifica dimensões
-- **WHEN** uma operação recebe dados cujas dimensões não são compatíveis com a operação
-- **THEN** o erro produzido é a variante de forma, carregando a forma esperada e a recebida
+#### Scenario: Shape mismatch identifies dimensions
+- **WHEN** an operation receives data whose dimensions are incompatible with it
+- **THEN** the produced error is the shape variant, carrying both expected and received shapes
 
-#### Scenario: Representação não suportada é distinguida de forma inválida
-- **WHEN** um algoritmo que opera apenas sobre dados densos recebe representação esparsa
-- **THEN** o erro produzido é especificamente de representação não suportada — e não um erro genérico de forma
+#### Scenario: Unsupported representation is distinguished from invalid shape
+- **WHEN** an algorithm operating only on dense data receives a sparse representation
+- **THEN** the produced error is specifically unsupported-representation — not a generic shape error
 
-#### Scenario: Não convergência informa esforço realizado
-- **WHEN** um processo iterativo esgota as iterações sem convergir
-- **THEN** o erro produzido informa a quantidade de iterações executadas
+#### Scenario: Non-convergence reports effort spent
+- **WHEN** an iterative process exhausts its iterations without converging
+- **THEN** the produced error reports the number of iterations executed
 
-### Requirement: Conversão uniforme para erros de algoritmo
-Cada crate de algoritmo SHALL poder definir seu próprio tipo de erro, e esse tipo SHALL converter-se a partir do erro central automaticamente, preservando os erros comuns idênticos entre algoritmos.
+### Requirement: Uniform conversion for algorithm errors
+Each algorithm crate SHALL be able to define its own error type, and that type SHALL convert from the central error automatically, keeping common errors identical across algorithms.
 
-#### Scenario: Erro central propaga através de erro de algoritmo
-- **WHEN** um consumidor trabalha com o tipo de erro específico de um algoritmo e ocorre um erro comum da biblioteca dentro do fluxo desse algoritmo
-- **THEN** o erro comum é convertido automaticamente para o tipo do algoritmo via conversão padrão da linguagem
+#### Scenario: Central error propagates through an algorithm error
+- **WHEN** a consumer works with an algorithm's specific error type and a common library error occurs inside that algorithm's flow
+- **THEN** the common error is converted automatically into the algorithm's type via the standard language conversion
 
-### Requirement: Erros de E/S integram-se à taxonomia
-Erros de entrada/saída da plataforma SHALL converter-se ao erro central sem envolvimento manual do chamador.
+### Requirement: I/O errors integrate into the taxonomy
+Platform input/output errors SHALL convert into the central error without manual involvement from the caller.
 
-#### Scenario: Falha de I/S vira erro da biblioteca
-- **WHEN** uma operação de leitura/escrita falha com erro de plataforma durante processamento
-- **THEN** o consumidor recebe o erro central na variante de E/S, com o erro original preservado como causa
+#### Scenario: I/O failure becomes a library error
+- **WHEN** a read/write operation fails with a platform error during processing
+- **THEN** the consumer receives the central error in the I/O variant, with the original error preserved as source

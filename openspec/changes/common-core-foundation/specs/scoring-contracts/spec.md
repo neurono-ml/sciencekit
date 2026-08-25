@@ -1,37 +1,37 @@
 ## Purpose
 
-Define os contratos de avaliação: scorers supervisionados e não supervisionados com dupla entrada — forma pura sobre previsões/atribuições já existentes (sem re-inferência) e forma conveniente provida que executa inferência e delega — ambos falíveis, servindo de base a GridSearchCV e pipelines.
+Defines the evaluation contracts: supervised and unsupervised scorers with dual input — pure form over already-existing predictions/assignments (no re-inference) and convenient provided form that runs inference and delegates — both fallible, serving as foundation for GridSearchCV and pipelines.
 
 ## ADDED Requirements
 
-### Requirement: Scorer supervisionado com forma pura e forma conveniente
-O scorer supervisionado SHALL expor uma entrada pura que compara alvos verdadeiros com previsões já existentes sem executar inferência, e SHALL prover uma segunda entrada que recebe modelo, features e alvos verdadeiros, executa a inferência e delega à forma pura — sem exigir implementação adicional do autor do scorer.
+### Requirement: Supervised scorer with pure form and convenient form
+The supervised scorer SHALL expose a pure input comparing true targets with already-existing predictions without running inference, and SHALL provide a second input receiving model, features and true targets, running inference and delegating to the pure form — without requiring additional implementation from the scorer author.
 
-#### Scenario: Métrica sobre previsões armazenadas não reinferi
-- **WHEN** o consumidor já dispõe das previsões de um modelo e avalia via forma pura
-- **THEN** nenhuma inferência é executada e o valor da métrica é produzido diretamente da comparação
+#### Scenario: Metric over stored predictions does not re-infer
+- **WHEN** the consumer already holds a model's predictions and evaluates via the pure form
+- **THEN** no inference runs and the metric value is produced directly from the comparison
 
-#### Scenario: Forma conveniente executa inferência e delega
-- **WHEN** um consumidor avalia um modelo via forma conveniente
-- **THEN** as previsões são obtidas do modelo e o resultado equivale ao da forma pura aplicada a essas mesmas previsões
+#### Scenario: Convenient form runs inference and delegates
+- **WHEN** a consumer evaluates a model via the convenient form
+- **THEN** predictions are obtained from the model and the result equals the pure form applied to those same predictions
 
-### Requirement: Scorer não supervisionado por atribuições ou por modelo
-O scorer não supervisionado SHALL expor entrada pura sobre features e atribuições/saídas já existentes (ex.: rótulos de cluster) e SHALL prover entrada conveniente análoga que obtém as saídas do modelo antes de delegar.
+### Requirement: Unsupervised scorer by assignments or by model
+The unsupervised scorer SHALL expose a pure input over features and already-existing assignments/outputs (e.g.: cluster labels) and SHALL provide an analogous convenient input that obtains the model's outputs before delegating.
 
-#### Scenario: Silhueta-like sobre atribuições existentes
-- **WHEN** atribuições de cluster já calculadas são fornecidas com suas features à forma pura
-- **THEN** a pontuação é calculada sem contato com o modelo
+#### Scenario: Silhouette-like over existing assignments
+- **WHEN** pre-computed cluster assignments are provided with their features to the pure form
+- **THEN** the score is computed without touching the model
 
-### Requirement: Avaliação é falível por construção
-Ambos os contratos de pontuação SHALL retornar resultado falível, pois a forma conveniente pode falhar na inferência e as formas puras podem rejeitar entradas incoerentes.
+### Requirement: Evaluation is fallible by construction
+Both scoring contracts SHALL return a fallible result, because the convenient form may fail at inference and pure forms may reject incoherent inputs.
 
-#### Scenario: Previsões incoerentes com os alvos produzem erro estruturado
-- **WHEN** a forma pura recebe previsões cuja estrutura não é comparável aos alvos verdadeiros
-- **THEN** a operação retorna erro da taxonomia central — nunca entra em pânico nem devolve sentinela numérica
+#### Scenario: Predictions incoherent with targets produce a structured error
+- **WHEN** the pure form receives predictions whose structure is not comparable with the true targets
+- **THEN** the operation returns an error from the central taxonomy — never panics nor returns a numeric sentinel
 
-### Requirement: Scorers são independentes dos modelos que avaliam
-Os contratos de pontuação SHALL ser genéricos quanto ao modelo avaliado, permitindo scorers reutilizáveis entre famílias de algoritmos compatíveis com a mesma forma de saída.
+### Requirement: Scorers are independent of the models they evaluate
+Scoring contracts SHALL be generic over the evaluated model, allowing scorers reusable across algorithm families compatible with the same output shape.
 
-#### Scenario: Mesmo scorer avalia modelos de famílias distintas
-- **WHEN** dois modelos supervisionados de naturezas diferentes produzem previsões comparáveis aos mesmos alvos
-- **THEN** o mesmo scorer os avalia sem adaptação adicional
+#### Scenario: Same scorer evaluates models from distinct families
+- **WHEN** two supervised models of different natures produce predictions comparable against the same targets
+- **THEN** the same scorer evaluates them without additional adaptation

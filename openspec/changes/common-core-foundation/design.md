@@ -2,74 +2,74 @@
 
 ## Context
 
-O crate `sciencekit_common` nasce sobre o workspace da change `bootstrap-workspace`. Os contratos aqui destilados foram decididos em exploração de design prévia e estão formalizados nos specs deste diretório (ver proposal — Capabilities). Restrições estruturais do PRD que moldam o desenho: zero-copy na superfície pública (§4.1), composição de traits (§3.3), nomenclatura completa com prefixo `sk`/`SK` (§3.4), arquivos de até 200 linhas virando módulo pasta padronizado (§3.2), testes companion `*_tests.rs` (§3.5).
+The `sciencekit_common` crate is born on top of the workspace from the `bootstrap-workspace` change. The contracts distilled here were decided in a previous design exploration and are formalized in the specs of this directory (see proposal — Capabilities). PRD structural constraints shaping the design: zero-copy on the public surface (§4.1), trait composition (§3.3), complete naming with the `sk`/`SK` prefix (§3.4), files up to 200 lines becoming standardized folder modules (§3.2), companion `*_tests.rs` tests (§3.5).
 
 ## Goals / Non-Goals
 
 **Goals:**
-- Congelar o vocabulário de tipos e traits que todos os crates futuros compilam contra.
-- Garantir por construção (`Send`/`Sync`, tipos distintos estimador/modelo) as propriedades de concorrência prometidas.
-- Manter a fronteira aberta a integradores externos (seam único de conversão falível).
-- Resolução de execução testável sem máquina real (contexto injetável).
+- Freeze the vocabulary of types and traits every future crate compiles against.
+- Guarantee by construction (`Send`/`Sync`, distinct estimator/model types) the promised concurrency properties.
+- Keep the boundary open to external integrators (a single fallible conversion seam).
+- Testable execution resolution without a real machine (injectable context).
 
 **Non-Goals:**
-- Qualquer algoritmo ou builder de estimador (Fase 1+).
-- Codecs completos encoder/decoder (Fase 1 — aqui só a tabela de rótulos e a canonicalização).
-- Implementação concreta de memmap (interop), paralelismo (rayon) e I/O assíncrono (tokio).
+- Any algorithm or estimator builder (Phase 1+).
+- Complete encoder/decoder codecs (Phase 1 — here only the label table and canonicalization).
+- Concrete implementation of memmap (interop), parallelism (rayon) and async I/O (tokio).
 
 ## Decisions
 
-1. **Dtype genérico como parâmetro de trait, não tipo associado; trait selada `SKFloat` como único bound numérico.**
-   - *Por quê:* cada algoritmo terá kernels distintos por dtype (SIMD `wide` usa tipos concretos); múltiplas impls por dtype são naturais, e um único bound selado impede fragmentação de bounds.
-   - *Alternativas:* tipo associado (impede múltiplos dtypes por tipo concreto sem maquinaria extra); `f64` concreto (mais simples, mas fecha a porta ao f32 exigido por performance/GPU futuros).
+1. **Generic dtype as a trait parameter, not an associated type; sealed `SKFloat` trait as the single numeric bound.**
+   - *Why:* each algorithm will have distinct kernels per dtype (SIMD `wide` uses concrete types); multiple impls per dtype are natural, and a single sealed bound prevents bound fragmentation.
+   - *Alternatives:* associated type (prevents multiple dtypes per concrete type without extra machinery); concrete `f64` (simpler, but closes the door to the f32 demanded by performance/future GPU work).
 
-2. **Duas traits de ajuste separadas por supervisão; ajuste retorna modelo distinto; ajuste opera sobre referência compartilhada.**
-   - *Por quê:* imutabilidade pós-ajuste dá `Send`/`Sync` por construção, validação cruzada e busca em grade paralelizam sem lock, prever-sem-ajustar não compila, e pipelines type-safe (PRD §2.1) exigem tipos encadeáveis estaticamente. Referência compartilhada no ajuste permite reuso do mesmo estimador em múltiplos folds sem clonar.
-   - *Alternativas:* objeto mutável estilo sklearn (`&mut self`) — pior para concorrência e erros de uso em runtime; trait única genérica nos alvos com `()` — uniforme, mas o call site `fit(x, ())` foi rejeitado pelo proprietário do produto.
-   - *Convenção de nomes:* estimador configurado `SKXxx`; modelo treinado `SKXxxModel` — alinhado à exportação (quem exporta Safetensors é o modelo; hiperparâmetros vão ao header JSON, PRD §8.2). O exemplo do PRD §2.1 será atualizado quando esta convenção for formalizada em release.
+2. **Two fit traits separated by supervision; fit returns a distinct model; fit operates on a shared reference.**
+   - *Why:* post-fit immutability gives `Send`/`Sync` by construction, cross-validation and grid search parallelize without locks, predict-without-fit does not compile, and type-safe pipelines (PRD §2.1) require statically chainable types. A shared reference in fit allows reusing the same estimator across multiple folds without cloning.
+   - *Alternatives:* sklearn-style mutable object (`&mut self`) — worse for concurrency and runtime usage errors; single generic trait over targets with `()` — uniform, but the `fit(x, ())` call site was rejected by the product owner.
+   - *Naming convention:* configured estimator `SKXxx`; trained model `SKXxxModel` — aligned with export (the model is what exports Safetensors; hyperparameters go to the JSON header, PRD §8.2). The example in PRD §2.1 will be updated when this convention is formalized in a release.
 
-3. **Fronteira de dados: enums wrapper `#[non_exhaustive]` com despacho único na entrada; seam universal via bound falível da std (`TryInto`).**
-   - *Por quê:* o seam dá aos terceiros UM ponto de integração (implementar conversão para nossas views) válido tanto para conversões infalíveis (promovidas automaticamente pela std) quanto falíveis; o erro flui para o `Result` já retornado pelas operações. Despacho denso/esparsa uma vez por operação mantém kernels limpos; algoritmos parcialmente suportantes rejeitam variante com erro específico antes de processar elementos.
-   - *Alternativas:* traits com entrada fixa por representação (type-safety marginal, mata o ponto de extensão); bound infalível apenas (sem porta para validação de terceiros).
-   - *Contrato zero-copy:* implementações nativas de conversão nunca copiam dados de matriz; cópias existem apenas como métodos explícitos de materialização.
-   - *Intermediários de pipeline:* conversão a partir de blocos owned empresta os dados dentro do escopo da chamada — requisito antecipado do encadeamento estático da Fase 6.
+3. **Data boundary: `#[non_exhaustive]` wrapper enums with a single dispatch at input; universal seam via the std's fallible bound (`TryInto`).**
+   - *Why:* the seam gives third parties ONE integration point (implementing conversion into our views) valid for both infallible conversions (automatically promoted by the std) and fallible ones; the error flows into the `Result` already returned by operations. Dense/sparse dispatch once per operation keeps kernels clean; partially supporting algorithms reject the variant with a specific error before processing elements.
+   - *Alternatives:* traits with fixed input per representation (marginal type safety, kills the extension point); infallible bound only (no door for third-party validation).
+   - *Zero-copy contract:* native conversion implementations never copy matrix data; copies exist only as explicit materialization methods.
+   - *Pipeline intermediates:* conversion from owned blocks borrows the data within the call scope — an anticipated requirement of Phase 6 static chaining.
 
-4. **Alvos: armazenamento ≠ interpretação.**
-   - *Por quê:* `[1,2,3]` é contínuo para o regressor e categórico para o classificador; a view descreve como o dado está guardado (contínuo/inteiro/nominal), o algoritmo decide o significado. Elevação inteiro→contínuo lossless é permitida; aritmética numérica sobre rótulos canônicos nunca acontece (canonicalização produz índices simbólicos).
-   - *Canonicalização:* função livre determinística → índices compactos + tabela reversível; é a base da codificação automática de classificadores (Fase 1+) e dos codecs explícitos cujo treino será atômico com metades derivadas (encoder/decoder compartilhando tabela imutável).
-   - *Dtype dos alvos contínuos desacoplado do dtype das features:* a view contínua guarda `f64` independentemente do parâmetro `F` das features; regressores convertem uma única vez na entrada. Evita contaminar toda a maquinaria de alvos com o parâmetro genérico. Alternativa (amarrar a `F`) reaberta se benchmarks mostrarem custo real.
+4. **Targets: storage ≠ interpretation.**
+   - *Why:* `[1,2,3]` is continuous for the regressor and categorical for the classifier; the view describes how data is stored (continuous/integer/nominal), the algorithm decides the meaning. Lossless integer→continuous elevation is allowed; numeric arithmetic over canonical labels never happens (canonicalization produces symbolic indices).
+   - *Canonicalization:* deterministic free function → compact indices + reversible table; it is the foundation of classifier automatic encoding (Phase 1+) and of the explicit codecs whose training will be atomic with derived halves (encoder/decoder sharing an immutable table).
+   - *Continuous target dtype decoupled from feature dtype:* the continuous view stores `f64` independently of the features' `F` parameter; regressors convert once at input. Avoids contaminating the whole target machinery with the generic parameter. Alternative (binding to `F`) reopened if benchmarks show real cost.
 
-5. **Scorers com dupla entrada e método provido; moram no vocabulário central.**
-   - *Por quê:* forma pura (alvos verdadeiros × previsões existentes) evita re-inferência; forma conveniente (modelo × features × alvos) alimenta GridSearchCV/pipelines; método provido delega à pura após inferir, então autores de scorer implementam só a métrica. Ambas retornam resultado falível (inferência pode falhar). Definidos no crate comum desde já porque são parte do contrato público estável; implementações concretas chegam com as métricas.
-   - *Fronteira registrada:* funções de perda de otimização (boosting, Fase 4) são maquinário interno de ensembles — NÃO usam os scorers.
+5. **Scorers with dual input and provided method; they live in the core vocabulary.**
+   - *Why:* pure form (true targets × existing predictions) avoids re-inference; convenient form (model × features × targets) feeds GridSearchCV/pipelines; the provided method delegates to the pure one after inferring, so scorer authors implement only the metric. Both return a fallible result (inference can fail). Defined in the common crate from the start because they are part of the stable public contract; concrete implementations arrive with metrics.
+   - *Recorded boundary:* optimization loss functions (boosting, Phase 4) are internal ensemble machinery — they do NOT use the scorers.
 
-6. **Execução: intenção (`SKExecutionMode`) ≠ plano (`SKExecutionPlan`); resolução pura por operação; erro duro em incompatibilidade explícita.**
-   - *Por quê:* o tamanho do conjunto só é conhecível na entrada da operação — ajuste e predição resolvem planos independentes semeados pela mesma intenção guardada no estimador/modelo. Resolução como função pura sobre contexto injetável torna o comportamento testável e determinístico. Falha dura preserva a semântica de pedidos explícitos; automático sempre escolhe modo compatível e nunca erra por incompatibilidade.
-   - *Contexto:* memória disponível, núcleos, tamanho do conjunto, padrão de acesso declarado pelo algoritmo, dica de lote. Leitura física da máquina fica confinada ao construtor padrão do contexto (`sysinfo`); a lógica de decisão jamais lê ambiente.
+6. **Execution: intent (`SKExecutionMode`) ≠ plan (`SKExecutionPlan`); pure resolution per operation; hard error on explicit incompatibility.**
+   - *Why:* dataset size only becomes known at operation input — fit and prediction resolve independent plans seeded by the same intent stored on the estimator/model. Resolution as a pure function over an injectable context makes behavior testable and deterministic. Hard failure preserves explicit-request semantics; automatic always picks a compatible mode and never fails on incompatibility.
+   - *Context:* available memory, cores, dataset size, access pattern declared by the algorithm, batch hint. Physical machine reading stays confined to the default context constructor (`sysinfo`); decision logic never reads the environment.
 
-7. **Streaming: batches owned com metadados mínimos; fonte sequencial iterável e falível; fonte aleatória abstrata sem dependência de mapeamento.**
-   - *Por quê:* bloco owned atravessa fronteiras de thread (pipeline I/O ∥ CPU do PRD §5.1); empréstimo amarraria o processamento ao leitor. O contrato aleatório fica independente de `memmap2` — implementações mapeadas pertencem à interop.
+7. **Streaming: owned batches with minimal metadata; iterable fallible sequential source; abstract random-access source without mapping dependency.**
+   - *Why:* an owned block crosses thread boundaries (PRD §5.1's I/O ∥ CPU pipeline); borrowing would tie processing to the reader. The random contract stays independent from `memmap2` — mapped implementations belong to interop.
 
-8. **Organização modular desde o primeiro commit:** pastas por conceito (`sk_float/`, `errors/`, `data_view/`, `target_view/`, `label_table/`, `fit_traits/`, `scorer_traits/`, `execution/`, `batching/`), `mod.rs` com re-exports públicos, testes companion ao lado, nenhum arquivo além de 200 linhas.
+8. **Modular organization from the first commit:** folders per concept (`sk_float/`, `errors/`, `data_view/`, `target_view/`, `label_table/`, `fit_traits/`, `scorer_traits/`, `execution/`, `batching/`), `mod.rs` with public re-exports, companion tests alongside, no file beyond 200 lines.
 
-9. **Dependências mínimas:** `ndarray`, `sprs`, `num-traits`, `thiserror`, `sysinfo`. Sem tokio/rayon/memmap2/serde nesta change.
+9. **Minimal dependencies:** `ndarray`, `sprs`, `num-traits`, `thiserror`, `sysinfo`. No tokio/rayon/memmap2/serde in this change.
 
 ## Risks / Trade-offs
 
-- [Bound falível pode degradar inferência de tipos em alguns call sites] → mitigado: casos nativos têm impls diretas; se atrito real surgir, adiciona-se açúcar construtor próprio sem mudança de contrato.
-- [Monomorfização por dtype multiplica código gerado] → aceito: só dtypes instanciados compilam; revisão de tempo de build entra como critério nas changes de algoritmos.
-- [`sysinfo` pesa no grafo de dependências do crate comum] → mitigado: leitura física isolada no construtor padrão de contexto; caminhos de teste injetam valores simulados.
-- [Variantes `#[non_exhaustive}` exigem caso coringa em matches externos] → intencional: é o preço da evolução não-breaking; documentado como padrão de consumo.
-- [Decisões adiadas podem custar retrabalho localizado] → lista explícita abaixo com direção padrão; todas são internas, sem impacto no contrato público.
+- [Fallible bound may degrade type inference at some call sites] → mitigated: native cases have direct impls; if real friction appears, own constructor sugar can be added without contract changes.
+- [Per-dtype monomorphization multiplies generated code] → accepted: only instantiated dtypes compile; build-time review becomes a criterion in algorithm changes.
+- [`sysinfo` weighs on the common crate's dependency graph] → mitigated: physical reading isolated in the default context constructor; test paths inject simulated values.
+- [`#[non_exhaustive}` variants require a wildcard case in external matches] → intentional: it is the price of non-breaking evolution; documented as a consumption pattern.
+- [Deferred decisions may cost localized rework] → explicit list below with default direction; all are internal, no impact on the public contract.
 
-## Decisões adiadas conscientemente (com direção padrão)
+## Consciously deferred decisions (with default direction)
 
-Representação interna da variante nominal (direção: enum interno minúsculo aceitando fatia de referências e fatia de strings owned, exposto como variante única pública); multi-alvo/multi-rótulo 2D (adiado — nova variante futura, não-breaking); conversões curadas com feature flags para `chrono`/`uuid`/`arrow` e macro `#[derive(SKTarget)]` (changes futuras); amarração fina entre plano de execução e escolha de alocadores (chega com os allocators).
+Internal representation of the nominal variant (direction: tiny internal enum accepting a slice of references and a slice of owned strings, exposed as a single public variant); 2D multi-target/multi-label (deferred — future new variant, non-breaking); curated conversions with feature flags for `chrono`/`uuid`/`arrow` and a `#[derive(SKTarget)]` macro (future changes); fine binding between execution plan and allocator choice (arrives with allocators).
 
 ## Migration Plan
 
-Crate novo; sem migração. Consumidores futuros começam contra esta API; rollback = reverter merge da branch de código.
+New crate; no migration. Future consumers start against this API; rollback = revert the code branch merge.
 
 ## Open Questions
 
-Nenhuma que bloqueie o detalhamento de tarefas — as micro-decisões listadas acima têm direção padrão definida e serão confirmadas durante o TDD de cada módulo.
+None blocking task detailing — the micro-decisions listed above have a defined default direction and will be confirmed during each module's TDD.

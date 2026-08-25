@@ -1,61 +1,61 @@
 # Tasks — common-core-foundation
 
-Toda task segue TDD (skill `tdd`): teste primeiro em módulo companion `*_tests.rs`, falha confirmada, implementação mínima, refatoração. Nenhum arquivo além de 200 linhas — estrutura de módulo pasta já prevista no design.
+Every task follows TDD (the `tdd` skill): test first in a companion `*_tests.rs` module, confirmed failure, minimal implementation, refactoring. No file beyond 200 lines — the folder-module structure is already planned in the design.
 
-## 1. Estrutura do crate
+## 1. Crate structure
 
-- [ ] 1.1 Criar `crates/sciencekit_common` no workspace com manifesto, licença declarada e árvore de módulos pasta vazia (`sk_float/`, `errors/`, `data_view/`, `target_view/`, `label_table/`, `fit_traits/`, `scorer_traits/`, `execution/`, `batching/`), compilando verde
-- [ ] 1.2 Adicionar dependências base: `ndarray`, `sprs`, `num-traits`, `thiserror`, `sysinfo`
+- [ ] 1.1 Create `crates/sciencekit_common` in the workspace with manifest, declared license and empty folder-module tree (`sk_float/`, `errors/`, `data_view/`, `target_view/`, `label_table/`, `fit_traits/`, `scorer_traits/`, `execution/`, `batching/`), compiling green
+- [ ] 1.2 Add base dependencies: `ndarray`, `sprs`, `num-traits`, `thiserror`, `sysinfo`
 
-## 2. Tipagem escalar
+## 2. Scalar typing
 
-- [ ] 2.1 TDD da trait selada `SKFloat`: implementada pelos floats padrão suportados, não implementável externamente, inteiros rejeitados por bound
+- [ ] 2.1 TDD for the sealed trait `SKFloat`: implemented by the supported standard floats, not implementable externally, integers rejected by bound
 
-## 3. Modelo de erros
+## 3. Error model
 
-- [ ] 3.1 TDD do enum central com variantes acordadas (forma com esperado/encontrado, representação não suportada, hiperparâmetro inválido identificável, modo incompatível com padrão declarado, não convergência com contagem, E/S com causa preservada, falha de conversão)
-- [ ] 3.2 TDD das conversões automáticas a partir de erro de plataforma e verificação do padrão de derivação para enums futuros de algoritmo
+- [ ] 3.1 TDD of the central enum with agreed variants (shape with expected/found, unsupported representation, identifiable invalid hyperparameter, mode incompatible with declared pattern, non-convergence with count, I/O with preserved source, conversion failure)
+- [ ] 3.2 TDD of automatic conversions from platform errors and verification of the derivation pattern for future algorithm enums
 
-## 4. Fronteira de dados
+## 4. Data boundary
 
-- [ ] 4.1 TDD da view densa/esparsa: conversões nativas sem cópia (denso emprestado, esparso CSR, bloco owned por empréstimo), marcação não exaustiva
-- [ ] 4.2 TDD do seam falível: tipos nativos via conversões diretas, tipo com conversão infalível aceito via blanket da std, conversão falível de terceiro propagando erro estruturado ao Result da operação
-- [ ] 4.3 TDD da view de alvos: três variantes (contínua, inteira, nominal), elevação lossless inteiro→contínuo, nominal referenciando texto emprestado
-- [ ] 4.4 TDD da rejeição precisa: variante não suportada por um consumidor denso-only produz erro específico antes de processar elementos
+- [ ] 4.1 TDD of the dense/sparse view: native copy-free conversions (borrowed dense, sparse CSR, owned block by borrowing), non-exhaustive marking
+- [ ] 4.2 TDD of the fallible seam: native types via direct conversions, a type with infallible conversion accepted via the std blanket, third-party fallible conversion propagating structured error into the operation's Result
+- [ ] 4.3 TDD of the target view: three variants (continuous, integer, nominal), lossless integer→continuous elevation, nominal referencing borrowed text
+- [ ] 4.4 TDD of precise rejection: a variant unsupported by a dense-only consumer produces a specific error before processing elements
 
-## 5. Rótulos canônicos
+## 5. Canonical labels
 
-- [ ] 5.1 TDD da canonicalização determinística: sequências nominais/inteiras → índices compactos + tabela reversível; roundtrip integral; mesma entrada → mesmo mapeamento
-- [ ] 5.2 TDD da tabela como portadora de dados exportáveis (metadados legíveis para o futuro header de modelos)
+- [ ] 5.1 TDD of deterministic canonicalization: nominal/integer sequences → compact indices + reversible table; full roundtrip; same input → same mapping
+- [ ] 5.2 TDD of the table as bearer of exportable data (readable metadata for the future model header)
 
-## 6. Contratos de ajuste e transformação
+## 6. Fit and transformation contracts
 
-- [ ] 6.1 TDD da trait não supervisionada: recebe apenas features; retorno é associated type do modelo; ajuste sobre referência compartilhada preserva o estimador reutilizável
-- [ ] 6.2 TDD da trait supervisionada: exige alvos na assinatura; estimador que só implementa a não supervisionada recusa alvos em compilação
-- [ ] 6.3 Testes de compilação provando irrepresentabilidade de prever-sem-ajustar e `Send`/`Sync` dos modelos produzidos por contratos de exemplo
-- [ ] 6.4 TDD da trait de transformador com saída tipada: encadeamento compatível valida estaticamente; incompatibilidade declarada detectável em compilação
+- [ ] 6.1 TDD of the unsupervised trait: receives only features; return is the model associated type; fit on a shared reference keeps the estimator reusable
+- [ ] 6.2 TDD of the supervised trait: requires targets in the signature; an estimator implementing only the unsupervised trait rejects targets at compile time
+- [ ] 6.3 Compile-time tests proving predict-without-fit unrepresentability and `Send`/`Sync` of models produced by example contracts
+- [ ] 6.4 TDD of the transformer trait with typed output: compatible chaining validates statically; declared incompatibility detectable at compile time
 
-## 7. Contratos de pontuação
+## 7. Scoring contracts
 
-- [ ] 7.1 TDD do scorer supervisionado: forma pura sobre previsões existentes sem inferência; forma provida executa inferência sobre contrato de exemplo e delega, resultado equivalente
-- [ ] 7.2 TDD do scorer não supervisionado: forma pura sobre atribuições existentes + forma provida análoga
-- [ ] 7.3 TDD da falibilidade: entradas incomparáveis produzem erro estruturado da taxonomia; genericidade do modelo avaliado permite reuso entre famílias
+- [ ] 7.1 TDD of the supervised scorer: pure form over existing predictions without inference; provided form runs inference over an example contract and delegates, equivalent result
+- [ ] 7.2 TDD of the unsupervised scorer: pure form over existing assignments + analogous provided form
+- [ ] 7.3 TDD of fallibility: incomparable inputs produce structured taxonomy errors; genericity over the evaluated model allows reuse across families
 
-## 8. Planejamento de execução
+## 8. Execution planning
 
-- [ ] 8.1 TDD da enum de intenção (cinco modos) e struct de plano consolidado
-- [ ] 8.2 TDD da resolução pura: mesmo contexto → mesmo plano; intenção explícita compatível preservada no plano
-- [ ] 8.3 TDD do erro duro: modo explícito incompatível com padrão declarado falha nomeando ambos os lados, antes de processar dados; automático nunca produz esse erro
-- [ ] 8.4 TDD da resolução por operação: contextos distintos entre ajuste e predição produzem planos independentes; contexto simulado dispensa leitura física (construtor padrão confinado à leitura real)
+- [ ] 8.1 TDD of the intent enum (five modes) and consolidated plan struct
+- [ ] 8.2 TDD of pure resolution: same context → same plan; compatible explicit intent preserved in the plan
+- [ ] 8.3 TDD of hard error: explicit mode incompatible with declared pattern fails naming both sides, before processing data; automatic never produces this error
+- [ ] 8.4 TDD of per-operation resolution: distinct contexts between fit and prediction produce independent plans; simulated context dispenses physical reading (default constructor confined to real reading)
 
 ## 9. Streaming
 
-- [ ] 9.1 TDD do bloco owned com metadados: sobrevive ao descarte da fonte; exatamente um bloco final em fonte finita
-- [ ] 9.2 TDD da fonte sequencial: iteração falível com erro estruturado em falha intermediária
-- [ ] 9.3 TDD do contrato de acesso aleatório abstrato: acesso posicional direto sem varredura, sem acoplar mecanismo de armazenamento
+- [ ] 9.1 TDD of the owned block with metadata: survives source drop; exactly one final block on finite sources
+- [ ] 9.2 TDD of the sequential source: fallible iteration with structured error on intermediate failure
+- [ ] 9.3 TDD of the abstract random-access contract: direct positional access without scanning, without coupling storage mechanism
 
-## 10. Aceite e revisão
+## 10. Acceptance and review
 
-- [ ] 10.1 Rodar todos os gates locais (fmt, clippy estrito, testes, doctests) e confirmar verde
-- [ ] 10.2 Verificar checklist de aceite adaptado desta change: contratos compilam sob `Send`/`Sync` onde prometido, coberturas companion completas, dados mock em ndarray/sprs, nomenclatura completa com prefixos corretos, nenhum arquivo além de 200 linhas
-- [ ] 10.3 Registrar no PR os critérios de aceite completos do PRD §8.7/§10.3 como pendentes para o primeiro estimador (Fase 1)
+- [ ] 10.1 Run all local gates (fmt, strict clippy, tests, doctests) and confirm green
+- [ ] 10.2 Verify this change's adapted acceptance checklist: contracts compile under `Send`/`Sync` where promised, complete companion coverage, mock data in ndarray/sprs, complete nomenclature with correct prefixes, no file beyond 200 lines
+- [ ] 10.3 Record on the PR that the full acceptance criteria from PRD §8.7/§10.3 are pending until the first estimator (Phase 1)
