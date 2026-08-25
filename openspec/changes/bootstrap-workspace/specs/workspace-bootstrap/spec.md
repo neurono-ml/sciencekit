@@ -1,45 +1,45 @@
 ## Purpose
 
-Estabelece a fundação verificável do repositório sciencekit: toolchain Rust fixada e reprodutível, portão de qualidade automatizado em CI para qualquer pull request e licença Apache-2.0 declarada. Toda mudança futura assume estes comportamentos como pré-condição.
+Establishes the verifiable foundation of the sciencekit repository: a pinned, reproducible Rust toolchain; an automated quality gate in CI for every pull request; and the declared Apache-2.0 license. Every future change assumes these behaviors as preconditions.
 
 ## ADDED Requirements
 
-### Requirement: Toolchain fixada e reprodutível
-O repositório SHALL fixar a versão exata do toolchain Rust (1.85) de forma declarativa, de modo que qualquer clone limpo compile com a mesma versão, usando edition 2024, sem dependência do Rust instalado na máquina do contribuidor.
+### Requirement: Pinned, reproducible toolchain
+The repository SHALL pin the exact Rust toolchain version (1.85) declaratively, so that any clean clone compiles with the same version, using edition 2024, without depending on the contributor's installed Rust.
 
-#### Scenario: Clone limpo usa o toolchain correto
-- **WHEN** um clone limpo do repositório executa qualquer comando Cargo sem configuração adicional
-- **THEN** o toolchain 1.85 exato é selecionado automaticamente a partir da declaração versionada no repositório
+#### Scenario: Clean clone uses the correct toolchain
+- **WHEN** a clean clone of the repository runs any Cargo command without additional configuration
+- **THEN** the exact 1.85 toolchain is selected automatically from the declaration versioned in the repository
 
-#### Scenario: Código incompatível com edition 2024 é rejeitado no build
-- **WHEN** código-fonte que exige edição anterior à 2024 é compilado no ambiente do projeto
-- **THEN** a compilação falha, evidenciando que edition 2024 está em vigor
+#### Scenario: Code incompatible with edition 2024 is rejected at build
+- **WHEN** source code requiring an edition earlier than 2024 is compiled in the project environment
+- **THEN** compilation fails, evidencing that edition 2024 is in force
 
-### Requirement: Portão de qualidade em CI para todo pull request
-O CI SHALL executar, automaticamente em cada pull request, verificações de formatação, análise estática com avisos tratados como erros, suíte completa de testes do workspace (incluindo testes de documentação) e build/teste dos exemplos. Qualquer falha SHALL impedir a aprovação automática da mudança.
+### Requirement: CI quality gate on every pull request
+CI SHALL automatically run, on each pull request, formatting checks, static analysis with warnings treated as errors, the complete workspace test suite (including documentation tests) and example build/tests. Any failure SHALL prevent automatic approval of the change.
 
-#### Scenario: Formatação divergente reprova o PR
-- **WHEN** um pull request contém código fora do padrão de formatação definido
-- **THEN** o job de verificação de formatação falha e aponta as divergências
+#### Scenario: Divergent formatting fails the PR
+- **WHEN** a pull request contains code outside the defined formatting standard
+- **THEN** the formatting check job fails and points out the divergences
 
-#### Scenario: Aviso de análise estática reprova o PR
-- **WHEN** o código introduz qualquer aviso de análise estática
-- **THEN** o job de análise falha, pois avisos são promovidos a erros
+#### Scenario: Static analysis warning fails the PR
+- **WHEN** the code introduces any static analysis warning
+- **THEN** the analysis job fails, because warnings are promoted to errors
 
-#### Scenario: Falha de teste reprova o PR
-- **WHEN** qualquer teste do workspace ou de exemplos falha no CI
-- **THEN** o pull request não pode ser considerado validado pela automação
+#### Scenario: Test failure fails the PR
+- **WHEN** any workspace or example test fails on CI
+- **THEN** the pull request cannot be considered validated by automation
 
-### Requirement: Compatibilidade garantida com o MSRV
-O CI SHALL incluir uma verificação dedicada que compila e testa o projeto usando exclusivamente a versão mínima suportada (1.85), de modo que uso acidental de funcionalidades de Rust mais recentes seja detectado antes do merge.
+### Requirement: Guaranteed MSRV compatibility
+CI SHALL include a dedicated check compiling and testing the project using exclusively the minimum supported version (1.85), so that accidental use of newer Rust features is detected before merge.
 
-#### Scenario: Funcionalidade mais nova que o MSRV é detectada
-- **WHEN** código utiliza funcionalidade estável introduzida após 1.85
-- **THEN** o job de MSRV falha enquanto os demais jobs com toolchain pinado também evidenciam a incompatibilidade
+#### Scenario: Feature newer than the MSRV is detected
+- **WHEN** code uses a stable feature introduced after 1.85
+- **THEN** the MSRV job fails while the remaining pinned-toolchain jobs also evidence the incompatibility
 
-### Requirement: Licença Apache-2.0 presente e declarada
-O repositório SHALL conter o texto completo da licença Apache-2.0 e os manifests do workspace SHALL declará-la como licença do projeto.
+### Requirement: Apache-2.0 license present and declared
+The repository SHALL contain the full Apache-2.0 license text and the workspace manifests SHALL declare it as the project license.
 
-#### Scenario: Licença visível no repositório
-- **WHEN** o repositório é inspecionado
-- **THEN** o arquivo de licença Apache-2.0 existe na raiz e a declaração de licença consta nos manifests do workspace
+#### Scenario: License visible in the repository
+- **WHEN** the repository is inspected
+- **THEN** the Apache-2.0 license file exists at the root and the license declaration appears in the workspace manifests
