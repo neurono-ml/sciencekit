@@ -3,43 +3,54 @@ schema: spec-driven
 # Project context (optional)
 # This is shown to AI when creating artifacts.
 context: |
-  Projeto: sciencekit — biblioteca de Machine Learning em Rust reimplementando o scikit-learn.
-  Fonte de verdade de produto: docs/PRD.md.
-  Tech stack: Rust (MSRV 1.85, edition 2024), workspace Cargo com sub-crates sciencekit_* em crates/
-  (ver PRD §3.1); ndarray, sprs, rayon, tokio, serde, thiserror, tracing, memmap2, sysinfo.
-  Convenções: builder pattern obrigatório; nomes completos sem abreviações
-  (maximum_number_of_iterations, não max_iter), única exceção o prefixo do projeto
-  sk/SK; itens públicos obrigatoriamente prefixados — structs/traits com SK +
-  PascalCase (SKEstimator, SKStandardScaler), funções livres (fora de impl),
-  variáveis e módulos públicos com sk_ + snake_case (sk_train_test_split);
-  métodos (funções dentro de impl de structs ou traits) não recebem prefixo;
-  zero-copy nas APIs públicas
-  (ArrayView/CowArray/views sprs); arquivo .rs >200 linhas vira módulo pasta padronizado
-  (mod.rs, builder.rs, core_implementation.rs, *_tests.rs); testes em módulos companion
-  *_tests.rs ao lado da implementação (nunca inline nem tests/ global).
-  Workflow: nenhum commit na main; código em worktree temporary/worktrees/<type>/<change-name>
-  (branch <type>/<change-name>) e definições openspec em temporary/worktrees/<type>/<change-name>-openspec
-  (branch <type>/<change-name>-openspec); TDD obrigatório via skill tdd; revisão final por agente
-  independente validando aceitação da spec antes do PR.
+  Project: sciencekit — Machine Learning library in Rust reimplementing scikit-learn.
+  Product source of truth: docs/PRD.md.
+  Language: all durable artifacts (code, docs, specs, commits, issues, PRs, README,
+  CHANGELOG) are written in English — international open-source project; only the live
+  conversation may use the operator's language.
+  Tech stack: Rust (MSRV 1.85, edition 2024), Cargo workspace with sciencekit_* sub-crates in crates/
+  (see PRD §3.1); ndarray, sprs, rayon, tokio, serde, thiserror, tracing, memmap2, sysinfo.
+  Conventions: builder pattern mandatory; full names without abbreviations
+  (maximum_number_of_iterations, not max_iter), single exception the project prefix
+  sk/SK; public items must be prefixed — structs/traits with SK +
+  PascalCase (SKEstimator, SKStandardScaler), free functions (outside impl),
+  variables and public modules with sk_ + snake_case (sk_train_test_split);
+  methods (functions inside impl blocks of structs or traits) get no prefix;
+  zero-copy on public APIs
+  (ArrayView/CowArray/sprs views); a .rs file >200 lines becomes a standardized folder module
+  (mod.rs, builder.rs, core_implementation.rs, *_tests.rs); tests in companion modules
+  *_tests.rs beside the implementation (never inline nor global tests/).
+  Workflow: no commits on main; code in worktree temporary/worktrees/<type>/<change-name>
+  (branch <type>/<change-name>) and openspec definitions in temporary/worktrees/<type>/<change-name>-openspec
+  (branch <type>/<change-name>-openspec); opening a branch for a change also creates the matching GitHub
+  issue in English as an ADR (Y-statement for simple decisions, Nygard format otherwise — see
+  https://adr.github.io/adr-templates/, draft with the architecture-decision-records skill), referenced in
+  the PR and closed deterministically via closing keywords (Closes/Fixes/Resolves #n); TDD mandatory via
+  tdd skill; final review by an independent agent validating spec acceptance before the PR; merged changes
+  update CHANGELOG.md (English, keep-a-changelog 1.1.0).
 
 rules:
   proposal:
-    - Planejar changes em grupos separados: (1) implementação do algoritmo, (2) changes para os diferentes acelerators (GPU OpenCL/CUDA/ROCm, BLAS/SIMD, alocadores, bindings Python), (3) changes para documentação.
-    - Changes pequenas com escopo mínimo; binding Python e backend GPU são changes associadas separadas, criadas após o algoritmo estar pronto em CPU.
-    - Incluir critérios de aceite do PRD §8.7/§10.3: muitos e poucos dados, concorrência, exportação de modelo + métricas.
+    - Plan changes in separate groups: (1) algorithm implementation, (2) changes for the different accelerators (GPU OpenCL/CUDA/ROCm, BLAS/SIMD, allocators, Python bindings), (3) documentation changes.
+    - Small changes with minimal scope; Python bindings and GPU backend are separate associated changes, created after the algorithm is ready on CPU.
+    - Include acceptance criteria from PRD §8.7/§10.3: large and small data, concurrency, model export + metrics.
+    - Write every artifact (proposal, specs, tasks, design) in English.
 
   tasks:
-    - Toda task deve ser implementada usando a skill tdd: teste primeiro, falha confirmada, implementação mínima, refatoração mantendo testes verdes.
-    - Testes vivem em módulos companion *_tests.rs ao lado da implementação; dados mock em ndarray/sprs.
-    - Evolução iterativa obrigatória: naive → testes → performance (SIMD/rayon/layout) → streaming/out-of-core; nenhuma etapa pode ser pulada.
+    - Every task must be implemented using the tdd skill: test first, confirmed failure, minimal implementation, refactoring keeping tests green.
+    - Tests live in companion *_tests.rs modules beside the implementation; mock data in ndarray/sprs.
+    - Mandatory iterative evolution: naive → tests → performance (SIMD/rayon/layout) → streaming/out-of-core; no step may be skipped.
 
 operations:
   apply:
     guidance:
-      - Implementar em git worktree temporary/worktrees/<type>/<change-name> na branch <type>/<change-name> (type ∈ feat|bugfix|chore|docs). Nunca commitar na main.
-      - Commitar as definições openspec/ desta change na branch <type>/<change-name>-openspec, em worktree temporary/worktrees/<type>/<change-name>-openspec.
-      - Usar a skill tdd para cada task.
-      - Ao concluir todas as tasks, acionar revisão por um agente independente que valide se a spec foi efetivamente atendida antes de abrir o PR.
+      - Implement in git worktree temporary/worktrees/<type>/<change-name> on branch <type>/<change-name> (type ∈ feat|bugfix|chore|docs). Never commit to main.
+      - When opening the branch for a change, create the matching GitHub issue in English formatted as an ADR — Y-statement template for simple decisions, Nygard format for more complete ones (https://adr.github.io/adr-templates/); draft the text with the architecture-decision-records skill.
+      - Reference the corresponding issue(s) in the PR description with closing keywords (Closes/Fixes/Resolves #n) so GitHub closes them deterministically when the PR merges.
+      - Commit this change's openspec/ definitions on branch <type>/<change-name>-openspec, in worktree temporary/worktrees/<type>/<change-name>-openspec.
+      - Use the tdd skill for each task.
+      - When all tasks are done, trigger review by an independent agent validating that the spec was effectively met before opening the PR.
   archive:
     guidance:
-      - O merge do código acontece via PR; quando o PR for mergeado, o agente opencode no GitHub mergeia a branch <type>/<change-name>-openspec correspondente e executa sync + archive da change.
+      - Code merge happens via PR; when the PR is merged, the opencode agent on GitHub merges the corresponding <type>/<change-name>-openspec branch and runs sync + archive of the change.
+      - Every finished and merged change must update CHANGELOG.md, in English, following https://keepachangelog.com/en/1.1.0/. The snippet between releases in the changelog is used to describe the released version.
