@@ -43,3 +43,4 @@ operations:
   archive:
     guidance:
       - O merge do código acontece via PR; quando o PR for mergeado, o agente opencode no GitHub mergeia a branch <type>/<change-name>-openspec correspondente e executa sync + archive da change.
+      - Toda change finalizada e mergeada deve atualizar CHANGELOG.md, em inglês, seguindo https://keepachangelog.com/en/1.1.0/. O trecho entre releases do changelog será usado para descrever a release lançada.

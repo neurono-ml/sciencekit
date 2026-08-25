@@ -18,6 +18,7 @@ Instruções para agentes trabalhando neste repositório. Fonte de verdade de pr
 - **TDD obrigatório:** toda task usa a skill `tdd` — teste primeiro, confirmar falha, implementação mínima, refatoração.
 - **Revisão independente:** ao final de cada change, um agente independente revisa o resultado validando se a spec foi efetivamente atendida, antes do PR.
 - **Pós-merge:** quando um PR é mergeado, o agente opencode no GitHub mergeia a branch `-openspec` correspondente em `main` e executa sync + archive da change.
+- **Changelog:** toda change finalizada e mergeada deve atualizar `CHANGELOG.md`, em inglês, seguindo https://keepachangelog.com/en/1.1.0/. O trecho entre releases do changelog será usado para descrever a release lançada.
 
 ## Planejamento (OpenSpec)
 
@@ -54,3 +55,16 @@ Instruções para agentes trabalhando neste repositório. Fonte de verdade de pr
 ## Releases
 
 - Cada versão da biblioteca recebe tag Git, é publicada no crates.io e associada a uma GitHub Release.
+
+## graphify
+
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+
+When the user types `/graphify`, invoke the `skill` tool with `skill: "graphify"` before doing anything else.
+
+Rules:
+- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- Dirty graphify-out/ files are expected after hooks or incremental updates; dirty graph files are not a reason to skip graphify. Only skip graphify if the task is about stale or incorrect graph output, or the user explicitly says not to use it.
+- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
