@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    name: Build and test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.85"
+
+      - name: Cache cargo registry and build artifacts
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build and test workspace
+        run: |
+          if [ -f Cargo.toml ]; then
+            cargo build --workspace --all-targets --locked
+            cargo test --workspace --locked
+          else
+            echo "No Cargo workspace yet (Phase 0 pending) — nothing to build."
+          fi
