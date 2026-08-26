@@ -28,6 +28,9 @@ context: |
   the PR and closed deterministically via closing keywords (Closes/Fixes/Resolves #n); TDD mandatory via
   tdd skill; final review by an independent agent validating spec acceptance before the PR; merged changes
   update CHANGELOG.md (English, keep-a-changelog 1.1.0).
+  Scratch artifacts: every temporary file (experiments, validation screenshots, throwaway scripts,
+  probes) goes to temporary/YYYY-MM-DD if generic or temporary/YYYY-MM-DD/<change-name> if related
+  to a change; never in tracked directories, never committed.
 
 rules:
   proposal:
@@ -45,6 +48,7 @@ operations:
   apply:
     guidance:
       - Implement in git worktree temporary/worktrees/<type>/<change-name> on branch <type>/<change-name> (type ∈ feat|bugfix|chore|docs). Never commit to main.
+      - Write every temporary artifact (experiments, validation screenshots, throwaway scripts, probes) under temporary/YYYY-MM-DD if generic, or temporary/YYYY-MM-DD/<change-name> if related to this change; never commit them.
       - When opening the branch for a change, create the matching GitHub issue in English formatted as an ADR — Y-statement template for simple decisions, Nygard format for more complete ones (https://adr.github.io/adr-templates/); draft the text with the architecture-decision-records skill.
       - Reference the corresponding issue(s) in the PR description with closing keywords (Closes/Fixes/Resolves #n) so GitHub closes them deterministically when the PR merges.
       - Commit this change's openspec/ definitions on branch <type>/<change-name>-openspec, in worktree temporary/worktrees/<type>/<change-name>-openspec.
