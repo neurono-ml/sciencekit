@@ -6,6 +6,8 @@
 ![Rust](https://img.shields.io/badge/rust-1.85%2B-orange?logo=rust&logoColor=white)
 ![License](https://img.shields.io/badge/license-pending-lightgrey)
 
+🌐 **Official site:** [https://neurono-ml.github.io/sciencekit/](https://neurono-ml.github.io/sciencekit/) — full API reference, guides and examples.
+
 A machine learning library in Rust reimplementing all of scikit-learn — extreme performance, zero-copy APIs and native out-of-core processing.
 
 ## Highlights
