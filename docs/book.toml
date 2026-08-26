@@ -1,0 +1,32 @@
+[book]
+title = "sciencekit"
+description = "All of scikit-learn, natively in Rust — extreme performance, zero-copy and out-of-core."
+authors = ["sciencekit project"]
+language = "en"
+src = "src"
+
+[build]
+build-dir = "book"
+create-missing = false
+
+[output.html]
+default-theme = "coal"
+preferred-dark-theme = "coal"
+additional-css = ["skin/custom.css"]
+additional-js = ["skin/custom.js"]
+git-repository-url = "https://github.com/neurono-ml/sciencekit"
+edit-url-template = "https://github.com/neurono-ml/sciencekit/edit/docs/documentations/{path}"
+site-url = "/sciencekit/"
+no-section-label = true
+
+[output.html.search]
+enable = true
+boost-title = 2
+
+[output.html.playground]
+editable = false
+line-numbers = true
+copyable = true
+
+[rust]
+edition = "2024"
