@@ -56,6 +56,10 @@ Instructions for agents working in this repository. Product source of truth: `do
 - That branch hosts an mdBook compatible with GitHub Pages containing: API, usage examples and a description of every function.
 - Unit tests of API functions and e2e tests are used as examples in the book.
 - **Diagrams:** always Mermaid or SVG — colorful, explanatory, with vivid clear colors harmonized with the mdBook theme. Render them with the drawing/rendering tools and make sure they display without errors before committing. ASCII-art diagrams are forbidden in any documentation (ASCII sketches are fine in conversation).
+- **Book location:** configuration in `docs/book.toml`; chapters in `docs/src/`; custom skin (CSS/JS) in `docs/skin/`.
+- **Book language: English.** Write new chapters and edits in English; translate PRD concepts faithfully.
+- **Documentation agents:** instructions and component catalog in `docs/src/documentation-guide.md`.
+- **Publishing:** the GitHub Actions workflow (`.github/workflows/deploy-documentation.yml`) builds and deploys the book to GitHub Pages on every push to `docs/documentations`. Run `mdbook build docs` locally before pushing.
 - **README:** keep `README.md` up to date, small, pointing to the documentation, with the expected badges for a Rust project hosted on GitHub (CI status, crates.io, docs.rs, Rust version).
 
 ## Agent skill
