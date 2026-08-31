@@ -9,6 +9,7 @@
 ## Engineering
 
 - [Architecture](architecture.md)
+- [sciencekit_math — kernels & BLAS](math-kernel.md)
 - [Plan & Roadmap](roadmap.md)
 
 ## Community
