@@ -1,0 +1,20 @@
+# sciencekit — Cargo workspace root
+#
+# The root is the `sciencekit` umbrella crate and the workspace root. Future
+# `sciencekit_*` sub-crates live under `crates/` and are added to `members` one
+# per change (PRD §3.1) to keep PRs small. The umbrella re-exports them (Phase 7).
+#
+# MSRV: Rust 1.85 (PRD §3.6), pinned by rust-toolchain.toml.
+
+[package]
+name = "sciencekit"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+rust-version = "1.85"
+description = "Machine Learning library in Rust reimplementing all of scikit-learn — extreme performance, zero-copy and native out-of-core."
+repository = "https://github.com/neurono-ml/sciencekit"
+
+[workspace]
+resolver = "3"
+members = []

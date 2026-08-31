@@ -1,6 +1,14 @@
+# Rust build artifacts
 target/
+**/*.rs.bk
+Cargo.lock
 
-docs/handoff.md
-docs/book/
+# Scratch artifacts — never committed (AGENTS.md)
 temporary/
+
+# Graphify knowledge graph output
 graphify-out/
+
+# mdBook build output and obsolete handoff
+docs/book/
+docs/handoff.md

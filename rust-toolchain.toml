@@ -1,0 +1,8 @@
+# Pin the exact Rust toolchain for reproducible builds (PRD §3.6).
+# A clean clone compiles with exactly 1.85, edition 2024, regardless of the
+# contributor's installed Rust. Upgrading the channel is an explicit, reviewable change.
+
+[toolchain]
+channel = "1.85"
+components = ["rustfmt", "clippy"]
+profile = "minimal"
