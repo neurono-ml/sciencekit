@@ -14,16 +14,15 @@ a single, reviewed plan rather than re-deriving structure per PR.
 
 ## What Changes
 
-- **Wave structure**: decompose PRD §12's seven phases into ~35 algorithm changes + ~12
-  accelerator waves + ~8 doc waves (≈55 changes total), organized so that dependencies
+- **Wave structure**: decompose PRD §12's seven phases into ~40 algorithm changes + ~11
+  accelerator waves + ~8 doc waves (≈60 changes total), organized so that dependencies
   are respected naturally and no throwaway/placeholder implementations are needed.
-- **Spike decisions locked** (5 research-driven choices, with the evidence summarized in
-  `design.md`):
-  1. **Pure-Rust BLAS default**: `oxiblas 0.2.2` vs `faer 0.24.4` — deferred to a
-     head-to-head spike benchmark (8 micro-benchmarks, GEMM/SVD/QR/Cholesky/eigh/solve)
-     under `temporary/2026-08-26/blas-spike/` **before W2.1** (LinearRegression needs
-     SVD). `matrixmultiply` is too narrow (GEMM-only); `ndarray-linalg`+`blas-src`
-     remains the opt-in `blas-backend` path.
+- **Spike decisions locked** (six decisions — five research-driven choices plus the
+  KNNImputer placement — with the evidence summarized in `design.md`):
+   1. **Pure-Rust BLAS default**: **`faer 0.24.4` locked** (spike 2026-08-31 under
+      `temporary/2026-08-31/blas-spike/`: `oxiblas 0.2.2` fails to compile on MSRV 1.85,
+      `faer` builds and passes GEMM correctness). `matrixmultiply` is too narrow
+      (GEMM-only); `ndarray-linalg`+`blas-src` remains the opt-in `blas-backend` path.
   2. **GPU backend order**: **OpenCL 3.0 first (ICD-agnostic / vendor-transparent) → Metal
      after OpenCL; CUDA and ROCm only on request.** Focus is **CPU + OpenCL**. The OpenCL
      backend uses `opencl3` + the OpenCL ICD loader, transparently using whatever OpenCL
@@ -37,11 +36,10 @@ a single, reviewed plan rather than re-deriving structure per PR.
   3. **Online quantile sketch for `SKRobustScaler`**: `tdigest 1.0.0` (Apache-2.0, mature,
     serde). Enables `partial_fit` for RobustScaler — a capability scikit-learn lacks
     (`np.nanpercentile` requires the full column).
-  4. **Pure-Rust sparse SVD for `SKTruncatedSVD`**: depends on the BLAS spike outcome —
-     `faer-sparse` + `rsvd-faer` if `faer` wins, `oxiblas-sparse::RandomizedSvd` + a
-     `sprs`↔`oxiblas-sparse` CSR adapter if `oxiblas` wins. `single-svdlib` (sprs-native
-     IRLBA, the gold standard) is attractive but MSRV 1.88 > our 1.85 blocks it unless
-     we bump MSRV. `arpack-sys` as opt-in `arpack-backend` for sklearn-exact parity.
+4. **Pure-Rust sparse SVD for `SKTruncatedSVD`**: **`faer-sparse` + `rsvd-faer`**
+     (Decision 1 resolved to `faer`). `single-svdlib` (sprs-native IRLBA, the gold
+     standard) is attractive but MSRV 1.88 > our 1.85 blocks it unless we bump MSRV.
+     `arpack-sys` as opt-in `arpack-backend` for sklearn-exact parity.
   5. **Nested rayon thread management**: rayon owns all parallelism (global pool,
      configurable via `ThreadPoolBuilder`); BLAS runs single-threaded inside rayon scopes
      (`MATMUL_NUM_THREADS=1` for `matrixmultiply`; disable `parallel` feature on
@@ -75,20 +73,19 @@ None — this is the first change in the repository; no prior specs exist.
 
 ## Impact
 
-- **Planning artifacts**: `design.md` (5 spike decisions in detail + academic anchors +
+- **Planning artifacts**: `design.md` (six decisions in detail + academic anchors +
   Rust ecosystem lessons) and `tasks.md` (W0–W7 wave breakdown with dependencies,
   anchors, and Rust improvements per change) become the canonical reference for all
   downstream changes.
 - **Downstream changes unblocked**: W0.1 (`bootstrap-workspace`), W0.2
-  (`common-core-foundation`), W0.3 (`math-kernel-foundation` — carrying the BLAS spike
-  sub-task), W0.4 (`execution-decision-and-observability`) can now be proposed against a
-  shared plan.
+  (`common-core-foundation`), W0.3 (`math-kernel-foundation`), W0.4
+  (`execution-decision-and-observability`) can now be proposed against a shared plan.
 - **Dependencies pinned** (reconciled in `design.md`): `ndarray ≥0.17`, `thiserror ^2`,
   `sprs` (pins `ndarray <0.18`), `ndarray-linalg 0.18` (needs `ndarray ^0.17.1` +
   `thiserror ^2`), `wide 1.6`, `memmap2 0.9.11`, `tikv-jemallocator 0.5`, `mimalloc 0.1`,
-  `approx 0.5.1`, `tracing-opentelemetry 0.33`, `cudarc 0.19`, `ocl`/`opencl3`,
-  `cubecl-hip-sys`, `tdigest 1.0.0`, and the BLAS-default candidate (`oxiblas 0.2.2` or
-  `faer 0.24.4`, pending spike).
+  `approx 0.5.1`, `tracing-opentelemetry 0.33`, `cudarc 0.19`, `opencl3`,
+  `cubecl-hip-sys`, `tdigest 1.0.0`, and the BLAS-default (`faer 0.24.4`, locked by
+  Decision 1; `oxiblas 0.2.2` disqualified on MSRV 1.85).
 - **No code, no runtime change**: this change touches only `openspec/changes/wave-plan-foundation/`
   artifacts. Implementation of W0.1 onward happens in separate changes on their own
   worktree branches, per the AGENTS.md workflow.

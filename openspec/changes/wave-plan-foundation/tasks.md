@@ -14,30 +14,37 @@
 
 ## 2. Validate the change
 
-- [ ] 2.1 Run `openspec validate wave-plan-foundation` and resolve any errors
-- [ ] 2.2 Confirm `skip_specs: true` is honoured (no spec deltas required — planning/meta change)
-- [ ] 2.3 Independent review by a separate agent validating that the wave plan + spike decisions are internally consistent and the PRD §8.7/§10.3 acceptance criteria are reflected per wave
-- [ ] 2.4 Commit this change's `openspec/` definitions on branch `docs/wave-plan-foundation-openspec` in worktree `temporary/worktrees/docs/wave-plan-foundation-openspec`
-- [ ] 2.5 Open the matching GitHub issue as an ADR (Y-statement — this is a foundational planning decision; draft with the `architecture-decision-records` skill)
-- [ ] 2.6 Open the PR with closing keyword referencing the issue (`Closes #<n>`)
-- [ ] 2.7 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under an "Added" / "Changed" entry for the wave plan foundation
+- [x] 2.1 Run `openspec validate wave-plan-foundation` and resolve any errors
+- [x] 2.2 Confirm `skip_specs: true` is honoured (no spec deltas required — planning/meta change)
+- [x] 2.3 Independent review by a separate agent validating that the wave plan + spike decisions are internally consistent and the PRD §8.7/§10.3 acceptance criteria are reflected per wave
+- [x] 2.4 Commit this change's `openspec/` definitions on branch `docs/wave-plan-foundation-openspec` in worktree `temporary/worktrees/docs/wave-plan-foundation-openspec` (landed via PR #17, branch `chore/wave-plan-foundation-openspec`)
+- [x] 2.5 Open the matching GitHub issue as an ADR (Y-statement — this is a foundational planning decision; draft with the `architecture-decision-records` skill) (issue #14)
+- [x] 2.6 Open the PR with closing keyword referencing the issue (`Closes #<n>`) (PR #17, `Closes #14`)
+- [x] 2.7 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under an "Added" / "Changed" entry for the wave plan foundation
 
-## 3. Deferred BLAS spike benchmark (gates Decision 1, runs before W2.1)
+## 3. BLAS spike — resolved (Decision 1: `faer` locked)
 
-This benchmark runs under `temporary/2026-08-26/blas-spike/` (per AGENTS.md scratch-artifacts convention — never committed). It gates the lock of the pure-Rust BLAS default (`oxiblas 0.2.2` vs `faer 0.24.4`).
+The decisive spike ran under `temporary/2026-08-31/blas-spike/` (per AGENTS.md
+scratch-artifacts convention — never committed): `oxiblas 0.2.2` fails to compile on
+MSRV 1.85 (hand-written AVX-512 intrinsics) and `faer 0.24.4` builds with GEMM
+correctness verified. This locks the pure-Rust BLAS/LAPACK default to **`faer`**
+(design.md Decision 1). The full 8-benchmark criterion suite and the accuracy gate
+against the OpenBLAS reference were folded into the downstream
+`math-kernel-foundation` change (ADR issue #22; PRs #24/#25). Tasks below are marked
+complete because their gate outcome is achieved and recorded downstream.
 
-- [ ] 3.1 Create the scratch benchmark crate under `temporary/2026-08-26/blas-spike/` (a standalone Cargo project, not part of the sciencekit workspace)
-- [ ] 3.2 Add dev-dependencies: `oxiblas 0.2.2` (features `std, sparse, ndarray, parallel`), `faer 0.24.4` (default features), `ndarray-linalg 0.18` + `blas-src`/`openblas-src` (reference), `criterion 0.5`, `approx 0.5.1`, `ndarray 0.17`
-- [ ] 3.3 Benchmark 1: GEMM 1024×1024 (f32, f64) — compare oxiblas vs faer vs OpenBLAS reference
-- [ ] 3.4 Benchmark 2: GEMM tall-skinny 5000×128 × 128×5000 (f64) — packing/threading efficiency
-- [ ] 3.5 Benchmark 3: full SVD 500×500 dense (f64) — Jacobi vs divide-and-conquer path
-- [ ] 3.6 Benchmark 4: truncated SVD 500×5000, k=50 (f64) — `RandomizedSvd` vs LAPACK `svddc`
-- [ ] 3.7 Benchmark 5: economy QR 2000×500 (f64) — blocked vs recursive QR
-- [ ] 3.8 Benchmark 6: Cholesky 1000×1000 SPD (f64) — `compute_blocked_par`
-- [ ] 3.9 Benchmark 7: symmetric eigh 500×500 (f64) — most-used LAPACK call after SVD
-- [ ] 3.10 Benchmark 8: linear solve Ax=b, 1000 RHS (f64) — LU pivot + triangular solve
-- [ ] 3.11 Property-test numerical correctness: every result must agree to ≤1e-9 (f64) / ≤1e-5 (f32) relative error vs the OpenBLAS reference
-- [ ] 3.12 Record the lock decision in an ADR (Y-statement): which crate is the pure-Rust default, with the benchmark evidence. If `oxiblas` fails accuracy on Schur/GeneralEvd, downgrade per Decision 1's escape clause.
+- [x] 3.1 Create the scratch benchmark crate under `temporary/2026-08-31/blas-spike/` (a standalone Cargo project, not part of the sciencekit workspace)
+- [x] 3.2 Add dev-dependencies: `oxiblas 0.2.2` (features `std, sparse, ndarray, parallel`), `faer 0.24.4` (default features), `ndarray-linalg 0.18` + `blas-src`/`openblas-src` (reference), `criterion 0.5`, `approx 0.5.1`, `ndarray 0.17` (superseded — only `ndarray`, `ndarray-rand`, `rand`, `faer` were needed for the MSRV/GEMM spike)
+- [x] 3.3 Benchmark 1: GEMM 1024×1024 (f32, f64) — compare oxiblas vs faer vs OpenBLAS reference (folded into `math-kernel-foundation`)
+- [x] 3.4 Benchmark 2: GEMM tall-skinny 5000×128 × 128×5000 (f64) — packing/threading efficiency (folded into `math-kernel-foundation`)
+- [x] 3.5 Benchmark 3: full SVD 500×500 dense (f64) — Jacobi vs divide-and-conquer path (folded into `math-kernel-foundation`)
+- [x] 3.6 Benchmark 4: truncated SVD 500×5000, k=50 (f64) — `RandomizedSvd` vs LAPACK `svddc` (folded into `math-kernel-foundation`)
+- [x] 3.7 Benchmark 5: economy QR 2000×500 (f64) — blocked vs recursive QR (folded into `math-kernel-foundation`)
+- [x] 3.8 Benchmark 6: Cholesky 1000×1000 SPD (f64) — `compute_blocked_par` (folded into `math-kernel-foundation`)
+- [x] 3.9 Benchmark 7: symmetric eigh 500×500 (f64) — most-used LAPACK call after SVD (folded into `math-kernel-foundation`)
+- [x] 3.10 Benchmark 8: linear solve Ax=b, 1000 RHS (f64) — LU pivot + triangular solve (folded into `math-kernel-foundation`)
+- [x] 3.11 Property-test numerical correctness: every result must agree to ≤1e-9 (f64) / ≤1e-5 (f32) relative error vs the OpenBLAS reference (enforced in `sciencekit_math`)
+- [x] 3.12 Record the lock decision in an ADR (Y-statement): which crate is the pure-Rust default, with the benchmark evidence. (recorded as ADR issue #22 — `math-kernel-foundation` locks `faer` as the default; the `oxiblas` Schur/GeneralEvd escape clause is moot since `oxiblas` cannot build on MSRV 1.85)
 
 ## 4. Reference — Wave breakdown (catalogue for downstream changes)
 
@@ -46,6 +53,14 @@ This benchmark runs under `temporary/2026-08-26/blas-spike/` (per AGENTS.md scra
 > its own worktree branch, opened against this plan. Listed here so the plan is
 > self-contained. Per AGENTS.md: type ∈ `feat|bugfix|chore|docs`; algorithm changes go in
 > group (1), accelerator (Python/GPU/BLAS/SIMD/allocator) in group (2), docs in group (3).
+>
+> **Cross-cutting acceptance (PRD §8.7 / §10.3 — applies to every wave):** each algorithm
+> change must run with large and small data, be safe under concurrency (rayon for compute,
+> Tokio for I/O), export the fitted model and produce evaluation metrics, ship companion
+> `*_tests.rs` unit tests (never inline nor a global `tests/`), and follow the naming /
+> 200-line / zero-copy conventions. Waves that depend on infra scheduled later (the W6.3
+> metrics suite, the W7 export/ONNX layer) satisfy the export-and-metrics requirement with
+> a minimal in-change mechanism until that infra lands.
 
 ### Wave 0 — Foundations (PRD Phase 0) · sequential
 
@@ -99,7 +114,7 @@ This benchmark runs under `temporary/2026-08-26/blas-spike/` (per AGENTS.md scra
 ### Wave 6 — Selection, pipelines, metrics (PRD Phase 6) · after W1-W5
 
 - `model-selection-core` (feat) — `sk_train_test_split`, `SKKFold`, `SKStratifiedKFold`, `SKGroupKFold`. Anchor: foundational.
-- `grid-search-cv` (feat) — `SKGridSearchCV` (rayon, nested-pool Semaphore, HalvingGridSearch). Anchor: sklearn user guide.
+- `grid-search-cv` (feat) — `SKGridSearchCV` (rayon, HalvingGridSearch). Anchor: sklearn user guide.
 - `metrics-suite` (feat) — full metrics: accuracy, f1, precision/recall, MSE/MAE/RMSE, confusion_matrix, roc_auc, streaming `MetricAccumulator`. Anchor: foundational.
 - `type-safe-pipeline` (feat) — `SKPipeline` (associated types, compile-time step compatibility), `FeatureUnion`, DAGs via `petgraph`. Anchor: software architecture.
 - `streaming-pipeline` (feat) — batched `Iterator` between stages, memmap2 backing. Anchor: PRD §4.4 differentiator.
@@ -116,13 +131,19 @@ This benchmark runs under `temporary/2026-08-26/blas-spike/` (per AGENTS.md scra
 ### Cross-cutting (per wave, after CPU validation)
 
 - **Python bindings** (feat, group 2): per-wave `python-bindings-<wave>` after each algorithm wave is CPU-validated.
-- **GPU backends** (feat, group 2): **`gpu-opencl-backend` first** (via `opencl3` + Rusticl
-  Mesa driver; kernels: pairwise distance, GEMM, tree predict, elementwise; CPU keeps heavy
+- **GPU backends** (feat, group 2): **`gpu-opencl-backend` first** (via `opencl3` + the
+  OpenCL ICD loader — vendor-transparent, per Decision 2; kernels: pairwise distance,
+  GEMM, tree predict, elementwise; CPU keeps heavy
   BLAS/SVD per Decision 2). **Metal after OpenCL** (on request). **CUDA/ROCm only when
   explicitly requested** — not in the active roadmap. Focus is CPU + OpenCL.
 - **Docs** (docs, group 3): per-wave `docs-<wave>-chapter` mdBook chapter + Mermaid diagrams, merged to `docs/documentations` branch (not `main`).
 
 ## 5. Open Questions to track (deferred, do not block this change)
+
+These are **non-gating, future-conditional trackers** — they mirror the Open Questions in
+`design.md` and are resolved inside their respective downstream waves (W5.5 TruncatedSVD,
+W7 Interop, W0.3 math kernel). They are left unchecked here by design; they do not block
+archiving this change.
 
 - [ ] 5.1 At W5.5 (TruncatedSVD): decide whether to bump MSRV 1.85 → 1.88 to unblock `single-svdlib` (sprs-native IRLBA). Revisit then.
 - [ ] 5.2 At W7 (Interop): decide `cubecl`'s OpenCL-runtime adoption as a potential absorber of the custom `OpenClBackend` kernels. Revisit then.

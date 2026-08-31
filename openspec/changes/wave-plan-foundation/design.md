@@ -18,10 +18,11 @@ three things undecided that every downstream change depends on:
 A prior research stream (three parallel subagents: scikit-learn internals, academic
 references + Rust ecosystem, Rust numerical foundations) produced the evidence base
 summarised in this document. Two follow-up spike subagents (BLAS path, GPU backends) plus
-targeted crate searches resolved the five decisions below. The decisions are
+targeted crate searches resolved the six decisions below. The decisions are
 **research-locked** where the evidence is conclusive (spikes 2, 3, 5) and
-**spike-gated** where a head-to-head benchmark must run first (spikes 1, 4 — the latter is
-a downstream consequence of the former).
+**spike-resolved** where a spike had to run first (spikes 1, 4 — the latter a downstream
+consequence of the former). Spike 1 ran at `temporary/2026-08-31/blas-spike/` and resolved
+to **`faer`** (`oxiblas` fails to compile on MSRV 1.85); spike 4 follows it.
 
 See `proposal.md` — Why for the motivation.
 
@@ -43,16 +44,20 @@ See `proposal.md` — Why for the motivation.
   `openspec/changes/wave-plan-foundation/` artifacts.
 - Replace the PRD. The PRD remains the product source of truth; this design is a
   planning/architectural layer beneath it.
-- Lock the BLAS default crate (spike 1) or the sparse-SVD crate (spike 4, which depends on
-  1). Both are spike-gated and defer to the benchmark under
-  `temporary/2026-08-26/blas-spike/`.
+- Run the full 8-benchmark criterion suite for the BLAS default (spike 1) or the
+  sparse-SVD crate (spike 4, which depends on 1) as an output of *this* change — that suite
+  moved to the downstream `math-kernel-foundation` change. This change only ran the decisive
+  spike at `temporary/2026-08-31/blas-spike/` that disqualified `oxiblas` on MSRV 1.85 and
+  locked `faer`.
 
 ## Decisions
 
 ### Decision 1 — Pure-Rust BLAS/LAPACK default: `faer` (resolved by spike — `oxiblas` fails MSRV)
 
 **Rationale.** The default build must be pure-Rust (PRD §6.2). Two candidates were
-evaluated head-to-head under `temporary/2026-08-31/blas-spike/`:
+checked for MSRV-1.85 viability under `temporary/2026-08-31/blas-spike/` (an `oxiblas`
+compile check against Rust 1.85 plus a `faer` build-and-GEMM smoke test — not a full
+head-to-head benchmark, which moved downstream):
 
 | Crate | License | MSRV (declared) | MSRV (actual) | Compiles on Rust 1.85? |
 |---|---|---|---|---|
@@ -74,14 +79,16 @@ companion.
 `oxiblas` dep) — candidate for small fixed-size ops (2×2/3×3 covariance in PCA) where GEMM
 overhead dominates, not a general default. `realfft`/`rustfft` — adjacent (FFT), not BLAS.
 
-**Decision.** **Defer lock to the spike benchmark.** Run 8 micro-benchmarks
-(GEMM 1024² / 5000×128; full SVD 500²; truncated SVD 500×5000 k=50; economy QR 2000×500;
-Cholesky 1000²; symmetric eigh 500²; linear solve 1000²×1000 RHS) comparing `oxiblas` vs
-`faer` vs `ndarray-linalg`+OpenBLAS (reference). **Lock criterion**: the winner must reach
-≥60% of OpenBLAS throughput on every bench (≥80% on GEMM/Cholesky/QR) AND match the
-reference to ≤1e-9 (f64) / ≤1e-5 (f32) relative error. If `oxiblas` fails accuracy on
-Schur/GeneralEvd (the historically buggy LAPACK ops), downgrade it to GEMM+Cholesky-only
-default and route the rest through `blas-backend` even when the feature is off.
+**Decision.** **`faer 0.24.4` is the pure-Rust BLAS/LAPACK default** (locked by the
+2026-08-31 spike — `oxiblas` is disqualified because it does not compile on MSRV 1.85).
+The escape clause below is moot for `oxiblas` (it cannot build), so no downgrade path is
+needed; the accuracy gate is enforced in `sciencekit_math` against the
+`ndarray-linalg`+OpenBLAS reference. The original benchmark plan (8 micro-benchmarks:
+GEMM 1024² / 5000×128; full SVD 500²; truncated SVD 500×5000 k=50; economy QR 2000×500;
+Cholesky 1000²; symmetric eigh 500²; linear solve 1000²×1000 RHS) and its lock criterion
+(≥60% of OpenBLAS throughput on every bench, ≥80% on GEMM/Cholesky/QR, ≤1e-9 f64 /
+≤1e-5 f32 relative error) moved to the downstream `math-kernel-foundation` change as a
+validation gate.
 
 ### Decision 2 — GPU backend order: OpenCL 3.0 first, ICD-agnostic (vendor-transparent) → Metal; CUDA/ROCm only on request (operator-locked)
 
@@ -178,7 +185,7 @@ serde-serializable, MSRV 1.62 (well below our 1.85).
 **Decision.** **`tdigest 1.0.0`** as the default. Document KLL as a future swap if memory
 becomes tight at very high feature counts.
 
-### Decision 4 — Pure-Rust sparse SVD for `SKTruncatedSVD`: depends on Decision 1 (spike-gated)
+### Decision 4 — Pure-Rust sparse SVD for `SKTruncatedSVD`: `faer-sparse` + `rsvd-faer` (resolved via Decision 1)
 
 **Rationale.** `SKTruncatedSVD` (LSA on TF-IDF) must not densify the input. ARPACK (what
 scikit-learn wraps via `scipy.sparse.linalg.svds`) is opaque C/Fortran — against the
@@ -291,7 +298,7 @@ DOIs/proceedings below instead.
 3. arXiv `1706.05114` (LightGBM) → wrong paper; **no arXiv version exists**. Use NeurIPS 2017 proceedings PDF.
 4. Bagging DOI corrected: `10.1007/BF00058655` (not `10.1023/A:1007551413461`).
 5. KD-tree DOI corrected: `10.1145/361002.361007` (not `10.1145/356786.356787`).
-6. Crate owners corrected: smartcore → `smartcorelib`; burn → `tracel-ai`; cudarc → `chelsea0x3b`; rustlearn → `maciejkula`; sprs → `sparsemat`; faer → `sarah-quinnes` (codeberg) / `sarah-ek` (github mirror).
+6. Crate owners corrected: smartcore → `smartcorelib`; burn → `tracel-ai`; cudarc → `chelsea0x3b`; rustlearn → `maciejkula`; sprs → `sparsemat`; faer → `sarah-ek` (GitHub mirror of `faer-rs`).
 
 ## Rust ecosystem lessons (what to steal, what to avoid)
 
@@ -315,15 +322,15 @@ W0.1's `Cargo.toml` must resolve these interdependencies from day one:
 - `wide 1.6`, `matrixmultiply 0.3.11`, `memmap2 0.9.11`, `tikv-jemallocator 0.5`,
   `mimalloc 0.1`, `approx 0.5.1`, `tracing-opentelemetry 0.33`, `cudarc 0.19`,
   `opencl3`, `cubecl-hip-sys`, `tdigest 1.0.0`
-- BLAS-default candidate: `oxiblas 0.2.2` OR `faer 0.24.4` (pending Decision 1 spike)
-- Build flags: `-C target-cpu=native` (unlocks safe `std::arch` intrinsics since Rust 1.87)
+- BLAS-default: `faer 0.24.4` (locked, Decision 1); `oxiblas 0.2.2` disqualified (fails MSRV 1.85)
+- Build flags: `-C target-cpu=native` (enables target-specific `std::arch` intrinsics and auto-vectorization)
 
 ## Risks / Trade-offs
 
-- **[`oxiblas` is numerically buggy]** (0.2.x, 8 months old, 3K downloads, no third-party audit, 116 KB TODO.md) → Mitigation: (1) pin a specific commit, not a floating `^0.2`; (2) ship property tests vs `ndarray-linalg`+OpenBLAS reference as a CI gate — fail build on rel. error > 1e-9; (3) for Schur/GeneralEvd, prefer the `blas-backend` path until proven.
+- **[`oxiblas` does not compile on MSRV 1.85]** (0.2.x, hand-written AVX-512 intrinsics, 191 build errors) → Resolved: `oxiblas` is disqualified and `faer` is the default. Its accuracy escape clause (Schur/GeneralEvd) is moot since it cannot build; the accuracy gate vs `ndarray-linalg`+OpenBLAS runs in `sciencekit_math`.
 - **[`faer` may not match toolchain]** (MSRV 1.84, edition unverified) → Mitigation: verify edition in the spike; if edition <2024, either accept the mismatch (edition is per-crate, not workspace) or contribute upstream.
 - **[`oxiblas`/`faer` does not interop with `sprs`]** (PRD §3 mandates `sprs`) → Mitigation: build a thin `sciencekit_sparse_blas` adapter (CSR↔CSR, zero-copy feasible). Verify layout equivalence in the spike.
-- **[Single-maintainer bus factor on `oxiblas`]** (KitaSan / COOLJAPAN OU, one publisher) → Mitigation: keep the adapter layer thin so `oxiblas` is swappable; mirror the pinned commit in sciencekit's git history (vendored fallback); track `matrixmultiply` as a permanent escape hatch.
+- **[Single-maintainer bus factor on `oxiblas`]** (KitaSan / `cool-japan`, one publisher) → Moot — `oxiblas` is disqualified on MSRV; `faer` is the default. (Kept to record why the adapter-stays-thin principle applies to any future BLAS swap.)
 - **[OpenCL lacks cuBLAS/cuSOLVER equivalents]** (SVD/QR/eigen not available on the OpenCL backend) → Mitigation: **accepted design** — heavy linear algebra stays on the CPU backend (pure-Rust BLAS, Decision 1); the OpenCL backend covers GPU-tractable kernels (pairwise distance, GEMM, tree predict, elementwise) written in OpenCL C / SPIR-V. `Automatic` routing delegates anything not implemented on OpenCL to CPU. This is consistent with the focus on CPU + OpenCL.
 - **[Writing and validating OpenCL kernels is non-trivial]** (GEMM, distance, reduction kernels need care to avoid numerical drift vs CPU) → Mitigation: TDD with CPU reference outputs as the oracle (per PRD §8.7 acceptance); start with the simplest kernels (elementwise, pairwise distance) and evolve; reuse `Rusticl`'s SPIR-V path (via `libclc`) rather than hand-rolled OpenCL C where possible.
 - **[Rusticl not available / NVIDIA-users on the official driver]** (Rusticl runs on NVIDIA only via nouveau, which conflicts with the official NVIDIA driver) → Mitigation: the backend is **ICD-agnostic** — it uses `opencl3` + the OpenCL ICD loader, so it transparently uses NVIDIA's `opencl-nvidia` ICD, AMD/Intel/Rusticl, or any registered ICD; Rusticl is never required. Document the required environment in `sciencekit_gpu`; the `gpu-opencl` feature degrades gracefully to CPU when no OpenCL device is present; CI uses a CPU-only fallback.
