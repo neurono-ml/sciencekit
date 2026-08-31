@@ -49,24 +49,26 @@ See `proposal.md` — Why for the motivation.
 
 ## Decisions
 
-### Decision 1 — Pure-Rust BLAS/LAPACK default: `oxiblas` vs `faer` (spike-gated)
+### Decision 1 — Pure-Rust BLAS/LAPACK default: `faer` (resolved by spike — `oxiblas` fails MSRV)
 
-**Rationale.** The default build must be pure-Rust (PRD §6.2). Three candidates:
+**Rationale.** The default build must be pure-Rust (PRD §6.2). Two candidates were
+evaluated head-to-head under `temporary/2026-08-31/blas-spike/`:
 
-| Crate | License | MSRV | Edition | Sparse | Maturity | Companion rSVD |
-|---|---|---|---|---|---|---|
-| `oxiblas 0.2.2` | Apache-2.0 | **1.85 (exact)** | **2024 (exact)** | own 9 formats | young (8 mo, 3K dl, 116 KB TODO) | `oxiblas::RandomizedSvd` (in prelude) |
-| `faer 0.24.4` | MIT | 1.84 | (verify) | `sparse-linalg` feature | mature (0.24.x) | `rsvd-faer 0.1.0` |
-| `matrixmultiply 0.3.11` | MIT/Apache | 1.75 | 2018 | ❌ | mature (132M dl) | ❌ GEMM only — too narrow |
+| Crate | License | MSRV (declared) | MSRV (actual) | Compiles on Rust 1.85? |
+|---|---|---|---|---|
+| `oxiblas 0.2.2` | Apache-2.0 | 1.85 | **>1.85 in practice** | ❌ **fails** (191 errors: AVX-512 `_mm512_loadu_si512`/`_mm512_storeu_si512` incompatible with Rust 1.85's stdarch) |
+| `faer 0.24.4` | MIT | 1.84 | 1.84 | ✅ builds + GEMM correctness verified |
 
-`matrixmultiply` is ruled out (GEMM-only forces hand-rolled LAPACK). `ndarray-linalg 0.18`
-is the opt-in `blas-backend` path (FFI to OpenBLAS/BLIS/MKL/Accelerate via `blas-src
-0.14`), not the default.
+**Spike verdict (2026-08-31):** `oxiblas` is **disqualified** — despite declaring MSRV
+1.85, it does not compile on Rust 1.85 (its hand-written AVX-512 intrinsics rely on a
+newer stdarch). Choosing it would violate the project's MSRV gate. `faer` is the **only
+viable pure-Rust candidate** meeting MSRV 1.85, and it provides the full LAPACK surface
+(QR, Cholesky, LU, SVD, eig, solve) plus a `sparse-linalg` feature and the `rsvd-faer`
+companion.
 
-`oxiblas` and `faer` are both viable; neither dominates. `oxiblas` wins on exact
-toolchain match (Rust 1.85 / edition 2024) and Apache-2.0-only license. `faer` wins on
-maturity (0.24.x vs 0.2.x), broader adoption, dedicated `sparse-linalg` feature, and the
-`rsvd-faer` companion. Both have rayon.
+`matrixmultiply 0.3.11` remains the fallback GEMM kernel (used by `ndarray`'s `dot` when
+`blas` is off) and `ndarray-linalg 0.18` + `blas-src` is the opt-in `blas-backend` path
+(FFI to OpenBLAS/BLIS/MKL/Accelerate), not the default.
 
 **Alternatives considered.** `nalgebra` (small-matrix dense LA, already an optional
 `oxiblas` dep) — candidate for small fixed-size ops (2×2/3×3 covariance in PCA) where GEMM
@@ -184,16 +186,14 @@ PRD default-build pure-Rust requirement.
 
 | Option | Algorithm | sprs-native? | MSRV | Verdict |
 |---|---|---|---|---|
+| `faer-sparse 0.17.1` + `rsvd-faer 0.1.0` | sparse SVD/eig + randomized | via faer sparse | 1.84 | **✅ chosen (Decision 1 → faer)** |
 | `single-svdlib 2.0.0` | IRLBA (R's irlba gold standard) + randomized | ✅ built for sprs | **1.88 ❌ (blocks)** | Attractive but MSRV-blocked |
-| `faer-sparse 0.17.1` + `rsvd-faer 0.1.0` | sparse SVD/eig + randomized | via faer sparse | 1.84 | **Cleanest if `faer` wins Decision 1** |
-| `oxiblas-sparse::RandomizedSvd` | randomized + Lanczos + IRAM | own formats (adapter needed) | 1.85 | **Cleanest if `oxiblas` wins Decision 1** |
+| `oxiblas-sparse::RandomizedSvd` | randomized + Lanczos + IRAM | own formats (adapter needed) | 1.85 | moot — `oxiblas` fails MSRV |
 | Hand-rolled Lanczos | simple recurrence (~80 LOC) | ✅ direct on sprs | n/a | Fallback / educational |
 | `arpack-sys 0.0.2` | ARPACK-NG (FFI, matches sklearn) | via scipy-style | n/a | Opt-in `arpack-backend` only |
 
-**Decision.** **Branch on Decision 1's outcome.** If `faer` wins → `faer-sparse` +
-`rsvd-faer`. If `oxiblas` wins → `oxiblas-sparse::RandomizedSvd` + a
-`sciencekit_sparse_blas` adapter (CSR↔CSR, zero-copy feasible — both are CSR-based).
-Hand-rolled Lanczos as the fallback (the recurrence is simple, ~80 LOC, well-specified).
+**Decision.** **`faer-sparse` + `rsvd-faer`** (Decision 1 resolved to `faer`). Hand-rolled
+Lanczos as the fallback (the recurrence is simple, ~80 LOC, well-specified).
 `single-svdlib` is the gold-standard algorithm (IRLBA) but MSRV 1.88 > 1.85 blocks it;
 revisit if MSRV is bumped (see Open Questions). `arpack-sys` as opt-in
 `arpack-backend` feature for sklearn-exact parity (research/forensics use case).
