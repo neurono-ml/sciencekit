@@ -17,4 +17,4 @@ repository = "https://github.com/neurono-ml/sciencekit"
 
 [workspace]
 resolver = "3"
-members = []
+members = ["crates/sciencekit_common"]
