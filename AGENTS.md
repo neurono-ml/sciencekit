@@ -16,17 +16,18 @@ Instructions for agents working in this repository. Product source of truth: `do
 
 ## Workflow (mandatory)
 
-- **No direct commits on `main`.** Every change is implemented in git worktrees:
+- **No direct commits on `main`.** Every change is implemented in **two coexisting git worktrees** that evolve in **parallel** and are merged into `main` via **separate PRs**:
   - Code: worktree `temporary/worktrees/<type>/<change-name>`, branch `<type>/<change-name>` (`type` ∈ `feat|bugfix|chore|docs`).
   - OpenSpec definitions: worktree `temporary/worktrees/<type>/<change-name>-openspec`, branch `<type>/<change-name>-openspec`. The change's `openspec/` files are committed on that associated branch.
   - `temporary/` is in `.gitignore` — worktrees are not versioned.
+- **Agile, parallel development:** the code branch and the openspec branch are developed side by side, each merged via its **own PR**, in **any order**. The code is **not** required to wait for the openspec planning PR to merge, and vice versa — merging the plan first is not a precondition for implementing. The openspec PR reviews/specifies the change; the code PR implements it; both reference the same ADR issue (below). This keeps planning and implementation moving in parallel rather than blocking on a sequential merge.
 - **Scratch artifacts:** all temporary files — experiments, validation screenshots, throwaway scripts, probes, scratch notes — are written under `temporary/YYYY-MM-DD` when generic, or `temporary/YYYY-MM-DD/<change-name>` when related to a change (`YYYY-MM-DD` = creation date). Never in tracked directories; nothing under `temporary/` is ever committed.
-- **Issue per branch (ADR):** whenever a branch is opened for a change, create a matching GitHub issue **in English**, written as an Architecture Decision Record:
+- **Issue per change (ADR):** when a change is opened, create a matching GitHub issue **in English**, written as an Architecture Decision Record:
   - Use the Y-statement template for simple decisions and the Nygard format for more complete ones (templates: https://adr.github.io/adr-templates/). Draft the issue text with the `architecture-decision-records` skill.
-  - Reference the corresponding issue(s) in the PR description using GitHub closing keywords (`Closes #<n>`, `Fixes #<n>`, `Resolves #<n>`) so issues are closed deterministically when the PR merges into `main`.
+  - Reference the corresponding issue(s) in the PR descriptions (both the code PR and the openspec PR) using GitHub closing keywords (`Closes #<n>`, `Fixes #<n>`, `Resolves #<n>`) so issues are closed deterministically when a PR merges into `main`.
 - **TDD mandatory:** every task uses the `tdd` skill — test first, confirm failure, minimal implementation, refactor.
-- **Independent review:** at the end of each change, an independent agent reviews the result validating that the spec was effectively met, before the PR.
-- **Post-merge:** when a PR is merged, the opencode agent on GitHub merges the corresponding `-openspec` branch into `main` and runs sync + archive of the change.
+- **Independent review:** at the end of each change, an independent agent reviews the result validating that the spec was effectively met, before the code PR.
+- **Post-merge:** when the change's PRs are merged, the opencode agent on GitHub runs sync + archive of the change (both branches already landed via their own PRs).
 - **Changelog:** every finished and merged change must update `CHANGELOG.md`, in English, following https://keepachangelog.com/en/1.1.0/. The snippet between releases in the changelog is used to describe the released version.
 
 ## Planning (OpenSpec)

@@ -20,13 +20,16 @@ context: |
   (ArrayView/CowArray/sprs views); a .rs file >200 lines becomes a standardized folder module
   (mod.rs, builder.rs, core_implementation.rs, *_tests.rs); tests in companion modules
   *_tests.rs beside the implementation (never inline nor global tests/).
-  Workflow: no commits on main; code in worktree temporary/worktrees/<type>/<change-name>
-  (branch <type>/<change-name>) and openspec definitions in temporary/worktrees/<type>/<change-name>-openspec
-  (branch <type>/<change-name>-openspec); opening a branch for a change also creates the matching GitHub
+  Workflow: no commits on main; every change has two coexisting worktrees — code in
+  temporary/worktrees/<type>/<change-name> (branch <type>/<change-name>) and openspec
+  definitions in temporary/worktrees/<type>/<change-name>-openspec (branch
+  <type>/<change-name>-openspec) — that evolve in parallel and are merged into main via
+  separate PRs in any order (agile: code does not wait for the openspec planning PR, and
+  vice versa); opening a change also creates the matching GitHub
   issue in English as an ADR (Y-statement for simple decisions, Nygard format otherwise — see
   https://adr.github.io/adr-templates/, draft with the architecture-decision-records skill), referenced in
   the PR and closed deterministically via closing keywords (Closes/Fixes/Resolves #n); TDD mandatory via
-  tdd skill; final review by an independent agent validating spec acceptance before the PR; merged changes
+  tdd skill; final review by an independent agent validating spec acceptance before the code PR; merged changes
   update CHANGELOG.md (English, keep-a-changelog 1.1.0).
   Scratch artifacts: every temporary file (experiments, validation screenshots, throwaway scripts,
   probes) goes to temporary/YYYY-MM-DD if generic or temporary/YYYY-MM-DD/<change-name> if related
@@ -49,12 +52,13 @@ operations:
     guidance:
       - Implement in git worktree temporary/worktrees/<type>/<change-name> on branch <type>/<change-name> (type ∈ feat|bugfix|chore|docs). Never commit to main.
       - Write every temporary artifact (experiments, validation screenshots, throwaway scripts, probes) under temporary/YYYY-MM-DD if generic, or temporary/YYYY-MM-DD/<change-name> if related to this change; never commit them.
-      - When opening the branch for a change, create the matching GitHub issue in English formatted as an ADR — Y-statement template for simple decisions, Nygard format for more complete ones (https://adr.github.io/adr-templates/); draft the text with the architecture-decision-records skill.
+      - When opening the change, create the matching GitHub issue in English formatted as an ADR — Y-statement template for simple decisions, Nygard format for more complete ones (https://adr.github.io/adr-templates/); draft the text with the architecture-decision-records skill.
       - Reference the corresponding issue(s) in the PR description with closing keywords (Closes/Fixes/Resolves #n) so GitHub closes them deterministically when the PR merges.
       - Commit this change's openspec/ definitions on branch <type>/<change-name>-openspec, in worktree temporary/worktrees/<type>/<change-name>-openspec.
+      - Develop the code branch and the openspec branch in parallel; each is merged into main via its own PR, in any order. Code does NOT wait for the openspec planning PR to merge (agile), and vice versa.
       - Use the tdd skill for each task.
-      - When all tasks are done, trigger review by an independent agent validating that the spec was effectively met before opening the PR.
+      - When all tasks are done, trigger review by an independent agent validating that the spec was effectively met before opening the code PR.
   archive:
     guidance:
-      - Code merge happens via PR; when the PR is merged, the opencode agent on GitHub merges the corresponding <type>/<change-name>-openspec branch and runs sync + archive of the change.
+      - Each change has two branches (code and openspec) merged into main via separate PRs, in any order. When the change's PRs are merged, the opencode agent on GitHub runs sync + archive of the change.
       - Every finished and merged change must update CHANGELOG.md, in English, following https://keepachangelog.com/en/1.1.0/. The snippet between releases in the changelog is used to describe the released version.
