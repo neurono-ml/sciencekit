@@ -6,7 +6,7 @@ The roadmap follows the scikit-learn mapping faithfully, respecting dependencies
   <div class="sk-card">
     <span class="sk-card__icon sk-icon--sky">📋</span>
     <div class="sk-card__title">OpenSpec-first</div>
-    <p>Every change starts with a specification (proposal, deltas, design, tasks) on a dedicated <code>-openspec</code> branch, reviewed before any code.</p>
+    <p>Every change is specified (proposal, deltas, design, tasks) on a dedicated <code>-openspec</code> branch, developed in <strong>parallel</strong> with its code branch and merged via a separate PR.</p>
   </div>
   <div class="sk-card">
     <span class="sk-card__icon sk-icon--violet">🔴</span>
