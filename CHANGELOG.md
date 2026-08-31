@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cargo workspace bootstrap (Phase 0.1): pinned Rust 1.85 toolchain, edition 2024, Apache-2.0 license, and CI gates (fmt, strict clippy, workspace tests + doctests, MSRV, examples).
 - `sciencekit_common` sub-crate (Phase 0.2): the shared contract vocabulary — sealed `SKFloat` scalar bound, central `SKError` taxonomy, data/target views, label canonicalization, fit/scorer/execution/streaming traits.
 - `sciencekit_math` sub-crate (Phase 0.3): higher-order `azip!`/`par_azip!` kernels, memory-layout helpers, zero-copy pairwise distances (Euclidean/Manhattan/Cosine) with a `wide` SIMD hot path, `sprs` CSR×dense and sparse×sparse products, and the `SKMathBackend` abstraction with `SKFaerBackend` (pure-Rust default) plus the opt-in `blas-backend` feature.
+- `wave-plan-foundation` (planning): wave decomposition of PRD phases 0–7 into downstream changes (W0–W7), six foundational technical decisions locked (pure-Rust BLAS default → `faer 0.24.4`; OpenCL 3.0 ICD-agnostic GPU arrival order; `tdigest` online quantile sketch for `SKRobustScaler`; `faer-sparse` + `rsvd-faer` sparse SVD; nested-rayon thread management; `SKKNNImputer` moved to Wave 3), an academic-anchor catalogue, and reconciled dependency pins.
 
 ### Changed
 
