@@ -28,6 +28,7 @@ Instructions for agents working in this repository. Product source of truth: `do
 - **TDD mandatory:** every task uses the `tdd` skill — test first, confirm failure, minimal implementation, refactor.
 - **Independent review:** at the end of each change, an independent agent reviews the result validating that the spec was effectively met, before the code PR.
 - **Post-merge:** when the change's PRs are merged, the opencode agent on GitHub runs sync + archive of the change (both branches already landed via their own PRs).
+- **Post-merge cleanup:** after a change's PRs are merged, remove its branches and worktree — delete the remote branch (merge with `--delete-branch` or `gh pr merge --delete-branch`), delete the local branch (`git branch -d <branch>`), and remove its worktree (`git worktree remove <path>`, then `git remote prune origin`). Branches whose PRs are still open (e.g. a draft) are kept. This keeps `temporary/worktrees/` and the branch list free of merged work.
 - **Changelog:** every finished and merged change must update `CHANGELOG.md`, in English, following https://keepachangelog.com/en/1.1.0/. The snippet between releases in the changelog is used to describe the released version.
 
 ## Planning (OpenSpec)
