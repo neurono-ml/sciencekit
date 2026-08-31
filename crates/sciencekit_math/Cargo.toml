@@ -1,0 +1,41 @@
+[package]
+name = "sciencekit_math"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+rust-version = "1.85"
+description = "Computational kernels and the BLAS/LAPACK interface for sciencekit: pairwise distances, dense/sparse products, higher-order operations and memory-layout helpers."
+repository = "https://github.com/neurono-ml/sciencekit"
+
+[dependencies]
+sciencekit_common = { path = "../sciencekit_common" }
+# Pure-Rust BLAS/LAPACK default (PRD §6.2, wave-plan-foundation Decision 1).
+faer = "0.24"
+# GEMM fallback kernel for the `MatrixMultiplyBackend`.
+matrixmultiply = "0.3"
+# SIMD hot paths (squared Euclidean dot kernel).
+wide = "0.7"
+# Dense kernels via `azip!`/`par_azip!` and the `zip_mut_with` API.
+ndarray = { version = "0.17", features = ["rayon"] }
+# Sparse CSR/CSC product kernels.
+sprs = "0.11"
+# Parallel iteration for `par_azip!`.
+rayon = "1"
+# Shared numeric bound (`SKFloat`).
+num-traits = "0.2"
+# Opt-in BLAS backend (off by default, see `blas-backend` feature).
+ndarray-linalg = { version = "0.18", optional = true }
+blas-src = { version = "0.14", optional = true }
+
+[features]
+default = []
+# Swap heavy dense algebra to `ndarray-linalg` over the configured `blas-src`
+# backend (OpenBLAS by default; BLIS/MKL/Accelerate are alternatives via the
+# ndarray-linalg features). Never enabled by default; the pure-Rust `faer` path
+# remains available as a fallback. See `backend::sk_default_math_backend`.
+blas-backend = [
+    "dep:ndarray-linalg",
+    "dep:blas-src",
+    "ndarray-linalg/openblas-system",
+    "blas-src/openblas",
+]
