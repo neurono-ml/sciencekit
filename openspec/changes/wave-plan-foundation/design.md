@@ -81,48 +81,66 @@ reference to ≤1e-9 (f64) / ≤1e-5 (f32) relative error. If `oxiblas` fails ac
 Schur/GeneralEvd (the historically buggy LAPACK ops), downgrade it to GEMM+Cholesky-only
 default and route the rest through `blas-backend` even when the feature is off.
 
-### Decision 2 — GPU backend order: OpenCL 3.0 first (via Rusticl) → Metal; CUDA/ROCm only on request (operator-locked)
+### Decision 2 — GPU backend order: OpenCL 3.0 first, ICD-agnostic (vendor-transparent) → Metal; CUDA/ROCm only on request (operator-locked)
 
-**Rationale.** The operator explicitly prefers **OpenCL 3.0 first**, trusting **Rusticl** to
-drive the backend, and wants to **focus on CPU + OpenCL** for the foreseeable future. CUDA
-and ROCm are postponed; **Metal** is added as the next backend *after* OpenCL; any
-implementation beyond OpenCL happens **only when requested**. This reverses the earlier
-CUDA-first recommendation.
+**Rationale.** The operator prefers **OpenCL 3.0 first** and wants a **CPU + OpenCL** focus,
+with an OpenCL implementation that **transparently tolerates NVIDIA, AMD, Intel, Ascend and
+other users** — i.e., it must work with whichever OpenCL driver the user has installed,
+without forcing a particular vendor stack. CUDA and ROCm are postponed; **Metal** follows
+*after* OpenCL; anything beyond OpenCL is implemented **only when requested**.
 
-The operator's instinct is well-grounded. **Rusticl** is Mesa's OpenCL implementation,
-written in Rust, on top of Gallium drivers. Verified facts:
-- **OpenCL 3.0 certified** (Khronos CTS passed, 2022; Khronos recognized it).
-- Merged into **Mesa 22.3**; a direct replacement for the dormant "Clover" OpenCL driver.
-- Runs on **RadeonSI (AMD), Iris (Intel), Freedreno (Qualcomm), Asahi (Apple), Zink, and
-  CPU via llvmpipe/softpipe** — a Rust-native driver stack spanning the hardware we care
-  about without CUDA's proprietary toolchain.
-- On AMD it has **outperformed ROCm's own OpenCL driver** (Phoronix benchmarks), and
-  RadeonSI+Rusticl was near **formal OpenCL 3.0 conformance for modern AMD GPUs** (2026,
-  Karol Herbst, Red Hat) — the first modern AMD conformance in a decade.
-- Supports SVM, SPIR-V 1.6, async/parallel program compilation, and a wide extension set.
-- Build deps: `rustc`, `bindgen`, LLVM with `libclc`, SPIRV-Tools — all open-source.
+**Why not Rusticl-on-NVIDIA (verified).** The operator's concern is confirmed: **Rusticl on
+NVIDIA runs exclusively through the Nouveau Gallium driver and cannot be used with the
+official NVIDIA driver.**
+- Rusticl is a Mesa OpenCL implementation over Gallium drivers; for NVIDIA the Gallium
+  driver is `nouveau`. Rusticl provides OpenCL 3.0 on NVIDIA **only via nouveau**.
+- The official NVIDIA driver **blacklists nouveau** — to run Rusticl on NVIDIA you must
+  remove `nvidia-utils`/`opencl-nvidia` (verified on Arch Linux forum). They cannot coexist.
+- Where Rusticl does run on NVIDIA (via nouveau), kernel latency is much higher and compute
+  performance is mixed vs the official NVIDIA OpenCL driver (Phoronix clpeak).
+- **Conclusion:** Rusticl is a good driver for **AMD / Intel / CPU** (open-source,
+  Khronos-certified OpenCL 3.0/3.1, often outperforms ROCm's OpenCL on AMD) but it is
+  **not** the driver for NVIDIA users, who normally use NVIDIA's own `opencl-nvidia` ICD.
 
-This neutralises the "companion-library gap" that motivated CUDA-first: because Rusticl
-provides OpenCL 3.0 on AMD/Intel/CPU and our focus is CPU+OpenCL, we do **not** need
-cuBLAS/cuSOLVER. The strategy is: heavy BLAS/SVD/eigen stays on the CPU backend (via the
-pure-Rust BLAS from Decision 1); OpenCL handles the GPU-tractable kernels — pairwise
-distance, GEMM, tree predict, elementwise — written in OpenCL C / SPIR-V, per the PRD's
-"no skipped steps" evolution.
+**Design: ICD-agnostic OpenCL backend (transparent).** `sciencekit`'s `OpenClBackend` uses
+**`opencl3` + the OpenCL ICD loader** (`libOpenCL.so`). The ICD loader discovers and
+dispatches to whichever vendor ICDs are registered on the system — it does **not** bundle
+or require Rusticl. This makes the backend **transparent to the user's hardware**:
 
-| Backend | Crate | Dynamic load | Companion libs | Cross-vendor | Rusticl-ready? |
+| User's platform | OpenCL ICD auto-discovered by the loader |
+|---|---|
+| NVIDIA + official driver | NVIDIA's own `opencl-nvidia` ICD |
+| NVIDIA + nouveau | Rusticl (via nouveau) |
+| AMD | Rusticl (`radeonsi`) or ROCm OpenCL ICD |
+| Intel | Intel Compute Runtime (`neo`) or Rusticl (`iris`) |
+| Ascend / other | the vendor's OpenCL ICD if present, else CPU fallback |
+
+The backend enumerates available platforms/devices (`clGetPlatformIDs`/`clGetDeviceIDs`)
+and transparently selects a usable device, preferring discrete GPUs and falling back to the
+CPU backend when no OpenCL device is available. Rusticl is **one possible driver**, not a
+dependency — the design never forces it.
+
+This still neutralises the "companion-library gap" that motivated CUDA-first: heavy
+BLAS/SVD/eigen stays on the CPU backend (pure-Rust BLAS, Decision 1); OpenCL handles the
+GPU-tractable kernels — pairwise distance, GEMM, tree predict, elementwise — written in
+OpenCL C / SPIR-V, per the PRD's "no skipped steps" evolution.
+
+| Backend | Crate | Discovery | Companion libs | Vendor transparency | Status |
 |---|---|---|---|---|---|
-| **OpenCL 3.0 (FIRST)** | `opencl3 0.12.3` | ⚠️ ICD-loader linked | none (write own kernels) | ✅✅ all vendors | ✅ RadeonSI/Iris/Zink/CPU |
-| **Metal (AFTER OpenCL)** | TBD (Metal FFI / `metallics`-style) | system framework | Metal Performance Shaders | ❌ Apple-only | n/a (Apple silicon) |
-| CUDA (on request) | `cudarc 0.19.9` | ✅ default (`libloading`) | full suite | ❌ NVIDIA-only | n/a |
-| ROCm (on request) | `cubecl-hip-sys` | ❌ needs `hipconfig` | none (raw bindgen) | ❌ AMD-only (Linux) | redundant w/ Rusticl on AMD |
+| **OpenCL 3.0 (FIRST)** | `opencl3 0.12.3` | ✅ ICD loader (auto) | none (write own kernels) | ✅✅ NVIDIA/AMD/Intel/others | primary |
+| **Metal (AFTER OpenCL)** | TBD (Metal FFI) | system framework | Metal Performance Shaders | Apple-only | next, on request |
+| CUDA (on request) | `cudarc 0.19.9` | `libloading` | full suite | NVIDIA-only | on request |
+| ROCm (on request) | `cubecl-hip-sys` | `hipconfig` | none | AMD-only (Linux) | on request |
 
 **Decision.** **OpenCL 3.0 (`opencl3`, not `ocl` — edition 2024, OpenCL 3.0) is the first
-and primary GPU backend, driven by Rusticl. Metal follows after OpenCL. CUDA and ROCm are
-not in the current roadmap — they are implemented only when explicitly requested.** CPU
-remains the always-present default backend. `SKExecutionMode::Automatic` routes via a
-cached 1ms micro-kernel benchmark per (backend, dtype, shape-class) — mirrors `cubecl`'s
-autotune-cache + `burn::Backend`. The `sciencekit_gpu` crate ships `SKComputeBackend` with
-`CpuBackend` always present and `OpenClBackend` behind the `gpu-opencl` feature flag.
+and primary GPU backend, implemented as an ICD-agnostic layer that transparently uses the
+user's installed OpenCL driver (NVIDIA official, AMD, Intel, Rusticl, etc.). Metal follows
+after OpenCL. CUDA and ROCm are not in the active roadmap — implemented only when
+explicitly requested.** CPU remains the always-present default backend.
+`SKExecutionMode::Automatic` routes via a cached 1ms micro-kernel benchmark per (backend,
+dtype, shape-class) — mirrors `cubecl`'s autotune-cache + `burn::Backend`. The
+`sciencekit_gpu` crate ships `SKComputeBackend` with `CpuBackend` always present and
+`OpenClBackend` behind the `gpu-opencl` feature flag.
 
 **Alignment with PRD §6.4.** PRD §6.4 lists OpenCL/CUDA/ROCm together as "Start" and
 OpenCL first in that list. This decision follows the PRD's **listed order** (OpenCL first)
@@ -308,7 +326,7 @@ W0.1's `Cargo.toml` must resolve these interdependencies from day one:
 - **[Single-maintainer bus factor on `oxiblas`]** (KitaSan / COOLJAPAN OU, one publisher) → Mitigation: keep the adapter layer thin so `oxiblas` is swappable; mirror the pinned commit in sciencekit's git history (vendored fallback); track `matrixmultiply` as a permanent escape hatch.
 - **[OpenCL lacks cuBLAS/cuSOLVER equivalents]** (SVD/QR/eigen not available on the OpenCL backend) → Mitigation: **accepted design** — heavy linear algebra stays on the CPU backend (pure-Rust BLAS, Decision 1); the OpenCL backend covers GPU-tractable kernels (pairwise distance, GEMM, tree predict, elementwise) written in OpenCL C / SPIR-V. `Automatic` routing delegates anything not implemented on OpenCL to CPU. This is consistent with the focus on CPU + OpenCL.
 - **[Writing and validating OpenCL kernels is non-trivial]** (GEMM, distance, reduction kernels need care to avoid numerical drift vs CPU) → Mitigation: TDD with CPU reference outputs as the oracle (per PRD §8.7 acceptance); start with the simplest kernels (elementwise, pairwise distance) and evolve; reuse `Rusticl`'s SPIR-V path (via `libclc`) rather than hand-rolled OpenCL C where possible.
-- **[Rusticl driver availability / configuration]** (env var `RUSTICL_ENABLE`; not enabled by default for all drivers; requires Mesa with Rusticl + LLVM/libclc) → Mitigation: document the required environment in `sciencekit_gpu` docs; provide a `gpu-opencl` feature that degrades gracefully to CPU when no OpenCL ICD/Rusticl is present; CI uses a CPU-only fallback unless a Rusticl device is available.
+- **[Rusticl not available / NVIDIA-users on the official driver]** (Rusticl runs on NVIDIA only via nouveau, which conflicts with the official NVIDIA driver) → Mitigation: the backend is **ICD-agnostic** — it uses `opencl3` + the OpenCL ICD loader, so it transparently uses NVIDIA's `opencl-nvidia` ICD, AMD/Intel/Rusticl, or any registered ICD; Rusticl is never required. Document the required environment in `sciencekit_gpu`; the `gpu-opencl` feature degrades gracefully to CPU when no OpenCL device is present; CI uses a CPU-only fallback.
 - **[ROCm bindings are raw bindgen unsafe]** (`cubecl-hip-sys`) → Deferred (on request only): if/when requested, layer a thin `RocmBackend` safe wrapper or adopt `cubecl`'s ROCm runtime; never expose raw FFI in `sciencekit_gpu` public API.
 - **[`cubecl` is alpha]** (breaking changes between minors) → Track it; a `CubeclBackend` can later absorb the custom OpenCL kernels. Not a v1 dependency.
 - **[CUDA deferred]** — NVIDIA users lose GPU accel until requested → Mitigation: the `SKComputeBackend` trait stays abstract so a future `CudaBackend` (`cudarc`) plugs in without touching algorithms; explicit ADR records the on-demand policy.
@@ -326,8 +344,8 @@ W0.1's `Cargo.toml` must resolve these interdependencies from day one:
 2. **`cubecl` adoption timing (OpenCL runtime).** `cubecl` (alpha, Burn-proven, edition
    2024) has an OpenCL runtime that could eventually absorb the custom `OpenClBackend`
    kernels into a portable `#[cube]` IR. Deferrable: the hand-written `OpenClBackend` over
-   `opencl3` (driven by Rusticl) covers the v1 surface; `cubecl` is a post-1.0
-   consolidation. Revisit at W7 (Interop + production).
+   `opencl3` (ICD-agnostic — driven by whatever ICD the user has installed) covers the v1
+   surface; `cubecl` is a post-1.0 consolidation. Revisit at W7 (Interop + production).
 3. **`nalgebra` role for small fixed-size matrices.** `nalgebra 0.35` (already an optional
    `oxiblas` dep) could be the pure-Rust fallback for 2×2/3×3 hot paths (PCA covariance,
    affine transforms) where GEMM overhead dominates. Deferrable: decide at W0.3 (math

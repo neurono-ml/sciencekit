@@ -24,16 +24,16 @@ a single, reviewed plan rather than re-deriving structure per PR.
      under `temporary/2026-08-26/blas-spike/` **before W2.1** (LinearRegression needs
      SVD). `matrixmultiply` is too narrow (GEMM-only); `ndarray-linalg`+`blas-src`
      remains the opt-in `blas-backend` path.
-  2. **GPU backend order**: **OpenCL 3.0 first (via Rusticl) → Metal after OpenCL; CUDA and
-     ROCm only on request.** Focus is **CPU + OpenCL**. This follows the operator's explicit
-     preference and is grounded in Rusticl (Mesa's OpenCL 3.0 implementation written in
-     Rust, Khronos-certified, running on RadeonSI/Iris/Zink/CPU and outperforming ROCm's
-     OpenCL on AMD). Heavy linear algebra stays on CPU (pure-Rust BLAS); the OpenCL backend
-     covers GPU-tractable kernels (pairwise distance, GEMM, tree predict, elementwise).
-     The "OpenCL-on-NVIDIA-is-deprecated" premise is disproven — OpenCL remains a viable
-     cross-vendor path. The GPU backend crate is `opencl3` (OpenCL 3.0, edition 2024),
-     not `ocl`. CUDA/ROCm/Metal are not in the active roadmap; they are implemented only
-     when explicitly requested.
+  2. **GPU backend order**: **OpenCL 3.0 first (ICD-agnostic / vendor-transparent) → Metal
+     after OpenCL; CUDA and ROCm only on request.** Focus is **CPU + OpenCL**. The OpenCL
+     backend uses `opencl3` + the OpenCL ICD loader, transparently using whatever OpenCL
+     driver the user has installed (NVIDIA official `opencl-nvidia`, AMD, Intel, Rusticl,
+     etc.) so NVIDIA/AMD/Intel/Ascend users work without forcing a vendor stack. Rusticl is
+     **not** used on NVIDIA (it would force Nouveau, which conflicts with the official
+     NVIDIA driver). Heavy linear algebra stays on CPU (pure-Rust BLAS); OpenCL covers
+     GPU-tractable kernels (pairwise distance, GEMM, tree predict, elementwise). The "OpenCL-on-NVIDIA-is-deprecated"
+     premise is disproven — OpenCL remains a viable cross-vendor path. CUDA/ROCm/Metal are
+     not in the active roadmap; they are implemented only when explicitly requested.
   3. **Online quantile sketch for `SKRobustScaler`**: `tdigest 1.0.0` (Apache-2.0, mature,
     serde). Enables `partial_fit` for RobustScaler — a capability scikit-learn lacks
     (`np.nanpercentile` requires the full column).
