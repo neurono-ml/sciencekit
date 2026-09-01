@@ -24,6 +24,10 @@ impl SKNdArrayLinalgBackend {
 }
 
 impl SKMathBackend for SKNdArrayLinalgBackend {
+    fn name(&self) -> &'static str {
+        "ndarray-linalg"
+    }
+
     fn gemm(&self, a: MatRef<f64>, b: MatRef<f64>, alpha: f64) -> Mat<f64> {
         let a_dense = to_ndarray(a);
         let b_dense = to_ndarray(b);

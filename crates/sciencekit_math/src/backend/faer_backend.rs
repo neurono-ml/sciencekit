@@ -22,6 +22,10 @@ impl SKFaerBackend {
 }
 
 impl SKMathBackend for SKFaerBackend {
+    fn name(&self) -> &'static str {
+        "faer"
+    }
+
     fn gemm(&self, a: MatRef<f64>, b: MatRef<f64>, alpha: f64) -> Mat<f64> {
         let rows = a.nrows();
         let cols = b.ncols();
@@ -79,6 +83,10 @@ impl SKMatrixMultiplyBackend {
 }
 
 impl SKMathBackend for SKMatrixMultiplyBackend {
+    fn name(&self) -> &'static str {
+        "matrixmultiply"
+    }
+
     fn gemm(&self, a: MatRef<f64>, b: MatRef<f64>, alpha: f64) -> Mat<f64> {
         let (rows, inner, cols) = (a.nrows(), a.ncols(), b.ncols());
         let mut output = Mat::<f64>::zeros(rows, cols);
