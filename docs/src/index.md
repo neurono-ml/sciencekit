@@ -83,15 +83,26 @@ it executes for real, right on the page.
 ```rust,editable
 // The sciencekit API follows the builder pattern everywhere.
 // This standalone demo mirrors its shape — the real crates arrive with Phase 0.
+// Bounded options are enums, never strings, so `execution_mode` cannot be
+// misspelled.
+#[derive(Debug, Clone, Copy)]
+enum SKExecutionMode {
+    Automatic,
+    InProcessSynchronous,
+    OutOfCoreStreaming,
+}
+
 #[derive(Debug)]
 struct TrainedKMeansModel {
     number_of_clusters: usize,
     maximum_iterations: usize,
+    execution_mode: SKExecutionMode,
 }
 
 struct KMeansBuilder {
     number_of_clusters: usize,
     maximum_iterations: usize,
+    execution_mode: SKExecutionMode,
 }
 
 impl KMeansBuilder {
@@ -99,6 +110,7 @@ impl KMeansBuilder {
         Self {
             number_of_clusters: 3,
             maximum_iterations: 100,
+            execution_mode: SKExecutionMode::Automatic,
         }
     }
 
@@ -112,8 +124,8 @@ impl KMeansBuilder {
         self
     }
 
-    fn execution_mode(mut self, mode: &str) -> Self {
-        println!("execution mode requested: {mode}");
+    fn execution_mode(self, mode: SKExecutionMode) -> Self {
+        println!("execution mode requested: {mode:?}");
         self
     }
 
@@ -121,6 +133,7 @@ impl KMeansBuilder {
         TrainedKMeansModel {
             number_of_clusters: self.number_of_clusters,
             maximum_iterations: self.maximum_iterations,
+            execution_mode: self.execution_mode,
         }
     }
 }
@@ -129,7 +142,7 @@ fn main() {
     let model = KMeansBuilder::new()
         .number_of_clusters(8)
         .maximum_iterations(300)
-        .execution_mode("Automatic")
+        .execution_mode(SKExecutionMode::Automatic)
         .build();
 
     println!("model ready: {model:?}");

@@ -21,3 +21,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Translated `AGENTS.md` and `openspec/config.yaml` to English (international open-source project).
 - `README.md` now links the official GitHub Pages site (`https://neurono-ml.github.io/sciencekit/`) at the top; it is also set as the repository homepage.
+- The homepage editable demo now passes `SKExecutionMode::Automatic` (an enum) instead of the string `"Automatic"` to `execution_mode`, matching the bounded-enum API.
