@@ -12,7 +12,7 @@ mod faer_backend;
 mod ndarray_backend;
 
 use faer::{Mat, MatRef};
-use sciencekit_common::SKError;
+use sciencekit_common::{SKBackendKind, SKError};
 
 pub use faer_backend::{SKFaerBackend, SKMatrixMultiplyBackend};
 
@@ -44,8 +44,8 @@ pub struct SKQRDecomposition {
 /// Implementations are pure and deterministic, and must be `Send + Sync` so an
 /// execution plan can dispatch heavy algebra across threads.
 pub trait SKMathBackend: Send + Sync {
-    /// The backend name, recorded in observability spans.
-    fn name(&self) -> &'static str;
+    /// The backend kind, recorded in observability spans.
+    fn kind(&self) -> SKBackendKind;
 
     /// Compute `C = α · A·B` for dense `A (m×k)` and `B (k×n)`.
     fn gemm(&self, a: MatRef<f64>, b: MatRef<f64>, alpha: f64) -> Mat<f64>;

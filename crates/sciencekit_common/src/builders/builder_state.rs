@@ -25,8 +25,16 @@ impl SKBuilderState {
     }
 
     /// Override the execution intent (trait-compatible `&mut self` form).
-    pub fn execution_mode(&mut self, mode: SKExecutionMode) -> &mut Self {
-        self.execution_intent = mode;
+    ///
+    /// Accepts any value convertible to [`SKExecutionMode`] via `TryInto`; the
+    /// enum itself converts infallibly, so a mis-typed string cannot compile.
+    pub fn execution_mode<E>(&mut self, mode: E) -> &mut Self
+    where
+        E: TryInto<SKExecutionMode>,
+    {
+        if let Ok(mode) = mode.try_into() {
+            self.execution_intent = mode;
+        }
         self
     }
 

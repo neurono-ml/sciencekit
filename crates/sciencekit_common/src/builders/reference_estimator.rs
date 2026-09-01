@@ -11,7 +11,9 @@
 use crate::SKError;
 use crate::builders::{SKBuilder, SKBuilderState, sk_validate_hyperparameter};
 use crate::execution::{SKExecutionContext, SKExecutionMode, SKExecutionPlan};
-use crate::observability::{SKOperationAttributes, sk_run_operation};
+use crate::observability::{
+    SKBackendKind, SKOperationAttributes, SKOperationKind, sk_run_operation,
+};
 
 /// The reference estimator demonstrating the mandatory builder pattern.
 ///
@@ -58,11 +60,11 @@ impl SKReferenceEstimator {
         context: &SKExecutionContext,
     ) -> Result<SKExecutionPlan, SKError> {
         let attributes = SKOperationAttributes {
-            operation: "fit",
+            operation: SKOperationKind::Fit,
             rows: shape.0,
             columns: shape.1,
             execution_mode: self.execution_intent,
-            backend: "reference",
+            backend: SKBackendKind::Faer,
         };
         sk_run_operation(attributes, || self.resolve_plan(context))
     }
@@ -91,8 +93,13 @@ impl SKReferenceEstimatorBuilder {
     }
 
     /// Set the execution intent (ergonomic by-value form for the PRD §2.1
-    /// chain); the trait additionally exposes the `&mut self` form.
-    pub fn execution_mode(mut self, mode: SKExecutionMode) -> Self {
+    /// chain); the trait additionally exposes the `&mut self` form. Accepts any
+    /// value convertible to [`SKExecutionMode`] (`TryInto`), so callers pass the
+    /// enum directly and a mis-typed string cannot compile.
+    pub fn execution_mode<E>(mut self, mode: E) -> Self
+    where
+        E: TryInto<SKExecutionMode>,
+    {
         self.state.execution_mode(mode);
         self
     }
@@ -105,7 +112,10 @@ impl Default for SKReferenceEstimatorBuilder {
 }
 
 impl SKBuilder<SKReferenceEstimator> for SKReferenceEstimatorBuilder {
-    fn execution_mode(&mut self, mode: SKExecutionMode) -> &mut Self {
+    fn execution_mode<E>(&mut self, mode: E) -> &mut Self
+    where
+        E: TryInto<SKExecutionMode>,
+    {
         self.state.execution_mode(mode);
         self
     }

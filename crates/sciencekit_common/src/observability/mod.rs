@@ -20,7 +20,7 @@ mod opentelemetry_layer;
 #[cfg(test)]
 mod observability_tests;
 
-pub use operation_attributes::SKOperationAttributes;
+pub use operation_attributes::{SKBackendKind, SKOperationAttributes, SKOperationKind};
 pub use operation_observation::SKOperationObservation;
 pub use run_operation::sk_run_operation;
 

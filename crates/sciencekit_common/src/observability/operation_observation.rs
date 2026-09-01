@@ -20,11 +20,11 @@ impl SKOperationObservation {
     pub fn begin(attributes: SKOperationAttributes) -> Self {
         let span = tracing::info_span!(
             "sciencekit.operation",
-            operation = attributes.operation,
+            operation = %attributes.operation,
             rows = attributes.rows,
             columns = attributes.columns,
             mode = ?attributes.execution_mode,
-            backend = attributes.backend,
+            backend = %attributes.backend,
             duration_ms = tracing::field::Empty,
             error = tracing::field::Empty,
         );

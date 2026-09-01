@@ -3,7 +3,7 @@
 
 use faer::linalg::matmul::matmul;
 use faer::{Accum, Mat, MatRef, Par};
-use sciencekit_common::SKError;
+use sciencekit_common::{SKBackendKind, SKError};
 
 use super::{SKMathBackend, SKQRDecomposition, SKSingularValueDecomposition};
 
@@ -22,8 +22,8 @@ impl SKFaerBackend {
 }
 
 impl SKMathBackend for SKFaerBackend {
-    fn name(&self) -> &'static str {
-        "faer"
+    fn kind(&self) -> SKBackendKind {
+        SKBackendKind::Faer
     }
 
     fn gemm(&self, a: MatRef<f64>, b: MatRef<f64>, alpha: f64) -> Mat<f64> {
@@ -83,8 +83,8 @@ impl SKMatrixMultiplyBackend {
 }
 
 impl SKMathBackend for SKMatrixMultiplyBackend {
-    fn name(&self) -> &'static str {
-        "matrixmultiply"
+    fn kind(&self) -> SKBackendKind {
+        SKBackendKind::MatrixMultiply
     }
 
     fn gemm(&self, a: MatRef<f64>, b: MatRef<f64>, alpha: f64) -> Mat<f64> {

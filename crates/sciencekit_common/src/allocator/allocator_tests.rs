@@ -4,13 +4,13 @@
 //! a unit test; it is verified by building with both allocator features
 //! enabled, which must fail with the conflict message (see `mod.rs`).
 
-use super::sk_allocator_name;
+use super::{SKAllocatorKind, sk_allocator_kind};
 
 /// The default build uses the system allocator and still allocates fine.
 #[cfg(not(any(feature = "allocator-jemalloc", feature = "allocator-mimalloc")))]
 #[test]
 fn default_build_uses_the_system_allocator() {
-    assert_eq!(sk_allocator_name(), "system");
+    assert_eq!(sk_allocator_kind(), SKAllocatorKind::System);
     let values = vec![0u8; 4096];
     assert_eq!(values.len(), 4096);
 }
@@ -19,7 +19,7 @@ fn default_build_uses_the_system_allocator() {
 #[cfg(feature = "allocator-jemalloc")]
 #[test]
 fn jemalloc_feature_installs_jemalloc() {
-    assert_eq!(sk_allocator_name(), "jemalloc");
+    assert_eq!(sk_allocator_kind(), SKAllocatorKind::Jemalloc);
     let values: Vec<u64> = (0..2048).map(|index| index as u64).collect();
     assert_eq!(values.len(), 2048);
     assert_eq!(values[2047], 2047);
@@ -29,7 +29,7 @@ fn jemalloc_feature_installs_jemalloc() {
 #[cfg(feature = "allocator-mimalloc")]
 #[test]
 fn mimalloc_feature_installs_mimalloc() {
-    assert_eq!(sk_allocator_name(), "mimalloc");
+    assert_eq!(sk_allocator_kind(), SKAllocatorKind::MiMalloc);
     let values: Vec<u64> = (0..2048).map(|index| index as u64).collect();
     assert_eq!(values.len(), 2048);
     assert_eq!(values[2047], 2047);

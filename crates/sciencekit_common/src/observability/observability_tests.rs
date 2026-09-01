@@ -15,7 +15,7 @@ use tracing_subscriber::layer::{Context, Layer};
 use tracing_subscriber::prelude::*;
 use tracing_subscriber::registry::LookupSpan;
 
-use super::{SKOperationAttributes, sk_run_operation};
+use super::{SKBackendKind, SKOperationAttributes, SKOperationKind, sk_run_operation};
 use crate::SKError;
 use crate::execution::SKExecutionMode;
 
@@ -82,13 +82,13 @@ where
     }
 }
 
-fn operation_attributes(operation: &'static str) -> SKOperationAttributes {
+fn operation_attributes(operation: SKOperationKind) -> SKOperationAttributes {
     SKOperationAttributes {
         operation,
         rows: 128,
         columns: 16,
         execution_mode: SKExecutionMode::InProcessSynchronous,
-        backend: "faer",
+        backend: SKBackendKind::Faer,
     }
 }
 
@@ -98,7 +98,9 @@ fn operation_emits_span_with_structured_fields() {
     let recording = RecordingLayer::default();
     let subscriber = tracing_subscriber::registry().with(recording.clone());
     tracing::subscriber::with_default(subscriber, || {
-        let result = sk_run_operation(operation_attributes("fit"), || Ok::<u32, SKError>(7));
+        let result = sk_run_operation(operation_attributes(SKOperationKind::Fit), || {
+            Ok::<u32, SKError>(7)
+        });
         assert_eq!(result.unwrap(), 7);
     });
 
@@ -110,11 +112,11 @@ fn operation_emits_span_with_structured_fields() {
         .iter()
         .map(|(k, v)| (k.as_str(), v.as_str()))
         .collect();
-    assert_eq!(fields.get("operation"), Some(&"\"fit\""));
+    assert_eq!(fields.get("operation"), Some(&"fit"));
     assert_eq!(fields.get("rows"), Some(&"128"));
     assert_eq!(fields.get("columns"), Some(&"16"));
     assert_eq!(fields.get("mode"), Some(&"InProcessSynchronous"));
-    assert_eq!(fields.get("backend"), Some(&"\"faer\""));
+    assert_eq!(fields.get("backend"), Some(&"faer"));
     assert!(
         fields.contains_key("duration_ms"),
         "duration must be recorded"
@@ -129,7 +131,7 @@ fn failed_operation_records_error_on_span() {
     let subscriber = tracing_subscriber::registry().with(recording.clone());
     tracing::subscriber::with_default(subscriber, || {
         let result = sk_run_operation(
-            operation_attributes("transform"),
+            operation_attributes(SKOperationKind::Transform),
             || -> Result<u32, SKError> { Err(SKError::shape_mismatch_2d(3, 2, 5, 4)) },
         );
         assert!(result.is_err());

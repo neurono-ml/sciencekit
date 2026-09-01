@@ -33,7 +33,9 @@ pub use errors::SKError;
 pub use execution::{SKExecutionContext, SKExecutionMode, SKExecutionPlan};
 pub use fit_traits::{SKFeatureTransformer, SKPredictor, SKSupervisedFit, SKUnsupervisedFit};
 pub use label_table::SKLabelTable;
-pub use observability::{SKOperationAttributes, SKOperationObservation, sk_run_operation};
+pub use observability::{
+    SKBackendKind, SKOperationAttributes, SKOperationKind, SKOperationObservation, sk_run_operation,
+};
 pub use scorer_traits::{SKSupervisedScorer, SKUnsupervisedScorer};
 pub use sk_float::SKFloat;
 pub use target_view::SKTargetView;
