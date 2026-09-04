@@ -8,7 +8,7 @@
 use faer::{Mat, MatRef, Unbind};
 use ndarray::{Array2, ArrayView2};
 use ndarray_linalg::{Cholesky, QR, SVD, UPLO};
-use sciencekit_common::SKError;
+use sciencekit_common::{SKBackendKind, SKError};
 
 use super::{SKMathBackend, SKQRDecomposition, SKSingularValueDecomposition};
 
@@ -24,6 +24,10 @@ impl SKNdArrayLinalgBackend {
 }
 
 impl SKMathBackend for SKNdArrayLinalgBackend {
+    fn kind(&self) -> SKBackendKind {
+        SKBackendKind::NdArrayLinalg
+    }
+
     fn gemm(&self, a: MatRef<f64>, b: MatRef<f64>, alpha: f64) -> Mat<f64> {
         let a_dense = to_ndarray(a);
         let b_dense = to_ndarray(b);

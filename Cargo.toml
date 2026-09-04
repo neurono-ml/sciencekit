@@ -18,3 +18,13 @@ repository = "https://github.com/neurono-ml/sciencekit"
 [workspace]
 resolver = "3"
 members = ["crates/sciencekit_common", "crates/sciencekit_math"]
+
+# Shared dependency pins for the workspace sub-crates (Phase 0.4 adds the
+# execution-decision, observability and allocator-selection dependencies).
+[workspace.dependencies]
+tracing = "0.1"
+tracing-opentelemetry = { version = "0.33", default-features = false }
+opentelemetry = "0.32"
+tracing-subscriber = "0.3"
+tikv-jemallocator = "0.5"
+mimalloc = "0.1"

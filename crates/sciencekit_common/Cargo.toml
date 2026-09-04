@@ -13,3 +13,29 @@ sprs = "0.11"
 num-traits = "0.2"
 thiserror = "2"
 sysinfo = "0.33"
+tracing = { workspace = true }
+tracing-opentelemetry = { workspace = true, optional = true }
+opentelemetry = { workspace = true, optional = true }
+tracing-subscriber = { workspace = true, optional = true }
+tikv-jemallocator = { workspace = true, optional = true }
+mimalloc = { workspace = true, optional = true }
+
+[features]
+default = []
+# Swap the global allocator to tikv-jemallocator (PRD §4.3). Mutually
+# exclusive with `allocator-mimalloc`; neither enabled keeps the system
+# allocator.
+allocator-jemalloc = ["dep:tikv-jemallocator"]
+# Swap the global allocator to mimalloc (PRD §4.3). Mutually exclusive with
+# `allocator-jemalloc`; neither enabled keeps the system allocator.
+allocator-mimalloc = ["dep:mimalloc"]
+# Opt-in OpenTelemetry export of tracing spans (PRD §9.2). Off by default:
+# without it no exporter is initialized and no OTLP traffic is produced.
+observability-export = [
+    "dep:tracing-opentelemetry",
+    "dep:opentelemetry",
+    "dep:tracing-subscriber",
+]
+
+[dev-dependencies]
+tracing-subscriber = { workspace = true }

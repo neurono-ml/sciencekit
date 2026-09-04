@@ -47,6 +47,7 @@ Instructions for agents working in this repository. Product source of truth: `do
 - **Mandatory prefix on public items** (full rule in PRD §3.4): structs and traits use `SK` + PascalCase (`SKEstimator`, `SKStandardScaler`); free-scope public functions (outside `impl`), variables and public modules use `sk_` + snake_case (`sk_train_test_split`). Methods — functions inside `impl` blocks of structs or traits — get no prefix. Crates always keep the full name (`sciencekit`, `sciencekit_*`).
 - Zero-copy on public APIs: `ArrayView`/`CowArray`/sparse views (`sprs`), never `Array` by value.
 - A `.rs` file over 200 lines becomes a standardized folder module (`mod.rs`, `builder.rs`, `core_implementation.rs`, `fitting_logic.rs`, `*_tests.rs`).
+- Folder modules are pure dispatchers: a `mod.rs` under a folder module carries **no implementation logic** — it only declares submodules and re-exports their public items. Put every implementation in its own file under the folder (e.g. `builders/builder_state.rs`, `observability/run_operation.rs`); companion `*_tests.rs` modules stay beside the implementation.
 - Tests live in companion `*_tests.rs` modules beside the implementation; mock data in `ndarray`/`sprs`. Never inline nor a global `tests/` directory.
 - Iterative evolution per algorithm, no skipped steps: naive → tests → performance (SIMD/rayon/layout) → streaming/out-of-core.
 - Acceptance of every implementation (PRD §8.7): runs with lots and little data, under concurrency, exports the model and produces metrics.
