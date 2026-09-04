@@ -142,9 +142,9 @@ complete because their gate outcome is achieved and recorded downstream.
 
 These are **non-gating, future-conditional trackers** — they mirror the Open Questions in
 `design.md` and are resolved inside their respective downstream waves (W5.5 TruncatedSVD,
-W7 Interop, W0.3 math kernel). They are left unchecked here by design; they do not block
-archiving this change.
+W7 Interop, W0.3 math kernel). They are left unchecked here by design unless their decision
+point fires; they do not block archiving this change.
 
 - [ ] 5.1 At W5.5 (TruncatedSVD): decide whether to bump MSRV 1.85 → 1.88 to unblock `single-svdlib` (sprs-native IRLBA). Revisit then.
 - [ ] 5.2 At W7 (Interop): decide `cubecl`'s OpenCL-runtime adoption as a potential absorber of the custom `OpenClBackend` kernels. Revisit then.
-- [ ] 5.3 At W0.3 (math kernel): decide `nalgebra` role for small fixed-size matrices. Revisit then.
+- [x] 5.3 At W0.3 (math kernel): decide `nalgebra` role for small fixed-size matrices. **Resolved 2026-09-04: `nalgebra` deferred — not adopted.** The W0.3 trigger passed with no small-matrix assessment recorded in the archived `math-kernel-foundation`; `sciencekit_math` exposes no 2×2/3×3 hot paths (PCA covariance, affine transforms) on its current kernel surface, so adding `nalgebra` now would be a speculative dependency. Retargeted to **W5.4 (PCA)**: adopt `nalgebra 0.35` only if `faer`'s small-matrix performance is inadequate there (ADR follow-up issue #37; W5.4 spec must include the small-matrix micro-benchmark gate).

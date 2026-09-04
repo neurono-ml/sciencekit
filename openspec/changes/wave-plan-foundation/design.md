@@ -355,5 +355,9 @@ W0.1's `Cargo.toml` must resolve these interdependencies from day one:
    surface; `cubecl` is a post-1.0 consolidation. Revisit at W7 (Interop + production).
 3. **`nalgebra` role for small fixed-size matrices.** `nalgebra 0.35` (already an optional
    `oxiblas` dep) could be the pure-Rust fallback for 2×2/3×3 hot paths (PCA covariance,
-   affine transforms) where GEMM overhead dominates. Deferrable: decide at W0.3 (math
-   kernel) based on whether the BLAS-default's small-matrix performance is adequate.
+   affine transforms) where GEMM overhead dominates. **RESOLVED (2026-09-04): deferred, not
+   adopted.** The W0.3 trigger passed with no small-matrix assessment in the archived
+   `math-kernel-foundation`; `sciencekit_math` has no small-matrix hot paths, so `nalgebra`
+   would be a speculative dependency. Retargeted to **W5.4 (PCA)** — adopt `nalgebra 0.35`
+   only if `faer`'s small-matrix performance is inadequate for 2×2/3×3 covariance there.
+   ADR follow-up issue #37; the W5.4 spec must gate on the small-matrix micro-benchmark.
