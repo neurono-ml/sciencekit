@@ -156,9 +156,10 @@ will run against the library itself.
 </div>
 
 <div class="sk-box sk-box--info">
-<strong>Current status:</strong> the repository is in Phase 0 — workspace foundations, core traits
-(<code>SKEstimator</code>, <code>SKPredictor</code>, <code>SKTransformer</code>) and the math kernel.
-Follow the full plan in <a href="./roadmap.html">Plan &amp; Roadmap</a>.
+<strong>Current status:</strong> Phase 0 (foundations) is complete — Cargo workspace, core traits
+(<code>SKEstimator</code>, <code>SKPredictor</code>, <code>SKTransformer</code>), the pure-Rust <code>faer</code> math
+kernel, and the automatic execution-decision + observability layer have all landed. Next up is
+Phase 1 (preprocessing). Follow the full plan in <a href="./roadmap.html">Plan &amp; Roadmap</a>.
 </div>
 
 ## Who is it for?
