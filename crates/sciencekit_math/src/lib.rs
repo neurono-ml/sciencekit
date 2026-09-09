@@ -13,8 +13,9 @@
 //! - [`sparse_ops`] — sparse (`sprs`) product kernels (sparse×dense,
 //!   sparse×sparse) over zero-copy views.
 //! - [`backend`] — the [`SKMathBackend`](backend::SKMathBackend) abstraction,
-//!   [`SKFaerBackend`](backend::SKFaerBackend) (pure-Rust default) and the opt-in
-//!   `blas-backend` path.
+//!   generic over the sealed [`SKFloat`] scalar bound and host-centric over
+//!   ndarray; the pure-Rust [`SKFaerBackend`](backend::SKFaerBackend) default,
+//!   the `matrixmultiply` GEMM fallback and the opt-in `blas-backend` path.
 //!
 //! **Naming:** public items follow PRD §3.4 — structs and traits are prefixed
 //! `SK`, free-scope functions use `sk_`, methods carry no prefix. Files stay at
@@ -32,7 +33,11 @@ pub mod layout;
 pub mod pairwise;
 pub mod sparse_ops;
 
-pub use backend::{SKFaerBackend, SKMathBackend, SKMatrixMultiplyBackend, sk_default_math_backend};
+pub use backend::{
+    SKFaerBackend, SKLUDecomposition, SKLeastSquaresSolution, SKMathBackend,
+    SKMatrixMultiplyBackend, SKNormKind, SKQRDecomposition, SKSingularValueDecomposition,
+    sk_default_math_backend,
+};
 pub use kernels::{sk_axis_sum, sk_binary_combine, sk_elementwise_transform, sk_scale_in_place};
 pub use layout::{sk_force_contiguous, sk_is_c_contiguous, sk_is_f_contiguous, sk_memory_layout};
 pub use pairwise::{
@@ -45,7 +50,7 @@ pub mod prelude {
     //! Convenience re-exports for downstream algorithm crates.
 
     pub use crate::backend::{
-        SKFaerBackend, SKMathBackend, SKMatrixMultiplyBackend, sk_default_math_backend,
+        SKFaerBackend, SKMathBackend, SKMatrixMultiplyBackend, SKNormKind, sk_default_math_backend,
     };
     pub use crate::layout::{
         sk_force_contiguous, sk_is_c_contiguous, sk_is_f_contiguous, sk_memory_layout,
