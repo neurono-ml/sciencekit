@@ -14,10 +14,10 @@ mod builder_trait;
 mod reference_estimator;
 mod validation;
 
-#[cfg(test)]
-mod builder_tests;
-
 pub use builder_state::SKBuilderState;
 pub use builder_trait::SKBuilder;
 pub use reference_estimator::{SKReferenceEstimator, SKReferenceEstimatorBuilder};
 pub use validation::sk_validate_hyperparameter;
+
+#[cfg(test)]
+mod builder_tests;
