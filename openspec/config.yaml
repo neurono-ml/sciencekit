@@ -51,11 +51,16 @@ operations:
   apply:
     guidance:
       - Implement in git worktree temporary/worktrees/<type>/<change-name> on branch <type>/<change-name> (type ∈ feat|bugfix|chore|docs). Never commit to main.
+      - Commit one commit per task as each task completes, scoped to that task's changes only; keep the commit history 1:1 with openspec/changes/<change-name>/tasks.md.
+      - As each task completes, also update and commit the change's openspec/ files in the -openspec worktree (mark the task - [x] in tasks.md, update touched spec/design artifacts) on branch <type>/<change-name>-openspec, so the openspec worktree stays in lockstep with the code worktree.
+      - When the change's apply finishes (all tasks done), push BOTH worktrees — the code branch and the -openspec branch — and open or update both PRs (code PR and openspec PR), each referencing the ADR issue via closing keywords.
+      - Before pushing the code branch, run the CI gates locally and fix any failures: cargo fmt --all --check (formatting), cargo clippy --workspace --all-targets (static analysis, warnings as errors) and cargo test --workspace (tests + doctests). Never push a branch whose local gates fail, so the PR's CI check does not fail on formatting.
       - Write every temporary artifact (experiments, validation screenshots, throwaway scripts, probes) under temporary/YYYY-MM-DD if generic, or temporary/YYYY-MM-DD/<change-name> if related to this change; never commit them.
       - When opening the change, create the matching GitHub issue in English formatted as an ADR — Y-statement template for simple decisions, Nygard format for more complete ones (https://adr.github.io/adr-templates/); draft the text with the architecture-decision-records skill.
       - Reference the corresponding issue(s) in the PR description with closing keywords (Closes/Fixes/Resolves #n) so GitHub closes them deterministically when the PR merges.
       - Commit this change's openspec/ definitions on branch <type>/<change-name>-openspec, in worktree temporary/worktrees/<type>/<change-name>-openspec.
       - Develop the code branch and the openspec branch in parallel; each is merged into main via its own PR, in any order. Code does NOT wait for the openspec planning PR to merge (agile), and vice versa.
+      - Each code change is accompanied by a documentation change that updates the mdBook (docs/src/) for the new behavior, on its own doc branch whose PR merges into docs/documentations; create the doc branch and PR alongside the code change.
       - Use the tdd skill for each task.
       - When all tasks are done, trigger review by an independent agent validating that the spec was effectively met before opening the code PR.
   archive:
