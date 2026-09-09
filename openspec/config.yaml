@@ -20,6 +20,9 @@ context: |
   (ArrayView/CowArray/sprs views); a .rs file >200 lines becomes a standardized folder module
   (mod.rs, builder.rs, core_implementation.rs, *_tests.rs); tests in companion modules
   *_tests.rs beside the implementation (never inline nor global tests/).
+  Tests sit at the end: any inline `#[cfg(test)]` block (implementation and tests
+  in the same file) MUST be at the end of the file so the implementation reads
+  top-down; a companion `*_tests.rs` module is declared at the end of its `mod.rs`.
   Workflow: no commits on main; every change has two coexisting worktrees — code in
   temporary/worktrees/<type>/<change-name> (branch <type>/<change-name>) and openspec
   definitions in temporary/worktrees/<type>/<change-name>-openspec (branch
