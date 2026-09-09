@@ -9,7 +9,7 @@
 
 mod selection;
 
+pub use selection::{SKAllocatorKind, sk_allocator_kind};
+
 #[cfg(test)]
 mod allocator_tests;
-
-pub use selection::{SKAllocatorKind, sk_allocator_kind};
