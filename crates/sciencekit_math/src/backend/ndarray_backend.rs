@@ -83,7 +83,11 @@ macro_rules! impl_math_backend {
                 unit_diagonal: bool,
             ) -> Result<Array2<$float>, SKError> {
                 let uplo = if lower { UPLO::Lower } else { UPLO::Upper };
-                let diag = if unit_diagonal { Diag::Unit } else { Diag::NonUnit };
+                let diag = if unit_diagonal {
+                    Diag::Unit
+                } else {
+                    Diag::NonUnit
+                };
                 a.solve_triangular(uplo, diag, &b.to_owned())
                     .map_err(|error| SKError::Conversion(error.to_string()))
             }

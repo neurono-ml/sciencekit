@@ -9,10 +9,10 @@ use sciencekit_common::SKFloat;
 
 use super::kernel::SKMathBackend;
 
-#[cfg(feature = "blas-backend")]
-use super::ndarray_backend::SKNdArrayLinalgBackend;
 #[cfg(not(feature = "blas-backend"))]
 use super::faer_backend::SKFaerBackend;
+#[cfg(feature = "blas-backend")]
+use super::ndarray_backend::SKNdArrayLinalgBackend;
 
 /// The default math backend for the current build configuration.
 ///

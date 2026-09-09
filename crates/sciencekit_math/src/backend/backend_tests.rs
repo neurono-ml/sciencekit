@@ -19,7 +19,11 @@ fn mat_from_rows<F: SKFloat>(rows: &[&[F]]) -> Array2<F> {
 }
 
 /// Assert two matrices agree element-wise within a tolerance.
-fn assert_close<F: SKFloat + std::fmt::Debug>(actual: &Array2<F>, expected: &Array2<F>, tolerance: F) {
+fn assert_close<F: SKFloat + std::fmt::Debug>(
+    actual: &Array2<F>,
+    expected: &Array2<F>,
+    tolerance: F,
+) {
     assert_eq!(actual.shape(), expected.shape());
     for ((i, j), value) in actual.indexed_iter() {
         let expected_value = expected[(i, j)];
@@ -35,12 +39,23 @@ fn assert_close<F: SKFloat + std::fmt::Debug>(actual: &Array2<F>, expected: &Arr
 
 /// GEMM matches a hand-computed reference product (generic over `F`).
 fn check_gemm_matches_reference_product<F: SKFloat + std::fmt::Debug>()
-where SKFaerBackend: SKMathBackend<F> {
-    let a = mat_from_rows(&[&[F::one(), F::from(2.0).unwrap()], &[F::from(3.0).unwrap(), F::from(4.0).unwrap()]]);
-    let b = mat_from_rows(&[&[F::from(5.0).unwrap(), F::from(6.0).unwrap()], &[F::from(7.0).unwrap(), F::from(8.0).unwrap()]]);
+where
+    SKFaerBackend: SKMathBackend<F>,
+{
+    let a = mat_from_rows(&[
+        &[F::one(), F::from(2.0).unwrap()],
+        &[F::from(3.0).unwrap(), F::from(4.0).unwrap()],
+    ]);
+    let b = mat_from_rows(&[
+        &[F::from(5.0).unwrap(), F::from(6.0).unwrap()],
+        &[F::from(7.0).unwrap(), F::from(8.0).unwrap()],
+    ]);
     let backend = SKFaerBackend::new();
     let product = backend.gemm(a.view(), b.view(), F::one(), 1);
-    let expected = mat_from_rows(&[&[F::from(19.0).unwrap(), F::from(22.0).unwrap()], &[F::from(43.0).unwrap(), F::from(50.0).unwrap()]]);
+    let expected = mat_from_rows(&[
+        &[F::from(19.0).unwrap(), F::from(22.0).unwrap()],
+        &[F::from(43.0).unwrap(), F::from(50.0).unwrap()],
+    ]);
     assert_close(&product, &expected, F::from(1e-4).unwrap());
 }
 
@@ -56,12 +71,20 @@ fn gemm_matches_reference_product_f32() {
 
 /// GEMM honours the scaling factor `α` (generic over `F`).
 fn check_gemm_applies_scalar_factor<F: SKFloat + std::fmt::Debug>()
-where SKFaerBackend: SKMathBackend<F> {
+where
+    SKFaerBackend: SKMathBackend<F>,
+{
     let a = mat_from_rows(&[&[F::one(), F::zero()], &[F::zero(), F::one()]]);
-    let b = mat_from_rows(&[&[F::from(2.0).unwrap(), F::from(3.0).unwrap()], &[F::from(4.0).unwrap(), F::from(5.0).unwrap()]]);
+    let b = mat_from_rows(&[
+        &[F::from(2.0).unwrap(), F::from(3.0).unwrap()],
+        &[F::from(4.0).unwrap(), F::from(5.0).unwrap()],
+    ]);
     let backend = SKFaerBackend::new();
     let product = backend.gemm(a.view(), b.view(), F::from(2.0).unwrap(), 1);
-    let expected = mat_from_rows(&[&[F::from(4.0).unwrap(), F::from(6.0).unwrap()], &[F::from(8.0).unwrap(), F::from(10.0).unwrap()]]);
+    let expected = mat_from_rows(&[
+        &[F::from(4.0).unwrap(), F::from(6.0).unwrap()],
+        &[F::from(8.0).unwrap(), F::from(10.0).unwrap()],
+    ]);
     assert_close(&product, &expected, F::from(1e-4).unwrap());
 }
 
@@ -77,8 +100,13 @@ fn gemm_applies_scalar_factor_f32() {
 
 /// SVD reconstructs its input: `A ≈ U Σ Vᵀ` (generic over `F`).
 fn check_svd_reconstructs_input<F: SKFloat + std::fmt::Debug>()
-where SKFaerBackend: SKMathBackend<F> {
-    let a = mat_from_rows(&[&[F::from(3.0).unwrap(), F::one(), F::one()], &[-F::one(), F::from(3.0).unwrap(), F::one()]]);
+where
+    SKFaerBackend: SKMathBackend<F>,
+{
+    let a = mat_from_rows(&[
+        &[F::from(3.0).unwrap(), F::one(), F::one()],
+        &[-F::one(), F::from(3.0).unwrap(), F::one()],
+    ]);
     let backend = SKFaerBackend::new();
     let decomposition: SKSingularValueDecomposition<F> = backend.svd(a.view()).unwrap();
     let (m, n) = a.dim();
@@ -102,11 +130,25 @@ fn svd_reconstructs_input_f32() {
 
 /// QR reconstructs its input: `A = Q R` (generic over `F`).
 fn check_qr_reconstructs_input<F: SKFloat + std::fmt::Debug>()
-where SKFaerBackend: SKMathBackend<F> {
+where
+    SKFaerBackend: SKMathBackend<F>,
+{
     let a = mat_from_rows(&[
-        &[F::from(12.0).unwrap(), -F::from(51.0).unwrap(), F::from(4.0).unwrap()],
-        &[F::from(6.0).unwrap(), F::from(167.0).unwrap(), -F::from(68.0).unwrap()],
-        &[-F::from(4.0).unwrap(), F::from(24.0).unwrap(), -F::from(41.0).unwrap()],
+        &[
+            F::from(12.0).unwrap(),
+            -F::from(51.0).unwrap(),
+            F::from(4.0).unwrap(),
+        ],
+        &[
+            F::from(6.0).unwrap(),
+            F::from(167.0).unwrap(),
+            -F::from(68.0).unwrap(),
+        ],
+        &[
+            -F::from(4.0).unwrap(),
+            F::from(24.0).unwrap(),
+            -F::from(41.0).unwrap(),
+        ],
     ]);
     let backend = SKFaerBackend::new();
     let decomposition: SKQRDecomposition<F> = backend.qr(a.view());
@@ -126,8 +168,13 @@ fn qr_reconstructs_input_f32() {
 
 /// Cholesky reconstructs a positive-definite input: `A = L Lᵀ`.
 fn check_cholesky_reconstructs_input<F: SKFloat + std::fmt::Debug>()
-where SKFaerBackend: SKMathBackend<F> {
-    let a = mat_from_rows(&[&[F::from(4.0).unwrap(), F::from(2.0).unwrap()], &[F::from(2.0).unwrap(), F::from(3.0).unwrap()]]);
+where
+    SKFaerBackend: SKMathBackend<F>,
+{
+    let a = mat_from_rows(&[
+        &[F::from(4.0).unwrap(), F::from(2.0).unwrap()],
+        &[F::from(2.0).unwrap(), F::from(3.0).unwrap()],
+    ]);
     let backend = SKFaerBackend::new();
     let lower = backend.cholesky(a.view()).unwrap();
     let reconstructed = lower.dot(&lower.t());
@@ -150,7 +197,10 @@ where
     SKFaerBackend: SKMathBackend<F>,
 {
     let a = mat_from_rows(&[&[F::one(), F::zero()], &[F::zero(), F::one()]]);
-    let b = mat_from_rows(&[&[F::from(2.0).unwrap(), F::zero()], &[F::zero(), F::from(3.0).unwrap()]]);
+    let b = mat_from_rows(&[
+        &[F::from(2.0).unwrap(), F::zero()],
+        &[F::zero(), F::from(3.0).unwrap()],
+    ]);
     let product = SKFaerBackend::new().gemm(a.view(), b.view(), F::one(), 1);
     assert_close(&product, &b, F::from(1e-4).unwrap());
 }
@@ -196,14 +246,18 @@ fn default_build_resolves_to_faer() {
 
 /// `solve_triangular` recovers a known solution from an upper-triangular `A`.
 fn check_solve_triangular_upper<F: SKFloat + std::fmt::Debug>()
-where SKFaerBackend: SKMathBackend<F> {
+where
+    SKFaerBackend: SKMathBackend<F>,
+{
     let a = mat_from_rows(&[
         &[F::from(2.0).unwrap(), F::from(1.0).unwrap()],
         &[F::zero(), F::from(3.0).unwrap()],
     ]);
     let b = mat_from_rows(&[&[F::from(5.0).unwrap()], &[F::from(6.0).unwrap()]]);
     let backend = SKFaerBackend::new();
-    let x = backend.solve_triangular(a.view(), b.view(), false, false).unwrap();
+    let x = backend
+        .solve_triangular(a.view(), b.view(), false, false)
+        .unwrap();
     // 2x + y = 5; 3y = 6 => y = 2, x = 1.5
     assert!((x[(0, 0)] - F::from(1.5).unwrap()).abs() < F::from(1e-4).unwrap());
     assert!((x[(1, 0)] - F::from(2.0).unwrap()).abs() < F::from(1e-4).unwrap());
@@ -221,14 +275,18 @@ fn solve_triangular_upper_f32() {
 
 /// `solve_triangular` recovers a known solution from a lower-triangular `A`.
 fn check_solve_triangular_lower<F: SKFloat + std::fmt::Debug>()
-where SKFaerBackend: SKMathBackend<F> {
+where
+    SKFaerBackend: SKMathBackend<F>,
+{
     let a = mat_from_rows(&[
         &[F::from(2.0).unwrap(), F::zero()],
         &[F::one(), F::from(3.0).unwrap()],
     ]);
     let b = mat_from_rows(&[&[F::from(4.0).unwrap()], &[F::from(5.0).unwrap()]]);
     let backend = SKFaerBackend::new();
-    let x = backend.solve_triangular(a.view(), b.view(), true, false).unwrap();
+    let x = backend
+        .solve_triangular(a.view(), b.view(), true, false)
+        .unwrap();
     // 2x = 4 => x = 2; x + 3y = 5 => y = 1
     assert!((x[(0, 0)] - F::from(2.0).unwrap()).abs() < F::from(1e-4).unwrap());
     assert!((x[(1, 0)] - F::from(1.0).unwrap()).abs() < F::from(1e-4).unwrap());
@@ -246,7 +304,9 @@ fn solve_triangular_lower_f32() {
 
 /// `solve` recovers a known solution of a general square system.
 fn check_solve_general<F: SKFloat + std::fmt::Debug>()
-where SKFaerBackend: SKMathBackend<F> {
+where
+    SKFaerBackend: SKMathBackend<F>,
+{
     let a = mat_from_rows(&[
         &[F::from(4.0).unwrap(), F::from(3.0).unwrap()],
         &[F::from(1.0).unwrap(), F::from(5.0).unwrap()],
@@ -270,7 +330,9 @@ fn solve_general_f32() {
 
 /// `eigh` reconstructs the input: `A ≈ V Σ Vᵀ` with ascending eigenvalues.
 fn check_eigh_reconstructs_input<F: SKFloat + std::fmt::Debug>()
-where SKFaerBackend: SKMathBackend<F> {
+where
+    SKFaerBackend: SKMathBackend<F>,
+{
     let a = mat_from_rows(&[
         &[F::from(4.0).unwrap(), F::one(), F::zero()],
         &[F::one(), F::from(3.0).unwrap(), F::from(2.0).unwrap()],
@@ -299,10 +361,20 @@ fn eigh_reconstructs_input_f32() {
 
 /// `lu` satisfies `P A = L U`; reconstructs `P` from the pivot.
 fn check_lu_reconstructs_pa_lu<F: SKFloat + std::fmt::Debug>()
-where SKFaerBackend: SKMathBackend<F> {
+where
+    SKFaerBackend: SKMathBackend<F>,
+{
     let a = mat_from_rows(&[
-        &[F::from(4.0).unwrap(), F::from(3.0).unwrap(), F::from(2.0).unwrap()],
-        &[F::from(1.0).unwrap(), F::from(5.0).unwrap(), F::from(3.0).unwrap()],
+        &[
+            F::from(4.0).unwrap(),
+            F::from(3.0).unwrap(),
+            F::from(2.0).unwrap(),
+        ],
+        &[
+            F::from(1.0).unwrap(),
+            F::from(5.0).unwrap(),
+            F::from(3.0).unwrap(),
+        ],
         &[F::from(2.0).unwrap(), F::one(), F::from(6.0).unwrap()],
     ]);
     let backend = SKFaerBackend::new();
@@ -330,12 +402,11 @@ fn lu_reconstructs_pa_lu_f32() {
 /// `slogdet` on a near-singular matrix returns a finite log-determinant (no
 /// underflow to `0.0`).
 fn check_slogdet_avoids_underflow<F: SKFloat + std::fmt::Debug>()
-where SKFaerBackend: SKMathBackend<F> {
+where
+    SKFaerBackend: SKMathBackend<F>,
+{
     let diagonal_value = F::from(1e-200).unwrap();
-    let a = mat_from_rows(&[
-        &[diagonal_value, F::zero()],
-        &[F::zero(), diagonal_value],
-    ]);
+    let a = mat_from_rows(&[&[diagonal_value, F::zero()], &[F::zero(), diagonal_value]]);
     let backend = SKFaerBackend::new();
     let (sign, log_abs_det) = backend.slogdet(a.view()).unwrap();
     assert!(sign == F::one());
@@ -350,7 +421,9 @@ fn slogdet_avoids_underflow_f64() {
 
 /// `pinv` satisfies the Moore–Penrose property `A pinv(A) A ≈ A`.
 fn check_pinv_moore_penrose<F: SKFloat + std::fmt::Debug>()
-where SKFaerBackend: SKMathBackend<F> {
+where
+    SKFaerBackend: SKMathBackend<F>,
+{
     let a = mat_from_rows(&[
         &[F::one(), F::from(2.0).unwrap()],
         &[F::from(3.0).unwrap(), F::from(4.0).unwrap()],
@@ -374,7 +447,9 @@ fn pinv_moore_penrose_f32() {
 
 /// `inv` inverts a square matrix: `A inv(A) = I`.
 fn check_inv_inverts<F: SKFloat + std::fmt::Debug>()
-where SKFaerBackend: SKMathBackend<F> {
+where
+    SKFaerBackend: SKMathBackend<F>,
+{
     let a = mat_from_rows(&[
         &[F::from(4.0).unwrap(), F::from(3.0).unwrap()],
         &[F::from(1.0).unwrap(), F::from(5.0).unwrap()],
@@ -398,13 +473,19 @@ fn inv_inverts_f32() {
 
 /// `lstsq` recovers the exact solution of a consistent system.
 fn check_lstsq_recovers_solution<F: SKFloat + std::fmt::Debug>()
-where SKFaerBackend: SKMathBackend<F> {
+where
+    SKFaerBackend: SKMathBackend<F>,
+{
     let a = mat_from_rows(&[
         &[F::one(), F::zero()],
         &[F::zero(), F::one()],
         &[F::one(), F::one()],
     ]);
-    let b = mat_from_rows(&[&[F::one()], &[F::from(2.0).unwrap()], &[F::from(3.0).unwrap()]]);
+    let b = mat_from_rows(&[
+        &[F::one()],
+        &[F::from(2.0).unwrap()],
+        &[F::from(3.0).unwrap()],
+    ]);
     let backend = SKFaerBackend::new();
     let result: SKLeastSquaresSolution<F> = backend.lstsq(a.view(), b.view()).unwrap();
     assert_eq!(result.rank, 2);
@@ -425,7 +506,9 @@ fn lstsq_recovers_solution_f32() {
 /// `lstsq` is stable under rank deficiency (returns the minimum-norm
 /// solution).
 fn check_lstsq_rank_deficient<F: SKFloat + std::fmt::Debug>()
-where SKFaerBackend: SKMathBackend<F> {
+where
+    SKFaerBackend: SKMathBackend<F>,
+{
     // A has rank 1 (both columns equal); infinitely many solutions, the
     // minimum-norm one has both coordinates equal.
     let a = mat_from_rows(&[
@@ -433,7 +516,11 @@ where SKFaerBackend: SKMathBackend<F> {
         &[F::from(2.0).unwrap(), F::from(2.0).unwrap()],
         &[F::from(3.0).unwrap(), F::from(3.0).unwrap()],
     ]);
-    let b = mat_from_rows(&[&[F::one()], &[F::from(2.0).unwrap()], &[F::from(3.0).unwrap()]]);
+    let b = mat_from_rows(&[
+        &[F::one()],
+        &[F::from(2.0).unwrap()],
+        &[F::from(3.0).unwrap()],
+    ]);
     let backend = SKFaerBackend::new();
     let result: SKLeastSquaresSolution<F> = backend.lstsq(a.view(), b.view()).unwrap();
     assert_eq!(result.rank, 1);
@@ -447,7 +534,9 @@ fn lstsq_rank_deficient_f64() {
 
 /// Matrix `norm` matches hand-computed values for the common orders.
 fn check_norm_matrix_orders<F: SKFloat + std::fmt::Debug>()
-where SKFaerBackend: SKMathBackend<F> {
+where
+    SKFaerBackend: SKMathBackend<F>,
+{
     let a = mat_from_rows(&[
         &[F::from(3.0).unwrap(), F::from(4.0).unwrap()],
         &[F::from(0.0).unwrap(), F::from(0.0).unwrap()],
@@ -474,7 +563,9 @@ fn norm_matrix_orders_f32() {
 /// Vector `norm` matches hand-computed values, including the `General`
 /// p-norm fallback.
 fn check_vector_norm_orders<F: SKFloat + std::fmt::Debug>()
-where SKFaerBackend: SKMathBackend<F> {
+where
+    SKFaerBackend: SKMathBackend<F>,
+{
     let x = Array1::from(vec![F::from(3.0).unwrap(), F::from(4.0).unwrap()]);
     let backend = SKFaerBackend::new();
     let l2 = backend.vector_norm(x.view(), SKNormKind::L2).unwrap();
@@ -482,7 +573,12 @@ where SKFaerBackend: SKMathBackend<F> {
     let l1 = backend.vector_norm(x.view(), SKNormKind::L1).unwrap();
     assert!((l1 - F::from(7.0).unwrap()).abs() < F::from(1e-4).unwrap());
     let general = backend
-        .vector_norm(x.view(), SKNormKind::General { order: F::from(2.0).unwrap() })
+        .vector_norm(
+            x.view(),
+            SKNormKind::General {
+                order: F::from(2.0).unwrap(),
+            },
+        )
         .unwrap();
     assert!((general - F::from(5.0).unwrap()).abs() < F::from(1e-4).unwrap());
 }
@@ -521,7 +617,10 @@ fn parallel_gemm_matches_sequential() {
 /// A generic helper that exercises the full host-centric surface using only
 /// `ndarray` types. This compiles if and only if the trait is backend-agnostic
 /// (no `faer` types in the public surface).
-fn assert_host_centric_surface<F: SKFloat, B: SKMathBackend<F> + ?Sized>(backend: &B, a: Array2<F>) {
+fn assert_host_centric_surface<F: SKFloat, B: SKMathBackend<F> + ?Sized>(
+    backend: &B,
+    a: Array2<F>,
+) {
     let _ = backend.gemm(a.view(), a.view(), F::one(), 1);
     let _: Result<SKSingularValueDecomposition<F>, _> = backend.svd(a.view());
     let _: SKQRDecomposition<F> = backend.qr(a.view());
@@ -559,7 +658,9 @@ fn kernel_runs_on_small_and_large_data() {
     let small = mat_from_rows(&[&[4.0, 1.0], &[1.0, 3.0]]);
     let small_svd = backend.svd(small.view()).unwrap();
     assert_eq!(small_svd.singular_values.len(), 2);
-    let small_solve = backend.solve(small.view(), mat_from_rows(&[&[1.0], &[2.0]]).view()).unwrap();
+    let small_solve = backend
+        .solve(small.view(), mat_from_rows(&[&[1.0], &[2.0]]).view())
+        .unwrap();
     assert!((small_solve[(0, 0)] - 0.0909f64).abs() < 1e-3);
     let small_inv = backend.inv(small.view()).unwrap();
     let small_identity = small.dot(&small_inv);
@@ -667,12 +768,11 @@ fn truncated_decomposition_roadmap_is_not_precluded() {
     // values; a future truncated `svds`/`eigsh` (out-of-core) returns the
     // same types for a bounded rank, so the surface stays additive.
     fn assert_concrete_containers<F: SKFloat>() {
-        let _: SKSingularValueDecomposition<F> =
-            SKSingularValueDecomposition {
-                u: Array2::<F>::zeros((2, 2)),
-                singular_values: vec![F::one(), F::one()],
-                v: Array2::<F>::zeros((2, 2)),
-            };
+        let _: SKSingularValueDecomposition<F> = SKSingularValueDecomposition {
+            u: Array2::<F>::zeros((2, 2)),
+            singular_values: vec![F::one(), F::one()],
+            v: Array2::<F>::zeros((2, 2)),
+        };
     }
     assert_concrete_containers::<f64>();
     assert_concrete_containers::<f32>();

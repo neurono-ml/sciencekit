@@ -10,7 +10,7 @@ use ndarray::{Array1, Array2, ArrayView1, ArrayView2};
 use sciencekit_common::{SKBackendKind, SKError, SKFloat};
 
 use super::decompositions::{
-    SKLeastSquaresSolution, SKLUDecomposition, SKQRDecomposition, SKSingularValueDecomposition,
+    SKLUDecomposition, SKLeastSquaresSolution, SKQRDecomposition, SKSingularValueDecomposition,
 };
 
 /// The dense linear-algebra backend abstraction.
@@ -95,11 +95,7 @@ pub trait SKMathBackend<F: SKFloat>: Send + Sync {
     fn pinv(&self, a: ArrayView2<F>) -> Result<Array2<F>, SKError> {
         let (m, n) = a.dim();
         let svd = self.svd(a)?;
-        let cutoff = svd
-            .singular_values
-            .first()
-            .copied()
-            .unwrap_or(F::zero())
+        let cutoff = svd.singular_values.first().copied().unwrap_or(F::zero())
             * F::epsilon()
             * F::from(m.max(n)).unwrap();
         let mut sigma_plus = Array2::<F>::zeros((n, m));
@@ -134,11 +130,7 @@ pub trait SKMathBackend<F: SKFloat>: Send + Sync {
         b: ArrayView2<F>,
     ) -> Result<SKLeastSquaresSolution<F>, SKError> {
         let svd = self.svd(a)?;
-        let cutoff = svd
-            .singular_values
-            .first()
-            .copied()
-            .unwrap_or(F::zero())
+        let cutoff = svd.singular_values.first().copied().unwrap_or(F::zero())
             * F::epsilon()
             * F::from(a.nrows().max(a.ncols())).unwrap();
         let rank = svd
@@ -215,7 +207,11 @@ pub trait SKMathBackend<F: SKFloat>: Send + Sync {
             }
             SKNormKind::Nuclear => {
                 let svd = self.svd(a)?;
-                Ok(svd.singular_values.iter().copied().fold(F::zero(), |acc, value| acc + value))
+                Ok(svd
+                    .singular_values
+                    .iter()
+                    .copied()
+                    .fold(F::zero(), |acc, value| acc + value))
             }
             SKNormKind::General { .. } => Err(SKError::Conversion(
                 "General p-norms are only supported for vectors".into(),
@@ -229,7 +225,9 @@ pub trait SKMathBackend<F: SKFloat>: Send + Sync {
     /// covers arbitrary p-norms `(∑|x|ᵖ)^(1/p)` (p = 0 counts non-zeros).
     fn vector_norm(&self, a: ArrayView1<F>, ord: SKNormKind<F>) -> Result<F, SKError> {
         match ord {
-            SKNormKind::Frobenius | SKNormKind::L2 => Ok(a.mapv(|value| value * value).sum().sqrt()),
+            SKNormKind::Frobenius | SKNormKind::L2 => {
+                Ok(a.mapv(|value| value * value).sum().sqrt())
+            }
             SKNormKind::L1 => Ok(a.mapv(F::abs).sum()),
             SKNormKind::Infinity => Ok(a.iter().copied().fold(F::neg_infinity(), F::max)),
             SKNormKind::NegativeInfinity => Ok(a.iter().copied().fold(F::infinity(), F::min)),
@@ -244,16 +242,18 @@ pub trait SKMathBackend<F: SKFloat>: Send + Sync {
             SKNormKind::General { order } => {
                 if order == F::zero() {
                     let count = a.iter().filter(|&&value| value != F::zero()).count();
-                    Ok(F::from(count)
-                        .ok_or_else(|| SKError::Conversion("norm overflow".into()))?)
+                    Ok(
+                        F::from(count)
+                            .ok_or_else(|| SKError::Conversion("norm overflow".into()))?,
+                    )
                 } else {
                     let sum = a.mapv(|value| value.abs().powf(order)).sum();
                     Ok(sum.powf(F::one() / order))
                 }
             }
-            SKNormKind::Nuclear => {
-                Err(SKError::Conversion("nuclear norm is only defined for matrices".into()))
-            }
+            SKNormKind::Nuclear => Err(SKError::Conversion(
+                "nuclear norm is only defined for matrices".into(),
+            )),
         }
     }
 }
@@ -280,11 +280,7 @@ fn sk_permutation_sign<F: SKFloat>(pivot: &[usize]) -> F {
             parity = !parity;
         }
     }
-    if parity {
-        -F::one()
-    } else {
-        F::one()
-    }
+    if parity { -F::one() } else { F::one() }
 }
 
 /// The norm orders supported by [`SKMathBackend::norm`] and

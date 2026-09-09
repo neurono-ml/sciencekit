@@ -156,7 +156,11 @@ macro_rules! faer_gemm_for {
             let rows = a.as_ref().nrows();
             let cols = b.as_ref().ncols();
             let mut output = Mat::<$float>::zeros(rows, cols);
-            let par = if parallelism > 1 { Par::rayon(parallelism) } else { Par::Seq };
+            let par = if parallelism > 1 {
+                Par::rayon(parallelism)
+            } else {
+                Par::Seq
+            };
             matmul(
                 output.as_mut(),
                 Accum::Replace,
@@ -221,7 +225,11 @@ macro_rules! impl_math_backend {
 
             fn cholesky(&self, a: ArrayView2<$float>) -> Result<Array2<$float>, SKError> {
                 let a = to_faer(a);
-                let factor = a.as_ref().to_owned().llt(Side::Lower).map_err(to_sk_error)?;
+                let factor = a
+                    .as_ref()
+                    .to_owned()
+                    .llt(Side::Lower)
+                    .map_err(to_sk_error)?;
                 Ok(to_ndarray(&factor.L().to_owned()))
             }
 
@@ -244,9 +252,13 @@ macro_rules! impl_math_backend {
                 let mut rhs = to_ndarray_copy(&b);
                 match (lower, unit_diagonal) {
                     (true, false) => a.as_ref().solve_lower_triangular_in_place(rhs.as_mut()),
-                    (true, true) => a.as_ref().solve_unit_lower_triangular_in_place(rhs.as_mut()),
+                    (true, true) => a
+                        .as_ref()
+                        .solve_unit_lower_triangular_in_place(rhs.as_mut()),
                     (false, false) => a.as_ref().solve_upper_triangular_in_place(rhs.as_mut()),
-                    (false, true) => a.as_ref().solve_unit_upper_triangular_in_place(rhs.as_mut()),
+                    (false, true) => a
+                        .as_ref()
+                        .solve_unit_upper_triangular_in_place(rhs.as_mut()),
                 }
                 Ok(to_ndarray(&rhs))
             }
@@ -282,9 +294,7 @@ macro_rules! impl_math_backend {
                     .self_adjoint_eigen(Side::Lower)
                     .map_err(to_sk_error)?;
                 let mut eigenvalues = Vec::new();
-                decomposition
-                    .S()
-                    .for_each(|&value| eigenvalues.push(value));
+                decomposition.S().for_each(|&value| eigenvalues.push(value));
                 Ok((
                     Array1::from(eigenvalues),
                     to_ndarray(&decomposition.U().to_owned()),
@@ -328,10 +338,7 @@ macro_rules! impl_math_backend {
                 decomposition
                     .S()
                     .for_each(|&value| singular_values.push(value));
-                let cutoff = singular_values
-                    .first()
-                    .copied()
-                    .unwrap_or(0.0)
+                let cutoff = singular_values.first().copied().unwrap_or(0.0)
                     * <$float>::EPSILON
                     * (a.nrows().max(a.ncols()) as $float);
                 let rank = singular_values
