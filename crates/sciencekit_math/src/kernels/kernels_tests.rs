@@ -149,3 +149,20 @@ fn same_array_driven_through_both_plans_agrees() {
     let parallel = sk_elementwise_transform(&input.view(), f, 4);
     assert_close(&sequential, &parallel);
 }
+
+// ---- Task 2.3 scenario (spec `higher-order-kernels`, race-free axis reduction) ----
+
+/// A wide, tall matrix reduced along axis 0 with parallelism greater than one
+/// equals the sequential column sums within tolerance. The parallel path must
+/// accumulate per-chunk partials (no shared mutable accumulator), so this holds
+/// across many rows without a race.
+#[test]
+fn parallel_axis_zero_sum_matches_sequential_reference() {
+    let (rows, cols) = (4096, 256);
+    let input: Array2<f64> = Array2::from_shape_fn((rows, cols), |(i, j)| {
+        (i as f64) * 0.001 + (j as f64) * 0.5
+    });
+    let sequential = sk_axis_sum(&input.view(), 0, 1);
+    let parallel = sk_axis_sum(&input.view(), 0, 8);
+    assert_close(&sequential, &parallel);
+}
