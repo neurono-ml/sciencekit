@@ -14,8 +14,8 @@
 
 ## 3. Grain calibration (provenance, no magic constants)
 
-- [ ] 3.1 Add `criterion` benches under `crates/sciencekit_math/benches/` covering the calibration matrix: each kernel × cheap/medium/expensive closures × sizes 10¹–10⁷; sequential-vs-parallel crossover extraction; raw artifacts under `temporary/YYYY-MM-DD/parallel-kernel-execution/`.
-- [ ] 3.2 Record each kernel's grain constants beside the kernel with provenance comment (protocol, machine, date); re-run confirmation on all four kernels (spec `higher-order-kernels` provenance scenario); wire recorded grains into the resolution inputs of 1.2 if they differ from the provisional values; commit + sync `-openspec` worktree.
+- [x] 3.1 Add `criterion` benches under `crates/sciencekit_math/benches/` covering the calibration matrix: each kernel × cheap/medium/expensive closures × sizes 10¹–10⁷; sequential-vs-parallel crossover extraction; raw artifacts under `temporary/YYYY-MM-DD/parallel-kernel-execution/`.
+- [x] 3.2 Record each kernel's grain constants beside the kernel with provenance comment (protocol, machine, date); re-run confirmation on all four kernels (spec `higher-order-kernels` provenance scenario); wire recorded grains into the resolution inputs of 1.2 if they differ from the provisional values; commit + sync `-openspec` worktree.
 
 ## 4. Streaming driver (I/O ∥ CPU)
 
