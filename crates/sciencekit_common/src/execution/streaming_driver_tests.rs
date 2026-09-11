@@ -146,3 +146,76 @@ fn buffer_depth_is_respected() {
         max_outstanding.load(Ordering::SeqCst)
     );
 }
+
+// ---- Task 4.3 scenarios (spec `streaming-executor`, control flow) ----
+
+/// Early stop via the callback halts the pipeline: batch k's effect is kept, no
+/// batch beyond the prefetched k+1 is requested, and the call returns without
+/// error.
+#[test]
+fn early_stop_halts_the_pipeline() {
+    let (mut source, read_log, _outstanding, _max) = RecordingSource::new(8, None);
+    let update = |batch: SKDataBatch<f64>, _parallelism: usize, state: &mut Vec<usize>| {
+        state.push(batch.position());
+        if batch.position() == 2 {
+            SKStreamDecision::Stop
+        } else {
+            SKStreamDecision::Continue
+        }
+    };
+    let mut state = Vec::new();
+    let result = sk_run_streaming_driver(&mut source, &mut state, update, &streaming_plan());
+
+    assert!(result.is_ok(), "early stop should return without error");
+    assert_eq!(state, vec![0, 1, 2]);
+    let max_read = read_log
+        .lock()
+        .unwrap()
+        .iter()
+        .map(|(index, _)| *index)
+        .max()
+        .unwrap();
+    assert!(
+        max_read <= 3,
+        "read beyond the prefetched batch: up to index {max_read}"
+    );
+}
+
+/// A mid-stream read failure surfaces the central taxonomy error with the
+/// effects of earlier batches preserved, and no further batch is processed.
+#[test]
+fn intermediate_read_failure_propagates_structured_error() {
+    let (mut source, _read_log, _outstanding, _max) = RecordingSource::new(8, Some(3));
+    let update = |batch: SKDataBatch<f64>, _parallelism: usize, state: &mut Vec<usize>| {
+        state.push(batch.position());
+        SKStreamDecision::Continue
+    };
+    let mut state = Vec::new();
+    let result = sk_run_streaming_driver(&mut source, &mut state, update, &streaming_plan());
+
+    match result {
+        Err(SKError::Conversion(message)) => {
+            assert!(message.contains("mid-stream read failure"));
+        }
+        other => panic!("expected taxonomy error, got {other:?}"),
+    }
+    assert_eq!(state, vec![0, 1, 2], "earlier batch effects must be preserved");
+}
+
+/// On a finite source, exactly one batch is delivered flagged final, and it is
+/// the last one; the driver then terminates normally.
+#[test]
+fn final_batch_is_delivered_exactly_once() {
+    let (mut source, _read_log, _outstanding, _max) = RecordingSource::new(5, None);
+    let update = |batch: SKDataBatch<f64>, _parallelism: usize, state: &mut Vec<(usize, bool)>| {
+        state.push((batch.position(), batch.is_final()));
+        SKStreamDecision::Continue
+    };
+    let mut state = Vec::new();
+    sk_run_streaming_driver(&mut source, &mut state, update, &streaming_plan()).unwrap();
+
+    assert_eq!(state.len(), 5);
+    let final_count = state.iter().filter(|(_, is_final)| *is_final).count();
+    assert_eq!(final_count, 1);
+    assert_eq!(state.last(), Some(&(4, true)));
+}
