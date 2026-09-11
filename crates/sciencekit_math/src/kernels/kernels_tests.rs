@@ -2,6 +2,8 @@
 
 use ndarray::{Array, Array1, Array2, array};
 use sciencekit_common::SKFloat;
+use sciencekit_common::execution::{SKStreamDecision, sk_run_streaming_driver};
+use sciencekit_common::{SKDataBatch, SKError, SKExecutionMode, SKExecutionPlan, SKLazySource};
 
 use super::{sk_axis_sum, sk_binary_combine, sk_elementwise_transform, sk_scale_in_place};
 
@@ -200,4 +202,56 @@ fn parallel_kernels_agree_under_concurrency() {
             .join()
             .expect("concurrent kernel thread must not panic");
     }
+}
+
+// ---- Task 5.1 composition: driver × parallel compute (streaming-executor) ----
+
+/// A four-row source; each row is one batch.
+struct DriverRowSource {
+    next: usize,
+}
+
+impl SKLazySource<f64> for DriverRowSource {
+    type Error = SKError;
+    fn next_batch(&mut self) -> Result<Option<SKDataBatch<f64>>, Self::Error> {
+        if self.next >= 4 {
+            return Ok(None);
+        }
+        let position = self.next;
+        self.next += 1;
+        let data =
+            Array2::from_shape_vec((1, 2), vec![position as f64, (position * 10) as f64]).unwrap();
+        Ok(Some(SKDataBatch::new(data, position, position == 3)))
+    }
+}
+
+/// The driver applies the plan's parallelism to each batch's computation: an
+/// update step that runs a parallel kernel per batch agrees with a sequential
+/// reference, end-to-end.
+#[test]
+fn driver_applies_plan_parallelism_to_each_batch() {
+    let mut source = DriverRowSource { next: 0 };
+    let plan = SKExecutionPlan {
+        mode: SKExecutionMode::OutOfCoreStreaming,
+        parallelism: 8,
+        batch_size: Some(1),
+        buffer_depth: 1,
+    };
+    let mut results = Vec::new();
+    let update = |batch: SKDataBatch<f64>, parallelism: usize, results: &mut Vec<f64>| {
+        let view = batch.data();
+        let row = Array1::from_shape_vec(2, vec![view[(0, 0)], view[(0, 1)]]).unwrap();
+        let scaled = sk_elementwise_transform(&row.view(), |x| 2.0 * x + 1.0, parallelism);
+        results.push(scaled[0] + scaled[1]);
+        SKStreamDecision::Continue
+    };
+    sk_run_streaming_driver(&mut source, &mut results, update, &plan).unwrap();
+
+    let mut reference = Vec::new();
+    for position in 0..4 {
+        let row = Array1::from_vec(vec![position as f64, (position * 10) as f64]);
+        let scaled = sk_elementwise_transform(&row.view(), |x| 2.0 * x + 1.0, 1);
+        reference.push(scaled[0] + scaled[1]);
+    }
+    assert_eq!(results, reference);
 }
