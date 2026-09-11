@@ -2,8 +2,8 @@
 
 - [x] 1.1 TDD: add failing tests to `execution_tests.rs` proving `sk_resolve_execution_plan` derives `parallelism` from work-unit size and grain — small in-memory dataset → 1; streaming batch hint below one grain → 1; memory-mapped → `cores`; determinism on repeated resolution with identical context (spec `execution-planning`).
 - [x] 1.2 Minimal implementation of the size-aware rule in `crates/sciencekit_common/src/execution/resolve.rs` with per-kernel grain inputs documented; keep resolution pure (no machine reads).
-- [ ] 1.3 TDD: failing tests for the double-buffer guard — `2 × batch > available_memory` (simulated) → structured error naming both quantities, raised before processing; automatic intent success path when the guard holds (spec `execution-planning`).
-- [ ] 1.4 Minimal implementation of the guard (new `SKError` variant in the central taxonomy); commit + sync `-openspec` worktree (`tasks.md` check, touched spec artifacts).
+- [x] 1.3 TDD: failing tests for the double-buffer guard — `2 × batch > available_memory` (simulated) → structured error naming both quantities, raised before processing; automatic intent success path when the guard holds (spec `execution-planning`).
+- [x] 1.4 Minimal implementation of the guard (new `SKError` variant in the central taxonomy); commit + sync `-openspec` worktree (`tasks.md` check, touched spec artifacts).
 
 ## 2. Kernels honor the plan
 
