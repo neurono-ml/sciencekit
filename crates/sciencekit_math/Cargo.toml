@@ -39,3 +39,11 @@ blas-backend = [
     "ndarray-linalg/openblas-system",
     "blas-src/openblas",
 ]
+
+[dev-dependencies]
+# Grain calibration protocol for the dense kernels (see `benches/kernel_calibration.rs`).
+criterion = "0.5"
+
+[[bench]]
+name = "kernel_calibration"
+harness = false
