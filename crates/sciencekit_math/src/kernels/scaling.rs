@@ -8,7 +8,11 @@ use sciencekit_common::SKFloat;
 /// Mutates `input` in place and returns nothing — no new buffer is allocated.
 /// Honours the resolved `parallelism`: `1` runs the sequential [`azip!`] form,
 /// `> 1` dispatches [`par_azip!`] across the element grid.
-pub fn sk_scale_in_place<F: SKFloat>(input: &mut Array<F, ndarray::Ix2>, factor: F, parallelism: usize) {
+pub fn sk_scale_in_place<F: SKFloat>(
+    input: &mut Array<F, ndarray::Ix2>,
+    factor: F,
+    parallelism: usize,
+) {
     if parallelism > 1 {
         par_azip!((value in input) { *value = *value * factor; });
     } else {

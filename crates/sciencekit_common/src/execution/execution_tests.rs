@@ -294,19 +294,8 @@ fn memory_mapped_resolves_full_sharding() {
 /// A single-core machine always resolves to parallelism one.
 #[test]
 fn single_core_machine_resolves_sequential_everywhere() {
-    for pattern in [
-        SKAccessPattern::Sequential,
-        SKAccessPattern::RandomAccess,
-    ] {
-        let ctx = simulated(
-            1 << 30,
-            1,
-            1 << 40,
-            None,
-            8,
-            pattern,
-            Some(100_000),
-        );
+    for pattern in [SKAccessPattern::Sequential, SKAccessPattern::RandomAccess] {
+        let ctx = simulated(1 << 30, 1, 1 << 40, None, 8, pattern, Some(100_000));
         let plan = sk_resolve_execution_plan(SKExecutionMode::Automatic, &ctx).unwrap();
         assert_eq!(plan.parallelism, 1);
     }

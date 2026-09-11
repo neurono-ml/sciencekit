@@ -57,9 +57,7 @@ fn calibration(c: &mut Criterion) {
     let parallelism = std::thread::available_parallelism()
         .map(|n| n.get())
         .unwrap_or(1);
-    eprintln!(
-        "calibration: available_parallelism={parallelism}, sizes={SIZES:?}"
-    );
+    eprintln!("calibration: available_parallelism={parallelism}, sizes={SIZES:?}");
 
     for &size in &SIZES {
         let input: Array1<f64> = Array1::from_shape_fn(size, |i| (i as f64) * 1e-3);
@@ -70,14 +68,12 @@ fn calibration(c: &mut Criterion) {
             ("medium", medium),
             ("expensive", expensive),
         ] {
-            c.bench_function(
-                &format!("elementwise/{cost}/n={size}/seq"),
-                |b| b.iter(|| sk_elementwise_transform(&input.view(), transform, 1)),
-            );
-            c.bench_function(
-                &format!("elementwise/{cost}/n={size}/par"),
-                |b| b.iter(|| sk_elementwise_transform(&input.view(), transform, parallelism)),
-            );
+            c.bench_function(&format!("elementwise/{cost}/n={size}/seq"), |b| {
+                b.iter(|| sk_elementwise_transform(&input.view(), transform, 1))
+            });
+            c.bench_function(&format!("elementwise/{cost}/n={size}/par"), |b| {
+                b.iter(|| sk_elementwise_transform(&input.view(), transform, parallelism))
+            });
         }
 
         for (cost, combine) in [
@@ -85,18 +81,12 @@ fn calibration(c: &mut Criterion) {
             ("medium", combine_medium),
             ("expensive", combine_expensive),
         ] {
-            c.bench_function(
-                &format!("binary/{cost}/n={size}/seq"),
-                |b| b.iter(|| sk_binary_combine(&input.view(), &right.view(), combine, 1)),
-            );
-            c.bench_function(
-                &format!("binary/{cost}/n={size}/par"),
-                |b| {
-                    b.iter(|| {
-                        sk_binary_combine(&input.view(), &right.view(), combine, parallelism)
-                    })
-                },
-            );
+            c.bench_function(&format!("binary/{cost}/n={size}/seq"), |b| {
+                b.iter(|| sk_binary_combine(&input.view(), &right.view(), combine, 1))
+            });
+            c.bench_function(&format!("binary/{cost}/n={size}/par"), |b| {
+                b.iter(|| sk_binary_combine(&input.view(), &right.view(), combine, parallelism))
+            });
         }
 
         let matrix: Array2<f64> =

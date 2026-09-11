@@ -100,10 +100,7 @@ fn check_buffer_guard(context: &SKExecutionContext) -> Result<(), SKError> {
 /// the unit is the whole dataset (in-memory), one batch (streaming) or an
 /// arbitrary shard (memory-mapped → always `cores`). Sub-grain or unknown units
 /// and single-core machines resolve to exactly one.
-fn parallelism_for(
-    mode: SKExecutionMode,
-    context: &SKExecutionContext,
-) -> usize {
+fn parallelism_for(mode: SKExecutionMode, context: &SKExecutionContext) -> usize {
     if context.cpu_cores <= 1 {
         return 1;
     }

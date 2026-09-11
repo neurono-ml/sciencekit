@@ -12,8 +12,8 @@ use std::sync::{Arc, Condvar, Mutex};
 
 use super::plan::SKExecutionPlan;
 use crate::SKError;
-use crate::batching::{SKDataBatch, SKLazySource};
 use crate::SKFloat;
+use crate::batching::{SKDataBatch, SKLazySource};
 
 /// The decision an update step returns to steer the pipeline.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -164,15 +164,13 @@ where
         let mut result = Ok(());
         loop {
             match next_item(&shared) {
-                Some(Item::Batch(batch)) => {
-                    match update(batch, plan.parallelism, state) {
-                        SKStreamDecision::Continue => continue,
-                        SKStreamDecision::Stop => {
-                            request_stop(&shared);
-                            break;
-                        }
+                Some(Item::Batch(batch)) => match update(batch, plan.parallelism, state) {
+                    SKStreamDecision::Continue => continue,
+                    SKStreamDecision::Stop => {
+                        request_stop(&shared);
+                        break;
                     }
-                }
+                },
                 Some(Item::Error(error)) => {
                     request_stop(&shared);
                     result = Err(error);

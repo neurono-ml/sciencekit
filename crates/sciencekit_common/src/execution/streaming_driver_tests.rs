@@ -21,8 +21,17 @@ struct RecordingSource {
     max_outstanding: Arc<AtomicUsize>,
 }
 
+#[allow(clippy::type_complexity)]
 impl RecordingSource {
-    fn new(total: usize, fail_at: Option<usize>) -> (Self, Arc<Mutex<Vec<(usize, Instant)>>>, Arc<AtomicUsize>, Arc<AtomicUsize>) {
+    fn new(
+        total: usize,
+        fail_at: Option<usize>,
+    ) -> (
+        Self,
+        Arc<Mutex<Vec<(usize, Instant)>>>,
+        Arc<AtomicUsize>,
+        Arc<AtomicUsize>,
+    ) {
         let read_log = Arc::new(Mutex::new(Vec::new()));
         let outstanding = Arc::new(AtomicUsize::new(0));
         let max_outstanding = Arc::new(AtomicUsize::new(0));
@@ -51,12 +60,18 @@ impl SKLazySource<f64> for RecordingSource {
         }
         let position = self.next;
         self.next += 1;
-        self.read_log.lock().unwrap().push((position, Instant::now()));
+        self.read_log
+            .lock()
+            .unwrap()
+            .push((position, Instant::now()));
         let current = self.outstanding.fetch_add(1, Ordering::SeqCst) + 1;
-        self.max_outstanding
-            .fetch_max(current, Ordering::SeqCst);
+        self.max_outstanding.fetch_max(current, Ordering::SeqCst);
         let data = Array2::from_shape_vec((1, 1), vec![position as f64]).unwrap();
-        Ok(Some(SKDataBatch::new(data, position, position == self.total - 1)))
+        Ok(Some(SKDataBatch::new(
+            data,
+            position,
+            position == self.total - 1,
+        )))
     }
 }
 
@@ -81,7 +96,10 @@ fn reader_advances_while_compute_runs() {
     let finish = Arc::clone(&finish_log);
     let update = move |batch: SKDataBatch<f64>, _parallelism: usize, _state: &mut ()| {
         thread::sleep(Duration::from_millis(50));
-        finish.lock().unwrap().push((batch.position(), Instant::now()));
+        finish
+            .lock()
+            .unwrap()
+            .push((batch.position(), Instant::now()));
         SKStreamDecision::Continue
     };
     let mut state = ();
@@ -110,11 +128,12 @@ fn reader_advances_while_compute_runs() {
 #[test]
 fn ordered_delivery_of_owned_batches() {
     let (mut source, _read_log, _outstanding, _max) = RecordingSource::new(5, None);
-    let update = |batch: SKDataBatch<f64>, _parallelism: usize, state: &mut Vec<(usize, Vec<f64>)>| {
-        let data = batch.data().as_slice_memory_order().unwrap().to_vec();
-        state.push((batch.position(), data));
-        SKStreamDecision::Continue
-    };
+    let update =
+        |batch: SKDataBatch<f64>, _parallelism: usize, state: &mut Vec<(usize, Vec<f64>)>| {
+            let data = batch.data().as_slice_memory_order().unwrap().to_vec();
+            state.push((batch.position(), data));
+            SKStreamDecision::Continue
+        };
     let mut state = Vec::new();
     sk_run_streaming_driver(&mut source, &mut state, update, &streaming_plan()).unwrap();
 
@@ -199,7 +218,11 @@ fn intermediate_read_failure_propagates_structured_error() {
         }
         other => panic!("expected taxonomy error, got {other:?}"),
     }
-    assert_eq!(state, vec![0, 1, 2], "earlier batch effects must be preserved");
+    assert_eq!(
+        state,
+        vec![0, 1, 2],
+        "earlier batch effects must be preserved"
+    );
 }
 
 /// On a finite source, exactly one batch is delivered flagged final, and it is
@@ -245,12 +268,14 @@ fn driver_runs_concurrently_across_threads() {
         .map(|_| {
             std::thread::spawn(|| {
                 let (mut source, _read_log, _outstanding, _max) = RecordingSource::new(5, None);
-                let update = |batch: SKDataBatch<f64>, _parallelism: usize, state: &mut Vec<usize>| {
-                    state.push(batch.position());
-                    SKStreamDecision::Continue
-                };
+                let update =
+                    |batch: SKDataBatch<f64>, _parallelism: usize, state: &mut Vec<usize>| {
+                        state.push(batch.position());
+                        SKStreamDecision::Continue
+                    };
                 let mut state = Vec::new();
-                sk_run_streaming_driver(&mut source, &mut state, update, &streaming_plan()).unwrap();
+                sk_run_streaming_driver(&mut source, &mut state, update, &streaming_plan())
+                    .unwrap();
                 state
             })
         })

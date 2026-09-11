@@ -159,9 +159,8 @@ fn same_array_driven_through_both_plans_agrees() {
 #[test]
 fn parallel_axis_zero_sum_matches_sequential_reference() {
     let (rows, cols) = (4096, 256);
-    let input: Array2<f64> = Array2::from_shape_fn((rows, cols), |(i, j)| {
-        (i as f64) * 0.001 + (j as f64) * 0.5
-    });
+    let input: Array2<f64> =
+        Array2::from_shape_fn((rows, cols), |(i, j)| (i as f64) * 0.001 + (j as f64) * 0.5);
     let sequential = sk_axis_sum(&input.view(), 0, 1);
     let parallel = sk_axis_sum(&input.view(), 0, 8);
     assert_close(&sequential, &parallel);
@@ -183,8 +182,9 @@ fn parallel_kernels_agree_under_concurrency() {
                 let par_t = sk_elementwise_transform(&input.view(), |x| x.sin(), 8);
                 assert_close(&seq_t, &par_t);
 
-                let m: Array2<f64> =
-                    Array2::from_shape_fn((512, 128), |(i, j)| (i as f64) * 0.001 + j as f64 * 0.25);
+                let m: Array2<f64> = Array2::from_shape_fn((512, 128), |(i, j)| {
+                    (i as f64) * 0.001 + j as f64 * 0.25
+                });
                 let seq_s = sk_axis_sum(&m.view(), 0, 1);
                 let par_s = sk_axis_sum(&m.view(), 0, 8);
                 assert_close(&seq_s, &par_s);
@@ -196,6 +196,8 @@ fn parallel_kernels_agree_under_concurrency() {
         })
         .collect();
     for handle in handles {
-        handle.join().expect("concurrent kernel thread must not panic");
+        handle
+            .join()
+            .expect("concurrent kernel thread must not panic");
     }
 }
