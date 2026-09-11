@@ -46,6 +46,7 @@ pub fn sk_resolve_execution_plan(
                 mode,
                 parallelism: parallelism_for(mode, context),
                 batch_size,
+                buffer_depth: 1,
             })
         }
         SKExecutionMode::InProcessSynchronous
@@ -54,6 +55,7 @@ pub fn sk_resolve_execution_plan(
             mode: intent,
             parallelism: parallelism_for(intent, context),
             batch_size: None,
+            buffer_depth: 1,
         }),
         SKExecutionMode::OutOfCoreStreaming => {
             if context.access_pattern == SKAccessPattern::RandomAccess {
@@ -67,6 +69,7 @@ pub fn sk_resolve_execution_plan(
                     mode: intent,
                     parallelism: parallelism_for(intent, context),
                     batch_size: context.batch_size_hint,
+                    buffer_depth: 1,
                 })
             }
         }

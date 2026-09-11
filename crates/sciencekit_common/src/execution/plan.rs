@@ -11,4 +11,8 @@ pub struct SKExecutionPlan {
     pub parallelism: usize,
     /// The batch size for streaming modes, when applicable.
     pub batch_size: Option<usize>,
+    /// The prefetch buffer depth for streaming — the number of batches read
+    /// ahead of compute. Double buffering is `1` (one batch computing, one
+    /// prefetched); depth greater than one is future work.
+    pub buffer_depth: usize,
 }
