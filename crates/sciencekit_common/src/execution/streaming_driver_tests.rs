@@ -219,3 +219,69 @@ fn final_batch_is_delivered_exactly_once() {
     assert_eq!(final_count, 1);
     assert_eq!(state.last(), Some(&(4, true)));
 }
+
+// ---- Task 5.1 scenarios (PRD §8.7 acceptance: concurrency, metrics, sizes) ----
+
+/// A streaming consumer accumulates a metric (here the total sum) across batches
+/// and the driver returns success, exercising the "produces metrics" acceptance.
+#[test]
+fn streaming_consumer_produces_correct_metric() {
+    let (mut source, _read_log, _outstanding, _max) = RecordingSource::new(6, None);
+    let update = |batch: SKDataBatch<f64>, _parallelism: usize, state: &mut f64| {
+        *state += batch.data()[(0, 0)];
+        SKStreamDecision::Continue
+    };
+    let mut metric = 0.0;
+    sk_run_streaming_driver(&mut source, &mut metric, update, &streaming_plan()).unwrap();
+    let expected: f64 = (0..6).map(|i| i as f64).sum();
+    assert_eq!(metric, expected);
+}
+
+/// The driver runs correctly from several threads concurrently, each with its
+/// own source, delivering ordered batches everywhere.
+#[test]
+fn driver_runs_concurrently_across_threads() {
+    let handles: Vec<_> = (0..4)
+        .map(|_| {
+            std::thread::spawn(|| {
+                let (mut source, _read_log, _outstanding, _max) = RecordingSource::new(5, None);
+                let update = |batch: SKDataBatch<f64>, _parallelism: usize, state: &mut Vec<usize>| {
+                    state.push(batch.position());
+                    SKStreamDecision::Continue
+                };
+                let mut state = Vec::new();
+                sk_run_streaming_driver(&mut source, &mut state, update, &streaming_plan()).unwrap();
+                state
+            })
+        })
+        .collect();
+    for handle in handles {
+        assert_eq!(handle.join().unwrap(), vec![0, 1, 2, 3, 4]);
+    }
+}
+
+/// The driver accepts both a single-batch (little data) and a 1000-batch (lots
+/// of data) stream, and the sequential fallback (`parallelism = 1`) works
+/// end-to-end.
+#[test]
+fn driver_accepts_small_and_large_streams_with_sequential_fallback() {
+    let (mut small, _read_log, _outstanding, _max) = RecordingSource::new(1, None);
+    let update = |batch: SKDataBatch<f64>, _parallelism: usize, state: &mut Vec<usize>| {
+        state.push(batch.position());
+        SKStreamDecision::Continue
+    };
+    let mut small_state = Vec::new();
+    sk_run_streaming_driver(&mut small, &mut small_state, update, &streaming_plan()).unwrap();
+    assert_eq!(small_state, vec![0]);
+
+    let (mut large, _read_log, _outstanding, _max) = RecordingSource::new(1000, None);
+    let sequential_plan = SKExecutionPlan {
+        parallelism: 1,
+        ..streaming_plan()
+    };
+    let mut large_state = Vec::new();
+    sk_run_streaming_driver(&mut large, &mut large_state, update, &sequential_plan).unwrap();
+    assert_eq!(large_state.len(), 1000);
+    assert_eq!(*large_state.first().unwrap(), 0);
+    assert_eq!(*large_state.last().unwrap(), 999);
+}

@@ -166,3 +166,36 @@ fn parallel_axis_zero_sum_matches_sequential_reference() {
     let parallel = sk_axis_sum(&input.view(), 0, 8);
     assert_close(&sequential, &parallel);
 }
+
+// ---- Task 5.1 scenario (PRD §8.7 acceptance: concurrency under a shared pool) ----
+
+/// Parallel kernels running from several threads on the shared rayon pool agree
+/// with their sequential references, on small and large data.
+#[test]
+fn parallel_kernels_agree_under_concurrency() {
+    let handles: Vec<_> = (0..4)
+        .map(|_| {
+            std::thread::spawn(|| {
+                // Large data: elementwise + axis-0 reduction, parallel vs sequential.
+                let n = 1 << 15;
+                let input: Array1<f64> = Array1::from_shape_fn(n, |i| (i as f64) / 7.0);
+                let seq_t = sk_elementwise_transform(&input.view(), |x| x.sin(), 1);
+                let par_t = sk_elementwise_transform(&input.view(), |x| x.sin(), 8);
+                assert_close(&seq_t, &par_t);
+
+                let m: Array2<f64> =
+                    Array2::from_shape_fn((512, 128), |(i, j)| (i as f64) * 0.001 + j as f64 * 0.25);
+                let seq_s = sk_axis_sum(&m.view(), 0, 1);
+                let par_s = sk_axis_sum(&m.view(), 0, 8);
+                assert_close(&seq_s, &par_s);
+
+                // Small data: sequential fallback stays correct under concurrency.
+                let tiny: Array2<f64> = array![[1.0, 2.0], [3.0, 4.0]];
+                assert_eq!(sk_axis_sum(&tiny.view(), 0, 1), array![4.0, 6.0]);
+            })
+        })
+        .collect();
+    for handle in handles {
+        handle.join().expect("concurrent kernel thread must not panic");
+    }
+}
