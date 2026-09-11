@@ -19,10 +19,10 @@
 
 ## 4. Streaming driver (I/O ∥ CPU)
 
-- [ ] 4.1 TDD: failing tests in a new `execution/*_tests.rs` companion for the driver contract over an instrumented `SKLazySource` — prefetch ordering (source asked for batch k+1 before batch k completes, via read log), ordered delivery of owned batches, buffer depth respected (spec `streaming-executor`).
-- [ ] 4.2 Minimal implementation of the prefetch pipeline in `crates/sciencekit_common/src/execution/` (`streaming_driver.rs` per design): dedicated I/O thread, bounded double buffer, owned-batch handoff, compute on the rayon pool per plan parallelism.
-- [ ] 4.3 TDD: failing tests for control flow — early stop via `Continue | Stop` callback (no reads beyond stop), structured error propagation from an intermediate read failure (earlier effects preserved, taxonomy error returned), exactly-once final batch delivery on a finite source (spec `streaming-executor`).
-- [ ] 4.4 Minimal implementation of the control-flow paths; commit + sync `-openspec` worktree.
+- [x] 4.1 TDD: failing tests in a new `execution/*_tests.rs` companion for the driver contract over an instrumented `SKLazySource` — prefetch ordering (source asked for batch k+1 before batch k completes, via read log), ordered delivery of owned batches, buffer depth respected (spec `streaming-executor`).
+- [x] 4.2 Minimal implementation of the prefetch pipeline in `crates/sciencekit_common/src/execution/` (`streaming_driver.rs` per design): dedicated I/O thread, bounded double buffer, owned-batch handoff, compute on the rayon pool per plan parallelism.
+- [x] 4.3 TDD: failing tests for control flow — early stop via `Continue | Stop` callback (no reads beyond stop), structured error propagation from an intermediate read failure (earlier effects preserved, taxonomy error returned), exactly-once final batch delivery on a finite source (spec `streaming-executor`).
+- [x] 4.4 Minimal implementation of the control-flow paths; commit + sync `-openspec` worktree.
 
 ## 5. Integration, gates and documentation
 
