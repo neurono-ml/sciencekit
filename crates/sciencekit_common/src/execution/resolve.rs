@@ -39,6 +39,9 @@ pub fn sk_resolve_execution_plan(
             } else {
                 None
             };
+            if mode == SKExecutionMode::OutOfCoreStreaming {
+                check_buffer_guard(context)?;
+            }
             Ok(SKExecutionPlan {
                 mode,
                 parallelism: parallelism_for(mode, context),
@@ -59,6 +62,7 @@ pub fn sk_resolve_execution_plan(
                     pattern: "random-access",
                 })
             } else {
+                check_buffer_guard(context)?;
                 Ok(SKExecutionPlan {
                     mode: intent,
                     parallelism: parallelism_for(intent, context),
@@ -67,6 +71,26 @@ pub fn sk_resolve_execution_plan(
             }
         }
     }
+}
+
+/// The double-buffer memory guard for streaming plans: two resident batches
+/// must fit in available memory. Raised before any data is processed, when a
+/// batch hint is present and its byte size is known.
+fn check_buffer_guard(context: &SKExecutionContext) -> Result<(), SKError> {
+    if let Some(batch_elements) = context.batch_size_hint {
+        if context.scalar_size_bytes > 0 {
+            let batch_bytes = (batch_elements as u64).saturating_mul(context.scalar_size_bytes);
+            let required_bytes = batch_bytes.saturating_mul(2);
+            if required_bytes > context.available_memory_bytes {
+                return Err(SKError::BatchBufferOversize {
+                    batch_bytes,
+                    required_bytes,
+                    available_bytes: context.available_memory_bytes,
+                });
+            }
+        }
+    }
+    Ok(())
 }
 
 /// The parallelism for a resolved mode: `min(cores, ceil(unit / grain))`, where
