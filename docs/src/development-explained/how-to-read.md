@@ -1,6 +1,6 @@
-# How to read this book
+# Developer Book
 
-This is a textbook *inside* the sciencekit documentation. The other chapters tell you
+Welcome to the **Developer Book** — a textbook *inside* the sciencekit documentation. The other pages tell you
 **what sciencekit is**. These chapters tell you **how sciencekit was built** — decision by
 decision, pull request by pull request — and, more importantly, *why* each choice was made,
 and what alternatives were deliberately thrown away.
@@ -11,7 +11,7 @@ You do not need a background in Rust or in numerical computing to read it. You n
 - **Curiosity** — you want to know *why*, not just *what*.
 - **Patience** — some ideas (traits, generics, zero-copy) take a chapter or two to click.
 
-## How the chapters are organised
+## How to read this book
 
 Each chapter corresponds to one real pull request that changed the code, and each is written
 as a self-contained lesson with the same skeleton:
@@ -34,18 +34,18 @@ run `cargo test` and watch it pass. The test is the proof; the chapter is the ex
 ## The order matters
 
 The chapters follow the order the code was written. Earlier chapters build concepts that
-later chapters assume. In particular, **Ch. 2 (core contracts)** is the keystone — almost
+later chapters assume. In particular, **Core contracts** is the keystone — almost
 every later chapter builds on the types it introduces. If you only read one chapter first,
 read that one.
 
 ```
-Ch.1  workspace & CI          — the skeleton
-Ch.2  core contracts          — the vocabulary (traits, errors, views)  ← keystone
-Ch.3  math kernels & BLAS     — the numeric substrate
-Ch.4  execution & observability
-Ch.5  the host-centric backend
-Ch.6  module hygiene           — how the code is organised as it grows
-Ch.7  parallel kernels & streaming
+Bootstrap: workspace & CI     — the skeleton
+Core contracts                — the vocabulary (traits, errors, views)  ← keystone
+Math kernels & BLAS           — the numeric substrate
+Execution & observability
+The host-centric backend
+Module hygiene                — how the code is organised as it grows
+Parallel kernels & streaming
 ```
 
 ## How to keep this book honest

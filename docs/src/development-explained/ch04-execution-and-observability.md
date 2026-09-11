@@ -1,4 +1,4 @@
-# Ch. 4 — Execution modes, resolution and observability
+# Execution modes, resolution and observability
 
 A machine-learning library cannot assume one-size-fits-all execution: the same algorithm
 must run instantly on a small in-memory dataset, stream through one too large to fit in

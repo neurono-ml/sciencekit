@@ -1,4 +1,4 @@
-# Ch. 2 — Core contracts in `sciencekit_common`
+# Core contracts in `sciencekit_common`
 
 Before any algorithm can crunch numbers, the whole library has to agree on a shared
 *vocabulary*: what a number is, what an error looks like, what a piece of data is, and

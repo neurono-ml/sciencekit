@@ -1,4 +1,4 @@
-# Ch. 7 — Parallel kernels and the streaming executor
+# Parallel kernels and the streaming executor
 
 Modern machines have many cores, but your data comes in all sizes. A library that blindly
 parallelizes everything wastes time on a 4-element array, and a library that never

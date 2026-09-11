@@ -1,4 +1,4 @@
-# Ch. 3 — `sciencekit_math`: kernels, distances and the BLAS interface
+# `sciencekit_math`: kernels, distances and the BLAS interface
 
 Every machine-learning algorithm, from linear regression to clustering to a support-vector
 machine, is at its heart just arithmetic done very, very fast over big tables of numbers.
