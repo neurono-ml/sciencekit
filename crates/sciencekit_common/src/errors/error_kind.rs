@@ -47,6 +47,20 @@ pub enum SKError {
         pattern: &'static str,
     },
 
+    /// A streaming batch hint whose double-buffered footprint exceeds available
+    /// memory. Raised at resolution, before any data is processed.
+    #[error(
+        "streaming batch buffer overflow: {required_bytes} bytes needed (2 × {batch_bytes} per batch) exceeds {available_bytes} bytes available"
+    )]
+    BatchBufferOversize {
+        /// The byte size of one resident batch.
+        batch_bytes: u64,
+        /// The total resident bytes required by double buffering (2 × `batch_bytes`).
+        required_bytes: u64,
+        /// The available memory in bytes.
+        available_bytes: u64,
+    },
+
     /// An iterative process exhausted its iterations without converging.
     #[error("failed to converge after {iterations} iterations")]
     NotConverged {

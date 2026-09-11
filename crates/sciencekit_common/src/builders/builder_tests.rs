@@ -18,6 +18,9 @@ fn simulated(
         available_memory_bytes: memory,
         cpu_cores: cores,
         dataset_size_bytes: dataset,
+        dataset_elements: None,
+        scalar_size_bytes: 8,
+        grain: 1024,
         access_pattern: pattern,
         batch_size_hint: batch,
     }
@@ -70,7 +73,8 @@ fn automatic_intent_resolves_to_in_memory_plan() {
     let context = simulated(1 << 30, 8, 100, SKAccessPattern::Sequential, None);
     let plan = state.resolve_plan(&context).unwrap();
     assert_eq!(plan.mode, SKExecutionMode::InProcessSynchronous);
-    assert_eq!(plan.parallelism, 8);
+    // 100 elements is below the default grain, so the plan stays sequential.
+    assert_eq!(plan.parallelism, 1);
 }
 
 /// Automatic intent streams oversized sequential data with the declared batch.

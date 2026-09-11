@@ -8,14 +8,19 @@ use super::plan::SKExecutionPlan;
 
 /// Resolve an execution plan from an intent and a context.
 ///
-/// Pure and deterministic: the same `(intent, context)` always yields the same
-/// plan. Automatic intent never produces an incompatibility error; an explicit
-/// mode incompatible with the declared access pattern does.
+/// Pure and deterministic: the same `(intent, context, grain)` always yields the
+/// same plan. Automatic intent never produces an incompatibility error; an
+/// explicit mode incompatible with the declared access pattern does.
+///
+/// The resolved `parallelism` derives from the size of the work unit — the whole
+/// dataset for in-memory modes, one batch for streaming, an arbitrary shard for
+/// memory-mapped access — capped by the documented per-kernel `grain`
+/// (minimum elements per thread) and by the core count. No machine is read here:
+/// the caller injects the context.
 pub fn sk_resolve_execution_plan(
     intent: SKExecutionMode,
     context: &SKExecutionContext,
 ) -> Result<SKExecutionPlan, SKError> {
-    let parallelism = context.cpu_cores.max(1);
     match intent {
         SKExecutionMode::Automatic => {
             let fits_in_memory = context.dataset_size_bytes <= context.available_memory_bytes;
@@ -34,18 +39,23 @@ pub fn sk_resolve_execution_plan(
             } else {
                 None
             };
+            if mode == SKExecutionMode::OutOfCoreStreaming {
+                check_buffer_guard(context)?;
+            }
             Ok(SKExecutionPlan {
                 mode,
-                parallelism,
+                parallelism: parallelism_for(mode, context),
                 batch_size,
+                buffer_depth: 1,
             })
         }
         SKExecutionMode::InProcessSynchronous
         | SKExecutionMode::InProcessAsynchronous
         | SKExecutionMode::OutOfCoreMemoryMapped => Ok(SKExecutionPlan {
             mode: intent,
-            parallelism,
+            parallelism: parallelism_for(intent, context),
             batch_size: None,
+            buffer_depth: 1,
         }),
         SKExecutionMode::OutOfCoreStreaming => {
             if context.access_pattern == SKAccessPattern::RandomAccess {
@@ -54,12 +64,56 @@ pub fn sk_resolve_execution_plan(
                     pattern: "random-access",
                 })
             } else {
+                check_buffer_guard(context)?;
                 Ok(SKExecutionPlan {
                     mode: intent,
-                    parallelism,
+                    parallelism: parallelism_for(intent, context),
                     batch_size: context.batch_size_hint,
+                    buffer_depth: 1,
                 })
             }
         }
+    }
+}
+
+/// The double-buffer memory guard for streaming plans: two resident batches
+/// must fit in available memory. Raised before any data is processed, when a
+/// batch hint is present and its byte size is known.
+fn check_buffer_guard(context: &SKExecutionContext) -> Result<(), SKError> {
+    if let Some(batch_elements) = context.batch_size_hint {
+        if context.scalar_size_bytes > 0 {
+            let batch_bytes = (batch_elements as u64).saturating_mul(context.scalar_size_bytes);
+            let required_bytes = batch_bytes.saturating_mul(2);
+            if required_bytes > context.available_memory_bytes {
+                return Err(SKError::BatchBufferOversize {
+                    batch_bytes,
+                    required_bytes,
+                    available_bytes: context.available_memory_bytes,
+                });
+            }
+        }
+    }
+    Ok(())
+}
+
+/// The parallelism for a resolved mode: `min(cores, ceil(unit / grain))`, where
+/// the unit is the whole dataset (in-memory), one batch (streaming) or an
+/// arbitrary shard (memory-mapped → always `cores`). Sub-grain or unknown units
+/// and single-core machines resolve to exactly one.
+fn parallelism_for(mode: SKExecutionMode, context: &SKExecutionContext) -> usize {
+    if context.cpu_cores <= 1 {
+        return 1;
+    }
+    let unit_elements = match mode {
+        SKExecutionMode::OutOfCoreStreaming => context.batch_size_hint.map(|batch| batch as u64),
+        SKExecutionMode::OutOfCoreMemoryMapped => Some(u64::MAX),
+        _ => context.dataset_elements,
+    };
+    match unit_elements {
+        Some(unit) if unit > 0 => {
+            let threads = unit.div_ceil(context.grain.max(1) as u64);
+            threads.clamp(1, context.cpu_cores as u64) as usize
+        }
+        _ => 1,
     }
 }
