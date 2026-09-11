@@ -9,7 +9,14 @@ use sciencekit_common::SKFloat;
 /// `axis = 1` collapses columns (per-row sums, length = rows). Reads rows as
 /// contiguous runs on row-major inputs, accumulating each row into the output
 /// with [`azip!`] — layout-aware and free of manual index loops.
-pub fn sk_axis_sum<F: SKFloat>(input: &ArrayView2<F>, axis: usize) -> Array<F, ndarray::Ix1> {
+///
+/// Accepts the resolved `parallelism`; the parallel dispatch paths are provided
+/// by the reduction step (axis-0 partial accumulation).
+pub fn sk_axis_sum<F: SKFloat>(
+    input: &ArrayView2<F>,
+    axis: usize,
+    _parallelism: usize,
+) -> Array<F, ndarray::Ix1> {
     let (rows, cols) = input.dim();
     match axis {
         0 => {
