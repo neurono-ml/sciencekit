@@ -311,3 +311,87 @@ fn single_core_machine_resolves_sequential_everywhere() {
         assert_eq!(plan.parallelism, 1);
     }
 }
+
+// ---- Task 1.3 scenarios (double-buffer memory guard, spec `execution-planning`) ----
+
+/// An oversized batch hint is refused before any processing, with a structured
+/// error naming the batch size and the available memory.
+#[test]
+fn oversized_batch_hint_is_refused_before_processing() {
+    // 1 MiB available; a 1 MiB-element batch × 8 bytes = 8 MiB per resident
+    // batch; double buffering needs 16 MiB — over the budget.
+    let ctx = simulated(
+        1 << 20,
+        4,
+        1 << 40,
+        None,
+        8,
+        SKAccessPattern::Sequential,
+        Some(1 << 20),
+    );
+    match sk_resolve_execution_plan(SKExecutionMode::Automatic, &ctx) {
+        Err(SKError::BatchBufferOversize {
+            batch_bytes,
+            required_bytes,
+            available_bytes,
+        }) => {
+            assert_eq!(batch_bytes, 1 << 23);
+            assert_eq!(required_bytes, 1 << 24);
+            assert_eq!(available_bytes, 1 << 20);
+        }
+        other => panic!("expected oversize error, got {other:?}"),
+    }
+}
+
+/// The same guard fires for an explicit streaming intent.
+#[test]
+fn explicit_streaming_refuses_oversized_batch() {
+    let ctx = simulated(
+        1 << 20,
+        4,
+        1 << 40,
+        None,
+        8,
+        SKAccessPattern::Sequential,
+        Some(1 << 20),
+    );
+    match sk_resolve_execution_plan(SKExecutionMode::OutOfCoreStreaming, &ctx) {
+        Err(SKError::BatchBufferOversize { .. }) => {}
+        other => panic!("expected oversize error, got {other:?}"),
+    }
+}
+
+/// A batch that just fits the double-buffer budget passes the guard.
+#[test]
+fn batch_fitting_double_buffer_budget_passes() {
+    // 16 MiB available; 1 MiB-element batch × 8 = 8 MiB; 2 × 8 MiB = 16 MiB == budget.
+    let ctx = simulated(
+        1 << 24,
+        4,
+        1 << 40,
+        None,
+        8,
+        SKAccessPattern::Sequential,
+        Some(1 << 20),
+    );
+    let plan = sk_resolve_execution_plan(SKExecutionMode::Automatic, &ctx).unwrap();
+    assert_eq!(plan.mode, SKExecutionMode::OutOfCoreStreaming);
+    assert_eq!(plan.batch_size, Some(1 << 20));
+}
+
+/// Automatic intent never trips the guard when the resolved batch fits.
+#[test]
+fn automatic_intent_never_trips_guard_when_batch_fits() {
+    let ctx = simulated(
+        1 << 30,
+        4,
+        1 << 40,
+        None,
+        8,
+        SKAccessPattern::Sequential,
+        Some(1024),
+    );
+    let plan = sk_resolve_execution_plan(SKExecutionMode::Automatic, &ctx).unwrap();
+    assert_eq!(plan.mode, SKExecutionMode::OutOfCoreStreaming);
+    assert_eq!(plan.batch_size, Some(1024));
+}
