@@ -7,8 +7,8 @@
 
 ## 2. Kernels honor the plan
 
-- [ ] 2.1 TDD: failing tests in `kernels_tests.rs` for the new `parallelism` parameter — all four kernels (`sk_elementwise_transform`, `sk_binary_combine`, `sk_axis_sum`, `sk_scale_in_place`): sequential path at `parallelism = 1` (no dispatch), parallel path matching sequential reference within float tolerance on large arrays, and one array shape driven through both plans agreeing (spec `higher-order-kernels`).
-- [ ] 2.2 Minimal implementation: signatures gain trailing `parallelism: usize`; `1 → azip!`/`zip_mut_with` sequential forms, `> 1 → par_azip!`; bounds tightened (`Sync`/`Send` closures) following the `gemm` precedent; update all in-workspace callers.
+- [x] 2.1 TDD: failing tests in `kernels_tests.rs` for the new `parallelism` parameter — all four kernels (`sk_elementwise_transform`, `sk_binary_combine`, `sk_axis_sum`, `sk_scale_in_place`): sequential path at `parallelism = 1` (no dispatch), parallel path matching sequential reference within float tolerance on large arrays, and one array shape driven through both plans agreeing (spec `higher-order-kernels`).
+- [x] 2.2 Minimal implementation: signatures gain trailing `parallelism: usize`; `1 → azip!`/`zip_mut_with` sequential forms, `> 1 → par_azip!`; bounds tightened (`Sync`/`Send` closures) following the `gemm` precedent; update all in-workspace callers.
 - [ ] 2.3 TDD: failing test for race-free parallel axis-0 — wide/tall matrix, parallel column sums equal sequential reference within tolerance; per-chunk partial accumulation, no shared mutable accumulator (spec `higher-order-kernels`).
 - [ ] 2.4 Minimal implementation of the axis-0 partial-accumulation path; commit + sync `-openspec` worktree.
 
