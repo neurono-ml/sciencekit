@@ -45,9 +45,10 @@ impl SKExecutionContext {
             dataset_size_bytes: 0,
             dataset_elements: None,
             scalar_size_bytes: 8,
-            // Provisional grain (1024 elements/thread) until the calibration
-            // protocol in `parallel-kernel-execution` records per-kernel values.
-            grain: 1024,
+            // Conservative default grain until the caller injects its kernel's
+            // measured value (`sciencekit_math::kernels` documents the per-kernel
+            // constants and their calibration provenance, 2026-09-11).
+            grain: 1_000_000,
             access_pattern: SKAccessPattern::Sequential,
             batch_size_hint: None,
         }

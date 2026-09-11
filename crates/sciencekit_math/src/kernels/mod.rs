@@ -9,12 +9,19 @@
 //! submodules; every implementation lives in its own file.
 
 mod elementwise;
+mod grain;
 mod reductions;
 mod scaling;
 
 pub use elementwise::{sk_binary_combine, sk_elementwise_transform};
+pub use grain::{
+    SK_AXIS_SUM_GRAIN, SK_BINARY_COMBINE_GRAIN, SK_ELEMENTWISE_TRANSFORM_GRAIN,
+    SK_SCALE_IN_PLACE_GRAIN,
+};
 pub use reductions::sk_axis_sum;
 pub use scaling::sk_scale_in_place;
 
+#[cfg(test)]
+mod grain_tests;
 #[cfg(test)]
 mod kernels_tests;

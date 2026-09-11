@@ -38,7 +38,11 @@ pub use backend::{
     SKMatrixMultiplyBackend, SKNormKind, SKQRDecomposition, SKSingularValueDecomposition,
     sk_default_math_backend,
 };
-pub use kernels::{sk_axis_sum, sk_binary_combine, sk_elementwise_transform, sk_scale_in_place};
+pub use kernels::{
+    SK_AXIS_SUM_GRAIN, SK_BINARY_COMBINE_GRAIN, SK_ELEMENTWISE_TRANSFORM_GRAIN,
+    SK_SCALE_IN_PLACE_GRAIN, sk_axis_sum, sk_binary_combine, sk_elementwise_transform,
+    sk_scale_in_place,
+};
 pub use layout::{sk_force_contiguous, sk_is_c_contiguous, sk_is_f_contiguous, sk_memory_layout};
 pub use pairwise::{
     sk_cosine_distance_matrix, sk_euclidean_distance_matrix, sk_manhattan_distance_matrix,
