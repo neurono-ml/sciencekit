@@ -129,6 +129,39 @@ Every builder exposes `execution_mode(SKExecutionMode::...)`. Default: `Automati
 
 The decision weighs: available memory (`sysinfo`), dataset size, declared access pattern, CPU cores (`available_parallelism`) and an optional batch hint. Users can override any parameter in the builder.
 
+### Size-aware parallelism
+
+Resolution derives `parallelism = min(cores, ceil(unit / grain))`, where the
+work unit is the whole dataset (in-memory), one batch (streaming), or an
+arbitrary shard (memory-mapped → always the core count). A single-core machine
+or a sub-grain unit resolves to exactly `1` (sequential, no dispatch overhead).
+The per-kernel `grain` (minimum elements per thread to amortize dispatch) is
+measured by the `kernel_calibration` criterion bench and recorded beside each
+kernel with machine + date provenance (see [math-kernel](math-kernel.md)).
+
+```mermaid
+flowchart LR
+    Intent[Execution intent] --> Resolve[sk_resolve_execution_plan]
+    Ctx[Context: memory / cores / size / grain] --> Resolve
+    Resolve --> Plan[SKExecutionPlan: mode + parallelism + batch_size + buffer_depth]
+    Plan --> Mode{Mode}
+    Mode -- In-memory --> Kernels[Kernels honor parallelism]
+    Mode -- Streaming --> Driver[Streaming driver]
+    Driver --> IoThread[I/O thread]
+    Driver --> Compute[Compute pool]
+    IoThread -->|prefetch k+1| Buffer[(Double buffer)]
+    Buffer --> Compute
+    Compute -->|update batch k| Update[Algorithm update step]
+    Update -->|Continue or Stop| Driver
+    Mode -- Memory-mapped --> Shards[Parallel shards, parallelism = cores]
+```
+
+For streaming, the driver owns the I/O ∥ CPU overlap: a dedicated I/O thread
+prefetches the next batch into a bounded double buffer while the compute pool
+processes the current batch via an algorithm-supplied `update(batch, parallelism, state)`
+step. Resolution guards the double-buffer footprint — `2 × batch ≤ available
+memory` — and refuses oversized batch hints before any data is processed.
+
 ## Optimization layers
 
 1. **Algorithmic** — correct complexity before micro-optimization.

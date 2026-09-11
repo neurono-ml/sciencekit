@@ -53,16 +53,51 @@ flowchart LR
 
 All structs/traits use the `SK` prefix and free functions the `sk_` prefix (PRD §3.4).
 
+## Resolved parallelism and grain
+
+Every dense kernel accepts the resolved plan's `parallelism` and honours it:
+`1` runs the sequential `azip!`/`zip_mut_with` form with **zero dispatch overhead**;
+`> 1` dispatches `par_azip!` (or a per-row/per-chunk parallel reduction) across the
+rayon compute pool. Parallel results match the sequential reference within
+floating-point tolerance.
+
+| Kernel | Parallelism behaviour |
+|---|---|
+| `sk_elementwise_transform` | `1 → azip!`, `> 1 → par_azip!` |
+| `sk_binary_combine` | `1 → zip_mut_with`, `> 1 → par_azip!` |
+| `sk_axis_sum` | axis-0: per-chunk partial accumulation (no shared accumulator); axis-1: per-row |
+| `sk_scale_in_place` | `1 → azip!`, `> 1 → par_azip!` |
+
+Policy lives in `sk_resolve_execution_plan`, **not** in the kernels. Resolution
+derives `parallelism = min(cores, ceil(unit / grain))` from the work-unit size
+(the whole dataset in memory, one batch when streaming) capped by the core
+count, and returns exactly `1` for single-core machines or sub-grain units.
+Each kernel documents a **grain** — the minimum elements per work unit needed to
+amortize parallel dispatch — measured by the `kernel_calibration` criterion
+bench (cheap/medium/expensive closures × sizes 10¹–10⁷) and recorded beside the
+kernel with machine + date provenance:
+
+| Kernel grain constant | Value | Calibrated on |
+|---|---|---|
+| `SK_ELEMENTWISE_TRANSFORM_GRAIN` | `1_000_000` | 2026-09-11, i7-12700H (20 cores) |
+| `SK_BINARY_COMBINE_GRAIN` | `10_000_000` | 2026-09-11, i7-12700H (20 cores) |
+| `SK_AXIS_SUM_GRAIN` | `100_000` | 2026-09-11, i7-12700H (20 cores) |
+| `SK_SCALE_IN_PLACE_GRAIN` | `1_000_000` | 2026-09-11, i7-12700H (20 cores) |
+
+The same grain applies to in-memory and streaming regimes. Re-calibrating on
+another machine changes only these constants and their provenance; the behaviour
+contracts above are unaffected.
+
 ## Usage examples
 
-Elementwise transform and an in-place scale:
+Elementwise transform and an in-place scale (both take the resolved `parallelism`):
 
 ```rust
 use ndarray::{array, Array1};
 use sciencekit_math::sk_elementwise_transform;
 
 let input = array![1.0_f64, 2.0, 3.0];
-let transformed = sk_elementwise_transform(&input.view(), |x| 2.0 * x + 1.0);
+let transformed = sk_elementwise_transform(&input.view(), |x| 2.0 * x + 1.0, 1);
 // transformed == [3.0, 5.0, 7.0]
 ```
 
