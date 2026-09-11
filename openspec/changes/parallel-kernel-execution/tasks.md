@@ -27,5 +27,5 @@
 ## 5. Integration, gates and documentation
 
 - [x] 5.1 Concurrency acceptance (PRD §8.7): tests running the driver and parallel kernels under a shared rayon pool from multiple threads; small-data and large-data acceptance passes; sequential fallback (`parallelism = 1`) verified end-to-end; model-export/metric smoke check for an existing streaming consumer example.
-- [ ] 5.2 CI gates locally: `cargo fmt --all --check`, `cargo clippy --workspace --all-targets` (warnings as errors), `cargo test --workspace`; fix until green.
+- [x] 5.2 CI gates locally: `cargo fmt --all --check`, `cargo clippy --workspace --all-targets` (warnings as errors), `cargo test --workspace`; fix until green.
 - [ ] 5.3 mdBook documentation: update `docs/src/` chapters (math-kernel and execution/architecture pages) for the new parallelism policy, grain provenance, kernel signature and streaming driver; Mermaid diagrams rendered error-free; build `mdbook build docs`; doc branch + PR per the documentation rule; commit + sync `-openspec` worktree final state.
