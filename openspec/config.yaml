@@ -64,6 +64,7 @@ operations:
       - Commit this change's openspec/ definitions on branch <type>/<change-name>-openspec, in worktree temporary/worktrees/<type>/<change-name>-openspec.
       - Develop the code branch and the openspec branch in parallel; each is merged into main via its own PR, in any order. Code does NOT wait for the openspec planning PR to merge (agile), and vice versa.
       - Each code change is accompanied by a documentation change that updates the mdBook (docs/src/) for the new behavior, on its own doc branch whose PR merges into docs/documentations; create the doc branch and PR alongside the code change.
+      - Every code change that introduces, changes, or fixes behavior must also update the `Development Explained` textbook under docs/src/development-explained/ (a doc change on a branch merged into docs/documentations): new features/algorithms/kernels/methods get a NEW chapter registered in SUMMARY.md under the `## Development Explained` part; fixes and refactors EDIT the existing chapter covering that behavior. Ground the chapter in the real code, specs and the companion *_tests.rs modules. See AGENTS.md → Documentation.
       - Use the tdd skill for each task.
       - When all tasks are done, trigger review by an independent agent validating that the spec was effectively met before opening the code PR.
   archive:
