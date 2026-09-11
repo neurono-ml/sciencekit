@@ -1,4 +1,4 @@
-# Ch. 5 — The host-centric backend
+# The host-centric backend
 
 The backend that does the heavy math started out married to one linear-algebra library
 (`faer`) and one numeric type (`f64`), so every algorithm that wanted a matrix product or

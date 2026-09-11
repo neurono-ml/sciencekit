@@ -1,4 +1,4 @@
-# Ch. 6 — Module hygiene: folder modules & the tests-at-end rule
+# Module hygiene: folder modules & the tests-at-end rule
 
 A machine-learning library starts as a handful of files and quietly becomes hundreds.
 Long before the algorithms get hard, the *organization* gets hard: you open a file to

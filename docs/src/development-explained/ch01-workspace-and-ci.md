@@ -1,4 +1,4 @@
-# Ch. 1 — Bootstrap: the Cargo workspace & CI
+# Bootstrap: the Cargo workspace & CI
 
 Every machine-learning library is, underneath, a collection of *many* small pieces that must agree on shared rules: how numbers are typed, how errors are reported, how code is formatted, and how it is proven to work. When `sciencekit` started, it was an empty repository — no code at all. The very first engineering decision was therefore not *which algorithm to write*, but **how to lay the ground** so that every later chapter has a stable place to stand. This chapter is about that foundation: a **Cargo workspace** that splits the library into sub-crates, a **pinned Rust toolchain**, and an automated **CI pipeline** that guards the whole thing.
 

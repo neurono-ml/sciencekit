@@ -1,4 +1,4 @@
-# Ch. 5 — Maintaining this book
+# Maintaining this book
 
 A textbook is only worth reading if it stays true. This book explains *why* sciencekit is
 built the way it is, and sciencekit is not finished — the roadmap (`docs/PRD.md`) maps out
