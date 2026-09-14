@@ -12,8 +12,15 @@ create-missing = false
 [output.html]
 default-theme = "coal"
 preferred-dark-theme = "coal"
-additional-css = ["skin/custom.css"]
-additional-js = ["skin/custom.js"]
+additional-css = ["skin/custom.css", "skin/katex.min.css"]
+additional-js = [
+    "skin/mermaid.min.js",
+    "skin/mermaid-init.js",
+    "skin/katex.min.js",
+    "skin/katex-auto-render.min.js",
+    "skin/katex-init.js",
+    "skin/custom.js",
+]
 git-repository-url = "https://github.com/neurono-ml/sciencekit"
 edit-url-template = "https://github.com/neurono-ml/sciencekit/edit/docs/documentations/{path}"
 site-url = "/sciencekit/"
