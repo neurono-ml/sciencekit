@@ -37,7 +37,7 @@ flowchart TB
     Q --> D["for each query row:<br>sk_squared_euclidean_distance_matrix<br>chunked over base rows (cache grain)"]:::predictNode
     D --> T["top-k via argpartition over per-base chunks<br>— O(n) expected, not O(n log n) sort"]:::predictNode
     T --> W["uniform vote | inverse-distance weights"]:::predictNode
-    W --> O["majority quartet via SKLabelTable<br>(classifier) | mean of neighbors (regressor)"]:::coreNode
+    W --> O["majority via SKLabelTable<br>(classifier) | mean of neighbors (regressor)"]:::coreNode
 ```
 
 *(the diagram is `fit` heavy: the *predict* spine is where all compute lives — the shape that distinguishes this family).*
