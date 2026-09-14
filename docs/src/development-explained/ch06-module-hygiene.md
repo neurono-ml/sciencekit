@@ -391,6 +391,8 @@ Here is the folder-module tree for a couple of the real modules we studied, show
 
 ```mermaid
 flowchart TD
+    accTitle: Two folder modules showing the pure-dispatcher pattern
+    accDescr: Each folder module has a mod.rs that acts as a pure dispatcher, implementation files for each concern, and companion test files. The kernels folder holds elementwise, grain, reductions and scaling; the execution folder holds context, modes, plan, resolve and the streaming driver.
     subgraph K["sciencekit_math :: kernels/ (folder module)"]
         direction TB
         K_RS["mod.rs<br/><i>pure dispatcher</i>"]

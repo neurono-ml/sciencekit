@@ -560,21 +560,23 @@ the data views:
 
 ```mermaid
 flowchart TD
-    subgraph est[Configured estimator — immutable, reusable]
+    accTitle: The fit, predict and transform contracts and their shared inputs
+    accDescr: The configured estimator carries SKSupervisedFit and SKUnsupervisedFit, which take features and targets and produce a fitted model. The fitted model carries SKPredictor and SKFeatureTransformer. All of them consume SKDataView and SKTargetView, and all report errors through SKError.
+    subgraph est[Configured estimator - immutable, reusable]
         SF[SKSupervisedFit] -->|fit features + targets| M1(Model type)
         UF[SKUnsupervisedFit] -->|fit features only| M2(Model type)
     end
 
-    subgraph model[Fitted model — sole bearer of learned state, thread-shareable]
+    subgraph model[Fitted model - sole bearer of learned state, thread-shareable]
         P[SKPredictor] -->|predict features| OUT[Array1 f64]
         FT[SKFeatureTransformer] -->|transform features| OUT2[Output type]
     end
 
-    DV[SKDataView Dense|Sparse] --> SF
+    DV["SKDataView: Dense or Sparse"] --> SF
     DV --> UF
     DV --> P
     DV --> FT
-    TV[SKTargetView Continuous|Integer|Nominal] --> SF
+    TV["SKTargetView: Continuous, Integer or Nominal"] --> SF
 
     ER[SKError] --> SF
     ER --> UF

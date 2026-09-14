@@ -20,23 +20,25 @@ algorithm crates consume.
 |---|---|
 | `kernels` | Elementwise transform, binary combine, axis reductions and in-place scaling. |
 | `layout` | C/F-contiguity detection and contiguity-forcing. |
-| `pairwise` | Squared-Euclidean (`‖a‖² − 2a·b + ‖b‖²`), Euclidean, Manhattan and Cosine distance matrices. |
+| `pairwise` | Squared-Euclidean ($\|a\|^2 - 2a \cdot b + \|b\|^2$), Euclidean, Manhattan and Cosine distance matrices. |
 | `sparse_ops` | `sprs` CSR×dense and sparse×sparse products over zero-copy views. |
 | `backend` | `SKMathBackend` trait + `SKFaerBackend` (default), `SKMatrixMultiplyBackend`, and the opt-in `blas-backend` feature. |
 
 ```mermaid
 flowchart LR
-    A[`sciencekit_math`] --> B[kernels]
+    accTitle: Modules of sciencekit_math and their key surfaces
+    accDescr: sciencekit_math exposes kernels using azip and par_azip, layout helpers, pairwise distance kernels using a SIMD dot, sparse operations over sprs views, and a backend that defaults to faer with an opt-in blas-backend.
+    A[sciencekit_math] --> B[kernels]
     A --> C[layout]
     A --> D[pairwise]
     A --> E[sparse_ops]
     A --> F[backend]
-    B --> G[`azip!` / `par_azip!` / `zip_mut_with`]
-    C --> H[`sk_memory_layout` / `sk_force_contiguous`]
-    D --> I[`wide` SIMD dot kernel]
-    E --> J[`sprs` views]
-    F --> K[`SKFaerBackend` (pure Rust)]
-    F --> L[`blas-backend` (opt-in)]
+    B --> G["azip! / par_azip! / zip_mut_with"]
+    C --> H["sk_memory_layout / sk_force_contiguous"]
+    D --> I["wide SIMD dot kernel"]
+    E --> J["sprs views"]
+    F --> K["SKFaerBackend (pure Rust)"]
+    F --> L["blas-backend (opt-in)"]
 ```
 
 ## Key public API

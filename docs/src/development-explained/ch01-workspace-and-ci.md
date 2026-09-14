@@ -235,17 +235,26 @@ And the **msrv** job re-runs build + test on the exact promised minimum, closing
 
 The workspace's *members* list is empty today, but the plan (PRD §3.1) is a folder tree like this:
 
-```
-sciencekit/
-├── Cargo.toml              # workspace root (what we just made)
-├── crates/
-│   ├── sciencekit/                  # umbrella crate (re-exports)
-│   ├── sciencekit_common/           # base traits, types, central errors
-│   ├── sciencekit_math/             # linear algebra, BLAS, SIMD, sparse
-│   ├── sciencekit_preprocessing/    # scalers, encoders, polynomial features
-│   ├── sciencekit_linear_model/     # linear regressions, logistic, SGD
-│   └── ...                          # one crate per algorithm area
-└── docs/
+```mermaid
+flowchart TD
+    accTitle: The planned sciencekit workspace layout
+    accDescr: A sciencekit workspace root containing Cargo.toml, a crates folder with one sub-crate per algorithm area, and a docs folder.
+    ROOT[sciencekit/]
+    ROOT --> CARGO[Cargo.toml<br/>workspace root]
+    ROOT --> CRATES[crates/]
+    ROOT --> DOCS[docs/]
+    CRATES --> UMBRELLA[sciencekit/<br/>umbrella crate re-exports]
+    CRATES --> COMMON[sciencekit_common/<br/>base traits, types, errors]
+    CRATES --> MATH[sciencekit_math/<br/>linear algebra, BLAS, SIMD, sparse]
+    CRATES --> PREP[sciencekit_preprocessing/<br/>scalers, encoders]
+    CRATES --> LINEAR[sciencekit_linear_model/<br/>regressions, logistic, SGD]
+    CRATES --> MORE[... one crate per algorithm area]
+
+    style ROOT fill:#e8f4f8,stroke:#6c8ebf
+    style CRATES fill:#fff2cc,stroke:#d6b656
+    style UMBRELLA fill:#e8f5e9,stroke:#7ea6a0
+    style COMMON fill:#e8f5e9,stroke:#7ea6a0
+    style MATH fill:#e8f5e9,stroke:#7ea6a0
 ```
 
 To see how a sub-crate actually registers into the workspace, here is the real `sciencekit_math/Cargo.toml` (from a later phase). Notice it is a *member* only once its own change adds it to the root's `members` list, and it depends on `sciencekit_common` by **path**:
@@ -323,6 +332,8 @@ The relationship between all the pieces we built:
 
 ```mermaid
 flowchart TB
+    accTitle: How the workspace, toolchain and CI gates fit together
+    accDescr: The Cargo.toml workspace root ties together the toolchain file, the umbrella crate and the CI workflow. The crates subfolder grows one crate per change, and the CI pipeline runs fmt, clippy, tests, examples and an MSRV check as gates.
     Root["Cargo.toml<br/>(workspace root, members = [])"] --> Toolchain["rust-toolchain.toml<br/>channel = 1.85, edition 2024"]
     Root --> Umbrella["src/lib.rs<br/>#!forbid(unsafe_code)"]
     Root --> CI["ci.yml<br/>(GitHub Actions)"]

@@ -156,6 +156,8 @@ current explanation.
 
 ```mermaid
 flowchart LR
+    accTitle: How a code change flows into the documentation
+    accDescr: A code change opens a code worktree branch and a docs worktree branch. The code branch becomes a code pull request. The docs branch must pass mdbook build with zero warnings, then becomes a doc pull request merged into docs/documentations, which deploys to GitHub Pages.
     C[code change] --> B1[worktree code branch]
     C --> B2["worktree docs branch"]
     B1 --> P1[code PR]
