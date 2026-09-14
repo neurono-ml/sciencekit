@@ -165,12 +165,15 @@ For horizontal bars reuse `.sk-bars` rows as seen in [Plan & Roadmap](./roadmap.
 
 ## Content rules
 
-1. Add new chapters to `SUMMARY.md` under the right part (Project / Engineering / Community).
+1. Add new chapters to `SUMMARY.md` under the right part (Project / Engineering / Community / Development Explained).
 2. Keep numbers honest: algorithm counts, phase progress and status pills must match the roadmap state.
 3. Prefer components over custom inline CSS; extend `skin/custom.css` only for genuinely reusable pieces.
 4. Add the `reveal` class to major blocks for scroll animation — sparingly.
 5. Internal links use relative paths ending in `.html` (`./algorithms.html`).
 6. Run `mdbook build docs` and fix every warning before pushing; `create-missing = false` means broken links fail the build.
+7. **Diagrams must be Mermaid, never ASCII.** Write a ` ```mermaid ` fence; the book renders it client-side (see AGENTS.md → Documentation). Add an `accTitle`/`accDescr` to every diagram so it is accessible.
+8. **Equations must be LaTeX, not plain text.** Write `$...$` (inline) or `$$...$$` (display) so KaTeX renders them. Do not paste `‖a‖²`, `Σ`, `√` etc. as plain text.
+9. **Every image needs descriptive alt text.** Diagrams carry `accTitle`/`accDescr`; images (`.png`/`.svg`) must have an `alt` attribute that explains the content as read, not just a filename or raw code.
 
 ## Checklist for a docs change
 

@@ -192,7 +192,7 @@ compute waits for the reader, the CPU sits idle.
 batch *k+1* into a second buffer. When compute finishes batch *k*, the already-fetched
 *k+1* is ready — no waiting. The `buffer_depth` in the plan (double buffering = `1`) is the
 number of prefetched batches ahead. The guard in the resolver ensures two resident batches
-fit in memory: if one batch is `B` bytes, double buffering needs `2 × B`, and if that exceeds
+fit in memory: if one batch is $B$ bytes, double buffering needs $2 \times B$, and if that exceeds
 available memory the plan is rejected *before any data is processed*.
 
 ### Numerical concept 4: the "grain" — how many elements per thread
@@ -579,6 +579,8 @@ Here is the end-to-end flow from intent to streaming execution:
 
 ```mermaid
 flowchart LR
+    accTitle: From builder to streaming execution and observability
+    accDescr: A builder holds the SKBuilderState with an execution intent. The resolver turns the intent and execution context into an SKExecutionPlan, or rejects incompatible or oversized plans. Streaming execution prefetches batches while updating state, and observability records each operation as an optional OpenTelemetry span.
     subgraph configure[Builder]
         BS[SKBuilderState] -->|intent<br/>SKExecutionMode::Automatic| RES
     end

@@ -193,7 +193,7 @@ decomposition from `faer`, hand it to the BLAS backend, and both are the same ty
 
 #### `SKSingularValueDecomposition<F>`
 
-*What it is* — The result of a singular value decomposition `A = U Σ Vᵀ`: fields `u`
+*What it is* — The result of a singular value decomposition $A = U \Sigma V^{\mathsf{T}}$: fields `u`
 (left singular vectors, `Array2<F>`), `singular_values` (a `Vec<F>`, non-increasing), and
 `v` (right singular vectors, `Array2<F>`).
 
@@ -228,7 +228,7 @@ host-resident, so there is nothing backend-specific to abstract.
 
 #### `SKLeastSquaresSolution<F>`
 
-*What it is* — The result of a minimum-norm least-squares solve `x = argmin ‖b - A x‖₂`:
+*What it is* — The result of a minimum-norm least-squares solve $x = \operatorname{argmin} \, \|b - A x\|_2$:
 fields `solution` (`Array2<F>`), `rank` (the effective rank after `rcond` truncation),
 `singular_values` (`Vec<F>`), and `residual_sum_of_squares` (an `Option<Vec<F>>`, present
 when the system is overdetermined, i.e. more rows than columns).
@@ -370,8 +370,8 @@ Line by line:
   generically.
 - We multiply `a` (the matrix `[[1,2],[3,4]]`) by `b` (`[[5,6],[7,8]]`) with `alpha =
   1.0`. The `1` is `parallelism` (sequential).
-- The **expected** matrix is computed by hand: `1·5 + 2·7 = 19`, `1·6 + 2·8 = 22`,
-  `3·5 + 4·7 = 43`, `3·6 + 4·8 = 50`. This is the "reference" — what matrix multiply must
+- The **expected** matrix is computed by hand: $1 \cdot 5 + 2 \cdot 7 = 19$, $1 \cdot 6 + 2 \cdot 8 = 22$,
+  $3 \cdot 5 + 4 \cdot 7 = 43$, $3 \cdot 6 + 4 \cdot 8 = 50$. This is the "reference" — what matrix multiply must
   produce, no matter which backend.
 - `assert_close` checks every element is within `1e-4` (floating-point math is never
   exact, so we allow a tiny tolerance). The test proves the backend's `gemm` is *correct*,
@@ -447,11 +447,11 @@ Line by line:
 
 - `a` is upper-triangular: `[[2,1],[0,3]]` (everything below the diagonal is zero). We
   pass `(false, false)` — `lower = false` (it's upper), `unit_diagonal = false`.
-- We're solving `A x = b`, i.e. `2·x + y = 5` and `3·y = 6`. By hand: from the second
-  equation, `y = 2`; plugging in, `2·x + 2 = 5`, so `x = 1.5`. The comment spells this out.
+- We're solving $A x = b$, i.e. $2x + y = 5$ and $3y = 6$. By hand: from the second
+  equation, $y = 2$; plugging in, $2x + 2 = 5$, so $x = 1.5$. The comment spells this out.
 - `backend.solve_triangular(...).unwrap()` asks the backend to solve it; `.unwrap()`
   unpacks the `Result` and panics if there was an error (fine for a test).
-- Two `assert!`s check `x[0,0] ≈ 1.5` and `x[1,0] ≈ 2.0`. Note we read the vector using
+- Two `assert!`s check $x_{0,0} \approx 1.5$ and $x_{1,0} \approx 2.0$. Note we read the vector using
   *two indices* `(row, col)` — even a column vector is a 2-D `Array2` here, so the single
   column is `(0,0)` and `(1,0)`. This test checks *numerical correctness* of a less
   obvious operation, again generically over `f64`/`f32`.
@@ -478,6 +478,8 @@ each backend adapts at the door, translating to and from its own library interna
 
 ```mermaid
 flowchart LR
+    accTitle: The host-centric backend boundary
+    accDescr: The library speaks host types such as ndarray views. Those cross the SKMathBackend trait, which takes array views in and returns owned arrays or decomposition containers out. The default SKFaerBackend adapts to faer, and the opt-in SKNdArrayLinalgBackend adapts to ndarray-linalg over a system BLAS.
     subgraph Host["The library speaks host types (ndarray / sprs)"]
         A["Algorithm (LinearRegression, PCA, ...)"]
         P["Execution planner"]

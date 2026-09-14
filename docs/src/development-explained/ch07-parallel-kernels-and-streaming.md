@@ -172,7 +172,7 @@ prefetched batches, plus the one being computed) so the reader never runs unboun
 
 The name "double buffering" refers to the simplest bound: `buffer_depth = 1`, so at most one
 batch is computing and one is prefetched — two resident batches. That is why the resolver
-checks `2 × batch ≤ available memory` before it will even allow a streaming plan: two batches
+checks $2 \times \text{batch} \le \text{available memory}$ before it will even allow a streaming plan: two batches
 must fit in RAM. The plan field is literally called `buffer_depth`, and `1` is double buffering.
 
 ### Numerical concept 4: closures for per-element math, not shared accumulators
@@ -411,6 +411,8 @@ producer/consumer that keeps streaming from ever idling the CPU:
 
 ```mermaid
 flowchart TD
+    accTitle: The resolve, parallel kernel and streaming pipeline
+    accDescr: Resolution turns an execution context into an execution plan with parallelism and batch size. Kernels branch on parallelism to use a parallel or sequential iterator. A streaming plan hands the parallelism to a double-buffered producer and consumer, so reading and computing overlap.
     subgraph resolve[Resolution — pure & deterministic]
         CTX[SKExecutionContext<br/>memory · cores · unit size · grain] --> RES[sk_resolve_execution_plan]
         RES --> PLAN[SKExecutionPlan<br/>mode · parallelism · batch_size · buffer_depth]
@@ -448,6 +450,8 @@ in step:
 
 ```mermaid
 sequenceDiagram
+    accTitle: Double-buffered streaming timeline
+    accDescr: The producer reads batches into a double buffer while the consumer computes, so reading batch one overlaps computing batch zero and the reader never runs more than buffer depth ahead.
     participant P as Producer (reader)
     participant B as Double buffer
     participant C as Consumer (compute)
