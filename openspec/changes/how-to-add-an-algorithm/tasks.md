@@ -42,5 +42,5 @@
 
 ## 9. Push, PRs, review
 
-- [ ] 9.1 Push the docs branch and the openspec branch; open the docs PR (→ `docs/documentations`) and the openspec PR (→ `main`), both referencing the ADR issue with closing keywords.
+- [x] 9.1 Push the docs branch and the openspec branch; open the docs PR (→ `docs/documentations`) and the openspec PR (→ `main`), both referencing the ADR issue with closing keywords.
 - [ ] 9.2 Independent agent review validating the tutorial effectively teaches a collaborator to write `SKStandardScaler` end-to-end by hand; fix findings; final merge.
