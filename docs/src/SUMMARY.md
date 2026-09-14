@@ -12,6 +12,15 @@
 - [sciencekit_math — kernels & BLAS](math-kernel.md)
 - [Plan & Roadmap](roadmap.md)
 
+## Tutorials
+
+- [Tutorials](tutorials/index.md)
+  - [How to add an Algorithm](tutorials/how-to-add-an-algorithm.md)
+  - [Adding a Transformer — `SKStandardScaler`, `SKRobustScaler`](tutorials/adding-a-transformer.md)
+  - [Adding a Linear Model — `SKLinearRegression`](tutorials/adding-a-linear-model.md)
+  - [Adding a Streaming Model — `SKSGDClassifier`, `SKSGDRegressor`](tutorials/adding-a-streaming-model.md)
+  - [Adding a Neighbors Model — `SKKNeighborsClassifier`, `SKKNeighborsRegressor`](tutorials/adding-a-neighbors-model.md)
+
 ## Community
 
 - [Contribute](contribute.md)
