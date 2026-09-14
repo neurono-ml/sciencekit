@@ -19,22 +19,23 @@ You do **not** need to know:
 
 Every estimator in `sciencekit` follows the same skeleton:
 
-```
-Builder::new()            hyperparameters, execution_mode(...)  (default: Automatic)
-      │ build()
-      ▼
-Estimator (stateless config, &self everywhere)
-      │ fit(features[, targets])
-      ▼
-Model (the fitted, shareable, exportable object)
-  knowing how to transform/predict
+```mermaid
+flowchart TD
+    classDef buildNode fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e,stroke-width:2px
+    classDef fitNode fill:#f0fdf4,stroke:#16a34a,color:#14532d,stroke-width:2px
+    classDef regNode fill:#fff7ed,stroke:#ea580c,color:#7c2d12,stroke-width:2px
+    classDef outNode fill:#ede9fe,stroke:#7c3aed,color:#3b0764,stroke-width:2px
 
-and inside fit, ONE resolved plan decides the regime:
-
-  InProcessSynchronous  →  parallel kernels, whole array, plan.parallelism threads
-  OutOfCoreStreaming    →  sk_run_streaming_driver: lazy batch, owned `SKDataBatch`,
-                           update(batch, parallelism, &mut State) — the "partial" step
-  OutOfCoreMemoryMapped →  SKMappableSource: O(1) random rows, no materialization
+    B["Builder::new()<br>hyperparameters · execution_mode(…)<br>(default: Automatic)"]:::buildNode
+    B -->|"build()"| E["Estimator<br>(stateless config, &self everywhere)"]:::buildNode
+    E -->|"fit(features[, targets])"| M["Model<br>(fitted, shareable, exportable object)"]:::fitNode
+    M --> P{"one resolved plan<br>decides the regime"}:::regNode
+    P -->|"InProcessSynchronous"| A["parallel kernels, whole array,<br>plan.parallelism threads"]:::regNode
+    P -->|"OutOfCoreStreaming"| S["sk_run_streaming_driver:<br>owned SKDataBatch,<br>update(batch, parallelism, &mut State)"]:::regNode
+    P -->|"OutOfCoreMemoryMapped"| Mm["SKMappableSource:<br>O(1) random rows,<br>no materialization"]:::regNode
+    A --> O["transform / predict verbs"]:::outNode
+    S --> O
+    Mm --> O
 ```
 
 The key that makes all of this cohere: the algorithm is first designed as a function of a
@@ -48,7 +49,7 @@ never picks a code path, only a [`SKExecutionMode`](how-to-add-an-algorithm.md) 
 
 | Chapter | What you build | The lesson it carries |
 |---|---|---|
-| [How to add an Algorithm](how-to-add-an-algorithm.md) | (no algorithm — the boiling plate) | file layout, naming, builder, contracts, planning, three regimes, TDD, gates, acceptance |
+| [How to add an Algorithm](how-to-add-an-algorithm.md) | (no algorithm — the boiler plate) | file layout, naming, builder, contracts, planning, three regimes, TDD, gates, acceptance |
 | [Adding a Transformer](adding-a-transformer.md) | `SKStandardScaler`, `SKRobustScaler` | reductions and partials; Welford; quantiles are hard in a stream |
 | [Adding a Linear Model](adding-a-linear-model.md) | `SKLinearRegression` | dense linear algebra through the backend; SVD vs normal equations; Gram accumulation when streaming |
 | [Adding a Streaming Model](adding-a-streaming-model.md) | `SKSGDClassifier`, `SKSGDRegressor` | gradient descent from zero; the driver's update; PartialFit spans; in-memory = degenerate batch |

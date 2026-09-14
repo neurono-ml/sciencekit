@@ -14,8 +14,9 @@ linear system means** — including the trade-off that makes it not just a "divi
 | Decision | Chosen | Roads not taken — and the reason they are traps |
 |---|---|---|
 | Solver | **SVD least squares** through the backend (`lstsq` = pseudoinverse path) | **Normal equations** (`solve(AᵀA, Aᵀy)`) — the textbook one-liner — squares the condition number: `κ(AᵀA) = κ(A)²`. For even moderately ill-conditioned real data this is the difference between 13 and 7 significant digits, and it silently produces wrong answers exactly where practitioners most need trust (correlated features). §2 walks the numbers. |
-| Rank deficiency | Keep `rank` and `singular_values` from `SKLeastSquaresSolution`; strong-style thin support today | Silently computing with a rank-deficient matrix and returning a solution that claims "the" answer is a subtraction bug hidden in plain sight — SVD hands rank and singular values for free, so we surface them. |
-| Intercept handling | Design-matrix augmentation (prepend a column of ones) unless `fit_intercept` (rather, `include_intercept`) is `false` | Solving for intercept separately via two means collapses rank prematurely on rank-deficient designs. |
+| Rank deficiency | Keep `rank` and `singular_values` from `SKLeastSquaresSolution`; thin support surfaced today | Silently computing with a rank-deficient matrix and returning a solution that claims "the" answer is a subtraction bug hidden in plain sight — SVD hands rank and singular values for free, so we surface them. |
+| Intercept handling | Design-matrix augmentation (prepend a column of ones) unless `include_intercept` is `false` — the PRD forbids
+scikit-learn abbreviations, so `include_intercept` is the name that carries this chapter | Solving for intercept separately via two means collapses rank prematurely on rank-deficient designs. |
 | Streaming | **Gram accumulation per batch**: carry `AᵀA` and `Aᵀy` (and `row_count`) in the stream state, and solve at the end — **the same form the in-memory path never had to use — and the honest precision trade-off is stated.** | Two-pass streaming (means then squares) re-reads the data — the streaming mode exists precisely because we cannot. |
 | Dtype | `F: SKFloat` on features; targets arrive as `f64` (`SKTargetView::Continuous`) | Type application binds feature dtype; the *model's* coefficients rise to the solve's precision policy (f64 state, see §3). |
 
@@ -30,7 +31,7 @@ flowchart TB
 
     Q{"sk_resolve_execution_plan(Automatic)"}:::planNode
     Q -->|"fits in RAM"| X["A = [1‖X]<br>SVD → pinv(A)·y<br>lstsq via faer backend<br>rank + singular_values surfaced"]:::jacNode
-    Q -->|"larger than RAM"| GR["per batch:<br>G := G + BᵀB<br>c := c + Bᵀyᵦ<br>row_count := n + batch.nrows()"]:::streamNode
+    Q -->|"larger than RAM"| GR["per batch:<br>G := G + BᵀB<br>c := c + Bᵀyᵦ<br>row_count := row_count + batch.nrows()"]:::streamNode
     GR --> END["solve(G, c) at stream end<br>⚠ doubles condition number — stated trade-off"]:::jacNode
     X -->|predict| St["SKLinearRegressionModel<br>coefficients, intercept, rank"]:::modelNode
 ```
@@ -85,16 +86,16 @@ injectable, dispatch-level truths).
 * Golub & Van Loan, *Matrix Computations* — chapters on least squares, condition numbers,
   and pseudoinverse: the canonical reference
 * Trefethen & Bau, *Numerical Linear Algebra* — lectures 4–5 and 11–19 build SVD and
-  least squares in a way a working engineer reads in an afternoons
+  least squares in a way a working engineer reads in an afternoon
 * Higham, *Accuracy and Stability of Numerical Algorithms* — if you want to *prove* the
   claims about normal equations; the chapter's warnings are his §20
 
-### 2.1 Power employed twice: the streaming road
+### 2.1 The streaming road
 
-Streaming's on the same skeleton — but the naive intuition here *doubles down* on the same
-hole. A batch-batched fit *is* "solve least squares per batch and average the βs", and
-almost no formulation of that is right (weighted slope aggregation hides what `Σ` packets
-mean, and the ranks per batch do not compose).
+Streaming sits on the same skeleton — but the naive intuition here *doubles down* on the same
+hole. The tempting "solve least squares per batch and average the β" is almost never right: a
+weighted average hides how the covered rows distributed, and per-batch ranks do not
+compose.
 
 What *composes* is the raw material of the normal equations — and that is the honest
 finding: the streaming regions re-shape the choice to Gram:
@@ -104,7 +105,7 @@ G := AᵀA        (p × p, symmetric)
 c := Aᵀy        (p, right-hand side)
 ```
 
-Updates are rank-p marvels: for each batch B (rows × p),
+Each update adds a rank-|B| contribution: for each batch B (rows × p),
 
 ```text
 G := G + BᵀB
@@ -117,7 +118,7 @@ streaming trade-off reads, honestly:
 
 | | in-memory SVD | streaming Gram |
 |---|---|---|
-| Significant digits at `κ(A)=10⁷` | ~14 | ~2–4 |
+| Significant digits at `κ(A)=10⁷` | ~9 (16 − log₁₀κ) | ~3–5 (the squared condition eats double) |
 | Memory per stream step | O(n·p) | O(p²) — the entire point |
 | Rank detection at stream end | native | only via `G`'s own singular values (≈ σᵢ² of A) |
 
@@ -179,7 +180,9 @@ impl<F: SKFloat> SKSupervisedFit<F> for SKLinearRegression {
                 context.dataset_size_bytes = view.len() as u64 * size_of::<F>() as u64;
                 context.dataset_elements = Some(view.len() as u64);
                 context.access_pattern = SKAccessPattern::Sequential;
-                context.grain = SK_GEMM_GRAIN;           // the dominant kernel's grain
+                context.grain = SK_BINARY_COMBINE_GRAIN; // closeness-of-fit of the batch
+                                                          // kernel; the GEMM grain is not yet
+                                                          // calibrated — see the note below
                 let plan = sk_resolve_execution_plan(self.execution_intent(), &context)?;
 
                 // 2 · SOLVE — through the backend; vanilla-f64 design matrix
@@ -281,7 +284,7 @@ fn streaming_gram_matches_full_array() { /* the streaming state carries exactly
 }
 ```
 
-(CHANGE-joy note to keep in the shipped pages: the third test exists to *show* how the
+(walk-through note to keep in the shipped pages: the third test exists to *show* how the
 streaming path's accuracy gate — *same fixtures in memory vs streaming* — is how normal
 equations got *kept* streaming but with the §2 caveat printed as a test contract.)
 

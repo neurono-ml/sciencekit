@@ -1,6 +1,6 @@
 # How to add an Algorithm
 
-This is the boiling plate. It contains **no algorithm** — only the skeleton every algorithm
+This is the boiler plate. It contains **no algorithm** — only the skeleton every algorithm
 in `sciencekit` must follow, and the discipline that keeps hundred algorithms coherent
 instead of a drawer of clever one-offs. Every case-study chapter in this part assumes this
 recipe and refers to it by section number.
@@ -177,7 +177,7 @@ estimator validates every hyperparameter exactly once, in `build()`.
 
 ```rust
 use sciencekit_common::builders::{SKBuilder, SKBuilderState};
-use sciencekit_common::errors::sk_validate_hyperparameter;
+use sciencekit_common::builders::sk_validate_hyperparameter;
 use sciencekit_common::SKExecutionMode;
 
 pub struct SKStandardScaler {
@@ -275,6 +275,7 @@ fn standardize<F: SKFloat>(
         || {
             let mut context = SKExecutionContext::real();
             context.dataset_size_bytes = features.len() as u64 * size_of::<F>() as u64;
+            context.scalar_size_bytes = size_of::<F>() as u64;   // defaults are f64-sized; set it for f32 batches
             context.dataset_elements = Some(features.len() as u64);
             context.access_pattern = SKAccessPattern::Sequential;
             context.grain = SK_AXIS_SUM_GRAIN;          // the algorithm declares its grain
@@ -303,9 +304,12 @@ parallelism = min(cores, ceil(unit_elements / grain))
 
 Two compile-time facts your tests should lock in:
 
-- `Automatic` is a *policy*, not a prophecy: it never errors, and small data always lands
-  in-memory (parallelism collapses to `1` when the unit is below one grain — the resolver
-  will not hand out threads for a 5-element array).
+- `Automatic` is a *policy*, not a prophecy: it never returns
+  `ExecutionModeIncompatible`, and small data always lands in-memory (parallelism
+  collapses to `1` when the unit is below one grain — the resolver will not hand out
+  threads for a 5-element array). One caveat: when `Automatic` resolves to a *streaming*
+  plan, the buffer guard still applies — an oversized `batch_size_hint` raises
+  `BatchBufferOversize`, which is a data-shape error, not an intent error.
 - Declaring `OutOfCoreStreaming` with `access_pattern = RandomAccess` is a programming
   error caught *before* any data moves: `SKError::ExecutionModeIncompatible`.
 
@@ -449,10 +453,10 @@ is built on it.
 ```rust
 use sciencekit_common::observability::{sk_run_operation, SKOperationAttributes, SKOperationKind};
 
-public fn fit<F>(...) -> Result<Model, MyError> {
+pub fn fit<F>(...) -> Result<Model, MyError> {
     sk_run_operation(
         SKOperationAttributes {
-            operation: SKOperationKind::Fit,          // PartialFit · Fit · Transform · Predict · Score
+            operation: SKOperationKind::Fit,          // Fit · FitTransform · FitPredict · PartialFit · Transform · Predict · Score
             rows, columns,
             execution_mode, backend,
         },

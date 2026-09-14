@@ -18,11 +18,11 @@ the memory-mapped base, not a streaming combiner.
 
 | Decision | Chosen | Roads not taken — and why they are wrong *for this family* |
 |---|---|---|
-| Streaming regime | **None** — `RandomAccess` only | A "streaming kNN" that combiner-accumulates neighbors would have to forever revisit "which k rows are currently the nearest" — theオ state is *the base itself*. Sequential batching cannot answer, in order, a question whose answer set is unordered. This is the chapter's central lesson. |
+| Streaming regime | **None** — `RandomAccess` only | A "streaming kNN" that combiner-accumulates neighbors would have to forever revisit "which k rows are currently the nearest" — the stored state is *the base itself*. Sequential batching cannot answer, in order, a question whose answer set is unordered. This is the chapter's central lesson. |
 | Distance kernel | `sk_squared_euclidean_distance_matrix` (squared, not sqrt-ed) | The root is a *monotone* transform: ranking does not change under it, so per-distance `sqrt` is wasted work. (For the *weighted* paths that do need a real distance, `sk_euclidean_distance_matrix` exists on the same module.) |
 | Candidate selection | **`argpartition`-shaped top-k** (select the k smallest, not full sort) | Full sort is `O(n log n)` per query row; selection-to-k is `O(n)` expected. At a base of millions and q queries, this single decision is the model's latency. |
 | Out-of-core form | `SKMappableSource`/memory-mapped base rows, and *it is enough* — the distance matrix is computed **per query row** over an iterator of base rows, chunked to cache grain | Bulk distance matrix over the whole base at once would demand RAM for q×n — precisely the "does not fit" scenario the third regime exists for. |
-| kd-tree | **Analyzed, not shipped here** | Explained honestly in §2.2 — below roughly ~10 dimensions brute force wins on modern CPUs, which is the *common modest dimension of real features*, and the tree's post-1980 cache behavior is hostile to the library's layout-carriage. The extension path is documented, not hidden. |
+| kd-tree | **Analyzed, not shipped here** | Explained honestly in §2.2 — below roughly ~10–15 dimensions brute force wins on modern CPUs, which is the *common modest dimension of real features*, and the tree's post-1980 cache behavior is hostile to the library's layout-carriage. The extension path is documented, not hidden. |
 | Label rules (classifier) | Majority vote over the k canonical indices via `SKLabelTable`; regressor averages with optional inverse-distance weights | Softmax-style weighting hides the vote; inverse-distance weighting's `1/0` knee at exact matches gets special-cased and *tested* rather than left to folklore. |
 
 ```mermaid
@@ -79,7 +79,7 @@ Every neighbor-model chapter carries two classic facts and one modern nuance. Cl
   asymptotically indistinguishable as `d` grows.
 - **The kd-tree's territory**: binary space partitioning makes queries
   `O(log n)` **when log-dim branch-cutting actually prunes candidates**, which degrades to
-  near-brute-force in high dimensions. The practical crossover sits low: past roughly ~15
+  near-brute-force in high dimensions. The practical crossover sits low: past roughly ~10–15
   dimensions, trees lose to brute force on most realistic data.
 
 The *modern nuance* this chapter also hands you (the one that makes the decision table
@@ -92,9 +92,10 @@ citations to read the source before choosing:
 **Sources:**
 
 * Bentley, "Multidimensional binary search trees used for associative searching" (1975) — the kd-tree paper
-* Cover & Hart, "Nearest neighbor pattern classification" (1967) — the classification
-  *semantics* (Bayes-consistency story of k-NN as `n → ∞` and `k → ∞`,`k/n → 0`)
-* Friedman, "An improved algorithm finding nearest neighbors" — the best-bin-first family nuance
+* Cover & Hart, "Nearest neighbor pattern classification" (1967) — the 1-NN ≤ 2×Bayes bound;
+  note the k→∞, k/n→0 consistency result is **Stone (1977)** — often misattributed, cite Stone
+* Friedman, "An improved algorithm finding nearest neighbors" — improved kd-tree search
+  ordering; the separate *best-bin-first* variant is Beis & Lowe (1997) — cite both
 * Muja & Lowe, "Fast approximate nearest neighbors with automatic algorithm configuration" (FLANN) — the practical decision territory of modern neighbor search
 * Wikipedia: `k-d tree` and `Nearest neighbor search` — the map of exact vs approximate avenues
 * scikit-learn `sklearn.neighbors` — `KNeighborsClassifier`/`KNeighborsRegressor` semantics
@@ -108,12 +109,20 @@ citations to read the source before choosing:
 // crates/sciencekit_neighbors/src/k_neighbors/core_implementation.rs
 pub enum SKNeighborWeights { Uniform, Distance }
 
-pub struct SKKNeighborsModel<S: SKMappableSource<f64>, T: SKTargetViewData> {
+pub struct SKKNeighborsModel<S: SKMappableSource<f64>> {
     base: S,                        // the training rows — the whole storage question
-    targets: T,                     // canonicalized usize indices (classifier) / f64 (regressor)
+    targets: ndarray::Array1<f64>,  // owned targets (canonicalized indices stored as f64)
     labels: Option<SKLabelTable>,   // classifier only — frozen, grow-only
     nearest_neighbors_count: usize,
     weights: SKNeighborWeights,
+    /// the intent recorded from the builder at fit time — the model's invoke of
+    /// execution_intent() reads it, while *resolution* still happens per operation
+    /// against a fresh SKExecutionContext (anchor §4.1)
+    execution_intent: SKExecutionMode,
+}
+
+impl<S: SKMappableSource<f64>> SKKNeighborsModel<S> {
+    pub fn execution_intent(&self) -> SKExecutionMode { self.execution_intent }
 }
 ```
 
@@ -132,15 +141,15 @@ Two notes before the code:
 ## 4. The crown code
 
 ```rust
-impl<F, S, T> SKPredictor<F> for SKKNeighborsModel<S, T>
+impl<F, S> SKPredictor<F> for SKKNeighborsModel<S>
 where
     F: SKFloat,
-    S: SKMappableSource<F>,
+    S: SKMappableSource<F> + Sync,
 {
     type Error = SKError;
     fn predict<'a, X>(&self, queries: X) -> Result<ndarray::Array1<f64>, Self::Error>
     where X: TryInto<SKDataView<'a, F>, Error = SKError> {
-        let query_rows = queries_placeholder?.as_dense()?;
+        let queries = queries.try_into()?.as_dense()?;
         sk_run_operation(
             SKOperationAttributes {
                 operation: SKOperationKind::Predict,
@@ -149,10 +158,13 @@ where
             },
             || {
                 let mut context = SKExecutionContext::real();
+                // the plan rides from the estimator's SKBuilderState (the model owns no
+                // plan — anchor §4.1); resolution happens per predict
                 context.dataset_size_bytes = queries.len() as u64 * size_of::<F>() as u64;
                 context.dataset_elements = Some(queries.len() as u64);
                 context.access_pattern = SKAccessPattern::RandomAccess;   // the family's pattern
-                context.grain = SK_GEMM_GRAIN;
+                context.grain = SK_BINARY_COMBINE_GRAIN; // pairwise/candidate kernels;
+                // (a dedicated GEMM grain is not yet measured — revisit once one is measured)
                 let plan = sk_resolve_execution_plan(self.execution_intent(), &context)?;
 
                 let rows = queries.nrows();
@@ -205,12 +217,13 @@ The two answer rules:
 
 ```text
 # uniform:  classifier — the mode of the k neighbors' labels (ties → the label with
-#                         the smallest canonical index; deterministic even when tied)
+#           the smallest canonical index; deterministic even when tied)
 #           regressor  — the mean of the k neighbors' targets
 
-# distance: both families weight each neighbor by 1 / max(dist, ε)     (the max(…, ε) is
-#           the zero-distance-danger guard — a neighbor *equal* to the query row has
-#           weight "infinite", not NaN; scikit-learn's wording is the same decision
+# distance: both families weight each neighbor by 1 / dist, then normalize. The reviewed
+#           edge is the zero-distance neighbor (dist = 0): scikit-learn assigns it weight
+#           1.0 and then normalizes — that is the rule implemented here; the ε-clamp is a
+#           *separate* documented safety choice, not "the same decision" as scikit-learn
 ```
 
 ---

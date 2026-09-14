@@ -66,8 +66,8 @@ arithmetic does to the naive forms.
 **Parallelism.** Sums are associatively commutative in *exact* math and *not* quite in
 floating point — which is why column sums are computed as **per-chunk partials** and
 combined once (`sk_axis_sum`, axis 0). Every parallel worker owns a partial; the combine
-step happens once. Thread f-mutation of a shared accumulator would give you a
-data-race — and, even if you fixed that with an atomic, a **non-deterministic summation
+step happens once. Mutating a shared accumulator from several threads is a data race — and,
+even if you patched the race with an atomic, you would get a **non-deterministic summation
 order** that changes run to run (deviating between small and large data, the exact thing
 the acceptance §8.7 "little and lots" tests want to distinguish: with little data, the
 deployment-time parallelism is 1; with lots, the parallel path must agree to machine
@@ -112,7 +112,7 @@ W(x; count, mean, M2):
 output: variance = M2 / count
 ```
 
-Every intermediate is a **small residual** — the despair-conditioned subtraction is
+Every intermediate is a **small residual** — the possibly-conditioned subtraction is
 `(x − mean)`, not `(big − big)`; the cancellation is *structured*, not pathological.
 
 And when the participants are *batches* (streaming), the form composes: two partial
@@ -132,7 +132,7 @@ One formulation, two regimes; that is the design point the anchor chapter promis
 
 **Sources to learn this properly:**
 
-* Donald Knuth, *TAOCP* vol. 2, §4.2.2 — where most people first meet Welford (as exercise: horizon the bibliographic tramp)
+* Donald Knuth, *TAOCP* vol. 2, §4.2.2 — where most people first meet Welford (as exercise: hardly the bibliographic patient)
 * Chan, Golub, LeVeque (1983), *Am. Stat.* — the analysis that says *why* it is stable
 * Welford's original note: *Technometrics* 4:3 (1962), "A note on a method for calculating corrected sums of squares and products"
 
@@ -167,7 +167,7 @@ impl SKMoments {
         for row in chunks.rows() {
             let row_f64: ndarray::Array1<f64> = row
                 .iter()
-                .map(|v| v.get())
+                .map(|v| v.to_f64().unwrap_or(0.0))
                 .collect();
             // Welford single-element update against the CURRENT mean
             self.count += 1;
@@ -299,7 +299,7 @@ impl SKUnsupervisedFit<F> for SKStandardScaler {
 }
 ```
 
-and the streaming twin — note that the only change is the *source regalia*:
+and the streaming twin — note that only the plumbing changes:
 
 ```rust
 impl SKStandardScaler {
@@ -326,6 +326,35 @@ impl SKStandardScaler {
 }
 ```
 
+The model — spelled out once, because it is the object the "smallest complete algorithm"
+must finish with (per-column fitted statistics as f64, plus the construction flags, which
+`transform` needs to know what the caller asked for):
+
+```rust
+pub struct SKStandardScalerModel {
+    means: ndarray::Array1<f64>,         // per column; 0.0 where with_mean == false
+    scales: ndarray::Array1<f64>,        // 1/σ per column; 1.0 where with_std is false
+}
+
+impl SKStandardScalerModel {
+    pub(crate) fn from_moments(
+        moments: SKMoments,
+        options: &SKStandardScaler,      // with_mean / with_std flags
+    ) -> Self {
+        let variance = moments.m2 / moments.count as f64;
+        let scales = variance.mapv(|v| (1.0 / v.sqrt()));
+        Self {
+            means: moments.mean,
+            scales,
+        }
+    }
+    /// (mean, scale) per column; the flags the caller disabled resolve to identities
+    pub fn columns(&self) -> Vec<(usize, f64, f64)> {
+        /* zip columns with (0.0, 1.0) wherever the construction flags disabled the step */
+    }
+}
+```
+
 `transform` (§ below) is a pure flat map — in the **model**, not the estimator:
 
 ```rust
@@ -340,7 +369,7 @@ impl<F: SKFloat> SKFeatureTransformer<F> for SKStandardScalerModel {
         for (column_index, mean, scale) in self.columns().into_iter() {
             // columns carry (mean, σ) or (0.0, 1.0) when the flags disable the step
             azip!((v in &mut out.slice_mut(ndarray::s![.., column_index]).into_iter())) {
-                *v = (*v - mean.get()) / scale.get();
+                *v = (*v.to_f64().unwrap() - mean) / scale;
             }
         }
         Ok(out)
@@ -390,7 +419,7 @@ pick an estimator and document its error.
 * Jain & Chlamtac, "The P² algorithm for dynamic calculation of quantiles and histograms
   without storing observations", *CACM* 28(10), 1985 — the famous O(1)-memory one-pass quantile estimator
 * Greenwald & Khanna, "Space-efficient online computation of quantile summaries", *SIGMOD* 2001 — the ε-accurate predecessor of modern sketches
-* McClard, "RobustScaler quantile_range and NS quantiles", scikit-learn `sklearn.preprocessing.RobustScaler` docs — the behavior contract mirrored
+* scikit-learn, `sklearn.preprocessing.RobustScaler` documentation — the behavior contract this chapter mirrors (quantile range default, centering/scaling flags)
 
 ---
 
@@ -431,7 +460,7 @@ fn welford_matches_two_pass_within_machine_epsilon() {
 }
 
 #[test]
-fn streaming_matches_in_memory_on_insulin_batches() { /* identical fixtures through
+fn streaming_matches_in_memory_on_thin_batches() { /* identical fixtures through
     fit_streaming, batched 3-rows-at-a-time; answers agree to 1e-14; the "is_final"
     flag tested by construction (driver guarantees terminal batch delivery) */ }
 
