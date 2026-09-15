@@ -200,8 +200,12 @@ impl SKMoments {
     }
 
     fn combine(&mut self, other: SKMoments) {
+        // The running state starts empty (`SKMoments::default()` carries
+        // zero-length vectors): adopting the first partial outright avoids
+        // subtracting mismatched shapes on the very first merge.
+        if self.count == 0 { *self = other; return; }
+        if other.count == 0 { return; }
         let total = self.count + other.count;
-        if total == 0 { return; }
         let delta_w: ndarray::Array1<f64> = &other.mean - &self.mean;
         let running_weight = self.count as f64;
         let borrowed_weight = other.count as f64;
@@ -233,16 +237,21 @@ impl SKMoments {
                     m2: ndarray::Array1::zeros(cols),
                 };
                 for row in piece.rows() {
-                    // single-element Welford update row by row (row-major contiguous)
-                    let mut ss = &mut state;
-                    azip!((mean in &mut ss.mean, m2 in &mut ss.m2, value in row) {
-                        let next = *value as f64;
-                        ss.count += 1;
+                    // Single-element Welford update, one row at a time: each
+                    // row is ONE observation, so the shared observation counter
+                    // advances once per row while every column updates its own
+                    // (mean, m2) pair with that same counter value.
+                    state.count += 1;
+                    let count_as_float = state.count as f64;
+                    for (mean, m2, value) in itertools::izip!(&mut state.mean, &mut state.m2, row.iter()) {
+                        let next = value.to_f64().unwrap_or(0.0);
                         let delta = next - *mean;
-                        *mean += delta / ss.count as f64;
-                        let ahead = next - *mean;
-                        *m2 += delta * ahead;
-                    });
+                        *mean += delta / count_as_float;
+                        *m2 += delta * (next - *mean);
+                    }
+                    // Parallel safety comes from the outer split: each rayon
+                    // worker owns its private `state`; partials merge once via
+                    // `combine` below, so no two threads share an accumulator.
                 }
                 state
             })
@@ -341,12 +350,20 @@ impl SKStandardScalerModel {
         moments: SKMoments,
         options: &SKStandardScaler,      // with_mean / with_std flags
     ) -> Self {
-        let variance = moments.m2 / moments.count as f64;
-        let scales = variance.mapv(|v| (1.0 / v.sqrt()));
-        Self {
-            means: moments.mean,
-            scales,
-        }
+        // Population variance (÷N), matching scikit-learn's default.
+        assert!(moments.count > 0, "cannot fit on zero rows — reject empty input in fit()");
+        let variance = &moments.m2 / moments.count as f64;
+        // `scales` stores the MULTIPLICATIVE factor 1/σ: transform centers
+        // then multiplies by it (never divides — division by a tiny σ
+        // amplifies rounding; multiplication by a precomputed reciprocal is
+        // both faster and the convention `sk_scale_in_place` expects).
+        // Columns the caller disabled resolve to identities here, so
+        // `columns()` below can hand `transform` ready-to-use triples.
+        let scales = variance.mapv(|v| if options.with_std { 1.0 / v.sqrt() } else { 1.0 });
+        let means = if options.with_mean { moments.mean } else {
+            ndarray::Array1::zeros(moments.mean.len())
+        };
+        Self { means, scales }
     }
     /// (mean, scale) per column; the flags the caller disabled resolve to identities
     pub fn columns(&self) -> Vec<(usize, f64, f64)> {
@@ -367,9 +384,12 @@ impl<F: SKFloat> SKFeatureTransformer<F> for SKStandardScalerModel {
         let view = features.try_into()?.as_dense()?;
         let mut out = view.to_owned();
         for (column_index, mean, scale) in self.columns().into_iter() {
-            // columns carry (mean, σ) or (0.0, 1.0) when the flags disable the step
-            azip!((v in &mut out.slice_mut(ndarray::s![.., column_index]).into_iter())) {
-                *v = (*v.to_f64().unwrap() - mean) / scale;
+            // `scale` is the precomputed reciprocal 1/σ (or 1.0 where the
+            // flags disable scaling): center, then MULTIPLY — never divide.
+            let mut column = out.column_mut(column_index);
+            for value in column.iter_mut() {
+                let centered = value.to_f64().unwrap_or(0.0) - mean;
+                *value = F::from_f64(centered * scale).unwrap_or(F::zero());
             }
         }
         Ok(out)
