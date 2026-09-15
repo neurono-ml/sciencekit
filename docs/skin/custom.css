@@ -212,9 +212,11 @@ body {
   background: var(--sk-sidebar-bg);
   backdrop-filter: blur(10px);
   border-right: 1px solid var(--sk-border-soft);
-  width: 300px;
-  min-width: 240px;
-  max-width: min(480px, 90vw);
+  /* Width MUST follow mdBook's variable: book.js drives resizing by setting
+     --sidebar-target-width on <html> (consumed via --sidebar-width), and the
+     content wrapper is offset by the same variable. A fixed width here
+     silently disables the resize handle. */
+  width: var(--sidebar-width);
 }
 
 .sidebar .brand {
