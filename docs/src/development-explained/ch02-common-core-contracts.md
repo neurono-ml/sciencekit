@@ -583,11 +583,11 @@ flowchart TD
     ER --> P
     ER --> FT
 
-    style est fill:#e8f4f8,stroke:#6c8ebf
-    style model fill:#e8f5e9,stroke:#7ea6a0
-    style DV fill:#fff2cc,stroke:#d6b656
-    style TV fill:#fff2cc,stroke:#d6b656
-    style ER fill:#fce4ec,stroke:#c2185b
+    style est fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e
+    style model fill:#f0fdf4,stroke:#16a34a,color:#14532d
+    style DV fill:#fef3c7,stroke:#d97706,color:#78350f
+    style TV fill:#fef3c7,stroke:#d97706,color:#78350f
+    style ER fill:#ffe4e6,stroke:#e11d48,color:#7f1d1d
 ```
 
 The diagram shows the two halves of the system: the estimator side (which *fits*) and the

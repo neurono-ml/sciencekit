@@ -21,20 +21,22 @@ The whole routine, before the details:
 
 ```mermaid
 flowchart TD
+    accTitle: The algorithm routine from failing test to acceptance
+    accDescr: Test-first contract, builder plus estimator, execution planning across three regimes, model export, and PRD section 8.7 acceptance gates.
     classDef buildNode fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e,stroke-width:2px
     classDef planNode fill:#f0fdf4,stroke:#16a34a,color:#14532d,stroke-width:2px
     classDef regNode fill:#fff7ed,stroke:#ea580c,color:#7c2d12,stroke-width:2px
     classDef outsNode fill:#ede9fe,stroke:#7c3aed,color:#3b0764,stroke-width:2px
 
-    T["TDD: failing contract test first"]:::buildNode
+    T["TDD: failing<br>contract test first"]:::buildNode
     T --> B["Builder + estimator<br>SKBuilderState, validate in build()"]:::buildNode
-    B --> Fit["estimator · fit(&self) implements<br>SKUnsupervisedFit | SKSupervisedFit<br>+ SKFeatureTransformer when transformer"]:::buildNode
-    Fit --> P{"SKExecutionContext<br>grain · access_pattern"}:::planNode
+    B --> Fit["estimator · fit(&self) implements<br>SKUnsupervisedFit |<br>SKSupervisedFit<br>+ SKFeatureTransformer when transformer"]:::buildNode
+    Fit --> P{"SKExecution<br>Context<br>grain · access_pattern"}:::planNode
     P --> PLN["sk_resolve_execution_plan<br>(Automatic default)"]:::planNode
-    PLN -->|"InProcess*|whole array"| K["measured-grain kernels<br>plan.parallelism threads"]:::regNode
+    PLN -->|"InProcess* | whole array"| K["measured-grain kernels<br>plan.parallelism threads"]:::regNode
     PLN -->|">RAM, sequential"| Dr["sk_run_streaming_driver<br>State + update() per batch"]:::regNode
     PLN -->|">RAM, RandomAccess"| Ma["SKMappableSource<br>memory-mapped rows"]:::regNode
-    K --> Ms["Model (distinct type)<br>SKPredictor / transform verbs"]:::outsNode
+    K -->     Ms["Model (distinct type)<br>SKPredictor /<br>transform verbs"]:::outsNode
     Dr --> Ms
     Ma --> Ms
     Ms --> Chk["§8.7 acceptance + export + scorers<br>fmt · clippy · test · mdbook build"]:::outsNode

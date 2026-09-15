@@ -250,11 +250,11 @@ flowchart TD
     CRATES --> LINEAR[sciencekit_linear_model/<br/>regressions, logistic, SGD]
     CRATES --> MORE[... one crate per algorithm area]
 
-    style ROOT fill:#e8f4f8,stroke:#6c8ebf
-    style CRATES fill:#fff2cc,stroke:#d6b656
-    style UMBRELLA fill:#e8f5e9,stroke:#7ea6a0
-    style COMMON fill:#e8f5e9,stroke:#7ea6a0
-    style MATH fill:#e8f5e9,stroke:#7ea6a0
+    style ROOT fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e
+    style CRATES fill:#fef3c7,stroke:#d97706,color:#78350f
+    style UMBRELLA fill:#f0fdf4,stroke:#16a34a,color:#14532d
+    style COMMON fill:#f0fdf4,stroke:#16a34a,color:#14532d
+    style MATH fill:#f0fdf4,stroke:#16a34a,color:#14532d
 ```
 
 To see how a sub-crate actually registers into the workspace, here is the real `sciencekit_math/Cargo.toml` (from a later phase). Notice it is a *member* only once its own change adds it to the root's `members` list, and it depends on `sciencekit_common` by **path**:
@@ -355,9 +355,9 @@ flowchart TB
     end
     CI --> Gates
 
-    classDef root fill:#06d6a0,stroke:#007a58,color:#00301f
-    classDef crate fill:#ffd166,stroke:#b07d00,color:#3b2f00
-    classDef gate fill:#118ab2,stroke:#0b5d78,color:#ffffff
+    classDef root fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e
+    classDef crate fill:#fef3c7,stroke:#d97706,color:#78350f
+    classDef gate fill:#f0fdf4,stroke:#16a34a,color:#14532d
     class Root,Toolchain,Umbrella,CI root
     class Common,Math,More crate
     class Fmt,Clippy,Test,Ex,Msrv gate

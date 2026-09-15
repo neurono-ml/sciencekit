@@ -606,12 +606,12 @@ flowchart LR
         OBS -->|opt-in feature| OTL[sk_opentelemetry_layer → exporter]
     end
 
-    style configure fill:#e8f4f8,stroke:#6c8ebf
-    style resolve fill:#fff2cc,stroke:#d6b656
-    style run fill:#e8f5e9,stroke:#7ea6a0
-    style observe fill:#f3e8f9,stroke:#b07bd8
-    style ERR fill:#fce4ec,stroke:#c2185b
-    style ERR2 fill:#fce4ec,stroke:#c2185b
+    style configure fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e
+    style resolve fill:#fef3c7,stroke:#d97706,color:#78350f
+    style run fill:#f0fdf4,stroke:#16a34a,color:#14532d
+    style observe fill:#ede9fe,stroke:#7c3aed,color:#3b0764
+    style ERR fill:#ffe4e6,stroke:#e11d48,color:#7f1d1d
+    style ERR2 fill:#ffe4e6,stroke:#e11d48,color:#7f1d1d
 ```
 
 Reading the diagram: the builder holds the intent; resolution combines it with an injected
