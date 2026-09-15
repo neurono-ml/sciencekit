@@ -172,8 +172,16 @@ For horizontal bars reuse `.sk-bars` rows as seen in [Plan & Roadmap](./roadmap.
 5. Internal links use relative paths ending in `.html` (`./algorithms.html`).
 6. Run `mdbook build docs` and fix every warning before pushing; `create-missing = false` means broken links fail the build.
 7. **Diagrams must be Mermaid, never ASCII.** Write a ` ```mermaid ` fence; the book renders it client-side (see AGENTS.md → Documentation). Add an `accTitle`/`accDescr` to every diagram so it is accessible.
-8. **Equations must be LaTeX, not plain text.** Write `$...$` (inline) or `$$...$$` (display) so KaTeX renders them. Do not paste `‖a‖²`, `Σ`, `√` etc. as plain text.
-9. **Every image needs descriptive alt text.** Diagrams carry `accTitle`/`accDescr`; images (`.png`/`.svg`) must have an `alt` attribute that explains the content as read, not just a filename or raw code.
+8. **Mermaid colors must use the fixed `--sk-*` pairs.** Every `classDef`/`style` declares `fill` + `stroke` + `color` from the approved pairs below — never `fill` alone, so text stays legible in both book themes:
+   - blue: `fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e`
+   - green: `fill:#f0fdf4,stroke:#16a34a,color:#14532d`
+   - orange: `fill:#fff7ed,stroke:#ea580c,color:#7c2d12`
+   - violet: `fill:#ede9fe,stroke:#7c3aed,color:#3b0764`
+   - amber: `fill:#fef3c7,stroke:#d97706,color:#78350f`
+   - rose: `fill:#ffe4e6,stroke:#e11d48,color:#7f1d1d`
+9. **Mermaid labels must not clip.** Keep each line at or below ~24 characters, break long node labels with explicit `<br/>`, and put spaces around separators in edge labels (`|InProcess* | whole array|`, not `|InProcess*|whole array|`). Unbreakable tokens (type names, paths) go on their own `<br/>` line.
+10. **Equations must be LaTeX, not plain text.** Write `$...$` (inline) or `$$...$$` (display) so KaTeX renders them. Do not paste `‖a‖²`, `Σ`, `√` etc. as plain text.
+11. **Every image needs descriptive alt text.** Diagrams carry `accTitle`/`accDescr`; images (`.png`/`.svg`) must have an `alt` attribute that explains the content as read, not just a filename or raw code.
 
 ## Checklist for a docs change
 

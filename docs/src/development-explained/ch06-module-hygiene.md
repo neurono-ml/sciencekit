@@ -427,10 +427,10 @@ flowchart TD
     E_RS --> E_DRV
     E_RS -.-> E_TESTS
 
-    style K_RS fill:#eef2ff,stroke:#6366f1,stroke-width:2px
-    style E_RS fill:#eef2ff,stroke:#6366f1,stroke-width:2px
-    style K_TESTS fill:#fdf2f8,stroke:#db2777,stroke-dasharray:5 5
-    style E_TESTS fill:#fdf2f8,stroke:#db2777,stroke-dasharray:5 5
+    style K_RS fill:#ede9fe,stroke:#7c3aed,color:#3b0764,stroke-width:2px
+    style E_RS fill:#ede9fe,stroke:#7c3aed,color:#3b0764,stroke-width:2px
+    style K_TESTS fill:#ffe4e6,stroke:#e11d48,color:#7f1d1d,stroke-dasharray:5 5
+    style E_TESTS fill:#ffe4e6,stroke:#e11d48,color:#7f1d1d,stroke-dasharray:5 5
 ```
 
 The solid arrows show `mod.rs` *declaring* its implementation submodules; the dashed

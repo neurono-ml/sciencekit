@@ -45,10 +45,10 @@ flowchart TD
     CRATES --> ALGORITHMS
     CRATES --> SUPPORT
 
-    style ROOT fill:#e8f4f8,stroke:#6c8ebf
-    style FOUNDATION fill:#e8f5e9,stroke:#7ea6a0
-    style ALGORITHMS fill:#fff2cc,stroke:#d6b656
-    style SUPPORT fill:#fce4ec,stroke:#c2185b
+    style ROOT fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e
+    style FOUNDATION fill:#f0fdf4,stroke:#16a34a,color:#14532d
+    style ALGORITHMS fill:#fef3c7,stroke:#d97706,color:#78350f
+    style SUPPORT fill:#ffe4e6,stroke:#e11d48,color:#7f1d1d
 ```
 
 ### Structural rules

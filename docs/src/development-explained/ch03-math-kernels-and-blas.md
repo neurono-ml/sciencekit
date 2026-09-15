@@ -515,13 +515,13 @@ flowchart LR
     TRAIT --> G[SKMatrixMultiplyBackend]
     TRAIT --> H["ndarray-linalg (opt-in blas-backend)"]
 
-    style MATH fill:#e8f4f8,stroke:#6c8ebf
-    style K fill:#fff2cc,stroke:#d6b656
-    style L fill:#fff2cc,stroke:#d6b656
-    style PW fill:#e8f5e9,stroke:#7ea6a0
-    style SO fill:#e8f5e9,stroke:#7ea6a0
-    style BE fill:#fce4ec,stroke:#c2185b
-    style TRAIT fill:#fce4ec,stroke:#c2185b
+    style MATH fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e
+    style K fill:#fef3c7,stroke:#d97706,color:#78350f
+    style L fill:#fef3c7,stroke:#d97706,color:#78350f
+    style PW fill:#f0fdf4,stroke:#16a34a,color:#14532d
+    style SO fill:#f0fdf4,stroke:#16a34a,color:#14532d
+    style BE fill:#ffe4e6,stroke:#e11d48,color:#7f1d1d
+    style TRAIT fill:#ffe4e6,stroke:#e11d48,color:#7f1d1d
 ```
 
 The diagram shows `sciencekit_math` as the numeric substrate: the four module families

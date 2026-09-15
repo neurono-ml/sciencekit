@@ -434,9 +434,9 @@ flowchart TD
         CON -->|Continue / Stop| CON
     end
 
-    style resolve fill:#fff2cc,stroke:#d6b656
-    style compute fill:#e8f5e9,stroke:#7ea6a0
-    style stream fill:#e8f4f8,stroke:#6c8ebf
+    style resolve fill:#fef3c7,stroke:#d97706,color:#78350f
+    style compute fill:#f0fdf4,stroke:#16a34a,color:#14532d
+    style stream fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e
 ```
 
 Reading the left branch: resolution decides `parallelism` from the context's unit size and the
