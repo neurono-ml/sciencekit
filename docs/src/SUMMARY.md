@@ -14,8 +14,8 @@
 
 ## Tutorials
 
+- [How to add an Algorithm](tutorials/how-to-add-an-algorithm.md)
 - [Tutorials](tutorials/index.md)
-  - [How to add an Algorithm](tutorials/how-to-add-an-algorithm.md)
   - [Adding a Transformer — `SKStandardScaler`, `SKRobustScaler`](tutorials/adding-a-transformer.md)
   - [Adding a Linear Model — `SKLinearRegression`](tutorials/adding-a-linear-model.md)
   - [Adding a Streaming Model — `SKSGDClassifier`, `SKSGDRegressor`](tutorials/adding-a-streaming-model.md)

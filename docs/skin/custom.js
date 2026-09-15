@@ -205,21 +205,41 @@ document.addEventListener('DOMContentLoaded', function () {
       toggle.setAttribute('aria-label', 'Toggle section: ' + link.textContent.trim());
       item.insertBefore(toggle, item.firstChild);
       toggle.addEventListener('click', function () {
-        var willOpen = !item.classList.contains('expanded');
-        if (willOpen) {
-          // Single-open: close sibling sections at the same level.
-          var siblings = Array.from(item.parentElement.children).filter(function (child) {
-            return child !== item && child.matches('li.chapter-item');
-          });
-          siblings.forEach(function (sibling) {
-            var nested = sibling.querySelector(':scope > ol.section');
-            if (nested) setOpen(nested, false);
-          });
+        toggleSection(item, list, scope);
+      });
+      // Clicking the section link of the page already being viewed toggles
+      // the submenu instead of reloading the same page (standard docs
+      // behavior). Links to other pages navigate normally; the freshly
+      // loaded page then single-opens around the active chapter.
+      link.addEventListener('click', function (event) {
+        if (event.defaultPrevented || event.button !== 0 || event.metaKey ||
+            event.ctrlKey || event.shiftKey || event.altKey) return;
+        var target = link.getAttribute('href') || '';
+        if (target.charAt(0) === '#') return;
+        var current = window.location.pathname.split('/').pop() || 'index.html';
+        var destination = target.split('/').pop().split('#')[0] || 'index.html';
+        if (destination === current) {
+          event.preventDefault();
+          toggleSection(item, list, scope);
         }
-        setOpen(list, willOpen);
-        writeOpenKeys(collectOpenKeys(scope));
       });
     });
+
+    function toggleSection(item, list, scope) {
+      var willOpen = !item.classList.contains('expanded');
+      if (willOpen) {
+        // Single-open: close sibling sections at the same level.
+        var siblings = Array.from(item.parentElement.children).filter(function (child) {
+          return child !== item && child.matches('li.chapter-item');
+        });
+        siblings.forEach(function (sibling) {
+          var nested = sibling.querySelector(':scope > ol.section');
+          if (nested) setOpen(nested, false);
+        });
+      }
+      setOpen(list, willOpen);
+      writeOpenKeys(collectOpenKeys(scope));
+    }
 
     if (persisted) {
       sections.forEach(function (list) {
