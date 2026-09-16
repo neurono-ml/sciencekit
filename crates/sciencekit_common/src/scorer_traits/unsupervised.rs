@@ -4,11 +4,11 @@ use ndarray::Array1;
 
 use crate::SKError;
 use crate::data_view::SKDataView;
-use crate::fit_traits::SKPredictor;
+use crate::fit_traits::SKRegressorPredictor;
 use crate::sk_float::SKFloat;
 
 /// An unsupervised scorer (e.g. silhouette-like) over features and assignments.
-pub trait SKUnsupervisedScorer<F: SKFloat, M: SKPredictor<F>>
+pub trait SKUnsupervisedScorer<F: SKFloat, M: SKRegressorPredictor<F>>
 where
     Self::Error: From<M::Error>,
 {
@@ -23,12 +23,13 @@ where
     /// Convenient form: obtain the model's outputs, then delegate to the pure form.
     fn score(&self, model: &M, features: SKDataView<'_, F>) -> Result<f64, Self::Error> {
         let raw = match features {
-            SKDataView::Dense(d) => model.predict(d)?,
-            SKDataView::Sparse(s) => model.predict(s)?,
+            SKDataView::Dense(dense) => model.predict(dense)?,
+            SKDataView::Sparse(sparse) => model.predict(sparse)?,
         };
-        // A predictor returns continuous scores; reinterpret as assignments by
-        // rounding to indices (convenient-form contract).
-        let assignments: Array1<usize> = raw.mapv(|v| v.round().max(0.0) as usize);
+        // A regressor returns continuous responses; reinterpret as assignments
+        // by rounding to indices (convenient-form contract).
+        let assignments: Array1<usize> =
+            raw.mapv(|value| num_traits::ToPrimitive::to_usize(&value.round()).unwrap_or(0));
         self.score_from_assignments(features, assignments.view())
     }
 }

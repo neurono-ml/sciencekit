@@ -4,8 +4,11 @@
 //! model type** (sole bearer of the learned state), operates on a **shared
 //! reference** of the configured estimator, and produces models that are
 //! `Send + Sync` by construction. Prediction exists only on the model type, so
-//! predict-without-fit is unrepresentable. The transformer declares its output
-//! as an associated type for static pipeline chaining.
+//! predict-without-fit is unrepresentable: regressors predict responses in the
+//! model scalar (`SKRegressorPredictor`), classifiers predict scalar-independent
+//! labels plus scalar-preserving probabilities (`SKClassifierPredictor`). The
+//! transformer declares its output as an associated type for static pipeline
+//! chaining.
 //!
 //! This is a **pure dispatcher** module: `mod.rs` only declares and re-exports
 //! submodules; every implementation lives in its own file.
@@ -15,7 +18,7 @@ mod supervised;
 mod transformer;
 mod unsupervised;
 
-pub use predictor::SKPredictor;
+pub use predictor::{SKClassifierPredictor, SKRegressorPredictor};
 pub use supervised::SKSupervisedFit;
 pub use transformer::SKFeatureTransformer;
 pub use unsupervised::SKUnsupervisedFit;

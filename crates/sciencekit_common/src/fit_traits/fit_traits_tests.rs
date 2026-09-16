@@ -2,7 +2,8 @@
 
 use ndarray::{Array1, Array2, array};
 
-use super::{SKFeatureTransformer, SKSupervisedFit, SKUnsupervisedFit};
+use super::{SKClassifierPredictor, SKFeatureTransformer, SKRegressorPredictor};
+use super::{SKSupervisedFit, SKUnsupervisedFit};
 use crate::SKError;
 use crate::data_view::SKDataView;
 
@@ -43,16 +44,59 @@ struct ExampleClassifier<F: crate::SKFloat> {
     marker: std::marker::PhantomData<F>,
 }
 
+/// An example regressor model predicting a constant response in the model scalar.
+#[derive(Debug, Clone, PartialEq)]
+struct ExampleRegressorModel<F: crate::SKFloat> {
+    response: F,
+}
+
+impl<F: crate::SKFloat> SKRegressorPredictor<F> for ExampleRegressorModel<F> {
+    type Error = SKError;
+    fn predict<'a, X>(&self, features: X) -> Result<Array1<F>, Self::Error>
+    where
+        X: TryInto<SKDataView<'a, F>, Error = SKError>,
+    {
+        let view: SKDataView<'a, F> = features.try_into()?;
+        let rows = match &view {
+            SKDataView::Dense(dense) => dense.nrows(),
+            SKDataView::Sparse(sparse) => sparse.rows(),
+        };
+        Ok(Array1::from_elem(rows, self.response))
+    }
+}
+
+/// An example classifier model predicting constant labels and probabilities.
 #[derive(Debug, Clone, PartialEq)]
 struct ExampleClassifierModel<F: crate::SKFloat> {
     classes: usize,
     marker: std::marker::PhantomData<F>,
 }
 
-impl<F: crate::SKFloat> ExampleClassifierModel<F> {
-    /// Prediction exists **only** on the model type.
-    fn predict(&self, _features: Array2<F>) -> Array1<usize> {
-        array![0_usize, 0]
+impl<F: crate::SKFloat> SKClassifierPredictor<F> for ExampleClassifierModel<F> {
+    type Error = SKError;
+    fn predict_labels<'a, X>(&self, features: X) -> Result<Array1<i64>, Self::Error>
+    where
+        X: TryInto<SKDataView<'a, F>, Error = SKError>,
+    {
+        let view: SKDataView<'a, F> = features.try_into()?;
+        let rows = match &view {
+            SKDataView::Dense(dense) => dense.nrows(),
+            SKDataView::Sparse(sparse) => sparse.rows(),
+        };
+        Ok(Array1::from_elem(rows, 1_i64))
+    }
+    fn predict_probabilities<'a, X>(&self, features: X) -> Result<Array2<F>, Self::Error>
+    where
+        X: TryInto<SKDataView<'a, F>, Error = SKError>,
+    {
+        let view: SKDataView<'a, F> = features.try_into()?;
+        let rows = match &view {
+            SKDataView::Dense(dense) => dense.nrows(),
+            SKDataView::Sparse(sparse) => sparse.rows(),
+        };
+        let mut probabilities = Array2::zeros((rows, self.classes));
+        probabilities.column_mut(1).fill(F::one());
+        Ok(probabilities)
     }
 }
 
@@ -62,10 +106,10 @@ impl<F: crate::SKFloat> SKSupervisedFit<F> for ExampleClassifier<F> {
     fn fit<'a, X, T>(&self, features: X, targets: T) -> Result<Self::Model, Self::Error>
     where
         X: TryInto<SKDataView<'a, F>, Error = SKError>,
-        T: TryInto<crate::SKTargetView<'a>, Error = SKError>,
+        T: TryInto<crate::SKTargetView<'a, F>, Error = SKError>,
     {
         let _view: SKDataView<'a, F> = features.try_into()?;
-        let _targets: crate::SKTargetView<'a> = targets.try_into()?;
+        let _targets: crate::SKTargetView<'a, F> = targets.try_into()?;
         Ok(ExampleClassifierModel {
             classes: 2,
             marker: std::marker::PhantomData,
@@ -147,6 +191,56 @@ fn fitted_models_are_send_sync() {
     fn assert_send_sync<T: Send + Sync>() {}
     assert_send_sync::<ExampleClustererModel<f32>>();
     assert_send_sync::<ExampleClassifierModel<f64>>();
+    assert_send_sync::<ExampleRegressorModel<f32>>();
+}
+
+/// Concurrent prediction shares one fitted model across threads per scalar.
+#[test]
+fn concurrent_predict_shares_one_model() {
+    let model = ExampleRegressorModel { response: 1.0_f32 };
+    let features = Array2::zeros((8, 2));
+    let predictions: Vec<Array1<f32>> = std::thread::scope(|scope| {
+        let handles: Vec<_> = (0..4)
+            .map(|_| {
+                scope.spawn(|| {
+                    model
+                        .predict(features.view())
+                        .expect("thread-local predict succeeds")
+                })
+            })
+            .collect();
+        handles
+            .into_iter()
+            .map(|handle| handle.join().expect("thread joins"))
+            .collect()
+    });
+    assert_eq!(predictions.len(), 4);
+    for prediction in predictions {
+        assert_eq!(prediction.as_slice().unwrap(), &[1.0_f32; 8]);
+    }
+}
+
+/// Predictions run on a single row and on a large batch in both scalars.
+#[test]
+fn predict_runs_on_small_and_large_batches() {
+    let regressor = ExampleRegressorModel { response: 3.0_f64 };
+    let single = Array2::zeros((1, 2));
+    assert_eq!(regressor.predict(single.view()).unwrap().len(), 1);
+    let large = Array2::zeros((10_000, 4));
+    let predictions = regressor.predict(large.view()).unwrap();
+    assert_eq!(predictions.len(), 10_000);
+
+    let classifier = ExampleClassifierModel::<f32> {
+        classes: 2,
+        marker: std::marker::PhantomData,
+    };
+    let single = Array2::zeros((1, 2));
+    assert_eq!(classifier.predict_labels(single.view()).unwrap().len(), 1);
+    let large = Array2::zeros((10_000, 4));
+    assert_eq!(
+        classifier.predict_labels(large.view()).unwrap().len(),
+        10_000
+    );
 }
 
 /// The configured estimator exposes no prediction — only the model does.
@@ -154,15 +248,40 @@ fn fitted_models_are_send_sync() {
 fn prediction_lives_only_on_the_model() {
     let estimator = ExampleClassifier::<f32>::default();
     let _estimator = estimator;
-    // The estimator type has no `predict` method by construction; prediction is
-    // only on `ExampleClassifierModel::predict`. This test builds the model
-    // through fit and calls predict on the *model*.
+    // The estimator type has no `predict_labels` method by construction;
+    // prediction is only on `ExampleClassifierModel`. This test builds the
+    // model through fit and calls prediction on the *model*.
     let features = Array2::zeros((2, 2));
     let targets = array![0_i64, 1];
     let model = ExampleClassifier::<f32>::default()
         .fit(&features, targets.view())
         .unwrap();
-    let _pred = model.predict(Array2::zeros((2, 2)));
+    let labels = model.predict_labels(features.view()).unwrap();
+    assert_eq!(labels.as_slice().unwrap(), &[1_i64, 1]);
+}
+
+/// Regressor predictions preserve the model scalar end to end.
+#[test]
+fn regressor_predictions_preserve_scalar() {
+    let model = ExampleRegressorModel { response: 2.5_f32 };
+    let features = Array2::zeros((3, 2));
+    let predictions = model.predict(features.view()).unwrap();
+    assert_eq!(predictions.as_slice().unwrap(), &[2.5_f32; 3]);
+}
+
+/// Classifier labels are dtype-independent; probabilities keep the scalar.
+#[test]
+fn classifier_labels_are_scalar_independent() {
+    let model = ExampleClassifierModel::<f32> {
+        classes: 2,
+        marker: std::marker::PhantomData,
+    };
+    let features = Array2::zeros((2, 3));
+    let labels = model.predict_labels(features.view()).unwrap();
+    assert_eq!(labels.as_slice().unwrap(), &[1_i64, 1]);
+    let probabilities = model.predict_probabilities(features.view()).unwrap();
+    assert_eq!(probabilities.shape(), &[2, 2]);
+    assert_eq!(probabilities.row(0).as_slice().unwrap(), &[0.0_f32, 1.0]);
 }
 
 /// A transformer's typed output chains into another stage's input.
@@ -176,4 +295,17 @@ fn transformer_output_chains_statically() {
     // The output (Array2<f32>) is exactly what a downstream dense stage accepts.
     let _next_view: SKDataView<'_, f32> = (&out).try_into().unwrap();
     assert_eq!(out.shape(), &[2, 2]);
+}
+
+/// A homogeneous scalar flows from transformer output into regressor input.
+#[test]
+fn homogeneous_scalar_flows_across_stages() {
+    let scaler = ExampleScaler::<f32> {
+        marker: std::marker::PhantomData,
+    };
+    let regressor = ExampleRegressorModel { response: 9.0_f32 };
+    let data = Array2::from_shape_vec((2, 2), vec![1.0_f32, 2.0, 3.0, 4.0]).unwrap();
+    let scaled: Array2<f32> = scaler.transform(&data).unwrap();
+    let predictions = regressor.predict(scaled.view()).unwrap();
+    assert_eq!(predictions.as_slice().unwrap(), &[9.0_f32, 9.0]);
 }
