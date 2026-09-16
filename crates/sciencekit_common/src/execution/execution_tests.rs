@@ -368,6 +368,24 @@ fn batch_fitting_double_buffer_budget_passes() {
     assert_eq!(plan.batch_size, Some(1 << 20));
 }
 
+/// f32 batches account `size_of::<f32>()` bytes per element when streaming.
+#[test]
+fn f32_scalar_size_flows_into_streaming_batches() {
+    let elements = 1 << 20;
+    let ctx = simulated(
+        1 << 30,
+        4,
+        elements * size_of::<f32>() as u64,
+        Some(elements),
+        size_of::<f32>() as u64,
+        SKAccessPattern::Sequential,
+        None,
+    );
+    assert_eq!(ctx.scalar_size_bytes, 4);
+    let plan = sk_resolve_execution_plan(SKExecutionMode::Automatic, &ctx).unwrap();
+    assert_eq!(plan.mode, SKExecutionMode::InProcessSynchronous);
+}
+
 /// Automatic intent never trips the guard when the resolved batch fits.
 #[test]
 fn automatic_intent_never_trips_guard_when_batch_fits() {
