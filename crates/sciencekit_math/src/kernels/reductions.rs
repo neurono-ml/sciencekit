@@ -3,7 +3,6 @@
 use ndarray::{Array, ArrayView2, Axis, azip};
 use rayon::prelude::*;
 use sciencekit_common::SKFloat;
-
 /// Sum a 2-D array along one axis, returning a 1-D result.
 ///
 /// `axis = 0` collapses rows (per-column sums, length = columns);
@@ -72,4 +71,83 @@ pub fn sk_axis_sum<F: SKFloat>(
         }
         _ => panic!("sk_axis_sum axis must be 0 or 1, found {axis}"),
     }
+}
+
+/// Sum of squares of a 2-D array along one axis, returning a 1-D result.
+///
+/// `axis = 0` collapses rows (per-column Σx², length = columns);
+/// `axis = 1` collapses columns (per-row Σx², length = rows).
+///
+/// The companion to [`sk_axis_sum`] for variance-style statistics
+/// (mean from Σx, variance from Σx²): same parallelism contract — `1` runs
+/// the sequential forms, `> 1` dispatches across the compute pool through
+/// per-chunk partial accumulators combined once at the end, free of manual
+/// index loops. Shares the [`SK_AXIS_SUM_GRAIN`](super::SK_AXIS_SUM_GRAIN)
+/// reduction grain.
+pub fn sk_axis_sum_squares<F: SKFloat>(
+    input: &ArrayView2<F>,
+    axis: usize,
+    parallelism: usize,
+) -> Array<F, ndarray::Ix1> {
+    let (rows, cols) = input.dim();
+    match axis {
+        0 if parallelism > 1 => {
+            let chunk_rows = rows.div_ceil(parallelism);
+            let partials: Vec<Array<F, ndarray::Ix1>> = input
+                .axis_chunks_iter(Axis(0), chunk_rows.max(1))
+                .into_par_iter()
+                .map(|chunk| sum_squares_sequential(&chunk.view(), 0))
+                .collect();
+            combine_partials(partials, cols)
+        }
+        0 => sum_squares_sequential(input, 0),
+        1 if parallelism > 1 => {
+            let squares: Vec<F> = input
+                .axis_iter(Axis(1))
+                .into_par_iter()
+                .map(|row| {
+                    row.iter()
+                        .fold(F::zero(), |acc, &value| acc + value * value)
+                })
+                .collect();
+            Array::from_vec(squares)
+        }
+        1 => sum_squares_sequential(input, 1),
+        _ => panic!("sk_axis_sum_squares axis must be 0 or 1, found {axis}"),
+    }
+}
+
+/// Sequential Σx² along one axis over contiguous row runs.
+fn sum_squares_sequential<F: SKFloat>(
+    input: &ArrayView2<F>,
+    axis: usize,
+) -> Array<F, ndarray::Ix1> {
+    let (rows, cols) = input.dim();
+    if axis == 0 {
+        let mut output = Array::zeros(cols);
+        for row in input.rows() {
+            azip!((acc in &mut output, value in row) { *acc = *acc + *value * *value; });
+        }
+        output
+    } else {
+        let mut output = Array::zeros(rows);
+        for (index, row) in input.rows().into_iter().enumerate() {
+            output[index] = row
+                .iter()
+                .fold(F::zero(), |acc, &value| acc + value * value);
+        }
+        output
+    }
+}
+
+/// Combine per-worker partial accumulators into a single result.
+fn combine_partials<F: SKFloat>(
+    partials: Vec<Array<F, ndarray::Ix1>>,
+    len: usize,
+) -> Array<F, ndarray::Ix1> {
+    let mut output = Array::zeros(len);
+    for partial in partials {
+        azip!((out in &mut output, value in &partial) { *out = *out + *value; });
+    }
+    output
 }
