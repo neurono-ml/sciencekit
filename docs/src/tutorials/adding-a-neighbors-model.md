@@ -270,7 +270,7 @@ fn memory_mapped_base_matches_in_memory_base() {
 | Lots and little data | the memory-mapped regime *is* the "lots" story (§5 test 4) |
 | Under concurrency | chunked distance rows + per-query partitioning, `plan.parallelism` from the plan |
 | Model export | base path + label table + hyper-settings (see anchor §10; memmap is exactly what the PRD §4.4 asks for mmappable bases) |
-| Metrics | classifier accuracy / regressor R² through `SKSupervisedScorer` (free, no new scorer) |
+| Metrics | classifier accuracy through `SKLabelScorer` / regressor R² through `SKSupervisedScorer` (free, no new scorer) |
 
 **Chapter sources** (see §2.1's citations): Bentley, Cover & Hart, Muja & Lowe, the
 `sklearn.neighbors` docs and its `npy`-neighbour algorithm notes on the

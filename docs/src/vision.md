@@ -79,7 +79,8 @@ Three target audiences:
 ```rust,ignore
 // Core trait vocabulary — implemented by the sciencekit crates.
 pub trait SKEstimator { /* hyperparameters and fit */ }
-pub trait SKPredictor: SKEstimator { /* predict */ }
+pub trait SKRegressorPredictor: SKEstimator { /* predict -> Array1<F> */ }
+pub trait SKClassifierPredictor: SKEstimator { /* labels -> Array1<i64> */ }
 pub trait SKTransformer: SKEstimator { /* transform / fit_transform */ }
 
 pub trait SKDataSource { /* eager: full in-memory access */ }
@@ -88,13 +89,13 @@ pub trait SKMappableSource { /* memmap: O(1) random access */ }
 ```
 
 Algorithms compose exactly the traits they support: an `SKSGDClassifier` implements
-`SKPredictor` + `SKLazySource`; an `SKStandardScaler` implements only `SKTransformer`.
+`SKClassifierPredictor` + `SKLazySource`; an `SKStandardScaler` implements only `SKTransformer`.
 
 ## Interoperability
 
 - **Single internal format:** extended Safetensors — JSON header with hyperparameters, training state
   and recoverability metadata (checkpointing), with partial writes via sharding or header padding.
-- **ONNX:** every estimator implements `SKToOnnx`; external models load as a generic `SKPredictor`.
+- **ONNX:** every estimator implements `SKToOnnx`; external models load as a generic predictor.
 - **Data:** pluggable sources behind arbitrary I/O traits, with conversions for Polars and DataFusion.
 - **Observability:** `tracing` oriented to OpenTelemetry, disableable at near-zero cost.
 

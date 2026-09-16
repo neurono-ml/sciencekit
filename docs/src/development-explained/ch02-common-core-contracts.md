@@ -29,7 +29,8 @@ future crate compiles against" (as its own `lib.rs` header says). It decides:
 - how failures are reported (`SKError`),
 - how feature data and target data enter an algorithm (`SKDataView`, `SKTargetView`),
 - what it means for an algorithm to *fit*, *predict*, or *transform*
-  (`SKSupervisedFit`, `SKUnsupervisedFit`, `SKPredictor`, `SKFeatureTransformer`).
+  (`SKSupervisedFit`, `SKUnsupervisedFit`, `SKRegressorPredictor`,
+  `SKClassifierPredictor`, `SKFeatureTransformer`).
 
 Without this crate, `sciencekit` would be dozens of disconnected experiments. With it,
 every algorithm starts from a proven, shared foundation — like every room in a building
@@ -414,26 +415,35 @@ compatibility checking to runtime.
 
 Here is the whole family at a glance:
 
-```
-                         sciencekit_common
-                             |
-      +-----------------------+----------------------+
-      |                                              |
-   numbers                                      data & errors
-      |                                              |
-   SKFloat (sealed) <-- f32, f64               SKError (enum)
-      |                                              |
-      +-- SKFloatSealed (private seal)         SKDataView (Dense | Sparse)
-                                                SKTargetView (Continuous | Integer | Nominal)
-                                                      |
-                                     +----------------+----------------+
-                                     |                                 |
-                                SKSupervisedFit                     SKUnsupervisedFit
-                                (features + targets)                (features only)
-                                      |                                 |
-                      SKRegressorPredictor (on the model)         (model type)
-                      SKClassifierPredictor (on the model)
-                                SKFeatureTransformer (transform)
+```mermaid
+flowchart TD
+    accTitle: The sciencekit_common vocabulary at a glance
+    accDescr: Numbers, data views and errors feed the fit traits on the estimator and the prediction and transform traits on the fitted model.
+    COMMON[sciencekit_common] --> NUM[numbers]
+    COMMON --> DATA[data and errors]
+    NUM --> FL[SKFloat sealed: f32, f64]
+    FL --> SEAL[SKFloatSealed private seal]
+    DATA --> ERR[SKError enum]
+    DATA --> DV[SKDataView: Dense or Sparse]
+    DATA --> TV[SKTargetView: Continuous, Integer or Nominal]
+    TV --> SF[SKSupervisedFit: features plus targets]
+    DV --> SF
+    DV --> UF[SKUnsupervisedFit: features only]
+    SF --> RP[SKRegressorPredictor on the model]
+    SF --> CP[SKClassifierPredictor on the model]
+    UF --> M[model type]
+    DV --> RP
+    DV --> CP
+    RP --> FT[SKFeatureTransformer: transform]
+
+    style COMMON fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e
+    style NUM fill:#ede9fe,stroke:#7c3aed,color:#4c1d95
+    style DATA fill:#fef3c7,stroke:#d97706,color:#78350f
+    style SF fill:#f0fdf4,stroke:#16a34a,color:#14532d
+    style UF fill:#f0fdf4,stroke:#16a34a,color:#14532d
+    style RP fill:#f0fdf4,stroke:#16a34a,color:#14532d
+    style CP fill:#f0fdf4,stroke:#16a34a,color:#14532d
+    style FT fill:#f0fdf4,stroke:#16a34a,color:#14532d
 ```
 
 ---
@@ -619,25 +629,6 @@ from the estimator, and both depend only on the shared data views and the centra
 
 ---
 
-## 8. Recap
-
-- **`SKFloat` is sealed** — only `f32` and `f64` are valid continuous numbers, enforced at
-  compile time by a private supertrait (`private::SKFloatSealed`).
-- **`SKError` is one precise taxonomy** — shape, unsupported representation, hyperparameter,
-  execution mode, batch overflow, convergence, I/O, and conversion — built with `thiserror`,
-  `#[non_exhaustive]`, and automatic `From` conversion into per-algorithm errors.
-- **Data enters through zero-copy views** — `SKDataView` (dense/sparse) and `SKTargetView`
-  (continuous/integer/nominal) borrow the caller's buffers rather than copying them, which
-  is the heart of the performance promise.
-- **Public inputs are declared over `TryInto`** — any type that can convert into a view is
-  accepted, making the library open to third-party integration without breaking.
-- **Fit, predict, and transform are separate contracts** — `SKSupervisedFit` and
-  `SKUnsupervisedFit` split by supervision; `SKRegressorPredictor`,
-  `SKClassifierPredictor`, and `SKFeatureTransformer` live on
-  the *model* type, making "predict before fit" a compile-time error.
-
----
-
 ## 7. Which float should I use?
 
 Both `f32` and `f64` satisfy `SKFloat`, and a model fitted on one predicts in the
@@ -662,6 +653,28 @@ predictions and continuous targets use `Array1<F>`/`ArrayView1<F>`, and classifi
 labels are `Array1<i64>` instead of float-encoded indices. Call sites that assumed
 `f64` update to the model scalar `F`; classifiers switch from comparing floats to
 comparing label indices.
+
+---
+
+## 8. Recap
+
+- **`SKFloat` is sealed** — only `f32` and `f64` are valid continuous numbers, enforced at
+  compile time by a private supertrait (`private::SKFloatSealed`).
+- **Predictions preserve the model scalar** — regressors return `Array1<F>`, classifiers
+  return `Array1<i64>` labels plus `Array2<F>` probabilities; continuous targets are
+  `SKTargetView::Continuous(ArrayView1<F>)`.
+- **`SKError` is one precise taxonomy** — shape, unsupported representation, hyperparameter,
+  execution mode, batch overflow, convergence, I/O, and conversion — built with `thiserror`,
+  `#[non_exhaustive]`, and automatic `From` conversion into per-algorithm errors.
+- **Data enters through zero-copy views** — `SKDataView` (dense/sparse) and `SKTargetView`
+  (continuous/integer/nominal) borrow the caller's buffers rather than copying them, which
+  is the heart of the performance promise.
+- **Public inputs are declared over `TryInto`** — any type that can convert into a view is
+  accepted, making the library open to third-party integration without breaking.
+- **Fit, predict, and transform are separate contracts** — `SKSupervisedFit` and
+  `SKUnsupervisedFit` split by supervision; `SKRegressorPredictor`,
+  `SKClassifierPredictor`, and `SKFeatureTransformer` live on
+  the *model* type, making "predict before fit" a compile-time error.
 
 *Next chapter:* now that we have the shared vocabulary of numbers, errors, and data views,
 we can look at how an actual algorithm puts it to work — fitting a model and predicting on

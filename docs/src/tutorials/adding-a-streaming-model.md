@@ -239,8 +239,8 @@ one batch in: Xᵦ, yᵦ → gradient(θ) ← (1/|B|) (Xᵦ θ − yᵦ)ᵀ Xᵦ
 
 The classifier's `predict` reduces probabilities across categories via the *same* label
 table — `argmax` over the class weights, then `SKLabelTable::label_of(index)` decodes the
-integer back into its frozen label string. The regressor simply returns one `f64` per row —
-matching the anchor §3.2 rule: `SKPredictor<F>` always returns `Array1<f64>`.
+integer back into its frozen label string. The regressor simply returns one `F` per row —
+matching the anchor §3.2 rule: `SKRegressorPredictor<F>` returns `Array1<F>`.
 
 The structural rule this encodes: label lookups always go *through* the table, never an
 ad-hoc map in the model — §5's grow-only test is the enforcement.
@@ -282,7 +282,7 @@ fn per_batch_partial_fit_spans() {
 | Lots and little data | §5 test 1 — literally the regimes-equivalence |
 | Under concurrency | gradient is parallel (partial accumulation), θ update sequential; `&self` fit; model `Sync` |
 | Model export | θ + clock + label table — plain fitted structure |
-| Metrics | `SKSupervisedScorer` (R² for the regressor, accuracy for the classifier through the scorer chapter) |
+| Metrics | `SKSupervisedScorer` (R² for the regressor) / `SKLabelScorer` (accuracy for the classifier through the scorer chapter) |
 
 Standing **study sources** (each also explained §2):
 
