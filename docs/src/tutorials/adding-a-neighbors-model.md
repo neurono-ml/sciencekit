@@ -109,9 +109,9 @@ citations to read the source before choosing:
 // crates/sciencekit_neighbors/src/k_neighbors/core_implementation.rs
 pub enum SKNeighborWeights { Uniform, Distance }
 
-pub struct SKKNeighborsModel<S: SKMappableSource<f64>> {
+pub struct SKKNeighborsModel<F: SKFloat, S: SKMappableSource<F>> {
     base: S,                        // the training rows — the whole storage question
-    targets: ndarray::Array1<f64>,  // owned targets (canonicalized indices stored as f64)
+    targets: ndarray::Array1<F>,  // owned continuous targets (regressor only)
     labels: Option<SKLabelTable>,   // classifier only — frozen, grow-only
     nearest_neighbors_count: usize,
     weights: SKNeighborWeights,
@@ -121,7 +121,7 @@ pub struct SKKNeighborsModel<S: SKMappableSource<f64>> {
     execution_intent: SKExecutionMode,
 }
 
-impl<S: SKMappableSource<f64>> SKKNeighborsModel<S> {
+impl<F: SKFloat, S: SKMappableSource<F>> SKKNeighborsModel<F, S> {
     pub fn execution_intent(&self) -> SKExecutionMode { self.execution_intent }
 }
 ```
@@ -141,13 +141,15 @@ Two notes before the code:
 ## 4. The crown code
 
 ```rust
-impl<F, S> SKPredictor<F> for SKKNeighborsModel<S>
+// Regressor: responses preserve the model scalar. The classifier sibling
+// implements SKClassifierPredictor<F> instead, returning Array1<i64> labels.
+impl<F, S> SKRegressorPredictor<F> for SKKNeighborsModel<F, S>
 where
     F: SKFloat,
     S: SKMappableSource<F> + Sync,
 {
     type Error = SKError;
-    fn predict<'a, X>(&self, queries: X) -> Result<ndarray::Array1<f64>, Self::Error>
+    fn predict<'a, X>(&self, queries: X) -> Result<ndarray::Array1<F>, Self::Error>
     where X: TryInto<SKDataView<'a, F>, Error = SKError> {
         let queries = queries.try_into()?.as_dense()?;
         sk_run_operation(
@@ -168,7 +170,7 @@ where
                 let plan = sk_resolve_execution_plan(self.execution_intent(), &context)?;
 
                 let rows = queries.nrows();
-                let mut out = ndarray::Array1::<f64>::zeros(rows);
+                let mut out = ndarray::Array1::<F>::zeros(rows);
 
                 // A per-query answer: every query row depends only on the base,
                 // so there is no reduction and no shared accumulator — par_azip! is safe.
@@ -188,12 +190,12 @@ where
 }
 
 // One query row: distance to every base row, then top-k selection, then reduce.
-impl SKKNeighborsModel<...> {
-    fn answer_for_query<F: SKFloat>(
+impl<F: SKFloat, S: SKMappableSource<F>> SKKNeighborsModel<F, S> {
+    fn answer_for_query(
         &self,
         query: &ndarray::ArrayView1<F>,
         parallelism: usize,
-    ) -> f64 {
+    ) -> F {
         // squared distances: x·x + b·b − 2·x·b, per-chunk over the mappable base
         let distances = sciencekit_math::pairwise::sk_squared_euclidean_distance_matrix(
             query.insert_axis(ndarray::Axis(0)),   // 1 × p
