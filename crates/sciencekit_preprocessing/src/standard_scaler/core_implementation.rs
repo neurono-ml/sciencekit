@@ -57,7 +57,7 @@ impl<F: SKFloat> SKUnsupervisedFit<F> for SKStandardScaler {
 }
 
 /// Learn per-column mean and scale under a `Fit` observability span.
-fn standardize<F: SKFloat>(
+pub(super) fn standardize<F: SKFloat>(
     estimator: &SKStandardScaler,
     features: &ArrayView2<F>,
 ) -> Result<(Array1<F>, Array1<F>), SKError> {
@@ -138,8 +138,9 @@ fn moments_from_sums<F: SKFloat>(
     for index in 0..columns_count {
         let column_mean = column_sums[index] / rows_as_scalar;
         let variance = population_variance(column_sum_squares[index], column_mean, rows_as_scalar);
-        mean[index] = mask_or_zero(column_mean, with_mean);
-        scale[index] = scale_or_one(variance.sqrt(), with_std);
+        let (mean_value, scale_value) = finalize_column(column_mean, variance, with_mean, with_std);
+        mean[index] = mean_value;
+        scale[index] = scale_value;
     }
     (mean, scale)
 }
@@ -152,6 +153,19 @@ fn population_variance<F: SKFloat>(sum_squares: F, column_mean: F, rows_as_scala
     } else {
         F::zero()
     }
+}
+
+/// Apply the `with_mean` / `with_std` flags to one column: a disabled mean
+/// becomes zero, a disabled or non-positive spread becomes a unit scale.
+pub(super) fn finalize_column<F: SKFloat>(
+    column_mean: F,
+    variance: F,
+    with_mean: bool,
+    with_std: bool,
+) -> (F, F) {
+    let mean_value = mask_or_zero(column_mean, with_mean);
+    let scale_value = scale_or_one(variance.sqrt(), with_std);
+    (mean_value, scale_value)
 }
 
 /// Keep the value when the flag is set, else the additive identity.
