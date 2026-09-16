@@ -5,7 +5,7 @@ use crate::data_view::SKDataView;
 use crate::sk_float::SKFloat;
 use crate::target_view::SKTargetView;
 
-/// Supervised fit: requires features and targets.
+/// Supervised fit: requires features and targets in a shared model scalar.
 pub trait SKSupervisedFit<F: SKFloat> {
     /// The fitted model type.
     type Model;
@@ -15,5 +15,5 @@ pub trait SKSupervisedFit<F: SKFloat> {
     fn fit<'a, X, T>(&self, features: X, targets: T) -> Result<Self::Model, Self::Error>
     where
         X: TryInto<SKDataView<'a, F>, Error = SKError>,
-        T: TryInto<SKTargetView<'a>, Error = SKError>;
+        T: TryInto<SKTargetView<'a, F>, Error = SKError>;
 }
