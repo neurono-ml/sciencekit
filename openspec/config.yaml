@@ -10,7 +10,11 @@ context: |
   conversation may use the operator's language.
   Tech stack: Rust (MSRV 1.85, edition 2024), Cargo workspace with sciencekit_* sub-crates in crates/
   (see PRD §3.1); ndarray, sprs, rayon, tokio, serde, thiserror, tracing, memmap2, sysinfo.
-  Conventions: builder pattern mandatory; full names without abbreviations
+  Conventions: builder pattern mandatory; every estimator builder exposes
+  execution_mode(SKExecutionMode::...) defaulting to Automatic AND backend(SKBackendKind)
+  defaulting to Faer (spec backend-selection — carried even when the math needs no heavy
+  algebra; estimator stays non-generic; every operation records the configured kind in its
+  span; fit transfers it into the model); full names without abbreviations
   (maximum_number_of_iterations, not max_iter), single exception the project prefix
   sk/SK; public items must be prefixed — structs/traits with SK +
   PascalCase (SKEstimator, SKStandardScaler), free functions (outside impl),
@@ -43,6 +47,7 @@ rules:
     - Plan changes in separate groups: (1) algorithm implementation, (2) changes for the different accelerators (GPU OpenCL/CUDA/ROCm, BLAS/SIMD, allocators, Python bindings), (3) documentation changes.
     - Small changes with minimal scope; Python bindings and GPU backend are separate associated changes, created after the algorithm is ready on CPU.
     - Include acceptance criteria from PRD §8.7/§10.3: large and small data, concurrency, model export + metrics.
+    - Every new or touched estimator complies with spec `backend-selection`: builder exposes `backend(SKBackendKind)` defaulting to Faer, operations record the configured kind, models carry it.
     - Write every artifact (proposal, specs, tasks, design) in English.
 
   tasks:
