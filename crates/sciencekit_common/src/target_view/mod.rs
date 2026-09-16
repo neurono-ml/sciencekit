@@ -3,9 +3,8 @@
 //!
 //! Storage ≠ interpretation: `[1,2,3]` is continuous for a regressor and
 //! categorical for a classifier. The view describes *how* data is stored.
-//! Continuous targets use `f64` independently of the feature dtype `F`
-//! (design decision 4). Integer targets elevate losslessly to continuous;
-//! nominal targets borrow their text.
+//! Continuous targets share the model scalar `F`; integer targets elevate to
+//! `F` on demand; nominal targets borrow their text.
 //!
 //! This is a **pure dispatcher** module: `mod.rs` only declares and re-exports
 //! submodules; every implementation lives in its own file.

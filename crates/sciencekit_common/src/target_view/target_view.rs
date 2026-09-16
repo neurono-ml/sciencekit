@@ -2,26 +2,32 @@
 
 use ndarray::{ArrayView1, CowArray, Ix1};
 
+use crate::sk_float::SKFloat;
+
 /// A zero-copy view over the targets (labels / responses) of a dataset.
 #[derive(Debug, Clone, Copy)]
 #[non_exhaustive]
-pub enum SKTargetView<'a> {
-    /// Continuous response values (independent of the feature dtype).
-    Continuous(ArrayView1<'a, f64>),
+pub enum SKTargetView<'a, F: SKFloat> {
+    /// Continuous response values in the model scalar.
+    Continuous(ArrayView1<'a, F>),
     /// Integer-valued targets.
     Integer(ArrayView1<'a, i64>),
     /// Nominal (textual) symbols, referencing borrowed text.
     Nominal(&'a [&'a str]),
 }
 
-impl<'a> SKTargetView<'a> {
-    /// Elevate to continuous values losslessly: continuous borrows, integer is
-    /// promoted to `f64` (exact for the `i64` range representable in f64),
-    /// nominal is rejected (it is categorical, not continuous).
-    pub fn as_continuous(&self) -> Result<CowArray<'a, f64, Ix1>, crate::SKError> {
+impl<'a, F: SKFloat> SKTargetView<'a, F> {
+    /// Elevate to continuous values in the model scalar: continuous borrows,
+    /// integer is promoted to `F` (exact while the value is representable in
+    /// `F`), nominal is rejected (it is categorical, not continuous).
+    pub fn as_continuous(&self) -> Result<CowArray<'a, F, Ix1>, crate::SKError> {
         match self {
             SKTargetView::Continuous(view) => Ok(CowArray::from(*view)),
-            SKTargetView::Integer(view) => Ok(CowArray::from(view.mapv(|v| v as f64))),
+            SKTargetView::Integer(view) => {
+                Ok(CowArray::from(view.mapv(|value| {
+                    num_traits::cast(value).unwrap_or(F::zero())
+                })))
+            }
             SKTargetView::Nominal(_) => Err(crate::SKError::UnsupportedRepresentation {
                 representation: "nominal",
                 suggestion: "encode nominal targets to indices before continuous use",
@@ -32,9 +38,9 @@ impl<'a> SKTargetView<'a> {
     /// The number of targets in the view.
     pub fn len(&self) -> usize {
         match self {
-            SKTargetView::Continuous(v) => v.len(),
-            SKTargetView::Integer(v) => v.len(),
-            SKTargetView::Nominal(v) => v.len(),
+            SKTargetView::Continuous(view) => view.len(),
+            SKTargetView::Integer(view) => view.len(),
+            SKTargetView::Nominal(text) => text.len(),
         }
     }
 
