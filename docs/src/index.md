@@ -157,7 +157,7 @@ will run against the library itself.
 
 <div class="sk-box sk-box--info">
 <strong>Current status:</strong> Phase 0 (foundations) is complete — Cargo workspace, core traits
-(<code>SKEstimator</code>, <code>SKPredictor</code>, <code>SKTransformer</code>), the pure-Rust <code>faer</code> math
+(<code>SKEstimator</code>, <code>SKRegressorPredictor</code>/<code>SKClassifierPredictor</code>, <code>SKTransformer</code>), the pure-Rust <code>faer</code> math
 kernel, and the automatic execution-decision + observability layer have all landed. Next up is
 Phase 1 (preprocessing). Follow the full plan in <a href="./roadmap.html">Plan &amp; Roadmap</a>.
 </div>

@@ -86,7 +86,8 @@ Trait composition is the foundation of everything:
 ```rust,ignore
 // Core trait vocabulary — implemented by the sciencekit crates.
 pub trait SKEstimator { /* hyperparameters and fit */ }
-pub trait SKPredictor: SKEstimator { /* predict */ }
+pub trait SKRegressorPredictor: SKEstimator { /* predict -> Array1<F> */ }
+pub trait SKClassifierPredictor: SKEstimator { /* labels -> Array1<i64> */ }
 pub trait SKTransformer: SKEstimator { /* transform / fit_transform */ }
 
 pub trait SKDataSource { /* eager: full in-memory access */ }
@@ -96,7 +97,7 @@ pub trait SKToOnnx { /* ONNX export */ }
 pub trait SKComputeBackend { /* compute device abstraction */ }
 ```
 
-Algorithms compose exactly the traits they support: an `SKSGDClassifier` implements `SKPredictor` + `SKLazySource`; an `SKStandardScaler` implements only `SKTransformer`.
+Algorithms compose exactly the traits they support: an `SKSGDClassifier` implements `SKClassifierPredictor` + `SKLazySource`; an `SKStandardScaler` implements only `SKTransformer`.
 
 ## Memory management
 
@@ -202,7 +203,7 @@ Feature flags have dual granularity: per capability (`parallel`, `allocator-*`, 
 - **Single internal format:** extended Safetensors — JSON header with `"sciencekit_format_version"`, hyperparameters, training state and recoverability metadata (checkpointing).
 - **Partial writes:** in-place tensor updates at known offsets; sharding for large models; header padding for small ones.
 - **Compression:** `.safetensors.gz`, `.safetensors.brotli`, `.snappy.safetensors`.
-- **ONNX:** every estimator implements `SKToOnnx`; external models load as a generic `SKPredictor`.
+- **ONNX:** every estimator implements `SKToOnnx`; external models load as a generic predictor.
 - **JSON debug:** human-readable serialization through the same central export trait.
 
 Errors use `thiserror` enums per algorithm with uniform propagation of common errors; observability uses `tracing` oriented to OpenTelemetry, disableable at near-zero cost.

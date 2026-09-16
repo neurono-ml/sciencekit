@@ -7,7 +7,7 @@ recipe and refers to it by section number.
 
 > **Contract level.** Everything below is written against the merged master contracts of
 > `sciencekit_common` and `sciencekit_math` as of the `parallel-kernel-execution` wave:
-> `SKBuilder`/`SKBuilderState`, `SKSupervisedFit`/`SKUnsupervisedFit`/`SKFeatureTransformer`/`SKPredictor`,
+> `SKBuilder`/`SKBuilderState`, `SKSupervisedFit`/`SKUnsupervisedFit`/`SKFeatureTransformer`/`SKRegressorPredictor`/`SKClassifierPredictor`,
 > `SKDataView`/`SKTargetView`, `SKExecutionContext`/`sk_resolve_execution_plan`,
 > `sk_run_streaming_driver`, `SKLazySource`/`SKMappableSource`, the measured-grain kernels and
 > the `SKMathBackend` abstraction. When a real algorithm crate lands and any signature has
@@ -36,7 +36,7 @@ flowchart TD
     PLN -->|"InProcess* | whole array"| K["measured-grain kernels<br>plan.parallelism threads"]:::regNode
     PLN -->|">RAM, sequential"| Dr["sk_run_streaming_driver<br>State + update() per batch"]:::regNode
     PLN -->|">RAM, RandomAccess"| Ma["SKMappableSource<br>memory-mapped rows"]:::regNode
-    K -->     Ms["Model (distinct type)<br>SKPredictor /<br>transform verbs"]:::outsNode
+    K -->     Ms["Model (distinct type)<br>predictor /<br>transform verbs"]:::outsNode
     Dr --> Ms
     Ma --> Ms
     Ms --> Chk["§8.7 acceptance + export + scorers<br>fmt · clippy · test · mdbook build"]:::outsNode
@@ -91,7 +91,7 @@ Three hard rules from the conventions chapter:
 - **No abbreviations, ever**, with the single exception of the project prefix. The builder
   field is `maximum_number_of_iterations: usize`, not `max_iter`; the count of nearest
   neighbors is `nearest_neighbors_count`, not `k`.
-- Structs and traits: `SK` + PascalCase → `SKStandardScaler`, `SKPredictor`.
+- Structs and traits: `SK` + PascalCase → `SKStandardScaler`, `SKRegressorPredictor`.
 - Free public functions, public variables, public modules: `sk_` + snake_case →
   `sk_resolve_execution_plan`, `sk_axis_sum`.
 - **Methods get no prefix** — standing inside an `impl` is the privilege that earns it:
@@ -158,17 +158,27 @@ Three details carry the design and are easy to miss in a skim:
 
 ```rust
 // Implemented on the MODEL, never on the estimator.
-pub trait SKPredictor<F: SKFloat> {
+pub trait SKRegressorPredictor<F: SKFloat> {
     type Error: From<SKError>;
-    fn predict<'a, X>(&self, features: X) -> Result<ndarray::Array1<f64>, Self::Error>
+    fn predict<'a, X>(&self, features: X) -> Result<ndarray::Array1<F>, Self::Error>
+    where
+        X: TryInto<SKDataView<'a, F>, Error = SKError>;
+}
+
+pub trait SKClassifierPredictor<F: SKFloat> {
+    type Error: From<SKError>;
+    fn predict_labels<'a, X>(&self, features: X) -> Result<ndarray::Array1<i64>, Self::Error>
+    where
+        X: TryInto<SKDataView<'a, F>, Error = SKError>;
+    fn predict_probabilities<'a, X>(&self, features: X) -> Result<ndarray::Array2<F>, Self::Error>
     where
         X: TryInto<SKDataView<'a, F>, Error = SKError>;
 }
 ```
 
-Note `predict` returns `Array1<f64>` regardless of the feature dtype `F` — predictions are
-always the precision-maximal number (`SKTargetView::Continuous` is also `f64`-only, which is
-how targets stay independent of feature dtype).
+Note `predict` returns `Array1<F>` in the model scalar — an `f32` model predicts
+`f32` with no `f64` detour — while classifier labels are scalar-independent `i64`
+indices (`SKTargetView::Continuous` is likewise generic over `F`).
 
 ---
 

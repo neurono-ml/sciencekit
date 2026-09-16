@@ -234,9 +234,9 @@ impl SKLinearRegression {
 `predict` on the model, honest minimum:
 
 ```rust
-impl<F: SKFloat> SKPredictor<F> for SKLinearRegressionModel {
+impl<F: SKFloat> SKRegressorPredictor<F> for SKLinearRegressionModel {
     type Error = SKError;
-    fn predict<'a, X>(&self, features: X) -> Result<ndarray::Array1<f64>, Self::Error>
+    fn predict<'a, X>(&self, features: X) -> Result<ndarray::Array1<F>, Self::Error>
     where X: TryInto<SKDataView<'a, F>, Error = SKError> {
         let view = features.try_into()?.as_dense()?;
         let (rows, _cols) = view.dim();
@@ -297,7 +297,7 @@ equations got *kept* streaming but with the §2 caveat printed as a test contrac
 | Lots and little data | four-row exact fixture and the rank-deficient one — two shapes, one solver |
 | Under concurrency | model is `Sync` + `Copy`-safe; scoring under rayon exercised in the scorers chapter |
 | Model export | coefficients + intercept + design options serialize (export conventions live in the model chapter of the anchor) |
-| Metrics | `SKSupervisedScorer` gives `score()` free — the R² chapter exercises it against these models |
+| Metrics | `SKSupervisedScorer` (regressor) / `SKLabelScorer` (classifier) give `score()` free — the R² chapter exercises it against these models |
 
 **Chapter sources:**
 

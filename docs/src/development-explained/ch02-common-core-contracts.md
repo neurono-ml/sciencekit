@@ -29,7 +29,8 @@ future crate compiles against" (as its own `lib.rs` header says). It decides:
 - how failures are reported (`SKError`),
 - how feature data and target data enter an algorithm (`SKDataView`, `SKTargetView`),
 - what it means for an algorithm to *fit*, *predict*, or *transform*
-  (`SKSupervisedFit`, `SKUnsupervisedFit`, `SKPredictor`, `SKFeatureTransformer`).
+  (`SKSupervisedFit`, `SKUnsupervisedFit`, `SKRegressorPredictor`,
+  `SKClassifierPredictor`, `SKFeatureTransformer`).
 
 Without this crate, `sciencekit` would be dozens of disconnected experiments. With it,
 every algorithm starts from a proven, shared foundation — like every room in a building
@@ -260,9 +261,10 @@ match on, instead of two code paths.
 In **supervised** learning you have features (the input, e.g. pixel values, measurements)
 and a **target** (what you want to predict — the answer). Three flavors matter here:
 
-- **Continuous**: a real number you predict, e.g. house price → `f64` (regression).
-- **Integer**: a whole-number target, e.g. star ratings → `i64` (can be elevated to
-  continuous losslessly).
+- **Continuous**: a real number you predict, e.g. house price → `F`, the model
+  scalar (regression).
+- **Integer**: a whole-number target, e.g. star ratings → `i64` (elevated to `F`
+  on demand).
 - **Nominal**: a category, e.g. `"cat"`, `"dog"`, `"bird"` → strings (classification).
 
 `SKTargetView` is the single type that holds any of these three. Unsupervised algorithms
@@ -333,13 +335,13 @@ variants.
 ### `SKTargetView` (the zero-copy target view)
 
 *What it is:* A `#[non_exhaustive]` enum over three target representations:
-`Continuous(ArrayView1<'a, f64>)`, `Integer(ArrayView1<'a, i64>)`, and
+`Continuous(ArrayView1<'a, F>)`, `Integer(ArrayView1<'a, i64>)`, and
 `Nominal(&'a [&'a str])`. Also derives `Debug, Clone, Copy`.
 
 *Why it exists:* Supervised algorithms need a single type for "the answers" that covers
 regression (continuous), integer targets, and classification (nominal). `.as_continuous()`
-elevates continuous or integer targets to `f64` **losslessly** (integers in the f64-
-representable range) and rejects nominal with a clear suggestion.
+elevates continuous or integer targets to the model scalar `F` (exact while the value
+is representable in `F`) and rejects nominal with a clear suggestion.
 
 *What we rejected:* Separate per-kind target arguments (forces the caller to know the kind
 up front) and forcing nominal text to be copied (we borrow the strings instead — spec
@@ -370,17 +372,34 @@ signature lack targets makes it *impossible* to pass them (compile-time rejectio
 *What we rejected:* Reusing one fit trait with an optional/ignored target parameter — that
 would let callers pass meaningless targets and lose the type-level guarantee.
 
-### `SKPredictor` (the prediction contract)
+### `SKRegressorPredictor` (the regressor prediction contract)
 
-*What it is:* A trait with an associated `Error` whose `predict(&self, features)` returns
-`Result<ndarray::Array1<f64>, Self::Error>` over the `TryInto` seam.
+*What it is:* A trait generic over `F: SKFloat` with an associated `Error` whose
+`predict(&self, features)` returns `Result<ndarray::Array1<F>, Self::Error>` over the
+`TryInto` seam.
 
 *Why it exists:* Prediction lives on the **fitted model**, never on the configured
 estimator (spec `estimator-contracts`). That makes "predict before fit" a compile-time
-error. `predict` returns a *dense* `Array1<f64>` — predicted scores or class indices.
+error. `predict` returns a *dense* `Array1<F>` — responses in the same scalar the model
+was fitted on, so an `f32` pipeline never pays an `f64` detour.
 
-*What we rejected:* Putting `predict` on the estimator type. That would break the "cannot
-predict before fitting" guarantee and the shared model across threads.
+*What we rejected:* A single `f64`-only `predict` for every model. It forced an upcast
+on every `f32` prediction and a cast back to chain the next stage — and it encoded
+class labels as floats (`0.0`/`1.0`), which is a lie of a type.
+
+### `SKClassifierPredictor` (the classifier prediction contract)
+
+*What it is:* A trait generic over `F: SKFloat` with an associated `Error` whose
+`predict_labels(&self, features)` returns `Result<ndarray::Array1<i64>, Self::Error>`
+and whose `predict_probabilities(&self, features)` returns
+`Result<ndarray::Array2<F>, Self::Error>`, both over the `TryInto` seam.
+
+*Why it exists:* Classifier outputs are labels, not floats. Labels are canonical `i64`
+indices — independent of the feature scalar, so `f32` and `f64` runs agree exactly —
+while probabilities preserve the model scalar `F`.
+
+*What we rejected:* Putting `predict_labels` on the estimator type. That would break the
+"cannot predict before fitting" guarantee and the shared model across threads.
 
 ### `SKFeatureTransformer` (the feature-transformer contract)
 
@@ -396,25 +415,35 @@ compatibility checking to runtime.
 
 Here is the whole family at a glance:
 
-```
-                         sciencekit_common
-                             |
-      +-----------------------+----------------------+
-      |                                              |
-   numbers                                      data & errors
-      |                                              |
-   SKFloat (sealed) <-- f32, f64               SKError (enum)
-      |                                              |
-      +-- SKFloatSealed (private seal)         SKDataView (Dense | Sparse)
-                                                SKTargetView (Continuous | Integer | Nominal)
-                                                      |
-                                     +----------------+----------------+
-                                     |                                 |
-                               SKSupervisedFit                     SKUnsupervisedFit
-                               (features + targets)                (features only)
-                                     |                                 |
-                               SKPredictor (on the model)          (model type)
-                               SKFeatureTransformer (transform)
+```mermaid
+flowchart TD
+    accTitle: The sciencekit_common vocabulary at a glance
+    accDescr: Numbers, data views and errors feed the fit traits on the estimator and the prediction and transform traits on the fitted model.
+    COMMON[sciencekit_common] --> NUM[numbers]
+    COMMON --> DATA[data and errors]
+    NUM --> FL[SKFloat sealed: f32, f64]
+    FL --> SEAL[SKFloatSealed private seal]
+    DATA --> ERR[SKError enum]
+    DATA --> DV[SKDataView: Dense or Sparse]
+    DATA --> TV[SKTargetView: Continuous, Integer or Nominal]
+    TV --> SF[SKSupervisedFit: features plus targets]
+    DV --> SF
+    DV --> UF[SKUnsupervisedFit: features only]
+    SF --> RP[SKRegressorPredictor on the model]
+    SF --> CP[SKClassifierPredictor on the model]
+    UF --> M[model type]
+    DV --> RP
+    DV --> CP
+    RP --> FT[SKFeatureTransformer: transform]
+
+    style COMMON fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e
+    style NUM fill:#ede9fe,stroke:#7c3aed,color:#4c1d95
+    style DATA fill:#fef3c7,stroke:#d97706,color:#78350f
+    style SF fill:#f0fdf4,stroke:#16a34a,color:#14532d
+    style UF fill:#f0fdf4,stroke:#16a34a,color:#14532d
+    style RP fill:#f0fdf4,stroke:#16a34a,color:#14532d
+    style CP fill:#f0fdf4,stroke:#16a34a,color:#14532d
+    style FT fill:#f0fdf4,stroke:#16a34a,color:#14532d
 ```
 
 ---
@@ -561,26 +590,30 @@ the data views:
 ```mermaid
 flowchart TD
     accTitle: The fit, predict and transform contracts and their shared inputs
-    accDescr: The configured estimator carries SKSupervisedFit and SKUnsupervisedFit, which take features and targets and produce a fitted model. The fitted model carries SKPredictor and SKFeatureTransformer. All of them consume SKDataView and SKTargetView, and all report errors through SKError.
+    accDescr: The configured estimator carries SKSupervisedFit and SKUnsupervisedFit, which take features and targets and produce a fitted model. The fitted model carries SKRegressorPredictor for continuous responses in the model scalar, SKClassifierPredictor for scalar-independent integer labels plus scalar-preserving probabilities, and SKFeatureTransformer. All of them consume SKDataView and SKTargetView, and all report errors through SKError.
     subgraph est[Configured estimator - immutable, reusable]
         SF[SKSupervisedFit] -->|fit features + targets| M1(Model type)
         UF[SKUnsupervisedFit] -->|fit features only| M2(Model type)
     end
 
     subgraph model[Fitted model - sole bearer of learned state, thread-shareable]
-        P[SKPredictor] -->|predict features| OUT[Array1 f64]
+        RP[SKRegressorPredictor] -->|predict features| OUT[Array1 F]
+        CP[SKClassifierPredictor] -->|predict labels| OUTL[Array1 i64]
+        CP -->|predict probabilities| OUTP[Array2 F]
         FT[SKFeatureTransformer] -->|transform features| OUT2[Output type]
     end
 
     DV["SKDataView: Dense or Sparse"] --> SF
     DV --> UF
-    DV --> P
+    DV --> RP
+    DV --> CP
     DV --> FT
     TV["SKTargetView: Continuous, Integer or Nominal"] --> SF
 
     ER[SKError] --> SF
     ER --> UF
-    ER --> P
+    ER --> RP
+    ER --> CP
     ER --> FT
 
     style est fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e
@@ -596,10 +629,40 @@ from the estimator, and both depend only on the shared data views and the centra
 
 ---
 
-## 7. Recap
+## 7. Which float should I use?
+
+Both `f32` and `f64` satisfy `SKFloat`, and a model fitted on one predicts in the
+same one — the scalar flows end to end with no implicit cast. The choice is a
+trade-off:
+
+- **`f32`** halves memory traffic and doubles throughput on SIMD and GPU kernels,
+  which is what out-of-core and large-batch workloads want. Prefer it unless you
+  need the extra precision.
+- **`f64`** keeps roughly 15–16 decimal digits of precision for ill-conditioned
+  solves and long accumulations. Prefer it when numerical stability dominates.
+
+A pipeline carries a single scalar: every stage agrees on `F`, so mixing an `f32`
+stage into an `f64` pipeline fails at compile time until an explicit cast stage
+bridges them.
+
+### Migration note
+
+Before this change, `predict` returned `Array1<f64>` and continuous targets were
+`ArrayView1<f64>` regardless of the feature scalar. After it, regressor
+predictions and continuous targets use `Array1<F>`/`ArrayView1<F>`, and classifier
+labels are `Array1<i64>` instead of float-encoded indices. Call sites that assumed
+`f64` update to the model scalar `F`; classifiers switch from comparing floats to
+comparing label indices.
+
+---
+
+## 8. Recap
 
 - **`SKFloat` is sealed** — only `f32` and `f64` are valid continuous numbers, enforced at
   compile time by a private supertrait (`private::SKFloatSealed`).
+- **Predictions preserve the model scalar** — regressors return `Array1<F>`, classifiers
+  return `Array1<i64>` labels plus `Array2<F>` probabilities; continuous targets are
+  `SKTargetView::Continuous(ArrayView1<F>)`.
 - **`SKError` is one precise taxonomy** — shape, unsupported representation, hyperparameter,
   execution mode, batch overflow, convergence, I/O, and conversion — built with `thiserror`,
   `#[non_exhaustive]`, and automatic `From` conversion into per-algorithm errors.
@@ -609,7 +672,8 @@ from the estimator, and both depend only on the shared data views and the centra
 - **Public inputs are declared over `TryInto`** — any type that can convert into a view is
   accepted, making the library open to third-party integration without breaking.
 - **Fit, predict, and transform are separate contracts** — `SKSupervisedFit` and
-  `SKUnsupervisedFit` split by supervision; `SKPredictor` and `SKFeatureTransformer` live on
+  `SKUnsupervisedFit` split by supervision; `SKRegressorPredictor`,
+  `SKClassifierPredictor`, and `SKFeatureTransformer` live on
   the *model* type, making "predict before fit" a compile-time error.
 
 *Next chapter:* now that we have the shared vocabulary of numbers, errors, and data views,

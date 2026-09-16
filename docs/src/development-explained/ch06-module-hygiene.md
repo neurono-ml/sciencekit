@@ -341,14 +341,14 @@ folder. It checks a design contract: a scorer has a "pure" form that scores from
 
 ```rust
 #[test]
-fn pure_form_does_not_re_infer() {
-    let scorer = accuracy::<f64, ConstantPredictor>();
-    let truth = array![1.0_f64, 1.0, 0.0];
-    let predictions = array![1.0_f64, 1.0, 1.0];
-    let score = <Accuracy as SKSupervisedScorer<f64, ConstantPredictor>>::score_from_predictions(
+fn label_pure_form_does_not_re_infer() {
+    let scorer = accuracy::<f64, ConstantClassifier>();
+    let truth = array![1_i64, 1, 0];
+    let labels = array![1_i64, 1, 1];
+    let score = <Accuracy as SKLabelScorer<f64, ConstantClassifier>>::score_from_labels(
         &scorer,
         SKTargetView::try_from(truth.view()).unwrap(),
-        predictions.view(),
+        labels.view(),
     )
     .unwrap();
     // 2 of 3 correct (predicted 1,1,1 vs true 1,1,0).
@@ -356,15 +356,15 @@ fn pure_form_does_not_re_infer() {
 }
 ```
 
-The test sets up truth `[1,1,0]` and predictions `[1,1,1]`. A `ConstantPredictor` always
-predicts 1.0, so 2 of the 3 predictions match the true labels. The score should be
-2/3. We call the *pure* form directly, `score_from_predictions`, handing it both the
-truth and the predictions — and check the result equals 2/3 (within floating-point
+The test sets up truth `[1,1,0]` and labels `[1,1,1]`. A `ConstantClassifier` always
+predicts label 1, so 2 of the 3 labels match the true labels. The score should be
+2/3. We call the *pure* form directly, `score_from_labels`, handing it both the
+truth and the labels — and check the result equals 2/3 (within floating-point
 tolerance, hence the `.abs() < 1e-9`).
 
-The sibling test `convenient_form_runs_inference_and_delegates` then verifies the *other*
-path: the convenient form runs the model once to get predictions, then delegates to the
-same pure form — and the two scores match. Together, the two tests pin down that the
+The sibling test `label_convenient_form_runs_inference_and_delegates` then verifies the
+*other* path: the convenient form runs the model once to get labels, then delegates to
+the same pure form — and the two scores match. Together, the two tests pin down that the
 pure form never re-infers and that both paths agree. All of this lives in a companion
 folder *beside* the scoring implementation, exactly as the hygiene rules demand.
 
