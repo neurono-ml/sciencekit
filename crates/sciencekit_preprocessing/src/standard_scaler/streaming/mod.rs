@@ -1,5 +1,5 @@
 //! Pure dispatcher: the streaming submodules. Carries no implementation logic.
 
-mod batches;
+pub(super) mod batches;
 mod fit;
-mod state;
+pub(super) mod state;

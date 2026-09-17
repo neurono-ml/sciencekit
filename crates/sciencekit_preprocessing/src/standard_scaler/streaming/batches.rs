@@ -44,7 +44,7 @@ pub(super) fn update_moments<F: SKFloat>(
         backend: estimator.backend,
     };
     sk_run_operation(attributes, || -> Result<(), SKError> {
-        let parallelism = batch_parallelism(&data, state);
+        let parallelism = batch_parallelism(&data, state.available_memory_bytes, state.cpu_cores);
         let (batch_mean, batch_deviations) = batch_moments(&data, parallelism);
         merge_batch(state, &batch_mean, &batch_deviations, data.nrows() as u64);
         Ok(())
@@ -55,11 +55,15 @@ pub(super) fn update_moments<F: SKFloat>(
 
 /// Resolve parallelism for one batch: an `Automatic` query over the batch as
 /// the work unit, so large batches earn threads without any machine reads in
-/// the decision path.
-fn batch_parallelism<F: SKFloat>(data: &ArrayView2<F>, state: &StreamingMoments<F>) -> usize {
+/// the decision path. Shared with the model's incremental `partial_fit`.
+pub(crate) fn batch_parallelism<F: SKFloat>(
+    data: &ArrayView2<F>,
+    available_memory_bytes: u64,
+    cpu_cores: usize,
+) -> usize {
     let context = SKExecutionContext {
-        available_memory_bytes: state.available_memory_bytes,
-        cpu_cores: state.cpu_cores,
+        available_memory_bytes,
+        cpu_cores,
         dataset_size_bytes: data.len() as u64 * size_of::<F>() as u64,
         dataset_elements: Some(data.len() as u64),
         scalar_size_bytes: size_of::<F>() as u64,
@@ -73,8 +77,11 @@ fn batch_parallelism<F: SKFloat>(data: &ArrayView2<F>, state: &StreamingMoments<
 }
 
 /// One batch's mean and Σ(x − μ)², the latter via the exact identity
-/// Σx² − 2μΣx + nμ² over the reduction kernels.
-fn batch_moments<F: SKFloat>(data: &ArrayView2<F>, parallelism: usize) -> (Array1<F>, Array1<F>) {
+/// Σx² − 2μΣx + nμ² over the reduction kernels. Shared with `partial_fit`.
+pub(crate) fn batch_moments<F: SKFloat>(
+    data: &ArrayView2<F>,
+    parallelism: usize,
+) -> (Array1<F>, Array1<F>) {
     let rows_as_scalar = F::from(data.nrows()).expect("batch row count fits in scalar");
     let sums = sk_axis_sum(data, 0, parallelism);
     let sum_squares = sk_axis_sum_squares(data, 0, parallelism);

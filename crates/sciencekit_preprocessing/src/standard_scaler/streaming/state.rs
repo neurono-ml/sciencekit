@@ -30,6 +30,36 @@ impl<F: SKFloat> StreamingMoments<F> {
     }
 }
 
+/// Chan et al. merge of one batch into running moments: exact up to float
+/// rounding, hence independent of batch order and sizes. Shared by the driver
+/// state and the model's incremental `partial_fit`.
+pub(crate) fn merge_moments<F: SKFloat>(
+    count: &mut u64,
+    mean: &mut Array1<F>,
+    deviations: &mut Array1<F>,
+    batch_mean: &Array1<F>,
+    batch_deviations: &Array1<F>,
+    batch_count: u64,
+) {
+    if *count == 0 {
+        mean.assign(batch_mean);
+        deviations.assign(batch_deviations);
+        *count = batch_count;
+        return;
+    }
+    let previous_count_as_scalar = F::from(*count).expect("row count fits in scalar");
+    let batch_count_as_scalar = F::from(batch_count).expect("row count fits in scalar");
+    let total_as_scalar = F::from(*count + batch_count).expect("row count fits in scalar");
+    for index in 0..mean.len() {
+        let delta = batch_mean[index] - mean[index];
+        mean[index] = mean[index] + delta * batch_count_as_scalar / total_as_scalar;
+        deviations[index] = deviations[index]
+            + batch_deviations[index]
+            + delta * delta * previous_count_as_scalar * batch_count_as_scalar / total_as_scalar;
+    }
+    *count += batch_count;
+}
+
 /// Chan et al. merge of one batch into the running state: exact up to float
 /// rounding, hence independent of batch order and sizes.
 pub(super) fn merge_batch<F: SKFloat>(
@@ -38,21 +68,12 @@ pub(super) fn merge_batch<F: SKFloat>(
     batch_deviations: &Array1<F>,
     batch_count: u64,
 ) {
-    if state.count == 0 {
-        state.mean.assign(batch_mean);
-        state.sum_squared_deviations.assign(batch_deviations);
-        state.count = batch_count;
-        return;
-    }
-    let previous_count_as_scalar = F::from(state.count).expect("row count fits in scalar");
-    let batch_count_as_scalar = F::from(batch_count).expect("row count fits in scalar");
-    let total_as_scalar = F::from(state.count + batch_count).expect("row count fits in scalar");
-    for index in 0..state.columns_count {
-        let delta = batch_mean[index] - state.mean[index];
-        state.mean[index] = state.mean[index] + delta * batch_count_as_scalar / total_as_scalar;
-        state.sum_squared_deviations[index] = state.sum_squared_deviations[index]
-            + batch_deviations[index]
-            + delta * delta * previous_count_as_scalar * batch_count_as_scalar / total_as_scalar;
-    }
-    state.count += batch_count;
+    merge_moments(
+        &mut state.count,
+        &mut state.mean,
+        &mut state.sum_squared_deviations,
+        batch_mean,
+        batch_deviations,
+        batch_count,
+    );
 }

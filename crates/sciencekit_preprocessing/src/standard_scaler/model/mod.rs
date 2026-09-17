@@ -1,37 +1,70 @@
 use ndarray::{Array1, Array2};
-use sciencekit_common::{SKBackendKind, SKDataView, SKError, SKFeatureTransformer, SKFloat};
+use sciencekit_common::{
+    SKBackendKind, SKDataView, SKError, SKExecutionMode, SKFeatureTransformer, SKFloat,
+};
 
-/// Fitted standard scaler: per-column mean and scale learned by `fit`.
+use super::core_implementation::finalize_column;
+
+mod partial_fit;
+
+/// Fitted standard scaler: the running Welford moments plus the masked mean
+/// and derived scale the last update produced.
 ///
 /// Distinct type from the estimator (`SKStandardScaler`): the estimator is
 /// immutable configuration, the model is the learned state and the export
-/// boundary. `scale` never holds zero — columns with zero variance (or the
-/// `with_std = false` case) store `1`, so `transform` divides safely.
+/// boundary. Moments are the single source of truth — `mean`/`scale` are
+/// refreshed from them by every constructor and every `partial_fit` — so
+/// incremental and batch fits converge to the same statistics.
 #[derive(Debug, Clone)]
 pub struct SKStandardScalerModel<F> {
+    sample_count: u64,
+    moments_mean: Array1<F>,
+    sum_squared_deviations: Array1<F>,
     mean: Array1<F>,
     scale: Array1<F>,
     with_mean: bool,
     with_std: bool,
     backend: SKBackendKind,
+    execution_intent: SKExecutionMode,
 }
 
 impl<F: SKFloat> SKStandardScalerModel<F> {
-    /// Build a fitted model from learned per-column statistics.
-    pub fn from_statistics(
-        mean: Array1<F>,
-        scale: Array1<F>,
+    /// Build a fitted model from learned moments: per-column mean, sum of
+    /// squared deviations and row count.
+    pub fn from_moments(
+        sample_count: u64,
+        moments_mean: Array1<F>,
+        sum_squared_deviations: Array1<F>,
         with_mean: bool,
         with_std: bool,
         backend: SKBackendKind,
+        execution_intent: SKExecutionMode,
     ) -> Self {
+        debug_assert!(sample_count > 0, "a fitted model covers at least one row");
+        let (mean, scale) = derive_statistics(
+            &moments_mean,
+            &sum_squared_deviations,
+            sample_count,
+            with_mean,
+            with_std,
+        );
         Self {
+            sample_count,
+            moments_mean,
+            sum_squared_deviations,
             mean,
             scale,
             with_mean,
             with_std,
             backend,
+            execution_intent,
         }
+    }
+
+    /// The number of rows the model has learned from, across `fit` and every
+    /// `partial_fit`.
+    pub fn sample_count(&self) -> u64 {
+        self.sample_count
     }
 
     /// Per-column means (zeros when fitted with `with_mean = false`).
@@ -48,6 +81,32 @@ impl<F: SKFloat> SKStandardScalerModel<F> {
     pub fn backend(&self) -> SKBackendKind {
         self.backend
     }
+}
+
+/// Derive the public masked mean and scale from running moments. Shared by
+/// the constructor and the incremental `partial_fit`.
+pub(super) fn derive_statistics<F: SKFloat>(
+    moments_mean: &Array1<F>,
+    sum_squared_deviations: &Array1<F>,
+    sample_count: u64,
+    with_mean: bool,
+    with_std: bool,
+) -> (Array1<F>, Array1<F>) {
+    let count_as_scalar = F::from(sample_count).expect("row count fits in scalar");
+    let mut mean = Array1::zeros(moments_mean.len());
+    let mut scale = Array1::from_elem(moments_mean.len(), F::one());
+    for (index, (column_mean, deviations)) in moments_mean
+        .iter()
+        .zip(sum_squared_deviations.iter())
+        .enumerate()
+    {
+        let variance = *deviations / count_as_scalar;
+        let (mean_value, scale_value) =
+            finalize_column(*column_mean, variance, with_mean, with_std);
+        mean[index] = mean_value;
+        scale[index] = scale_value;
+    }
+    (mean, scale)
 }
 
 impl<F: SKFloat> SKFeatureTransformer<F> for SKStandardScalerModel<F> {

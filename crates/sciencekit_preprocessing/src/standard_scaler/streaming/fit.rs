@@ -1,7 +1,7 @@
 //! The streaming entry point: plan dispatch, batch collection and the driver
 //! run that finalizes the dense-equivalent model.
 
-use ndarray::{Array1, Array2, ArrayView2, Axis};
+use ndarray::{Array2, ArrayView2, Axis};
 use sciencekit_common::{
     SKError, SKExecutionContext, SKExecutionMode, SKExecutionPlan, SKFloat, SKLazySource,
     SKOperationAttributes, SKOperationKind,
@@ -10,7 +10,7 @@ use sciencekit_common::{
 };
 use sciencekit_math::kernels::SK_AXIS_SUM_GRAIN;
 
-use super::super::core_implementation::{SKStandardScaler, finalize_column, standardize};
+use super::super::core_implementation::{SKStandardScaler, standardize};
 use super::super::model::SKStandardScalerModel;
 use super::batches::update_moments;
 use super::state::StreamingMoments;
@@ -93,13 +93,15 @@ impl SKStandardScaler {
         let concatenated = ndarray::concatenate(Axis(0), &views)
             .map_err(|_| SKError::Conversion("batch concatenation failed".into()))?;
         debug_assert_eq!(concatenated.ncols(), columns);
-        let (mean, scale) = standardize(self, &concatenated.view())?;
-        Ok(SKStandardScalerModel::from_statistics(
-            mean,
-            scale,
+        let (raw_mean, raw_deviations) = standardize(self, &concatenated.view())?;
+        Ok(SKStandardScalerModel::from_moments(
+            concatenated.nrows() as u64,
+            raw_mean,
+            raw_deviations,
             self.with_mean,
             self.with_std,
             self.backend,
+            self.execution_intent(),
         ))
     }
 
@@ -129,22 +131,14 @@ impl SKStandardScaler {
         if state.count == 0 {
             return Err(SKError::Conversion("streaming fit received no rows".into()));
         }
-        let count_as_scalar = F::from(state.count).expect("streamed row count fits in scalar");
-        let mut mean = Array1::zeros(state.columns_count);
-        let mut scale = Array1::from_elem(state.columns_count, F::one());
-        for index in 0..state.columns_count {
-            let variance = state.sum_squared_deviations[index] / count_as_scalar;
-            let (mean_value, scale_value) =
-                finalize_column(state.mean[index], variance, self.with_mean, self.with_std);
-            mean[index] = mean_value;
-            scale[index] = scale_value;
-        }
-        Ok(SKStandardScalerModel::from_statistics(
-            mean,
-            scale,
+        Ok(SKStandardScalerModel::from_moments(
+            state.count,
+            state.mean.clone(),
+            state.sum_squared_deviations.clone(),
             self.with_mean,
             self.with_std,
             self.backend,
+            self.execution_intent(),
         ))
     }
 }

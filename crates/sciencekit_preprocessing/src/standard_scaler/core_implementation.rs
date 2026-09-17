@@ -45,18 +45,21 @@ impl<F: SKFloat> SKUnsupervisedFit<F> for SKStandardScaler {
         X: TryInto<SKDataView<'a, F>, Error = SKError>,
     {
         let dense = features.try_into()?.as_dense()?;
-        let (mean, scale) = standardize(self, &dense)?;
-        Ok(SKStandardScalerModel::from_statistics(
-            mean,
-            scale,
+        let (raw_mean, raw_deviations) = standardize(self, &dense)?;
+        Ok(SKStandardScalerModel::from_moments(
+            dense.nrows() as u64,
+            raw_mean,
+            raw_deviations,
             self.with_mean,
             self.with_std,
             self.backend,
+            self.execution_intent(),
         ))
     }
 }
 
-/// Learn per-column mean and scale under a `Fit` observability span.
+/// Learn per-column mean and Σ(x − μ)² under a `Fit` observability span: the
+/// raw moments every model constructor needs.
 pub(super) fn standardize<F: SKFloat>(
     estimator: &SKStandardScaler,
     features: &ArrayView2<F>,
@@ -76,8 +79,6 @@ pub(super) fn standardize<F: SKFloat>(
             &column_sums,
             &column_sum_squares,
             rows_count,
-            estimator.with_mean,
-            estimator.with_std,
         ))
     })
 }
@@ -120,39 +121,26 @@ fn column_statistics<F: SKFloat>(
     (column_sums, column_sum_squares)
 }
 
-/// Derive mean and scale from the column sums: population variance via
-/// `E[x²] − mean²`, clamping tiny cancellation negatives to zero.
-/// Zero-variance columns (or `with_std = false`) yield a scale of one so
-/// `transform` divides safely; `with_mean = false` yields a zero mean.
+/// Derive raw per-column mean and Σ(x − μ)² from the column sums, the latter
+/// via the exact identity Σx² − 2μΣx + nμ² — the same moments the streaming
+/// path accumulates, so both regimes agree.
 fn moments_from_sums<F: SKFloat>(
     column_sums: &Array1<F>,
     column_sum_squares: &Array1<F>,
     rows_count: usize,
-    with_mean: bool,
-    with_std: bool,
 ) -> (Array1<F>, Array1<F>) {
     let rows_as_scalar = F::from(rows_count).expect("row count fits in scalar");
     let columns_count = column_sums.len();
     let mut mean = Array1::zeros(columns_count);
-    let mut scale = Array1::from_elem(columns_count, F::one());
+    let mut deviations = Array1::zeros(columns_count);
     for index in 0..columns_count {
         let column_mean = column_sums[index] / rows_as_scalar;
-        let variance = population_variance(column_sum_squares[index], column_mean, rows_as_scalar);
-        let (mean_value, scale_value) = finalize_column(column_mean, variance, with_mean, with_std);
-        mean[index] = mean_value;
-        scale[index] = scale_value;
+        mean[index] = column_mean;
+        deviations[index] = column_sum_squares[index]
+            - F::from(2).unwrap() * column_mean * column_sums[index]
+            + rows_as_scalar * column_mean * column_mean;
     }
-    (mean, scale)
-}
-
-/// Population variance from Σx² and the mean, flooring float noise at zero.
-fn population_variance<F: SKFloat>(sum_squares: F, column_mean: F, rows_as_scalar: F) -> F {
-    let variance = (sum_squares / rows_as_scalar) - column_mean * column_mean;
-    if variance > F::zero() {
-        variance
-    } else {
-        F::zero()
-    }
+    (mean, deviations)
 }
 
 /// Apply the `with_mean` / `with_std` flags to one column: a disabled mean
