@@ -5,3 +5,7 @@ pub mod streaming;
 
 #[cfg(test)]
 mod standard_scaler_tests;
+#[cfg(test)]
+mod streaming_tests;
+#[cfg(test)]
+mod test_datasets;
