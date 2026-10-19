@@ -5,7 +5,10 @@ use sciencekit_common::SKFloat;
 use sciencekit_common::execution::{SKStreamDecision, sk_run_streaming_driver};
 use sciencekit_common::{SKDataBatch, SKError, SKExecutionMode, SKExecutionPlan, SKLazySource};
 
-use super::{sk_axis_sum, sk_binary_combine, sk_elementwise_transform, sk_scale_in_place};
+use super::{
+    sk_axis_sum, sk_axis_sum_squares, sk_binary_combine, sk_elementwise_transform,
+    sk_scale_in_place,
+};
 
 /// Assert two float vectors agree within a relative floating-point tolerance
 /// (the repo's `assert_close` contract — parallel reordering may shift the last
@@ -223,6 +226,68 @@ impl SKLazySource<f64> for DriverRowSource {
             Array2::from_shape_vec((1, 2), vec![position as f64, (position * 10) as f64]).unwrap();
         Ok(Some(SKDataBatch::new(data, position, position == 3)))
     }
+}
+
+/// Column sum of squares (axis 0) matches the per-column Σx² totals.
+#[test]
+fn axis_zero_sum_squares_matches_column_totals() {
+    let input: Array2<f64> = array![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]];
+    let squares = sk_axis_sum_squares(&input.view(), 0, 1);
+    assert_eq!(squares, array![66.0, 93.0, 126.0]);
+}
+
+/// Row sum of squares (axis 1) matches the per-row Σx² totals.
+#[test]
+fn axis_one_sum_squares_matches_row_totals() {
+    let input: Array2<f64> = array![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]];
+    let squares = sk_axis_sum_squares(&input.view(), 1, 1);
+    assert_eq!(squares, array![14.0, 77.0, 194.0]);
+}
+
+/// Sum of squares stays generic over both supported floats.
+#[test]
+fn sum_squares_accepts_either_float() {
+    assert_eq!(
+        sk_axis_sum_squares(&array![[1.0_f32, 2.0]].view(), 0, 1),
+        array![1.0_f32, 4.0]
+    );
+    assert_eq!(
+        sk_axis_sum_squares(&array![[1.0_f64, 2.0]].view(), 1, 1),
+        array![5.0_f64]
+    );
+}
+
+/// Parallel Σx² over a wide, tall matrix equals the sequential reference
+/// within tolerance (per-chunk partials, no shared mutable accumulator).
+#[test]
+fn parallel_sum_squares_matches_sequential_reference() {
+    let (rows, cols) = (4096, 256);
+    let input: Array2<f64> =
+        Array2::from_shape_fn((rows, cols), |(i, j)| (i as f64) * 0.001 + (j as f64) * 0.5);
+    let sequential = sk_axis_sum_squares(&input.view(), 0, 1);
+    let parallel = sk_axis_sum_squares(&input.view(), 0, 8);
+    assert_close(&sequential, &parallel);
+}
+
+/// Parallel per-row Σx² (axis 1) equals the sequential reference: the result
+/// has one element per row (length = rows), not per column.
+#[test]
+fn parallel_row_sum_squares_matches_sequential() {
+    let input: Array2<f64> = array![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]];
+    let sequential = sk_axis_sum_squares(&input.view(), 1, 1);
+    assert_eq!(sequential, array![14.0, 77.0]);
+    let parallel = sk_axis_sum_squares(&input.view(), 1, 8);
+    assert_eq!(parallel, sequential);
+}
+
+/// Parallel per-row Σx (axis 1) equals the sequential reference (length = rows).
+#[test]
+fn parallel_row_sum_matches_sequential() {
+    let input: Array2<f64> = array![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]];
+    let sequential = sk_axis_sum(&input.view(), 1, 1);
+    assert_eq!(sequential, array![6.0, 15.0]);
+    let parallel = sk_axis_sum(&input.view(), 1, 8);
+    assert_eq!(parallel, sequential);
 }
 
 /// The driver applies the plan's parallelism to each batch's computation: an

@@ -85,8 +85,8 @@ where
 fn operation_attributes(operation: SKOperationKind) -> SKOperationAttributes {
     SKOperationAttributes {
         operation,
-        rows: 128,
-        columns: 16,
+        rows_count: 128,
+        columns_count: 16,
         execution_mode: SKExecutionMode::InProcessSynchronous,
         backend: SKBackendKind::Faer,
     }

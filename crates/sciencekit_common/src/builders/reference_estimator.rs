@@ -61,8 +61,8 @@ impl SKReferenceEstimator {
     ) -> Result<SKExecutionPlan, SKError> {
         let attributes = SKOperationAttributes {
             operation: SKOperationKind::Fit,
-            rows: shape.0,
-            columns: shape.1,
+            rows_count: shape.0,
+            columns_count: shape.1,
             execution_mode: self.execution_intent,
             backend: SKBackendKind::Faer,
         };

@@ -21,8 +21,8 @@ impl SKOperationObservation {
         let span = tracing::info_span!(
             "sciencekit.operation",
             operation = %attributes.operation,
-            rows = attributes.rows,
-            columns = attributes.columns,
+            rows = attributes.rows_count,
+            columns = attributes.columns_count,
             mode = ?attributes.execution_mode,
             backend = %attributes.backend,
             duration_ms = tracing::field::Empty,

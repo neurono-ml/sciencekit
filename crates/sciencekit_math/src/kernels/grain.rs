@@ -35,7 +35,8 @@ pub const SK_ELEMENTWISE_TRANSFORM_GRAIN: usize = 1_000_000;
 /// grain is set at the largest measured size.
 pub const SK_BINARY_COMBINE_GRAIN: usize = 10_000_000;
 
-/// Grain for `sk_axis_sum`: crossover 10⁵ for both axis-0 and axis-1.
+/// Grain for `sk_axis_sum` and `sk_axis_sum_squares`: crossover 10⁵ for both
+/// axis-0 and axis-1.
 pub const SK_AXIS_SUM_GRAIN: usize = 100_000;
 
 /// Grain for `sk_scale_in_place`: crossover 10⁶.

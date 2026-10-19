@@ -70,9 +70,9 @@ pub struct SKOperationAttributes {
     /// The operation kind (`fit`, `transform`, `predict`, ...).
     pub operation: SKOperationKind,
     /// The number of rows of the operation input.
-    pub rows: usize,
+    pub rows_count: usize,
     /// The number of columns of the operation input.
-    pub columns: usize,
+    pub columns_count: usize,
     /// The execution mode the operation resolved to.
     pub execution_mode: SKExecutionMode,
     /// The math backend the operation uses for heavy dense algebra.

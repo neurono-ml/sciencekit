@@ -40,8 +40,8 @@ pub use backend::{
 };
 pub use kernels::{
     SK_AXIS_SUM_GRAIN, SK_BINARY_COMBINE_GRAIN, SK_ELEMENTWISE_TRANSFORM_GRAIN,
-    SK_SCALE_IN_PLACE_GRAIN, sk_axis_sum, sk_binary_combine, sk_elementwise_transform,
-    sk_scale_in_place,
+    SK_SCALE_IN_PLACE_GRAIN, sk_axis_sum, sk_axis_sum_squares, sk_binary_combine,
+    sk_elementwise_transform, sk_scale_in_place,
 };
 pub use layout::{sk_force_contiguous, sk_is_c_contiguous, sk_is_f_contiguous, sk_memory_layout};
 pub use pairwise::{
