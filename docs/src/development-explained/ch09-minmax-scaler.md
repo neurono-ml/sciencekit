@@ -254,7 +254,7 @@ summary here is *extrema*, and extrema commute. That is why the three regimes do
 - **`sk_axis_min_max` is a reusable kernel**, the extremum companion of the sum reductions, with
   the same race-free parallelism contract.
 
-*Next chapter:* the robust scaler takes the same template in a
+*Next chapter:* the [robust scaler](./ch10-robust-scaler.html) takes the same template in a
 harder direction — centering and scaling on *quantiles* (median and interquartile range) so
 outliers stop dominating the scale, and learning those quantiles from a stream through an
 online sketch, something scikit-learn's `RobustScaler` cannot do at all.
