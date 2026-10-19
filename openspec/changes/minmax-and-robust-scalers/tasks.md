@@ -58,7 +58,7 @@ pure-dispatcher `mod.rs`. One commit per task.
 - [x] 5.2 Red: companion tests for `partial_fit` and `fit_streaming` (approximate dense within
   the documented tolerance, empty no-op, column mismatch, sample-count accumulation, in-memory
   intent collects, empty source error). Verify: tests fail.
-- [ ] 5.3 Implement the per-column sketch state and the online `partial_fit`/`fit_streaming`
+- [x] 5.3 Implement the per-column sketch state and the online `partial_fit`/`fit_streaming`
   path. Verify: incremental and streaming tests pass within tolerance.
 
 ## 6. Acceptance and gates
