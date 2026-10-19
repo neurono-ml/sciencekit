@@ -53,7 +53,7 @@ pure-dispatcher `mod.rs`. One commit per task.
 
 ## 5. RobustScaler — online quantile sketch, incremental and out-of-core
 
-- [ ] 5.1 Add the `tdigest 1.0.0` workspace pin and the `sciencekit_preprocessing` dependency.
+- [x] 5.1 Add the `tdigest 1.0.0` workspace pin and the `sciencekit_preprocessing` dependency.
   Verify: `cargo build -p sciencekit_preprocessing` succeeds.
 - [ ] 5.2 Red: companion tests for `partial_fit` and `fit_streaming` (approximate dense within
   the documented tolerance, empty no-op, column mismatch, sample-count accumulation, in-memory
