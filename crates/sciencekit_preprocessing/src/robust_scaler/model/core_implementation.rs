@@ -5,7 +5,7 @@ use sciencekit_common::{
 };
 use tdigest::TDigest;
 
-use crate::robust_scaler::core_implementation::SKRobustScalerConfiguration;
+use crate::robust_scaler::configuration::SKRobustScalerConfiguration;
 
 /// Fitted robust scaler: the learned per-column center and scale (already
 /// masked by the configured flags) plus the configuration.

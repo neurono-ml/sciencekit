@@ -10,7 +10,8 @@ use sciencekit_common::{
 };
 use sciencekit_math::kernels::SK_AXIS_SUM_GRAIN;
 
-use super::super::core_implementation::{SKRobustScaler, finalize_statistics, robust_statistics};
+use super::super::configuration::finalize_statistics;
+use super::super::core_implementation::{SKRobustScaler, robust_statistics};
 use super::super::model::SKRobustScalerModel;
 use super::super::sketch::sketch_statistics;
 use super::batches::update_sketches;

@@ -41,6 +41,7 @@ impl<F: SKFloat> SKMinMaxScalerModel<F> {
             let (batch_minimum, batch_maximum) = batch_extrema(&dense, parallelism);
             merge_extrema(
                 &mut self.minimum,
+                &mut self.maximum,
                 &mut self.data_range,
                 &batch_minimum,
                 &batch_maximum,

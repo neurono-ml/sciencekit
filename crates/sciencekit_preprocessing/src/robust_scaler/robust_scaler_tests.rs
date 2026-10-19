@@ -125,6 +125,16 @@ fn fit_rejects_empty_input() {
     assert!(matches!(error, SKError::ShapeMismatch { .. }));
 }
 
+/// A matrix with zero columns is rejected the same way.
+#[test]
+fn fit_rejects_zero_column_input() {
+    let features: Array2<f64> = Array2::zeros((2, 0));
+    let error = default_scaler()
+        .fit(&features)
+        .expect_err("zero-column fit must fail");
+    assert!(matches!(error, SKError::ShapeMismatch { .. }));
+}
+
 /// Sparse inputs are rejected at the dense-only boundary with a precise error.
 #[test]
 fn fit_rejects_sparse_input() {

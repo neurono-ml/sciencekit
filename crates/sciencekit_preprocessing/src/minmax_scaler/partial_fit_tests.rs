@@ -20,8 +20,8 @@ fn partial_fit_after_fit_matches_dense() {
     let chunks = chunk_rows(&features, &[2, 4]);
     let mut model = default_scaler().fit(&chunks[0]).expect("fit succeeds");
     model.partial_fit(&chunks[1]).expect("partial fit succeeds");
-    assert_close(model.minimum(), &reference.minimum().to_vec());
-    assert_close(model.range(), &reference.range().to_vec());
+    assert_eq!(model.minimum(), reference.minimum());
+    assert_eq!(model.range(), reference.range());
     assert_eq!(model.sample_count(), 6);
 }
 

@@ -24,6 +24,7 @@ pub(super) fn update_extrema<F: SKFloat>(
     if state.columns_count == 0 {
         state.columns_count = data.ncols();
         state.minimum = Array1::zeros(data.ncols());
+        state.maximum = Array1::zeros(data.ncols());
         state.data_range = Array1::zeros(data.ncols());
     }
     if state.columns_count != data.ncols() {
@@ -49,6 +50,7 @@ pub(super) fn update_extrema<F: SKFloat>(
         if state.count == 0 {
             // First batch: the running extrema are exactly this batch's.
             state.minimum.assign(&batch_minimum);
+            state.maximum.assign(&batch_maximum);
             state.data_range.assign(&(&batch_maximum - &batch_minimum));
             state.count = data.nrows() as u64;
         } else {

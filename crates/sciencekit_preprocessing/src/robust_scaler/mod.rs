@@ -1,4 +1,5 @@
 pub mod builder;
+pub(crate) mod configuration;
 pub mod core_implementation;
 pub mod model;
 pub mod quantiles;

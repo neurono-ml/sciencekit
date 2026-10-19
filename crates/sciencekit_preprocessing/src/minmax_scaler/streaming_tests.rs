@@ -22,8 +22,8 @@ fn streaming_matches_dense_fit() {
     let streamed = default_scaler()
         .fit_streaming(&mut source)
         .expect("streaming fit succeeds");
-    assert_close(streamed.minimum(), &reference.minimum().to_vec());
-    assert_close(streamed.range(), &reference.range().to_vec());
+    assert_eq!(streamed.minimum(), reference.minimum());
+    assert_eq!(streamed.range(), reference.range());
     let output = streamed.transform(&features).expect("transform succeeds");
     let expected = reference.transform(&features).expect("transform succeeds");
     assert_eq!(output, expected);

@@ -6,7 +6,7 @@ use sciencekit_common::{
 };
 
 use super::core_implementation::SKRobustScalerModel;
-use crate::robust_scaler::core_implementation::finalize_statistics;
+use crate::robust_scaler::configuration::finalize_statistics;
 use crate::robust_scaler::sketch::{extend_sketches, sketch_statistics};
 
 impl<F: SKFloat> SKRobustScalerModel<F> {

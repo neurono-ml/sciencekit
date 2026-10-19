@@ -23,6 +23,15 @@ pub fn sk_axis_min_max<F: SKFloat>(
     parallelism: usize,
 ) -> (Array<F, Ix1>, Array<F, Ix1>) {
     let (rows, cols) = input.dim();
+    if rows == 0 {
+        // No rows: no extrema to fold. Mirror the sum reductions and return
+        // empty/zero-length results rather than the `±∞` fold identities.
+        return if axis == 1 {
+            (Array::zeros(0), Array::zeros(0))
+        } else {
+            (Array::zeros(cols), Array::zeros(cols))
+        };
+    }
     match axis {
         0 if parallelism > 1 => {
             // Parallel per-column extrema: split rows into chunks, reduce each

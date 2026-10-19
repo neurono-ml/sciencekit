@@ -128,11 +128,10 @@ impl<F: SKFloat> SKMinMaxScaler<F> {
         if state.count == 0 {
             return Err(SKError::Conversion("streaming fit received no rows".into()));
         }
-        let maximum = &state.minimum + &state.data_range;
         Ok(SKMinMaxScalerModel::from_extrema(
             state.count,
             state.minimum.clone(),
-            maximum,
+            state.maximum.clone(),
             self.feature_range(),
             self.clip,
             self.backend,

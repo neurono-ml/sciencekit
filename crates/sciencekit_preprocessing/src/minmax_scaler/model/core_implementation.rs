@@ -16,6 +16,7 @@ use sciencekit_common::{
 pub struct SKMinMaxScalerModel<F> {
     pub(super) sample_count: u64,
     pub(super) minimum: Array1<F>,
+    pub(super) maximum: Array1<F>,
     pub(super) data_range: Array1<F>,
     pub(super) scale: Array1<F>,
     pub(super) feature_minimum: F,
@@ -44,6 +45,7 @@ impl<F: SKFloat> SKMinMaxScalerModel<F> {
         Self {
             sample_count,
             minimum,
+            maximum,
             data_range,
             scale,
             feature_minimum,

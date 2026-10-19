@@ -11,7 +11,7 @@ use ndarray::{Array1, ArrayView2};
 use sciencekit_common::SKFloat;
 use tdigest::TDigest;
 
-use crate::robust_scaler::core_implementation::SKRobustScalerConfiguration;
+use crate::robust_scaler::configuration::SKRobustScalerConfiguration;
 
 /// Internal compression parameter for the per-column sketch: a
 /// memory/accuracy trade-off, deliberately not a builder option so the public

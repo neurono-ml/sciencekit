@@ -8,43 +8,14 @@ use sciencekit_math::kernels::SK_AXIS_SUM_GRAIN;
 use tdigest::TDigest;
 
 use crate::robust_scaler::builder::SKRobustScalerBuilder;
+use crate::robust_scaler::configuration::{SKRobustScalerConfiguration, finalize_statistics};
 use crate::robust_scaler::model::SKRobustScalerModel;
-use crate::robust_scaler::quantiles::{
-    column_quantile_statistics, standard_normal_interquantile_span,
-};
+use crate::robust_scaler::quantiles::column_quantile_statistics;
 use crate::robust_scaler::sketch::{extend_sketches, new_sketches};
 
 /// The per-column statistics a dense fit produces: the exact center, the exact
 /// scale and the seeded per-column online sketches.
 type RobustStatistics<F> = (Array1<F>, Array1<F>, Vec<TDigest>);
-
-/// The immutable per-scaler options shared by the estimator and its model:
-/// the two masking flags, the quantile range and the unit-variance flag.
-#[derive(Debug, Clone, Copy)]
-pub(crate) struct SKRobustScalerConfiguration<F> {
-    pub(super) with_centering: bool,
-    pub(super) with_scaling: bool,
-    pub(super) quantile_low: F,
-    pub(super) quantile_high: F,
-    pub(super) unit_variance: bool,
-}
-
-impl<F: SKFloat> SKRobustScalerConfiguration<F> {
-    /// The `(low, high)` percentile pair the scale is built from.
-    pub(super) fn quantile_range(&self) -> (F, F) {
-        (self.quantile_low, self.quantile_high)
-    }
-
-    /// The standard-normal interquantile span used as the unit-variance
-    /// divisor.
-    pub(super) fn unit_variance_span(&self) -> F {
-        F::from(standard_normal_interquantile_span(
-            self.quantile_low.to_f64().unwrap_or(25.0),
-            self.quantile_high.to_f64().unwrap_or(75.0),
-        ))
-        .unwrap_or(F::one())
-    }
-}
 
 /// Immutable, builder-configured robust scaler estimator. The learned state
 /// lives in the distinct [`SKRobustScalerModel`].
@@ -154,47 +125,6 @@ pub(super) fn robust_statistics<F: SKFloat>(
         extend_sketches(&mut sketches, features);
         Ok((center, scale, sketches))
     })
-}
-
-/// Apply the masking flags and the unit-variance divisor to the raw quantile
-/// statistics, keeping every scale positive so the output stays finite. Shared
-/// by the dense fit and the online update.
-pub(crate) fn finalize_statistics<F: SKFloat>(
-    configuration: &SKRobustScalerConfiguration<F>,
-    raw_center: &Array1<F>,
-    raw_scale: &Array1<F>,
-) -> (Array1<F>, Array1<F>) {
-    let span = if configuration.unit_variance {
-        configuration.unit_variance_span()
-    } else {
-        F::one()
-    };
-    let center: Array1<F> = raw_center
-        .iter()
-        .map(|&value| {
-            if configuration.with_centering {
-                value
-            } else {
-                F::zero()
-            }
-        })
-        .collect();
-    let scale: Array1<F> = raw_scale
-        .iter()
-        .map(|&value| {
-            let scaled = if configuration.unit_variance {
-                value / span
-            } else {
-                value
-            };
-            if configuration.with_scaling && scaled > F::zero() {
-                scaled
-            } else {
-                F::one()
-            }
-        })
-        .collect();
-    (center, scale)
 }
 
 /// Reject empty inputs before any element is processed.
