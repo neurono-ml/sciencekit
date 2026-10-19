@@ -62,8 +62,10 @@ No stage may be skipped — each algorithm walks the full path:
 
 <div class="sk-timeline__item reveal">
 <div class="sk-timeline__card">
-<div class="sk-timeline__head"><span class="sk-timeline__title">Phase 1 — Preprocessing</span><span class="sk-pill sk-pill--neutral">Planned</span></div>
-<p style="margin:0.2rem 0 0;font-size:0.9rem;color:#52525c"><code>SKStandardScaler</code>, <code>SKMinMaxScaler</code>, <code>SKRobustScaler</code> (<code>tdigest</code> online quantile sketch), <code>SKOneHotEncoder</code>, <code>SKPolynomialFeatures</code>; imputation strategies (<code>SKSimpleImputer</code>). <code>SKKNNImputer</code> moved to Wave 3, built directly on the trees — no brute-force placeholder.</p>
+<div class="sk-timeline__head"><span class="sk-timeline__title">Phase 1 — Preprocessing</span><span class="sk-pill sk-pill--sky">In progress</span></div>
+<p style="margin:0.2rem 0 0.6rem;font-size:0.9rem;color:#52525c"><code>SKStandardScaler</code> (dense · incremental <code>partial_fit</code> · out-of-core streaming) · <code>SKMinMaxScaler</code>, <code>SKRobustScaler</code> (<code>tdigest</code> online quantile sketch) · <code>SKOneHotEncoder</code>, <code>SKPolynomialFeatures</code>; imputation strategies (<code>SKSimpleImputer</code>). <code>SKKNNImputer</code> moved to Wave 3, built directly on the trees — no brute-force placeholder.</p>
+<div class="sk-progress"><div class="sk-progress__bar sk-progress__bar--sky" style="width:25%"></div></div>
+<div class="sk-progress__meta"><span>W1.1 landed: standard-scaler (dense, incremental and out-of-core)</span><span>1/4</span></div>
 </div>
 </div>
 

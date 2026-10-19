@@ -46,7 +46,7 @@ and receives a Python binding as soon as it is validated on CPU.
 
 | Estimator | Description | Status |
 |---|---|---|
-| `SKStandardScaler` | Standardizes by removing the mean and scaling to unit variance | <span class="sk-pill sk-pill--neutral">Planned</span> |
+| `SKStandardScaler` | Standardizes by removing the mean and scaling to unit variance (dense · incremental · streaming) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKMinMaxScaler` | Scales each feature to a fixed range | <span class="sk-pill sk-pill--neutral">Planned</span> |
 | `SKRobustScaler` | Scaling robust to outliers through quartile statistics | <span class="sk-pill sk-pill--neutral">Planned</span> |
 | `SKOneHotEncoder` | One-hot encoding of categories | <span class="sk-pill sk-pill--neutral">Planned</span> |

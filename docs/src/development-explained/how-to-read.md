@@ -46,6 +46,7 @@ Execution & observability
 The host-centric backend
 Module hygiene                — how the code is organised as it grows
 Parallel kernels & streaming
+The first algorithm           — SKStandardScaler, the estimator template
 ```
 
 ## How to keep this book honest
