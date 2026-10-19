@@ -14,7 +14,7 @@ pure-dispatcher `mod.rs`. One commit per task.
 
 ## 2. MinMaxScaler — estimator, model and dense path
 
-- [ ] 2.1 Red: companion tests for `SKMinMaxScaler` (unit-range mapping, `feature_range`
+- [x] 2.1 Red: companion tests for `SKMinMaxScaler` (unit-range mapping, `feature_range`
   override, constant column, `clip` on/off, empty/sparse errors, transform column mismatch,
   backend default and override, f32/f64). Verify: tests fail.
 - [ ] 2.2 `SKMinMaxScalerBuilder` (`feature_range`, `clip`, `backend`, `execution_mode`;
