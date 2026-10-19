@@ -46,7 +46,7 @@ pure-dispatcher `mod.rs`. One commit per task.
   Verify: default configuration asserted.
 - [x] 4.3 Exact dense quantile helper + the probit approximation (Acklam) with a test pinning
   the 25–75 standard-normal span (≈ 1.34898). Verify: helper tests pass.
-- [ ] 4.4 `SKRobustScaler` estimator and `SKRobustScalerModel` (learned center/scale, masking,
+- [x] 4.4 `SKRobustScaler` estimator and `SKRobustScalerModel` (learned center/scale, masking,
   accessors, backend). Verify: the dense fit/transform tests pass.
 - [ ] 4.5 Document the scaler in the companion docs change and verify `mdbook build docs`
   passes with zero warnings.
