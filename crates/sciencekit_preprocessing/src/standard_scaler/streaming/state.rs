@@ -1,6 +1,6 @@
 //! The combinable Welford state and its Chan et al. merge.
 
-use ndarray::Array1;
+use ndarray::{Array1, azip};
 use sciencekit_common::SKFloat;
 
 /// Combinable per-column Welford state: count, mean and sum of squared
@@ -50,13 +50,19 @@ pub(crate) fn merge_moments<F: SKFloat>(
     let previous_count_as_scalar = F::from(*count).expect("row count fits in scalar");
     let batch_count_as_scalar = F::from(batch_count).expect("row count fits in scalar");
     let total_as_scalar = F::from(*count + batch_count).expect("row count fits in scalar");
-    for index in 0..mean.len() {
-        let delta = batch_mean[index] - mean[index];
-        mean[index] = mean[index] + delta * batch_count_as_scalar / total_as_scalar;
-        deviations[index] = deviations[index]
-            + batch_deviations[index]
-            + delta * delta * previous_count_as_scalar * batch_count_as_scalar / total_as_scalar;
-    }
+    azip!(
+        (mean in mean.view_mut(),
+         deviations in deviations.view_mut(),
+         batch_mean in batch_mean.view(),
+         batch_deviations in batch_deviations.view())
+        {
+            let delta = *batch_mean - *mean;
+            *mean = *mean + delta * batch_count_as_scalar / total_as_scalar;
+            *deviations = *deviations
+                + *batch_deviations
+                + delta * delta * previous_count_as_scalar * batch_count_as_scalar / total_as_scalar;
+        }
+    );
     *count += batch_count;
 }
 

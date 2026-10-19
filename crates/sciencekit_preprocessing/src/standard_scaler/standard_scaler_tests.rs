@@ -5,7 +5,8 @@
 
 use ndarray::{Array1, Array2, array};
 use sciencekit_common::{
-    SKBackendKind, SKBuilder, SKError, SKFeatureTransformer, SKFloat, SKUnsupervisedFit,
+    SKBackendKind, SKBuilder, SKError, SKExecutionMode, SKFeatureTransformer, SKFloat,
+    SKUnsupervisedFit,
 };
 
 use super::test_datasets::{
@@ -126,6 +127,47 @@ fn backend_defaults_to_faer() {
     let features: Array2<f64> = array![[1.0, 2.0], [3.0, 4.0]];
     let model = scaler.fit(&features).expect("fit succeeds");
     assert_eq!(model.backend(), SKBackendKind::Faer);
+}
+
+/// The default execution intent is `Automatic`.
+#[test]
+fn default_execution_intent_is_automatic() {
+    assert_eq!(
+        default_scaler().execution_intent(),
+        SKExecutionMode::Automatic
+    );
+}
+
+/// The immutable estimator and the fitted model are safe to share across
+/// threads: concurrent fits and transforms agree with the single-threaded result.
+#[test]
+fn estimator_and_model_are_safe_under_concurrency() {
+    use std::sync::Arc;
+
+    let features: Arc<Array2<f64>> = Arc::new(small_features());
+    let scaler = Arc::new(default_scaler());
+    let model = Arc::new(scaler.fit(&*features).expect("fit succeeds"));
+    let expected = model.transform(&*features).expect("transform succeeds");
+
+    let handles: Vec<_> = (0..8)
+        .map(|_| {
+            let scaler = Arc::clone(&scaler);
+            let model = Arc::clone(&model);
+            let features = Arc::clone(&features);
+            std::thread::spawn(move || {
+                let fitted = scaler.fit(&*features).expect("concurrent fit succeeds");
+                assert_eq!(fitted.mean(), model.mean());
+                assert_eq!(fitted.scale(), model.scale());
+                model
+                    .transform(&*features)
+                    .expect("concurrent transform succeeds")
+            })
+        })
+        .collect();
+
+    for handle in handles {
+        assert_eq!(handle.join().expect("worker thread joins"), expected);
+    }
 }
 
 /// A backend override flows from builder into estimator and fitted model.

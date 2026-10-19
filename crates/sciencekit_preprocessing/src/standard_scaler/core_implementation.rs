@@ -130,16 +130,19 @@ fn moments_from_sums<F: SKFloat>(
     rows_count: usize,
 ) -> (Array1<F>, Array1<F>) {
     let rows_as_scalar = F::from(rows_count).expect("row count fits in scalar");
-    let columns_count = column_sums.len();
-    let mut mean = Array1::zeros(columns_count);
-    let mut deviations = Array1::zeros(columns_count);
-    for index in 0..columns_count {
-        let column_mean = column_sums[index] / rows_as_scalar;
-        mean[index] = column_mean;
-        deviations[index] = column_sum_squares[index]
-            - F::from(2).unwrap() * column_mean * column_sums[index]
-            + rows_as_scalar * column_mean * column_mean;
-    }
+    let two = F::from(2).expect("two fits in scalar");
+    let mean: Array1<F> = column_sums
+        .iter()
+        .map(|&sum| sum / rows_as_scalar)
+        .collect();
+    let deviations: Array1<F> = column_sums
+        .iter()
+        .zip(column_sum_squares.iter())
+        .map(|(&sum, &sum_squares)| {
+            let column_mean = sum / rows_as_scalar;
+            sum_squares - two * column_mean * sum + rows_as_scalar * column_mean * column_mean
+        })
+        .collect();
     (mean, deviations)
 }
 
