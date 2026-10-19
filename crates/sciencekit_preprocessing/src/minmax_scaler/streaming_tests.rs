@@ -106,7 +106,9 @@ fn streaming_explicit_in_process_collects_batches() {
 fn streaming_accepts_either_float() {
     let batch_f32 = array![[1.0_f32, 2.0], [3.0, 4.0], [5.0, 6.0]];
     let mut source = chunked_source(&batch_f32, &[1, 2]);
-    let streamed = default_scaler()
+    let streamed = SKMinMaxScaler::<f32>::build()
+        .build()
+        .expect("scaler builds")
         .fit_streaming(&mut source)
         .expect("streaming fit succeeds");
     assert_eq!(streamed.minimum().clone(), array![1.0_f32, 2.0]);
