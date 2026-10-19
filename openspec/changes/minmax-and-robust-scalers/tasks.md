@@ -6,9 +6,9 @@ pure-dispatcher `mod.rs`. One commit per task.
 
 ## 1. Kernel — per-column min/max reduction
 
-- [ ] 1.1 Red: companion tests for `sk_axis_min_max` (column extrema, f32/f64, parallel ≡
+- [x] 1.1 Red: companion tests for `sk_axis_min_max` (column extrema, f32/f64, parallel ≡
   sequential exactly). Verify: tests fail before the function exists.
-- [ ] 1.2 Implement `sk_axis_min_max` (sequential + race-free per-chunk parallel partials,
+- [x] 1.2 Implement `sk_axis_min_max` (sequential + race-free per-chunk parallel partials,
   shared reduction grain) and export it from the crate root. Verify: the new kernel tests pass
   and `cargo test -p sciencekit_math` is green.
 
