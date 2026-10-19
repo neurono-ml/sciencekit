@@ -48,7 +48,7 @@ pure-dispatcher `mod.rs`. One commit per task.
   the 25–75 standard-normal span (≈ 1.34898). Verify: helper tests pass.
 - [x] 4.4 `SKRobustScaler` estimator and `SKRobustScalerModel` (learned center/scale, masking,
   accessors, backend). Verify: the dense fit/transform tests pass.
-- [ ] 4.5 Document the scaler in the companion docs change and verify `mdbook build docs`
+- [x] 4.5 Document the scaler in the companion docs change and verify `mdbook build docs`
   passes with zero warnings.
 
 ## 5. RobustScaler — online quantile sketch, incremental and out-of-core
