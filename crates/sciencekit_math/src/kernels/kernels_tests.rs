@@ -269,6 +269,27 @@ fn parallel_sum_squares_matches_sequential_reference() {
     assert_close(&sequential, &parallel);
 }
 
+/// Parallel per-row Σx² (axis 1) equals the sequential reference: the result
+/// has one element per row (length = rows), not per column.
+#[test]
+fn parallel_row_sum_squares_matches_sequential() {
+    let input: Array2<f64> = array![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]];
+    let sequential = sk_axis_sum_squares(&input.view(), 1, 1);
+    assert_eq!(sequential, array![14.0, 77.0]);
+    let parallel = sk_axis_sum_squares(&input.view(), 1, 8);
+    assert_eq!(parallel, sequential);
+}
+
+/// Parallel per-row Σx (axis 1) equals the sequential reference (length = rows).
+#[test]
+fn parallel_row_sum_matches_sequential() {
+    let input: Array2<f64> = array![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]];
+    let sequential = sk_axis_sum(&input.view(), 1, 1);
+    assert_eq!(sequential, array![6.0, 15.0]);
+    let parallel = sk_axis_sum(&input.view(), 1, 8);
+    assert_eq!(parallel, sequential);
+}
+
 /// The driver applies the plan's parallelism to each batch's computation: an
 /// update step that runs a parallel kernel per batch agrees with a sequential
 /// reference, end-to-end.

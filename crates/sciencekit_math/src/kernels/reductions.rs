@@ -20,7 +20,13 @@ pub fn sk_axis_sum<F: SKFloat>(
 ) -> Array<F, ndarray::Ix1> {
     let (rows, cols) = input.dim();
     if rows == 0 {
-        return Array::zeros(cols);
+        // No rows: per-column sums are zero (length columns), per-row sums are
+        // empty (length zero).
+        return if axis == 1 {
+            Array::zeros(0)
+        } else {
+            Array::zeros(cols)
+        };
     }
     match axis {
         0 if parallelism > 1 => {
@@ -53,21 +59,22 @@ pub fn sk_axis_sum<F: SKFloat>(
             output
         }
         1 if parallelism > 1 => {
-            // Parallel per-row sums: each row reduces independently.
+            // Parallel per-row sums: each row reduces independently. Iterating
+            // `Axis(0)` yields the rows themselves (length = rows).
             let sums: Vec<F> = input
-                .axis_iter(Axis(1))
+                .axis_iter(Axis(0))
                 .into_par_iter()
                 .map(|row| row.iter().fold(F::zero(), |acc, &value| acc + value))
                 .collect();
             Array::from_vec(sums)
         }
         1 => {
-            // Sequential per-row sums.
-            let mut output = Array::zeros(rows);
-            for (index, row) in input.rows().into_iter().enumerate() {
-                output[index] = row.iter().fold(F::zero(), |acc, &value| acc + value);
-            }
-            output
+            // Sequential per-row sums, one reduction per row.
+            input
+                .rows()
+                .into_iter()
+                .map(|row| row.iter().fold(F::zero(), |acc, &value| acc + value))
+                .collect()
         }
         _ => panic!("sk_axis_sum axis must be 0 or 1, found {axis}"),
     }
@@ -102,8 +109,10 @@ pub fn sk_axis_sum_squares<F: SKFloat>(
         }
         0 => sum_squares_sequential(input, 0),
         1 if parallelism > 1 => {
+            // Parallel per-row Σx²: iterating `Axis(0)` yields the rows
+            // themselves, so the result has one element per row.
             let squares: Vec<F> = input
-                .axis_iter(Axis(1))
+                .axis_iter(Axis(0))
                 .into_par_iter()
                 .map(|row| {
                     row.iter()
@@ -122,7 +131,7 @@ fn sum_squares_sequential<F: SKFloat>(
     input: &ArrayView2<F>,
     axis: usize,
 ) -> Array<F, ndarray::Ix1> {
-    let (rows, cols) = input.dim();
+    let (_, cols) = input.dim();
     if axis == 0 {
         let mut output = Array::zeros(cols);
         for row in input.rows() {
@@ -130,13 +139,14 @@ fn sum_squares_sequential<F: SKFloat>(
         }
         output
     } else {
-        let mut output = Array::zeros(rows);
-        for (index, row) in input.rows().into_iter().enumerate() {
-            output[index] = row
-                .iter()
-                .fold(F::zero(), |acc, &value| acc + value * value);
-        }
-        output
+        input
+            .rows()
+            .into_iter()
+            .map(|row| {
+                row.iter()
+                    .fold(F::zero(), |acc, &value| acc + value * value)
+            })
+            .collect()
     }
 }
 
