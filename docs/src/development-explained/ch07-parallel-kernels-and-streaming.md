@@ -492,6 +492,5 @@ the spec `streaming-executor` requires, bounded by the plan's `buffer_depth`.
   producer thread into a bounded double buffer while the consumer computes on the rayon pool,
   delivering ordered, owned batches and stopping early on request.
 
-*Next chapter:* now that an operation can parallelize its math and stream its data, we look at
-how the whole workspace is shaped into crates — the boundaries that keep kernels, execution,
-and the umbrella library decoupled and testable.
+*Next chapter:* with the substrate in place, we build the first real algorithm on top of it —
+`SKStandardScaler`, the estimator template every later algorithm copies.

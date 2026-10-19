@@ -36,4 +36,5 @@
   - [The host-centric backend](development-explained/ch05-host-centric-backend.md)
   - [Module hygiene: folder modules & tests-at-end](development-explained/ch06-module-hygiene.md)
   - [Parallel kernels & the streaming executor](development-explained/ch07-parallel-kernels-and-streaming.md)
+  - [The first algorithm: SKStandardScaler](development-explained/ch08-standard-scaler.md)
   - [Maintaining this book](development-explained/maintaining.md)

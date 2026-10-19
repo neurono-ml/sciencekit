@@ -183,5 +183,6 @@ worktrees, two separate PRs" discipline that governs code.
   build, and the deploy happens automatically on merge.
 - Keep counts, phases and status in sync with `docs/PRD.md`.
 
-Next chapter: we step down from the meta and back into the code, and see how one of those
-future algorithms will actually be built.
+Next chapter: we step down from the meta and back into the code, where the first algorithm
+built with these rules — [`SKStandardScaler`](./ch08-standard-scaler.html) — shows the whole
+procedure in action.
