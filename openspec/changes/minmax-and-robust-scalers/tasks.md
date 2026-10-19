@@ -23,7 +23,7 @@ pure-dispatcher `mod.rs`. One commit per task.
 - [x] 2.3 `SKMinMaxScaler` estimator (`SKUnsupervisedFit`) and `SKMinMaxScalerModel`
   (`SKFeatureTransformer`, learned min/range/scale/min_, accessors, backend). Verify: the
   dense fit/transform tests pass.
-- [ ] 2.4 Document the scaler in the companion docs change (new `ch09` Developer Book chapter
+- [x] 2.4 Document the scaler in the companion docs change (new `ch09` Developer Book chapter
   section) and verify `mdbook build docs` passes with zero warnings.
 
 ## 3. MinMaxScaler — incremental and out-of-core
