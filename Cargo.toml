@@ -30,3 +30,7 @@ tikv-jemallocator = "0.5"
 mimalloc = "0.1"
 
 ndarray = { version = "0.17", features = ["rayon"] }
+
+# Online quantile sketch for the robust scaler (spec `robust-scaler`); confined
+# to `sciencekit_preprocessing`.
+tdigest = "1.0"
