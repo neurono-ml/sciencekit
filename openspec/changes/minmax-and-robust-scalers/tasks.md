@@ -17,10 +17,10 @@ pure-dispatcher `mod.rs`. One commit per task.
 - [x] 2.1 Red: companion tests for `SKMinMaxScaler` (unit-range mapping, `feature_range`
   override, constant column, `clip` on/off, empty/sparse errors, transform column mismatch,
   backend default and override, f32/f64). Verify: tests fail.
-- [ ] 2.2 `SKMinMaxScalerBuilder` (`feature_range`, `clip`, `backend`, `execution_mode`;
+- [x] 2.2 `SKMinMaxScalerBuilder` (`feature_range`, `clip`, `backend`, `execution_mode`;
   private constructor) and the `SKBuilder` impl. Verify: builder tests compile and default
   configuration is asserted.
-- [ ] 2.3 `SKMinMaxScaler` estimator (`SKUnsupervisedFit`) and `SKMinMaxScalerModel`
+- [x] 2.3 `SKMinMaxScaler` estimator (`SKUnsupervisedFit`) and `SKMinMaxScalerModel`
   (`SKFeatureTransformer`, learned min/range/scale/min_, accessors, backend). Verify: the
   dense fit/transform tests pass.
 - [ ] 2.4 Document the scaler in the companion docs change (new `ch09` Developer Book chapter
