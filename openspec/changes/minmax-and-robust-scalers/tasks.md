@@ -41,7 +41,7 @@ pure-dispatcher `mod.rs`. One commit per task.
   hand-checkable column, `quantile_range` override, `with_centering`/`with_scaling` masking,
   zero-spread column, `unit_variance` against known probit spans, empty/sparse errors,
   transform column mismatch, backend default/override, f32/f64). Verify: tests fail.
-- [ ] 4.2 `SKRobustScalerBuilder` (`with_centering`, `with_scaling`, `quantile_range`,
+- [x] 4.2 `SKRobustScalerBuilder` (`with_centering`, `with_scaling`, `quantile_range`,
   `unit_variance`, `backend`, `execution_mode`; private constructor) and the `SKBuilder` impl.
   Verify: default configuration asserted.
 - [x] 4.3 Exact dense quantile helper + the probit approximation (Acklam) with a test pinning
