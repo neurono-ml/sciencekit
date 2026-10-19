@@ -65,7 +65,7 @@ pure-dispatcher `mod.rs`. One commit per task.
 
 - [x] 6.1 `cargo fmt --all --check`, `cargo clippy --workspace --all-targets` and
   `cargo test --workspace` all green; `mdbook build docs` zero warnings.
-- [ ] 6.2 Small and large data validated; concurrency validated (shared estimator/model across
+- [x] 6.2 Small and large data validated; concurrency validated (shared estimator/model across
   threads); models carry their backend kind as the export boundary; export/metrics deferred to
   the interop/metrics changes as in `standard-scaler`.
 - [ ] 6.3 Independent review by a separate agent validating the spec was met; fix findings.
