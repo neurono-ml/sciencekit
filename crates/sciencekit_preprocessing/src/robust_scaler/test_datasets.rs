@@ -6,8 +6,18 @@
 
 use ndarray::{Array1, Array2};
 use sciencekit_common::builders::SKBuilder;
+use sciencekit_common::{SKDataBatch, SKError, SKFloat, SKLazySource};
 
 use super::core_implementation::SKRobustScaler;
+
+/// The documented relative tolerance the online quantile sketch is held to
+/// against the exact dense fit (spec `robust-scaler`).
+pub(super) const SKETCH_RELATIVE_TOLERANCE: f64 = 0.05;
+
+/// Small hand-checkable matrix (5 rows × 1 column).
+pub(super) fn small_features() -> Array2<f64> {
+    ndarray::array![[1.0], [2.0], [3.0], [4.0], [5.0]]
+}
 
 /// Large deterministic matrix (100 000 rows × 8 columns) from a modular closed
 /// form, with the last column held constant to exercise the zero-spread path at
@@ -49,4 +59,57 @@ pub(super) fn default_scaler() -> SKRobustScaler<f64> {
     SKRobustScaler::<f64>::build()
         .build()
         .expect("default scaler builds")
+}
+
+/// Split matrix rows into owned chunks of the given lengths, which must sum to
+/// the row count.
+pub(super) fn chunk_rows<F: SKFloat>(features: &Array2<F>, lengths: &[usize]) -> Vec<Array2<F>> {
+    assert_eq!(
+        lengths.iter().sum::<usize>(),
+        features.nrows(),
+        "chunk lengths must cover every row exactly once"
+    );
+    let mut start = 0;
+    lengths
+        .iter()
+        .map(|&len| {
+            let chunk = features
+                .slice(ndarray::s![start..start + len, ..])
+                .to_owned();
+            start += len;
+            chunk
+        })
+        .collect()
+}
+
+/// An in-memory batch source: each vector entry is one owned batch.
+pub(super) struct VecSource<F> {
+    batches: Vec<Array2<F>>,
+    next: usize,
+}
+
+impl<F> VecSource<F> {
+    pub(super) fn new(batches: Vec<Array2<F>>) -> Self {
+        Self { batches, next: 0 }
+    }
+}
+
+impl<F: SKFloat> SKLazySource<F> for VecSource<F> {
+    type Error = SKError;
+
+    fn next_batch(&mut self) -> Result<Option<SKDataBatch<F>>, Self::Error> {
+        if self.next >= self.batches.len() {
+            return Ok(None);
+        }
+        let position = self.next;
+        self.next += 1;
+        let data = self.batches[position].clone();
+        let is_final = self.next == self.batches.len();
+        Ok(Some(SKDataBatch::new(data, position, is_final)))
+    }
+}
+
+/// Stream a matrix in row chunks of the given lengths.
+pub(super) fn chunked_source<F: SKFloat>(features: &Array2<F>, lengths: &[usize]) -> VecSource<F> {
+    VecSource::new(chunk_rows(features, lengths))
 }
