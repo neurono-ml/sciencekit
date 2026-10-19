@@ -29,8 +29,8 @@ impl<F: SKFloat> SKStandardScalerModel<F> {
         }
         let attributes = SKOperationAttributes {
             operation: SKOperationKind::PartialFit,
-            rows: dense.nrows(),
-            columns: dense.ncols(),
+            rows_count: dense.nrows(),
+            columns_count: dense.ncols(),
             execution_mode: self.execution_intent,
             backend: self.backend,
         };

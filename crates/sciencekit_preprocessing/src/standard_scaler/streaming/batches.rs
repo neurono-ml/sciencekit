@@ -38,8 +38,8 @@ pub(super) fn update_moments<F: SKFloat>(
     }
     let attributes = SKOperationAttributes {
         operation: SKOperationKind::PartialFit,
-        rows: data.nrows(),
-        columns: data.ncols(),
+        rows_count: data.nrows(),
+        columns_count: data.ncols(),
         execution_mode: estimator.execution_intent(),
         backend: estimator.backend,
     };

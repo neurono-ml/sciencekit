@@ -131,8 +131,8 @@ impl<F: SKFloat> SKFeatureTransformer<F> for SKStandardScalerModel<F> {
         }
         let attributes = SKOperationAttributes {
             operation: SKOperationKind::Transform,
-            rows: dense.nrows(),
-            columns: dense.ncols(),
+            rows_count: dense.nrows(),
+            columns_count: dense.ncols(),
             execution_mode: sciencekit_common::SKExecutionMode::Automatic,
             backend: self.backend,
         };

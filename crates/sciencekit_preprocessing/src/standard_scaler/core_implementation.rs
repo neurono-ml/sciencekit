@@ -67,8 +67,8 @@ pub(super) fn standardize<F: SKFloat>(
     let (rows_count, columns_count) = validated_shape(features)?;
     let attributes = SKOperationAttributes {
         operation: SKOperationKind::Fit,
-        rows: rows_count,
-        columns: columns_count,
+        rows_count,
+        columns_count,
         execution_mode: estimator.execution_intent(),
         backend: estimator.backend,
     };

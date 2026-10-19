@@ -32,8 +32,8 @@ impl SKStandardScaler {
         // carries zero dimensions while each batch reports its real ones.
         let attributes = SKOperationAttributes {
             operation: SKOperationKind::Fit,
-            rows: 0,
-            columns: 0,
+            rows_count: 0,
+            columns_count: 0,
             execution_mode: self.execution_intent(),
             backend: self.backend,
         };
