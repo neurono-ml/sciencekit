@@ -68,7 +68,7 @@ pure-dispatcher `mod.rs`. One commit per task.
 - [x] 6.2 Small and large data validated; concurrency validated (shared estimator/model across
   threads); models carry their backend kind as the export boundary; export/metrics deferred to
   the interop/metrics changes as in `standard-scaler`.
-- [ ] 6.3 Independent review by a separate agent validating the spec was met; fix findings.
+- [x] 6.3 Independent review by a separate agent validating the spec was met; fix findings.
 
 ## Workflow follow-up
 
