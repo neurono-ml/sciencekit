@@ -42,7 +42,7 @@ fn fit_learns_per_column_minimum_and_range() {
     let model = default_scaler().fit(&features).expect("fit succeeds");
     assert_close(model.minimum(), &[1.0, 2.0]);
     assert_close(model.range(), &[4.0, 10.0]);
-    assert_close(model.scale(), &[0.1, 0.1]);
+    assert_close(model.scale(), &[0.25, 0.1]);
 }
 
 /// A `feature_range` override maps the data into the configured target range.
@@ -92,7 +92,9 @@ fn clip_true_constrains_output_to_feature_range() {
 fn clip_false_allows_out_of_range_output() {
     let train: Array2<f64> = array![[0.0], [10.0]];
     let model = default_scaler().fit(&train).expect("fit succeeds");
-    let output = model.transform(&array![[15.0]]).expect("transform succeeds");
+    let output = model
+        .transform(&array![[15.0]])
+        .expect("transform succeeds");
     assert_eq!(output, array![[1.5]]);
 }
 
@@ -159,7 +161,9 @@ fn backend_override_reaches_model() {
 fn fit_accepts_either_float() {
     fn minimum_of<F: SKFloat>(raw: Vec<F>) -> F {
         let features = Array2::from_shape_vec((2, 1), raw).unwrap();
-        default_scaler()
+        SKMinMaxScaler::<F>::build()
+            .build()
+            .expect("scaler builds")
             .fit(&features)
             .expect("fit succeeds")
             .minimum()[0]
