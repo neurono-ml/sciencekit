@@ -44,7 +44,7 @@ pure-dispatcher `mod.rs`. One commit per task.
 - [ ] 4.2 `SKRobustScalerBuilder` (`with_centering`, `with_scaling`, `quantile_range`,
   `unit_variance`, `backend`, `execution_mode`; private constructor) and the `SKBuilder` impl.
   Verify: default configuration asserted.
-- [ ] 4.3 Exact dense quantile helper + the probit approximation (Acklam) with a test pinning
+- [x] 4.3 Exact dense quantile helper + the probit approximation (Acklam) with a test pinning
   the 25–75 standard-normal span (≈ 1.34898). Verify: helper tests pass.
 - [ ] 4.4 `SKRobustScaler` estimator and `SKRobustScalerModel` (learned center/scale, masking,
   accessors, backend). Verify: the dense fit/transform tests pass.
