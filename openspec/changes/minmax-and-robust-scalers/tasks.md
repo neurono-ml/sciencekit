@@ -31,7 +31,7 @@ pure-dispatcher `mod.rs`. One commit per task.
 - [x] 3.1 Red: companion tests for `partial_fit` (prefix+rest ≡ dense, empty no-op, column
   mismatch, chaining, builder flags) and `fit_streaming` (uneven batches ≡ dense, in-memory
   intent collects, empty source error). Verify: tests fail.
-- [ ] 3.2 Implement running-extrema `partial_fit` and `fit_streaming` (streaming executor +
+- [x] 3.2 Implement running-extrema `partial_fit` and `fit_streaming` (streaming executor +
   in-memory collect branch). Verify: incremental and streaming tests pass, exactly equal to
   dense.
 
