@@ -37,7 +37,7 @@ pure-dispatcher `mod.rs`. One commit per task.
 
 ## 4. RobustScaler — estimator, model and dense exact path
 
-- [ ] 4.1 Red: companion tests for `SKRobustScaler` dense behavior (median/IQR on a
+- [x] 4.1 Red: companion tests for `SKRobustScaler` dense behavior (median/IQR on a
   hand-checkable column, `quantile_range` override, `with_centering`/`with_scaling` masking,
   zero-spread column, `unit_variance` against known probit spans, empty/sparse errors,
   transform column mismatch, backend default/override, f32/f64). Verify: tests fail.
