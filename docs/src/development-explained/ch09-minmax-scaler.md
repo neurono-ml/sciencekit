@@ -44,7 +44,7 @@ out for free.
 | **Estimator and model are separate types, again** | `SKMinMaxScaler<F>` is configuration (target range, clip, backend); `SKMinMaxScalerModel<F>` is learned state (per-column minimum, range, and the affine scale). The template from chapter 8 transfers unchanged. | Reusing `SKStandardScaler`'s model with a flag — the learned state is genuinely different (extrema, not moments), so a shared type would be a lie. |
 | **`SKMinMaxScaler` is generic over the scalar, unlike `SKStandardScaler`** | The target range is *stored as `F`* (`feature_range((F, F))`), so the estimator must carry the scalar type. The scalar still arrives by inference from the data at `fit` time in the common case. | Storing the range as `f64` and converting — it would force a conversion path and break the "same scalar end to end" rule the rest of the library follows. |
 | **The kernel is a first-class extremum reduction** | `sk_axis_min_max` returns each column's minimum and maximum in one pass, with the *same* parallelism contract and grain as `sk_axis_sum`. Every later extremum-based algorithm (outlier detection, trees) reuses it. | Folding min/max into the scaler — duplicated and re-optimized in every extremum algorithm. |
-| **Running extrema are the single source of truth** | The model stores the per-column `minimum` and `data_range`; the affine `scale` is *derived* from them by every constructor and every update, so an incremental update reconverges to the same parameters a batch fit would produce. | Storing the derived `scale` directly — the incremental merge would have to undo it to recover the raw extrema. |
+| **Running extrema are the single source of truth** | The model stores the per-column `minimum`, `maximum` and `data_range`; the affine `scale` is *derived* from them by every constructor and every update, so an incremental update reconverges to the same parameters a batch fit would produce. | Storing the derived `scale` directly — the incremental merge would have to undo it to recover the raw extrema. |
 | **Min/max makes all regimes exact, not approximate** | `min` and `max` are associative and commutative, so merging per-batch extrema in any order gives the same answer. Dense, streaming and `partial_fit` produce *identical* arrays; the tests use `assert_eq`, not a tolerance. | Sketching the extrema (as the robust scaler will do for quantiles) — unnecessary, since running min/max is $O(\text{columns})$ state and exact. |
 | **`clip` is a transform-time concern** | The transform clamps to the target range only when `clip` is true, and flipping it never requires a refit. | Baking clipping into the learned scale — coupling a presentation choice to the fitted state. |
 | **A zero-range column gets unit scale** | A constant column has range 0; dividing by it would produce `NaN`. We treat it as having unit scale and a target-range minimum, so its transformed values are finite and equal the target minimum. | Letting the division happen and cleaning up `NaN` later — late and easy to miss. |
@@ -115,13 +115,14 @@ clipping, `Faer` and `Automatic`.
 
 ### `SKMinMaxScalerModel<F>` — the fitted model
 
-*What it is* — the learned state: `sample_count`, the per-column `minimum` and `data_range`
+*What it is* — the learned state: `sample_count`, the per-column `minimum`, `maximum` and
+`data_range`
 (= `maximum - minimum`), the derived affine `scale`, the configured target range, the `clip`
 flag, the carried `backend` and the execution intent. It implements `SKFeatureTransformer<F>`
 (`transform`) and carries the incremental `partial_fit`.
 
 *Why it exists* — it is the export boundary and the only object that knows the extrema.
-Because it stores the raw `minimum`/`data_range` rather than the derived `scale`, the
+Because it stores the raw `minimum`/`maximum`/`data_range` rather than the derived `scale`, the
 incremental update is exact and never has to "undo" a transformation.
 
 ### `sk_axis_min_max` — the kernel
@@ -139,13 +140,16 @@ scaler can reuse the plan it already resolves.
 
 ### `StreamingExtrema<F>` and `merge_extrema` — the streaming state
 
-*What it is* — the combinable per-column extrema state (`count`, `minimum`, `data_range`) plus
-the machine facts used to size parallelism. `merge_extrema` recovers the running maximum as
-`minimum + data_range`, takes the element-wise `min` of the minima and `max` of the maxima,
-and rewrites the pair.
+*What it is* — the combinable per-column extrema state (`count`, `minimum`, `maximum`,
+`data_range`) plus the machine facts used to size parallelism. `merge_extrema` takes the
+element-wise `min` of the minima and `max` of the maxima and rewrites the range as
+`maximum − minimum`, keeping the *exact* extrema rather than reconstructing the maximum from
+the range.
 
 *Why it exists* — it is the piece the streaming driver mutates, batch by batch, and the *same*
-function the model's `partial_fit` uses, so streaming and incremental cannot diverge.
+function the model's `partial_fit` uses, so streaming and incremental cannot diverge — and,
+because the extrema are stored directly rather than re-derived, they agree with the dense fit
+bit for bit.
 
 ---
 
@@ -245,8 +249,8 @@ summary here is *extrema*, and extrema commute. That is why the three regimes do
   inputs are guaranteed for algorithms that need them.
 - **`SKMinMaxScaler` is configuration; `SKMinMaxScalerModel` is learned state.** `fit` turns one
   into the other; the model is the export boundary.
-- **Running extrema are the single source of truth.** `scale` is derived from `minimum` and
-  `data_range`, never accumulated, so the regimes cannot drift.
+- **Running extrema are the single source of truth.** `scale` is derived from `minimum`,
+  `maximum` and `data_range`, never accumulated, so the regimes cannot drift.
 - **Min/max make the regimes exact.** Dense, streaming and `partial_fit` produce identical
   arrays; the tests use `assert_eq`, not a tolerance.
 - **A zero-range column gets unit scale**, so constant columns stay finite instead of `NaN`.
