@@ -55,7 +55,7 @@ pure-dispatcher `mod.rs`. One commit per task.
 
 - [x] 5.1 Add the `tdigest 1.0.0` workspace pin and the `sciencekit_preprocessing` dependency.
   Verify: `cargo build -p sciencekit_preprocessing` succeeds.
-- [ ] 5.2 Red: companion tests for `partial_fit` and `fit_streaming` (approximate dense within
+- [x] 5.2 Red: companion tests for `partial_fit` and `fit_streaming` (approximate dense within
   the documented tolerance, empty no-op, column mismatch, sample-count accumulation, in-memory
   intent collects, empty source error). Verify: tests fail.
 - [ ] 5.3 Implement the per-column sketch state and the online `partial_fit`/`fit_streaming`
