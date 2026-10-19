@@ -191,3 +191,36 @@ fn close_helper_matches_exact_vectors() {
     let values: Array1<f64> = array![1.0, 2.0, 3.0];
     assert_close(&values, &[1.0, 2.0, 3.0]);
 }
+
+/// The immutable estimator and the fitted model are safe to share across
+/// threads: concurrent fits and transforms agree with the single-threaded
+/// result, on the large dataset.
+#[test]
+fn estimator_and_model_are_safe_under_concurrency() {
+    use std::sync::Arc;
+
+    let features: Arc<Array2<f64>> = Arc::new(large_features());
+    let scaler = Arc::new(default_scaler());
+    let model = Arc::new(scaler.fit(&*features).expect("fit succeeds"));
+    let expected = model.transform(&*features).expect("transform succeeds");
+
+    let handles: Vec<_> = (0..8)
+        .map(|_| {
+            let scaler = Arc::clone(&scaler);
+            let model = Arc::clone(&model);
+            let features = Arc::clone(&features);
+            std::thread::spawn(move || {
+                let fitted = scaler.fit(&*features).expect("concurrent fit succeeds");
+                assert_eq!(fitted.minimum(), model.minimum());
+                assert_eq!(fitted.range(), model.range());
+                model
+                    .transform(&*features)
+                    .expect("concurrent transform succeeds")
+            })
+        })
+        .collect();
+
+    for handle in handles {
+        assert_eq!(handle.join().expect("worker thread joins"), expected);
+    }
+}
