@@ -10,6 +10,7 @@
 
 mod elementwise;
 mod grain;
+mod min_max;
 mod reductions;
 mod scaling;
 
@@ -18,6 +19,7 @@ pub use grain::{
     SK_AXIS_SUM_GRAIN, SK_BINARY_COMBINE_GRAIN, SK_ELEMENTWISE_TRANSFORM_GRAIN,
     SK_SCALE_IN_PLACE_GRAIN,
 };
+pub use min_max::sk_axis_min_max;
 pub use reductions::{sk_axis_sum, sk_axis_sum_squares};
 pub use scaling::sk_scale_in_place;
 
