@@ -24,8 +24,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `workspace-bootstrap` (planning): capability spec published and the change archived, capturing the Phase 0 workspace foundation, CI gates, and acceptance criteria.
 - `sciencekit_common` (Phase 0.4): the automatic execution decision resolver (`sk_resolve_execution_plan` — turns `SKExecutionMode::Automatic` plus an `SKExecutionContext` into a concrete `SKExecutionPlan`), the mandatory builder foundation (`SKBuilder` trait + `SKBuilderState` defaulting to `Automatic`, `sk_validate_hyperparameter`, `SKReferenceEstimator` exemplar), observability (`SKOperationAttributes`/`sk_run_operation` tracing spans with an opt-in `observability-export` OpenTelemetry layer), and the `allocator-jemalloc`/`allocator-mimalloc` global-allocator feature flags. `sciencekit_math` exposes `sk_default_math_backend` (pure-Rust `faer` default, `blas-backend` opt-in) and per-backend `kind()` (`SKBackendKind`).
 - **BREAKING** `sciencekit_common` generic float predictions: `SKRegressorPredictor<F>` returns `Array1<F>`, `SKClassifierPredictor<F>` returns `Array1<i64>` labels plus `Array2<F>` probabilities, `SKTargetView` is generic over `F: SKFloat`, and scorers split into continuous (`SKSupervisedScorer`, in `F`) and label (`SKLabelScorer`, over `i64`) contracts — f32 pipelines no longer pay an f64 detour.
+- `sciencekit_preprocessing` sub-crate (Wave 1, first algorithm): `SKStandardScaler` with a builder-only surface (`with_mean`, `with_std`, `backend`, `execution_mode`) and a distinct `SKStandardScalerModel`; dense `fit`/`transform`, incremental `partial_fit` (exact Chan–Golub–LeVeque merge) and out-of-core `fit_streaming` through the Phase 0 streaming executor — all three regimes converge on the same model.
+- `sciencekit_math` kernel `sk_axis_sum_squares`: the `Σx²` companion of `sk_axis_sum` (axis 0/1, sequential and race-free parallel paths, shared `SK_AXIS_SUM_GRAIN`).
+- `backend-selection` capability published: every estimator builder exposes `backend(SKBackendKind)` (default `Faer`), every operation records the configured kind in its span, and `fit` carries it into the fitted model.
 
 ### Changed
+
+- `SKOperationAttributes` shape fields renamed to `rows_count`/`columns_count` (they are counts); the tracing span field names stay `rows`/`columns`.
 
 - Translated `AGENTS.md` and `openspec/config.yaml` to English (international open-source project).
 - `README.md` now links the official GitHub Pages site (`https://neurono-ml.github.io/sciencekit/`) at the top; it is also set as the repository homepage.
