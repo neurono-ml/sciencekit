@@ -75,5 +75,20 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 
 - [x] 8.1 `cargo fmt --all --check`, `cargo clippy --workspace --all-targets`,
   `cargo test --workspace` all green.
-- [x] 8.2 Small and large data, concurrency, model export (backend-carrying model) and
-  metrics validated per PRD §8.7/§10.3.
+- [x] 8.2 Small and large data validated; concurrency validated (the immutable estimator and
+  the fitted model are shared across threads with identical results).
+- [ ] 8.3 Model export (Safetensors/JSON) and metric generation deferred: no
+  `sciencekit_interop` (Phase 7) or metrics-suite (W6.3) crate exists yet. The fitted model is
+  already the distinct, backend-carrying export boundary this change establishes; tracked for
+  the interop/metrics changes.
+
+## 9. Independent-review fixes
+
+- [x] 9.1 Fix the axis-1 parallel reduction bug in `sk_axis_sum`/`sk_axis_sum_squares`
+  (iterated columns for the per-row path); add non-square axis-1 parallel regression tests.
+  *(commit `fix(math): correct axis-1 parallel reduction to iterate rows`)*
+- [x] 9.2 Make `model/mod.rs` a pure dispatcher (move implementation to
+  `model/core_implementation.rs`) and remove the remaining manual index loops.
+  *(commit `refactor(preprocessing): pure-dispatcher model module and review fixes`)*
+- [x] 9.3 Make `from_moments` crate-internal, record the carried execution intent in
+  `transform`, and add default-intent and concurrency tests.

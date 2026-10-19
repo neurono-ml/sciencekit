@@ -92,6 +92,15 @@ The observability shape attributes are counts, so they are named `rows_count` /
 `columns_count` (the "explicit names" convention). The *span field* names remain
 `rows`/`columns` — the trace schema is unchanged; only the Rust identifiers are clearer.
 
+### Decision 9 — `backend-selection` is published directly, not as a change delta
+
+The `backend-selection` capability is a cross-cutting convention that every estimator shares,
+not an algorithm-specific behavior. It is published directly into `openspec/specs/backend-selection/`
+(with its builder rule in `AGENTS.md`) rather than as a delta under this change, because it is
+introduced once for the whole library and would otherwise be re-declared by every estimator
+change. The capability's requirements are still verified here (the scaler carries and records
+the configured kind), and later estimators inherit it unchanged.
+
 ## Risks / Trade-offs
 
 - **f32 precision:** `Σx²` on large f32 data loses precision faster than `f64`. Accepted

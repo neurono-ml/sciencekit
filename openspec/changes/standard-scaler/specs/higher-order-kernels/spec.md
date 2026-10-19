@@ -32,3 +32,8 @@ once at the end, with no shared mutable accumulator.
 - **WHEN** a wide, tall matrix is reduced along axis 0 with parallelism greater than one
 - **THEN** the result equals the sequential reference within floating-point tolerance
 
+#### Scenario: Per-row parallel matches sequential
+
+- **WHEN** a non-square matrix is reduced along axis 1 with parallelism greater than one
+- **THEN** the result has one element per row and equals the sequential reference
+
