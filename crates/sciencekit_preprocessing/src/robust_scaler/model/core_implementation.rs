@@ -3,6 +3,7 @@ use sciencekit_common::{
     SKBackendKind, SKDataView, SKError, SKExecutionMode, SKFeatureTransformer, SKFloat,
     SKOperationAttributes, SKOperationKind, sk_run_operation,
 };
+use tdigest::TDigest;
 
 use crate::robust_scaler::core_implementation::SKRobustScalerConfiguration;
 
@@ -18,19 +19,22 @@ pub struct SKRobustScalerModel<F> {
     pub(super) sample_count: u64,
     pub(super) center: Array1<F>,
     pub(super) scale: Array1<F>,
+    pub(super) sketches: Vec<TDigest>,
     pub(super) configuration: SKRobustScalerConfiguration<F>,
     pub(super) backend: SKBackendKind,
     pub(super) execution_intent: SKExecutionMode,
 }
 
 impl<F: SKFloat> SKRobustScalerModel<F> {
-    /// Build a fitted model from learned center and scale. Crate-internal:
+    /// Build a fitted model from learned center and scale plus the per-column
+    /// online sketches the incremental path continues from. Crate-internal:
     /// models are produced by `fit`/`fit_streaming`, never constructed by
     /// consumers.
-    pub(crate) fn from_quantiles(
+    pub(crate) fn from_sketches(
         sample_count: u64,
         center: Array1<F>,
         scale: Array1<F>,
+        sketches: Vec<TDigest>,
         configuration: SKRobustScalerConfiguration<F>,
         backend: SKBackendKind,
         execution_intent: SKExecutionMode,
@@ -40,6 +44,7 @@ impl<F: SKFloat> SKRobustScalerModel<F> {
             sample_count,
             center,
             scale,
+            sketches,
             configuration,
             backend,
             execution_intent,

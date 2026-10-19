@@ -65,24 +65,28 @@ fn streaming_empty_source_errors() {
 /// Batches disagreeing on column count fail with a shape error.
 #[test]
 fn streaming_column_mismatch_errors() {
-    let mut source = VecSource::new(vec![array![[1.0, 2.0], [3.0, 4.0]], array![[5.0, 6.0, 7.0]]]);
+    let mut source = VecSource::new(vec![
+        array![[1.0, 2.0], [3.0, 4.0]],
+        array![[5.0, 6.0, 7.0]],
+    ]);
     let error = default_scaler()
         .fit_streaming(&mut source)
         .expect_err("mismatched stream must fail");
     assert!(matches!(error, SKError::ShapeMismatch { .. }));
 }
 
-/// The builder flags and a target-range override survive the streaming path.
+/// The builder flags survive the streaming path and the sketch approximates the
+/// dense fit within the documented tolerance.
 #[test]
 fn streaming_respects_builder_flags() {
-    let features = small_features();
+    let features = large_features();
     let scaler = SKRobustScaler::<f64>::build()
         .quantile_range((10.0, 90.0))
         .unit_variance(true)
         .build()
         .expect("scaler builds");
     let reference = scaler.fit(&features).expect("fit succeeds");
-    let mut source = chunked_source(&features, &[2, 3]);
+    let mut source = chunked_source(&features, &[40_000, 60_000]);
     let streamed = scaler
         .fit_streaming(&mut source)
         .expect("streaming fit succeeds");

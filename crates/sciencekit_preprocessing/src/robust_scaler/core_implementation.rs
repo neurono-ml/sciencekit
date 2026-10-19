@@ -5,12 +5,18 @@ use sciencekit_common::{
     execution::SKAccessPattern, sk_run_operation,
 };
 use sciencekit_math::kernels::SK_AXIS_SUM_GRAIN;
+use tdigest::TDigest;
 
 use crate::robust_scaler::builder::SKRobustScalerBuilder;
 use crate::robust_scaler::model::SKRobustScalerModel;
 use crate::robust_scaler::quantiles::{
     column_quantile_statistics, standard_normal_interquantile_span,
 };
+use crate::robust_scaler::sketch::{extend_sketches, new_sketches};
+
+/// The per-column statistics a dense fit produces: the exact center, the exact
+/// scale and the seeded per-column online sketches.
+type RobustStatistics<F> = (Array1<F>, Array1<F>, Vec<TDigest>);
 
 /// The immutable per-scaler options shared by the estimator and its model:
 /// the two masking flags, the quantile range and the unit-variance flag.
@@ -111,11 +117,12 @@ impl<F: SKFloat> SKUnsupervisedFit<F> for SKRobustScaler<F> {
         X: TryInto<SKDataView<'a, F>, Error = SKError>,
     {
         let dense = features.try_into()?.as_dense()?;
-        let (center, scale) = robust_statistics(self, &dense)?;
-        Ok(SKRobustScalerModel::from_quantiles(
+        let (center, scale, sketches) = robust_statistics(self, &dense)?;
+        Ok(SKRobustScalerModel::from_sketches(
             dense.nrows() as u64,
             center,
             scale,
+            sketches,
             self.configuration(),
             self.backend,
             self.execution_intent(),
@@ -123,11 +130,12 @@ impl<F: SKFloat> SKUnsupervisedFit<F> for SKRobustScaler<F> {
     }
 }
 
-/// Learn the per-column exact center and scale under a `Fit` observability span.
+/// Learn the per-column exact center and scale under a `Fit` observability span,
+/// and seed the per-column online sketches the incremental path continues from.
 pub(super) fn robust_statistics<F: SKFloat>(
     estimator: &SKRobustScaler<F>,
     features: &ArrayView2<F>,
-) -> Result<(Array1<F>, Array1<F>), SKError> {
+) -> Result<RobustStatistics<F>, SKError> {
     let (rows_count, columns_count) = validated_shape(features)?;
     let attributes = SKOperationAttributes {
         operation: SKOperationKind::Fit,
@@ -140,26 +148,31 @@ pub(super) fn robust_statistics<F: SKFloat>(
         let _plan = resolve_fit_plan(estimator, features)?;
         let (raw_center, raw_scale) =
             column_quantile_statistics(features, estimator.quantile_low, estimator.quantile_high);
-        Ok(finalize_statistics(estimator, &raw_center, &raw_scale))
+        let (center, scale) =
+            finalize_statistics(&estimator.configuration(), &raw_center, &raw_scale);
+        let mut sketches = new_sketches(columns_count);
+        extend_sketches(&mut sketches, features);
+        Ok((center, scale, sketches))
     })
 }
 
 /// Apply the masking flags and the unit-variance divisor to the raw quantile
-/// statistics, keeping every scale positive so the output stays finite.
-fn finalize_statistics<F: SKFloat>(
-    estimator: &SKRobustScaler<F>,
+/// statistics, keeping every scale positive so the output stays finite. Shared
+/// by the dense fit and the online update.
+pub(crate) fn finalize_statistics<F: SKFloat>(
+    configuration: &SKRobustScalerConfiguration<F>,
     raw_center: &Array1<F>,
     raw_scale: &Array1<F>,
 ) -> (Array1<F>, Array1<F>) {
-    let span = if estimator.unit_variance {
-        estimator.configuration().unit_variance_span()
+    let span = if configuration.unit_variance {
+        configuration.unit_variance_span()
     } else {
         F::one()
     };
     let center: Array1<F> = raw_center
         .iter()
         .map(|&value| {
-            if estimator.with_centering {
+            if configuration.with_centering {
                 value
             } else {
                 F::zero()
@@ -169,12 +182,12 @@ fn finalize_statistics<F: SKFloat>(
     let scale: Array1<F> = raw_scale
         .iter()
         .map(|&value| {
-            let scaled = if estimator.unit_variance {
+            let scaled = if configuration.unit_variance {
                 value / span
             } else {
                 value
             };
-            if estimator.with_scaling && scaled > F::zero() {
+            if configuration.with_scaling && scaled > F::zero() {
                 scaled
             } else {
                 F::one()

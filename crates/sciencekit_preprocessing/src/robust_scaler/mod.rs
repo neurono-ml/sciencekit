@@ -2,6 +2,7 @@ pub mod builder;
 pub mod core_implementation;
 pub mod model;
 pub mod quantiles;
+pub(crate) mod sketch;
 pub mod streaming;
 
 #[cfg(test)]
