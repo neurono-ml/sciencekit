@@ -8,7 +8,9 @@ use sciencekit_common::{
     SKUnsupervisedFit,
 };
 
-use super::test_datasets::{assert_close, assert_close_with_tolerance, default_scaler, large_features};
+use super::test_datasets::{
+    assert_close, assert_close_with_tolerance, default_scaler, large_features,
+};
 use crate::robust_scaler::core_implementation::SKRobustScaler;
 
 /// The defaults center on the median and scale by the 25–75 interquartile
@@ -110,11 +112,7 @@ fn unit_variance_divides_scale_by_standard_normal_span() {
         .expect("scaler builds");
     let model = scaler.fit(&features).expect("fit succeeds");
     assert!(model.unit_variance());
-    assert_close_with_tolerance(
-        model.scale(),
-        &[2.0 / 1.348_979_500_392_163_4],
-        1e-9,
-    );
+    assert_close_with_tolerance(model.scale(), &[2.0 / 1.348_979_500_392_163_4], 1e-9);
 }
 
 /// Empty inputs fail with a shape error before any element is processed.
