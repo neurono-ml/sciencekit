@@ -6,7 +6,7 @@ use sciencekit_common::execution::{SKStreamDecision, sk_run_streaming_driver};
 use sciencekit_common::{SKDataBatch, SKError, SKExecutionMode, SKExecutionPlan, SKLazySource};
 
 use super::{
-    sk_axis_sum, sk_axis_sum_squares, sk_binary_combine, sk_elementwise_transform,
+    sk_axis_min_max, sk_axis_sum, sk_axis_sum_squares, sk_binary_combine, sk_elementwise_transform,
     sk_scale_in_place,
 };
 
@@ -288,6 +288,69 @@ fn parallel_row_sum_matches_sequential() {
     assert_eq!(sequential, array![6.0, 15.0]);
     let parallel = sk_axis_sum(&input.view(), 1, 8);
     assert_eq!(parallel, sequential);
+}
+
+// ---- Task 1.1 (change minmax-and-robust-scalers: min/max axis reduction) ----
+
+/// Per-column extrema: each output pair holds that column's minimum and its
+/// maximum, in one pass.
+#[test]
+fn axis_zero_min_max_matches_column_extrema() {
+    let input: Array2<f64> = array![[1.0, 5.0, 3.0], [4.0, 2.0, 9.0], [7.0, 8.0, 6.0]];
+    let (minima, maxima) = sk_axis_min_max(&input.view(), 0, 1);
+    assert_eq!(minima, array![1.0, 2.0, 3.0]);
+    assert_eq!(maxima, array![7.0, 8.0, 9.0]);
+}
+
+/// Per-row extrema: the companion shape of the column reduction, one pair per
+/// row (length = rows).
+#[test]
+fn axis_one_min_max_matches_row_extrema() {
+    let input: Array2<f64> = array![[1.0, 5.0, 3.0], [4.0, 2.0, 9.0]];
+    let (minima, maxima) = sk_axis_min_max(&input.view(), 1, 1);
+    assert_eq!(minima, array![1.0, 2.0]);
+    assert_eq!(maxima, array![5.0, 9.0]);
+}
+
+/// Parallel per-column extrema equal the sequential reference **exactly**:
+/// min/max are order-independent, so no tolerance is involved.
+#[test]
+fn parallel_axis_zero_min_max_matches_sequential_exactly() {
+    let (rows, cols) = (4096, 256);
+    let input: Array2<f64> = Array2::from_shape_fn((rows, cols), |(i, j)| {
+        ((i * 31 + j * 17) % 1013) as f64 * 0.25 - j as f64
+    });
+    let (sequential_minima, sequential_maxima) = sk_axis_min_max(&input.view(), 0, 1);
+    let (parallel_minima, parallel_maxima) = sk_axis_min_max(&input.view(), 0, 8);
+    assert_eq!(sequential_minima, parallel_minima);
+    assert_eq!(sequential_maxima, parallel_maxima);
+}
+
+/// Parallel per-row extrema equal the sequential reference exactly.
+#[test]
+fn parallel_axis_one_min_max_matches_sequential_exactly() {
+    let (rows, cols) = (2048, 64);
+    let input: Array2<f64> = Array2::from_shape_fn((rows, cols), |(i, j)| {
+        ((i * 7 + j * 13) % 401) as f64 - i as f64 * 0.5
+    });
+    let (sequential_minima, sequential_maxima) = sk_axis_min_max(&input.view(), 1, 1);
+    let (parallel_minima, parallel_maxima) = sk_axis_min_max(&input.view(), 1, 8);
+    assert_eq!(sequential_minima, parallel_minima);
+    assert_eq!(sequential_maxima, parallel_maxima);
+}
+
+/// Both supported floats are accepted and return extrema in their own type.
+#[test]
+fn min_max_accepts_either_float() {
+    let f32_input: Array2<f32> = array![[1.0, 2.0], [3.0, 0.5]];
+    let (f32_minima, f32_maxima) = sk_axis_min_max(&f32_input.view(), 0, 1);
+    assert_eq!(f32_minima, array![1.0_f32, 0.5]);
+    assert_eq!(f32_maxima, array![3.0_f32, 2.0]);
+
+    let f64_input: Array2<f64> = array![[1.0, 2.0], [3.0, 0.5]];
+    let (f64_minima, f64_maxima) = sk_axis_min_max(&f64_input.view(), 0, 1);
+    assert_eq!(f64_minima, array![1.0_f64, 0.5]);
+    assert_eq!(f64_maxima, array![3.0_f64, 2.0]);
 }
 
 /// The driver applies the plan's parallelism to each batch's computation: an
