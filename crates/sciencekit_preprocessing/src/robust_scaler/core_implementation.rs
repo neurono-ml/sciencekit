@@ -1,0 +1,155 @@
+use ndarray::{Array1, ArrayView2};
+use sciencekit_common::{
+    SKBackendKind, SKBuilderState, SKDataView, SKError, SKExecutionContext, SKExecutionMode,
+    SKExecutionPlan, SKFloat, SKOperationAttributes, SKOperationKind, SKUnsupervisedFit,
+    execution::SKAccessPattern, sk_run_operation,
+};
+use sciencekit_math::kernels::SK_AXIS_SUM_GRAIN;
+use tdigest::TDigest;
+
+use crate::robust_scaler::builder::SKRobustScalerBuilder;
+use crate::robust_scaler::configuration::{SKRobustScalerConfiguration, finalize_statistics};
+use crate::robust_scaler::model::SKRobustScalerModel;
+use crate::robust_scaler::quantiles::column_quantile_statistics;
+use crate::robust_scaler::sketch::{extend_sketches, new_sketches};
+
+/// The per-column statistics a dense fit produces: the exact center, the exact
+/// scale and the seeded per-column online sketches.
+type RobustStatistics<F> = (Array1<F>, Array1<F>, Vec<TDigest>);
+
+/// Immutable, builder-configured robust scaler estimator. The learned state
+/// lives in the distinct [`SKRobustScalerModel`].
+pub struct SKRobustScaler<F> {
+    pub(super) plan: SKBuilderState,
+    pub(super) with_centering: bool,
+    pub(super) with_scaling: bool,
+    pub(super) quantile_low: F,
+    pub(super) quantile_high: F,
+    pub(super) unit_variance: bool,
+    pub(super) backend: SKBackendKind,
+}
+
+impl<F: SKFloat> SKRobustScaler<F> {
+    pub fn build() -> SKRobustScalerBuilder<F> {
+        SKRobustScalerBuilder::new()
+    }
+
+    pub fn execution_intent(&self) -> SKExecutionMode {
+        self.plan.execution_intent()
+    }
+
+    pub fn resolve_plan(&self, context: &SKExecutionContext) -> Result<SKExecutionPlan, SKError> {
+        self.plan.resolve_plan(context)
+    }
+
+    /// The backend kind this estimator records in its operation spans and
+    /// transfers into its fitted models.
+    pub fn backend(&self) -> SKBackendKind {
+        self.backend
+    }
+
+    /// Whether the transform centers on the median.
+    pub fn with_centering(&self) -> bool {
+        self.with_centering
+    }
+
+    /// Whether the transform scales by the interquantile range.
+    pub fn with_scaling(&self) -> bool {
+        self.with_scaling
+    }
+
+    /// The `(low, high)` percentile pair the scale is built from.
+    pub fn quantile_range(&self) -> (F, F) {
+        (self.quantile_low, self.quantile_high)
+    }
+
+    /// Whether the scale is divided by the standard-normal interquantile span.
+    pub fn unit_variance(&self) -> bool {
+        self.unit_variance
+    }
+
+    pub(super) fn configuration(&self) -> SKRobustScalerConfiguration<F> {
+        SKRobustScalerConfiguration {
+            with_centering: self.with_centering,
+            with_scaling: self.with_scaling,
+            quantile_low: self.quantile_low,
+            quantile_high: self.quantile_high,
+            unit_variance: self.unit_variance,
+        }
+    }
+}
+
+impl<F: SKFloat> SKUnsupervisedFit<F> for SKRobustScaler<F> {
+    type Model = SKRobustScalerModel<F>;
+    type Error = SKError;
+
+    fn fit<'a, X>(&self, features: X) -> Result<Self::Model, Self::Error>
+    where
+        X: TryInto<SKDataView<'a, F>, Error = SKError>,
+    {
+        let dense = features.try_into()?.as_dense()?;
+        let (center, scale, sketches) = robust_statistics(self, &dense)?;
+        Ok(SKRobustScalerModel::from_sketches(
+            dense.nrows() as u64,
+            center,
+            scale,
+            sketches,
+            self.configuration(),
+            self.backend,
+            self.execution_intent(),
+        ))
+    }
+}
+
+/// Learn the per-column exact center and scale under a `Fit` observability span,
+/// and seed the per-column online sketches the incremental path continues from.
+pub(super) fn robust_statistics<F: SKFloat>(
+    estimator: &SKRobustScaler<F>,
+    features: &ArrayView2<F>,
+) -> Result<RobustStatistics<F>, SKError> {
+    let (rows_count, columns_count) = validated_shape(features)?;
+    let attributes = SKOperationAttributes {
+        operation: SKOperationKind::Fit,
+        rows_count,
+        columns_count,
+        execution_mode: estimator.execution_intent(),
+        backend: estimator.backend,
+    };
+    sk_run_operation(attributes, || {
+        let _plan = resolve_fit_plan(estimator, features)?;
+        let (raw_center, raw_scale) =
+            column_quantile_statistics(features, estimator.quantile_low, estimator.quantile_high);
+        let (center, scale) =
+            finalize_statistics(&estimator.configuration(), &raw_center, &raw_scale);
+        let mut sketches = new_sketches(columns_count);
+        extend_sketches(&mut sketches, features);
+        Ok((center, scale, sketches))
+    })
+}
+
+/// Reject empty inputs before any element is processed.
+fn validated_shape<F>(features: &ArrayView2<F>) -> Result<(usize, usize), SKError> {
+    let (rows_count, columns_count) = features.dim();
+    if rows_count == 0 || columns_count == 0 {
+        return Err(SKError::ShapeMismatch {
+            expected: vec![rows_count.max(1), columns_count.max(1)],
+            found: vec![rows_count, columns_count],
+        });
+    }
+    Ok((rows_count, columns_count))
+}
+
+/// Build a fresh execution context per operation, declare the reduction grain
+/// and the `Sequential` access pattern, and resolve the plan.
+fn resolve_fit_plan<F: SKFloat>(
+    estimator: &SKRobustScaler<F>,
+    features: &ArrayView2<F>,
+) -> Result<SKExecutionPlan, SKError> {
+    let mut context = SKExecutionContext::real();
+    context.dataset_size_bytes = features.len() as u64 * size_of::<F>() as u64;
+    context.scalar_size_bytes = size_of::<F>() as u64;
+    context.dataset_elements = Some(features.len() as u64);
+    context.access_pattern = SKAccessPattern::Sequential;
+    context.grain = SK_AXIS_SUM_GRAIN;
+    estimator.resolve_plan(&context)
+}

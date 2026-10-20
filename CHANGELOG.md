@@ -27,6 +27,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `sciencekit_preprocessing` sub-crate (Wave 1, first algorithm): `SKStandardScaler` with a builder-only surface (`with_mean`, `with_std`, `backend`, `execution_mode`) and a distinct `SKStandardScalerModel`; dense `fit`/`transform`, incremental `partial_fit` (exact Chan–Golub–LeVeque merge) and out-of-core `fit_streaming` through the Phase 0 streaming executor — all three regimes converge on the same model.
 - `sciencekit_math` kernel `sk_axis_sum_squares`: the `Σx²` companion of `sk_axis_sum` (axis 0/1, sequential and race-free parallel paths, shared `SK_AXIS_SUM_GRAIN`).
 - `backend-selection` capability published: every estimator builder exposes `backend(SKBackendKind)` (default `Faer`), every operation records the configured kind in its span, and `fit` carries it into the fitted model.
+- `sciencekit_preprocessing` (Wave 1, min/max and robust scalers): `SKMinMaxScaler` (builder-only `feature_range`, `clip`, `backend`, `execution_mode`) and `SKRobustScaler` (builder-only `with_centering`, `with_scaling`, `quantile_range`, `unit_variance`, `backend`, `execution_mode`), each with a distinct fitted model; dense `fit`/`transform`, exact incremental `partial_fit` for min/max and an online `tdigest`-sketch `partial_fit` for the robust scaler, and out-of-core `fit_streaming` for both.
+- `sciencekit_math` kernel `sk_axis_min_max`: the per-axis minimum and maximum in one pass, the extremum companion of the sum reductions (axis 0/1, sequential and race-free parallel paths, shared `SK_AXIS_SUM_GRAIN`).
+- Workspace dependency `tdigest 1.0`, confined to `sciencekit_preprocessing`, backing the robust scaler's online quantile sketch.
 
 ### Changed
 
