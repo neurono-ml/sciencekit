@@ -329,7 +329,11 @@ macro_rules! impl_math_backend {
                 b: ArrayView2<$float>,
             ) -> Result<SKLeastSquaresSolution<$float>, SKError> {
                 let a_faer = to_faer(a);
-                let decomposition = a_faer.as_ref().to_owned().svd().map_err(to_sk_error)?;
+                // Thin SVD: only the first `min(m, n)` singular vectors are
+                // needed for the pseudoinverse solution. The full SVD would
+                // allocate and compute an `m × m` `U` — catastrophic for the
+                // tall design matrices least squares actually sees.
+                let decomposition = a_faer.as_ref().to_owned().thin_svd().map_err(to_sk_error)?;
                 let b_mat = to_ndarray_copy(&b);
                 // Minimum-norm least-squares solution `x = pinv(A) b` via the
                 // SVD pseudoinverse (Decision 7: faer composes from SVD).
