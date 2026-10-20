@@ -10,6 +10,7 @@ mod output;
 mod state;
 mod statistics;
 mod strategy;
+mod streaming;
 
 pub use builder::SKSimpleImputerBuilder;
 pub use core_implementation::SKSimpleImputer;
@@ -28,6 +29,9 @@ mod output_tests;
 
 #[cfg(test)]
 mod partial_fit_tests;
+
+#[cfg(test)]
+mod streaming_tests;
 
 #[cfg(test)]
 mod transform_tests;
