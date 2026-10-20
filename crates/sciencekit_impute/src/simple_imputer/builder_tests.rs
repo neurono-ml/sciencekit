@@ -1,8 +1,13 @@
 //! Companion tests for the imputer builder (spec `simple-imputer`).
 
-use sciencekit_common::{SKBackendKind, SKBuilder, SKError, SKExecutionMode};
+use ndarray::array;
+use sciencekit_common::{
+    SKBackendKind, SKBuilder, SKError, SKExecutionMode, SKFeatureTransformer, SKUnsupervisedFit,
+};
 
 use super::core_implementation::SKSimpleImputer;
+use super::model::SKSimpleImputerModel;
+use super::output::SKImputedOutput;
 use super::strategy::SKImputationStrategy;
 
 #[test]
@@ -49,6 +54,17 @@ fn generic_over_the_scalar_for_f32() {
     let imputer: SKSimpleImputer<f32> = SKSimpleImputer::build().build().unwrap();
     assert!(imputer.missing_values().is_nan());
     assert_eq!(imputer.strategy(), SKImputationStrategy::Mean);
+
+    // The same configuration fits and transforms the smaller scalar: the
+    // estimator and the model are typed on `F` alone, never on the backend.
+    let model: SKSimpleImputerModel<f32> = imputer
+        .fit(&array![[1.0f32, f32::NAN], [3.0, 4.0]])
+        .unwrap();
+    assert_eq!(model.statistics().as_slice().unwrap(), &[2.0f32, 4.0]);
+    match model.transform(&array![[f32::NAN, 4.0f32]]).unwrap() {
+        SKImputedOutput::Dense(matrix) => assert_eq!(matrix, array![[2.0f32, 4.0]]),
+        SKImputedOutput::Sparse(matrix) => panic!("expected a dense result, found {matrix:?}"),
+    }
 }
 
 #[test]
