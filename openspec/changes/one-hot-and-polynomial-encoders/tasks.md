@@ -6,14 +6,14 @@ pure-dispatcher `mod.rs`. One commit per task.
 
 ## 1. Categorical feature view in `sciencekit_common`
 
-- [ ] 1.1 Red: companion tests for `SKNominalMatrixView` and `SKCategoricalView` (row-major
+- [x] 1.1 Red: companion tests for `SKNominalMatrixView` and `SKCategoricalView` (row-major
   shape, `value(row, column)` borrows the label, `is_empty`, representation label, nominal vs
   integer dispatch, conversion via `TryInto`/`From` for `&[&[&str]]` and `ArrayView2<i64>`).
   Verify: tests fail before the types exist.
-- [ ] 1.2 Implement `SKNominalMatrixView<'a>` and the non-exhaustive `SKCategoricalView<'a>`
+- [x] 1.2 Implement `SKNominalMatrixView<'a>` and the non-exhaustive `SKCategoricalView<'a>`
   (with `representation()` and once-per-operation rejection) plus the conversion impls, exported
   from the crate root. Verify: the new tests pass and `cargo test -p sciencekit_common` is green.
-- [ ] 1.3 Export the documented `SK_CATEGORICAL_MISSING_CODE: i64 = -1` constant and assert in a
+- [x] 1.3 Export the documented `SK_CATEGORICAL_MISSING_CODE: i64 = -1` constant and assert in a
   test that it is reachable from the crate root. Verify: the constant test passes.
 
 ## 2. OneHotEncoder — estimator, model and dense/sparse transform
