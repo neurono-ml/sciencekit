@@ -24,3 +24,6 @@ mod fit_tests;
 
 #[cfg(test)]
 mod output_tests;
+
+#[cfg(test)]
+mod transform_tests;

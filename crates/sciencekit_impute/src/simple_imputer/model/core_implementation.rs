@@ -76,3 +76,19 @@ impl<F: SKFloat> SKSimpleImputerModel<F> {
         self.execution_intent
     }
 }
+
+impl<F: SKFloat> sciencekit_common::SKFeatureTransformer<F> for SKSimpleImputerModel<F> {
+    type Output = crate::simple_imputer::output::SKImputedOutput<F>;
+    type Error = sciencekit_common::SKError;
+
+    fn transform<'a, X>(&self, features: X) -> Result<Self::Output, Self::Error>
+    where
+        X: TryInto<sciencekit_common::SKDataView<'a, F>, Error = sciencekit_common::SKError>,
+    {
+        let view = features.try_into()?;
+        let dense = view.as_dense()?;
+        Ok(crate::simple_imputer::output::SKImputedOutput::Dense(
+            dense.to_owned(),
+        ))
+    }
+}
