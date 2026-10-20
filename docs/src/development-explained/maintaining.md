@@ -185,5 +185,6 @@ worktrees, two separate PRs" discipline that governs code.
 
 Next chapter: we step down from the meta and back into the code, where the algorithms built
 with these rules — [`SKStandardScaler`](./ch08-standard-scaler.html),
-[`SKMinMaxScaler`](./ch09-minmax-scaler.html) and
-[`SKRobustScaler`](./ch10-robust-scaler.html) — show the whole procedure in action.
+[`SKMinMaxScaler`](./ch09-minmax-scaler.html),
+[`SKRobustScaler`](./ch10-robust-scaler.html) and the
+[encoders](./ch11-one-hot-and-polynomial-encoders.html) — show the whole procedure in action.
