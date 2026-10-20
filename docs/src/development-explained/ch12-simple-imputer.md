@@ -375,7 +375,8 @@ crate and the marker semantics to build on.
   the export boundary.
 
 Next chapter: with imputation in place, the book turns to the first *supervised* models, where
-complete, encoded feature matrices finally become inputs to a model that learns.
+complete, encoded feature matrices finally become inputs to a model that learns — see
+[Linear models: `SKLinearRegression`](./ch13-linear-regression.html).
 
-> Chapters are added in the order the pull requests landed. The linear-model chapter will be
-> registered in `SUMMARY.md` when it lands.
+> Chapters are added in the order the pull requests landed. The linear-model chapter is
+> registered in `SUMMARY.md`.

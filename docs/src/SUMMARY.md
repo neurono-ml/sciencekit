@@ -41,4 +41,5 @@
   - [The third scaler: SKRobustScaler](development-explained/ch10-robust-scaler.md)
   - [Encoders: one-hot & polynomial](development-explained/ch11-one-hot-and-polynomial-encoders.md)
   - [Imputation: SKSimpleImputer & SKMissingIndicator](development-explained/ch12-simple-imputer.md)
+  - [Linear models: SKLinearRegression](development-explained/ch13-linear-regression.md)
   - [Maintaining this book](development-explained/maintaining.md)
