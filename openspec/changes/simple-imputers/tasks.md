@@ -6,7 +6,7 @@ pure-dispatcher `mod.rs`. One commit per task. ADR issue: #87.
 
 ## 1. Crate scaffold and workspace member
 
-- [ ] 1.1 Add `crates/sciencekit_impute` (root `Cargo.toml`, `src/lib.rs` with the
+- [x] 1.1 Add `crates/sciencekit_impute` (root `Cargo.toml`, `src/lib.rs` with the
   `simple_imputer` and `missing_indicator` module declarations) and register it in the
   workspace `members`, with `sprs`/`tdigest` taken from the workspace pins. Verify:
   `cargo build -p sciencekit_impute` succeeds and `cargo test --workspace` stays green.
