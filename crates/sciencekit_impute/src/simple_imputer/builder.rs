@@ -24,12 +24,12 @@ impl<F: SKFloat> SKSimpleImputerBuilder<F> {
     pub fn new() -> SKSimpleImputerBuilder<F> {
         Self {
             state: SKBuilderState::new(),
-            strategy: SKImputationStrategy::Median,
-            missing_values: F::zero(),
+            strategy: SKImputationStrategy::Mean,
+            missing_values: F::nan(),
             fill_value: None,
-            keep_empty_features: true,
-            add_indicator: true,
-            backend: SKBackendKind::NdArrayLinalg,
+            keep_empty_features: false,
+            add_indicator: false,
+            backend: SKBackendKind::Faer,
         }
     }
 
@@ -95,6 +95,14 @@ impl<F: SKFloat> SKBuilder<SKSimpleImputer<F>> for SKSimpleImputerBuilder<F> {
     }
 
     fn build(self) -> Result<SKSimpleImputer<F>, SKError> {
+        if let Some(value) = self.fill_value {
+            if value.is_nan() {
+                return Err(SKError::InvalidHyperparameter {
+                    name: "fill_value",
+                    reason: "a NaN fill would leave every filled cell missing".to_owned(),
+                });
+            }
+        }
         Ok(SKSimpleImputer {
             plan: self.state,
             strategy: self.strategy,

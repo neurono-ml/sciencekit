@@ -47,27 +47,27 @@ impl<F: SKFloat> SKSimpleImputer<F> {
 
     /// The configured per-column strategy statistic.
     pub fn strategy(&self) -> SKImputationStrategy {
-        SKImputationStrategy::Median
+        self.strategy
     }
 
     /// The configured missing-value marker.
     pub fn missing_values(&self) -> F {
-        F::zero()
+        self.missing_values
     }
 
     /// The configured constant fill, if any.
     pub fn fill_value(&self) -> Option<F> {
-        None
+        self.fill_value
     }
 
     /// Whether all-missing columns are kept as `0.0` instead of dropped.
     pub fn keep_empty_features(&self) -> bool {
-        true
+        self.keep_empty_features
     }
 
     /// Whether the transform stacks a missingness indicator per fit-time
     /// missing feature.
     pub fn add_indicator(&self) -> bool {
-        true
+        self.add_indicator
     }
 }
