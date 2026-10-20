@@ -56,10 +56,10 @@ statistic, and the carried backend kind.
 - **WHEN** a column `[7.0, NaN, 10.0]` is fitted with the default strategy
 - **THEN** its statistic is the mean of the observed values, `8.5`
 
-#### Scenario: Median over an even count
+#### Scenario: Median over an even observed count
 
-- **WHEN** a column `[1.0, NaN, 3.0, 5.0]` is fitted with `Median`
-- **THEN** its statistic is the lower-of-two or midpoint order statistic of the observed values, `3.0`
+- **WHEN** a column `[1.0, NaN, 3.0, 5.0, 7.0]` is fitted with `Median`
+- **THEN** its four observed values average their central pair, so the statistic is `4.0`
 
 #### Scenario: Most-frequent tie breaks toward the smallest value
 
