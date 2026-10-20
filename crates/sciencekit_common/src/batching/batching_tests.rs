@@ -101,6 +101,18 @@ fn supervised_source_yields_pairs_with_one_final_block() {
     assert_eq!(finals, 1);
 }
 
+/// A supervised block obtained from a source survives the source's drop.
+#[test]
+fn supervised_block_survives_its_source() {
+    let block = {
+        let mut source = FiniteSupervisedSource::new();
+        source.next_supervised_batch().unwrap().unwrap()
+    };
+    // The source is dropped here; the block still owns its data.
+    assert_eq!(block.features().nrows(), 1);
+    assert_eq!(block.targets().len(), 1);
+}
+
 // ---- Example sources -------------------------------------------------------
 
 /// A finite supervised source of 3 batches; the last is marked final.
