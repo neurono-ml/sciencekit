@@ -77,8 +77,10 @@ median (exact under `Mean`/`MostFrequent`/`Constant`, as the spec requires; the 
 approximation is confined to the sketch path). `fit_streaming` copies the
 `standard-scaler` split: in-process intents collect the batches and reuse the dense path so
 the result is exactly the concatenated fit; otherwise the streaming driver updates the
-per-batch state. Spans are built from `SKOperationAttributes` carrying the model's backend
-kind, exactly as the scalers do.
+per-batch state. The same state records the columns that carried a missing cell, so
+`partial_fit` and the driver rebuild the composed indicator's scope as batches arrive — an
+incrementally fitted model stacks the same mask as the concatenated fit. Spans are built
+from `SKOperationAttributes` carrying the model's backend kind, exactly as the scalers do.
 
 ### 6. The mask is typed on `F`
 `SKMissingIndicator` emits `0.0`/`1.0` in `SKFloat` rather than `bool`. *Why:*

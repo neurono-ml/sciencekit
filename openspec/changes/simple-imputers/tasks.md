@@ -112,7 +112,7 @@ pure-dispatcher `mod.rs`. One commit per task. ADR issue: #87.
 
 ## 13. Independent review
 
-- [ ] 13.1 Independent review by a separate agent validating the specs were met; fix
+- [x] 13.1 Independent review by a separate agent validating the specs were met; fix
   findings.
 
 ## Workflow follow-up

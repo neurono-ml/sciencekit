@@ -135,6 +135,11 @@ batch whose column count differs from the accumulated one SHALL be rejected.
 - **WHEN** a model is built with `partial_fit` over two uneven batches and compared with `fit` on their concatenation
 - **THEN** the statistics are equal and both models transform a probe matrix identically
 
+#### Scenario: Split batches extend the indicator scope
+
+- **WHEN** a model built with `add_indicator(true)` is fitted on a first batch and extended with a second batch that introduces a missing column
+- **THEN** its indicator scope and stacked output equal those of the model fitted on the concatenation
+
 #### Scenario: Empty batch is a no-op
 
 - **WHEN** `partial_fit` receives a batch with zero rows
