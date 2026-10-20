@@ -100,7 +100,7 @@ pure-dispatcher `mod.rs`. One commit per task. ADR issue: #87.
 
 ## 11. Documentation
 
-- [ ] 11.1 Add the doc-branch chapters: a new `Development Explained` chapter for the impute
+- [x] 11.1 Add the doc-branch chapters: a new `Development Explained` chapter for the impute
   crate and both estimators (with Mermaid diagrams), register it in `SUMMARY.md`, update
   `maintaining.md` and the Imputation section of `docs/src/algorithms.md`. Verify:
   `mdbook build docs` passes with zero warnings.
