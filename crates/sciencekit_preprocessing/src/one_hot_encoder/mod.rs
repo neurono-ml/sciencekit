@@ -9,8 +9,10 @@ mod categories;
 mod core_implementation;
 mod model;
 mod output;
+mod streaming;
 mod unknown_policy;
 
+pub use builder::SKOneHotEncoderBuilder;
 pub use categories::{SKIntegerCategoryTable, SKOneHotColumnCategories};
 pub use core_implementation::SKOneHotEncoder;
 pub use model::SKOneHotEncoderModel;

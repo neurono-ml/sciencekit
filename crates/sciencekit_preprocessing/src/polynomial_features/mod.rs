@@ -10,6 +10,7 @@ mod model;
 mod output;
 mod terms;
 
+pub use builder::SKPolynomialFeaturesBuilder;
 pub use core_implementation::SKPolynomialFeatures;
 pub use model::SKPolynomialFeaturesModel;
 pub use output::SKExpandedOutput;

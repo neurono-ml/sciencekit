@@ -256,3 +256,29 @@ fn large_data_dense_and_sparse_agree() {
     let sparse = model.transform_sparse::<f64, _>(features.view()).unwrap();
     assert_eq!(sparse.to_dense(), dense);
 }
+
+/// The default execution intent is Automatic.
+#[test]
+fn default_execution_intent_is_automatic() {
+    use sciencekit_common::SKExecutionMode;
+    let expander = SKPolynomialFeatures::build().build().unwrap();
+    assert_eq!(expander.execution_intent(), SKExecutionMode::Automatic);
+}
+
+/// Zero terms are not stored in the sparse output.
+#[test]
+fn sparse_stores_only_nonzeros() {
+    let features = array![[2.0_f64, 3.0], [0.0, 4.0]];
+    let model = default_expander().fit(features.view()).unwrap();
+    let sparse = model.transform_sparse::<f64, _>(features.view()).unwrap();
+    // Row 0: [1,2,3,4,6,9] -> 6 nonzeros. Row 1: [1,0,4,0,0,16] -> 3 nonzeros.
+    assert_eq!(sparse.nnz(), 9);
+}
+
+/// Streaming rejects zero-feature input instead of building a broken model.
+#[test]
+fn streaming_zero_features_errors() {
+    let mut source = VecSource::new(vec![Array2::<f64>::zeros((3, 0))]);
+    let result = default_expander().fit_streaming(&mut source);
+    assert!(matches!(result, Err(SKError::ShapeMismatch { .. })));
+}

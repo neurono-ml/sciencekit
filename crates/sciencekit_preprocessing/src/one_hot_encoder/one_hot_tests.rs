@@ -393,3 +393,51 @@ fn large_data_and_concurrency() {
         }
     });
 }
+
+/// The default execution intent is Automatic.
+#[test]
+fn default_execution_intent_is_automatic() {
+    use sciencekit_common::SKExecutionMode;
+    let encoder = SKOneHotEncoder::build().build().unwrap();
+    assert_eq!(encoder.execution_intent(), SKExecutionMode::Automatic);
+}
+
+/// A transform whose representation differs from the fitted one is rejected.
+#[test]
+fn transform_representation_mismatch_errors() {
+    use sciencekit_common::SKError;
+    let owned = text(&[&["a"], &["b"]]);
+    let view = as_nominal(&owned);
+    let rows: Vec<&[&str]> = view.iter().map(Vec::as_slice).collect();
+    let model = SKOneHotEncoder::build()
+        .build()
+        .unwrap()
+        .fit(rows.as_slice())
+        .unwrap();
+
+    let codes = Array2::from_shape_vec((1, 1), vec![0_i64]).unwrap();
+    let result: Result<Array2<f64>, _> = model.transform_dense(codes.view());
+    assert!(matches!(
+        result,
+        Err(SKError::UnsupportedRepresentation { .. })
+    ));
+}
+
+/// A ragged nominal row is rejected instead of panicking.
+#[test]
+fn ragged_nominal_transform_errors() {
+    let owned = text(&[&["a"], &["b"]]);
+    let view = as_nominal(&owned);
+    let rows: Vec<&[&str]> = view.iter().map(Vec::as_slice).collect();
+    let model = SKOneHotEncoder::build()
+        .build()
+        .unwrap()
+        .fit(rows.as_slice())
+        .unwrap();
+
+    let first: &[&str] = &["a"];
+    let second: &[&str] = &[];
+    let ragged: &[&[&str]] = &[first, second];
+    let result: Result<Array2<f64>, _> = model.transform_dense(ragged);
+    assert!(result.is_err());
+}

@@ -2,6 +2,7 @@
 //! Carries no implementation logic.
 
 mod core_implementation;
+mod resolution;
 mod sparse;
 
 pub use core_implementation::SKOneHotEncoderModel;

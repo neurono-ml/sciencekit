@@ -92,6 +92,9 @@ impl SKPolynomialFeatures {
                 if data.nrows() == 0 {
                     continue;
                 }
+                if data.ncols() == 0 {
+                    return Err(SKError::shape_mismatch_2d(data.nrows(), 1, data.nrows(), 0));
+                }
                 match columns_count {
                     None => columns_count = Some(data.ncols()),
                     Some(expected) if expected != data.ncols() => {

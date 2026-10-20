@@ -7,8 +7,9 @@ use sciencekit_common::{
 };
 
 use crate::one_hot_encoder::builder::SKOneHotEncoderBuilder;
-use crate::one_hot_encoder::categories::{SKIntegerCategoryTable, build_column_categories};
+use crate::one_hot_encoder::categories::{SKOneHotColumnCategories, build_column_categories};
 use crate::one_hot_encoder::model::SKOneHotEncoderModel;
+use crate::one_hot_encoder::streaming::accumulate_batches;
 use crate::one_hot_encoder::unknown_policy::SKUnknownPolicy;
 
 /// The configured one-hot encoder. Immutable configuration; the fitted
@@ -82,18 +83,14 @@ impl SKOneHotEncoder {
             backend: self.backend,
         };
         sk_run_operation(attributes, || {
-            let accumulator = accumulate_batches(batches)?;
-            let columns = accumulator.finalize()?;
+            let columns = accumulate_batches(batches)?;
             Ok(self.model_from_columns(columns))
         })
     }
 
     /// Wrap learned columns into a fitted model carrying this estimator's
     /// configuration.
-    fn model_from_columns(
-        &self,
-        columns: Vec<crate::one_hot_encoder::categories::SKOneHotColumnCategories>,
-    ) -> SKOneHotEncoderModel {
+    fn model_from_columns(&self, columns: Vec<SKOneHotColumnCategories>) -> SKOneHotEncoderModel {
         SKOneHotEncoderModel::from_columns(
             columns,
             self.sparse_output,
@@ -101,119 +98,5 @@ impl SKOneHotEncoder {
             self.backend,
             self.execution_intent(),
         )
-    }
-}
-
-/// Running accumulator for `fit_streaming`: one column of labels (nominal) or
-/// one code table (integer) per input column, in batch order.
-enum StreamingCategories {
-    Nominal(Vec<Vec<String>>),
-    Integer(Vec<SKIntegerCategoryTable>),
-}
-
-impl StreamingCategories {
-    fn finalize(
-        self,
-    ) -> Result<Vec<crate::one_hot_encoder::categories::SKOneHotColumnCategories>, SKError> {
-        use crate::one_hot_encoder::categories::SKOneHotColumnCategories;
-        use sciencekit_common::sk_canonicalize_labels;
-        match self {
-            StreamingCategories::Nominal(columns) => Ok(columns
-                .iter()
-                .map(|labels| {
-                    let borrowed: Vec<&str> = labels.iter().map(String::as_str).collect();
-                    let (_indices, table) = sk_canonicalize_labels(&borrowed);
-                    SKOneHotColumnCategories::Nominal(table)
-                })
-                .collect()),
-            StreamingCategories::Integer(tables) => Ok(tables
-                .into_iter()
-                .map(SKOneHotColumnCategories::Integer)
-                .collect()),
-        }
-    }
-}
-
-/// Accumulate every batch into running column state, enforcing a consistent
-/// column count and representation.
-fn accumulate_batches<'a, I, C>(batches: I) -> Result<StreamingCategories, SKError>
-where
-    I: IntoIterator<Item = C>,
-    C: TryInto<SKCategoricalView<'a>, Error = SKError>,
-{
-    let mut accumulator: Option<StreamingCategories> = None;
-    let mut number_of_columns: Option<usize> = None;
-
-    for batch in batches {
-        let view = batch.try_into()?;
-        if view.is_empty() {
-            continue;
-        }
-        let (rows_count, columns_count) = view.shape();
-        match number_of_columns {
-            None => number_of_columns = Some(columns_count),
-            Some(expected) if expected != columns_count => {
-                return Err(SKError::ShapeMismatch {
-                    expected: vec![expected],
-                    found: vec![columns_count],
-                });
-            }
-            _ => {}
-        }
-        accumulate_one(&view, rows_count, columns_count, &mut accumulator)?;
-    }
-
-    accumulator.ok_or_else(|| SKError::Conversion("streaming fit received no batches".into()))
-}
-
-/// Fold one batch into the accumulator, initializing it from the first batch.
-fn accumulate_one(
-    view: &SKCategoricalView<'_>,
-    rows_count: usize,
-    columns_count: usize,
-    accumulator: &mut Option<StreamingCategories>,
-) -> Result<(), SKError> {
-    match view {
-        SKCategoricalView::Nominal(matrix) => {
-            let target = accumulator.get_or_insert_with(|| {
-                StreamingCategories::Nominal(vec![Vec::new(); columns_count])
-            });
-            let StreamingCategories::Nominal(columns) = target else {
-                return Err(representation_changed("nominal"));
-            };
-            for (column, labels) in columns.iter_mut().enumerate() {
-                for row in 0..rows_count {
-                    labels.push(matrix.value(row, column).to_owned());
-                }
-            }
-        }
-        SKCategoricalView::Integer(codes) => {
-            let target = accumulator.get_or_insert_with(|| {
-                StreamingCategories::Integer(vec![SKIntegerCategoryTable::default(); columns_count])
-            });
-            let StreamingCategories::Integer(tables) = target else {
-                return Err(representation_changed("integer"));
-            };
-            for (column, table) in tables.iter_mut().enumerate() {
-                for row in 0..rows_count {
-                    let code = codes[[row, column]];
-                    if code != sciencekit_common::SK_CATEGORICAL_MISSING_CODE {
-                        table.observe(code);
-                    }
-                }
-            }
-        }
-        _ => {
-            return Err(representation_changed("unknown"));
-        }
-    }
-    Ok(())
-}
-
-/// A representation changed between streaming batches.
-fn representation_changed(representation: &'static str) -> SKError {
-    SKError::UnsupportedRepresentation {
-        representation,
-        suggestion: "stream batches of a single categorical representation",
     }
 }
