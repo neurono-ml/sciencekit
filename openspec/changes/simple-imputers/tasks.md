@@ -22,10 +22,10 @@ pure-dispatcher `mod.rs`. One commit per task. ADR issue: #87.
 
 ## 3. SKSimpleImputer — builder and estimator shell
 
-- [ ] 3.1 Red: companion tests for `SKSimpleImputerBuilder` (defaults: `Mean`, `NaN` marker,
+- [x] 3.1 Red: companion tests for `SKSimpleImputerBuilder` (defaults: `Mean`, `NaN` marker,
   `keep_empty_features(false)`, `add_indicator(false)`, `Faer`, `Automatic`; every setter
   chainable; private constructor; invalid configuration rejected). Verify: tests fail.
-- [ ] 3.2 Implement `SKImputationStrategy` and `SKSimpleImputerBuilder` (plus the `SKBuilder`
+- [x] 3.2 Implement `SKImputationStrategy` and `SKSimpleImputerBuilder` (plus the `SKBuilder`
   impl) and the `SKSimpleImputer` estimator shell carrying the configuration. Verify: the
   builder tests pass.
 
