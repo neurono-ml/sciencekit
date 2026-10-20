@@ -72,6 +72,16 @@ pub enum SKError {
     #[error("I/O error: {0}")]
     Io(#[from] io::Error),
 
+    /// Missingness met at transform in a feature that was complete at fit
+    /// time, while `error_on_new` is enabled.
+    #[error(
+        "feature {column} was complete at fit time but is missing at transform; set error_on_new(false) to tolerate new missingness"
+    )]
+    UnexpectedMissingness {
+        /// The feature column that never carried a missing value at fit time.
+        column: usize,
+    },
+
     /// A conversion failure at the data boundary.
     #[error("conversion failure: {0}")]
     Conversion(String),
