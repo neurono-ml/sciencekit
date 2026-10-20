@@ -76,6 +76,10 @@ it is copied into a dozen regressors and classifiers.
 - **`sciencekit_common`:** `batching/` gains `SKSupervisedBatch` / `SKSupervisedLazySource`
   and `execution/streaming_driver.rs` gains `sk_run_supervised_streaming_driver`, sharing
   the existing prefetch engine with the unchanged `sk_run_streaming_driver`.
+- **`sciencekit_math`:** `backend/faer_backend.rs` switches the least-squares kernel to the
+  thin SVD (a discovered performance bug fix — see `design.md`).
+- **Workspace:** a `[profile.dev.package."*"] opt-level = 2` block keeps dependency code
+  optimized in dev/test builds.
 - **Dependencies:** none new beyond the existing `ndarray`/`rayon`; the streaming path
   reuses the Phase 0 streaming executor and the backend's `lstsq`.
 - **Public API:** new exports `SKLinearRegression`, `SKLinearRegressionBuilder`,

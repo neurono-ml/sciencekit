@@ -130,3 +130,17 @@ and metric generation are tracked for those changes, exactly as `standard-scaler
 
 Additive: a new crate, two new kernels, and one `[workspace] members` entry. No existing
 item changes; no span schema change.
+
+## Discovered during implementation
+
+- **The backend's least-squares kernel used the full SVD.** `SKFaerBackend::lstsq` called
+  faer's `svd()`, which computes a **full** decomposition whose `U` is `m × m`. For the tall
+  design matrices least squares actually sees, that allocates and computes an `m × m` matrix
+  — a 20 000 × 7 design produced a 20 000 × 20 000 `U` and took ~12 s in a debug build. The
+  fix is to use the **thin** SVD (`thin_svd`), which yields `U` as `m × min(m, n)`; the
+  pseudoinverse path only ever needs the first `min(m, n)` singular vectors. This is a
+  performance bug fix in `sciencekit_math`, pinned by a tall-design `lstsq` regression test;
+  the public contract of `lstsq` (the minimum-norm solution) is unchanged, so no spec delta is
+  required. A companion workspace setting (`[profile.dev.package."*"] opt-level = 2`) keeps
+  dependency code optimized in dev/test builds, so the pure-Rust linear algebra does not make
+  the large-data tests impractical while our own crates stay unoptimized for fast iteration.

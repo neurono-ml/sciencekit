@@ -12,13 +12,20 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 - [x] 1.2 Implement both with the sequential form and the race-free per-chunk parallel
   form, sharing the reduction grain; export them from the crate root.
 - [x] 1.3 Green: parallel cross products match the sequential reference within tolerance.
+- [x] 1.4 Fix the least-squares kernel to use the **thin** SVD (discovered: `SKFaerBackend::lstsq`
+  used the full SVD, whose `U` is `m × m` — a 20 000-row design took ~12 s in debug); pin it
+  with a tall-design `lstsq` regression test in `backend_tests.rs`.
+  *(commit `fix(math): use the thin SVD in the least-squares kernel`)*
+- [x] 1.5 Workspace `[profile.dev.package."*"] opt-level = 2` so dependency linear algebra
+  stays fast in dev/test builds while our crates stay unoptimized.
 
 ## 2. Estimator, model and dense path
 
 - [x] 2.1 Red: companion tests for `SKLinearRegression` (exact line fit, intercept on/off,
   rank and singular values surfaced, rank-deficient minimum-norm solution, prediction,
   f32/f64, empty-input / sparse-input / target-length / prediction-shape errors, backend
-  default). *(commit `feat(linear_model): add linear regression estimator, model and tests`)*
+  default). *(commit `feat(linear_model): add SKLinearRegression with dense, streaming and
+  incremental fits`)*
 - [x] 2.2 `SKLinearRegressionBuilder` (`include_intercept`, `backend`, `execution_mode`;
   private constructor) and the `SKBuilder` impl.
 - [x] 2.3 `SKLinearRegression` estimator and the `SKSupervisedFit<F>` impl building a
@@ -37,7 +44,8 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
   `streaming-batches`. *(commit `feat(common): add supervised streaming batches and prefetch driver`)*
 - [x] 3.1 Red: streaming companion tests (uneven batches ≡ dense, single batch, empty
   source error, column mismatch error, builder flags, f32, large scale).
-  *(commit `feat(linear_model): add out-of-core streaming fit for linear regression`)*
+  *(folded into `feat(linear_model): add SKLinearRegression with dense, streaming and
+  incremental fits`)*
 - [x] 3.2 `SKGramState` (Gram matrix, right-hand side, row count) and the per-batch
   accumulation through `sk_gram_matrix`/`sk_gram_vector`.
 - [x] 3.3 The per-batch update closure driven by the Phase 0 streaming executor.
@@ -49,7 +57,8 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 
 - [x] 4.1 Red: incremental companion tests (after-fit ≡ dense, single-row accumulation,
   empty batch no-op, column mismatch, chaining, builder flags, large scale).
-  *(commit `feat(linear_model): add incremental partial_fit to linear regression model`)*
+  *(folded into `feat(linear_model): add SKLinearRegression with dense, streaming and
+  incremental fits`)*
 - [x] 4.2 Implement `partial_fit` on the model via the shared `SKGramState`, solving at
   read time.
 - [x] 4.3 Green: incremental ≡ dense within tolerance; the accumulated row count grows.
@@ -58,15 +67,16 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 
 - [x] 5.1 Extract `test_datasets` (small hand-checkable design with a known line, large
   synthetic design, `chunk_rows`, `VecSource`/`chunked_source`, `assert_close`).
-  *(commit `test(linear_model): share deterministic small and large datasets across tests`)*
+  *(folded into `feat(linear_model): add SKLinearRegression with dense, streaming and
+  incremental fits`)*
 - [x] 5.2 Refactor the dense, streaming and incremental tests to consume the shared
   datasets/helpers.
 
 ## 6. Acceptance and gates
 
-- [ ] 6.1 `cargo fmt --all --check`, `cargo clippy --workspace --all-targets`,
+- [x] 6.1 `cargo fmt --all --check`, `cargo clippy --workspace --all-targets`,
   `cargo test --workspace` all green.
-- [ ] 6.2 Small and large data validated; concurrency validated (the immutable estimator and
+- [x] 6.2 Small and large data validated; concurrency validated (the immutable estimator and
   the fitted model are shared across threads with identical results).
 - [ ] 6.3 Model export (Safetensors/JSON) and metric generation deferred: no
   `sciencekit_interop` (Phase 7) or metrics-suite (W6.3) crate exists yet. The fitted model is
