@@ -84,10 +84,10 @@ pure-dispatcher `mod.rs`. One commit per task. ADR issue: #87.
 
 ## 9. add_indicator stacking
 
-- [ ] 9.1 Red: companion tests for the stacking rule (output width = retained features +
+- [x] 9.1 Red: companion tests for the stacking rule (output width = retained features +
   counted missing features, indicator columns ordered after the features, model exposing the
   fitted indicator, disabled by default). Verify: tests fail.
-- [ ] 9.2 Implement the horizontal stack inside the imputer's transform and expose the
+- [x] 9.2 Implement the horizontal stack inside the imputer's transform and expose the
   fitted `SKMissingIndicator` from `SKSimpleImputerModel`. Verify: the stacking tests pass.
 
 ## 10. Acceptance — small and large data, concurrency, export
