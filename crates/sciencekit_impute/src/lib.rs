@@ -5,3 +5,7 @@
 //! [`missing_indicator::SKMissingIndicator`], which reports where those cells are.
 //! Both are builder-only, generic over the scalar `SKFloat`, sparse-aware through
 //! [`sprs`] and record the configured backend kind in every operation span.
+
+pub mod missing_indicator;
+pub mod missingness;
+pub mod simple_imputer;
