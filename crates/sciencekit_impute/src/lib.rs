@@ -9,3 +9,6 @@
 pub mod missing_indicator;
 pub mod missingness;
 pub mod simple_imputer;
+
+#[cfg(test)]
+mod acceptance_tests;
