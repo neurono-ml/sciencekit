@@ -2,6 +2,7 @@
 //! (spec `simple-imputer`).
 
 mod core_implementation;
+mod partial_fit;
 mod transform;
 
 pub use core_implementation::SKSimpleImputerModel;

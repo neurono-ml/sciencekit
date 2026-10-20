@@ -26,4 +26,7 @@ mod fit_tests;
 mod output_tests;
 
 #[cfg(test)]
+mod partial_fit_tests;
+
+#[cfg(test)]
 mod transform_tests;
