@@ -28,7 +28,9 @@ pub mod target_view;
 
 pub use batching::{SKDataBatch, SKLazySource, SKMappableSource};
 pub use builders::{SKBuilder, SKBuilderState, sk_validate_hyperparameter};
-pub use data_view::SKDataView;
+pub use data_view::{
+    SK_CATEGORICAL_MISSING_CODE, SKCategoricalView, SKDataView, SKNominalMatrixView,
+};
 pub use errors::SKError;
 pub use execution::{SKExecutionContext, SKExecutionMode, SKExecutionPlan};
 pub use fit_traits::{
