@@ -8,7 +8,5 @@ sciencekit_common = { path = "../sciencekit_common" }
 sciencekit_math = { path = "../sciencekit_math" }
 
 ndarray = { workspace = true }
+sprs = { workspace = true }
 tdigest = { workspace = true }
-
-[dev-dependencies]
-sprs = "0.11"

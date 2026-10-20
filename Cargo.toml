@@ -31,6 +31,10 @@ mimalloc = "0.1"
 
 ndarray = { version = "0.17", features = ["rayon"] }
 
+# Sparse CSR representation (PRD §3); the sparse output path of the
+# preprocessing encoders builds on it.
+sprs = "0.11"
+
 # Online quantile sketch for the robust scaler (spec `robust-scaler`); confined
 # to `sciencekit_preprocessing`.
 tdigest = "1.0"
