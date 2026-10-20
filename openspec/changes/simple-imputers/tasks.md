@@ -63,11 +63,11 @@ pure-dispatcher `mod.rs`. One commit per task. ADR issue: #87.
 
 ## 7. Out-of-core fit_streaming
 
-- [ ] 7.1 Red: companion tests for `fit_streaming` (in-memory intent ≡ dense fit exactly,
+- [x] 7.1 Red: companion tests for `fit_streaming` (in-memory intent ≡ dense fit exactly,
   driver path within sketch tolerance for the median and exact for mean/mode, uneven batch
   sizes, empty source error, spans recording the configured backend kind). Verify: tests
   fail.
-- [ ] 7.2 Implement `fit_streaming` over `SKLazySource` mirroring the scaler split (collected
+- [x] 7.2 Implement `fit_streaming` over `SKLazySource` mirroring the scaler split (collected
   dense branch vs `sk_run_streaming_driver` with per-batch updates). Verify: the streaming
   tests pass.
 
