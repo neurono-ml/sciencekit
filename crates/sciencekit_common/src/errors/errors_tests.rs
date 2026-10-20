@@ -89,3 +89,12 @@ fn error_display_is_informative() {
     let err = SKError::not_converged(99);
     assert!(format!("{err}").contains("99"));
 }
+
+/// New missingness names the never-missing feature and the way out.
+#[test]
+fn unexpected_missingness_names_the_feature() {
+    let err = SKError::UnexpectedMissingness { column: 3 };
+    let message = format!("{err}");
+    assert!(message.contains("3"), "the feature column must be named");
+    assert!(message.contains("error_on_new"), "the remedy must be named");
+}
