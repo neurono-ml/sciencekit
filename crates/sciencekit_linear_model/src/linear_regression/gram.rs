@@ -19,7 +19,7 @@ pub(crate) struct SKGramState<F> {
     /// The accumulated `XᵀX`, `design_width × design_width`.
     pub(super) gram: Array2<F>,
     /// The accumulated `Xᵀy`, length `design_width`.
-    pub(super) rhs: Array1<F>,
+    pub(super) right_hand_side: Array1<F>,
     /// The number of rows accumulated across every batch.
     pub(super) row_count: u64,
 }
@@ -30,7 +30,7 @@ impl<F: SKFloat> SKGramState<F> {
         Self {
             design_width,
             gram: Array2::zeros((design_width, design_width)),
-            rhs: Array1::zeros(design_width),
+            right_hand_side: Array1::zeros(design_width),
             row_count: 0,
         }
     }
@@ -43,7 +43,7 @@ impl<F: SKFloat> SKGramState<F> {
         parallelism: usize,
     ) {
         self.gram = &self.gram + &sk_gram_matrix(design, parallelism);
-        self.rhs = &self.rhs + &sk_gram_vector(design, target, parallelism);
+        self.right_hand_side = &self.right_hand_side + &sk_gram_vector(design, target, parallelism);
         self.row_count += design.nrows() as u64;
     }
 }

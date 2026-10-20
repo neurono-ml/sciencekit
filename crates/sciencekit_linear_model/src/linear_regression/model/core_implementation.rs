@@ -6,9 +6,8 @@ use sciencekit_common::{
     SKBackendKind, SKDataView, SKError, SKExecutionMode, SKFloat, SKOperationAttributes,
     SKOperationKind, SKRegressorPredictor, sk_run_operation,
 };
-use sciencekit_math::{
-    SKFaerBackend, SKLeastSquaresSolution, SKMathBackend, SKMatrixMultiplyBackend,
-};
+use sciencekit_math::SKBackendSelection;
+use sciencekit_math::SKLeastSquaresSolution;
 
 use crate::linear_regression::gram::SKGramState;
 use crate::linear_regression::solving::solve_least_squares;
@@ -65,10 +64,9 @@ impl<F: SKFloat> SKLinearRegressionModel<F> {
         execution_intent: SKExecutionMode,
     ) -> Result<Self, SKError>
     where
-        SKFaerBackend: SKMathBackend<F>,
-        SKMatrixMultiplyBackend: SKMathBackend<F>,
+        F: SKBackendSelection,
     {
-        let solution = solve_least_squares(backend, gram.gram.view(), gram.rhs.view())?;
+        let solution = solve_least_squares(backend, gram.gram.view(), gram.right_hand_side.view())?;
         Ok(Self::from_solution(
             solution,
             gram,
@@ -88,12 +86,22 @@ impl<F: SKFloat> SKLinearRegressionModel<F> {
         self.intercept
     }
 
-    /// The effective rank of the design matrix after truncation.
+    /// The effective rank of the matrix the last solve factored, after
+    /// truncation.
+    ///
+    /// A densely fitted model reports the rank of the design matrix `[1 ‖ X]`;
+    /// a model reached through `fit_streaming` or `partial_fit` reports the rank
+    /// of the accumulated Gram matrix `XᵀX` (whose singular values are the
+    /// squares of the design's), because those regimes solve `XᵀX β = Xᵀy`.
     pub fn rank(&self) -> usize {
         self.rank
     }
 
-    /// The singular values of the last solve, non-increasing.
+    /// The singular values of the matrix the last solve factored, non-increasing.
+    ///
+    /// Dense `fit` surfaces the design matrix's singular values; the streaming
+    /// and incremental regimes surface the Gram matrix's (≈ the squares of the
+    /// design's), for the same reason as [`SKLinearRegressionModel::rank`].
     pub fn singular_values(&self) -> &[F] {
         &self.singular_values
     }

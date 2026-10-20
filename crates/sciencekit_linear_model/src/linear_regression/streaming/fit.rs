@@ -7,8 +7,8 @@ use sciencekit_common::{
     SKOperationKind, SKSupervisedLazySource, execution::SKAccessPattern,
     execution::sk_run_supervised_streaming_driver, sk_run_operation,
 };
+use sciencekit_math::SKBackendSelection;
 use sciencekit_math::kernels::SK_AXIS_SUM_GRAIN;
-use sciencekit_math::{SKFaerBackend, SKMathBackend, SKMatrixMultiplyBackend};
 
 use super::super::core_implementation::SKLinearRegression;
 use super::super::model::SKLinearRegressionModel;
@@ -28,8 +28,7 @@ impl SKLinearRegression {
         F: SKFloat,
         S: SKSupervisedLazySource<F> + Send,
         S::Error: From<SKError> + Into<SKError>,
-        SKFaerBackend: SKMathBackend<F>,
-        SKMatrixMultiplyBackend: SKMathBackend<F>,
+        F: SKBackendSelection,
     {
         // Single-pass source: totals are unknown upfront, so the outer span
         // carries zero dimensions while each batch reports its real ones.
@@ -70,8 +69,7 @@ impl SKLinearRegression {
         F: SKFloat,
         S: SKSupervisedLazySource<F> + Send,
         S::Error: From<SKError> + Into<SKError>,
-        SKFaerBackend: SKMathBackend<F>,
-        SKMatrixMultiplyBackend: SKMathBackend<F>,
+        F: SKBackendSelection,
     {
         use sciencekit_common::SKSupervisedFit;
         let mut feature_batches: Vec<Array2<F>> = Vec::new();
@@ -118,8 +116,7 @@ impl SKLinearRegression {
         F: SKFloat,
         S: SKSupervisedLazySource<F> + Send,
         S::Error: From<SKError> + Into<SKError>,
-        SKFaerBackend: SKMathBackend<F>,
-        SKMatrixMultiplyBackend: SKMathBackend<F>,
+        F: SKBackendSelection,
     {
         let machine = SKExecutionContext::real();
         let mut state = StreamingGramState::new(machine.available_memory_bytes, machine.cpu_cores);

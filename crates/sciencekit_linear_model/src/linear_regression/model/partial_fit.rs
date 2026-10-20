@@ -5,7 +5,7 @@ use sciencekit_common::{
     SKDataView, SKError, SKExecutionContext, SKFloat, SKOperationAttributes, SKOperationKind,
     SKTargetView, sk_run_operation,
 };
-use sciencekit_math::{SKFaerBackend, SKMathBackend, SKMatrixMultiplyBackend};
+use sciencekit_math::SKBackendSelection;
 
 use super::SKLinearRegressionModel;
 use super::split_solution;
@@ -21,8 +21,7 @@ impl<F: SKFloat> SKLinearRegressionModel<F> {
     where
         X: TryInto<SKDataView<'a, F>, Error = SKError>,
         T: TryInto<SKTargetView<'a, F>, Error = SKError>,
-        SKFaerBackend: SKMathBackend<F>,
-        SKMatrixMultiplyBackend: SKMathBackend<F>,
+        F: SKBackendSelection,
     {
         let dense = features.try_into()?.as_dense()?;
         let target = targets.try_into()?.as_continuous()?.into_owned();
@@ -58,8 +57,11 @@ impl<F: SKFloat> SKLinearRegressionModel<F> {
             let design = build_design(&dense, include_intercept);
             self.gram
                 .accumulate(&design.view(), &target.view(), parallelism);
-            let solution =
-                solve_least_squares(backend, self.gram.gram.view(), self.gram.rhs.view())?;
+            let solution = solve_least_squares(
+                backend,
+                self.gram.gram.view(),
+                self.gram.right_hand_side.view(),
+            )?;
             let (intercept, coefficients) = split_solution(&solution.solution, include_intercept);
             self.intercept = intercept;
             self.coefficients = coefficients;

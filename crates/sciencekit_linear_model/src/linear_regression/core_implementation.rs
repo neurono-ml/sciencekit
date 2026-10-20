@@ -7,8 +7,8 @@ use sciencekit_common::{
     SKExecutionPlan, SKFloat, SKOperationAttributes, SKOperationKind, SKSupervisedFit,
     SKTargetView, execution::SKAccessPattern, sk_run_operation,
 };
+use sciencekit_math::SKBackendSelection;
 use sciencekit_math::kernels::SK_AXIS_SUM_GRAIN;
-use sciencekit_math::{SKFaerBackend, SKMathBackend, SKMatrixMultiplyBackend};
 
 use crate::linear_regression::builder::SKLinearRegressionBuilder;
 use crate::linear_regression::gram::SKGramState;
@@ -55,11 +55,7 @@ impl SKLinearRegression {
     }
 }
 
-impl<F: SKFloat> SKSupervisedFit<F> for SKLinearRegression
-where
-    SKFaerBackend: SKMathBackend<F>,
-    SKMatrixMultiplyBackend: SKMathBackend<F>,
-{
+impl<F: SKBackendSelection> SKSupervisedFit<F> for SKLinearRegression {
     type Model = SKLinearRegressionModel<F>;
     type Error = SKError;
 

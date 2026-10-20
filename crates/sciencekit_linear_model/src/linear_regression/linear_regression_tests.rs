@@ -3,7 +3,9 @@
 
 use ndarray::{Array1, Array2, array};
 use sciencekit_common::builders::SKBuilder;
-use sciencekit_common::{SKBackendKind, SKError, SKRegressorPredictor, SKSupervisedFit};
+use sciencekit_common::{
+    SKBackendKind, SKError, SKExecutionMode, SKRegressorPredictor, SKSupervisedFit,
+};
 
 use super::core_implementation::SKLinearRegression;
 use super::test_datasets::{
@@ -73,6 +75,20 @@ fn rank_deficiency_yields_a_minimum_norm_solution() {
     );
     let predictions = model.predict(features.view()).unwrap();
     assert_close_with_tolerance(&predictions, &[1.0, 2.0, 3.0, 4.0], 1e-9);
+    // Minimum-norm property: with the second column exactly twice the first,
+    // the duplicated contribution splits so that β1 + 2·β2 = 1 with the
+    // smallest norm — β1 = 1/5, β2 = 2/5 — and a zero intercept.
+    assert_close_scalar(model.intercept(), 0.0, 1e-9);
+    assert_close_with_tolerance(model.coefficients(), &[0.2, 0.4], 1e-9);
+}
+
+/// The estimator defaults to the automatic execution intent and includes the
+/// intercept.
+#[test]
+fn default_execution_intent_is_automatic() {
+    let estimator = SKLinearRegression::build().build().unwrap();
+    assert_eq!(estimator.execution_intent(), SKExecutionMode::Automatic);
+    assert!(estimator.include_intercept());
 }
 
 /// Prediction evaluates the learned line on new rows.
