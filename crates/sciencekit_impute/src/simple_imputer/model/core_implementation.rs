@@ -12,6 +12,7 @@ pub struct SKSimpleImputerModel<F> {
     pub(super) statistics: Array1<F>,
     pub(super) dropped_columns: Vec<usize>,
     pub(super) number_of_input_columns: usize,
+    pub(super) missing_values: F,
     pub(super) strategy: SKImputationStrategy,
     pub(super) fill_value: Option<F>,
     pub(super) keep_empty_features: bool,
@@ -32,6 +33,7 @@ impl<F: SKFloat> SKSimpleImputerModel<F> {
             statistics,
             dropped_columns,
             number_of_input_columns,
+            missing_values: estimator.missing_values,
             strategy: estimator.strategy,
             fill_value: estimator.fill_value,
             keep_empty_features: estimator.keep_empty_features,
@@ -61,6 +63,11 @@ impl<F: SKFloat> SKSimpleImputerModel<F> {
         self.number_of_input_columns - self.dropped_columns.len()
     }
 
+    /// The missing-value marker the model recognizes.
+    pub fn missing_values(&self) -> F {
+        self.missing_values
+    }
+
     /// The strategy the statistics were computed with.
     pub fn strategy(&self) -> SKImputationStrategy {
         self.strategy
@@ -74,21 +81,5 @@ impl<F: SKFloat> SKSimpleImputerModel<F> {
     /// The execution intent carried from the estimator at fit time.
     pub fn execution_intent(&self) -> SKExecutionMode {
         self.execution_intent
-    }
-}
-
-impl<F: SKFloat> sciencekit_common::SKFeatureTransformer<F> for SKSimpleImputerModel<F> {
-    type Output = crate::simple_imputer::output::SKImputedOutput<F>;
-    type Error = sciencekit_common::SKError;
-
-    fn transform<'a, X>(&self, features: X) -> Result<Self::Output, Self::Error>
-    where
-        X: TryInto<sciencekit_common::SKDataView<'a, F>, Error = sciencekit_common::SKError>,
-    {
-        let view = features.try_into()?;
-        let dense = view.as_dense()?;
-        Ok(crate::simple_imputer::output::SKImputedOutput::Dense(
-            dense.to_owned(),
-        ))
     }
 }

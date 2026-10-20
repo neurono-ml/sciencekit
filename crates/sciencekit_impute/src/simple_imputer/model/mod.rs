@@ -2,5 +2,6 @@
 //! (spec `simple-imputer`).
 
 mod core_implementation;
+mod transform;
 
 pub use core_implementation::SKSimpleImputerModel;
