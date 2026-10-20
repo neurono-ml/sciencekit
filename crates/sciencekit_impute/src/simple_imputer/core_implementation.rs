@@ -1,10 +1,12 @@
 //! The `SKSimpleImputer` estimator shell (spec `simple-imputer`).
 
 use sciencekit_common::{
-    SKBackendKind, SKBuilderState, SKError, SKExecutionMode, SKExecutionPlan, SKFloat,
+    SKBackendKind, SKBuilderState, SKDataView, SKError, SKExecutionMode, SKExecutionPlan, SKFloat,
+    SKUnsupervisedFit,
 };
 
 use crate::simple_imputer::builder::SKSimpleImputerBuilder;
+use crate::simple_imputer::model::SKSimpleImputerModel;
 use crate::simple_imputer::strategy::SKImputationStrategy;
 
 /// Fill the missing cells of a numeric feature matrix with a per-column
@@ -69,5 +71,29 @@ impl<F: SKFloat> SKSimpleImputer<F> {
     /// missing feature.
     pub fn add_indicator(&self) -> bool {
         self.add_indicator
+    }
+}
+
+impl<F: SKFloat> SKUnsupervisedFit<F> for SKSimpleImputer<F> {
+    type Model = SKSimpleImputerModel<F>;
+    type Error = SKError;
+
+    fn fit<'a, X>(&self, features: X) -> Result<Self::Model, Self::Error>
+    where
+        X: TryInto<SKDataView<'a, F>, Error = SKError>,
+    {
+        let view = features.try_into()?;
+        let dense = view.as_dense()?;
+        let number_of_columns = dense.ncols();
+        Ok(SKSimpleImputerModel::from_state(
+            ndarray::Array1::zeros(number_of_columns),
+            Vec::new(),
+            number_of_columns,
+            self.strategy,
+            self.fill_value,
+            self.keep_empty_features,
+            self.backend,
+            self.execution_intent(),
+        ))
     }
 }

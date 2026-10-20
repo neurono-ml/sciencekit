@@ -5,16 +5,21 @@
 
 mod builder;
 mod core_implementation;
+mod model;
 mod output;
 mod strategy;
 
 pub use builder::SKSimpleImputerBuilder;
 pub use core_implementation::SKSimpleImputer;
+pub use model::SKSimpleImputerModel;
 pub use output::SKImputedOutput;
 pub use strategy::SKImputationStrategy;
 
 #[cfg(test)]
 mod builder_tests;
+
+#[cfg(test)]
+mod fit_tests;
 
 #[cfg(test)]
 mod output_tests;
