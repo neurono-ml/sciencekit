@@ -13,11 +13,11 @@ pure-dispatcher `mod.rs`. One commit per task. ADR issue: #87.
 
 ## 2. Marker semantics and the owned output type
 
-- [ ] 2.1 Red: companion tests for the marker rules (dense `NaN` marker vs explicit marker,
+- [x] 2.1 Red: companion tests for the marker rules (dense `NaN` marker vs explicit marker,
   CSR explicit entries, the `0.0` marker marking implicit zeros, any other marker leaving
   implicit zeros observed) and for `SKImputedOutput<F>` (`Dense`/`Sparse` variants,
   shape accessors, `#[non_exhaustive]`). Verify: tests fail.
-- [ ] 2.2 Implement the marker-mask helpers over `SKDataView` and the `SKImputedOutput<F>`
+- [x] 2.2 Implement the marker-mask helpers over `SKDataView` and the `SKImputedOutput<F>`
   enum exported from the crate root. Verify: the marker tests pass for `f32` and `f64`.
 
 ## 3. SKSimpleImputer — builder and estimator shell
