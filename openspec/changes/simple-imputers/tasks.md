@@ -73,12 +73,12 @@ pure-dispatcher `mod.rs`. One commit per task. ADR issue: #87.
 
 ## 8. SKMissingIndicator — estimator, model and mask
 
-- [ ] 8.1 Red: companion tests for `SKMissingIndicator` (defaults `MissingOnly`,
+- [x] 8.1 Red: companion tests for `SKMissingIndicator` (defaults `MissingOnly`,
   `error_on_new(true)`, dense output; scope learned at fit; deterministic scope across fits;
   mask `1.0`/`0.0` at the missing cells; sparse input → sparse mask with the missing cells as
   stored entries; `All` scope; `error_on_new` rejecting and then tolerating new missingness;
   column-count mismatch; carried backend). Verify: tests fail.
-- [ ] 8.2 Implement `SKMissingFeatureScope`, `SKMissingIndicatorBuilder`, the estimator and
+- [x] 8.2 Implement `SKMissingFeatureScope`, `SKMissingIndicatorBuilder`, the estimator and
   `SKMissingIndicatorModel<F>` (fit scope + typed mask transform + `error_on_new`). Verify:
   the indicator tests pass.
 
