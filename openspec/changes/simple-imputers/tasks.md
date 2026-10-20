@@ -42,7 +42,7 @@ pure-dispatcher `mod.rs`. One commit per task. ADR issue: #87.
 
 ## 5. Transform — dense and sparse, empty-column policy
 
-- [ ] 5.1 Red: companion tests for `transform` (only missing cells change and observed cells
+- [x] 5.1 Red: companion tests for `transform` (only missing cells change and observed cells
   stay bit-identical, column-count mismatch rejected before reading elements, dense→dense and
   CSR→CSR, sparse fill storing only the filled cells, empty column dropped by default,
   retained as `0.0` under `keep_empty_features(true)`, filled under `Constant`). Verify:
