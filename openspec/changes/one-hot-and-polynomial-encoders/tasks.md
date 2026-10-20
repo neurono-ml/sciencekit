@@ -86,7 +86,7 @@ pure-dispatcher `mod.rs`. One commit per task.
   threads); dense and sparse outputs provably equal; models carry their backend kind and expose
   the label tables as the export boundary (export/metrics deferred to the interop/metrics changes
   as in `standard-scaler`).
-- [ ] 7.3 Independent review by a separate agent validating the spec was met; fix findings.
+- [x] 7.3 Independent review by a separate agent validating the spec was met; fix findings.
 
 ## Workflow follow-up
 
