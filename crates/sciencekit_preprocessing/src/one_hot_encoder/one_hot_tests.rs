@@ -354,3 +354,42 @@ fn streaming_empty_sequence_error() {
         .fit_streaming(batches);
     assert!(result.is_err());
 }
+
+/// Acceptance: large data encodes, and one model serves concurrent readers.
+#[test]
+fn large_data_and_concurrency() {
+    // 50 000 rows, four columns, ten categories each, built by a closed form.
+    let rows_count = 50_000;
+    let labels: Vec<String> = (0..10).map(|index| format!("c{index}")).collect();
+    let owned: Vec<Vec<String>> = (0..rows_count)
+        .map(|row| {
+            (0..4)
+                .map(|column| labels[(row * 7 + column * 3) % 10].clone())
+                .collect()
+        })
+        .collect();
+    let view = as_nominal(&owned);
+    let rows: Vec<&[&str]> = view.iter().map(Vec::as_slice).collect();
+
+    let model = SKOneHotEncoder::build()
+        .build()
+        .unwrap()
+        .fit(rows.as_slice())
+        .unwrap();
+    assert_eq!(model.number_of_output_features(), 40);
+
+    let expected: Array2<f64> = model.transform_dense(rows.as_slice()).unwrap();
+    std::thread::scope(|scope| {
+        let handles: Vec<_> = (0..4)
+            .map(|_| {
+                let model = &model;
+                let rows = rows.as_slice();
+                scope.spawn(move || model.transform_dense::<f64, _>(rows).unwrap())
+            })
+            .collect();
+        for handle in handles {
+            let output = handle.join().unwrap();
+            assert_eq!(output, expected);
+        }
+    });
+}

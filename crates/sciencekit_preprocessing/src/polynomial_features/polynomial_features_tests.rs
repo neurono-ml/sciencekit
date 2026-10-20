@@ -240,3 +240,19 @@ fn streaming_empty_source_errors() {
     let result = default_expander().fit_streaming(&mut source);
     assert!(result.is_err());
 }
+
+/// Acceptance: large data expands, and dense and sparse paths agree.
+#[test]
+fn large_data_dense_and_sparse_agree() {
+    let features = Array2::from_shape_fn((20_000, 5), |(row, column)| {
+        ((row * 7 + column * 13) % 17) as f64 * 0.5 - 2.0
+    });
+    let model = default_expander().fit(features.view()).unwrap();
+    // Two features short of the count: degree-2 expansion of 5 features is
+    // C(5 + 2, 2) = 21 terms (with bias).
+    assert_eq!(model.number_of_output_features(), 21);
+
+    let dense: Array2<f64> = model.transform_dense(features.view()).unwrap();
+    let sparse = model.transform_sparse::<f64, _>(features.view()).unwrap();
+    assert_eq!(sparse.to_dense(), dense);
+}
