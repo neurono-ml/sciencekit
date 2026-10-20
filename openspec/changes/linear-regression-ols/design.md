@@ -144,3 +144,11 @@ item changes; no span schema change.
   required. A companion workspace setting (`[profile.dev.package."*"] opt-level = 2`) keeps
   dependency code optimized in dev/test builds, so the pure-Rust linear algebra does not make
   the large-data tests impractical while our own crates stay unoptimized for fast iteration.
+- **Dispatching a kind to a backend leaked the feature gate.** The first version of the
+  algorithm's `solve_least_squares` called `sk_default_math_backend::<F>()`, whose bound
+  (`SKNdArrayLinalgBackend: SKMathBackend<F>`) only exists under the `blas-backend` feature —
+  a configuration the algorithm crate cannot name, so the crate failed to compile with
+  `--features sciencekit_math/blas-backend`. The fix adds `SKBackendSelection` /
+  `sk_math_backend_for_kind` in `sciencekit_math`, implemented for the sealed scalars, so the
+  feature-gated arm is resolved inside the crate that owns the feature and the algorithm side
+  carries only a nameable `F: SKBackendSelection` bound.

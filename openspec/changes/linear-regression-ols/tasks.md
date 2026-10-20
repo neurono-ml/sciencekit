@@ -85,5 +85,15 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 
 ## 7. Independent-review fixes
 
-- [ ] 7.1 Address every finding of the independent review (spec conformance, numerics,
+- [x] 7.1 Address every finding of the independent review (spec conformance, numerics,
   naming and test coverage) and re-run the gates.
+  - **M1 (blocking):** the crate did not compile with `sciencekit_math/blas-backend` enabled;
+    added `SKBackendSelection` / `sk_math_backend_for_kind` in `sciencekit_math` so the
+    feature-gated dispatch stays inside the crate that owns the feature.
+  - **m2/m3:** documented the regime semantics of `rank`/`singular_values` and the
+    build-config `NdArrayLinalg` fallback.
+  - **m4:** split `streaming_driver.rs` into the `streaming_driver/` folder module.
+  - **m5:** added the missing tests (failing supervised source, block-survives-its-source,
+    the minimum-norm property, the automatic default intent).
+  - **m6/m7:** CHANGELOG entry and the `maintaining.md` pointer to the new chapter.
+  - **n1/n5:** renamed `rhs` to `right_hand_side` and removed stray scratch files.
