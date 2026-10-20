@@ -30,10 +30,10 @@ stay private.
 
 ### Requirement: Categorical input accepts text and integer codes
 
-`fit` and the transforms SHALL accept a categorical feature view carrying either a nominal
-(text) matrix or integer-coded columns, and SHALL be generic over the output scalar
-`F: SKFloat`. Integer columns SHALL treat a documented sentinel code as a missing entry that
-is not registered as a category.
+`fit` SHALL accept a categorical feature view carrying either a nominal (text) matrix or
+integer-coded columns; its learned tables are independent of the output scalar. The transforms
+SHALL be generic over the output scalar `F: SKFloat`. Integer columns SHALL treat a documented
+sentinel code as a missing entry that is not registered as a category.
 
 #### Scenario: Text columns
 

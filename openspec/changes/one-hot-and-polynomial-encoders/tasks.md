@@ -46,29 +46,29 @@ pure-dispatcher `mod.rs`. One commit per task.
 
 ## 4. PolynomialFeatures — estimator, model and lazy expansion
 
-- [ ] 4.1 Red: companion tests for `SKPolynomialFeatures` (`[2,3]` with defaults → `[1,2,3,4,6,9]`,
+- [x] 4.1 Red: companion tests for `SKPolynomialFeatures` (`[2,3]` with defaults → `[1,2,3,4,6,9]`,
   output width for two features degree two = 6, `interaction_only` drops pure powers,
   `include_bias(false)` drops the constant, documented column order, `degree(0)` →
   `InvalidHyperparameter`, empty/sparse-input errors, transform column mismatch, backend
   default/override, f32/f64, determinism). Verify: tests fail.
-- [ ] 4.2 `SKPolynomialFeaturesBuilder` (`degree`, `interaction_only`, `include_bias`,
+- [x] 4.2 `SKPolynomialFeaturesBuilder` (`degree`, `interaction_only`, `include_bias`,
   `sparse_output`, `backend`, `execution_mode`; private constructor, `degree` validation) and the
   `SKBuilder` impl. Verify: default configuration and invalid-degree tests pass.
-- [ ] 4.3 Exponent term generator (bias-first, increasing total degree, lexicographic within a
+- [x] 4.3 Exponent term generator (bias-first, increasing total degree, lexicographic within a
   degree, `interaction_only` restricting to `{0,1}`) with a test pinning the term list for the
   hand-checkable case. Verify: generator tests pass.
-- [ ] 4.4 `SKPolynomialFeatures` estimator and `SKPolynomialFeaturesModel` (learned input/output
+- [x] 4.4 `SKPolynomialFeatures` estimator and `SKPolynomialFeaturesModel` (learned input/output
   counts, term list, backend); dense `transform_dense` streaming term values row by row with
   `azip!`/`map`. Verify: dense expansion tests pass.
-- [ ] 4.5 Sparse `transform_sparse` (only nonzeros stored, parallel build) and `transform()`
+- [x] 4.5 Sparse `transform_sparse` (only nonzeros stored, parallel build) and `transform()`
   returning `SKExpandedOutput<F>` honoring `sparse_output`. Verify: sparse ≡ dense equivalence
   tests pass exactly.
 
 ## 5. PolynomialFeatures — out-of-core fit_streaming
 
-- [ ] 5.1 Red: companion tests for `fit_streaming` (uneven batches ≡ dense feature count,
+- [x] 5.1 Red: companion tests for `fit_streaming` (uneven batches ≡ dense feature count,
   in-memory intent collects, empty source error). Verify: tests fail.
-- [ ] 5.2 Implement `fit_streaming` over `SKLazySource` (in-memory collect branch; otherwise learn
+- [x] 5.2 Implement `fit_streaming` over `SKLazySource` (in-memory collect branch; otherwise learn
   the feature count from the first non-empty batch). Verify: streaming tests pass.
 
 ## 6. Documentation

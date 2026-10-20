@@ -33,8 +33,8 @@ stay private.
 
 `fit` SHALL accept a numeric feature view, learn the input column count, and return a fitted
 model exposing the input feature count and the total output feature count derived from
-`degree`, `interaction_only` and `include_bias`. The estimator SHALL stay generic over the
-scalar `F: SKFloat`.
+`degree`, `interaction_only` and `include_bias`. The fitted state is independent of the output
+scalar; the transforms SHALL be generic over the scalar `F: SKFloat`.
 
 #### Scenario: Hand-checkable two-feature degree two
 
