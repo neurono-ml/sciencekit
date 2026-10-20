@@ -107,7 +107,7 @@ pure-dispatcher `mod.rs`. One commit per task. ADR issue: #87.
 
 ## 12. Gates
 
-- [ ] 12.1 `cargo fmt --all --check`, `cargo clippy --workspace --all-targets` and
+- [x] 12.1 `cargo fmt --all --check`, `cargo clippy --workspace --all-targets` and
   `cargo test --workspace` all green; `mdbook build docs` zero warnings.
 
 ## 13. Independent review
