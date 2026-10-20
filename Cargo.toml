@@ -17,7 +17,12 @@ repository = "https://github.com/neurono-ml/sciencekit"
 
 [workspace]
 resolver = "3"
-members = ["crates/sciencekit_common", "crates/sciencekit_math", "crates/sciencekit_preprocessing"]
+members = [
+    "crates/sciencekit_common",
+    "crates/sciencekit_impute",
+    "crates/sciencekit_math",
+    "crates/sciencekit_preprocessing",
+]
 
 # Shared dependency pins for the workspace sub-crates (Phase 0.4 adds the
 # execution-decision, observability and allocator-selection dependencies).
@@ -35,9 +40,9 @@ ndarray = { version = "0.17", features = ["rayon"] }
 rayon = "1"
 
 # Sparse CSR representation (PRD §3); the sparse output path of the
-# preprocessing encoders builds on it.
+# preprocessing encoders and the sparse imputation path build on it.
 sprs = "0.11"
 
-# Online quantile sketch for the robust scaler (spec `robust-scaler`); confined
-# to `sciencekit_preprocessing`.
+# Online quantile sketch for the robust scaler (spec `robust-scaler`) and for the
+# streaming median of the imputer (spec `simple-imputer`).
 tdigest = "1.0"

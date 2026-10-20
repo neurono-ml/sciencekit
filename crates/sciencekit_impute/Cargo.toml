@@ -1,0 +1,13 @@
+[package]
+name = "sciencekit_impute"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+sciencekit_common = { path = "../sciencekit_common" }
+sciencekit_math = { path = "../sciencekit_math" }
+
+ndarray = { workspace = true }
+rayon = { workspace = true }
+sprs = { workspace = true }
+tdigest = { workspace = true }
