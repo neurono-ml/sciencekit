@@ -147,8 +147,11 @@ which source columns to skip. Tests: `all_missing_column_gets_a_nan_statistic_an
 
 `fit` seeds this state with the batch, then derives the exact statistics: the mean, mode and
 constant come straight from the state, and the median takes the exact order statistic of the
-batch (the sketch is still seeded so `partial_fit` can continue from it). `partial_fit` extends
-the state and refreshes the statistics — nothing else changes. The tests
+batch (the sketch is still seeded so `partial_fit` can continue from it). The state also tracks
+the columns that carried at least one missing cell, so the composed indicator can be rebuilt
+from it. `partial_fit` extends the state and refreshes the statistics, the empty-column policy
+**and** the indicator scope — a missing column first seen in a later batch becomes a mask
+column, exactly as if the batches had been concatenated. The tests
 `split_batches_equal_the_whole_for_mean` and `split_batches_equal_the_whole_for_most_frequent`
 assert that two halves and the concatenation produce the same model;
 `median_stays_within_the_sketch_tolerance_of_the_dense_fit` states the one documented
@@ -249,8 +252,10 @@ flowchart TB
 `add_indicator(true)` makes the imputer **compose** the indicator instead of duplicating it. At
 fit, an indicator is built with the imputer's marker, `error_on_new(false)` (so a transform the
 imputer can handle is never failed by the mask) and the same backend kind; its fitted model is
-stored in `SKSimpleImputerModel::indicator()`. At transform, the imputation runs first — dropping
-the empty columns — and the mask is concatenated along the column axis. For a dense result that
+stored in `SKSimpleImputerModel::indicator()`. The scope is not frozen at the first batch: the state
+records the missing columns batch by batch, and `partial_fit` rebuilds the indicator from it, so
+an incrementally fitted model answers like one fitted on the whole. At transform, the imputation
+runs first — dropping the empty columns — and the mask is concatenated along the column axis. For a dense result that
 is an `ndarray` concatenation; for CSR it is a triplet rebuild that shifts the mask columns past
 the feature columns. The output width is therefore
 
@@ -316,6 +321,9 @@ full:
   `the_scope_is_deterministic_across_fits` — the indicator's scope is learned, exact and stable.
 - `new_missingness_is_rejected_by_default` — the error names the column, and the remedy is in
   the message.
+- `incremental_batches_extend_the_indicator_scope_like_the_whole` — a missing column introduced
+  by the second batch lands in the mask of a model learned with `partial_fit`, matching the
+  concatenated fit.
 - `one_fitted_model_transforms_concurrently` (acceptance) — one model, eight threads, identical
   results: the model is `Send + Sync` by construction.
 
