@@ -1,37 +1,11 @@
-//! Companion tests for the imputation transform (spec `simple-imputer`).
+//! Companion tests for the dense transform (spec `simple-imputer`).
 
-use ndarray::{Array2, array};
+use ndarray::array;
 use sciencekit_common::{SKBuilder, SKFeatureTransformer, SKUnsupervisedFit};
-use sprs::{CsMat, TriMat};
 
-use super::core_implementation::SKSimpleImputer;
-use super::output::SKImputedOutput;
-use super::strategy::SKImputationStrategy;
-
-/// Build a CSR matrix from triplets for the sparse cases.
-fn csr(shape: (usize, usize), entries: &[(usize, usize, f64)]) -> CsMat<f64> {
-    let mut triplets = TriMat::new(shape);
-    for &(row, column, value) in entries {
-        triplets.add_triplet(row, column, value);
-    }
-    triplets.to_csr()
-}
-
-/// The dense matrix behind a dense imputation output.
-fn dense(output: SKImputedOutput<f64>) -> Array2<f64> {
-    match output {
-        SKImputedOutput::Dense(matrix) => matrix,
-        other => panic!("expected a dense output, found {other:?}"),
-    }
-}
-
-/// The sparse matrix behind a sparse imputation output.
-fn sparse(output: SKImputedOutput<f64>) -> CsMat<f64> {
-    match output {
-        SKImputedOutput::Sparse(matrix) => matrix,
-        other => panic!("expected a sparse output, found {other:?}"),
-    }
-}
+use super::fixtures::dense;
+use crate::simple_imputer::core_implementation::SKSimpleImputer;
+use crate::simple_imputer::strategy::SKImputationStrategy;
 
 #[test]
 fn dense_fills_only_the_missing_cells() {
@@ -101,63 +75,6 @@ fn dense_input_produces_dense_output() {
 }
 
 #[test]
-fn csr_input_produces_csr_output() {
-    let features = csr((3, 2), &[(0, 0, 2.0), (1, 1, 4.0)]);
-    let model = SKSimpleImputer::<f64>::build()
-        .build()
-        .unwrap()
-        .fit(features.view())
-        .unwrap();
-    let output = model.transform(features.view()).unwrap();
-    assert_eq!(output.representation(), "csr");
-    assert_eq!((output.nrows(), output.ncols()), (3, 2));
-}
-
-#[test]
-fn sparse_fill_stores_only_the_filled_cells() {
-    // Column 0 observes 2.0 explicitly, NaN explicitly (missing) and an
-    // implicit zero (observed under a NaN marker): mean = 1.0.
-    let features = csr((3, 1), &[(0, 0, 2.0), (1, 0, f64::NAN)]);
-    let model = SKSimpleImputer::<f64>::build()
-        .build()
-        .unwrap()
-        .fit(features.view())
-        .unwrap();
-    let imputed = sparse(model.transform(features.view()).unwrap());
-    assert_eq!(
-        imputed.nnz(),
-        2,
-        "only the filled cell joins the observed one"
-    );
-    assert_eq!(imputed.get(0, 0), Some(&2.0));
-    assert_eq!(imputed.get(1, 0), Some(&1.0));
-    assert_eq!(
-        imputed.get(2, 0),
-        None,
-        "the observed implicit zero stays implicit"
-    );
-    assert_eq!(imputed.to_dense(), array![[2.0], [1.0], [0.0]]);
-}
-
-#[test]
-fn zero_marker_fills_the_implicit_zeros() {
-    let features = csr((3, 1), &[(0, 0, 4.0)]);
-    let model = SKSimpleImputer::<f64>::build()
-        .missing_values(0.0)
-        .build()
-        .unwrap()
-        .fit(features.view())
-        .unwrap();
-    let imputed = sparse(model.transform(features.view()).unwrap());
-    assert_eq!(
-        imputed.nnz(),
-        3,
-        "every structural zero was missing under a zero marker"
-    );
-    assert_eq!(imputed.to_dense(), array![[4.0], [4.0], [4.0]]);
-}
-
-#[test]
 fn all_missing_column_is_dropped_by_default() {
     let model = SKSimpleImputer::<f64>::build()
         .build()
@@ -203,20 +120,4 @@ fn constant_strategy_fills_every_missing_cell_and_keeps_the_columns() {
             .unwrap(),
     );
     assert_eq!(imputed, array![[-1.0, -1.0], [2.0, -1.0]]);
-}
-
-#[test]
-fn sparse_all_missing_column_is_dropped_by_default() {
-    let features = csr(
-        (2, 2),
-        &[(0, 0, 1.0), (1, 0, 2.0), (0, 1, f64::NAN), (1, 1, f64::NAN)],
-    );
-    let model = SKSimpleImputer::<f64>::build()
-        .build()
-        .unwrap()
-        .fit(features.view())
-        .unwrap();
-    let imputed = sparse(model.transform(features.view()).unwrap());
-    assert_eq!((imputed.rows(), imputed.cols()), (2, 1));
-    assert_eq!(imputed.to_dense(), array![[1.0], [2.0]]);
 }

@@ -130,13 +130,14 @@ impl<F: SKFloat> SKSimpleImputer<F> {
             ));
         };
         let statistics = imputation.statistics(self.strategy, self.fill_value);
-        let dropped_columns = empty_columns(&statistics, self.keep_empty_features);
+        let dropped_columns =
+            empty_columns(&statistics, imputation.counts(), self.keep_empty_features);
         let indicator = if self.add_indicator {
-            let scope: Vec<usize> = state
-                .missing_columns
+            let scope: Vec<usize> = imputation
+                .missing_columns()
                 .iter()
                 .enumerate()
-                .filter_map(|(column, &missing)| missing.then_some(column))
+                .filter_map(|(column, missing)| missing.then_some(column))
                 .collect();
             Some(SKMissingIndicatorModel::from_scope(
                 scope,

@@ -1,6 +1,6 @@
 //! Acceptance on lots of data: the out-of-core fit over a streamed matrix.
 
-use ndarray::s;
+use ndarray::{array, s};
 use sciencekit_common::{SKBuilder, SKExecutionMode, SKFeatureTransformer, SKUnsupervisedFit};
 
 use super::fixtures::{
@@ -35,6 +35,47 @@ fn a_large_generated_matrix_streams_like_the_concatenated_fit() {
 
     // The two models must also impute the same rows identically.
     let probe = features.slice(s![..100, ..]).to_owned();
+    assert_eq!(
+        dense_imputation(streamed_model.transform(&probe).unwrap()),
+        dense_imputation(dense_model.transform(&probe).unwrap())
+    );
+}
+
+#[test]
+fn streaming_fit_learns_the_indicator_scope_across_batches() {
+    // Column 3 is missing only in the last chunk, so the scope can only be
+    // complete if the driver accumulates it batch by batch.
+    let mut features = generated_features(400, 4, 0);
+    for row in 300..400 {
+        features[[row, 3]] = f64::NAN;
+    }
+
+    let imputer = SKSimpleImputer::<f64>::build()
+        .add_indicator(true)
+        .build()
+        .unwrap();
+    let dense_model = imputer.fit(&features).unwrap();
+
+    let mut source = SKVectorSource::new(chunk_rows(&features, 100));
+    let streamed_model = SKSimpleImputer::<f64>::build()
+        .add_indicator(true)
+        .execution_mode(SKExecutionMode::OutOfCoreStreaming)
+        .build()
+        .unwrap()
+        .fit_streaming(&mut source)
+        .unwrap();
+
+    assert_eq!(
+        dense_model.indicator().unwrap().scope(),
+        &[3],
+        "only the planted column is missing"
+    );
+    assert_eq!(
+        streamed_model.indicator().unwrap().scope(),
+        dense_model.indicator().unwrap().scope(),
+        "the last chunk contributes the missing column"
+    );
+    let probe = array![[1.0, 2.0, 3.0, f64::NAN]];
     assert_eq!(
         dense_imputation(streamed_model.transform(&probe).unwrap()),
         dense_imputation(dense_model.transform(&probe).unwrap())

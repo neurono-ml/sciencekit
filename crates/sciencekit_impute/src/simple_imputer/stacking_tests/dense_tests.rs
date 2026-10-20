@@ -1,35 +1,10 @@
-//! Companion tests for the `add_indicator` stacking rule (spec
-//! `simple-imputer`).
-//!
-//! The stacked output is the imputed features followed, column by column, by
-//! the missingness mask of the features that carried a missing cell at fit
-//! time.
+//! Companion tests for stacking on dense inputs (spec `simple-imputer`).
 
-use ndarray::{Array2, array};
+use ndarray::array;
 use sciencekit_common::{SKBuilder, SKFeatureTransformer, SKUnsupervisedFit};
-use sprs::{CsMat, TriMat};
 
-use super::core_implementation::SKSimpleImputer;
-use super::output::SKImputedOutput;
-
-/// Build a CSR matrix from triplets for the sparse cases.
-fn csr(shape: (usize, usize), entries: &[(usize, usize, f64)]) -> CsMat<f64> {
-    let mut triplets = TriMat::new(shape);
-    for &(row, column, value) in entries {
-        triplets.add_triplet(row, column, value);
-    }
-    triplets.to_csr()
-}
-
-/// The dense payload of an imputation, panicking on a sparse one.
-fn dense_imputation(output: SKImputedOutput<f64>) -> Array2<f64> {
-    match output {
-        SKImputedOutput::Dense(matrix) => matrix,
-        SKImputedOutput::Sparse(matrix) => {
-            panic!("expected a dense imputation, found a csr one: {matrix:?}")
-        }
-    }
-}
+use super::fixtures::dense_imputation;
+use crate::simple_imputer::core_implementation::SKSimpleImputer;
 
 #[test]
 fn indicator_is_disabled_by_default() {
@@ -112,33 +87,34 @@ fn new_missingness_is_imputed_but_not_masked() {
 }
 
 #[test]
-fn sparse_stacking_appends_the_mask_columns() {
-    let fitted = csr(
-        (2, 2),
-        &[(0, 0, 1.0), (0, 1, f64::NAN), (1, 0, 3.0), (1, 1, 5.0)],
-    );
-    let model = SKSimpleImputer::<f64>::build()
+fn incremental_batches_extend_the_indicator_scope_like_the_whole() {
+    let first = array![[1.0, 2.0], [3.0, 4.0]];
+    let second = array![[5.0, f64::NAN], [7.0, 8.0]];
+    let whole = array![[1.0, 2.0], [3.0, 4.0], [5.0, f64::NAN], [7.0, 8.0]];
+
+    let concatenated = SKSimpleImputer::<f64>::build()
         .add_indicator(true)
         .build()
         .unwrap()
-        .fit(fitted.view())
+        .fit(&whole)
         .unwrap();
-    assert_eq!(model.indicator().unwrap().scope(), &[1]);
-    let features = csr(
-        (2, 2),
-        &[(0, 0, 1.0), (0, 1, f64::NAN), (1, 0, 3.0), (1, 1, 5.0)],
+    let mut incremental = SKSimpleImputer::<f64>::build()
+        .add_indicator(true)
+        .build()
+        .unwrap()
+        .fit(&first)
+        .unwrap();
+    incremental.partial_fit(&second).unwrap();
+
+    assert_eq!(
+        incremental.indicator().unwrap().scope(),
+        concatenated.indicator().unwrap().scope(),
+        "the second batch contributes the missing column"
     );
-    match model.transform(features.view()).unwrap() {
-        SKImputedOutput::Sparse(matrix) => {
-            assert_eq!(matrix.shape(), (2, 3), "two features plus one mask");
-            assert_eq!(matrix.get(0, 1), Some(&5.0), "the missing cell is filled");
-            assert_eq!(
-                matrix.get(0, 2),
-                Some(&1.0),
-                "the mask follows the features"
-            );
-            assert_eq!(matrix.get(1, 2), None, "an observed cell is not masked");
-        }
-        SKImputedOutput::Dense(matrix) => panic!("expected a csr result, found {matrix:?}"),
-    }
+    assert_eq!(incremental.statistics(), concatenated.statistics());
+    let probe = array![[f64::NAN, f64::NAN]];
+    assert_eq!(
+        dense_imputation(incremental.transform(&probe).unwrap()),
+        dense_imputation(concatenated.transform(&probe).unwrap())
+    );
 }

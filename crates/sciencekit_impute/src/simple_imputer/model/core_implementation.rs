@@ -51,7 +51,8 @@ impl<F: SKFloat> SKSimpleImputerModel<F> {
         }
     }
 
-    /// The per-column fill statistic, one entry per retained column.
+    /// The per-column fill statistic, one entry per input column: a dropped
+    /// empty column keeps its slot and carries `NaN`.
     pub fn statistics(&self) -> ArrayView1<'_, F> {
         self.statistics.view()
     }

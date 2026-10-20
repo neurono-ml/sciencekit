@@ -1,7 +1,7 @@
 //! Companion tests for the missing-indicator builder (spec `missing-indicator`).
 
 use ndarray::array;
-use sciencekit_common::{SKBackendKind, SKBuilder, SKUnsupervisedFit};
+use sciencekit_common::{SKBackendKind, SKBuilder, SKExecutionMode, SKUnsupervisedFit};
 
 use super::builder::SKMissingIndicatorBuilder;
 use super::core_implementation::SKMissingIndicator;
@@ -20,6 +20,7 @@ fn defaults_mask_only_the_features_missing_at_fit() {
         "new missingness is rejected by default"
     );
     assert_eq!(estimator.backend(), SKBackendKind::Faer);
+    assert_eq!(estimator.execution_intent(), SKExecutionMode::Automatic);
     assert!(!estimator.sparse_output());
 
     let model = estimator.fit(&array![[1.0, f64::NAN], [3.0, 4.0]]).unwrap();

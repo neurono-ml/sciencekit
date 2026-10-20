@@ -16,34 +16,25 @@ use crate::simple_imputer::state::SKImputationState;
 use crate::simple_imputer::statistics::{dense_column_statistics, sparse_column_statistics};
 use crate::simple_imputer::strategy::SKImputationStrategy;
 
-/// The three pieces a fit derives from one batch: the per-column statistic,
-/// the seeded incremental state and the optional composed indicator.
-type FittedState<F> = (
-    ndarray::Array1<F>,
-    SKImputationState<F>,
-    Option<SKMissingIndicatorModel<F>>,
-);
-
 impl<F: SKFloat> SKSimpleImputer<F> {
     /// Fit the dense representation; the observed set is the non-missing cells.
     fn fit_dense(&self, dense: ArrayView2<'_, F>) -> Result<SKSimpleImputerModel<F>, SKError> {
         let (rows_count, columns_count) = validated_shape(&dense)?;
-        let (statistics, state, indicator) = self.fitted_state(
+        let (statistics, state) = self.fitted_state(
             rows_count,
             columns_count,
             dense.len() as u64,
             |state| state.extend_dense(&dense, self.strategy, self.missing_values),
             || dense_column_statistics(&dense, self.strategy, self.missing_values, self.fill_value),
-            || self.fitted_indicator_dense(&dense),
         )?;
-        Ok(self.finish_fit(statistics, columns_count, state, indicator))
+        self.finish_fit(statistics, columns_count, state)
     }
 
     /// Fit the sparse representation; the observed set is the explicit
     /// non-missing entries plus the structural zeros the marker observes.
     fn fit_sparse(&self, sparse: CsMatView<'_, F>) -> Result<SKSimpleImputerModel<F>, SKError> {
         let (rows_count, columns_count) = validated_sparse_shape(&sparse)?;
-        let (statistics, state, indicator) = self.fitted_state(
+        let (statistics, state) = self.fitted_state(
             rows_count,
             columns_count,
             sparse.nnz() as u64,
@@ -56,9 +47,8 @@ impl<F: SKFloat> SKSimpleImputer<F> {
                     self.fill_value,
                 )
             },
-            || self.fitted_indicator_sparse(&sparse),
         )?;
-        Ok(self.finish_fit(statistics, columns_count, state, indicator))
+        self.finish_fit(statistics, columns_count, state)
     }
 
     /// Seed the incremental state with the fit batch and derive the exact
@@ -75,8 +65,7 @@ impl<F: SKFloat> SKSimpleImputer<F> {
         stored_elements: u64,
         seed_state: impl FnOnce(&mut SKImputationState<F>),
         exact_statistics: impl FnOnce() -> ndarray::Array1<F>,
-        fit_indicator: impl FnOnce() -> Result<Option<SKMissingIndicatorModel<F>>, SKError>,
-    ) -> Result<FittedState<F>, SKError> {
+    ) -> Result<(ndarray::Array1<F>, SKImputationState<F>), SKError> {
         sk_run_operation(self.fit_attributes(rows_count, columns_count), || {
             let plan = resolve_fit_plan(self, stored_elements)?;
             debug_assert!(plan.parallelism >= 1);
@@ -87,8 +76,7 @@ impl<F: SKFloat> SKSimpleImputer<F> {
             } else {
                 state.statistics(self.strategy, self.fill_value)
             };
-            let indicator = fit_indicator()?;
-            Ok::<_, SKError>((statistics, state, indicator))
+            Ok::<_, SKError>((statistics, state))
         })
     }
 
@@ -106,28 +94,6 @@ impl<F: SKFloat> SKSimpleImputer<F> {
             .build()
     }
 
-    /// Fit the composed indicator on the dense batch, when requested.
-    fn fitted_indicator_dense(
-        &self,
-        dense: &ArrayView2<'_, F>,
-    ) -> Result<Option<SKMissingIndicatorModel<F>>, SKError> {
-        if !self.add_indicator {
-            return Ok(None);
-        }
-        Ok(Some(self.indicator_estimator()?.fit(*dense)?))
-    }
-
-    /// Fit the composed indicator on the sparse batch, when requested.
-    fn fitted_indicator_sparse(
-        &self,
-        sparse: &CsMatView<'_, F>,
-    ) -> Result<Option<SKMissingIndicatorModel<F>>, SKError> {
-        if !self.add_indicator {
-            return Ok(None);
-        }
-        Ok(Some(self.indicator_estimator()?.fit(*sparse)?))
-    }
-
     /// The span attributes of a fit, carrying the configured execution mode
     /// and backend kind.
     fn fit_attributes(&self, rows_count: usize, columns_count: usize) -> SKOperationAttributes {
@@ -141,23 +107,38 @@ impl<F: SKFloat> SKSimpleImputer<F> {
     }
 
     /// Assemble the fitted model from the statistics, the seeded state and the
-    /// empty-column policy.
+    /// empty-column policy, composing the indicator from the columns the state
+    /// saw missing.
     fn finish_fit(
         &self,
         statistics: ndarray::Array1<F>,
         columns_count: usize,
         state: SKImputationState<F>,
-        indicator: Option<SKMissingIndicatorModel<F>>,
-    ) -> SKSimpleImputerModel<F> {
-        let dropped_columns = empty_columns(&statistics, self.keep_empty_features);
-        SKSimpleImputerModel::from_state(
+    ) -> Result<SKSimpleImputerModel<F>, SKError> {
+        let dropped_columns = empty_columns(&statistics, state.counts(), self.keep_empty_features);
+        let indicator = if self.add_indicator {
+            let scope: Vec<usize> = state
+                .missing_columns()
+                .iter()
+                .enumerate()
+                .filter_map(|(column, missing)| missing.then_some(column))
+                .collect();
+            Some(SKMissingIndicatorModel::from_scope(
+                scope,
+                columns_count,
+                &self.indicator_estimator()?,
+            ))
+        } else {
+            None
+        };
+        Ok(SKSimpleImputerModel::from_state(
             statistics,
             dropped_columns,
             columns_count,
             state,
             indicator,
             self,
-        )
+        ))
     }
 }
 

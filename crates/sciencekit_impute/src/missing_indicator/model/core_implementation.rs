@@ -48,6 +48,21 @@ impl<F: SKFloat> SKMissingIndicatorModel<F> {
         }
     }
 
+    /// A copy of this model covering `scope`: the incremental imputer extends
+    /// the scope as batches arrive, carrying the rest of the configuration.
+    pub(crate) fn with_scope(&self, scope: Vec<usize>) -> Self {
+        Self {
+            scope,
+            number_of_input_columns: self.number_of_input_columns,
+            features: self.features,
+            error_on_new: self.error_on_new,
+            sparse_output: self.sparse_output,
+            missing_values: self.missing_values,
+            backend: self.backend,
+            execution_intent: self.execution_intent,
+        }
+    }
+
     /// The feature columns the mask covers, in ascending order.
     pub fn scope(&self) -> &[usize] {
         &self.scope

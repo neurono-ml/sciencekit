@@ -29,6 +29,7 @@ pub(in crate::simple_imputer) struct SKImputationState<F> {
     pub(super) value_counts: Vec<HashMap<u64, u64>>,
     pub(super) sketches: Vec<TDigest>,
     pub(super) implicit_zeros: Vec<u64>,
+    pub(super) missing_columns: Vec<bool>,
 }
 
 impl<F: SKFloat> SKImputationState<F> {
@@ -67,7 +68,20 @@ impl<F: SKFloat> SKImputationState<F> {
             } else {
                 Vec::new()
             },
+            missing_columns: vec![false; columns_count],
         }
+    }
+
+    /// The observed count of every column: zero means the column carries no
+    /// statistic and, unless retained, is dropped from the output.
+    pub(in crate::simple_imputer) fn counts(&self) -> &[u64] {
+        &self.counts
+    }
+
+    /// The columns with at least one missing cell, accumulated batch by batch;
+    /// the composed indicator rebuilds its scope from it.
+    pub(in crate::simple_imputer) fn missing_columns(&self) -> &[bool] {
+        &self.missing_columns
     }
 
     /// The current statistic of every column under `strategy`.

@@ -9,19 +9,26 @@ use super::SKSimpleImputer;
 
 /// The indices of the columns that produced no statistic, kept only when the
 /// estimator retains empty features.
+///
+/// A `NaN` statistic alone does not mean the column is empty: under a marker
+/// other than `NaN`, a `NaN` cell is an observed value, so a column can carry a
+/// `NaN` mean while holding data. Emptiness is the conjunction of both
+/// signals — no observed cell and no statistic.
 pub(in crate::simple_imputer) fn empty_columns<F: SKFloat>(
     statistics: &ndarray::Array1<F>,
+    counts: &[u64],
     keep_empty_features: bool,
 ) -> Vec<usize> {
     if keep_empty_features {
         return Vec::new();
     }
-    statistics
-        .iter()
-        .enumerate()
-        .filter(|(_, statistic)| statistic.is_nan())
-        .map(|(index, _)| index)
-        .collect()
+    let mut empty_columns = Vec::new();
+    for (column, (statistic, count)) in statistics.iter().zip(counts.iter()).enumerate() {
+        if statistic.is_nan() && *count == 0 {
+            empty_columns.push(column);
+        }
+    }
+    empty_columns
 }
 
 /// Reject empty dense inputs before any element is processed.

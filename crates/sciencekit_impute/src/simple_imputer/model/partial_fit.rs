@@ -82,10 +82,24 @@ impl<F: SKFloat> SKSimpleImputerModel<F> {
         }
     }
 
-    /// Refresh the statistics and the empty-column policy from the accumulated
-    /// state.
+    /// Refresh the statistics, the empty-column policy and the composed
+    /// indicator's scope from the accumulated state.
     fn refresh_statistics(&mut self) {
         self.statistics = self.state.statistics(self.strategy, self.fill_value);
-        self.dropped_columns = empty_columns(&self.statistics, self.keep_empty_features);
+        self.dropped_columns = empty_columns(
+            &self.statistics,
+            self.state.counts(),
+            self.keep_empty_features,
+        );
+        if let Some(indicator) = self.indicator.as_mut() {
+            let scope: Vec<usize> = self
+                .state
+                .missing_columns()
+                .iter()
+                .enumerate()
+                .filter_map(|(column, missing)| missing.then_some(column))
+                .collect();
+            *indicator = indicator.with_scope(scope);
+        }
     }
 }
