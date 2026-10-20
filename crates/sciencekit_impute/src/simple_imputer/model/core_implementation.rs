@@ -3,6 +3,7 @@
 use ndarray::{Array1, ArrayView1};
 use sciencekit_common::{SKBackendKind, SKExecutionMode, SKFloat};
 
+use crate::missing_indicator::SKMissingIndicatorModel;
 use crate::simple_imputer::state::SKImputationState;
 use crate::simple_imputer::strategy::SKImputationStrategy;
 
@@ -19,6 +20,7 @@ pub struct SKSimpleImputerModel<F> {
     pub(super) fill_value: Option<F>,
     pub(super) keep_empty_features: bool,
     pub(super) state: SKImputationState<F>,
+    pub(super) indicator: Option<SKMissingIndicatorModel<F>>,
     pub(super) backend: SKBackendKind,
     pub(super) execution_intent: SKExecutionMode,
 }
@@ -42,6 +44,7 @@ impl<F: SKFloat> SKSimpleImputerModel<F> {
             fill_value: estimator.fill_value,
             keep_empty_features: estimator.keep_empty_features,
             state,
+            indicator: None,
             backend: estimator.backend,
             execution_intent: estimator.execution_intent(),
         }
@@ -66,6 +69,12 @@ impl<F: SKFloat> SKSimpleImputerModel<F> {
     /// minus the ones dropped as all-missing.
     pub fn number_of_output_features(&self) -> usize {
         self.number_of_input_columns - self.dropped_columns.len()
+    }
+
+    /// The fitted missingness indicator stacked by the transform, when
+    /// `add_indicator` was requested.
+    pub fn indicator(&self) -> Option<&SKMissingIndicatorModel<F>> {
+        self.indicator.as_ref()
     }
 
     /// The missing-value marker the model recognizes.
