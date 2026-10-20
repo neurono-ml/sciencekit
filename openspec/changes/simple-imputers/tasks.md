@@ -31,11 +31,11 @@ pure-dispatcher `mod.rs`. One commit per task. ADR issue: #87.
 
 ## 4. Dense fit — per-column statistics
 
-- [ ] 4.1 Red: companion tests for dense `fit` (mean over observed values, exact median of
+- [x] 4.1 Red: companion tests for dense `fit` (mean over observed values, exact median of
   even and odd counts, most-frequent with the smallest-tie rule, constant, all-missing
   column producing a `NaN` statistic, column-count bookkeeping, carried backend kind,
   `fit(&self)` leaving the estimator reusable). Verify: tests fail.
-- [ ] 4.2 Implement the column statistics — rayon `par_iter` over columns with compensated
+- [x] 4.2 Implement the column statistics — rayon `par_iter` over columns with compensated
   sum for the mean, a sorted order statistic for the median, a count map with deterministic
   tie-break for the mode — and `SKSimpleImputerModel<F>` with its accessors. Verify: the
   dense fit tests pass.
