@@ -13,8 +13,7 @@ and how the imputed output preserves the input's dense or sparse shape.
 `SKSimpleImputer` SHALL be constructible only through its builder, exposing chainable
 `strategy(SKImputationStrategy)` defaulting to `Mean`, `missing_values(F)` defaulting to
 `NaN`, `fill_value(Option<F>)`, `keep_empty_features(bool)` defaulting to `false` and
-`add_indicator(bool)` defaulting to `false`; the direct constructor SHALL stay private and
-the estimator SHALL stay non-generic over scalar and backend.
+`add_indicator(bool)` defaulting to `false`; the direct constructor SHALL stay private.
 
 #### Scenario: Default configuration
 
@@ -25,6 +24,17 @@ the estimator SHALL stay non-generic over scalar and backend.
 
 - **WHEN** a builder sets `strategy(Constant)` with `fill_value(Some(1.5))` and `missing_values(0.0)`
 - **THEN** the fitted model fills every `0.0` cell with `1.5`, whatever the column contents
+
+### Requirement: Generic over the scalar, never over the backend
+
+The estimator SHALL stay generic over the scalar `SKFloat` — its configuration carries `F`
+values — and SHALL keep the backend a runtime value, never a type parameter (spec
+`backend-selection`).
+
+#### Scenario: One estimator type serves both scalars
+
+- **WHEN** the same imputer configuration is built and fitted for `f32` and for `f64`
+- **THEN** a single estimator type serves both, no backend type parameter appears, and each fit yields a model of the matching scalar
 
 ### Requirement: Backend and execution intent selection
 
