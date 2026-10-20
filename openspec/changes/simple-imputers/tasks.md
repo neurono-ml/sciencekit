@@ -92,7 +92,7 @@ pure-dispatcher `mod.rs`. One commit per task. ADR issue: #87.
 
 ## 10. Acceptance — small and large data, concurrency, export
 
-- [ ] 10.1 Acceptance tests: hand-checkable tiny matrix end to end, a large generated matrix
+- [x] 10.1 Acceptance tests: hand-checkable tiny matrix end to end, a large generated matrix
   streamed through `fit_streaming`, the shared estimator fitted concurrently from several
   threads (`fit(&self)`) and one model used concurrently for `transform`, dense and sparse
   outputs provably equal, and the model's statistics/scope reachable as the export boundary.
