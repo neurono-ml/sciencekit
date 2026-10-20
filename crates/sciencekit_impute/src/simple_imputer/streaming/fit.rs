@@ -14,6 +14,7 @@ use super::super::core_implementation::{SKSimpleImputer, empty_columns};
 use super::super::model::SKSimpleImputerModel;
 use super::batches::update_imputation;
 use super::state::StreamingImputation;
+use crate::missing_indicator::SKMissingIndicatorModel;
 
 impl<F: SKFloat> SKSimpleImputer<F> {
     /// Fit on a sequential batch source.
@@ -130,11 +131,27 @@ impl<F: SKFloat> SKSimpleImputer<F> {
         };
         let statistics = imputation.statistics(self.strategy, self.fill_value);
         let dropped_columns = empty_columns(&statistics, self.keep_empty_features);
+        let indicator = if self.add_indicator {
+            let scope: Vec<usize> = state
+                .missing_columns
+                .iter()
+                .enumerate()
+                .filter_map(|(column, &missing)| missing.then_some(column))
+                .collect();
+            Some(SKMissingIndicatorModel::from_scope(
+                scope,
+                state.columns_count,
+                &self.indicator_estimator()?,
+            ))
+        } else {
+            None
+        };
         Ok(SKSimpleImputerModel::from_state(
             statistics,
             dropped_columns,
             state.columns_count,
             imputation,
+            indicator,
             self,
         ))
     }

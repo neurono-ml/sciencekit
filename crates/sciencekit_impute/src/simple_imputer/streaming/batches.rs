@@ -9,6 +9,7 @@ use sciencekit_common::{
 use super::super::core_implementation::SKSimpleImputer;
 use super::super::state::SKImputationState;
 use super::state::StreamingImputation;
+use crate::missingness::sk_is_missing;
 
 /// Validate one batch and feed it into the running per-column state. The
 /// driver closure is infallible, so a shape violation is parked in the state
@@ -32,6 +33,19 @@ pub(super) fn update_imputation<F: SKFloat>(
     }
     if data.nrows() == 0 {
         return SKStreamDecision::Continue;
+    }
+    if estimator.add_indicator {
+        if state.missing_columns.len() != data.ncols() {
+            state.missing_columns = vec![false; data.ncols()];
+        }
+        for (column, values) in data.columns().into_iter().enumerate() {
+            if values
+                .iter()
+                .any(|&value| sk_is_missing(value, estimator.missing_values))
+            {
+                state.missing_columns[column] = true;
+            }
+        }
     }
     let attributes = SKOperationAttributes {
         operation: SKOperationKind::PartialFit,

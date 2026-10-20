@@ -13,8 +13,10 @@ use sciencekit_common::{
 };
 use sprs::{CsMatView, TriMat};
 
+use crate::missing_indicator::SKIndicatorOutput;
 use crate::missingness::{sk_is_missing, sk_sparse_marks_implicit_zeros};
 use crate::simple_imputer::model::SKSimpleImputerModel;
+use crate::simple_imputer::model::stacking::{horizontally_stack_dense, horizontally_stack_sparse};
 use crate::simple_imputer::output::SKImputedOutput;
 
 impl<F: SKFloat> SKFeatureTransformer<F> for SKSimpleImputerModel<F> {
@@ -30,14 +32,14 @@ impl<F: SKFloat> SKFeatureTransformer<F> for SKSimpleImputerModel<F> {
                 self.validate_columns(dense.nrows(), dense.ncols())?;
                 let attributes = self.transform_attributes(dense.nrows(), dense.ncols());
                 sk_run_operation(attributes, || {
-                    Ok(SKImputedOutput::Dense(self.transform_dense(&dense)))
+                    Ok(SKImputedOutput::Dense(self.transform_dense(&dense)?))
                 })
             }
             SKDataView::Sparse(sparse) => {
                 self.validate_columns(sparse.rows(), sparse.cols())?;
                 let attributes = self.transform_attributes(sparse.rows(), sparse.cols());
                 sk_run_operation(attributes, || {
-                    Ok(SKImputedOutput::Sparse(self.transform_sparse(&sparse)))
+                    Ok(SKImputedOutput::Sparse(self.transform_sparse(&sparse)?))
                 })
             }
             _ => Err(SKError::UnsupportedRepresentation {
@@ -95,8 +97,8 @@ impl<F: SKFloat> SKSimpleImputerModel<F> {
     }
 
     /// Fill the missing cells of every retained column, skipping the dropped
-    /// ones.
-    fn transform_dense(&self, features: &ArrayView2<'_, F>) -> Array2<F> {
+    /// ones, then stack the mask when `add_indicator` was requested.
+    fn transform_dense(&self, features: &ArrayView2<'_, F>) -> Result<Array2<F>, SKError> {
         let mut output = Array2::zeros((features.nrows(), self.number_of_output_features()));
         let mut target = 0;
         for (source, &statistic) in self.statistics.iter().enumerate() {
@@ -115,13 +117,21 @@ impl<F: SKFloat> SKSimpleImputerModel<F> {
             });
             target += 1;
         }
-        output
+        let Some(indicator) = self.indicator.as_ref() else {
+            return Ok(output);
+        };
+        let mask = match indicator.transform(*features)? {
+            SKIndicatorOutput::Dense(mask) => mask,
+            SKIndicatorOutput::Sparse(mask) => mask.to_dense(),
+        };
+        horizontally_stack_dense(&output, &mask.view())
     }
 
     /// Rebuild the CSR matrix row by row: explicit entries are kept, missing
     /// ones become their column statistic, and — under a `0.0` marker — every
-    /// implicit zero is filled too.
-    fn transform_sparse(&self, features: &CsMatView<'_, F>) -> sprs::CsMat<F> {
+    /// implicit zero is filled too. The mask columns are stacked last when
+    /// `add_indicator` was requested.
+    fn transform_sparse(&self, features: &CsMatView<'_, F>) -> Result<sprs::CsMat<F>, SKError> {
         // The retained source columns in ascending order, with their output
         // index and the value that fills them.
         let mut retained: Vec<(usize, usize, F)> = Vec::new();
@@ -168,6 +178,20 @@ impl<F: SKFloat> SKSimpleImputerModel<F> {
                 cursor += 1;
             }
         }
-        triplets.to_csr()
+        let imputed = triplets.to_csr();
+        let Some(indicator) = self.indicator.as_ref() else {
+            return Ok(imputed);
+        };
+        let mask = match indicator.transform(*features)? {
+            SKIndicatorOutput::Sparse(mask) => mask,
+            SKIndicatorOutput::Dense(mask) => {
+                let mut triplets = TriMat::new(mask.dim());
+                mask.indexed_iter()
+                    .filter(|(_, value)| !value.is_zero())
+                    .for_each(|((row, column), value)| triplets.add_triplet(row, column, *value));
+                triplets.to_csr()
+            }
+        };
+        Ok(horizontally_stack_sparse(&imputed, &mask))
     }
 }

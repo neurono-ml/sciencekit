@@ -33,6 +33,7 @@ impl<F: SKFloat> SKSimpleImputerModel<F> {
         dropped_columns: Vec<usize>,
         number_of_input_columns: usize,
         state: SKImputationState<F>,
+        indicator: Option<SKMissingIndicatorModel<F>>,
         estimator: &super::super::core_implementation::SKSimpleImputer<F>,
     ) -> Self {
         Self {
@@ -44,7 +45,7 @@ impl<F: SKFloat> SKSimpleImputerModel<F> {
             fill_value: estimator.fill_value,
             keep_empty_features: estimator.keep_empty_features,
             state,
-            indicator: None,
+            indicator,
             backend: estimator.backend,
             execution_intent: estimator.execution_intent(),
         }

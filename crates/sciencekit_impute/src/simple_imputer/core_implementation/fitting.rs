@@ -3,36 +3,47 @@
 
 use ndarray::ArrayView2;
 use sciencekit_common::{
-    SKDataView, SKError, SKExecutionPlan, SKFloat, SKOperationAttributes, SKOperationKind,
+    SKBuilder, SKDataView, SKError, SKFloat, SKOperationAttributes, SKOperationKind,
     SKUnsupervisedFit, sk_run_operation,
 };
 use sprs::CsMatView;
 
 use super::SKSimpleImputer;
+use super::validation::{empty_columns, resolve_fit_plan, validated_shape, validated_sparse_shape};
+use crate::missing_indicator::{SKMissingIndicator, SKMissingIndicatorModel};
 use crate::simple_imputer::model::SKSimpleImputerModel;
 use crate::simple_imputer::state::SKImputationState;
 use crate::simple_imputer::statistics::{dense_column_statistics, sparse_column_statistics};
 use crate::simple_imputer::strategy::SKImputationStrategy;
 
+/// The three pieces a fit derives from one batch: the per-column statistic,
+/// the seeded incremental state and the optional composed indicator.
+type FittedState<F> = (
+    ndarray::Array1<F>,
+    SKImputationState<F>,
+    Option<SKMissingIndicatorModel<F>>,
+);
+
 impl<F: SKFloat> SKSimpleImputer<F> {
     /// Fit the dense representation; the observed set is the non-missing cells.
     fn fit_dense(&self, dense: ArrayView2<'_, F>) -> Result<SKSimpleImputerModel<F>, SKError> {
         let (rows_count, columns_count) = validated_shape(&dense)?;
-        let (statistics, state) = self.fitted_state(
+        let (statistics, state, indicator) = self.fitted_state(
             rows_count,
             columns_count,
             dense.len() as u64,
             |state| state.extend_dense(&dense, self.strategy, self.missing_values),
             || dense_column_statistics(&dense, self.strategy, self.missing_values, self.fill_value),
+            || self.fitted_indicator_dense(&dense),
         )?;
-        Ok(self.finish_fit(statistics, columns_count, state))
+        Ok(self.finish_fit(statistics, columns_count, state, indicator))
     }
 
     /// Fit the sparse representation; the observed set is the explicit
     /// non-missing entries plus the structural zeros the marker observes.
     fn fit_sparse(&self, sparse: CsMatView<'_, F>) -> Result<SKSimpleImputerModel<F>, SKError> {
         let (rows_count, columns_count) = validated_sparse_shape(&sparse)?;
-        let (statistics, state) = self.fitted_state(
+        let (statistics, state, indicator) = self.fitted_state(
             rows_count,
             columns_count,
             sparse.nnz() as u64,
@@ -45,8 +56,9 @@ impl<F: SKFloat> SKSimpleImputer<F> {
                     self.fill_value,
                 )
             },
+            || self.fitted_indicator_sparse(&sparse),
         )?;
-        Ok(self.finish_fit(statistics, columns_count, state))
+        Ok(self.finish_fit(statistics, columns_count, state, indicator))
     }
 
     /// Seed the incremental state with the fit batch and derive the exact
@@ -63,7 +75,8 @@ impl<F: SKFloat> SKSimpleImputer<F> {
         stored_elements: u64,
         seed_state: impl FnOnce(&mut SKImputationState<F>),
         exact_statistics: impl FnOnce() -> ndarray::Array1<F>,
-    ) -> Result<(ndarray::Array1<F>, SKImputationState<F>), SKError> {
+        fit_indicator: impl FnOnce() -> Result<Option<SKMissingIndicatorModel<F>>, SKError>,
+    ) -> Result<FittedState<F>, SKError> {
         sk_run_operation(self.fit_attributes(rows_count, columns_count), || {
             let plan = resolve_fit_plan(self, stored_elements)?;
             debug_assert!(plan.parallelism >= 1);
@@ -74,8 +87,45 @@ impl<F: SKFloat> SKSimpleImputer<F> {
             } else {
                 state.statistics(self.strategy, self.fill_value)
             };
-            Ok::<_, SKError>((statistics, state))
+            let indicator = fit_indicator()?;
+            Ok::<_, SKError>((statistics, state, indicator))
         })
+    }
+
+    /// The indicator estimator composed by `add_indicator`: the same marker and
+    /// backend kind, tolerating missingness unseen at fit so it never fails a
+    /// transform the imputer can handle.
+    pub(in crate::simple_imputer) fn indicator_estimator(
+        &self,
+    ) -> Result<SKMissingIndicator<F>, SKError> {
+        SKMissingIndicator::build()
+            .missing_values(self.missing_values)
+            .error_on_new(false)
+            .backend(self.backend)
+            .execution_mode(self.execution_intent())
+            .build()
+    }
+
+    /// Fit the composed indicator on the dense batch, when requested.
+    fn fitted_indicator_dense(
+        &self,
+        dense: &ArrayView2<'_, F>,
+    ) -> Result<Option<SKMissingIndicatorModel<F>>, SKError> {
+        if !self.add_indicator {
+            return Ok(None);
+        }
+        Ok(Some(self.indicator_estimator()?.fit(*dense)?))
+    }
+
+    /// Fit the composed indicator on the sparse batch, when requested.
+    fn fitted_indicator_sparse(
+        &self,
+        sparse: &CsMatView<'_, F>,
+    ) -> Result<Option<SKMissingIndicatorModel<F>>, SKError> {
+        if !self.add_indicator {
+            return Ok(None);
+        }
+        Ok(Some(self.indicator_estimator()?.fit(*sparse)?))
     }
 
     /// The span attributes of a fit, carrying the configured execution mode
@@ -97,9 +147,17 @@ impl<F: SKFloat> SKSimpleImputer<F> {
         statistics: ndarray::Array1<F>,
         columns_count: usize,
         state: SKImputationState<F>,
+        indicator: Option<SKMissingIndicatorModel<F>>,
     ) -> SKSimpleImputerModel<F> {
         let dropped_columns = empty_columns(&statistics, self.keep_empty_features);
-        SKSimpleImputerModel::from_state(statistics, dropped_columns, columns_count, state, self)
+        SKSimpleImputerModel::from_state(
+            statistics,
+            dropped_columns,
+            columns_count,
+            state,
+            indicator,
+            self,
+        )
     }
 }
 
@@ -120,60 +178,4 @@ impl<F: SKFloat> SKUnsupervisedFit<F> for SKSimpleImputer<F> {
             }),
         }
     }
-}
-
-/// The indices of the columns that produced no statistic, kept only when the
-/// estimator retains empty features.
-pub(in crate::simple_imputer) fn empty_columns<F: SKFloat>(
-    statistics: &ndarray::Array1<F>,
-    keep_empty_features: bool,
-) -> Vec<usize> {
-    if keep_empty_features {
-        return Vec::new();
-    }
-    statistics
-        .iter()
-        .enumerate()
-        .filter(|(_, statistic)| statistic.is_nan())
-        .map(|(index, _)| index)
-        .collect()
-}
-
-/// Reject empty dense inputs before any element is processed.
-fn validated_shape<F>(features: &ArrayView2<F>) -> Result<(usize, usize), SKError> {
-    let (rows_count, columns_count) = features.dim();
-    if rows_count == 0 || columns_count == 0 {
-        return Err(SKError::ShapeMismatch {
-            expected: vec![rows_count.max(1), columns_count.max(1)],
-            found: vec![rows_count, columns_count],
-        });
-    }
-    Ok((rows_count, columns_count))
-}
-
-/// Reject empty sparse inputs before any element is processed.
-fn validated_sparse_shape<F>(features: &CsMatView<'_, F>) -> Result<(usize, usize), SKError> {
-    let (rows_count, columns_count) = features.shape();
-    if rows_count == 0 || columns_count == 0 {
-        return Err(SKError::ShapeMismatch {
-            expected: vec![rows_count.max(1), columns_count.max(1)],
-            found: vec![rows_count, columns_count],
-        });
-    }
-    Ok((rows_count, columns_count))
-}
-
-/// Build a fresh execution context per operation, declare the reduction grain
-/// and the `Sequential` access pattern, and resolve the plan.
-fn resolve_fit_plan<F: SKFloat>(
-    estimator: &SKSimpleImputer<F>,
-    stored_elements: u64,
-) -> Result<SKExecutionPlan, SKError> {
-    let mut context = sciencekit_common::SKExecutionContext::real();
-    context.dataset_size_bytes = stored_elements * size_of::<F>() as u64;
-    context.scalar_size_bytes = size_of::<F>() as u64;
-    context.dataset_elements = Some(stored_elements);
-    context.access_pattern = sciencekit_common::execution::SKAccessPattern::Sequential;
-    context.grain = sciencekit_math::kernels::SK_AXIS_SUM_GRAIN;
-    estimator.resolve_plan(&context)
 }

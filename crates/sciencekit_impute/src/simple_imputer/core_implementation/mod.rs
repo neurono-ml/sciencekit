@@ -5,7 +5,8 @@
 
 mod configuration;
 mod fitting;
+mod validation;
 
 pub use configuration::SKSimpleImputer;
 
-pub(in crate::simple_imputer) use fitting::empty_columns;
+pub(in crate::simple_imputer) use validation::empty_columns;

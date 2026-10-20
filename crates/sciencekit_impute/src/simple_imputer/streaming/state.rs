@@ -10,6 +10,7 @@ pub(in crate::simple_imputer) struct StreamingImputation<F> {
     pub(super) columns_count: usize,
     pub(super) rows_count: u64,
     pub(super) imputation: Option<SKImputationState<F>>,
+    pub(super) missing_columns: Vec<bool>,
     pub(super) error: Option<SKError>,
 }
 
@@ -20,6 +21,7 @@ impl<F> StreamingImputation<F> {
             columns_count: 0,
             rows_count: 0,
             imputation: None,
+            missing_columns: Vec::new(),
             error: None,
         }
     }

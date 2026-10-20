@@ -3,6 +3,7 @@
 
 mod core_implementation;
 mod partial_fit;
+mod stacking;
 mod transform;
 
 pub use core_implementation::SKSimpleImputerModel;

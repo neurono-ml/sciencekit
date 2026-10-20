@@ -26,6 +26,16 @@ impl<F: SKFloat> SKMissingIndicatorModel<F> {
         number_of_input_columns: usize,
         estimator: &super::super::core_implementation::SKMissingIndicator<F>,
     ) -> Self {
+        Self::from_scope(scope, number_of_input_columns, estimator)
+    }
+
+    /// Build the model from a scope accumulated outside a batch fit — the
+    /// streaming driver learns it batch by batch.
+    pub(crate) fn from_scope(
+        scope: Vec<usize>,
+        number_of_input_columns: usize,
+        estimator: &super::super::core_implementation::SKMissingIndicator<F>,
+    ) -> Self {
         Self {
             scope,
             number_of_input_columns,
