@@ -1,114 +1,81 @@
-//! The `SKSimpleImputer` estimator shell (spec `simple-imputer`).
+//! Batch fitting: the representation dispatch, the state seeding and the
+//! fitted model assembly (spec `simple-imputer`).
 
+use ndarray::ArrayView2;
 use sciencekit_common::{
-    SKBackendKind, SKBuilderState, SKDataView, SKError, SKExecutionMode, SKExecutionPlan, SKFloat,
-    SKOperationAttributes, SKOperationKind, SKUnsupervisedFit, sk_run_operation,
+    SKDataView, SKError, SKExecutionPlan, SKFloat, SKOperationAttributes, SKOperationKind,
+    SKUnsupervisedFit, sk_run_operation,
 };
 use sprs::CsMatView;
 
-use crate::simple_imputer::builder::SKSimpleImputerBuilder;
+use super::SKSimpleImputer;
 use crate::simple_imputer::model::SKSimpleImputerModel;
+use crate::simple_imputer::state::SKImputationState;
 use crate::simple_imputer::statistics::{dense_column_statistics, sparse_column_statistics};
 use crate::simple_imputer::strategy::SKImputationStrategy;
 
-/// Fill the missing cells of a numeric feature matrix with a per-column
-/// strategy statistic (spec `simple-imputer`). The learned state lives in the
-/// distinct model returned by `fit`.
-pub struct SKSimpleImputer<F> {
-    pub(super) plan: SKBuilderState,
-    pub(super) strategy: SKImputationStrategy,
-    pub(super) missing_values: F,
-    pub(super) fill_value: Option<F>,
-    pub(super) keep_empty_features: bool,
-    pub(super) add_indicator: bool,
-    pub(super) backend: SKBackendKind,
-}
-
 impl<F: SKFloat> SKSimpleImputer<F> {
-    /// The builder of this estimator; the only construction path.
-    pub fn build() -> SKSimpleImputerBuilder<F> {
-        SKSimpleImputerBuilder::new()
-    }
-
-    /// The configured execution intent.
-    pub fn execution_intent(&self) -> SKExecutionMode {
-        self.plan.execution_intent()
-    }
-
-    /// Resolve the accumulated intent against a context into a concrete plan.
-    pub fn resolve_plan(
-        &self,
-        context: &sciencekit_common::SKExecutionContext,
-    ) -> Result<SKExecutionPlan, SKError> {
-        self.plan.resolve_plan(context)
-    }
-
-    /// The backend kind this estimator records in its operation spans and
-    /// transfers into its fitted models.
-    pub fn backend(&self) -> SKBackendKind {
-        self.backend
-    }
-
-    /// The configured per-column strategy statistic.
-    pub fn strategy(&self) -> SKImputationStrategy {
-        self.strategy
-    }
-
-    /// The configured missing-value marker.
-    pub fn missing_values(&self) -> F {
-        self.missing_values
-    }
-
-    /// The configured constant fill, if any.
-    pub fn fill_value(&self) -> Option<F> {
-        self.fill_value
-    }
-
-    /// Whether all-missing columns are kept as `0.0` instead of dropped.
-    pub fn keep_empty_features(&self) -> bool {
-        self.keep_empty_features
-    }
-
-    /// Whether the transform stacks a missingness indicator per fit-time
-    /// missing feature.
-    pub fn add_indicator(&self) -> bool {
-        self.add_indicator
-    }
-
     /// Fit the dense representation; the observed set is the non-missing cells.
-    fn fit_dense(
-        &self,
-        dense: ndarray::ArrayView2<'_, F>,
-    ) -> Result<SKSimpleImputerModel<F>, SKError> {
+    fn fit_dense(&self, dense: ArrayView2<'_, F>) -> Result<SKSimpleImputerModel<F>, SKError> {
         let (rows_count, columns_count) = validated_shape(&dense)?;
-        let statistics = sk_run_operation(self.fit_attributes(rows_count, columns_count), || {
-            let plan = resolve_fit_plan(self, dense.len() as u64)?;
-            debug_assert!(plan.parallelism >= 1);
-            Ok::<_, SKError>(dense_column_statistics(
-                &dense,
-                self.strategy,
-                self.missing_values,
-                self.fill_value,
-            ))
-        })?;
-        Ok(self.finish_fit(statistics, columns_count))
+        let (statistics, state) = self.fitted_state(
+            rows_count,
+            columns_count,
+            dense.len() as u64,
+            |state| state.extend_dense(&dense, self.strategy, self.missing_values),
+            || dense_column_statistics(&dense, self.strategy, self.missing_values, self.fill_value),
+        )?;
+        Ok(self.finish_fit(statistics, columns_count, state))
     }
 
     /// Fit the sparse representation; the observed set is the explicit
     /// non-missing entries plus the structural zeros the marker observes.
     fn fit_sparse(&self, sparse: CsMatView<'_, F>) -> Result<SKSimpleImputerModel<F>, SKError> {
         let (rows_count, columns_count) = validated_sparse_shape(&sparse)?;
-        let statistics = sk_run_operation(self.fit_attributes(rows_count, columns_count), || {
-            let plan = resolve_fit_plan(self, sparse.nnz() as u64)?;
+        let (statistics, state) = self.fitted_state(
+            rows_count,
+            columns_count,
+            sparse.nnz() as u64,
+            |state| state.extend_sparse(&sparse, self.strategy, self.missing_values),
+            || {
+                sparse_column_statistics(
+                    &sparse,
+                    self.strategy,
+                    self.missing_values,
+                    self.fill_value,
+                )
+            },
+        )?;
+        Ok(self.finish_fit(statistics, columns_count, state))
+    }
+
+    /// Seed the incremental state with the fit batch and derive the exact
+    /// statistics for it.
+    ///
+    /// The mean, mode and constant statistics come from the state itself,
+    /// which is exact; the median keeps the exact order statistic of the batch
+    /// (the sketch approximation is confined to the incremental path), while
+    /// the sketch is still seeded so `partial_fit` can continue from it.
+    fn fitted_state(
+        &self,
+        rows_count: usize,
+        columns_count: usize,
+        stored_elements: u64,
+        seed_state: impl FnOnce(&mut SKImputationState<F>),
+        exact_statistics: impl FnOnce() -> ndarray::Array1<F>,
+    ) -> Result<(ndarray::Array1<F>, SKImputationState<F>), SKError> {
+        sk_run_operation(self.fit_attributes(rows_count, columns_count), || {
+            let plan = resolve_fit_plan(self, stored_elements)?;
             debug_assert!(plan.parallelism >= 1);
-            Ok::<_, SKError>(sparse_column_statistics(
-                &sparse,
-                self.strategy,
-                self.missing_values,
-                self.fill_value,
-            ))
-        })?;
-        Ok(self.finish_fit(statistics, columns_count))
+            let mut state = SKImputationState::new(columns_count, self.strategy);
+            seed_state(&mut state);
+            let statistics = if self.strategy == SKImputationStrategy::Median {
+                exact_statistics()
+            } else {
+                state.statistics(self.strategy, self.fill_value)
+            };
+            Ok::<_, SKError>((statistics, state))
+        })
     }
 
     /// The span attributes of a fit, carrying the configured execution mode
@@ -123,15 +90,16 @@ impl<F: SKFloat> SKSimpleImputer<F> {
         }
     }
 
-    /// Assemble the fitted model from the statistics and the empty-column
-    /// policy.
+    /// Assemble the fitted model from the statistics, the seeded state and the
+    /// empty-column policy.
     fn finish_fit(
         &self,
         statistics: ndarray::Array1<F>,
         columns_count: usize,
+        state: SKImputationState<F>,
     ) -> SKSimpleImputerModel<F> {
         let dropped_columns = empty_columns(&statistics, self.keep_empty_features);
-        SKSimpleImputerModel::from_state(statistics, dropped_columns, columns_count, self)
+        SKSimpleImputerModel::from_state(statistics, dropped_columns, columns_count, state, self)
     }
 }
 
@@ -156,7 +124,7 @@ impl<F: SKFloat> SKUnsupervisedFit<F> for SKSimpleImputer<F> {
 
 /// The indices of the columns that produced no statistic, kept only when the
 /// estimator retains empty features.
-fn empty_columns<F: SKFloat>(
+pub(in crate::simple_imputer) fn empty_columns<F: SKFloat>(
     statistics: &ndarray::Array1<F>,
     keep_empty_features: bool,
 ) -> Vec<usize> {
@@ -172,7 +140,7 @@ fn empty_columns<F: SKFloat>(
 }
 
 /// Reject empty dense inputs before any element is processed.
-fn validated_shape<F>(features: &ndarray::ArrayView2<F>) -> Result<(usize, usize), SKError> {
+fn validated_shape<F>(features: &ArrayView2<F>) -> Result<(usize, usize), SKError> {
     let (rows_count, columns_count) = features.dim();
     if rows_count == 0 || columns_count == 0 {
         return Err(SKError::ShapeMismatch {

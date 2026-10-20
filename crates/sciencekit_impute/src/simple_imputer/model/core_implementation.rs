@@ -3,7 +3,9 @@
 use ndarray::{Array1, ArrayView1};
 use sciencekit_common::{SKBackendKind, SKExecutionMode, SKFloat};
 
+use crate::simple_imputer::state::SKImputationState;
 use crate::simple_imputer::strategy::SKImputationStrategy;
+
 /// The learned state of an [`crate::simple_imputer::SKSimpleImputer`]: the
 /// per-column statistic, the columns dropped as all-missing and the carried
 /// backend kind. The sole bearer of the fitted state, `Send + Sync` by
@@ -16,6 +18,7 @@ pub struct SKSimpleImputerModel<F> {
     pub(super) strategy: SKImputationStrategy,
     pub(super) fill_value: Option<F>,
     pub(super) keep_empty_features: bool,
+    pub(super) state: SKImputationState<F>,
     pub(super) backend: SKBackendKind,
     pub(super) execution_intent: SKExecutionMode,
 }
@@ -27,6 +30,7 @@ impl<F: SKFloat> SKSimpleImputerModel<F> {
         statistics: Array1<F>,
         dropped_columns: Vec<usize>,
         number_of_input_columns: usize,
+        state: SKImputationState<F>,
         estimator: &super::super::core_implementation::SKSimpleImputer<F>,
     ) -> Self {
         Self {
@@ -37,6 +41,7 @@ impl<F: SKFloat> SKSimpleImputerModel<F> {
             strategy: estimator.strategy,
             fill_value: estimator.fill_value,
             keep_empty_features: estimator.keep_empty_features,
+            state,
             backend: estimator.backend,
             execution_intent: estimator.execution_intent(),
         }
