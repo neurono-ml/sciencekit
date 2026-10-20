@@ -51,7 +51,7 @@ fn nominal_slice_converts_into_categorical_view() {
 #[test]
 fn integer_codes_convert_into_categorical_view() {
     let codes = Array2::from_shape_vec((2, 2), vec![0_i64, 1, 2, 3]).unwrap();
-    let view: SKCategoricalView<'_> = ArrayView2::from(&codes).into();
+    let view: SKCategoricalView<'_> = ArrayView2::from(&codes).try_into().unwrap();
     assert_eq!(view.representation(), "integer");
     assert_eq!(view.shape(), (2, 2));
     match view {
@@ -64,7 +64,7 @@ fn integer_codes_convert_into_categorical_view() {
 #[test]
 fn owned_integer_block_enters_by_borrowing() {
     let codes = Array2::from_shape_vec((1, 1), vec![7_i64]).unwrap();
-    let view: SKCategoricalView<'_> = (&codes).into();
+    let view: SKCategoricalView<'_> = (&codes).try_into().unwrap();
     assert_eq!(view.shape(), (1, 1));
 }
 
@@ -104,7 +104,7 @@ fn missing_sentinel_is_documented_constant() {
 #[test]
 fn categorical_view_emptiness() {
     let codes = Array2::from_shape_vec((0, 0), Vec::<i64>::new()).unwrap();
-    let view: SKCategoricalView<'_> = ArrayView2::from(&codes).into();
+    let view: SKCategoricalView<'_> = ArrayView2::from(&codes).try_into().unwrap();
     assert!(view.is_empty());
     assert_eq!(view.number_of_columns(), 0);
 }

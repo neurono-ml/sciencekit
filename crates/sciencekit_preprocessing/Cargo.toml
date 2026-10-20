@@ -8,5 +8,6 @@ sciencekit_common = { path = "../sciencekit_common" }
 sciencekit_math = { path = "../sciencekit_math" }
 
 ndarray = { workspace = true }
+rayon = { workspace = true }
 sprs = { workspace = true }
 tdigest = { workspace = true }

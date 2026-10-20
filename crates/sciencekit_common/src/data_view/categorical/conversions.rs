@@ -1,13 +1,11 @@
 //! Conversions into [`SKCategoricalView`] from native representations.
 //!
 //! The seam mirrors the numeric boundary: native types convert through the
-//! standard fallible bound and third parties can plug their own (including
-//! fallible) conversions. The `From<ArrayView2<i64>>` and
-//! `From<SKNominalMatrixView>` impls live on the enum definition in
-//! `categorical_view.rs`, so only the borrowed owned-block conversion is added
-//! here.
+//! standard fallible bound with a [`crate::SKError`] error, and third parties
+//! can plug their own (including fallible) conversions. The
+//! `From<SKNominalMatrixView>` impl lives on the enum definition.
 
-use ndarray::Array2;
+use ndarray::{Array2, ArrayView2};
 
 use super::{SKCategoricalView, SKNominalMatrixView};
 
@@ -19,9 +17,18 @@ impl<'a> TryFrom<&'a [&'a [&'a str]]> for SKCategoricalView<'a> {
     }
 }
 
+/// A borrowed integer-coded matrix enters through the same boundary.
+impl<'a> TryFrom<ArrayView2<'a, i64>> for SKCategoricalView<'a> {
+    type Error = crate::SKError;
+    fn try_from(view: ArrayView2<'a, i64>) -> Result<Self, Self::Error> {
+        Ok(SKCategoricalView::Integer(view))
+    }
+}
+
 /// An owned integer-coded block enters by borrowing — no data is duplicated.
-impl<'a> From<&'a Array2<i64>> for SKCategoricalView<'a> {
-    fn from(array: &'a Array2<i64>) -> Self {
-        SKCategoricalView::Integer(array.view())
+impl<'a> TryFrom<&'a Array2<i64>> for SKCategoricalView<'a> {
+    type Error = crate::SKError;
+    fn try_from(array: &'a Array2<i64>) -> Result<Self, Self::Error> {
+        Ok(SKCategoricalView::Integer(array.view()))
     }
 }

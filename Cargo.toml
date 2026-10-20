@@ -31,6 +31,9 @@ mimalloc = "0.1"
 
 ndarray = { version = "0.17", features = ["rayon"] }
 
+# Data-parallel compute pool (PRD §5); the sparse output build uses it.
+rayon = "1"
+
 # Sparse CSR representation (PRD §3); the sparse output path of the
 # preprocessing encoders builds on it.
 sprs = "0.11"

@@ -58,9 +58,3 @@ impl<'a> From<SKNominalMatrixView<'a>> for SKCategoricalView<'a> {
         SKCategoricalView::Nominal(view)
     }
 }
-
-impl<'a> From<ArrayView2<'a, i64>> for SKCategoricalView<'a> {
-    fn from(view: ArrayView2<'a, i64>) -> Self {
-        SKCategoricalView::Integer(view)
-    }
-}

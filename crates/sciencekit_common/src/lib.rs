@@ -37,7 +37,7 @@ pub use fit_traits::{
     SKClassifierPredictor, SKFeatureTransformer, SKRegressorPredictor, SKSupervisedFit,
     SKUnsupervisedFit,
 };
-pub use label_table::SKLabelTable;
+pub use label_table::{SKLabelTable, sk_canonicalize_labels};
 pub use observability::{
     SKBackendKind, SKOperationAttributes, SKOperationKind, SKOperationObservation, sk_run_operation,
 };
