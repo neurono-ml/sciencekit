@@ -18,7 +18,7 @@ pure-dispatcher `mod.rs`. One commit per task.
 
 ## 2. OneHotEncoder — estimator, model and dense/sparse transform
 
-- [ ] 2.1 Promote `sprs` to the workspace pins and to `sciencekit_preprocessing` production
+- [x] 2.1 Promote `sprs` to the workspace pins and to `sciencekit_preprocessing` production
   dependencies. Verify: `cargo build -p sciencekit_preprocessing` succeeds.
 - [ ] 2.2 Red: companion tests for `SKOneHotEncoder` (hand-checkable single text column
   `["a","b","a"] → [[1,0],[0,1],[1,0]]`, output width = category sum, first-occurrence table
