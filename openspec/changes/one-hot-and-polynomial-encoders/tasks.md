@@ -73,7 +73,7 @@ pure-dispatcher `mod.rs`. One commit per task.
 
 ## 6. Documentation
 
-- [ ] 6.1 Add the doc-branch chapters: a new `Development Explained` chapter for the categorical
+- [x] 6.1 Add the doc-branch chapters: a new `Development Explained` chapter for the categorical
   boundary + both transformers (with Mermaid diagrams), register it in `SUMMARY.md` and update
   `maintaining.md`; document the public API. Verify: `mdbook build docs` passes with zero
   warnings.
