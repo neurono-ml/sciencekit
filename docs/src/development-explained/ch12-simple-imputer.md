@@ -134,6 +134,15 @@ The model stores **one statistic per input column**. A column that has no observ
 which source columns to skip. Tests: `all_missing_column_gets_a_nan_statistic_and_is_reported`,
 `all_missing_column_is_dropped_by_default`, `keep_empty_features_retains_the_column_as_zero`.
 
+A `NaN` statistic is not by itself proof that a column is empty, and the two cases must not be
+confused. Under a marker other than `NaN`, a `NaN` cell is an **observed** value: a column such
+as `[NaN, 1.0]` with `missing_values(0.0)` has observed data whose mean happens to be `NaN`. The
+column is therefore kept, and its missing cells are filled with that `NaN` statistic — only a
+column with **no observed cell at all** falls back to the `0.0` of a retained empty column.
+Tests: `a_nan_value_under_a_zero_marker_is_observed_so_the_column_stays`,
+`a_nan_statistic_over_observed_data_fills_with_that_statistic`,
+`a_retained_empty_column_still_fills_with_zero`.
+
 ### The incremental state and the three regimes
 
 `SKImputationState<F>` is what makes the estimator iterative. Per column it keeps:
@@ -309,6 +318,9 @@ full:
   observed value is copied bit for bit.
 - `zero_marker_fills_the_implicit_zeros` — with a `0.0` marker the CSR rebuild also materializes
   the cells that storage never held.
+- `a_retained_empty_sparse_column_stores_no_explicit_zeros` — the CSR rebuild never writes a
+  filled `0.0`, because `0.0` is exactly what the format leaves implicit: the retained empty
+  column is still there in the dense view, but it costs no stored entry.
 - `split_batches_equal_the_whole_for_mean` — two `partial_fit` halves equal one fit, the
   incremental promise.
 - `streaming_driver_mean_is_exact` / `streaming_driver_median_stays_within_the_sketch_tolerance`
