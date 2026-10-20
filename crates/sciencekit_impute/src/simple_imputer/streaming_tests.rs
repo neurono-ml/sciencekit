@@ -2,8 +2,8 @@
 
 use ndarray::{Array2, array, s};
 use sciencekit_common::{
-    SKBackendKind, SKBuilder, SKDataBatch, SKError, SKExecutionMode, SKFeatureTransformer,
-    SKFloat, SKLazySource, SKUnsupervisedFit,
+    SKBackendKind, SKBuilder, SKDataBatch, SKError, SKExecutionMode, SKFeatureTransformer, SKFloat,
+    SKLazySource, SKUnsupervisedFit,
 };
 
 use super::core_implementation::SKSimpleImputer;
@@ -168,7 +168,10 @@ fn streaming_empty_source_errors() {
 
 #[test]
 fn streaming_column_mismatch_errors() {
-    let mut source = SKVectorSource::new(vec![array![[1.0, 2.0], [3.0, 4.0]], array![[5.0, 6.0, 7.0]]]);
+    let mut source = SKVectorSource::new(vec![
+        array![[1.0, 2.0], [3.0, 4.0]],
+        array![[5.0, 6.0, 7.0]],
+    ]);
     let error = SKSimpleImputer::<f64>::build()
         .build()
         .unwrap()

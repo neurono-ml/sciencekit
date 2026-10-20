@@ -1,12 +1,12 @@
-//! The `SKMissingIndicator` estimator shell (spec `missing-indicator`).
+//! The estimator configuration surface: the builder-only construction and the
+//! accessors every operation reads (spec `missing-indicator`).
 
 use sciencekit_common::{
-    SKBackendKind, SKBuilderState, SKDataView, SKError, SKExecutionContext, SKExecutionMode,
-    SKExecutionPlan, SKFloat, SKUnsupervisedFit,
+    SKBackendKind, SKBuilderState, SKError, SKExecutionContext, SKExecutionMode, SKExecutionPlan,
+    SKFloat,
 };
 
 use crate::missing_indicator::builder::SKMissingIndicatorBuilder;
-use crate::missing_indicator::model::SKMissingIndicatorModel;
 use crate::missing_indicator::scope::SKMissingFeatureScope;
 
 /// Learn which feature columns carry missing cells and emit a `0.0`/`1.0` mask
@@ -61,20 +61,5 @@ impl<F: SKFloat> SKMissingIndicator<F> {
     /// The configured missing-value marker.
     pub fn missing_values(&self) -> F {
         self.missing_values
-    }
-}
-
-impl<F: SKFloat> SKUnsupervisedFit<F> for SKMissingIndicator<F> {
-    type Model = SKMissingIndicatorModel<F>;
-    type Error = SKError;
-
-    fn fit<'a, X>(&self, _features: X) -> Result<Self::Model, Self::Error>
-    where
-        X: TryInto<SKDataView<'a, F>, Error = SKError>,
-    {
-        Err(SKError::UnsupportedRepresentation {
-            representation: "unknown",
-            suggestion: "the missing indicator is not implemented yet",
-        })
     }
 }

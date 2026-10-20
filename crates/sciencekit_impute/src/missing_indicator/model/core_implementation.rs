@@ -20,6 +20,24 @@ pub struct SKMissingIndicatorModel<F> {
 }
 
 impl<F: SKFloat> SKMissingIndicatorModel<F> {
+    /// Build the model from the learned scope; the sole construction path.
+    pub(in crate::missing_indicator) fn from_state(
+        scope: Vec<usize>,
+        number_of_input_columns: usize,
+        estimator: &super::super::core_implementation::SKMissingIndicator<F>,
+    ) -> Self {
+        Self {
+            scope,
+            number_of_input_columns,
+            features: estimator.features,
+            error_on_new: estimator.error_on_new,
+            sparse_output: estimator.sparse_output,
+            missing_values: estimator.missing_values,
+            backend: estimator.backend,
+            execution_intent: estimator.execution_intent(),
+        }
+    }
+
     /// The feature columns the mask covers, in ascending order.
     pub fn scope(&self) -> &[usize] {
         &self.scope

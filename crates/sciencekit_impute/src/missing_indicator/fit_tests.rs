@@ -77,8 +77,8 @@ fn empty_input_is_rejected_at_fit() {
         .build()
         .unwrap()
         .fit(&Array2::<f64>::zeros((0, 2)))
-        .err()
-        .expect("an empty matrix must fail");
+        .map(|_| ())
+        .expect_err("an empty matrix must fail");
     assert!(matches!(error, SKError::ShapeMismatch { .. }));
 }
 

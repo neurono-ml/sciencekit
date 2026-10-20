@@ -33,7 +33,7 @@ fn dense_input_yields_a_dense_mask_in_scope_order() {
         .unwrap();
     let mask = dense_mask(
         model
-            .transform(&array![[f64::NAN, f64::NAN], [2.0, 4.0]])
+            .transform(&array![[2.0, f64::NAN], [4.0, 5.0]])
             .unwrap(),
     );
     assert_eq!(mask, array![[1.0], [0.0]]);
@@ -110,8 +110,7 @@ fn new_missingness_is_rejected_by_default() {
         .unwrap();
     let error = model
         .transform(&array![[f64::NAN, 2.0]])
-        .err()
-        .expect("a missing cell in a never-missing feature must fail");
+        .expect_err("a missing cell in a never-missing feature must fail");
     assert!(
         matches!(error, SKError::UnexpectedMissingness { column: 0 }),
         "expected the never-missing feature to be named, found {error:?}"
@@ -139,7 +138,6 @@ fn column_count_mismatch_is_rejected() {
         .unwrap();
     let error = model
         .transform(&array![[1.0, 2.0, 3.0]])
-        .err()
-        .expect("a column count mismatch must fail");
+        .expect_err("a column count mismatch must fail");
     assert!(matches!(error, SKError::ShapeMismatch { .. }));
 }

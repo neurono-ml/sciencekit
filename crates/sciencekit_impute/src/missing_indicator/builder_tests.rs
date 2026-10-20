@@ -22,9 +22,7 @@ fn defaults_mask_only_the_features_missing_at_fit() {
     assert_eq!(estimator.backend(), SKBackendKind::Faer);
     assert!(!estimator.sparse_output());
 
-    let model = estimator
-        .fit(&array![[1.0, f64::NAN], [3.0, 4.0]])
-        .unwrap();
+    let model = estimator.fit(&array![[1.0, f64::NAN], [3.0, 4.0]]).unwrap();
     assert_eq!(model.scope(), &[1]);
     assert_eq!(model.number_of_input_columns(), 2);
     assert_eq!(model.number_of_output_columns(), 1);
