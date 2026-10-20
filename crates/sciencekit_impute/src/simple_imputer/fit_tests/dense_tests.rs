@@ -46,8 +46,10 @@ fn most_frequent_tie_breaks_toward_the_smallest() {
         .strategy(SKImputationStrategy::MostFrequent)
         .build()
         .unwrap();
+    // Column 0 has a strict mode (2 twice, 5 once); column 1 ties at two
+    // occurrences each, so the smallest of the tied values must win.
     let model = imputer
-        .fit(&array![[2.0, 5.0], [5.0, 1.0], [2.0, 1.0], [f64::NAN, 1.0]])
+        .fit(&array![[2.0, 5.0], [5.0, 5.0], [2.0, 1.0], [f64::NAN, 1.0]])
         .unwrap();
     assert_eq!(model.statistics().as_slice().unwrap(), &[2.0, 1.0]);
 }

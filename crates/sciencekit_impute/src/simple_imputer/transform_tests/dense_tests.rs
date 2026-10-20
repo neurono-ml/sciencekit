@@ -121,3 +121,53 @@ fn constant_strategy_fills_every_missing_cell_and_keeps_the_columns() {
     );
     assert_eq!(imputed, array![[-1.0, -1.0], [2.0, -1.0]]);
 }
+
+#[test]
+fn a_nan_statistic_over_observed_data_fills_with_that_statistic() {
+    // Under a `0.0` marker a `NaN` cell is an observed value, so column 0 holds
+    // data whose mean is `NaN`. The missing cell must be filled with the fitted
+    // statistic, not with the `0.0` reserved for a retained empty column.
+    let features = array![[f64::NAN, 2.0], [1.0, 0.0]];
+    let model = SKSimpleImputer::<f64>::build()
+        .missing_values(0.0)
+        .build()
+        .unwrap()
+        .fit(&features)
+        .unwrap();
+    assert!(model.statistics()[0].is_nan());
+    assert!(
+        model.dropped_columns().is_empty(),
+        "the column holds observed data"
+    );
+
+    let output = dense(model.transform(&array![[0.0, 0.0]]).unwrap());
+    assert!(
+        output[[0, 0]].is_nan(),
+        "the fill is the column statistic, not the retained-empty zero"
+    );
+    assert_eq!(
+        output[[0, 1]],
+        2.0,
+        "the observed mean of column 1 fills it"
+    );
+}
+
+#[test]
+fn a_retained_empty_column_still_fills_with_zero() {
+    // The retained-empty-column zero must survive the statistic-aware fill: a
+    // column with no observed cell and no statistic fills with `0.0`.
+    let features = array![[f64::NAN, 2.0], [f64::NAN, 4.0]];
+    let model = SKSimpleImputer::<f64>::build()
+        .keep_empty_features(true)
+        .build()
+        .unwrap()
+        .fit(&features)
+        .unwrap();
+    assert!(model.statistics()[0].is_nan());
+    assert!(model.dropped_columns().is_empty());
+
+    let output = dense(model.transform(&features).unwrap());
+    assert_eq!(output[[0, 0]], 0.0);
+    assert_eq!(output[[1, 0]], 0.0);
+    assert_eq!(output[[0, 1]], 2.0);
+}

@@ -78,3 +78,30 @@ fn sparse_all_missing_column_is_dropped_by_default() {
     assert_eq!((imputed.rows(), imputed.cols()), (2, 1));
     assert_eq!(imputed.to_dense(), array![[1.0], [2.0]]);
 }
+
+#[test]
+fn a_retained_empty_sparse_column_stores_no_explicit_zeros() {
+    // The retained empty column fills with `0.0`, and `0.0` is exactly the value
+    // a CSR leaves implicit: storing it would add entries the format does not
+    // need, so the fill stays structural.
+    let fitted = csr(
+        (2, 2),
+        &[(0, 0, f64::NAN), (1, 0, f64::NAN), (0, 1, 2.0), (1, 1, 4.0)],
+    );
+    let model = SKSimpleImputer::<f64>::build()
+        .keep_empty_features(true)
+        .build()
+        .unwrap()
+        .fit(fitted.view())
+        .unwrap();
+    assert!(model.dropped_columns().is_empty());
+
+    let output = sparse(model.transform(fitted.view()).unwrap());
+    assert_eq!(output.shape(), (2, 2));
+    assert_eq!(output.to_dense(), array![[0.0, 2.0], [0.0, 4.0]]);
+    assert_eq!(
+        output.nnz(),
+        2,
+        "the zero fill of the retained empty column stays implicit"
+    );
+}

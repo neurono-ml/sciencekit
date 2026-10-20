@@ -81,10 +81,16 @@ impl<F: SKFloat> SKSimpleImputerModel<F> {
         }
     }
 
-    /// The value that fills a missing cell of the column with `statistic`: the
-    /// statistic itself, or `0.0` for a retained empty column (no statistic).
-    fn fill_for(&self, statistic: F) -> F {
-        if statistic.is_nan() {
+    /// The value that fills a missing cell of `column`: the fitted statistic, or
+    /// `0.0` for a retained empty column.
+    ///
+    /// A `NaN` statistic alone does not mean the column is empty — under a
+    /// marker other than `NaN`, a `NaN` cell is observed and the column can
+    /// carry a `NaN` mean. Only a column with no observed cell falls back to
+    /// `0.0`; every other column fills with its statistic, `NaN` included.
+    fn fill_for(&self, column: usize) -> F {
+        let statistic = self.statistics[column];
+        if statistic.is_nan() && self.state.counts()[column] == 0 {
             F::zero()
         } else {
             statistic
@@ -101,11 +107,11 @@ impl<F: SKFloat> SKSimpleImputerModel<F> {
     fn transform_dense(&self, features: &ArrayView2<'_, F>) -> Result<Array2<F>, SKError> {
         let mut output = Array2::zeros((features.nrows(), self.number_of_output_features()));
         let mut target = 0;
-        for (source, &statistic) in self.statistics.iter().enumerate() {
+        for source in 0..self.statistics.len() {
             if self.is_dropped(source) {
                 continue;
             }
-            let fill = self.fill_for(statistic);
+            let fill = self.fill_for(source);
             let mut output_column = output.column_mut(target);
             let source_column = features.column(source);
             azip!((target_value in &mut output_column, &source_value in &source_column) {
@@ -135,9 +141,9 @@ impl<F: SKFloat> SKSimpleImputerModel<F> {
         // The retained source columns in ascending order, with their output
         // index and the value that fills them.
         let mut retained: Vec<(usize, usize, F)> = Vec::new();
-        for (source, &statistic) in self.statistics.iter().enumerate() {
+        for source in 0..self.statistics.len() {
             if !self.is_dropped(source) {
-                retained.push((source, retained.len(), self.fill_for(statistic)));
+                retained.push((source, retained.len(), self.fill_for(source)));
             }
         }
         let fill_implicit_zeros = sk_sparse_marks_implicit_zeros(self.missing_values);
@@ -160,12 +166,12 @@ impl<F: SKFloat> SKSimpleImputerModel<F> {
                     continue;
                 }
                 cursor += 1;
-                let imputed = if sk_is_missing(value, self.missing_values) {
-                    fill
-                } else {
-                    value
-                };
-                if !(fill_implicit_zeros && imputed == F::zero()) {
+                let is_missing = sk_is_missing(value, self.missing_values);
+                let imputed = if is_missing { fill } else { value };
+                // A filled `0.0` needs no entry: it is exactly the value a CSR
+                // leaves implicit, so storing it would only bloat the matrix.
+                // An observed `0.0` is the input's own structure and is kept.
+                if !(is_missing && imputed == F::zero()) {
                     triplets.add_triplet(row_index, output, imputed);
                 }
             }
