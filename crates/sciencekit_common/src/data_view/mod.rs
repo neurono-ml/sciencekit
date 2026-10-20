@@ -11,13 +11,15 @@
 //! This is a **pure dispatcher** module: `mod.rs` only declares and re-exports
 //! submodules; every implementation lives in its own file.
 
+pub mod categorical;
 mod conversions;
 // Private implementation module shadowing the parent name; allowed because the
-// module stays private and every public item is re-exported above, so the
+// module stays private and every public item is re-exported below, so the
 // same-name nesting never surfaces in public paths.
 #[allow(clippy::module_inception)]
 mod data_view;
 
+pub use categorical::{SK_CATEGORICAL_MISSING_CODE, SKCategoricalView, SKNominalMatrixView};
 pub use data_view::SKDataView;
 
 #[cfg(test)]
