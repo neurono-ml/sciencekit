@@ -53,11 +53,11 @@ pure-dispatcher `mod.rs`. One commit per task. ADR issue: #87.
 
 ## 6. Incremental fit (partial_fit)
 
-- [ ] 6.1 Red: companion tests for `partial_fit` (split uneven batches ≡ `fit` on the
+- [x] 6.1 Red: companion tests for `partial_fit` (split uneven batches ≡ `fit` on the
   concatenation for mean/mode/constant, median equal to the exact dense value while the
   sketch path stays within tolerance, empty batch no-op, column-count mismatch error,
   chaining `&mut self`). Verify: tests fail.
-- [ ] 6.2 Implement `partial_fit` on the model with its accumulating state (count/sum, value
+- [x] 6.2 Implement `partial_fit` on the model with its accumulating state (count/sum, value
   counts, per-column `tdigest` for the median). Verify: the incremental equivalence tests
   pass.
 
