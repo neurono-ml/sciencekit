@@ -19,16 +19,25 @@ pub enum SKImputedOutput<F> {
 impl<F> SKImputedOutput<F> {
     /// The row count of the imputed matrix, dense or sparse alike.
     pub fn nrows(&self) -> usize {
-        0
+        match self {
+            SKImputedOutput::Dense(matrix) => matrix.nrows(),
+            SKImputedOutput::Sparse(matrix) => matrix.shape().0,
+        }
     }
 
     /// The column count of the imputed matrix, dense or sparse alike.
     pub fn ncols(&self) -> usize {
-        0
+        match self {
+            SKImputedOutput::Dense(matrix) => matrix.ncols(),
+            SKImputedOutput::Sparse(matrix) => matrix.shape().1,
+        }
     }
 
     /// The representation label, used for diagnostics and dispatch.
     pub fn representation(&self) -> &'static str {
-        "dense"
+        match self {
+            SKImputedOutput::Dense(_) => "dense",
+            SKImputedOutput::Sparse(_) => "csr",
+        }
     }
 }

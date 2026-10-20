@@ -15,14 +15,18 @@ use sciencekit_common::SKFloat;
 /// A `NaN` marker matches `NaN` cells through `is_nan()` (since `NaN == NaN`
 /// is always false); any other marker matches by equality, so a `NaN` cell is
 /// never missing under a non-`NaN` marker.
-pub fn sk_is_missing<F: SKFloat>(_value: F, _marker: F) -> bool {
-    false
+pub fn sk_is_missing<F: SKFloat>(value: F, marker: F) -> bool {
+    if marker.is_nan() {
+        value.is_nan()
+    } else {
+        value == marker
+    }
 }
 
 /// Whether a sparse matrix's implicit zeros count as missing under `marker`.
 ///
 /// Only the `0.0` marker claims the implicit zeros; every other marker,
 /// including the default `NaN`, leaves the structural zeros observed.
-pub fn sk_sparse_marks_implicit_zeros<F: SKFloat>(_marker: F) -> bool {
-    false
+pub fn sk_sparse_marks_implicit_zeros<F: SKFloat>(marker: F) -> bool {
+    marker == F::zero()
 }
