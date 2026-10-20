@@ -47,7 +47,7 @@ pure-dispatcher `mod.rs`. One commit per task. ADR issue: #87.
   CSR→CSR, sparse fill storing only the filled cells, empty column dropped by default,
   retained as `0.0` under `keep_empty_features(true)`, filled under `Constant`). Verify:
   tests fail.
-- [ ] 5.2 Implement `transform` on the model returning `SKImputedOutput<F>` — `azip!`/`map`
+- [x] 5.2 Implement `transform` on the model returning `SKImputedOutput<F>` — `azip!`/`map`
   fill for dense, a two-pass CSR rebuild for sparse — plus the empty-column policy. Verify:
   the transform tests pass and sparse ≡ dense equivalence holds exactly.
 
