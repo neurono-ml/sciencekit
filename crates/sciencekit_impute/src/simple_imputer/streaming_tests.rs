@@ -103,6 +103,7 @@ fn streaming_driver_mean_is_exact() {
         .unwrap();
     let mut source = SKVectorSource::new(chunk_rows(&features, &[1, 2, 1]));
     let streamed = SKSimpleImputer::<f64>::build()
+        .execution_mode(SKExecutionMode::OutOfCoreStreaming)
         .build()
         .unwrap()
         .fit_streaming(&mut source)
@@ -121,6 +122,7 @@ fn streaming_driver_mode_is_exact() {
         .unwrap();
     let mut source = SKVectorSource::new(chunk_rows(&features, &[2, 1, 3]));
     let streamed = SKSimpleImputer::<f64>::build()
+        .execution_mode(SKExecutionMode::OutOfCoreStreaming)
         .strategy(SKImputationStrategy::MostFrequent)
         .build()
         .unwrap()
@@ -140,6 +142,7 @@ fn streaming_driver_median_stays_within_the_sketch_tolerance() {
         .unwrap();
     let mut source = SKVectorSource::new(chunk_rows(&features, &[121, 200, 279]));
     let streamed = SKSimpleImputer::<f64>::build()
+        .execution_mode(SKExecutionMode::OutOfCoreStreaming)
         .strategy(SKImputationStrategy::Median)
         .build()
         .unwrap()
