@@ -144,7 +144,9 @@ transform, consistently across the dense and sparse paths.
 `fit_streaming` SHALL consume a sequence of categorical batches and produce the same tables the
 dense `fit` would produce for the concatenated batches: category indices follow first-occurrence
 order across the concatenation. An empty sequence or a batch sequence with inconsistent column
-counts SHALL fail with a structured error.
+counts SHALL fail with a structured error. Because the tables depend only on the categories
+observed in order, accumulating them batch by batch is exact — no separate in-memory branch is
+required.
 
 #### Scenario: Uneven batches equal dense
 

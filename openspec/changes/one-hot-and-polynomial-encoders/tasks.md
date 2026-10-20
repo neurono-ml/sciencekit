@@ -20,28 +20,28 @@ pure-dispatcher `mod.rs`. One commit per task.
 
 - [x] 2.1 Promote `sprs` to the workspace pins and to `sciencekit_preprocessing` production
   dependencies. Verify: `cargo build -p sciencekit_preprocessing` succeeds.
-- [ ] 2.2 Red: companion tests for `SKOneHotEncoder` (hand-checkable single text column
+- [x] 2.2 Red: companion tests for `SKOneHotEncoder` (hand-checkable single text column
   `["a","b","a"] → [[1,0],[0,1],[1,0]]`, output width = category sum, first-occurrence table
   order, deterministic tables across fits, table roundtrip, unknown-category `Reject` error,
   empty input, inconsistent column counts, backend default/override, f32/f64). Verify: tests
   fail.
-- [ ] 2.3 `SKOneHotEncoderBuilder` (`sparse_output`, `handle_unknown`, `backend`,
+- [x] 2.3 `SKOneHotEncoderBuilder` (`sparse_output`, `handle_unknown`, `backend`,
   `execution_mode`; private constructor) and the `SKBuilder` impl. Verify: default configuration
   is asserted by tests.
-- [ ] 2.4 `SKOneHotEncoder` estimator (dense `fit` over `SKCategoricalView`), the per-column
+- [x] 2.4 `SKOneHotEncoder` estimator (dense `fit` over `SKCategoricalView`), the per-column
   `SKOneHotColumnCategories` (nominal `SKLabelTable` / integer code table) and
   `SKOneHotEncoderModel` with accessors and carried backend. Verify: the dense fit tests pass.
-- [ ] 2.5 Dense `transform_dense` + `transform()` returning `SKEncodedOutput<F>`, honoring the
+- [x] 2.5 Dense `transform_dense` + `transform()` returning `SKEncodedOutput<F>`, honoring the
   `handle_unknown` policy and the missing sentinel. Verify: dense output and policy tests pass.
-- [ ] 2.6 Parallel two-pass CSR `transform_sparse` (rayon row-nnz pass + fill,
+- [x] 2.6 Parallel two-pass CSR `transform_sparse` (rayon row-nnz pass + fill,
   `CsMat::new_from_unsorted`). Verify: the sparse ≡ dense equivalence tests pass exactly.
 
 ## 3. OneHotEncoder — out-of-core fit_streaming
 
-- [ ] 3.1 Red: companion tests for `fit_streaming` (uneven categorical batches ≡ dense tables,
+- [x] 3.1 Red: companion tests for `fit_streaming` (uneven categorical batches ≡ dense tables,
   first-occurrence order across the concatenation, inconsistent-columns error, empty sequence
   error). Verify: tests fail.
-- [ ] 3.2 Implement `fit_streaming` over an iterator of `SKCategoricalView` batches reusing the
+- [x] 3.2 Implement `fit_streaming` over an iterator of `SKCategoricalView` batches reusing the
   table-building logic. Verify: streaming ≡ dense tests pass exactly.
 
 ## 4. PolynomialFeatures — estimator, model and lazy expansion
