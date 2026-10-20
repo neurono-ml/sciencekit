@@ -77,6 +77,14 @@ transport choice, not a different model. A single-pass source reports zero dimen
 the outer span (totals unknown upfront); each batch reports its real dimensions on a
 `PartialFit` span. This mirrors the scaler's `resolve_streaming_plan`.
 
+The Phase 0 streaming executor carries features only (`SKDataBatch`), but a supervised
+out-of-core fit needs the targets alongside them. Rather than conflate a target column into
+the feature matrix or duplicate the prefetch machinery, the change adds a **supervised
+streaming contract** to `sciencekit_common` — `SKSupervisedBatch` (owned features +
+targets), the `SKSupervisedLazySource` fallible iteration, and
+`sk_run_supervised_streaming_driver` — and generalizes the driver so both the feature-only
+and the supervised sources share one prefetch engine. The feature-only path is unchanged.
+
 ### Decision 7 — Backend is carried, not dispatched, by the estimator
 
 Per `backend-selection`, the estimator exposes `backend(SKBackendKind)` and records the

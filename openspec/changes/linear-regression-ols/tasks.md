@@ -31,6 +31,10 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 
 ## 3. Out-of-core streaming fit
 
+- [x] 3.0 Add the supervised streaming contract to `sciencekit_common`
+  (`SKSupervisedBatch`, `SKSupervisedLazySource`, `sk_run_supervised_streaming_driver`)
+  and generalize the prefetch driver to serve both source kinds; spec delta on
+  `streaming-batches`. *(commit `feat(common): add supervised streaming batches and prefetch driver`)*
 - [ ] 3.1 Red: streaming companion tests (uneven batches ≡ dense, single batch, empty
   source error, column mismatch error, builder flags, f32, large scale).
   *(commit `feat(linear_model): add out-of-core streaming fit for linear regression`)*

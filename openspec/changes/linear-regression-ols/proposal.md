@@ -37,6 +37,11 @@ it is copied into a dozen regressors and classifiers.
 - **Kernels `sk_gram_matrix` and `sk_gram_vector`** in `sciencekit_math`: the `XᵀX` and
   `Xᵀy` cross-product reductions the Gram accumulation needs, with the same sequential /
   race-free parallel contract as the existing axis reductions.
+- **Supervised streaming contract** in `sciencekit_common`: `SKSupervisedBatch` (owned
+  features + targets), the `SKSupervisedLazySource` fallible iteration, and
+  `sk_run_supervised_streaming_driver`, which reuses the existing prefetch pipeline. The
+  existing `SKDataBatch` carries features only, so a supervised out-of-core fit needs this
+  pair; the feature-only driver is unchanged.
 - **Companion test modules** (`*_tests.rs`) covering dense, incremental and streaming
   fits, f32/f64, intercept on/off, rank-deficient designs, concurrency and the model
   export boundary.
@@ -55,6 +60,11 @@ it is copied into a dozen regressors and classifiers.
 - `higher-order-kernels`: adds the cross-product reductions `sk_gram_matrix` (`XᵀX`) and
   `sk_gram_vector` (`Xᵀy`), the matrix/vector companions of the axis reductions, with the
   same parallelism and grain contract.
+- `streaming-batches`: adds the supervised streaming contract (`SKSupervisedBatch` /
+  `SKSupervisedLazySource`) and the prefetch driver entry point that serves both the
+  feature-only and the supervised sequential sources — discovered during implementation,
+  because the existing `SKDataBatch` carries only features and a supervised out-of-core fit
+  needs the targets alongside them.
 
 ## Impact
 
@@ -63,6 +73,9 @@ it is copied into a dozen regressors and classifiers.
   `[workspace] members` entry in the root `Cargo.toml`.
 - **`sciencekit_math`:** `kernels/` gains `sk_gram_matrix` and `sk_gram_vector`; the crate
   root re-exports them.
+- **`sciencekit_common`:** `batching/` gains `SKSupervisedBatch` / `SKSupervisedLazySource`
+  and `execution/streaming_driver.rs` gains `sk_run_supervised_streaming_driver`, sharing
+  the existing prefetch engine with the unchanged `sk_run_streaming_driver`.
 - **Dependencies:** none new beyond the existing `ndarray`/`rayon`; the streaming path
   reuses the Phase 0 streaming executor and the backend's `lstsq`.
 - **Public API:** new exports `SKLinearRegression`, `SKLinearRegressionBuilder`,
