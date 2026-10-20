@@ -2,11 +2,12 @@
 
 use sciencekit_common::{
     SKBackendKind, SKBuilderState, SKDataView, SKError, SKExecutionMode, SKExecutionPlan, SKFloat,
-    SKUnsupervisedFit,
+    SKOperationAttributes, SKOperationKind, SKUnsupervisedFit, sk_run_operation,
 };
 
 use crate::simple_imputer::builder::SKSimpleImputerBuilder;
 use crate::simple_imputer::model::SKSimpleImputerModel;
+use crate::simple_imputer::statistics::column_statistics;
 use crate::simple_imputer::strategy::SKImputationStrategy;
 
 /// Fill the missing cells of a numeric feature matrix with a per-column
@@ -84,16 +85,74 @@ impl<F: SKFloat> SKUnsupervisedFit<F> for SKSimpleImputer<F> {
     {
         let view = features.try_into()?;
         let dense = view.as_dense()?;
-        let number_of_columns = dense.ncols();
+        let (rows_count, columns_count) = validated_shape(&dense)?;
+        let attributes = SKOperationAttributes {
+            operation: SKOperationKind::Fit,
+            rows_count,
+            columns_count,
+            execution_mode: self.execution_intent(),
+            backend: self.backend,
+        };
+        let statistics = sk_run_operation(attributes, || {
+            let plan = resolve_fit_plan(self, &dense)?;
+            debug_assert!(plan.parallelism >= 1);
+            Ok::<_, SKError>(column_statistics(
+                &dense,
+                self.strategy,
+                self.missing_values,
+                self.fill_value,
+            ))
+        })?;
+        let dropped_columns = empty_columns(&statistics, self.keep_empty_features);
         Ok(SKSimpleImputerModel::from_state(
-            ndarray::Array1::zeros(number_of_columns),
-            Vec::new(),
-            number_of_columns,
-            self.strategy,
-            self.fill_value,
-            self.keep_empty_features,
-            self.backend,
-            self.execution_intent(),
+            statistics,
+            dropped_columns,
+            columns_count,
+            self,
         ))
     }
+}
+
+/// The indices of the columns that produced no statistic, kept only when the
+/// estimator retains empty features.
+fn empty_columns<F: SKFloat>(
+    statistics: &ndarray::Array1<F>,
+    keep_empty_features: bool,
+) -> Vec<usize> {
+    if keep_empty_features {
+        return Vec::new();
+    }
+    statistics
+        .iter()
+        .enumerate()
+        .filter(|(_, statistic)| statistic.is_nan())
+        .map(|(index, _)| index)
+        .collect()
+}
+
+/// Reject empty inputs before any element is processed.
+fn validated_shape<F>(features: &ndarray::ArrayView2<F>) -> Result<(usize, usize), SKError> {
+    let (rows_count, columns_count) = features.dim();
+    if rows_count == 0 || columns_count == 0 {
+        return Err(SKError::ShapeMismatch {
+            expected: vec![rows_count.max(1), columns_count.max(1)],
+            found: vec![rows_count, columns_count],
+        });
+    }
+    Ok((rows_count, columns_count))
+}
+
+/// Build a fresh execution context per operation, declare the reduction grain
+/// and the `Sequential` access pattern, and resolve the plan.
+fn resolve_fit_plan<F: SKFloat>(
+    estimator: &SKSimpleImputer<F>,
+    features: &ndarray::ArrayView2<F>,
+) -> Result<SKExecutionPlan, SKError> {
+    let mut context = sciencekit_common::SKExecutionContext::real();
+    context.dataset_size_bytes = features.len() as u64 * size_of::<F>() as u64;
+    context.scalar_size_bytes = size_of::<F>() as u64;
+    context.dataset_elements = Some(features.len() as u64);
+    context.access_pattern = sciencekit_common::execution::SKAccessPattern::Sequential;
+    context.grain = sciencekit_math::kernels::SK_AXIS_SUM_GRAIN;
+    estimator.resolve_plan(&context)
 }

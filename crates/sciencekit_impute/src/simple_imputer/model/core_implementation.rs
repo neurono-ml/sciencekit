@@ -4,7 +4,6 @@ use ndarray::{Array1, ArrayView1};
 use sciencekit_common::{SKBackendKind, SKExecutionMode, SKFloat};
 
 use crate::simple_imputer::strategy::SKImputationStrategy;
-
 /// The learned state of an [`crate::simple_imputer::SKSimpleImputer`]: the
 /// per-column statistic, the columns dropped as all-missing and the carried
 /// backend kind. The sole bearer of the fitted state, `Send + Sync` by
@@ -27,21 +26,17 @@ impl<F: SKFloat> SKSimpleImputerModel<F> {
         statistics: Array1<F>,
         dropped_columns: Vec<usize>,
         number_of_input_columns: usize,
-        strategy: SKImputationStrategy,
-        fill_value: Option<F>,
-        keep_empty_features: bool,
-        backend: SKBackendKind,
-        execution_intent: SKExecutionMode,
+        estimator: &super::super::core_implementation::SKSimpleImputer<F>,
     ) -> Self {
         Self {
             statistics,
             dropped_columns,
             number_of_input_columns,
-            strategy,
-            fill_value,
-            keep_empty_features,
-            backend,
-            execution_intent,
+            strategy: estimator.strategy,
+            fill_value: estimator.fill_value,
+            keep_empty_features: estimator.keep_empty_features,
+            backend: estimator.backend,
+            execution_intent: estimator.execution_intent(),
         }
     }
 
@@ -60,9 +55,10 @@ impl<F: SKFloat> SKSimpleImputerModel<F> {
         self.number_of_input_columns
     }
 
-    /// The number of columns the transform will emit.
+    /// The number of columns the transform will emit: the fitted columns
+    /// minus the ones dropped as all-missing.
     pub fn number_of_output_features(&self) -> usize {
-        self.statistics.len()
+        self.number_of_input_columns - self.dropped_columns.len()
     }
 
     /// The strategy the statistics were computed with.

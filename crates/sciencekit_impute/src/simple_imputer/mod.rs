@@ -7,6 +7,7 @@ mod builder;
 mod core_implementation;
 mod model;
 mod output;
+mod statistics;
 mod strategy;
 
 pub use builder::SKSimpleImputerBuilder;
