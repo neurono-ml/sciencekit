@@ -37,4 +37,6 @@
   - [Module hygiene: folder modules & tests-at-end](development-explained/ch06-module-hygiene.md)
   - [Parallel kernels & the streaming executor](development-explained/ch07-parallel-kernels-and-streaming.md)
   - [The first algorithm: SKStandardScaler](development-explained/ch08-standard-scaler.md)
+  - [The second scaler: SKMinMaxScaler](development-explained/ch09-minmax-scaler.md)
+  - [The third scaler: SKRobustScaler](development-explained/ch10-robust-scaler.md)
   - [Maintaining this book](development-explained/maintaining.md)
