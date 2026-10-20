@@ -8,27 +8,27 @@ and receives a Python binding as soon as it is validated on CPU.
   <div class="sk-donut">
     <svg viewBox="0 0 200 200" role="img" aria-label="Algorithm distribution by category">
       <circle cx="100" cy="100" r="80" stroke="#eceef1"/>
-      <circle cx="100" cy="100" r="80" stroke="#0284c7" stroke-dasharray="64.44 502.65" stroke-dashoffset="0"/>
-      <circle cx="100" cy="100" r="80" stroke="#0d9488" stroke-dasharray="25.78 502.65" stroke-dashoffset="-64.44"/>
-      <circle cx="100" cy="100" r="80" stroke="#7c3aed" stroke-dasharray="90.22 502.65" stroke-dashoffset="-90.22"/>
-      <circle cx="100" cy="100" r="80" stroke="#4f46e5" stroke-dasharray="51.55 502.65" stroke-dashoffset="-180.44"/>
-      <circle cx="100" cy="100" r="80" stroke="#e11d48" stroke-dasharray="38.67 502.65" stroke-dashoffset="-231.99"/>
-      <circle cx="100" cy="100" r="80" stroke="#d97706" stroke-dasharray="25.78 502.65" stroke-dashoffset="-270.66"/>
-      <circle cx="100" cy="100" r="80" stroke="#ea580c" stroke-dasharray="38.67 502.65" stroke-dashoffset="-296.44"/>
-      <circle cx="100" cy="100" r="80" stroke="#059669" stroke-dasharray="38.67 502.65" stroke-dashoffset="-335.11"/>
-      <circle cx="100" cy="100" r="80" stroke="#0891b2" stroke-dasharray="25.78 502.65" stroke-dashoffset="-373.78"/>
-      <circle cx="100" cy="100" r="80" stroke="#db2777" stroke-dasharray="12.89 502.65" stroke-dashoffset="-399.56"/>
-      <circle cx="100" cy="100" r="80" stroke="#2563eb" stroke-dasharray="38.67 502.65" stroke-dashoffset="-412.45"/>
-      <circle cx="100" cy="100" r="80" stroke="#16a34a" stroke-dasharray="51.55 502.65" stroke-dashoffset="-451.12"/>
+      <circle cx="100" cy="100" r="80" stroke="#0284c7" stroke-dasharray="62.83 502.65" stroke-dashoffset="-0.00"/>
+      <circle cx="100" cy="100" r="80" stroke="#0d9488" stroke-dasharray="37.70 502.65" stroke-dashoffset="-62.83"/>
+      <circle cx="100" cy="100" r="80" stroke="#7c3aed" stroke-dasharray="87.96 502.65" stroke-dashoffset="-100.53"/>
+      <circle cx="100" cy="100" r="80" stroke="#4f46e5" stroke-dasharray="50.27 502.65" stroke-dashoffset="-188.50"/>
+      <circle cx="100" cy="100" r="80" stroke="#e11d48" stroke-dasharray="37.70 502.65" stroke-dashoffset="-238.76"/>
+      <circle cx="100" cy="100" r="80" stroke="#d97706" stroke-dasharray="25.13 502.65" stroke-dashoffset="-276.46"/>
+      <circle cx="100" cy="100" r="80" stroke="#ea580c" stroke-dasharray="37.70 502.65" stroke-dashoffset="-301.59"/>
+      <circle cx="100" cy="100" r="80" stroke="#059669" stroke-dasharray="37.70 502.65" stroke-dashoffset="-339.29"/>
+      <circle cx="100" cy="100" r="80" stroke="#0891b2" stroke-dasharray="25.13 502.65" stroke-dashoffset="-376.99"/>
+      <circle cx="100" cy="100" r="80" stroke="#db2777" stroke-dasharray="12.57 502.65" stroke-dashoffset="-402.12"/>
+      <circle cx="100" cy="100" r="80" stroke="#2563eb" stroke-dasharray="37.70 502.65" stroke-dashoffset="-414.69"/>
+      <circle cx="100" cy="100" r="80" stroke="#16a34a" stroke-dasharray="50.27 502.65" stroke-dashoffset="-452.39"/>
     </svg>
     <div class="sk-donut__center">
-      <span class="sk-donut__value">39+</span>
+      <span class="sk-donut__value">40+</span>
       <span class="sk-donut__label">algorithms</span>
     </div>
   </div>
   <ul class="sk-donut__legend">
     <li><span class="sk-donut__swatch" style="background:#0284c7"></span>Preprocessing<span class="sk-donut__count">5</span></li>
-    <li><span class="sk-donut__swatch" style="background:#0d9488"></span>Imputation<span class="sk-donut__count">2</span></li>
+    <li><span class="sk-donut__swatch" style="background:#0d9488"></span>Imputation<span class="sk-donut__count">3</span></li>
     <li><span class="sk-donut__swatch" style="background:#7c3aed"></span>Linear models<span class="sk-donut__count">7</span></li>
     <li><span class="sk-donut__swatch" style="background:#4f46e5"></span>Nearest neighbors<span class="sk-donut__count">4</span></li>
     <li><span class="sk-donut__swatch" style="background:#e11d48"></span>SVM<span class="sk-donut__count">3</span></li>
@@ -56,7 +56,8 @@ and receives a Python binding as soon as it is validated on CPU.
 
 | Estimator | Description | Status |
 |---|---|---|
-| Simple strategies | Mean, median, most frequent and constant | <span class="sk-pill sk-pill--neutral">Planned</span> |
+| `SKSimpleImputer` | Mean, median, most frequent and constant imputation (dense · sparse · incremental · streaming) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
+| `SKMissingIndicator` | `0.0`/`1.0` mask of the features missing at fit time (dense · sparse) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKKNNImputer` | Multivariate imputation via nearest neighbors | <span class="sk-pill sk-pill--neutral">Planned</span> |
 
 ## Linear models · `sciencekit_linear_model`

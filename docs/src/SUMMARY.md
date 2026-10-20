@@ -40,4 +40,5 @@
   - [The second scaler: SKMinMaxScaler](development-explained/ch09-minmax-scaler.md)
   - [The third scaler: SKRobustScaler](development-explained/ch10-robust-scaler.md)
   - [Encoders: one-hot & polynomial](development-explained/ch11-one-hot-and-polynomial-encoders.md)
+  - [Imputation: SKSimpleImputer & SKMissingIndicator](development-explained/ch12-simple-imputer.md)
   - [Maintaining this book](development-explained/maintaining.md)
