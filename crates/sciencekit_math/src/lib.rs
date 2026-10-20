@@ -34,9 +34,9 @@ pub mod pairwise;
 pub mod sparse_ops;
 
 pub use backend::{
-    SKFaerBackend, SKLUDecomposition, SKLeastSquaresSolution, SKMathBackend,
+    SKBackendSelection, SKFaerBackend, SKLUDecomposition, SKLeastSquaresSolution, SKMathBackend,
     SKMatrixMultiplyBackend, SKNormKind, SKQRDecomposition, SKSingularValueDecomposition,
-    sk_default_math_backend,
+    sk_default_math_backend, sk_math_backend_for_kind,
 };
 pub use kernels::{
     SK_AXIS_SUM_GRAIN, SK_BINARY_COMBINE_GRAIN, SK_ELEMENTWISE_TRANSFORM_GRAIN,

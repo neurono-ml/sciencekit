@@ -533,8 +533,14 @@ fn lstsq_rank_deficient_f64() {
 }
 
 /// `lstsq` recovers the exact solution of a **tall** (rows ≫ columns) design —
-/// the shape least squares actually sees. Guards the thin-SVD path: the full
-/// SVD would allocate an `m × m` `U`, which for tall designs is ruinous.
+/// the shape least squares actually sees.
+///
+/// This is a **functional smoke test** for the tall path, not a performance
+/// pin: reverting `lstsq` to the full SVD would still pass it (just far more
+/// slowly). The thin-SVD guarantee it exercises — that only the first
+/// `min(m, n)` singular vectors are needed — is asserted by the rank and
+/// solution checks below; the crate-level large-data regression test is what
+/// would catch a performance regression in practice.
 fn check_lstsq_tall_design<F: SKFloat + std::fmt::Debug>()
 where
     SKFaerBackend: SKMathBackend<F>,
