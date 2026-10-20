@@ -6,12 +6,12 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 
 ## 1. Kernels — cross-product reductions
 
-- [ ] 1.1 Red: companion tests for `sk_gram_matrix` and `sk_gram_vector` (hand-checkable
+- [x] 1.1 Red: companion tests for `sk_gram_matrix` and `sk_gram_vector` (hand-checkable
   blocks, f32/f64, parallel ≡ sequential, symmetry of the Gram matrix).
   *(commit `feat(math): add sk_gram_matrix and sk_gram_vector cross-product kernels`)*
-- [ ] 1.2 Implement both with the sequential form and the race-free per-chunk parallel
+- [x] 1.2 Implement both with the sequential form and the race-free per-chunk parallel
   form, sharing the reduction grain; export them from the crate root.
-- [ ] 1.3 Green: parallel cross products match the sequential reference within tolerance.
+- [x] 1.3 Green: parallel cross products match the sequential reference within tolerance.
 
 ## 2. Estimator, model and dense path
 
