@@ -80,9 +80,9 @@ pure-dispatcher `mod.rs`. One commit per task.
 
 ## 7. Acceptance and gates
 
-- [ ] 7.1 `cargo fmt --all --check`, `cargo clippy --workspace --all-targets` and
+- [x] 7.1 `cargo fmt --all --check`, `cargo clippy --workspace --all-targets` and
   `cargo test --workspace` all green; `mdbook build docs` zero warnings.
-- [ ] 7.2 Small and large data validated; concurrency validated (shared estimator/model across
+- [x] 7.2 Small and large data validated; concurrency validated (shared estimator/model across
   threads); dense and sparse outputs provably equal; models carry their backend kind and expose
   the label tables as the export boundary (export/metrics deferred to the interop/metrics changes
   as in `standard-scaler`).
