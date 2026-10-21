@@ -12,6 +12,11 @@
 //!   Manhattan, Cosine) with a SIMD-friendly hot path.
 //! - [`sparse_ops`] — sparse (`sprs`) product kernels (sparse×dense,
 //!   sparse×sparse) over zero-copy views.
+//! - [`solvers`] — iterative linear solvers: the zero-copy
+//!   [`SKLinearOperator`](solvers::SKLinearOperator) abstraction, the
+//!   [`sk_conjugate_gradient`](solvers::sk_conjugate_gradient) SPD solve and the
+//!   sparse `AᵀA`
+//!   [`SKCsrNormalEquationOperator`](solvers::SKCsrNormalEquationOperator).
 //! - [`backend`] — the [`SKMathBackend`](backend::SKMathBackend) abstraction,
 //!   generic over the sealed [`SKFloat`] scalar bound and host-centric over
 //!   ndarray; the pure-Rust [`SKFaerBackend`](backend::SKFaerBackend) default,
@@ -31,6 +36,7 @@ pub mod backend;
 pub mod kernels;
 pub mod layout;
 pub mod pairwise;
+pub mod solvers;
 pub mod sparse_ops;
 
 pub use backend::{
@@ -48,6 +54,7 @@ pub use pairwise::{
     sk_cosine_distance_matrix, sk_euclidean_distance_matrix, sk_manhattan_distance_matrix,
     sk_squared_euclidean_distance_matrix,
 };
+pub use solvers::{SKCsrNormalEquationOperator, SKLinearOperator, sk_conjugate_gradient};
 pub use sparse_ops::{sk_csr_dense_product, sk_sparse_product};
 
 pub mod prelude {
