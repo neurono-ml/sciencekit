@@ -39,16 +39,16 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 
 ## 2. `SKLasso`
 
-- [ ] 2.1 Red: companion tests for `SKLasso` (builder defaults, scalar/sequence alpha,
+- [x] 2.1 Red: companion tests for `SKLasso` (builder defaults, scalar/sequence alpha,
   intercept on/off, sparse fit, prediction, both floats, structured errors). *(commit
   `feat(linear_model): add SKLasso with dense and sparse coordinate descent`)*
-- [ ] 2.2 `SKLassoBuilder<F>` + the `SKBuilder` impl (private constructor, hyperparameter
+- [x] 2.2 `SKLassoBuilder<F>` + the `SKBuilder` impl (private constructor, hyperparameter
   validation).
-- [ ] 2.3 `SKLasso<F>` + the `SKSupervisedFit<F>` impl (shape validation, representation
+- [x] 2.3 `SKLasso<F>` + the `SKSupervisedFit<F>` impl (shape validation, representation
   dispatch, the `Fit` observability span, backend transfer).
-- [ ] 2.4 `SKLassoModel<F>` (accessors, the `SKRegressorPredictor<F>` impl, single-alpha
+- [x] 2.4 `SKLassoModel<F>` (accessors, the `SKRegressorPredictor<F>` impl, single-alpha
   `predict` and `predict_with_alpha_index`).
-- [ ] 2.5 Green: dense and sparse lasso fit/predict behave per spec.
+- [x] 2.5 Green: dense and sparse lasso fit/predict behave per spec.
 
 ## 3. `SKElasticNet`
 
