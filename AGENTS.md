@@ -34,9 +34,16 @@ Instructions for agents working in this repository. Product source of truth: `do
 - **Documentation change accompanies every code change:** each code change is paired with a documentation change that updates the mdBook (chapters in `docs/src/`) for the newly introduced behavior — on its own doc branch and its own PR merged into `docs/documentations` (see Documentation). The doc branch and PR are created alongside the code change, not deferred. "Documentation" here means the user-facing mdBook, distinct from the `-openspec` planning branch.
 - **Post-merge:** when the change's PRs are merged, the opencode agent on GitHub runs sync + archive of the change (both branches already landed via their own PRs).
 - **Post-merge cleanup:** after a change's PRs are merged, remove its branches and worktree — delete the remote branch (merge with `--delete-branch` or `gh pr merge --delete-branch`), delete the local branch (`git branch -d <branch>`), and remove its worktree (`git worktree remove <path>`, then `git remote prune origin`). Branches whose PRs are still open (e.g. a draft) are kept. This keeps `temporary/worktrees/` and the branch list free of merged work.
+- **Prune locally what was deleted on the remote:** whenever starting work, remove every local branch and worktree whose remote counterpart no longer exists. Fetch and prune first (`git fetch --prune`), then delete the now-orphaned local branches (`git branch -d <branch>`, or `-D` once confirmed merged) and remove their worktrees (`git worktree remove <path>`, `git worktree prune`). Local branches with no remote counterpart by design (e.g. `docs/documentations`) are kept.
 - **Changelog:** every finished and merged change must update `CHANGELOG.md`, in English, following https://keepachangelog.com/en/1.1.0/. The snippet between releases in the changelog is used to describe the released version.
 
 ## Planning (OpenSpec)
+
+- **Sync before planning:** before starting any planning, update the code and documentation branches from the remote:
+
+  ```sh
+  git checkout main && git pull && git checkout docs/documentations && git pull && git checkout main
+  ```
 
 - Use the `/opsx-propose`, `/opsx-apply`, `/opsx-archive` commands (`.opencode/commands/`); the `openspec` CLI is installed.
 - Create changes in separate groups:
