@@ -20,6 +20,7 @@
 #![warn(missing_docs)]
 
 pub mod coordinate_descent;
+pub mod elastic_net;
 pub mod lasso;
 pub mod linear_regression;
 pub mod ridge;
