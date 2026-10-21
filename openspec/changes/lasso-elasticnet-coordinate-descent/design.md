@@ -167,4 +167,16 @@ no workspace-member change. No existing item changes; no span schema change.
 
 ## Discovered during implementation
 
-_(filled in as the apply surfaces anything unexpected, as W2.1 and W2.2 did.)_
+- **Gap-safe elimination is restricted to the pure-L1 objective.** The dual–gap radius
+  `R = √(2G/n)` is derived for the lasso formulation; applying it inside the elastic-net solve
+  would use a radius that is not guaranteed to bound the elastic-net dual optimum. The solver now
+  applies gap-safe elimination only when `l2 == 0` (lasso); the elastic net uses the strong
+  initial active set plus the same KKT reactivation guarantee, exactly as Decision 5 states. The
+  KKT reactivation remains the correctness source in both cases.
+- **The streaming scenarios are pinned explicitly.** The independent review added an
+  in-memory-intent streaming test (the batches are collected and matched to the dense fit) and a
+  batch-order-independence test (a permuted source yields the same model), covering the
+  `coordinate-descent-solver` scenarios that were previously only implied by the uneven-batch
+  test.
+- **Rayon is promoted to a production dependency** of `sciencekit_linear_model` for the
+  per-`alpha` parallel solve, as anticipated in the Migration Plan.

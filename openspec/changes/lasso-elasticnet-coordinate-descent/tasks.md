@@ -98,10 +98,10 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 
 - [x] 7.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under `Unreleased → Added`
   for `SKLasso`, `SKElasticNet` and the `coordinate-descent-solver` substrate.
-- [ ] 7.2 Companion documentation change on its own `docs/*` branch (merged into
+- [x] 7.2 Companion documentation change on its own `docs/*` branch (merged into
   `docs/documentations`): the `SKLasso`/`SKElasticNet` entries in `docs/src/algorithms.md` and
   a new `Development Explained` chapter (`docs/src/development-explained/`) registered in
   `SUMMARY.md`, walking through the coordinate-descent iteration, the unpenalized intercept,
   the gap-safe screening and the companion tests — including the `maintaining.md` pointer.
-- [ ] 7.3 Independent-review fixes: address every finding (spec conformance, numerics,
+- [x] 7.3 Independent-review fixes: address every finding (spec conformance, numerics,
   screening correctness, representation dispatch, naming, test coverage) and re-run the gates.
