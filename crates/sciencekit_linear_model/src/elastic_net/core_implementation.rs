@@ -86,6 +86,28 @@ impl<F: SKFloat> SKElasticNet<F> {
     pub fn maximum_number_of_iterations(&self) -> usize {
         self.config.maximum_number_of_iterations
     }
+
+    /// Fit on a sequential supervised source, retaining each batch's design and
+    /// solving the whole accumulated design once at the end.
+    ///
+    /// The result equals the dense `fit` on the concatenated data within
+    /// floating point tolerance, regardless of batch order or size.
+    pub fn fit_streaming<S>(&self, source: &mut S) -> Result<SKElasticNetModel<F>, SKError>
+    where
+        S: sciencekit_common::SKSupervisedLazySource<F> + Send,
+        S::Error: From<SKError> + Into<SKError>,
+    {
+        let core = crate::coordinate_descent::sk_fit_streaming(
+            source,
+            &self.alphas,
+            self.l1_ratio,
+            self.include_intercept,
+            self.backend,
+            self.execution_intent(),
+            self.config.clone(),
+        )?;
+        Ok(SKElasticNetModel::from_core(core))
+    }
 }
 
 impl<F: SKFloat> SKSupervisedFit<F> for SKElasticNet<F> {

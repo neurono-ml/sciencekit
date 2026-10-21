@@ -55,17 +55,7 @@ impl<F: SKFloat> SKCoordinateDescentState<F> {
         }
     }
 
-    /// The representation label (`dense` or `csr`).
-    #[cfg(test)]
-    pub(crate) fn representation_label(&self) -> &'static str {
-        match self {
-            Self::Dense { .. } => "dense",
-            Self::Sparse { .. } => "csr",
-        }
-    }
-
     /// The number of feature columns seen so far.
-    #[cfg(test)]
     pub(crate) fn columns_count(&self) -> usize {
         match self {
             Self::Dense { batches, .. } => batches.first().map_or(0, Array2::ncols),

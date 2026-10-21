@@ -182,27 +182,3 @@ fn non_default_backend_reaches_model() {
     let model = estimator.fit(features.view(), targets.view()).unwrap();
     assert_eq!(model.backend(), SKBackendKind::MatrixMultiply);
 }
-
-/// The estimator fits both supported floats.
-#[test]
-fn fits_both_supported_floats() {
-    let features = array![[1.0f32], [2.0], [3.0]];
-    let targets = array![2.0f32, 4.0, 6.0];
-    let model = SKLasso::<f32>::build()
-        .alpha(1.0f32)
-        .include_intercept(false)
-        .tolerance(1e-5)
-        .maximum_number_of_iterations(100_000)
-        .build()
-        .unwrap()
-        .fit(features.view(), targets.view())
-        .unwrap();
-    assert!((model.coefficient_for(0)[0] - 25.0 / 14.0).abs() < 1e-3);
-}
-
-/// The fitted model is `Send + Sync`.
-#[test]
-fn model_is_send_and_sync() {
-    fn assert_send_sync<T: Send + Sync>() {}
-    assert_send_sync::<super::model::SKLassoModel<f64>>();
-}

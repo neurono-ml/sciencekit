@@ -95,6 +95,28 @@ impl<F: SKFloat> SKLasso<F> {
             self.screening,
         )
     }
+
+    /// Fit on a sequential supervised source, retaining each batch's design and
+    /// solving the whole accumulated design once at the end.
+    ///
+    /// The result equals the dense `fit` on the concatenated data within
+    /// floating point tolerance, regardless of batch order or size.
+    pub fn fit_streaming<S>(&self, source: &mut S) -> Result<SKLassoModel<F>, SKError>
+    where
+        S: sciencekit_common::SKSupervisedLazySource<F> + Send,
+        S::Error: From<SKError> + Into<SKError>,
+    {
+        let core = crate::coordinate_descent::sk_fit_streaming(
+            source,
+            &self.alphas,
+            F::one(),
+            self.include_intercept,
+            self.backend,
+            self.execution_intent(),
+            self.coordinate_descent_config(),
+        )?;
+        Ok(SKLassoModel::from_core(core))
+    }
 }
 
 impl<F: SKFloat> SKSupervisedFit<F> for SKLasso<F> {

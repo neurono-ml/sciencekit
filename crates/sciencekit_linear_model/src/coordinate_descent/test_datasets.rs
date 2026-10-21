@@ -5,7 +5,8 @@
 //! and CSR forms and float-comparison helpers. All data is built by closed-form
 //! formulas — no RNG, identical on every machine.
 
-use ndarray::{Array1, Array2, array};
+use ndarray::{Array1, Array2, Axis, array};
+use sciencekit_common::{SKError, SKFloat, SKSupervisedBatch, SKSupervisedLazySource};
 use sprs::{CsMat, TriMat};
 
 /// The convergence tolerance the substrate tests solve to.
@@ -80,4 +81,84 @@ pub(crate) fn assert_close_scalar(actual: f64, expected: f64, tolerance: f64) {
         (actual - expected).abs() <= bound,
         "values {actual} and {expected} differ beyond {bound}"
     );
+}
+
+/// An in-memory supervised source: each entry is one owned batch.
+pub(crate) struct SupervisedVecSource<F> {
+    batches: Vec<(Array2<F>, Array1<F>)>,
+    next: usize,
+}
+
+impl<F> SupervisedVecSource<F> {
+    /// A source that yields the given batches in order.
+    pub(crate) fn new(batches: Vec<(Array2<F>, Array1<F>)>) -> Self {
+        Self { batches, next: 0 }
+    }
+}
+
+impl<F: SKFloat> SKSupervisedLazySource<F> for SupervisedVecSource<F> {
+    type Error = SKError;
+
+    fn next_supervised_batch(&mut self) -> Result<Option<SKSupervisedBatch<F>>, Self::Error> {
+        if self.next >= self.batches.len() {
+            return Ok(None);
+        }
+        let position = self.next;
+        self.next += 1;
+        let (features, targets) = self.batches[position].clone();
+        let is_final = self.next == self.batches.len();
+        Ok(Some(SKSupervisedBatch::new(
+            features, targets, position, is_final,
+        )))
+    }
+}
+
+/// Split a design and its targets into owned chunks of the given lengths, which
+/// must sum to the row count.
+pub(crate) fn chunk_pairs<F: SKFloat>(
+    features: &Array2<F>,
+    targets: &Array1<F>,
+    lengths: &[usize],
+) -> Vec<(Array2<F>, Array1<F>)> {
+    assert_eq!(lengths.iter().sum::<usize>(), features.nrows());
+    let mut start = 0;
+    lengths
+        .iter()
+        .map(|&length| {
+            let feature_chunk = features.slice(ndarray::s![start..start + length, ..]).to_owned();
+            let target_chunk = targets.slice(ndarray::s![start..start + length]).to_owned();
+            start += length;
+            (feature_chunk, target_chunk)
+        })
+        .collect()
+}
+
+/// Stream a design in row chunks of the given lengths.
+pub(crate) fn chunked_source<F: SKFloat>(
+    features: &Array2<F>,
+    targets: &Array1<F>,
+    lengths: &[usize],
+) -> SupervisedVecSource<F> {
+    SupervisedVecSource::new(chunk_pairs(features, targets, lengths))
+}
+
+/// A large deterministic design (12 000 rows × 5 columns) from a modular closed
+/// form.
+pub(crate) fn large_features<F: SKFloat>() -> Array2<F> {
+    Array2::from_shape_fn((12_000, 5), |(row, column)| {
+        F::from(((row * 7 + column * 13) % 97) as f64 * 0.25 + column as f64).expect("fits")
+    })
+}
+
+/// The exact targets for [`large_features`] with an L1-sparse coefficient set.
+pub(crate) fn large_targets<F: SKFloat>(features: &Array2<F>) -> Array1<F> {
+    let coefficients = [1.5, 0.0, -0.75, 0.0, 2.0];
+    features.map_axis(Axis(1), |row| {
+        let linear = row
+            .iter()
+            .zip(coefficients.iter())
+            .map(|(value, coefficient)| *value * F::from(*coefficient).expect("fits"))
+            .fold(F::zero(), |accumulator, term| accumulator + term);
+        linear + F::from(0.25).expect("fits")
+    })
 }
