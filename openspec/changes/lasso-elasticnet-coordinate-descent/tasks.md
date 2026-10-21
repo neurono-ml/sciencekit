@@ -74,18 +74,18 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 
 ## 5. Shared deterministic test datasets
 
-- [ ] 5.1 Extract the shared coordinate-descent datasets and helpers (hand-checkable
+- [x] 5.1 Extract the shared coordinate-descent datasets and helpers (hand-checkable
   one-feature and orthogonal designs with known solutions, a large synthetic design, dense
   and CSR forms, `assert_close`). *(folded into the `feat(linear_model): add SKLasso ...`
   commit)*
-- [ ] 5.2 Refactor the dense, sparse, streaming and incremental suites to consume the shared
+- [x] 5.2 Refactor the dense, sparse, streaming and incremental suites to consume the shared
   datasets and helpers.
 
 ## 6. Acceptance and gates
 
-- [ ] 6.1 `cargo fmt --all --check`, `cargo clippy --workspace --all-targets`,
+- [x] 6.1 `cargo fmt --all --check`, `cargo clippy --workspace --all-targets`,
   `cargo test --workspace` all green.
-- [ ] 6.2 Small and large data validated; concurrency validated (the immutable estimators and
+- [x] 6.2 Small and large data validated; concurrency validated (the immutable estimators and
   the fitted models are shared across threads with identical results); dense, sparse,
   incremental and streaming fits cross-agree within the documented tolerance; the solution
   satisfies the KKT conditions.
@@ -96,7 +96,7 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 
 ## 7. Documentation, changelog and review
 
-- [ ] 7.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under `Unreleased → Added`
+- [x] 7.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under `Unreleased → Added`
   for `SKLasso`, `SKElasticNet` and the `coordinate-descent-solver` substrate.
 - [ ] 7.2 Companion documentation change on its own `docs/*` branch (merged into
   `docs/documentations`): the `SKLasso`/`SKElasticNet` entries in `docs/src/algorithms.md` and
