@@ -188,5 +188,6 @@ with these rules — [`SKStandardScaler`](./ch08-standard-scaler.html),
 [`SKMinMaxScaler`](./ch09-minmax-scaler.html),
 [`SKRobustScaler`](./ch10-robust-scaler.html), the
 [encoders](./ch11-one-hot-and-polynomial-encoders.html), the
-[imputers](./ch12-simple-imputer.html) and the first supervised model,
-[`SKLinearRegression`](./ch13-linear-regression.html) — show the whole procedure in action.
+[imputers](./ch12-simple-imputer.html), the first supervised model
+[`SKLinearRegression`](./ch13-linear-regression.html) and the first regularized one,
+[`SKRidge`](./ch14-ridge-regression.html) — show the whole procedure in action.

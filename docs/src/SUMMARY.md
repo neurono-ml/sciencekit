@@ -42,4 +42,5 @@
   - [Encoders: one-hot & polynomial](development-explained/ch11-one-hot-and-polynomial-encoders.md)
   - [Imputation: SKSimpleImputer & SKMissingIndicator](development-explained/ch12-simple-imputer.md)
   - [Linear models: SKLinearRegression](development-explained/ch13-linear-regression.md)
+  - [Regularized linear models: SKRidge](development-explained/ch14-ridge-regression.md)
   - [Maintaining this book](development-explained/maintaining.md)

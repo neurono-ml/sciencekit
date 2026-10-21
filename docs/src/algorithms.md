@@ -65,7 +65,7 @@ and receives a Python binding as soon as it is validated on CPU.
 | Estimator | Description | Status |
 |---|---|---|
 | `SKLinearRegression` | Ordinary least squares (dense · incremental · streaming) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
-| `SKRidge` | Regression with L2 regularization | <span class="sk-pill sk-pill--neutral">Planned</span> |
+| `SKRidge` | Regression with L2 regularization (dense · sparse · incremental · streaming) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKLasso` | Regression with L1 regularization (sparse support) | <span class="sk-pill sk-pill--neutral">Planned</span> |
 | `SKElasticNet` | Combined L1 + L2 regularization | <span class="sk-pill sk-pill--neutral">Planned</span> |
 | `SKLogisticRegression` | Regularized logistic classification | <span class="sk-pill sk-pill--neutral">Planned</span> |
