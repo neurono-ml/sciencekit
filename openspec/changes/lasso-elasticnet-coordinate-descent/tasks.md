@@ -52,15 +52,15 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 
 ## 3. `SKElasticNet`
 
-- [ ] 3.1 Red: companion tests for `SKElasticNet` (builder defaults including `l1_ratio`,
+- [x] 3.1 Red: companion tests for `SKElasticNet` (builder defaults including `l1_ratio`,
   `l1_ratio = 1` equals lasso, the pure-L2 closed form at `l1_ratio = 0`, `l1_ratio`
   validation, sparse fit, both floats, structured errors). *(commit
   `feat(linear_model): add SKElasticNet with the l1_ratio mixing parameter`)*
-- [ ] 3.2 `SKElasticNetBuilder<F>` + the `SKBuilder` impl with `l1_ratio` validated to
+- [x] 3.2 `SKElasticNetBuilder<F>` + the `SKBuilder` impl with `l1_ratio` validated to
   `[0, 1]`.
-- [ ] 3.3 `SKElasticNet<F>` + the `SKSupervisedFit<F>` impl.
-- [ ] 3.4 `SKElasticNetModel<F>` (accessors including `l1_ratio`, the predictor).
-- [ ] 3.5 Green: dense and sparse elastic-net fit/predict behave per spec.
+- [x] 3.3 `SKElasticNet<F>` + the `SKSupervisedFit<F>` impl.
+- [x] 3.4 `SKElasticNetModel<F>` (accessors including `l1_ratio`, the predictor).
+- [x] 3.5 Green: dense and sparse elastic-net fit/predict behave per spec.
 
 ## 4. Incremental and out-of-core fits
 
