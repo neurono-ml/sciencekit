@@ -97,6 +97,11 @@ impl<F: SKFloat> SKRidgeModel<F> {
     }
 
     /// The reported rank of the matrix the last solve factored.
+    ///
+    /// The SVD path reports the effective rank after truncation; the Cholesky /
+    /// Gram path (dense-with-positive-alpha, sparse `Cholesky`, incremental and
+    /// streaming) does not factor the design, so it reports the design width as
+    /// the assumed full rank.
     pub fn rank(&self) -> usize {
         self.rank
     }

@@ -93,3 +93,45 @@ fn cholesky_surfaces_no_singular_values() {
     assert!(model.singular_values().is_empty());
     assert_eq!(model.rank(), model.feature_count());
 }
+
+/// A rank-deficient design with a zero penalty returns the minimum-norm
+/// solution, not an amplified null-space direction.
+#[test]
+fn svd_zero_penalty_rank_deficient_is_minimum_norm() {
+    let (features, targets) = rank_deficient();
+    let model = default_builder()
+        .alpha(0.0)
+        .solver(SKRidgeSolver::Svd)
+        .build()
+        .unwrap()
+        .fit(features.view(), targets.view())
+        .unwrap();
+    // The centered targets are exactly the first centered column, so the
+    // minimum-norm coefficient pair is `(1, 2) / (1 + 4)`.
+    assert_close(&model.coefficient_for(0).to_vec(), &[0.2, 0.4], 1e-9);
+    assert_close_scalar(model.intercept_for(0), 0.0, 1e-9);
+}
+
+/// The SVD path handles a wide design (more features than rows) without
+/// panicking on the backend's full factor shapes.
+#[test]
+fn svd_handles_a_wide_design() {
+    let features = ndarray::array![[1.0, 0.0, 1.0, 0.0], [0.0, 1.0, 0.0, 1.0]];
+    let targets = ndarray::array![1.0, 2.0];
+    let model = default_builder()
+        .alpha(1.0)
+        .include_intercept(false)
+        .solver(SKRidgeSolver::Svd)
+        .build()
+        .unwrap()
+        .fit(features.view(), targets.view())
+        .unwrap();
+    assert_eq!(model.feature_count(), 4);
+    assert!(
+        model
+            .coefficient_for(0)
+            .iter()
+            .all(|value| value.is_finite()),
+        "wide-design coefficients must be finite"
+    );
+}

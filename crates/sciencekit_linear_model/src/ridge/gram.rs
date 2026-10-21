@@ -17,13 +17,8 @@ use crate::ridge::sparse::{sk_csr_column_sums, sk_csr_transpose_vector_product, 
 /// batch order and sizes do not change a later result.
 #[derive(Debug, Clone)]
 pub(crate) struct SKCenteredGramState<F> {
-    /// The design width (number of features, excluding the intercept).
-    ///
-    /// Carried for the streaming/incremental regimes that reuse this state;
-    /// the dense fit derives the width from the Gram's own shape.
-    #[allow(dead_code)]
-    pub(super) features_count: usize,
-    /// The accumulated `XᵀX`, `features_count × features_count`.
+    /// The accumulated `XᵀX`, `features_count × features_count` (all-zero when
+    /// [`SKCenteredGramState::has_full_gram`] is false).
     pub(super) gram: Array2<F>,
     /// The accumulated `Xᵀy`, length `features_count`.
     pub(super) cross: Array1<F>,
@@ -33,18 +28,42 @@ pub(crate) struct SKCenteredGramState<F> {
     pub(super) target_sum: F,
     /// The number of rows accumulated across every batch.
     pub(super) row_count: u64,
+    /// Whether the `p × p` Gram was materialized.
+    ///
+    /// The `SparseCg` path never forms `XᵀX` (Decision 6), so its state keeps
+    /// the `O(p)` statistics but an all-zero Gram; the incremental regime
+    /// refuses to continue from such a state rather than solve a partial system.
+    pub(super) has_full_gram: bool,
 }
 
 impl<F: SKFloat> SKCenteredGramState<F> {
-    /// An all-zero state for a design of the given width.
+    /// An all-zero state with an empty (but present) Gram for a design of the
+    /// given width.
     pub(super) fn empty(features_count: usize) -> Self {
         Self {
-            features_count,
             gram: Array2::zeros((features_count, features_count)),
             cross: Array1::zeros(features_count),
             column_sums: Array1::zeros(features_count),
             target_sum: F::zero(),
             row_count: 0,
+            has_full_gram: true,
+        }
+    }
+
+    /// The `O(p)` statistics of one sparse batch, **without** materializing the
+    /// `p × p` Gram.
+    ///
+    /// This is the state a `SparseCg` fit keeps: `Xᵀy`, `Σx`, `Σy` and the row
+    /// count, so the model can report its row count, while `XᵀX` is never formed
+    /// (the conjugate-gradient operator applies `DᵀD` on the fly).
+    pub(super) fn statistics_only(features: &CsMatView<F>, target: &ArrayView1<F>) -> Self {
+        Self {
+            gram: Array2::zeros((features.cols(), features.cols())),
+            cross: sk_csr_transpose_vector_product(features, target.view()),
+            column_sums: sk_csr_column_sums(features),
+            target_sum: target.sum(),
+            row_count: features.rows() as u64,
+            has_full_gram: false,
         }
     }
 

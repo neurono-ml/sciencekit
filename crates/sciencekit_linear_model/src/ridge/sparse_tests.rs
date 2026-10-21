@@ -127,3 +127,39 @@ fn sparse_scalar_alpha_yields_one_solution() {
     assert_eq!(model.coefficients().nrows(), 1);
     assert_eq!(model.intercepts().len(), 1);
 }
+
+/// A `SparseCg` fit never materializes `XᵀX`, so it cannot be continued
+/// incrementally; the update is refused with a structured error.
+#[test]
+fn sparse_cg_fit_refuses_incremental_updates_without_the_gram() {
+    let (dense, targets) = two_feature();
+    let sparse = to_csr(&dense);
+    let mut model = sparse_cg(1.0).fit(sparse.view(), targets.view()).unwrap();
+    let error = model
+        .partial_fit(sparse.view(), targets.view())
+        .unwrap_err();
+    assert!(matches!(
+        error,
+        SKError::UnsupportedRepresentation {
+            representation: "csr",
+            ..
+        }
+    ));
+}
+
+/// A tight tolerance within a one-iteration budget does not converge: the
+/// iterative solve surfaces the effort rather than a stale vector.
+#[test]
+fn tight_tolerance_with_small_budget_fails_to_converge() {
+    let (dense, targets) = two_feature();
+    let sparse = to_csr(&dense);
+    let estimator = SKRidge::build()
+        .alpha(1.0)
+        .solver(SKRidgeSolver::SparseCg)
+        .tolerance(1e-18)
+        .maximum_number_of_iterations(1)
+        .build()
+        .unwrap();
+    let error = estimator.fit(sparse.view(), targets.view()).unwrap_err();
+    assert!(matches!(error, SKError::NotConverged { iterations: 1 }));
+}

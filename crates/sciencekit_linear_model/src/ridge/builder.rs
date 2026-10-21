@@ -14,7 +14,9 @@ use crate::ridge::core_implementation::SKRidge;
 /// `Automatic` resolves by input representation (dense → `Cholesky`, sparse →
 /// `SparseCg`) and `Cholesky` falls back to `Svd` when every `alpha` is zero or
 /// the factor fails, so the selected solver may differ from the configured one —
-/// the model always exposes the solver actually used.
+/// the model always exposes the solver actually used. An explicit `SparseCg`
+/// applies to sparse input only; a dense input under `SparseCg` is rejected with
+/// a structured representation error.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SKRidgeSolver {
     /// Resolve automatically from the input representation.

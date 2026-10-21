@@ -5,6 +5,7 @@ use sciencekit_common::builders::SKBuilder;
 use sciencekit_common::{SKError, SKSupervisedFit};
 use sciencekit_math::SKBackendSelection;
 
+use super::builder::SKRidgeSolver;
 use super::core_implementation::SKRidge;
 use super::sparse_test_datasets::to_csr;
 use super::streaming_test_datasets::{
@@ -127,7 +128,13 @@ fn sparse_batches_accumulate_like_dense_batches() {
         .unwrap();
     let first = to_csr(&features.slice(s![0..3, ..]).to_owned());
     let rest = to_csr(&features.slice(s![3.., ..]).to_owned());
-    let mut model = default_ridge()
+    // The Gram must be retained to continue incrementally, so this fit uses the
+    // Cholesky solver (the SparseCg path never materializes `XᵀX`).
+    let mut model = SKRidge::build()
+        .alpha(1.0)
+        .solver(SKRidgeSolver::Cholesky)
+        .build()
+        .unwrap()
         .fit(first.view(), targets.slice(s![0..3]))
         .unwrap();
     model

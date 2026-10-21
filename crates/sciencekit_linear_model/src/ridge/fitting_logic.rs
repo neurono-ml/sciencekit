@@ -2,7 +2,7 @@
 //! the `Fit` span, Gram accumulation and the dense/sparse solve
 //! (spec `ridge-regression`).
 
-use ndarray::{Array1, ArrayView2};
+use ndarray::{Array1, ArrayView1, ArrayView2};
 use sciencekit_common::{
     SKDataView, SKError, SKExecutionContext, SKExecutionPlan, SKFloat, SKOperationAttributes,
     SKOperationKind, execution::SKAccessPattern, sk_run_operation,
@@ -11,6 +11,7 @@ use sciencekit_math::SKBackendSelection;
 use sciencekit_math::kernels::SK_AXIS_SUM_GRAIN;
 use sprs::CsMatView;
 
+use super::builder::SKRidgeSolver;
 use super::core_implementation::SKRidge;
 use super::gram::SKCenteredGramState;
 use super::model::SKRidgeModel;
@@ -73,15 +74,18 @@ fn fit_dense<F: SKBackendSelection>(
     Ok(model_from(estimator, solution, gram))
 }
 
-/// Fit the sparse path: accumulate the sparse Gram and solve without
-/// densifying the design.
+/// Fit the sparse path: build only the accumulator the resolved solver needs
+/// and solve without densifying the design.
+///
+/// The Gram (`XᵀX`) is materialized only for the `Cholesky` path; the
+/// conjugate-gradient path keeps just the `O(p)` statistics and applies `DᵀD` on
+/// the fly, so `SparseCg` never forms `XᵀX` (Decision 6).
 fn fit_sparse<F: SKBackendSelection>(
     estimator: &SKRidge<F>,
     sparse: CsMatView<F>,
     target: &Array1<F>,
 ) -> Result<SKRidgeModel<F>, SKError> {
-    let mut gram = SKCenteredGramState::empty(sparse.cols());
-    gram.accumulate_sparse(&sparse, &target.view());
+    let gram = sparse_gram_state(estimator.solver, &sparse, &target.view());
     let solution = solve_sparse_ridge(
         estimator.solver,
         &gram,
@@ -94,6 +98,26 @@ fn fit_sparse<F: SKBackendSelection>(
         estimator.backend,
     )?;
     Ok(model_from(estimator, solution, gram))
+}
+
+/// Build the sparse fit's accumulator: the full `XᵀX` for the Gram (`Cholesky`)
+/// path, the `O(p)` statistics only for the conjugate-gradient path, and none
+/// for the dense-only `Svd` solver (which rejects sparse input before solving).
+fn sparse_gram_state<F: SKFloat>(
+    solver: SKRidgeSolver,
+    sparse: &CsMatView<F>,
+    target: &ArrayView1<F>,
+) -> SKCenteredGramState<F> {
+    match solver {
+        SKRidgeSolver::Cholesky => {
+            let mut gram = SKCenteredGramState::empty(sparse.cols());
+            gram.accumulate_sparse(sparse, target);
+            gram
+        }
+        SKRidgeSolver::Automatic | SKRidgeSolver::SparseCg | SKRidgeSolver::Svd => {
+            SKCenteredGramState::statistics_only(sparse, target)
+        }
+    }
 }
 
 /// Build the fitted model from a solve and the accumulated Gram state.

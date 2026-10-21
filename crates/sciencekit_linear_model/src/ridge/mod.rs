@@ -37,3 +37,5 @@ mod streaming_test_datasets;
 mod streaming_tests;
 #[cfg(test)]
 mod test_datasets;
+#[cfg(test)]
+mod thread_tests;

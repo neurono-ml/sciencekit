@@ -18,6 +18,11 @@ impl<F: SKBackendSelection> SKRidgeModel<F> {
     /// normal equations. Returns the model itself for chaining. An empty batch
     /// is a no-op; a column count differing from the fitted design is rejected
     /// with `ShapeMismatch`. Dense and sparse batches are both accepted.
+    ///
+    /// A model fitted through the `SparseCg` path never materialized `XᵀX`, so
+    /// it cannot be continued incrementally: the update returns a structured
+    /// representation error pointing at the `Cholesky` solver rather than
+    /// solving a partial system.
     pub fn partial_fit<'a, X, T>(&mut self, features: X, targets: T) -> Result<&mut Self, SKError>
     where
         X: TryInto<SKDataView<'a, F>, Error = SKError>,
@@ -44,6 +49,12 @@ impl<F: SKBackendSelection> SKRidgeModel<F> {
             return Err(SKError::ShapeMismatch {
                 expected: vec![rows_count],
                 found: vec![target.len()],
+            });
+        }
+        if !self.gram.has_full_gram {
+            return Err(SKError::UnsupportedRepresentation {
+                representation: "csr",
+                suggestion: "the model was fitted without materializing XᵀX (SparseCg); refit with the Cholesky solver to enable incremental updates",
             });
         }
         let attributes = SKOperationAttributes {
