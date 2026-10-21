@@ -187,5 +187,6 @@ Next chapter: we step down from the meta and back into the code, where the algor
 with these rules — [`SKStandardScaler`](./ch08-standard-scaler.html),
 [`SKMinMaxScaler`](./ch09-minmax-scaler.html),
 [`SKRobustScaler`](./ch10-robust-scaler.html), the
-[encoders](./ch11-one-hot-and-polynomial-encoders.html) and the
-[imputers](./ch12-simple-imputer.html) — show the whole procedure in action.
+[encoders](./ch11-one-hot-and-polynomial-encoders.html), the
+[imputers](./ch12-simple-imputer.html) and the first supervised model,
+[`SKLinearRegression`](./ch13-linear-regression.html) — show the whole procedure in action.
