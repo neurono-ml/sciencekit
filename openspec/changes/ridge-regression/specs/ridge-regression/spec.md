@@ -26,7 +26,7 @@ configuration carries the scalar `alpha`, the estimator MAY be generic over `F`.
 
 - **WHEN** an estimator is built with an explicit `tolerance` and
   `maximum_number_of_iterations`
-- **THEN** the fitted model's sparse solve honors those values and records them in its span
+- **THEN** the fitted model's sparse solve honors those values
 
 #### Scenario: Configuration flows through the model
 
@@ -40,7 +40,7 @@ configuration carries the scalar `alpha`, the estimator MAY be generic over `F`.
 The builder SHALL expose a solver selection of `Automatic`, `Cholesky`, `Svd` and `SparseCg`.
 `Automatic` SHALL resolve to `Cholesky` for dense input and to `SparseCg` for sparse input;
 `Cholesky` SHALL fall back to `Svd` when `alpha` is zero or the Cholesky factor fails. The
-solver actually used SHALL be recorded in the operation span and exposed by the fitted model.
+solver actually used SHALL be exposed by the fitted model.
 
 #### Scenario: Automatic chooses per representation
 
@@ -207,13 +207,16 @@ differing from the fitted design.
 ### Requirement: Backend and execution intent are carried and recorded
 
 Per the `backend-selection` capability, every estimator and model operation SHALL record the
-configured backend kind and the solver actually used in its observability span, and `fit`
-SHALL transfer the kind into the fitted model; the kind SHALL never be hardcoded.
+configured backend kind in its observability span; the solver actually used, being an
+algorithm-level concept the shared span vocabulary does not carry, SHALL be exposed by the
+fitted model. `fit` SHALL transfer the backend kind into the fitted model; the kind SHALL
+never be hardcoded.
 
 #### Scenario: Configured kind reaches the model
 
 - **WHEN** an estimator is built with a non-default backend and fitted
-- **THEN** the model reports that backend kind and the fit's span records the solver used
+- **THEN** the model reports that backend kind and its span records the kind, while
+  `model.solver()` reports the resolved solver
 
 ### Requirement: The fitted model is shareable across threads
 
