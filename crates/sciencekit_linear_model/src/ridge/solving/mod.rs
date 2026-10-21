@@ -3,10 +3,11 @@
 
 mod centering;
 mod cholesky;
+mod gram_solve;
 mod resolution;
 mod solve_types;
 mod svd;
 
-pub(super) use cholesky::solve_with_cholesky;
+pub(crate) use gram_solve::solve_from_gram;
 pub(super) use resolution::solve_ridge;
 pub(super) use solve_types::SKRidgeSolution;

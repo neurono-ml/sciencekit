@@ -11,6 +11,7 @@ mod fitting_logic;
 mod gram;
 mod solving;
 mod sparse;
+mod streaming;
 
 pub use builder::{SKIntoRidgeAlphas, SKRidgeBuilder, SKRidgeSolver};
 pub use core_implementation::SKRidge;
@@ -18,6 +19,8 @@ pub use model::SKRidgeModel;
 
 #[cfg(test)]
 mod error_tests;
+#[cfg(test)]
+mod partial_fit_tests;
 #[cfg(test)]
 mod ridge_tests;
 #[cfg(test)]
@@ -28,5 +31,9 @@ mod sparse_prediction_tests;
 mod sparse_test_datasets;
 #[cfg(test)]
 mod sparse_tests;
+#[cfg(test)]
+mod streaming_test_datasets;
+#[cfg(test)]
+mod streaming_tests;
 #[cfg(test)]
 mod test_datasets;
