@@ -28,13 +28,13 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
   `feat(linear_model): add gap-safe screening to the coordinate-descent solver`)*
 - [x] 1.8 Implement `screening.rs` (strong initial active set, dual-feasible gap radius,
   gap-safe elimination, KKT reactivation) and wire it into the solver.
-- [ ] 1.9 Red: companion tests for the retained-design accumulator and the parallel per-alpha
+- [x] 1.9 Red: companion tests for the retained-design accumulator and the parallel per-alpha
   solve (dense and sparse accumulation equal concatenation, empty accumulator, column
   mismatch, parallel results equal sequential). *(commit
   `feat(linear_model): add the retained-design accumulator and parallel per-alpha solve`)*
-- [ ] 1.10 Implement `SKCoordinateDescentState` (dense rows and stacked CSR batches) and the
+- [x] 1.10 Implement `SKCoordinateDescentState` (dense rows and stacked CSR batches) and the
   rayon per-alpha parallel solve.
-- [ ] 1.11 Green: the full substrate suite passes on both floats, on small and large designs
+- [x] 1.11 Green: the full substrate suite passes on both floats, on small and large designs
   and across every branch (positive, selection, screening).
 
 ## 2. `SKLasso`
@@ -64,13 +64,13 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 
 ## 4. Incremental and out-of-core fits
 
-- [ ] 4.1 Red: streaming and incremental companion tests for both estimators (uneven batches
+- [x] 4.1 Red: streaming and incremental companion tests for both estimators (uneven batches
   equal dense, single batch, empty source error, column mismatch, in-memory intent collects,
   both floats, large scale). *(commit
   `feat(linear_model): add lasso and elastic-net fit_streaming and partial_fit`)*
-- [ ] 4.2 Implement `fit_streaming` for both estimators over the retained-design accumulator.
-- [ ] 4.3 Implement `partial_fit` on both fitted models.
-- [ ] 4.4 Green: incremental and streaming fits equal the dense fit within tolerance.
+- [x] 4.2 Implement `fit_streaming` for both estimators over the retained-design accumulator.
+- [x] 4.3 Implement `partial_fit` on both fitted models.
+- [x] 4.4 Green: incremental and streaming fits equal the dense fit within tolerance.
 
 ## 5. Shared deterministic test datasets
 
