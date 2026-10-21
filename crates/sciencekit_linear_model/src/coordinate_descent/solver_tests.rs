@@ -51,7 +51,11 @@ fn solve(
 fn orthogonal_design_matches_the_closed_form() {
     let (features, targets) = orthogonal_design();
     let solution = solve(&features, &targets, 0.5, 1.0, true, &config());
-    assert_close(&solution.coefficients.row(0).to_vec(), &[1.5, -0.5, 0.0], 1e-8);
+    assert_close(
+        &solution.coefficients.row(0).to_vec(),
+        &[1.5, -0.5, 0.0],
+        1e-8,
+    );
     assert_close_scalar(solution.intercepts[0], 0.0, 1e-10);
 }
 
@@ -60,7 +64,11 @@ fn orthogonal_design_matches_the_closed_form() {
 fn zero_penalty_recovers_least_squares() {
     let (features, targets) = orthogonal_design();
     let solution = solve(&features, &targets, 0.0, 1.0, true, &config());
-    assert_close(&solution.coefficients.row(0).to_vec(), &[2.0, -1.0, 0.0], 1e-8);
+    assert_close(
+        &solution.coefficients.row(0).to_vec(),
+        &[2.0, -1.0, 0.0],
+        1e-8,
+    );
     assert_close_scalar(solution.intercepts[0], 0.0, 1e-10);
 }
 
@@ -69,7 +77,11 @@ fn zero_penalty_recovers_least_squares() {
 fn large_penalty_zeroes_every_coefficient() {
     let (features, targets) = orthogonal_design();
     let solution = solve(&features, &targets, 5.0, 1.0, true, &config());
-    assert_close(&solution.coefficients.row(0).to_vec(), &[0.0, 0.0, 0.0], 1e-12);
+    assert_close(
+        &solution.coefficients.row(0).to_vec(),
+        &[0.0, 0.0, 0.0],
+        1e-12,
+    );
     assert_close_scalar(solution.intercepts[0], 0.0, 1e-12);
 }
 
@@ -91,7 +103,11 @@ fn positive_constraint_clamps_negative_coordinates() {
     let mut constrained = config();
     constrained.positive = true;
     let solution = solve(&features, &targets, 0.5, 1.0, true, &constrained);
-    assert_close(&solution.coefficients.row(0).to_vec(), &[1.5, 0.0, 0.0], 1e-8);
+    assert_close(
+        &solution.coefficients.row(0).to_vec(),
+        &[1.5, 0.0, 0.0],
+        1e-8,
+    );
 }
 
 /// The random selection converges to the same solution as the cyclic one.
@@ -116,17 +132,14 @@ fn sparse_matches_dense() {
     let sparse = to_csr(&features);
     let dense_solution = solve(&features, &targets, 1.0, 1.0, false, &config());
     let access = SKSparseColumns::new(sparse.view());
-    let sparse_solution = sk_solve_all_alphas(
-        &access,
-        targets.view(),
-        &[1.0],
-        1.0,
-        false,
-        &config(),
-    )
-    .unwrap();
+    let sparse_solution =
+        sk_solve_all_alphas(&access, targets.view(), &[1.0], 1.0, false, &config()).unwrap();
     // Σxy = 28, n·α = 3, Σx² = 14 → S(28, 3)/14 = 25/14.
-    assert_close(&dense_solution.coefficients.row(0).to_vec(), &[25.0 / 14.0], 1e-8);
+    assert_close(
+        &dense_solution.coefficients.row(0).to_vec(),
+        &[25.0 / 14.0],
+        1e-8,
+    );
     assert_close(
         &dense_solution.coefficients.row(0).to_vec(),
         &sparse_solution.coefficients.row(0).to_vec(),
@@ -160,8 +173,8 @@ fn zero_iteration_budget_fails_to_converge() {
     let mut exhausted = config();
     exhausted.maximum_number_of_iterations = 0;
     let access = SKDenseColumns::new(features.view());
-    let error = sk_solve_all_alphas(&access, targets.view(), &[0.5], 1.0, true, &exhausted)
-        .unwrap_err();
+    let error =
+        sk_solve_all_alphas(&access, targets.view(), &[0.5], 1.0, true, &exhausted).unwrap_err();
     assert!(matches!(error, SKError::NotConverged { iterations: 0 }));
 }
 
@@ -173,8 +186,16 @@ fn multi_alpha_rows_are_independent() {
     let solution =
         sk_solve_all_alphas(&access, targets.view(), &[0.25, 1.5], 1.0, true, &config()).unwrap();
     assert_eq!(solution.coefficients.nrows(), 2);
-    assert_close(&solution.coefficients.row(0).to_vec(), &[1.75, -0.75, 0.0], 1e-8);
-    assert_close(&solution.coefficients.row(1).to_vec(), &[0.5, 0.0, 0.0], 1e-8);
+    assert_close(
+        &solution.coefficients.row(0).to_vec(),
+        &[1.75, -0.75, 0.0],
+        1e-8,
+    );
+    assert_close(
+        &solution.coefficients.row(1).to_vec(),
+        &[0.5, 0.0, 0.0],
+        1e-8,
+    );
 }
 
 /// The parallel multi-alpha path agrees with solving each penalty alone.

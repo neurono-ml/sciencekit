@@ -14,16 +14,16 @@ mod solution;
 mod solver;
 mod streaming;
 
-pub use config::{SKIntoAlphas, SKSelection};
 pub(crate) use config::SKCoordinateDescentConfig;
+pub use config::{SKIntoAlphas, SKSelection};
 pub(crate) use core::SKCoordinateDescentModelCore;
 pub(crate) use fit::sk_fit_coordinate_descent;
 pub(crate) use streaming::sk_fit_streaming;
 
 #[cfg(test)]
-mod config_tests;
-#[cfg(test)]
 mod accumulator_tests;
+#[cfg(test)]
+mod config_tests;
 #[cfg(test)]
 mod screening_tests;
 #[cfg(test)]

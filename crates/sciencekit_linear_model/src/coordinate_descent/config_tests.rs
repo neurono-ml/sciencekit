@@ -5,8 +5,8 @@ use ndarray::{Array1, array};
 use sciencekit_common::SKError;
 
 use super::config::{
-    SKCoordinateDescentConfig, SKIntoAlphas, SKSelection, sk_validate_coordinate_descent_hyperparameters,
-    sk_validate_l1_ratio,
+    SKCoordinateDescentConfig, SKIntoAlphas, SKSelection,
+    sk_validate_coordinate_descent_hyperparameters, sk_validate_l1_ratio,
 };
 
 /// A scalar penalty converts to a one-element sequence.
@@ -19,10 +19,7 @@ fn scalar_alpha_converts_to_one_element() {
 #[test]
 fn sequence_forms_convert_in_order() {
     assert_eq!(vec![1.0_f64, 2.0, 3.0].into_alphas(), vec![1.0, 2.0, 3.0]);
-    assert_eq!(
-        array![1.0_f64, 2.0, 3.0].into_alphas(),
-        vec![1.0, 2.0, 3.0]
-    );
+    assert_eq!(array![1.0_f64, 2.0, 3.0].into_alphas(), vec![1.0, 2.0, 3.0]);
     let slice: &[f64] = &[1.0, 2.0, 3.0];
     assert_eq!(slice.into_alphas(), vec![1.0, 2.0, 3.0]);
     assert_eq!([1.0_f64, 2.0, 3.0].into_alphas(), vec![1.0, 2.0, 3.0]);
@@ -42,9 +39,7 @@ fn default_configuration_is_documented() {
 /// A valid configuration validates without error.
 #[test]
 fn valid_hyperparameters_validate() {
-    assert!(
-        sk_validate_coordinate_descent_hyperparameters(&[1.0_f64, 2.0], 1e-4, 1000).is_ok()
-    );
+    assert!(sk_validate_coordinate_descent_hyperparameters(&[1.0_f64, 2.0], 1e-4, 1000).is_ok());
     assert!(sk_validate_l1_ratio(0.5_f64).is_ok());
     assert!(sk_validate_l1_ratio(1.0_f64).is_ok());
     assert!(sk_validate_l1_ratio(0.0_f64).is_ok());
@@ -75,8 +70,7 @@ fn negative_alpha_is_rejected() {
 /// A non-positive tolerance is rejected.
 #[test]
 fn non_positive_tolerance_is_rejected() {
-    let error =
-        sk_validate_coordinate_descent_hyperparameters(&[1.0], 0.0, 1000).unwrap_err();
+    let error = sk_validate_coordinate_descent_hyperparameters(&[1.0], 0.0, 1000).unwrap_err();
     assert!(matches!(
         error,
         SKError::InvalidHyperparameter {
@@ -89,8 +83,7 @@ fn non_positive_tolerance_is_rejected() {
 /// A zero iteration budget is rejected.
 #[test]
 fn zero_iteration_budget_is_rejected() {
-    let error =
-        sk_validate_coordinate_descent_hyperparameters(&[1.0], 1e-4, 0).unwrap_err();
+    let error = sk_validate_coordinate_descent_hyperparameters(&[1.0], 1e-4, 0).unwrap_err();
     assert!(matches!(
         error,
         SKError::InvalidHyperparameter {

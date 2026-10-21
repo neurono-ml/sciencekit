@@ -7,8 +7,8 @@ use sciencekit_common::{
 
 use crate::coordinate_descent::SKCoordinateDescentConfig;
 use crate::coordinate_descent::SKIntoAlphas;
-use crate::coordinate_descent::config::sk_validate_coordinate_descent_hyperparameters;
 use crate::coordinate_descent::SKSelection;
+use crate::coordinate_descent::config::sk_validate_coordinate_descent_hyperparameters;
 use crate::lasso::core_implementation::SKLasso;
 
 /// Builder for [`SKLasso`]: the only construction surface.

@@ -76,7 +76,11 @@ impl<F: SKFloat> SKCoordinateDescentModelCore<F> {
 
     /// Append one batch to the retained design, converting the representation
     /// when the batch and the accumulator disagree.
-    fn accumulate(&mut self, data: SKDataView<'_, F>, target: ArrayView1<F>) -> Result<(), SKError> {
+    fn accumulate(
+        &mut self,
+        data: SKDataView<'_, F>,
+        target: ArrayView1<F>,
+    ) -> Result<(), SKError> {
         let state_is_dense = matches!(self.state, SKCoordinateDescentState::Dense { .. });
         match data {
             SKDataView::Dense(dense) => {

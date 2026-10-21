@@ -41,7 +41,9 @@ fn uneven_batches_match_the_dense_fit() {
 #[test]
 fn empty_source_is_rejected() {
     let mut source: SupervisedVecSource<f64> = SupervisedVecSource::new(Vec::new());
-    let error = elastic_net(0.5, 0.5).fit_streaming(&mut source).unwrap_err();
+    let error = elastic_net(0.5, 0.5)
+        .fit_streaming(&mut source)
+        .unwrap_err();
     assert!(matches!(error, SKError::Conversion(_)));
 }
 
@@ -53,7 +55,9 @@ fn column_mismatch_is_rejected() {
         (array![[1.0, 2.0, 3.0]], array![1.0]),
     ];
     let mut source = SupervisedVecSource::new(batches);
-    let error = elastic_net(0.5, 0.5).fit_streaming(&mut source).unwrap_err();
+    let error = elastic_net(0.5, 0.5)
+        .fit_streaming(&mut source)
+        .unwrap_err();
     assert!(matches!(error, SKError::ShapeMismatch { .. }));
 }
 

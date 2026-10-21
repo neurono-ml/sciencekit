@@ -3,8 +3,8 @@
 use crate::coordinate_descent::test_datasets::{
     assert_close, assert_close_scalar, orthogonal_design, to_csr,
 };
-use sciencekit_common::builders::SKBuilder;
 use sciencekit_common::SKSupervisedFit;
+use sciencekit_common::builders::SKBuilder;
 
 use super::core_implementation::SKLasso;
 
@@ -30,11 +30,7 @@ fn sparse_matches_dense() {
         &sparse_model.coefficient_for(0).to_vec(),
         1e-8,
     );
-    assert_close_scalar(
-        dense.intercept_for(0),
-        sparse_model.intercept_for(0),
-        1e-8,
-    );
+    assert_close_scalar(dense.intercept_for(0), sparse_model.intercept_for(0), 1e-8);
 }
 
 /// A sparse feature excluded by the penalty is still exactly zero.
@@ -53,8 +49,10 @@ fn sparse_prediction_matches_dense() {
     let sparse = to_csr(&features);
     let model = lasso(0.5).fit(sparse.view(), targets.view()).unwrap();
     let dense_prediction = model.predict_with_alpha_index(0, features.view()).unwrap();
-    let sparse_prediction = model
-        .predict_with_alpha_index(0, sparse.view())
-        .unwrap();
-    assert_close(&sparse_prediction.to_vec(), &dense_prediction.to_vec(), 1e-8);
+    let sparse_prediction = model.predict_with_alpha_index(0, sparse.view()).unwrap();
+    assert_close(
+        &sparse_prediction.to_vec(),
+        &dense_prediction.to_vec(),
+        1e-8,
+    );
 }

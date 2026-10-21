@@ -37,7 +37,10 @@ pub(crate) fn one_feature() -> (Array2<f64>, Array1<f64>) {
 /// A one-feature design whose mean is zero and whose targets have a large
 /// intercept, so the unpenalized intercept is invariant to the penalty.
 pub(crate) fn zero_mean_feature() -> (Array2<f64>, Array1<f64>) {
-    (array![[-2.0], [-1.0], [0.0], [1.0], [2.0]], array![-1.0, 2.0, 5.0, 8.0, 11.0])
+    (
+        array![[-2.0], [-1.0], [0.0], [1.0], [2.0]],
+        array![-1.0, 2.0, 5.0, 8.0, 11.0],
+    )
 }
 
 /// Convert a dense design to an equivalent CSR matrix, dropping exact zeros.
@@ -125,7 +128,9 @@ pub(crate) fn chunk_pairs<F: SKFloat>(
     lengths
         .iter()
         .map(|&length| {
-            let feature_chunk = features.slice(ndarray::s![start..start + length, ..]).to_owned();
+            let feature_chunk = features
+                .slice(ndarray::s![start..start + length, ..])
+                .to_owned();
             let target_chunk = targets.slice(ndarray::s![start..start + length]).to_owned();
             start += length;
             (feature_chunk, target_chunk)

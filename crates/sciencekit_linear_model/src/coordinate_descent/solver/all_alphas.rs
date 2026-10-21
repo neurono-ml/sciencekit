@@ -24,9 +24,8 @@ pub(crate) fn sk_solve_all_alphas<F: SKFloat, A: SKColumnAccess<F> + Sync>(
     include_intercept: bool,
     config: &SKCoordinateDescentConfig<F>,
 ) -> Result<SKCoordinateDescentSolution<F>, SKError> {
-    let solve_one = |alpha: &F| {
-        sk_solve_alpha(access, target, *alpha, l1_ratio, include_intercept, config)
-    };
+    let solve_one =
+        |alpha: &F| sk_solve_alpha(access, target, *alpha, l1_ratio, include_intercept, config);
     let solutions: Vec<Result<SKCoordinateDescentAlphaSolution<F>, SKError>> = if alphas.len() > 1 {
         alphas.par_iter().map(solve_one).collect()
     } else {
@@ -38,7 +37,9 @@ pub(crate) fn sk_solve_all_alphas<F: SKFloat, A: SKColumnAccess<F> + Sync>(
     let mut screened_count = 0usize;
     for (row_index, solution) in solutions.into_iter().enumerate() {
         let solution = solution?;
-        coefficients.row_mut(row_index).assign(&solution.coefficients);
+        coefficients
+            .row_mut(row_index)
+            .assign(&solution.coefficients);
         intercepts[row_index] = solution.intercept;
         screened_count += solution.screened_count;
     }

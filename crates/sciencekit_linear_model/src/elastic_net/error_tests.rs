@@ -37,7 +37,10 @@ fn rejects_target_length_mismatch() {
 /// A negative penalty is rejected at build time.
 #[test]
 fn rejects_negative_alpha() {
-    let error = SKElasticNet::<f64>::build().alpha(-1.0).build().unwrap_err();
+    let error = SKElasticNet::<f64>::build()
+        .alpha(-1.0)
+        .build()
+        .unwrap_err();
     assert!(matches!(
         error,
         SKError::InvalidHyperparameter { name: "alpha", .. }
@@ -60,7 +63,10 @@ fn rejects_empty_alpha_sequence() {
 /// A non-positive tolerance is rejected at build time.
 #[test]
 fn rejects_zero_tolerance() {
-    let error = SKElasticNet::<f64>::build().tolerance(0.0).build().unwrap_err();
+    let error = SKElasticNet::<f64>::build()
+        .tolerance(0.0)
+        .build()
+        .unwrap_err();
     assert!(matches!(
         error,
         SKError::InvalidHyperparameter {
@@ -108,9 +114,7 @@ fn rejects_out_of_range_l1_ratio() {
 #[test]
 fn rejects_prediction_shape_mismatch() {
     let (features, targets) = one_feature();
-    let model = default_net()
-        .fit(features.view(), targets.view())
-        .unwrap();
+    let model = default_net().fit(features.view(), targets.view()).unwrap();
     let wrong = ndarray::array![[1.0, 2.0]];
     let error = model.predict(wrong.view()).unwrap_err();
     assert!(matches!(error, SKError::ShapeMismatch { .. }));

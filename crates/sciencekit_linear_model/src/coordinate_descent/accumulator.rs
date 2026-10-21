@@ -66,9 +66,7 @@ impl<F: SKFloat> SKCoordinateDescentState<F> {
     /// The number of rows accumulated across every batch.
     pub(crate) fn row_count(&self) -> u64 {
         match self {
-            Self::Dense { batches, .. } => {
-                batches.iter().map(Array2::nrows).sum::<usize>() as u64
-            }
+            Self::Dense { batches, .. } => batches.iter().map(Array2::nrows).sum::<usize>() as u64,
             Self::Sparse { batches, .. } => batches.iter().map(CsMat::rows).sum::<usize>() as u64,
         }
     }
@@ -91,11 +89,7 @@ impl<F: SKFloat> SKCoordinateDescentState<F> {
     }
 
     /// Append one sparse batch (owned copy) and its targets.
-    pub(crate) fn accumulate_sparse(
-        &mut self,
-        features: CsMatView<'_, F>,
-        targets: ArrayView1<F>,
-    ) {
+    pub(crate) fn accumulate_sparse(&mut self, features: CsMatView<'_, F>, targets: ArrayView1<F>) {
         if let Self::Sparse {
             batches,
             targets: accumulated,
@@ -125,8 +119,7 @@ impl<F: SKFloat> SKCoordinateDescentState<F> {
         }
         match self {
             Self::Dense { batches, targets } => {
-                let views: Vec<ArrayView2<F>> =
-                    batches.iter().map(|batch| batch.view()).collect();
+                let views: Vec<ArrayView2<F>> = batches.iter().map(|batch| batch.view()).collect();
                 let design = ndarray::concatenate(Axis(0), &views)
                     .map_err(|_| SKError::Conversion("dense batch concatenation failed".into()))?;
                 let access = SKDenseColumns::new(design.view());
@@ -139,7 +132,11 @@ impl<F: SKFloat> SKCoordinateDescentState<F> {
                     config,
                 )
             }
-            Self::Sparse { batches, targets, columns_count } => {
+            Self::Sparse {
+                batches,
+                targets,
+                columns_count,
+            } => {
                 let stacked = sk_stack_sparse(batches, *columns_count);
                 let access = SKSparseColumns::new(stacked.view());
                 sk_solve_all_alphas(
@@ -156,10 +153,7 @@ impl<F: SKFloat> SKCoordinateDescentState<F> {
 }
 
 /// Append `incoming` targets to an accumulated target vector.
-fn concatenate_targets<F: SKFloat>(
-    accumulated: &Array1<F>,
-    incoming: &ArrayView1<F>,
-) -> Array1<F> {
+fn concatenate_targets<F: SKFloat>(accumulated: &Array1<F>, incoming: &ArrayView1<F>) -> Array1<F> {
     if accumulated.is_empty() {
         return incoming.to_owned();
     }
@@ -175,9 +169,7 @@ fn sk_stack_sparse<F: SKFloat>(batches: &[CsMat<F>], columns_count: usize) -> Cs
     let mut row_offset = 0;
     for batch in batches {
         for (row_index, sparse_row) in batch.outer_iterator().enumerate() {
-            for (&column_index, &value) in
-                sparse_row.indices().iter().zip(sparse_row.data())
-            {
+            for (&column_index, &value) in sparse_row.indices().iter().zip(sparse_row.data()) {
                 triplets.add_triplet(row_offset + row_index, column_index, value);
             }
         }

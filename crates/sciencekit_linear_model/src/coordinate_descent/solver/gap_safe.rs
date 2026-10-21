@@ -6,9 +6,7 @@ use ndarray::{Array1, ArrayView1};
 use sciencekit_common::SKFloat;
 
 use super::super::access::SKColumnAccess;
-use super::super::screening::{
-    sk_dual_feasible_scale, sk_gap_safe_radius, sk_is_safely_zero,
-};
+use super::super::screening::{sk_dual_feasible_scale, sk_gap_safe_radius, sk_is_safely_zero};
 use super::orchestration::sk_full_gradient;
 
 /// Deactivate active coordinates that are exactly zero and provably zero by the
@@ -34,7 +32,16 @@ pub(super) fn sk_apply_gap_safe_screening<F: SKFloat, A: SKColumnAccess<F>>(
         .iter()
         .fold(F::zero(), |best, value| best.max(value.abs()));
     let scale = sk_dual_feasible_scale(infinity_norm, l1);
-    let duality_gap = sk_duality_gap(residual, target, coefficients, l1, l2, row_count, scale, inv_n);
+    let duality_gap = sk_duality_gap(
+        residual,
+        target,
+        coefficients,
+        l1,
+        l2,
+        row_count,
+        scale,
+        inv_n,
+    );
     let radius = sk_gap_safe_radius(duality_gap, rows);
     let mut deactivate = Vec::new();
     for column in 0..access.columns_count() {
@@ -47,7 +54,9 @@ pub(super) fn sk_apply_gap_safe_screening<F: SKFloat, A: SKColumnAccess<F>>(
             deactivate.push(column);
         }
     }
-    deactivate.into_iter().for_each(|column| active[column] = false);
+    deactivate
+        .into_iter()
+        .for_each(|column| active[column] = false);
 }
 
 /// The primal–dual gap at the current solution and dual-feasible point

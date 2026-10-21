@@ -79,9 +79,7 @@ impl<F: SKFloat> SKSparseColumns<F> {
         let rows_count = view.rows();
         let mut columns: Vec<Vec<(usize, F)>> = vec![Vec::new(); view.cols()];
         for (row_index, sparse_row) in view.outer_iterator().enumerate() {
-            for (&column_index, &value) in
-                sparse_row.indices().iter().zip(sparse_row.data())
-            {
+            for (&column_index, &value) in sparse_row.indices().iter().zip(sparse_row.data()) {
                 columns[column_index].push((row_index, value));
             }
         }

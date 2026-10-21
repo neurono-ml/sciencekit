@@ -28,10 +28,7 @@ pub(crate) fn sk_gap_safe_radius<F: SKFloat>(duality_gap: F, row_count: usize) -
 
 /// The scaling that turns the raw residual into a dual-feasible point:
 /// `z = −r / (n · scale)`, with `scale = max(1, ‖Xᵀr/n‖∞ / α)`.
-pub(crate) fn sk_dual_feasible_scale<F: SKFloat>(
-    gradient_infinity_norm: F,
-    l1_threshold: F,
-) -> F {
+pub(crate) fn sk_dual_feasible_scale<F: SKFloat>(gradient_infinity_norm: F, l1_threshold: F) -> F {
     if l1_threshold <= F::zero() {
         return F::one();
     }
@@ -60,9 +57,7 @@ pub(crate) fn sk_kkt_violations<F: SKFloat>(
     gradient
         .iter()
         .enumerate()
-        .filter(|(index, value)| {
-            !active[*index] && value.abs() > l1_threshold + tolerance
-        })
+        .filter(|(index, value)| !active[*index] && value.abs() > l1_threshold + tolerance)
         .map(|(index, _)| index)
         .collect()
 }
