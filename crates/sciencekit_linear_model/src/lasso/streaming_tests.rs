@@ -150,3 +150,49 @@ fn partial_fit_sparse_batch_matches_dense() {
         1e-8,
     );
 }
+
+/// An in-memory execution intent collects the batches and matches the dense fit.
+#[test]
+fn in_memory_intent_collects_and_matches_the_dense_fit() {
+    use sciencekit_common::SKExecutionMode;
+
+    let (features, targets) = orthogonal_design();
+    let dense = lasso(0.5).fit(features.view(), targets.view()).unwrap();
+    let estimator = SKLasso::<f64>::build()
+        .alpha(0.5)
+        .tolerance(1e-10)
+        .maximum_number_of_iterations(100_000)
+        .execution_mode(SKExecutionMode::InProcessSynchronous)
+        .build()
+        .unwrap();
+    let mut source = chunked_source(&features, &targets, &[2, 2]);
+    let streamed = estimator.fit_streaming(&mut source).unwrap();
+    assert_close(
+        &streamed.coefficient_for(0).to_vec(),
+        &dense.coefficient_for(0).to_vec(),
+        1e-8,
+    );
+}
+
+/// The streaming fit is independent of the batch order.
+#[test]
+fn streaming_is_independent_of_batch_order() {
+    let (features, targets) = orthogonal_design();
+    let dense = lasso(0.5).fit(features.view(), targets.view()).unwrap();
+    let mut permuted = SupervisedVecSource::new(vec![
+        (
+            features.slice(s![2.., ..]).to_owned(),
+            targets.slice(s![2..]).to_owned(),
+        ),
+        (
+            features.slice(s![0..2, ..]).to_owned(),
+            targets.slice(s![0..2]).to_owned(),
+        ),
+    ]);
+    let streamed = lasso(0.5).fit_streaming(&mut permuted).unwrap();
+    assert_close(
+        &streamed.coefficient_for(0).to_vec(),
+        &dense.coefficient_for(0).to_vec(),
+        1e-8,
+    );
+}

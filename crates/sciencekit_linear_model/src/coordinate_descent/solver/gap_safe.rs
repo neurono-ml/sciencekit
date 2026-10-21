@@ -25,6 +25,13 @@ pub(super) fn sk_apply_gap_safe_screening<F: SKFloat, A: SKColumnAccess<F>>(
     if l1 <= F::zero() || rows == 0 {
         return;
     }
+    // The gap-safe radius below is derived for the pure-L1 (lasso) objective.
+    // The elastic net still uses the strong initial set plus the KKT
+    // reactivation guarantee, but not this gap-based elimination (design
+    // Decision 5).
+    if l2 > F::zero() {
+        return;
+    }
     let row_count = F::from(rows).expect("row counts fit in the scalar");
     let inv_n = F::one() / row_count;
     let gradient = sk_full_gradient(access, residual.view(), inv_n);
