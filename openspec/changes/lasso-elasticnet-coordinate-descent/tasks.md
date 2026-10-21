@@ -12,21 +12,21 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
   `feat(linear_model): add the coordinate-descent configuration substrate`)*
 - [x] 1.2 Implement `SKIntoAlphas`, `SKSelection`, `SKCoordinateDescentConfig` and the shared
   `sk_validate_*` helpers.
-- [ ] 1.3 Red: companion tests for the dense coordinate-descent solver (one-feature closed
+- [x] 1.3 Red: companion tests for the dense coordinate-descent solver (one-feature closed
   form, orthogonal closed form, KKT satisfaction, alpha monotonicity, zero alpha → least
   squares, large alpha → all zeros, `positive`, `selection(Random)` equivalence, `f32`/`f64`).
-- [ ] 1.4 Implement the dense coordinate-descent solver: soft-threshold updates, the
+- [x] 1.4 Implement the dense coordinate-descent solver: soft-threshold updates, the
   unpenalized residual-mean intercept coordinate, cyclic/random sweeps and convergence on the
   maximum coordinate change.
-- [ ] 1.5 Red: companion tests for the sparse coordinate-descent solver (CSR equals dense
+- [x] 1.5 Red: companion tests for the sparse coordinate-descent solver (CSR equals dense
   within tolerance, both floats, a zero row is a no-op).
-- [ ] 1.6 Implement the CSR column access and the shared column-access abstraction so dense
+- [x] 1.6 Implement the CSR column access and the shared column-access abstraction so dense
   and sparse share one coordinate loop without densifying the design.
-- [ ] 1.7 Red: companion tests for gap-safe screening (screened equals unscreened, a positive
+- [x] 1.7 Red: companion tests for gap-safe screening (screened equals unscreened, a positive
   screened count on a sparse solution, KKT reactivation recovers a deliberately screened-out
   coordinate, screening disabled equals enabled). *(commit
   `feat(linear_model): add gap-safe screening to the coordinate-descent solver`)*
-- [ ] 1.8 Implement `screening.rs` (strong initial active set, dual-feasible gap radius,
+- [x] 1.8 Implement `screening.rs` (strong initial active set, dual-feasible gap radius,
   gap-safe elimination, KKT reactivation) and wire it into the solver.
 - [ ] 1.9 Red: companion tests for the retained-design accumulator and the parallel per-alpha
   solve (dense and sparse accumulation equal concatenation, empty accumulator, column
