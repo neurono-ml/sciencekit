@@ -7,8 +7,10 @@ pub mod builder;
 pub mod core_implementation;
 pub mod model;
 
+mod fitting_logic;
 mod gram;
 mod solving;
+mod sparse;
 
 pub use builder::{SKIntoRidgeAlphas, SKRidgeBuilder, SKRidgeSolver};
 pub use core_implementation::SKRidge;
@@ -20,5 +22,11 @@ mod error_tests;
 mod ridge_tests;
 #[cfg(test)]
 mod solver_tests;
+#[cfg(test)]
+mod sparse_prediction_tests;
+#[cfg(test)]
+mod sparse_test_datasets;
+#[cfg(test)]
+mod sparse_tests;
 #[cfg(test)]
 mod test_datasets;

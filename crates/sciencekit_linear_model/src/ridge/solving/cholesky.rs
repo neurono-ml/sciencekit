@@ -9,7 +9,7 @@ use sciencekit_math::SKBackendSelection;
 ///
 /// The factor is `A = L Lᵀ`; the system is solved by the two triangular passes
 /// `L y = cross` then `Lᵀ β = y`.
-pub(super) fn solve_with_cholesky<F: SKBackendSelection>(
+pub(crate) fn solve_with_cholesky<F: SKBackendSelection>(
     backend: SKBackendKind,
     gram_plus_alpha: ArrayView2<F>,
     cross: ArrayView1<F>,

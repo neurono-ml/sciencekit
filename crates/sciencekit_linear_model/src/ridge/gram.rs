@@ -4,6 +4,9 @@
 use ndarray::{Array1, Array2, ArrayView1, ArrayView2, azip};
 use sciencekit_common::SKFloat;
 use sciencekit_math::{sk_axis_sum, sk_gram_matrix, sk_gram_vector};
+use sprs::CsMatView;
+
+use crate::ridge::sparse::{sk_csr_column_sums, sk_csr_transpose_vector_product, sk_sparse_gram};
 
 /// Running centered cross products of a design matrix and its targets.
 ///
@@ -57,6 +60,19 @@ impl<F: SKFloat> SKCenteredGramState<F> {
         self.column_sums = &self.column_sums + &sk_axis_sum(features, 0, parallelism);
         self.target_sum = self.target_sum + target.sum();
         self.row_count += features.nrows() as u64;
+    }
+
+    /// Accumulate one sparse batch's cross products into the running state.
+    ///
+    /// `XᵀX` comes from the zero-copy normal-equation operator applied to unit
+    /// columns, `Σx` from `Xᵀ·1` and `Xᵀy` from `Xᵀ·y`; the design is never
+    /// densified, only the `p × p` Gram and the `O(p)` vectors are materialized.
+    pub(super) fn accumulate_sparse(&mut self, features: &CsMatView<F>, target: &ArrayView1<F>) {
+        self.gram = &self.gram + &sk_sparse_gram(features);
+        self.cross = &self.cross + &sk_csr_transpose_vector_product(features, target.view());
+        self.column_sums = &self.column_sums + &sk_csr_column_sums(features);
+        self.target_sum = self.target_sum + target.sum();
+        self.row_count += features.rows() as u64;
     }
 
     /// The centered cross products `(Ĉ, ĉ)` plus the feature means `x̄` and the

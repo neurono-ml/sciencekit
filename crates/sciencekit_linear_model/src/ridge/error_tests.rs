@@ -112,23 +112,6 @@ fn svd_rejects_sparse_input() {
     ));
 }
 
-/// Until the sparse path lands, the `Automatic` solver also rejects sparse
-/// input with a structured error.
-#[test]
-fn automatic_rejects_sparse_input() {
-    let (sparse, targets) = sparse_design();
-    let error = default_ridge()
-        .fit(sparse.view(), targets.view())
-        .unwrap_err();
-    assert!(matches!(
-        error,
-        SKError::UnsupportedRepresentation {
-            representation: "csr",
-            ..
-        }
-    ));
-}
-
 /// A small sparse identity design with matching targets.
 fn sparse_design() -> (sprs::CsMat<f64>, Array1<f64>) {
     use sprs::TriMat;

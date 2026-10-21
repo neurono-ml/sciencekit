@@ -1,11 +1,12 @@
 //! The fitted ridge model, its accessors and its per-alpha prediction
 //! (spec `ridge-regression`).
 
-use ndarray::{Array1, Array2, ArrayView1, ArrayView2};
+use ndarray::{Array1, Array2, ArrayView1, ArrayView2, Axis};
 use sciencekit_common::{
     SKBackendKind, SKDataView, SKError, SKExecutionMode, SKFloat, SKOperationAttributes,
     SKOperationKind, sk_run_operation,
 };
+use sciencekit_math::sk_csr_dense_product;
 
 use crate::ridge::builder::SKRidgeSolver;
 use crate::ridge::gram::SKCenteredGramState;
@@ -132,6 +133,10 @@ impl<F: SKFloat> SKRidgeModel<F> {
     }
 
     /// Predict responses for one explicit `alpha` index.
+    ///
+    /// Accepts dense and sparse features; sparse features are multiplied by the
+    /// selected coefficient column without densifying the design. A column count
+    /// differing from the fitted design is rejected with `ShapeMismatch`.
     pub fn predict_with_alpha_index<'a, X>(
         &self,
         index: usize,
@@ -140,27 +145,49 @@ impl<F: SKFloat> SKRidgeModel<F> {
     where
         X: TryInto<SKDataView<'a, F>, Error = SKError>,
     {
-        let dense = features.try_into()?.as_dense()?;
-        if dense.ncols() != self.feature_count() {
+        let data = features.try_into()?;
+        let (rows_count, columns_count) = match data {
+            SKDataView::Dense(dense) => dense.dim(),
+            SKDataView::Sparse(sparse) => (sparse.rows(), sparse.cols()),
+            _ => {
+                return Err(SKError::UnsupportedRepresentation {
+                    representation: "unknown",
+                    suggestion: "convert the features to a dense matrix or a CSR matrix",
+                });
+            }
+        };
+        if columns_count != self.feature_count() {
             return Err(SKError::shape_mismatch_2d(
-                dense.nrows(),
+                rows_count,
                 self.feature_count(),
-                dense.nrows(),
-                dense.ncols(),
+                rows_count,
+                columns_count,
             ));
         }
         let attributes = SKOperationAttributes {
             operation: SKOperationKind::Predict,
-            rows_count: dense.nrows(),
-            columns_count: dense.ncols(),
+            rows_count,
+            columns_count,
             execution_mode: self.execution_intent,
             backend: self.backend,
         };
         sk_run_operation(attributes, || {
             let intercept = self.intercepts[index];
-            Ok(dense
-                .dot(&self.coefficients.row(index))
-                .mapv(|value| value + intercept))
+            let coefficient_row = self.coefficients.row(index);
+            match data {
+                SKDataView::Dense(dense) => {
+                    Ok(dense.dot(&coefficient_row).mapv(|value| value + intercept))
+                }
+                SKDataView::Sparse(sparse) => {
+                    let coefficient_column = coefficient_row.insert_axis(Axis(1));
+                    let product = sk_csr_dense_product(&sparse, &coefficient_column);
+                    Ok(product.column(0).mapv(|value| value + intercept))
+                }
+                _ => Err(SKError::UnsupportedRepresentation {
+                    representation: "unknown",
+                    suggestion: "convert the features to a dense matrix or a CSR matrix",
+                }),
+            }
         })
     }
 }

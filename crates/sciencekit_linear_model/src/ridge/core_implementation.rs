@@ -1,19 +1,15 @@
 //! The `SKRidge` estimator and its supervised dense `fit`
 //! (spec `ridge-regression`).
 
-use ndarray::ArrayView2;
 use sciencekit_common::{
     SKBackendKind, SKBuilderState, SKDataView, SKError, SKExecutionContext, SKExecutionMode,
-    SKExecutionPlan, SKFloat, SKOperationAttributes, SKOperationKind, SKSupervisedFit,
-    SKTargetView, execution::SKAccessPattern, sk_run_operation,
+    SKExecutionPlan, SKFloat, SKSupervisedFit, SKTargetView,
 };
 use sciencekit_math::SKBackendSelection;
-use sciencekit_math::kernels::SK_AXIS_SUM_GRAIN;
 
 use crate::ridge::builder::{SKRidgeBuilder, SKRidgeSolver};
-use crate::ridge::gram::SKCenteredGramState;
+use crate::ridge::fitting_logic::fit_impl;
 use crate::ridge::model::SKRidgeModel;
-use crate::ridge::solving::{reject_sparse, solve_ridge};
 
 /// Ridge regression, builder-configured.
 ///
@@ -90,83 +86,7 @@ impl<F: SKBackendSelection> SKSupervisedFit<F> for SKRidge<F> {
         T: TryInto<SKTargetView<'a, F>, Error = SKError>,
     {
         let data = features.try_into()?;
-        let representation = data.representation();
-        let dense = match data {
-            SKDataView::Dense(dense) => dense,
-            _ => return Err(reject_sparse(self.solver)),
-        };
         let target = targets.try_into()?.as_continuous()?.into_owned();
-        let (rows_count, columns_count) = validated_shape(&dense, target.len())?;
-        let attributes = SKOperationAttributes {
-            operation: SKOperationKind::Fit,
-            rows_count,
-            columns_count,
-            execution_mode: self.execution_intent(),
-            backend: self.backend,
-        };
-        sk_run_operation(attributes, || {
-            let plan = resolve_fit_plan(self, &dense)?;
-            let mut gram = SKCenteredGramState::empty(columns_count);
-            gram.accumulate_dense(&dense, &target.view(), plan.parallelism);
-            let solution = solve_ridge(
-                self.solver,
-                representation,
-                self.include_intercept,
-                &gram,
-                dense.view(),
-                target.view(),
-                &self.alphas,
-                self.backend,
-            )?;
-            Ok(SKRidgeModel::from_solve(
-                self.alphas.clone(),
-                solution.coefficients,
-                solution.intercepts,
-                solution.rank,
-                solution.singular_values,
-                solution.resolved,
-                self.include_intercept,
-                self.backend,
-                self.execution_intent(),
-                gram,
-            ))
-        })
+        fit_impl(self, data, target)
     }
-}
-
-/// Reject empty inputs and a target count that disagrees with the row count,
-/// before any element is processed.
-fn validated_shape<F>(
-    features: &ArrayView2<F>,
-    target_len: usize,
-) -> Result<(usize, usize), SKError> {
-    let (rows_count, columns_count) = features.dim();
-    if rows_count == 0 || columns_count == 0 {
-        return Err(SKError::ShapeMismatch {
-            expected: vec![rows_count.max(1), columns_count.max(1)],
-            found: vec![rows_count, columns_count],
-        });
-    }
-    if target_len != rows_count {
-        return Err(SKError::ShapeMismatch {
-            expected: vec![rows_count],
-            found: vec![target_len],
-        });
-    }
-    Ok((rows_count, columns_count))
-}
-
-/// Build a fresh execution context per operation, declare the reduction grain
-/// and the `Sequential` access pattern, and resolve the plan.
-fn resolve_fit_plan<F: SKFloat>(
-    estimator: &SKRidge<F>,
-    features: &ArrayView2<F>,
-) -> Result<SKExecutionPlan, SKError> {
-    let mut context = SKExecutionContext::real();
-    context.dataset_size_bytes = features.len() as u64 * size_of::<F>() as u64;
-    context.scalar_size_bytes = size_of::<F>() as u64;
-    context.dataset_elements = Some(features.len() as u64);
-    context.access_pattern = SKAccessPattern::Sequential;
-    context.grain = SK_AXIS_SUM_GRAIN;
-    estimator.resolve_plan(&context)
 }

@@ -13,23 +13,6 @@ use super::svd::solve_with_svd;
 use crate::ridge::builder::SKRidgeSolver;
 use crate::ridge::gram::SKCenteredGramState;
 
-/// Reject a sparse input with a structured representation error.
-///
-/// The `Svd` solver points the consumer at the sparse-capable solvers; until the
-/// sparse paths land, every solver points at the dense conversion.
-pub(crate) fn reject_sparse(configured: SKRidgeSolver) -> SKError {
-    match configured {
-        SKRidgeSolver::Svd => SKError::UnsupportedRepresentation {
-            representation: "csr",
-            suggestion: "use the Cholesky or SparseCg solver for sparse input",
-        },
-        _ => SKError::UnsupportedRepresentation {
-            representation: "csr",
-            suggestion: "sparse ridge fits arrive with the SparseCg solver; convert to dense with to_dense for now",
-        },
-    }
-}
-
 /// Resolve the configured solver for the input representation.
 ///
 /// `Automatic` maps dense → `Cholesky` and sparse → `SparseCg`; every explicit
@@ -119,9 +102,6 @@ fn resolve_and_solve<F: SKBackendSelection>(
     inputs: SKRidgeSolveInputs<'_, F>,
     backend: SKBackendKind,
 ) -> Result<(SKRidgeSolver, SKRidgeSolveResult<F>), SKError> {
-    if representation != "dense" {
-        return Err(reject_sparse(configured));
-    }
     match resolve_solver(configured, representation) {
         SKRidgeSolver::Cholesky => solve_cholesky_with_fallback(inputs, backend),
         SKRidgeSolver::Svd => Ok((SKRidgeSolver::Svd, solve_svd(backend, &inputs)?)),
