@@ -20,7 +20,9 @@ pub use context::SKExecutionContext;
 pub use modes::{SKAccessPattern, SKExecutionMode};
 pub use plan::SKExecutionPlan;
 pub use resolve::sk_resolve_execution_plan;
-pub use streaming_driver::{SKStreamDecision, sk_run_streaming_driver};
+pub use streaming_driver::{
+    SKStreamDecision, sk_run_streaming_driver, sk_run_supervised_streaming_driver,
+};
 
 #[cfg(test)]
 mod execution_tests;

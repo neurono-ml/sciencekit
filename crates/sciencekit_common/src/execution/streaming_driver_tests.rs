@@ -5,11 +5,13 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
 
-use ndarray::Array2;
+use ndarray::{Array1, Array2};
 
-use super::streaming_driver::{SKStreamDecision, sk_run_streaming_driver};
+use super::streaming_driver::{
+    SKStreamDecision, sk_run_streaming_driver, sk_run_supervised_streaming_driver,
+};
 use super::{SKExecutionMode, SKExecutionPlan};
-use crate::{SKDataBatch, SKError, SKLazySource};
+use crate::{SKDataBatch, SKError, SKLazySource, SKSupervisedBatch, SKSupervisedLazySource};
 
 /// An instrumented sequential source: logs every read and can fail mid-stream.
 struct RecordingSource {
@@ -309,4 +311,78 @@ fn driver_accepts_small_and_large_streams_with_sequential_fallback() {
     assert_eq!(large_state.len(), 1000);
     assert_eq!(*large_state.first().unwrap(), 0);
     assert_eq!(*large_state.last().unwrap(), 999);
+}
+
+// ---- Supervised streaming driver (spec `streaming-batches`) ----
+
+/// A finite supervised source of `total` one-row batches.
+struct SupervisedRecordingSource {
+    next: usize,
+    total: usize,
+}
+
+impl SupervisedRecordingSource {
+    fn new(total: usize) -> Self {
+        SupervisedRecordingSource { next: 0, total }
+    }
+}
+
+impl SKSupervisedLazySource<f64> for SupervisedRecordingSource {
+    type Error = SKError;
+    fn next_supervised_batch(&mut self) -> Result<Option<SKSupervisedBatch<f64>>, Self::Error> {
+        if self.next >= self.total {
+            return Ok(None);
+        }
+        let position = self.next;
+        self.next += 1;
+        let features = Array2::from_shape_vec((1, 1), vec![position as f64]).unwrap();
+        let targets = Array1::from_vec(vec![(position * 10) as f64]);
+        Ok(Some(SKSupervisedBatch::new(
+            features,
+            targets,
+            position,
+            position == self.total - 1,
+        )))
+    }
+}
+
+/// The supervised driver delivers feature/target pairs in order, and the
+/// update closure sees the paired data.
+#[test]
+fn supervised_driver_pairs_features_and_targets() {
+    let mut source = SupervisedRecordingSource::new(5);
+    let update =
+        |batch: SKSupervisedBatch<f64>, _parallelism: usize, state: &mut Vec<(usize, f64)>| {
+            state.push((batch.position(), batch.targets()[0]));
+            SKStreamDecision::Continue
+        };
+    let mut state = Vec::new();
+    sk_run_supervised_streaming_driver(&mut source, &mut state, update, &streaming_plan()).unwrap();
+    assert_eq!(
+        state,
+        vec![(0, 0.0), (1, 10.0), (2, 20.0), (3, 30.0), (4, 40.0)]
+    );
+}
+
+/// A supervised source that fails on the first read yields a structured error.
+struct FailingSupervisedSource;
+
+impl SKSupervisedLazySource<f64> for FailingSupervisedSource {
+    type Error = SKError;
+    fn next_supervised_batch(&mut self) -> Result<Option<SKSupervisedBatch<f64>>, Self::Error> {
+        Err(SKError::Conversion("supervised stream failed".into()))
+    }
+}
+
+/// The supervised driver surfaces a mid-stream read failure as the central
+/// taxonomy error, not a panic.
+#[test]
+fn supervised_driver_surfaces_a_mid_stream_error() {
+    let mut source = FailingSupervisedSource;
+    let update = |_batch: SKSupervisedBatch<f64>, _parallelism: usize, _state: &mut ()| {
+        SKStreamDecision::Continue
+    };
+    let error = sk_run_supervised_streaming_driver(&mut source, &mut (), update, &streaming_plan())
+        .unwrap_err();
+    assert!(error.to_string().contains("supervised stream failed"));
 }

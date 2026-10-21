@@ -34,14 +34,14 @@ pub mod pairwise;
 pub mod sparse_ops;
 
 pub use backend::{
-    SKFaerBackend, SKLUDecomposition, SKLeastSquaresSolution, SKMathBackend,
+    SKBackendSelection, SKFaerBackend, SKLUDecomposition, SKLeastSquaresSolution, SKMathBackend,
     SKMatrixMultiplyBackend, SKNormKind, SKQRDecomposition, SKSingularValueDecomposition,
-    sk_default_math_backend,
+    sk_default_math_backend, sk_math_backend_for_kind,
 };
 pub use kernels::{
     SK_AXIS_SUM_GRAIN, SK_BINARY_COMBINE_GRAIN, SK_ELEMENTWISE_TRANSFORM_GRAIN,
     SK_SCALE_IN_PLACE_GRAIN, sk_axis_min_max, sk_axis_sum, sk_axis_sum_squares, sk_binary_combine,
-    sk_elementwise_transform, sk_scale_in_place,
+    sk_elementwise_transform, sk_gram_matrix, sk_gram_vector, sk_scale_in_place,
 };
 pub use layout::{sk_force_contiguous, sk_is_c_contiguous, sk_is_f_contiguous, sk_memory_layout};
 pub use pairwise::{

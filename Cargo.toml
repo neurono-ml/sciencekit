@@ -20,9 +20,18 @@ resolver = "3"
 members = [
     "crates/sciencekit_common",
     "crates/sciencekit_impute",
+    "crates/sciencekit_linear_model",
     "crates/sciencekit_math",
     "crates/sciencekit_preprocessing",
 ]
+
+# Optimize dependencies in dev/test builds. The pure-Rust linear algebra
+# (`faer`) is dramatically slower unoptimized — an SVD that takes milliseconds
+# optimized takes tens of seconds in a fully debug build — which would make the
+# large-data algorithm tests (PRD §8.7) impractical. Our own crates stay
+# unoptimized for fast iteration.
+[profile.dev.package."*"]
+opt-level = 2
 
 # Shared dependency pins for the workspace sub-crates (Phase 0.4 adds the
 # execution-decision, observability and allocator-selection dependencies).

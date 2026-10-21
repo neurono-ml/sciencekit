@@ -532,6 +532,47 @@ fn lstsq_rank_deficient_f64() {
     check_lstsq_rank_deficient::<f64>();
 }
 
+/// `lstsq` recovers the exact solution of a **tall** (rows ≫ columns) design —
+/// the shape least squares actually sees.
+///
+/// This is a **functional smoke test** for the tall path, not a performance
+/// pin: reverting `lstsq` to the full SVD would still pass it (just far more
+/// slowly). The thin-SVD guarantee it exercises — that only the first
+/// `min(m, n)` singular vectors are needed — is asserted by the rank and
+/// solution checks below; the crate-level large-data regression test is what
+/// would catch a performance regression in practice.
+fn check_lstsq_tall_design<F: SKFloat + std::fmt::Debug>()
+where
+    SKFaerBackend: SKMathBackend<F>,
+{
+    let rows = 2000;
+    let a = Array2::from_shape_fn((rows, 3), |(i, j)| {
+        F::from(((i * 7 + j * 13) % 89) as f64 * 0.25 + j as f64).unwrap()
+    });
+    let true_solution = [1.5_f64, -0.5, 2.0];
+    let mut b = Array2::<F>::zeros((rows, 1));
+    for i in 0..rows {
+        let value = true_solution[0] * a[(i, 0)].to_f64().unwrap()
+            + true_solution[1] * a[(i, 1)].to_f64().unwrap()
+            + true_solution[2] * a[(i, 2)].to_f64().unwrap();
+        b[(i, 0)] = F::from(value).unwrap();
+    }
+    let result: SKLeastSquaresSolution<F> = SKFaerBackend::new().lstsq(a.view(), b.view()).unwrap();
+    assert_eq!(result.rank, 3);
+    for (index, expected) in true_solution.iter().enumerate() {
+        let recovered = result.solution[(index, 0)].to_f64().unwrap();
+        assert!(
+            (recovered - expected).abs() < 1e-3,
+            "coefficient {index}: {recovered} vs {expected}"
+        );
+    }
+}
+
+#[test]
+fn lstsq_tall_design_f64() {
+    check_lstsq_tall_design::<f64>();
+}
+
 /// Matrix `norm` matches hand-computed values for the common orders.
 fn check_norm_matrix_orders<F: SKFloat + std::fmt::Debug>()
 where

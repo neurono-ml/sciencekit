@@ -1,8 +1,10 @@
 //! Tests for streaming batches (spec `streaming-batches`).
 
-use ndarray::{Array2, ArrayView1};
+use ndarray::{Array1, Array2, ArrayView1};
 
-use super::{SKDataBatch, SKLazySource, SKMappableSource};
+use super::{
+    SKDataBatch, SKLazySource, SKMappableSource, SKSupervisedBatch, SKSupervisedLazySource,
+};
 use crate::SKError;
 
 /// An owned block survives the source's drop (its data is fully owned).
@@ -65,7 +67,81 @@ fn random_access_contract_does_not_couple_storage() {
     assert_eq!(source.number_of_rows(), 1);
 }
 
+/// A supervised block owns both its features and its targets, surviving the
+/// source's drop.
+#[test]
+fn supervised_block_owns_features_and_targets() {
+    let features = Array2::from_shape_vec((2, 2), vec![1.0_f64, 2.0, 3.0, 4.0]).unwrap();
+    let targets = Array1::from_vec(vec![5.0_f64, 6.0]);
+    let batch = SKSupervisedBatch::new(features, targets, 0, true);
+
+    let extracted = batch.clone();
+    assert_eq!(
+        extracted.features().as_slice_memory_order().unwrap(),
+        &[1.0, 2.0, 3.0, 4.0]
+    );
+    assert_eq!(extracted.targets().as_slice().unwrap(), &[5.0, 6.0]);
+    assert!(extracted.is_final());
+}
+
+/// A supervised source yields feature/target pairs, one final block.
+#[test]
+fn supervised_source_yields_pairs_with_one_final_block() {
+    let mut source = FiniteSupervisedSource::new();
+    let mut finals = 0;
+    let mut count = 0;
+    while let Some(batch) = source.next_supervised_batch().unwrap() {
+        count += 1;
+        assert_eq!(batch.features().nrows(), batch.targets().len());
+        if batch.is_final() {
+            finals += 1;
+        }
+    }
+    assert_eq!(count, 3);
+    assert_eq!(finals, 1);
+}
+
+/// A supervised block obtained from a source survives the source's drop.
+#[test]
+fn supervised_block_survives_its_source() {
+    let block = {
+        let mut source = FiniteSupervisedSource::new();
+        source.next_supervised_batch().unwrap().unwrap()
+    };
+    // The source is dropped here; the block still owns its data.
+    assert_eq!(block.features().nrows(), 1);
+    assert_eq!(block.targets().len(), 1);
+}
+
 // ---- Example sources -------------------------------------------------------
+
+/// A finite supervised source of 3 batches; the last is marked final.
+struct FiniteSupervisedSource {
+    next_position: usize,
+}
+impl FiniteSupervisedSource {
+    fn new() -> Self {
+        FiniteSupervisedSource { next_position: 0 }
+    }
+}
+impl SKSupervisedLazySource<f64> for FiniteSupervisedSource {
+    type Error = SKError;
+    fn next_supervised_batch(&mut self) -> Result<Option<SKSupervisedBatch<f64>>, Self::Error> {
+        if self.next_position >= 3 {
+            return Ok(None);
+        }
+        let position = self.next_position;
+        self.next_position += 1;
+        let features = Array2::from_shape_vec((1, 1), vec![position as f64]).unwrap();
+        let targets = Array1::from_vec(vec![(position * 2) as f64]);
+        Ok(Some(SKSupervisedBatch::new(
+            features,
+            targets,
+            position,
+            position == 2,
+        )))
+    }
+}
 
 /// A finite sequential source of 3 batches; the last is marked final.
 struct FiniteSource {

@@ -22,7 +22,7 @@ mod ndarray_backend;
 pub use decompositions::{
     SKLUDecomposition, SKLeastSquaresSolution, SKQRDecomposition, SKSingularValueDecomposition,
 };
-pub use dispatch::sk_default_math_backend;
+pub use dispatch::{SKBackendSelection, sk_default_math_backend, sk_math_backend_for_kind};
 pub use faer_backend::{SKFaerBackend, SKMatrixMultiplyBackend};
 pub use kernel::{SKMathBackend, SKNormKind};
 
