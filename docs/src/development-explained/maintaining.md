@@ -189,5 +189,6 @@ with these rules — [`SKStandardScaler`](./ch08-standard-scaler.html),
 [`SKRobustScaler`](./ch10-robust-scaler.html), the
 [encoders](./ch11-one-hot-and-polynomial-encoders.html), the
 [imputers](./ch12-simple-imputer.html), the first supervised model
-[`SKLinearRegression`](./ch13-linear-regression.html) and the first regularized one,
-[`SKRidge`](./ch14-ridge-regression.html) — show the whole procedure in action.
+[`SKLinearRegression`](./ch13-linear-regression.html), the first regularized one,
+[`SKRidge`](./ch14-ridge-regression.html), and the L1-regularized pair
+[`SKLasso` & `SKElasticNet`](./ch15-lasso-elastic-net.html) — show the whole procedure in action.
