@@ -6,11 +6,11 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 
 ## 1. Coordinate-descent substrate (`crates/sciencekit_linear_model/src/coordinate_descent/`)
 
-- [ ] 1.1 Red: companion tests for the alpha-conversion trait, the sweep selection and the
+- [x] 1.1 Red: companion tests for the alpha-conversion trait, the sweep selection and the
   hyperparameter validation (scalar/sequence conversion, negative and empty alpha rejection,
   non-positive tolerance, zero iteration budget, `l1_ratio` bounds helper). *(commit
   `feat(linear_model): add the coordinate-descent configuration substrate`)*
-- [ ] 1.2 Implement `SKIntoAlphas`, `SKSelection`, `SKCoordinateDescentConfig` and the shared
+- [x] 1.2 Implement `SKIntoAlphas`, `SKSelection`, `SKCoordinateDescentConfig` and the shared
   `sk_validate_*` helpers.
 - [ ] 1.3 Red: companion tests for the dense coordinate-descent solver (one-feature closed
   form, orthogonal closed form, KKT satisfaction, alpha monotonicity, zero alpha → least
