@@ -35,19 +35,16 @@ pub(crate) fn sk_solve_all_alphas<F: SKFloat, A: SKColumnAccess<F> + Sync>(
     let columns = access.columns_count();
     let mut coefficients = Array2::zeros((alphas.len(), columns));
     let mut intercepts = Array1::zeros(alphas.len());
-    let mut iterations = 0usize;
     let mut screened_count = 0usize;
     for (row_index, solution) in solutions.into_iter().enumerate() {
         let solution = solution?;
         coefficients.row_mut(row_index).assign(&solution.coefficients);
         intercepts[row_index] = solution.intercept;
-        iterations += solution.iterations;
         screened_count += solution.screened_count;
     }
     Ok(SKCoordinateDescentSolution {
         coefficients,
         intercepts,
-        iterations,
         screened_count,
     })
 }

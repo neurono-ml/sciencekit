@@ -5,12 +5,18 @@
 //! submodules; every implementation lives in its own file.
 
 mod access;
+mod accumulator;
 pub mod config;
+mod core;
+mod fit;
 mod screening;
 mod solution;
 mod solver;
 
 pub use config::{SKIntoAlphas, SKSelection};
+pub(crate) use config::SKCoordinateDescentConfig;
+pub(crate) use core::SKCoordinateDescentModelCore;
+pub(crate) use fit::sk_fit_coordinate_descent;
 
 #[cfg(test)]
 mod config_tests;
@@ -19,4 +25,4 @@ mod screening_tests;
 #[cfg(test)]
 mod solver_tests;
 #[cfg(test)]
-mod test_datasets;
+pub(crate) mod test_datasets;

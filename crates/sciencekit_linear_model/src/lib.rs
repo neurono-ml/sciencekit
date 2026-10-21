@@ -20,5 +20,6 @@
 #![warn(missing_docs)]
 
 pub mod coordinate_descent;
+pub mod lasso;
 pub mod linear_regression;
 pub mod ridge;

@@ -1,0 +1,99 @@
+//! Structured-error tests for `SKLasso` (spec `lasso`).
+
+use crate::coordinate_descent::test_datasets::one_feature;
+use ndarray::{Array1, Array2, array};
+use sciencekit_common::builders::SKBuilder;
+use sciencekit_common::{SKError, SKRegressorPredictor, SKSupervisedFit};
+
+use super::core_implementation::SKLasso;
+
+/// A default lasso over `f64`.
+fn default_lasso() -> SKLasso<f64> {
+    SKLasso::build().build().unwrap()
+}
+
+/// Empty input is rejected before any element is processed.
+#[test]
+fn rejects_empty_design() {
+    let features: Array2<f64> = Array2::zeros((0, 2));
+    let targets: Array1<f64> = Array1::zeros(0);
+    let error = default_lasso()
+        .fit(features.view(), targets.view())
+        .unwrap_err();
+    assert!(matches!(error, SKError::ShapeMismatch { .. }));
+}
+
+/// A target count disagreeing with the row count is rejected.
+#[test]
+fn rejects_target_length_mismatch() {
+    let (features, _) = one_feature();
+    let targets = array![1.0, 2.0];
+    let error = default_lasso()
+        .fit(features.view(), targets.view())
+        .unwrap_err();
+    assert!(matches!(error, SKError::ShapeMismatch { .. }));
+}
+
+/// A negative penalty is rejected at build time.
+#[test]
+fn rejects_negative_alpha() {
+    let error = SKLasso::<f64>::build().alpha(-1.0).build().unwrap_err();
+    assert!(matches!(
+        error,
+        SKError::InvalidHyperparameter { name: "alpha", .. }
+    ));
+}
+
+/// An empty penalty sequence is rejected at build time.
+#[test]
+fn rejects_empty_alpha_sequence() {
+    let error = SKLasso::<f64>::build()
+        .alpha(Vec::<f64>::new())
+        .build()
+        .unwrap_err();
+    assert!(matches!(
+        error,
+        SKError::InvalidHyperparameter { name: "alpha", .. }
+    ));
+}
+
+/// A non-positive tolerance is rejected at build time.
+#[test]
+fn rejects_zero_tolerance() {
+    let error = SKLasso::<f64>::build().tolerance(0.0).build().unwrap_err();
+    assert!(matches!(
+        error,
+        SKError::InvalidHyperparameter {
+            name: "tolerance",
+            ..
+        }
+    ));
+}
+
+/// A zero iteration budget is rejected at build time.
+#[test]
+fn rejects_zero_iteration_budget() {
+    let error = SKLasso::<f64>::build()
+        .maximum_number_of_iterations(0)
+        .build()
+        .unwrap_err();
+    assert!(matches!(
+        error,
+        SKError::InvalidHyperparameter {
+            name: "maximum_number_of_iterations",
+            ..
+        }
+    ));
+}
+
+/// Prediction on a column count differing from the fitted design is rejected.
+#[test]
+fn rejects_prediction_shape_mismatch() {
+    let (features, targets) = one_feature();
+    let model = default_lasso()
+        .fit(features.view(), targets.view())
+        .unwrap();
+    let wrong = array![[1.0, 2.0]];
+    let error = model.predict(wrong.view()).unwrap_err();
+    assert!(matches!(error, SKError::ShapeMismatch { .. }));
+}

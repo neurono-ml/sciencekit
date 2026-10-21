@@ -122,7 +122,6 @@ pub(crate) fn sk_solve_alpha_with_initial_active<F: SKFloat, A: SKColumnAccess<F
     Ok(SKCoordinateDescentAlphaSolution {
         coefficients,
         intercept,
-        iterations: total_iterations,
         screened_count,
     })
 }
