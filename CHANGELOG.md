@@ -44,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `sciencekit_math` least-squares kernel now uses the **thin** SVD instead of the full SVD: the full decomposition allocates an `m × m` `U`, which made a tall-design fit (e.g. 20 000 rows) take seconds; the pseudoinverse path only needs the first `min(m, n)` singular vectors, and the minimum-norm solution is unchanged.
 - Workspace `[profile.dev.package."*"] opt-level = 2`: dependency code (pure-Rust linear algebra) stays optimized in dev/test builds while the project crates stay unoptimized.
+- `linear-regression` capability published (archive of `linear-regression-ols`): the `SKLinearRegression` estimator/model contract; the `higher-order-kernels` capability gained the `sk_gram_matrix`/`sk_gram_vector` cross-product reductions and `streaming-batches` gained the supervised streaming contract.
 
 ### Changed
 
