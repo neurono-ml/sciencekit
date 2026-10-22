@@ -6,13 +6,13 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 
 ## 1. Logistic solver substrate (`crates/sciencekit_linear_model/src/logistic/`)
 
-- [ ] 1.1 Red: companion tests for the objective configuration, the hyperparameter validation
+- [x] 1.1 Red: companion tests for the objective configuration, the hyperparameter validation
   (non-positive tolerance, zero iteration budget, non-positive regularization strength,
   out-of-range `l1_ratio`), the penalty/solver matrix resolution (every supported pair
   accepted, every unsupported pair rejected naming solver and penalty, `l1_ratio` honored only
   with `ElasticNet`) and the class-weight normalization (`None`, `Balanced`, explicit,
   negative rejected). *(commit `feat(linear_model): add the logistic configuration and resolution substrate`)*
-- [ ] 1.2 Implement `SKLogisticConfig`, the shared `sk_validate_*` helpers, the
+- [x] 1.2 Implement `SKLogisticConfig`, the shared `sk_validate_*` helpers, the
   penalty/solver/multi-class resolution and the class-weight normalization.
 - [ ] 1.3 Red: companion tests for the objective (binary and softmax loss, gradient,
   proximal soft-threshold step) and the design abstraction (dense and CSR give the same
