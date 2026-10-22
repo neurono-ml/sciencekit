@@ -91,11 +91,11 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 
 ## 7. Shared deterministic test datasets
 
-- [ ] 7.1 Extract the shared logistic datasets and helpers (hand-checkable separable and
+- [x] 7.1 Extract the shared logistic datasets and helpers (hand-checkable separable and
   orthogonal designs with known optima, an imbalanced design, a large synthetic design, dense
   and CSR forms, a fixed seed, `assert_close`). *(folded into the `feat(linear_model): add
   SKLogisticRegression ...` commit)*
-- [ ] 7.2 Refactor the binary, multi-class, sparse, streaming and incremental suites to
+- [x] 7.2 Refactor the binary, multi-class, sparse, streaming and incremental suites to
   consume the shared datasets and helpers.
 
 ## 8. Acceptance and gates
