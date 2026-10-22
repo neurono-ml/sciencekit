@@ -121,5 +121,5 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
   `SUMMARY.md`, walking through the logistic objective, the solver portfolio, the multi-class
   strategies, target canonicalization and the companion tests — including the
   `maintaining.md` pointer.
-- [ ] 9.3 Independent-review fixes: address every finding (spec conformance, numerics, solver
+- [x] 9.3 Independent-review fixes: address every finding (spec conformance, numerics, solver
   correctness, representation dispatch, naming, test coverage) and re-run the gates.

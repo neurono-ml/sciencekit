@@ -41,7 +41,8 @@ The builder SHALL expose `C(F)` (inverse regularization) and `alpha(F)` (direct
 regularization, `alpha = 1/C`). When only one is set, it SHALL define the effective
 regularization strength. When both are set on the same builder, the most recently called
 setter SHALL determine the effective value and the build SHALL emit a warning; a
-non-positive value from either setter SHALL be rejected at fit with a structured error.
+non-positive or non-finite value from either setter SHALL be rejected at build with a
+structured error.
 
 #### Scenario: Only C is set
 
@@ -56,10 +57,12 @@ non-positive value from either setter SHALL be rejected at fit with a structured
 ### Requirement: The objective is the penalized logistic negative log-likelihood
 
 The estimator SHALL minimize the penalized logistic loss: for binary fits
-`(1/(2·C))·R(w) + (1/n)·Σ_i c_i·log(1 + exp(−y_i·x_iᵀw))` with `y_i ∈ {−1, +1}`, and for
-multinomial fits the softmax cross-entropy with the same penalty `R(w)`, where `R(w)` is
-`‖w‖₂²` (`L2`), `‖w‖₁` (`L1`), `l1_ratio·‖w‖₁ + (1−l1_ratio)/2·‖w‖₂²` (`ElasticNet`) or `0`
-(`None`). The intercept SHALL never be penalized.
+`(1/n)·Σ_i c_i·log(1 + exp(−y_i·x_iᵀw)) + P(w)` with `y_i ∈ {−1, +1}`, and for multinomial
+fits the softmax cross-entropy with the same penalty `P(w)`, where `P(w)` is `(α/2)‖w‖₂²`
+(`L2`), `α‖w‖₁` (`L1`), `α·(l1_ratio·‖w‖₁ + (1−l1_ratio)/2·‖w‖₂²)` (`ElasticNet`) or `0`
+(`None`), with `α = 1/C`. The intercept SHALL never be penalized, except under the
+`Liblinear` solver, whose LIBLINEAR formulation regularizes the intercept exactly as
+scikit-learn does.
 
 #### Scenario: A large C approaches the unregularized fit
 
@@ -172,10 +175,11 @@ in the loss, leaving the penalty unweighted. `Balanced` SHALL weight each class 
 
 ### Requirement: Warm start seeds the optimizer from an explicit solution
 
-`warm_start(true)` SHALL seed the optimizer from a coefficient solution supplied on the
-builder (a previous model's coefficients) instead of the zero vector; the estimator SHALL
-remain immutable and stateless, so no solution is reused implicitly across `fit` calls.
-`warm_start(true)` without a supplied solution SHALL start from zero.
+`warm_start(true)` SHALL seed the `Lbfgs` and `Saga` optimizers from a coefficient solution
+supplied on the builder (a previous model's coefficients) instead of the zero vector; the
+`Liblinear` path starts cold. The estimator SHALL remain immutable and stateless, so no
+solution is reused implicitly across `fit` calls. `warm_start(true)` without a supplied
+solution SHALL start from zero.
 
 #### Scenario: Warm start reaches the same optimum
 

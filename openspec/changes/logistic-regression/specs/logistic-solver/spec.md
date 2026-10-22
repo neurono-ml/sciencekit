@@ -65,13 +65,14 @@ rejected with a structured error.
 - **WHEN** an explicit class weight is negative
 - **THEN** the fit returns a structured error naming the class weight
 
-### Requirement: L-BFGS-B with an orthant-wise step solves the smooth path
+### Requirement: The L-BFGS-B solver solves the smooth path
 
 The substrate SHALL solve the smooth `L2`/`None` objective with a limited-memory BFGS
-quasi-Newton iteration that maintains a bounded history of curvature pairs and SHALL apply an
-orthant-wise (OWL-QN) step when a penalty is present, converging on the projected gradient
-norm against `tolerance`, bounded by `maximum_number_of_iterations`, and raising
-`SKError::NotConverged { iterations }` when the budget is exhausted.
+quasi-Newton iteration that maintains a bounded history of curvature pairs, takes an Armijo
+backtracking line search, converges on the gradient infinity norm against `tolerance`,
+bounded by `maximum_number_of_iterations`, and raises `SKError::NotConverged { iterations }`
+when the budget is exhausted. (Because the solver/penalty matrix forbids an L1 penalty for
+this solver, no orthant-wise step is required.)
 
 #### Scenario: Smooth L2 fit converges
 
@@ -103,18 +104,20 @@ densifying it.
 - **WHEN** a borrowed CSR design is fitted with the `Saga` solver
 - **THEN** no dense `n × p` copy of the design is constructed
 
-### Requirement: LIBLINEAR dual coordinate descent solves the one-vs-rest path
+### Requirement: The LIBLINEAR coordinate-descent solver solves the one-vs-rest path
 
-The substrate SHALL provide a dual coordinate-descent (LIBLINEAR-style) solver for the `L1`
-and `L2` penalties that operates one-vs-rest and, for each binary subproblem, updates the dual
-coordinates in a shrinking active set, converging on the projected gradient against
-`tolerance`, bounded by `maximum_number_of_iterations`.
+The substrate SHALL provide a LIBLINEAR-style solver for the `L1` and `L2` penalties that
+operates one-vs-rest: for `L2` it updates the box-constrained dual coordinates, each by a
+Newton step on the scalar subproblem; for `L1` it runs a primal coordinate descent with a
+soft-threshold step. Both converge on the maximum coordinate change against `tolerance`,
+bounded by `maximum_number_of_iterations`. As in scikit-learn's LIBLINEAR path, the intercept
+is augmented as a constant feature and is therefore regularised.
 
-#### Scenario: Dual solver matches the primal optimum
+#### Scenario: Coordinate-descent solver matches the primal optimum
 
-- **WHEN** the same binary design is fitted with the `Liblinear` solver and with the `Lbfgs`
-  solver under an L2 penalty
-- **THEN** the two decision functions agree within tolerance
+- **WHEN** the same binary design without an intercept is fitted with the `Liblinear` solver
+  and with the `Lbfgs` solver under an L2 penalty
+- **THEN** the two coefficient vectors agree within tolerance
 
 #### Scenario: Dual solver keeps sparse designs sparse
 
@@ -138,8 +141,9 @@ sparse design is the `O(n · n_classes)` linear predictor.
 
 Because the logistic objective is not a function of the Gram matrix, the substrate SHALL
 retain the design — dense rows appended, or sparse CSR batches stacked — together with the
-canonical labels and the sample weights, and SHALL re-solve at read time; the accumulated fit
-SHALL be independent of batch order and size.
+canonical labels, and SHALL re-solve at read time (the per-sample weights are re-derived from
+the class-weighting policy at each solve); the accumulated fit SHALL be independent of batch
+order and size.
 
 #### Scenario: Accumulated equals concatenated
 
