@@ -115,7 +115,7 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 
 - [x] 9.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under `Unreleased → Added`
   for `SKLogisticRegression` and the `logistic-solver` substrate.
-- [ ] 9.2 Companion documentation change on its own `docs/*` branch (merged into
+- [x] 9.2 Companion documentation change on its own `docs/*` branch (merged into
   `docs/documentations`): the `SKLogisticRegression` entry in `docs/src/algorithms.md` and a
   new `Development Explained` chapter (`docs/src/development-explained/`) registered in
   `SUMMARY.md`, walking through the logistic objective, the solver portfolio, the multi-class
