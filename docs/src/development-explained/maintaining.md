@@ -191,4 +191,5 @@ with these rules — [`SKStandardScaler`](./ch08-standard-scaler.html),
 [imputers](./ch12-simple-imputer.html), the first supervised model
 [`SKLinearRegression`](./ch13-linear-regression.html), the first regularized one,
 [`SKRidge`](./ch14-ridge-regression.html), and the L1-regularized pair
-[`SKLasso` & `SKElasticNet`](./ch15-lasso-elastic-net.html) — show the whole procedure in action.
+[`SKLasso` & `SKElasticNet`](./ch15-lasso-elastic-net.html) — and the first classifier,
+[`SKLogisticRegression`](./ch16-logistic-regression.html) — show the whole procedure in action.
