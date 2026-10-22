@@ -1,70 +1,37 @@
 //! Companion tests for the out-of-core logistic fit (spec
 //! `logistic-regression`).
 
-use ndarray::{Array1, Array2, array};
+use ndarray::{Array1, Array2};
 use sciencekit_common::builders::SKBuilder;
-use sciencekit_common::{
-    SKClassifierPredictor, SKError, SKSupervisedBatch, SKSupervisedFit, SKSupervisedLazySource,
-};
+use sciencekit_common::{SKClassifierPredictor, SKSupervisedFit};
 
 use super::SKLogisticRegression;
+use crate::logistic::test_datasets::{SupervisedFloatSource, labels_i64, separable_binary_design};
 
-/// An in-memory supervised source: each entry is one owned batch.
-struct VecSource<F> {
-    batches: Vec<(Array2<F>, Array1<F>)>,
-    next: usize,
-}
-
-impl<F: sciencekit_common::SKFloat> SKSupervisedLazySource<F> for VecSource<F> {
-    type Error = SKError;
-
-    fn next_supervised_batch(&mut self) -> Result<Option<SKSupervisedBatch<F>>, Self::Error> {
-        if self.next >= self.batches.len() {
-            return Ok(None);
-        }
-        let position = self.next;
-        self.next += 1;
-        let (features, targets) = self.batches[position].clone();
-        let is_final = self.next == self.batches.len();
-        Ok(Some(SKSupervisedBatch::new(
-            features, targets, position, is_final,
-        )))
-    }
-}
-
+/// The shared binary design split into two float-coded batches.
 fn batches() -> Vec<(Array2<f64>, Array1<f64>)> {
+    let (features, labels) = separable_binary_design();
+    let split = 3;
+    let first_features = features.slice(ndarray::s![0..split, ..]).to_owned();
+    let first_labels = Array1::from_vec(labels[0..split].iter().map(|&l| l as f64).collect());
+    let second_features = features.slice(ndarray::s![split.., ..]).to_owned();
+    let second_labels = Array1::from_vec(labels[split..].iter().map(|&l| l as f64).collect());
     vec![
-        (
-            array![[-2.0, -1.0], [-1.0, -2.0], [-1.0, -1.0]],
-            array![0.0, 0.0, 0.0],
-        ),
-        (
-            array![[1.0, 1.0], [2.0, 1.0], [1.0, 2.0]],
-            array![1.0, 1.0, 1.0],
-        ),
+        (first_features, first_labels),
+        (second_features, second_labels),
     ]
 }
 
 #[test]
 fn streaming_equals_the_dense_fit() {
-    let all_features = array![
-        [-2.0, -1.0],
-        [-1.0, -2.0],
-        [-1.0, -1.0],
-        [1.0, 1.0],
-        [2.0, 1.0],
-        [1.0, 2.0]
-    ];
-    let all_labels = array![0_i64, 0, 0, 1, 1, 1];
+    let (all_features, raw) = separable_binary_design();
+    let all_labels = labels_i64(&raw);
     let dense = SKLogisticRegression::<f64>::build()
         .build()
         .unwrap()
         .fit(all_features.view(), all_labels.view())
         .unwrap();
-    let mut source = VecSource {
-        batches: batches(),
-        next: 0,
-    };
+    let mut source = SupervisedFloatSource::new(batches());
     let streamed = SKLogisticRegression::<f64>::build()
         .build()
         .unwrap()
@@ -79,10 +46,7 @@ fn streaming_equals_the_dense_fit() {
 
 #[test]
 fn an_empty_source_is_rejected() {
-    let mut source = VecSource::<f64> {
-        batches: Vec::new(),
-        next: 0,
-    };
+    let mut source = SupervisedFloatSource::<f64>::new(Vec::new());
     let result = SKLogisticRegression::<f64>::build()
         .build()
         .unwrap()

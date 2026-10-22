@@ -3,31 +3,18 @@
 use ndarray::{Array1, Array2, array};
 use sciencekit_common::builders::SKBuilder;
 use sciencekit_common::{SKClassifierPredictor, SKError, SKSupervisedFit};
-use sprs::TriMat;
 
 use super::SKLogisticRegression;
+use crate::logistic::test_datasets::{
+    assert_close, imbalanced_binary_design, labels_i64, large_intercept_binary_design,
+    non_separable_binary_design, separable_binary_design, three_class_design, to_csr,
+};
 use crate::logistic::{SKClassWeight, SKLogisticPenalty, SKLogisticSolver, SKMultiClass};
 
+/// A two-feature separable binary design with `i64` labels.
 fn binary_dataset() -> (Array2<f64>, Array1<i64>) {
-    let features = array![
-        [-2.0, -1.0],
-        [-1.0, -2.0],
-        [-1.0, -1.0],
-        [1.0, 1.0],
-        [2.0, 1.0],
-        [1.0, 2.0]
-    ];
-    (features, array![0, 0, 0, 1, 1, 1])
-}
-
-fn to_csr(dense: &Array2<f64>) -> sprs::CsMat<f64> {
-    let mut triplets = TriMat::new((dense.nrows(), dense.ncols()));
-    dense.indexed_iter().for_each(|((row, column), &value)| {
-        if value != 0.0 {
-            triplets.add_triplet(row, column, value);
-        }
-    });
-    triplets.to_csr()
+    let (features, labels) = separable_binary_design();
+    (features, labels_i64(&labels))
 }
 
 #[test]
@@ -87,15 +74,8 @@ fn nominal_labels_round_trip() {
 
 #[test]
 fn multinomial_fits_three_classes() {
-    let features = array![
-        [-3.0, 0.0],
-        [-2.0, 0.0],
-        [0.0, 3.0],
-        [0.0, 2.0],
-        [3.0, 0.0],
-        [2.0, 0.0]
-    ];
-    let labels = array![0_i64, 0, 1, 1, 2, 2];
+    let (features, raw) = three_class_design();
+    let labels = labels_i64(&raw);
     let model = SKLogisticRegression::<f64>::build()
         .build()
         .unwrap()
@@ -114,15 +94,8 @@ fn multinomial_fits_three_classes() {
 
 #[test]
 fn liblinear_with_multinomial_is_rejected_at_fit() {
-    let three = array![0_i64, 0, 1, 1, 2, 2];
-    let features3 = array![
-        [-3.0, 0.0],
-        [-2.0, 0.0],
-        [0.0, 3.0],
-        [0.0, 2.0],
-        [3.0, 0.0],
-        [2.0, 0.0]
-    ];
+    let (features3, raw) = three_class_design();
+    let three = labels_i64(&raw);
     let error = SKLogisticRegression::<f64>::build()
         .solver(SKLogisticSolver::Liblinear)
         .multi_class(SKMultiClass::Multinomial)
@@ -135,8 +108,8 @@ fn liblinear_with_multinomial_is_rejected_at_fit() {
 
 #[test]
 fn balanced_class_weight_fits_an_imbalanced_design() {
-    let features = array![[-2.0], [-1.0], [0.5], [1.0], [2.0], [3.0]];
-    let labels = array![0_i64, 0, 0, 0, 1, 1];
+    let (features, raw) = imbalanced_binary_design();
+    let labels = labels_i64(&raw);
     let model = SKLogisticRegression::<f64>::build()
         .class_weight(SKClassWeight::Balanced)
         .build()
@@ -179,31 +152,25 @@ fn sparse_and_dense_agree() {
         .unwrap()
         .fit(sparse.view(), labels.view())
         .unwrap();
-    for (dense_value, sparse_value) in dense_model
-        .coefficients()
-        .iter()
-        .zip(sparse_model.coefficients())
-    {
-        assert!((dense_value - sparse_value).abs() < 1e-6);
-    }
+    let dense_values: Vec<f64> = dense_model.coefficients().iter().copied().collect();
+    let sparse_values: Vec<f64> = sparse_model.coefficients().iter().copied().collect();
+    assert_close(&dense_values, &sparse_values, 1e-6);
 }
 
 #[test]
 fn partial_fit_equals_the_dense_fit() {
-    let features = array![
-        [-2.0, -1.0],
-        [-1.0, -2.0],
-        [-1.0, -1.0],
-        [1.0, 1.0],
-        [2.0, 1.0],
-        [1.0, 2.0]
-    ];
-    let labels = array![0_i64, 0, 0, 1, 1, 1];
+    let (features, raw) = separable_binary_design();
+    let labels = labels_i64(&raw);
     // Each batch carries both classes, so the first fit is a valid binary fit.
-    let first = array![[-2.0, -1.0], [-1.0, -2.0], [1.0, 1.0], [2.0, 1.0]];
-    let first_labels = array![0_i64, 0, 1, 1];
-    let second = array![[-1.0, -1.0], [1.0, 2.0]];
-    let second_labels = array![0_i64, 1];
+    let select = |indices: &[usize]| {
+        let batch_features = Array2::from_shape_fn((indices.len(), features.ncols()), |(i, j)| {
+            features[[indices[i], j]]
+        });
+        let batch_labels = Array1::from_vec(indices.iter().map(|&i| labels[i]).collect());
+        (batch_features, batch_labels)
+    };
+    let (first, first_labels) = select(&[0, 1, 4, 3]);
+    let (second, second_labels) = select(&[2, 5]);
     let mut model = SKLogisticRegression::<f64>::build()
         .build()
         .unwrap()
@@ -346,8 +313,8 @@ fn a_large_c_approaches_the_unregularized_fit() {
 #[test]
 fn the_intercept_is_not_shrunk_by_the_penalty() {
     // A design whose best separator needs a large intercept.
-    let features = array![[-2.0], [-1.0], [0.0], [1.0], [2.0]];
-    let labels = array![0_i64, 0, 1, 1, 1];
+    let (features, raw) = large_intercept_binary_design();
+    let labels = labels_i64(&raw);
     let small = SKLogisticRegression::<f64>::build()
         .alpha(0.01)
         .build()
@@ -372,15 +339,8 @@ fn the_intercept_is_not_shrunk_by_the_penalty() {
 
 #[test]
 fn the_decision_function_has_one_column_per_head_and_orders_the_classes() {
-    let features = array![
-        [-3.0, 0.0],
-        [-2.0, 0.0],
-        [0.0, 3.0],
-        [0.0, 2.0],
-        [3.0, 0.0],
-        [2.0, 0.0]
-    ];
-    let labels = array![0_i64, 0, 1, 1, 2, 2];
+    let (features, raw) = three_class_design();
+    let labels = labels_i64(&raw);
     let model = SKLogisticRegression::<f64>::build()
         .build()
         .unwrap()
@@ -431,15 +391,8 @@ fn warm_start_without_a_source_equals_the_cold_fit() {
 fn every_supported_solver_penalty_pair_converges() {
     // An XOR-like, deliberately non-separable design, so the unregularised MLE
     // is finite.
-    let features = array![
-        [-2.0, -2.0],
-        [-2.0, 2.0],
-        [2.0, -2.0],
-        [2.0, 2.0],
-        [-1.0, -1.0],
-        [-1.0, 1.0]
-    ];
-    let labels = array![0_i64, 1, 1, 0, 0, 1];
+    let (features, raw) = non_separable_binary_design();
+    let labels = labels_i64(&raw);
     let pairs = [
         (SKLogisticSolver::Lbfgs, SKLogisticPenalty::L2),
         (SKLogisticSolver::Lbfgs, SKLogisticPenalty::None),

@@ -22,3 +22,5 @@ pub(crate) use targets::{sk_canonicalize_against, sk_canonicalize_targets};
 mod config_tests;
 #[cfg(test)]
 mod design_tests;
+#[cfg(test)]
+pub(crate) mod test_datasets;

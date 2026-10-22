@@ -1,7 +1,10 @@
 //! Companion tests for the logistic solvers (spec `logistic-solver`).
 
 use ndarray::{Array1, Array2, array};
-use sprs::TriMat;
+
+use crate::logistic::test_datasets::{
+    assert_close_scalar, separable_binary_design_with_zero_column, three_class_design, to_csr,
+};
 
 use super::orchestration::sk_solve_logistic;
 use super::solution::SKLogisticSolution;
@@ -31,29 +34,6 @@ fn config(
     }
 }
 
-/// Three features (the third is an exact zero column) and two separable classes.
-fn binary_dataset() -> (Array2<f64>, Vec<usize>) {
-    let features = array![
-        [-2.0, -1.0, 0.0],
-        [-1.0, -2.0, 0.0],
-        [-1.0, -1.0, 0.0],
-        [1.0, 1.0, 0.0],
-        [2.0, 1.0, 0.0],
-        [1.0, 2.0, 0.0],
-    ];
-    (features, vec![0, 0, 0, 1, 1, 1])
-}
-
-fn to_csr(dense: &Array2<f64>) -> sprs::CsMat<f64> {
-    let mut triplets = TriMat::new((dense.nrows(), dense.ncols()));
-    dense.indexed_iter().for_each(|((row, column), &value)| {
-        if value != 0.0 {
-            triplets.add_triplet(row, column, value);
-        }
-    });
-    triplets.to_csr()
-}
-
 fn solve_dense(
     features: &Array2<f64>,
     labels: &[usize],
@@ -68,7 +48,7 @@ fn solve_dense(
 
 #[test]
 fn lbfgs_binary_separates_the_classes() {
-    let (features, labels) = binary_dataset();
+    let (features, labels) = separable_binary_design_with_zero_column();
     let solution = solve_dense(
         &features,
         &labels,
@@ -88,15 +68,7 @@ fn lbfgs_binary_separates_the_classes() {
 
 #[test]
 fn lbfgs_multinomial_fits_three_classes() {
-    let features = array![
-        [-3.0, 0.0],
-        [-2.0, 0.0],
-        [0.0, 3.0],
-        [0.0, 2.0],
-        [3.0, 0.0],
-        [2.0, 0.0]
-    ];
-    let labels = vec![0, 0, 1, 1, 2, 2];
+    let (features, labels) = three_class_design();
     let solution = solve_dense(
         &features,
         &labels,
@@ -123,7 +95,7 @@ fn lbfgs_multinomial_fits_three_classes() {
 
 #[test]
 fn saga_l1_drives_the_zero_column_to_exact_zero() {
-    let (features, labels) = binary_dataset();
+    let (features, labels) = separable_binary_design_with_zero_column();
     let solution = solve_dense(
         &features,
         &labels,
@@ -140,7 +112,7 @@ fn saga_l1_drives_the_zero_column_to_exact_zero() {
 
 #[test]
 fn saga_and_lbfgs_agree_under_l2() {
-    let (features, labels) = binary_dataset();
+    let (features, labels) = separable_binary_design_with_zero_column();
     let lbfgs = solve_dense(
         &features,
         &labels,
@@ -156,14 +128,17 @@ fn saga_and_lbfgs_agree_under_l2() {
         &config(SKLogisticSolver::Saga, SKLogisticPenalty::L2, 1.0, true),
     );
     for column in 0..3 {
-        let difference = (lbfgs.coefficients[[0, column]] - saga.coefficients[[0, column]]).abs();
-        assert!(difference < 1e-2, "column {column} differs by {difference}");
+        assert_close_scalar(
+            lbfgs.coefficients[[0, column]],
+            saga.coefficients[[0, column]],
+            1e-2,
+        );
     }
 }
 
 #[test]
 fn liblinear_l2_matches_lbfgs_without_intercept() {
-    let (features, labels) = binary_dataset();
+    let (features, labels) = separable_binary_design_with_zero_column();
     let lbfgs = solve_dense(
         &features,
         &labels,
@@ -184,15 +159,17 @@ fn liblinear_l2_matches_lbfgs_without_intercept() {
         ),
     );
     for column in 0..3 {
-        let difference =
-            (lbfgs.coefficients[[0, column]] - liblinear.coefficients[[0, column]]).abs();
-        assert!(difference < 1e-2, "column {column} differs by {difference}");
+        assert_close_scalar(
+            lbfgs.coefficients[[0, column]],
+            liblinear.coefficients[[0, column]],
+            1e-2,
+        );
     }
 }
 
 #[test]
 fn liblinear_l1_produces_a_sparse_solution() {
-    let (features, labels) = binary_dataset();
+    let (features, labels) = separable_binary_design_with_zero_column();
     let solution = solve_dense(
         &features,
         &labels,
@@ -210,14 +187,7 @@ fn liblinear_l1_produces_a_sparse_solution() {
 
 #[test]
 fn one_versus_rest_fits_one_head_per_class() {
-    let features = array![
-        [-3.0, 0.0],
-        [0.0, 3.0],
-        [3.0, 0.0],
-        [-2.0, 0.0],
-        [0.0, 2.0],
-        [2.0, 0.0]
-    ];
+    let (features, _) = three_class_design();
     let labels = vec![0, 1, 2, 0, 1, 2];
     let solution = solve_dense(
         &features,
@@ -232,7 +202,7 @@ fn one_versus_rest_fits_one_head_per_class() {
 
 #[test]
 fn sparse_and_dense_agree() {
-    let (features, labels) = binary_dataset();
+    let (features, labels) = separable_binary_design_with_zero_column();
     let sparse = to_csr(&features);
     let weights = vec![1.0_f64; labels.len()];
     let config = config(SKLogisticSolver::Saga, SKLogisticPenalty::L1, 0.1, true);
@@ -248,16 +218,17 @@ fn sparse_and_dense_agree() {
     )
     .unwrap();
     for column in 0..3 {
-        let difference = (dense_solution.coefficients[[0, column]]
-            - sparse_solution.coefficients[[0, column]])
-        .abs();
-        assert!(difference < 1e-6, "column {column} differs by {difference}");
+        assert_close_scalar(
+            dense_solution.coefficients[[0, column]],
+            sparse_solution.coefficients[[0, column]],
+            1e-6,
+        );
     }
 }
 
 #[test]
 fn a_tiny_budget_reports_non_convergence() {
-    let (features, labels) = binary_dataset();
+    let (features, labels) = separable_binary_design_with_zero_column();
     let mut config = config(SKLogisticSolver::Saga, SKLogisticPenalty::L1, 0.05, true);
     config.maximum_number_of_iterations = 1;
     config.tolerance = 1e-14;
