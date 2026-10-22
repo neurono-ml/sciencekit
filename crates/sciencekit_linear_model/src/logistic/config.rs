@@ -95,8 +95,8 @@ pub(crate) fn sk_validate_logistic_hyperparameters<F: SKFloat>(
 ) -> Result<(), SKError> {
     sk_validate_hyperparameter(
         "C",
-        alpha > F::zero(),
-        "the regularization strength must be positive",
+        alpha > F::zero() && alpha.is_finite(),
+        "the regularization strength must be positive and finite",
     )?;
     sk_validate_hyperparameter("tolerance", tolerance > F::zero(), "must be positive")?;
     sk_validate_hyperparameter(
