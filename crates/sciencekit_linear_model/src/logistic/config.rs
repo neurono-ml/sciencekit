@@ -50,10 +50,39 @@ pub enum SKClassWeight<F> {
     Explicit(Vec<F>),
 }
 
+#[allow(clippy::derivable_impls)]
 impl<F> Default for SKClassWeight<F> {
     fn default() -> Self {
         SKClassWeight::None
     }
+}
+
+/// The objective configuration shared by the logistic estimators.
+///
+/// The regularization strength is stored as `alpha` (the reciprocal of
+/// scikit-learn's `C`); the builders resolve `C`/`alpha` before constructing it.
+#[derive(Debug, Clone)]
+pub(crate) struct SKLogisticConfig<F> {
+    /// The regularization strength `alpha = 1/C`.
+    pub(crate) alpha: F,
+    /// The convergence tolerance.
+    pub(crate) tolerance: F,
+    /// The iteration budget before declaring non-convergence.
+    pub(crate) maximum_number_of_iterations: usize,
+    /// The penalty.
+    pub(crate) penalty: SKLogisticPenalty,
+    /// The elastic-net mixing parameter (honored only with `ElasticNet`).
+    pub(crate) l1_ratio: F,
+    /// The solver.
+    pub(crate) solver: SKLogisticSolver,
+    /// The multi-class strategy.
+    pub(crate) multi_class: SKMultiClass,
+    /// The class-weighting policy.
+    pub(crate) class_weight: SKClassWeight<F>,
+    /// Whether the fit solves for an unpenalized intercept.
+    pub(crate) include_intercept: bool,
+    /// Whether the optimizer is seeded from a supplied solution.
+    pub(crate) warm_start: bool,
 }
 
 /// Validate the numeric logistic hyperparameters: the regularization strength,

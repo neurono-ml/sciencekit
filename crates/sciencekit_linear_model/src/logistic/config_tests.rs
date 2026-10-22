@@ -6,9 +6,7 @@ use super::config::{
     SKClassWeight, SKLogisticPenalty, SKLogisticSolver, SKMultiClass,
     sk_validate_logistic_hyperparameters,
 };
-use super::resolution::{
-    SKResolvedMultiClass, sk_resolve_multi_class, sk_validate_solver_penalty,
-};
+use super::resolution::{SKResolvedMultiClass, sk_resolve_multi_class, sk_validate_solver_penalty};
 use sciencekit_common::SKError;
 
 #[test]
@@ -82,8 +80,7 @@ fn unsupported_solver_penalty_pairs_are_rejected() {
 
 #[test]
 fn a_single_class_is_rejected() {
-    let error =
-        sk_resolve_multi_class(SKMultiClass::Auto, SKLogisticSolver::Lbfgs, 1).unwrap_err();
+    let error = sk_resolve_multi_class(SKMultiClass::Auto, SKLogisticSolver::Lbfgs, 1).unwrap_err();
     assert!(matches!(error, SKError::InvalidHyperparameter { name, .. } if name == "targets"));
 }
 
@@ -119,12 +116,8 @@ fn auto_resolves_by_solver() {
 
 #[test]
 fn liblinear_with_multinomial_is_rejected() {
-    let error = sk_resolve_multi_class(
-        SKMultiClass::Multinomial,
-        SKLogisticSolver::Liblinear,
-        3,
-    )
-    .unwrap_err();
+    let error = sk_resolve_multi_class(SKMultiClass::Multinomial, SKLogisticSolver::Liblinear, 3)
+        .unwrap_err();
     assert!(matches!(error, SKError::InvalidHyperparameter { name, .. } if name == "multi_class"));
 }
 

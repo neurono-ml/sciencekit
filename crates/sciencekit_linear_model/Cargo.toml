@@ -10,3 +10,4 @@ sciencekit_math = { path = "../sciencekit_math" }
 ndarray = { workspace = true }
 rayon = { workspace = true }
 sprs = { workspace = true }
+tracing = { workspace = true }
