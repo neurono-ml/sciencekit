@@ -130,6 +130,27 @@ fn a_one_shot_source_with_a_larger_budget_takes_one_pass() {
     assert!(!model.converged());
 }
 
+/// A one-shot source with a budget of exactly one pass really did exhaust its
+/// budget, so the strict policy raises instead of pretending the provider
+/// clamped it.
+#[test]
+fn a_one_shot_source_with_a_budget_of_one_raises_under_strict() {
+    let (features, targets) = regression_design();
+    let mut source = SKSupervisedFloatSource::new(split_batches(&features, &targets, 2));
+    let error = SKSGDRegressor::<f64>::build()
+        .learning_rate(SKSGDLearningRate::Constant)
+        .initial_learning_rate(0.05)
+        .alpha(0.0)
+        .shuffle(false)
+        .maximum_number_of_iterations(1)
+        .number_of_epochs_without_improvement(10)
+        .build()
+        .unwrap()
+        .fit_streaming(&mut source)
+        .unwrap_err();
+    assert!(matches!(error, SKError::NotConverged { iterations: 1 }));
+}
+
 /// A reopenable source that exhausts the whole requested budget without
 /// converging raises under the strict policy.
 #[test]

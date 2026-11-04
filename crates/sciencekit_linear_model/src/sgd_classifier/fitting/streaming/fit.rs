@@ -118,7 +118,7 @@ where
                 break;
             }
         }
-        let provider_limited = !Provider::IS_REOPENABLE;
+        let provider_limited = !Provider::IS_REOPENABLE && config.maximum_number_of_iterations > 1;
         if provider_limited && config.maximum_number_of_iterations > 1 {
             tracing::warn!(
                 maximum_number_of_iterations = config.maximum_number_of_iterations,
