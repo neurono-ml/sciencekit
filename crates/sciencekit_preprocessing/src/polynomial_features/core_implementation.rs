@@ -5,7 +5,7 @@ use ndarray::{Array2, ArrayView2, Axis};
 use sciencekit_common::{
     SKBackendKind, SKBuilderState, SKDataView, SKError, SKExecutionContext, SKExecutionMode,
     SKExecutionPlan, SKFloat, SKLazySource, SKOperationAttributes, SKOperationKind,
-    execution::SKAccessPattern, sk_run_operation,
+    SKSourceProvider, execution::SKAccessPattern, sk_run_operation,
 };
 
 use crate::polynomial_features::builder::SKPolynomialFeaturesBuilder;
@@ -68,11 +68,13 @@ impl SKPolynomialFeatures {
 
     /// Fit on a sequential batch source, learning the same expansion the dense
     /// `fit` would learn for the concatenated data.
-    pub fn fit_streaming<F, S>(&self, source: &mut S) -> Result<SKPolynomialFeaturesModel, SKError>
+    pub fn fit_streaming<F, Provider>(
+        &self,
+        mut provider: Provider,
+    ) -> Result<SKPolynomialFeaturesModel, SKError>
     where
         F: SKFloat,
-        S: SKLazySource<F> + Send,
-        S::Error: From<SKError> + Into<SKError>,
+        Provider: SKSourceProvider<F>,
     {
         let attributes = SKOperationAttributes {
             operation: SKOperationKind::Fit,
@@ -87,6 +89,7 @@ impl SKPolynomialFeatures {
                 || plan.mode == SKExecutionMode::InProcessAsynchronous;
             let mut columns_count: Option<usize> = None;
             let mut collected: Vec<Array2<F>> = Vec::new();
+            let mut source = provider.open()?;
             while let Some(batch) = source.next_batch().map_err(Into::into)? {
                 let data = batch.data();
                 if data.nrows() == 0 {
