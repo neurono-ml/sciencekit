@@ -539,7 +539,7 @@ Order faithful to the scikit-learn mapping (from the handoff), respecting depend
 ### Cross-cutting (continuous)
 
 - **Per completed algorithm:** Python binding in an associated change; GPU backend (OpenCL → CUDA → ROCm) in following separate changes.
-- **Recorded future improvements (out of scope now):** workflows CLI; ONNX/Safetensors import converted to native types with retraining/LoRA.
+- **Recorded future improvements (out of scope now):** workflows CLI; ONNX/Safetensors import converted to native types with retraining/LoRA. The formerly listed **sparse out-of-core streaming** item is delivered: the streaming batch contract carries an owned dense/CSR feature block (`SKFeatureBlock`), so sparse designs are fitted from a stream without densification (change `sparse-streaming-batches`).
 
 ---
 
