@@ -37,11 +37,11 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
   concatenated data, with implicit zeros counted per column and no `n × p` dense copy.
   *(commit `feat(preprocessing): stream the scalers from sparse batches`)*
 - [x] 3.2 Implement per-column CSR statistics for the three scalers.
-- [ ] 3.3 Red: conformance tests for `SKPolynomialFeatures` (sparse in, sparse out, dense
+- [x] 3.3 Red: conformance tests for `SKPolynomialFeatures` (sparse in, sparse out, dense
   agreement, no densification). *(commit
   `feat(preprocessing): stream polynomial features from sparse batches`)*
-- [ ] 3.4 Implement the sparse polynomial expansion.
-- [ ] 3.5 Green: the preprocessing conformance suite passes.
+- [x] 3.4 Implement the sparse polynomial expansion.
+- [x] 3.5 Green: the preprocessing conformance suite passes.
 
 ## 4. Imputation estimator
 
