@@ -11,6 +11,8 @@
 
 mod averaging;
 pub(crate) mod config;
+mod convergence;
+mod early_stopping;
 mod epoch;
 mod learning_rate;
 mod loss;
@@ -21,6 +23,8 @@ mod shuffle;
 mod state;
 mod update;
 
+pub use crate::class_weight::SKClassWeight;
+pub use convergence::SKConvergencePolicy;
 pub use learning_rate::SKSGDLearningRate;
 pub use loss::{SKSGDClassifierLoss, SKSGDLoss, SKSGDRegressorLoss};
 pub use penalty::SKSGDPenalty;
@@ -29,6 +33,10 @@ pub use penalty::SKSGDPenalty;
 mod averaging_tests;
 #[cfg(test)]
 mod config_tests;
+#[cfg(test)]
+mod convergence_tests;
+#[cfg(test)]
+mod early_stopping_tests;
 #[cfg(test)]
 mod objective_tests;
 #[cfg(test)]

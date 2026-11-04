@@ -4,6 +4,7 @@
 use sciencekit_common::builders::sk_validate_hyperparameter;
 use sciencekit_common::{SKError, SKFloat};
 
+use super::convergence::SKConvergencePolicy;
 use super::learning_rate::SKSGDLearningRate;
 use super::penalty::SKSGDPenalty;
 
@@ -40,6 +41,8 @@ pub(crate) struct SKSGDConfig<F> {
     pub(crate) random_seed: u64,
     /// Whether the fit reports the averaged iterate.
     pub(crate) average: bool,
+    /// What an unconverged fit does when its budget runs out.
+    pub(crate) convergence_policy: SKConvergencePolicy,
 }
 
 impl<F: SKFloat> Default for SKSGDConfig<F> {
@@ -60,6 +63,7 @@ impl<F: SKFloat> Default for SKSGDConfig<F> {
             shuffle: true,
             random_seed: 0,
             average: false,
+            convergence_policy: SKConvergencePolicy::Strict,
         }
     }
 }

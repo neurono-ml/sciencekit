@@ -1,6 +1,8 @@
 //! Companion tests for the learning-rate schedules (spec
 //! `stochastic-gradient-solver`, decision 4).
 
+#![allow(clippy::field_reassign_with_default)]
+
 use sciencekit_common::SKError;
 
 use super::schedule::SKLearningRateSchedule;

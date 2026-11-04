@@ -28,3 +28,5 @@ pub mod logistic;
 pub mod logistic_regression;
 pub mod ridge;
 pub mod sgd;
+
+pub use sgd::SKConvergencePolicy;

@@ -1,6 +1,8 @@
 //! Companion tests for the stochastic-gradient configuration validation (spec
 //! `stochastic-gradient-solver`).
 
+#![allow(clippy::field_reassign_with_default)]
+
 use sciencekit_common::SKError;
 
 use super::config::{SKSGDConfig, sk_validate_sgd_configuration};
@@ -121,4 +123,13 @@ fn early_stopping_requires_more_than_one_epoch() {
 fn an_explicit_learning_rate_is_not_collapsed_by_default() {
     let config = SKSGDConfig::<f64>::default();
     assert!(config.learning_rate.uses_initial_rate());
+}
+
+#[test]
+fn the_default_convergence_policy_is_strict() {
+    let config = SKSGDConfig::<f64>::default();
+    assert_eq!(
+        config.convergence_policy,
+        crate::sgd::SKConvergencePolicy::Strict
+    );
 }

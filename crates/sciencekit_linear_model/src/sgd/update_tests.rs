@@ -1,6 +1,8 @@
 //! Companion tests for the single-sample update (spec
 //! `stochastic-gradient-solver`, decision 3).
 
+#![allow(clippy::field_reassign_with_default)]
+
 use ndarray::{Array1, array};
 
 use super::config::SKSGDConfig;
@@ -165,4 +167,38 @@ fn the_update_counter_advances_the_schedule() {
     let first_rate = state.learning_rate();
     sk_apply_single_sample_update(&mut state, array![1.0].view(), 1.0, 1.0, &loss, &config);
     assert!(state.learning_rate() < first_rate);
+}
+
+#[test]
+fn the_update_works_on_f32() {
+    let mut config = SKSGDConfig::<f32>::default();
+    config.penalty = SKSGDPenalty::None;
+    config.alpha = 0.0;
+    config.learning_rate = SKSGDLearningRate::Constant;
+    config.initial_learning_rate = 0.1;
+    let schedule = SKLearningRateSchedule::new(
+        config.learning_rate,
+        config.initial_learning_rate,
+        config.inverse_scaling_power,
+        config.alpha,
+        1.0,
+    );
+    let mut state = SKLearningState::new(
+        Array1::from_vec(vec![1.0_f32, 2.0]),
+        0.0,
+        schedule,
+        config.average,
+    );
+    let loss = sk_regressor_loss_adapter(SKSGDRegressorLoss::SquaredError, 0.0_f32);
+    let weighted_loss = sk_apply_single_sample_update(
+        &mut state,
+        array![1.0_f32, 1.0].view(),
+        4.0,
+        1.0,
+        &loss,
+        &config,
+    );
+    assert!((state.weights[0] - 1.1).abs() < 1e-6);
+    assert!((state.intercept - 0.1).abs() < 1e-6);
+    assert!((weighted_loss - 0.5).abs() < 1e-6);
 }

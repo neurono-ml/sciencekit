@@ -13,4 +13,6 @@ pub use definition::SKSGDLoss;
 pub use regressor::SKSGDRegressorLoss;
 
 #[cfg(test)]
-mod loss_tests;
+mod classifier_tests;
+#[cfg(test)]
+mod regressor_tests;
