@@ -1,5 +1,12 @@
 name: CI
 
+# `psm` — reached through `faer` → `npyz` → `py_literal` → `pest` → `stacker` —
+# publishes builds whose `ar_archive_writer` dependency uses let-chains that need
+# a newer rustc than the pinned MSRV (1.85), so a fresh resolution breaks every
+# build job. The lockfile is not committed; each build job re-pins the last
+# `psm` release that compiles on 1.85. Drop the pin when `psm` stops needing a
+# newer rustc or when the MSRV is raised.
+
 on:
   push:
     branches: [main]
@@ -37,6 +44,8 @@ jobs:
           components: clippy
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
+      - name: Pin psm to the last release that builds on the MSRV
+        run: cargo update -p psm --precise 0.1.24
       - name: cargo clippy --workspace --all-targets -- -D warnings
         run: cargo clippy --workspace --all-targets -- -D warnings
 
@@ -52,6 +61,8 @@ jobs:
         uses: dtolnay/rust-toolchain@1.85
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
+      - name: Pin psm to the last release that builds on the MSRV
+        run: cargo update -p psm --precise 0.1.24
       - name: cargo test --workspace --all-targets
         run: cargo test --workspace --all-targets
 
@@ -67,6 +78,8 @@ jobs:
         uses: dtolnay/rust-toolchain@1.85
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
+      - name: Pin psm to the last release that builds on the MSRV
+        run: cargo update -p psm --precise 0.1.24
       - name: cargo build --examples
         run: cargo build --examples
       - name: cargo test --examples
@@ -86,6 +99,8 @@ jobs:
           components: rustfmt, clippy
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
+      - name: Pin psm to the last release that builds on the MSRV
+        run: cargo update -p psm --precise 0.1.24
       - name: cargo build + test on exact 1.85
         run: |
           cargo build --workspace --all-targets
