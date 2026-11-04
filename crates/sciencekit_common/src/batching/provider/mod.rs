@@ -17,7 +17,7 @@ pub use source_provider::SKSourceProvider;
 pub use supervised_provider::SKSupervisedSourceProvider;
 
 #[cfg(test)]
-mod provider_test_sources;
+pub(crate) mod provider_test_sources;
 #[cfg(test)]
 mod provider_tests;
 #[cfg(test)]

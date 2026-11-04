@@ -9,14 +9,14 @@ use crate::{SKError, SKFloat};
 
 /// A finite source of `total` one-row batches; usable as both families.
 #[derive(Debug)]
-pub(super) struct FiniteSource<F> {
+pub(crate) struct FiniteSource<F> {
     next: usize,
     total: usize,
     marker: PhantomData<F>,
 }
 
 impl<F: SKFloat> FiniteSource<F> {
-    pub(super) fn new(total: usize) -> Self {
+    pub(crate) fn new(total: usize) -> Self {
         FiniteSource {
             next: 0,
             total,

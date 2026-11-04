@@ -1,5 +1,5 @@
-//! Companion tests for the single-pass out-of-core regression fit (spec
-//! `stochastic-gradient-regressor`).
+//! Companion tests for the multi-epoch out-of-core regression fit over source
+//! providers (spec `stochastic-gradient-regressor`).
 
 use ndarray::{Array1, Array2};
 use sciencekit_common::builders::SKBuilder;

@@ -1,5 +1,5 @@
-//! Companion tests for the single-pass out-of-core fit (spec
-//! `stochastic-gradient-classifier`).
+//! Companion tests for the multi-epoch out-of-core fit over source providers
+//! (spec `stochastic-gradient-classifier`).
 
 use ndarray::{Array1, Array2};
 use sciencekit_common::builders::SKBuilder;
