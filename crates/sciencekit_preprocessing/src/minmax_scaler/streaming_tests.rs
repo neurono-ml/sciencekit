@@ -136,6 +136,7 @@ fn reopenable_provider_takes_one_pass_and_matches_dense_fit() {
         .fit_streaming(provider)
         .expect("streaming fit succeeds");
     assert_eq!(factory_calls.load(Ordering::SeqCst), 1);
+    assert_eq!(streamed.sample_count(), reference.sample_count());
     assert_eq!(streamed.minimum(), reference.minimum());
     assert_eq!(streamed.range(), reference.range());
 }

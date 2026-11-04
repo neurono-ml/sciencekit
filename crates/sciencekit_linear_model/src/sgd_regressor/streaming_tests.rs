@@ -173,6 +173,42 @@ fn an_exhausted_reopenable_budget_raises_under_strict() {
     assert!(matches!(error, SKError::NotConverged { iterations: 2 }));
 }
 
+/// A reopenable factory that fails on the second pass aborts the fit: the
+/// partial first-pass iterate is discarded and the original cause surfaces.
+#[test]
+fn a_reopenable_factory_failure_on_the_second_pass_aborts_the_fit() {
+    let (features, targets) = regression_design();
+    let mut calls = 0usize;
+    let provider = SKReopenableSource::new(move || {
+        calls += 1;
+        if calls == 2 {
+            Err(SKError::Conversion(
+                "factory failed on the second pass".into(),
+            ))
+        } else {
+            Ok(SKSupervisedFloatSource::<f64>::new(vec![(
+                features.clone(),
+                targets.clone(),
+            )]))
+        }
+    });
+    let error = SKSGDRegressor::<f64>::build()
+        .learning_rate(SKSGDLearningRate::Constant)
+        .initial_learning_rate(0.05)
+        .alpha(0.0)
+        .shuffle(false)
+        .maximum_number_of_iterations(3)
+        .build()
+        .unwrap()
+        .fit_streaming(provider)
+        .unwrap_err();
+    assert!(
+        error
+            .to_string()
+            .contains("factory failed on the second pass")
+    );
+}
+
 #[test]
 fn an_f32_stream_fits() {
     let (features, targets) = regression_design();
