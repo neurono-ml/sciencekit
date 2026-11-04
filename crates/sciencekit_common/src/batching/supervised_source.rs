@@ -13,8 +13,8 @@ use super::supervised_batch::SKSupervisedBatch;
 /// out-of-core without materializing the whole dataset. Intermediate read
 /// failures yield an error from the central taxonomy instead of panicking.
 pub trait SKSupervisedLazySource<F> {
-    /// The iteration error type; converts from the central [`SKError`].
-    type Error: From<SKError>;
+    /// The iteration error type; converts to and from the central [`SKError`].
+    type Error: From<SKError> + Into<SKError>;
     /// Produce the next supervised batch, `None` at the end of a finite source.
     fn next_supervised_batch(&mut self) -> Result<Option<SKSupervisedBatch<F>>, Self::Error>;
 }

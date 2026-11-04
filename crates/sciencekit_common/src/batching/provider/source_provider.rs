@@ -15,7 +15,7 @@ use super::super::SKLazySource;
 /// reborrow of the source, the reopenable implementation an owned source.
 pub trait SKSourceProvider<F> {
     /// The source opened for one pass.
-    type Source<'pass>: SKLazySource<F>
+    type Source<'pass>: SKLazySource<F> + Send
     where
         Self: 'pass;
 
@@ -30,7 +30,7 @@ pub trait SKSourceProvider<F> {
 
 impl<F, Source> SKSourceProvider<F> for &mut Source
 where
-    Source: SKLazySource<F>,
+    Source: SKLazySource<F> + Send,
 {
     type Source<'pass>
         = &'pass mut Source

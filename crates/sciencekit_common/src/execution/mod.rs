@@ -21,7 +21,8 @@ pub use modes::{SKAccessPattern, SKExecutionMode};
 pub use plan::SKExecutionPlan;
 pub use resolve::sk_resolve_execution_plan;
 pub use streaming_driver::{
-    SKStreamDecision, sk_run_streaming_driver, sk_run_supervised_streaming_driver,
+    SKStreamDecision, SKStreamingPassPolicy, sk_run_streaming_driver, sk_run_streaming_provider,
+    sk_run_supervised_streaming_driver, sk_run_supervised_streaming_provider,
 };
 
 #[cfg(test)]

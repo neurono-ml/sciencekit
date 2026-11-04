@@ -15,7 +15,7 @@ use super::super::SKSupervisedLazySource;
 /// fresh source per pass.
 pub trait SKSupervisedSourceProvider<F> {
     /// The source opened for one pass.
-    type Source<'pass>: SKSupervisedLazySource<F>
+    type Source<'pass>: SKSupervisedLazySource<F> + Send
     where
         Self: 'pass;
 
@@ -30,7 +30,7 @@ pub trait SKSupervisedSourceProvider<F> {
 
 impl<F, Source> SKSupervisedSourceProvider<F> for &mut Source
 where
-    Source: SKSupervisedLazySource<F>,
+    Source: SKSupervisedLazySource<F> + Send,
 {
     type Source<'pass>
         = &'pass mut Source
