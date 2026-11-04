@@ -1,4 +1,4 @@
-//! The `SKLogisticRegression` estimator and its supervised fit (spec
+//! The `SKLogisticRegression` estimator and its fit (spec
 //! `logistic-regression`).
 
 use sciencekit_common::{
@@ -15,6 +15,9 @@ use crate::logistic::resolution::sk_resolve_multi_class;
 use crate::logistic::sk_canonicalize_targets;
 use crate::logistic_regression::builder::SKLogisticRegressionBuilder;
 use crate::logistic_regression::model::SKLogisticRegressionModel;
+use crate::logistic_regression::validation::{
+    sk_dimensions, sk_validate_shape, unsupported_representation,
+};
 
 /// Logistic regression, builder-configured.
 ///
@@ -174,43 +177,5 @@ impl<F: SKFloat> SKSupervisedFit<F> for SKLogisticRegression<F> {
                 state,
             ))
         })
-    }
-}
-
-/// The row and column counts of a feature view.
-pub(crate) fn sk_dimensions<F>(data: &SKDataView<'_, F>) -> (usize, usize) {
-    match data {
-        SKDataView::Dense(dense) => dense.dim(),
-        SKDataView::Sparse(sparse) => (sparse.rows(), sparse.cols()),
-        _ => (0, 0),
-    }
-}
-
-/// Reject empty inputs and a label count that disagrees with the row count.
-pub(crate) fn sk_validate_shape(
-    rows_count: usize,
-    columns_count: usize,
-    labels_count: usize,
-) -> Result<(), SKError> {
-    if rows_count == 0 || columns_count == 0 {
-        return Err(SKError::ShapeMismatch {
-            expected: vec![rows_count.max(1), columns_count.max(1)],
-            found: vec![rows_count, columns_count],
-        });
-    }
-    if labels_count != rows_count {
-        return Err(SKError::ShapeMismatch {
-            expected: vec![rows_count],
-            found: vec![labels_count],
-        });
-    }
-    Ok(())
-}
-
-/// The error for a feature representation the estimators do not consume.
-pub(crate) fn unsupported_representation() -> SKError {
-    SKError::UnsupportedRepresentation {
-        representation: "unknown",
-        suggestion: "convert the features to a dense matrix or a CSR matrix",
     }
 }
