@@ -69,6 +69,8 @@ and receives a Python binding as soon as it is validated on CPU.
 | `SKLasso` | Regression with L1 regularization (dense · sparse · incremental · streaming) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKElasticNet` | Combined L1 + L2 regularization (dense · sparse · incremental · streaming) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKLogisticRegression` | Regularized logistic classification (binary · multinomial · one-vs-rest · dense · sparse · incremental · streaming) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
+| `SKSGDClassifier` | Stochastic-gradient linear classification (5 losses · one-vs-rest · dense · sparse · incremental · streaming) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
+| `SKSGDRegressor` | Stochastic-gradient linear regression (4 losses · Huber / epsilon-insensitive · dense · sparse · incremental · streaming) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKSGDClassifier` | Incremental classification via SGD · streaming (`SKLazySource`) | <span class="sk-pill sk-pill--neutral">Planned</span> |
 | `SKSGDRegressor` | Incremental regression via SGD · streaming (`SKLazySource`) | <span class="sk-pill sk-pill--neutral">Planned</span> |
 

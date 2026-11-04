@@ -193,3 +193,6 @@ with these rules — [`SKStandardScaler`](./ch08-standard-scaler.html),
 [`SKRidge`](./ch14-ridge-regression.html), and the L1-regularized pair
 [`SKLasso` & `SKElasticNet`](./ch15-lasso-elastic-net.html) — and the first classifier,
 [`SKLogisticRegression`](./ch16-logistic-regression.html) — show the whole procedure in action.
+The stochastic-gradient family
+([`SKSGDClassifier` & `SKSGDRegressor`](./ch17-sgd-classifier-regressor.html)) then shows the
+same rules applied to an estimator whose cost does not depend on the dataset size.
