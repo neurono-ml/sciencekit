@@ -5,8 +5,6 @@
 //! forms, an in-memory streaming source and float-comparison helpers. All data
 //! is built by closed-form formulas — no RNG, identical on every machine.
 
-#![allow(dead_code)]
-
 use ndarray::{Array1, Array2, array};
 use sciencekit_common::{SKError, SKFloat, SKSupervisedBatch, SKSupervisedLazySource};
 use sprs::{CsMat, TriMat};
@@ -20,20 +18,6 @@ pub(crate) fn separable_binary_design() -> (Array2<f64>, Vec<usize>) {
         [1.0, 1.0],
         [2.0, 1.0],
         [1.0, 2.0]
-    ];
-    (features, vec![0, 0, 0, 1, 1, 1])
-}
-
-/// A two-feature separable binary design whose third column is an exact zero,
-/// so a penalty can drive that coefficient to exactly zero.
-pub(crate) fn separable_binary_design_with_zero_column() -> (Array2<f64>, Vec<usize>) {
-    let features = array![
-        [-2.0, -1.0, 0.0],
-        [-1.0, -2.0, 0.0],
-        [-1.0, -1.0, 0.0],
-        [1.0, 1.0, 0.0],
-        [2.0, 1.0, 0.0],
-        [1.0, 2.0, 0.0],
     ];
     (features, vec![0, 0, 0, 1, 1, 1])
 }

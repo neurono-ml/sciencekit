@@ -22,14 +22,14 @@ pub fn sk_expand_class_weights<F: SKFloat>(
         SKClassWeight::Balanced => {
             let mut counts = vec![0usize; number_of_classes];
             class_indices.iter().for_each(|&index| counts[index] += 1);
-            let n_samples = class_indices.len();
+            let number_of_samples = class_indices.len();
             counts
                 .iter()
                 .map(|&count| {
                     if count == 0 {
                         F::zero()
                     } else {
-                        F::from(n_samples).expect("sample counts fit in the scalar")
+                        F::from(number_of_samples).expect("sample counts fit in the scalar")
                             / F::from(number_of_classes * count).expect("counts fit in the scalar")
                     }
                 })

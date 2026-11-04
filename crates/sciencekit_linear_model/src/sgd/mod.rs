@@ -34,6 +34,7 @@ pub(crate) use convergence::{SKConvergenceTracker, sk_finish_epochs};
 pub(crate) use early_stopping::{SKEarlyStopping, sk_split_validation_indices};
 pub(crate) use epoch::{sk_run_batch_epoch, sk_run_dense_epoch, sk_run_sparse_epoch};
 pub(crate) use learning_rate::schedule::SKLearningRateSchedule;
+pub(crate) use learning_rate::sk_optimal_offset;
 pub(crate) use loss::regressor::{SKSGDRegressorLossAdapter, sk_regressor_loss_adapter};
 pub(crate) use objective::sk_objective_improved;
 pub(crate) use shuffle::SKRandomGenerator;
@@ -53,5 +54,7 @@ mod objective_tests;
 mod penalty_tests;
 #[cfg(test)]
 mod shuffle_tests;
+#[cfg(test)]
+mod update_penalty_tests;
 #[cfg(test)]
 mod update_tests;

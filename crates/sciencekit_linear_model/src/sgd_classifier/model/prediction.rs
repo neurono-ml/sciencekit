@@ -89,26 +89,32 @@ impl<F: SKFloat> SKSGDClassifierModel<F> {
         let number_of_classes = self.number_of_classes();
         let mut probabilities = Array2::<F>::zeros((scores.nrows(), number_of_classes));
         if self.is_binary() {
-            for row in 0..scores.nrows() {
-                let positive = clamp(SKSGDLoss::<F>::probability(&self.loss, scores[[row, 0]]));
-                probabilities[[row, 1]] = positive;
-                probabilities[[row, 0]] = F::one() - positive;
+            for (mut row, scores_row) in probabilities.outer_iter_mut().zip(scores.outer_iter()) {
+                let positive = clamp(SKSGDLoss::<F>::probability(&self.loss, scores_row[0]));
+                row[1] = positive;
+                row[0] = F::one() - positive;
             }
         } else {
-            for row in 0..scores.nrows() {
-                let mut total = F::zero();
-                for head in 0..number_of_classes {
-                    let value = clamp(SKSGDLoss::<F>::probability(&self.loss, scores[[row, head]]));
-                    probabilities[[row, head]] = value;
-                    total = total + value;
-                }
+            // Compute the arg-max once for the whole matrix: the zero-total
+            // fallback must not re-score every row on every iteration.
+            let labels = self.labels_from_scores(scores);
+            for ((mut row, scores_row), &best_label) in probabilities
+                .outer_iter_mut()
+                .zip(scores.outer_iter())
+                .zip(labels.iter())
+            {
+                row.iter_mut()
+                    .zip(scores_row.iter())
+                    .for_each(|(value, &score)| {
+                        *value = clamp(SKSGDLoss::<F>::probability(&self.loss, score));
+                    });
+                let total = row
+                    .iter()
+                    .fold(F::zero(), |accumulator, &value| accumulator + value);
                 if total > F::zero() {
-                    probabilities
-                        .row_mut(row)
-                        .mapv_inplace(|value| value / total);
+                    row.iter_mut().for_each(|value| *value = *value / total);
                 } else {
-                    let best = self.labels_from_scores(scores)[row] as usize;
-                    probabilities[[row, best]] = F::one();
+                    row[best_label as usize] = F::one();
                 }
             }
         }

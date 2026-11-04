@@ -20,7 +20,6 @@ pub(crate) struct SKConvergenceTracker<F> {
     tolerance: F,
     patience: usize,
     previous_objective: Option<F>,
-    best_objective: Option<F>,
     epochs_without_improvement: usize,
     converged: bool,
 }
@@ -32,7 +31,6 @@ impl<F: SKFloat> SKConvergenceTracker<F> {
             tolerance,
             patience,
             previous_objective: None,
-            best_objective: None,
             epochs_without_improvement: 0,
             converged: false,
         }
@@ -45,9 +43,6 @@ impl<F: SKFloat> SKConvergenceTracker<F> {
             Some(previous) => previous - objective > self.tolerance,
         };
         self.previous_objective = Some(objective);
-        if self.best_objective.is_none_or(|best| objective < best) {
-            self.best_objective = Some(objective);
-        }
         if improved {
             self.epochs_without_improvement = 0;
         } else {

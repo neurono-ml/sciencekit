@@ -8,6 +8,7 @@ mod optimal;
 mod policy;
 pub(crate) mod schedule;
 
+pub(crate) use optimal::sk_optimal_offset;
 pub use policy::SKSGDLearningRate;
 
 #[cfg(test)]

@@ -35,12 +35,3 @@ pub(crate) fn sk_initial_slope_scale<F: SKFloat>(
     });
     total / F::from(targets.len()).expect("the target count fits in the scalar")
 }
-
-/// The estimated offset `t₀ = max(1, 1 / (alpha · s))` of the optimal
-/// schedule.
-pub(crate) fn sk_optimal_offset<F: SKFloat>(alpha: F, mean_absolute_slope: F) -> F {
-    if alpha <= F::zero() || mean_absolute_slope <= F::zero() {
-        return F::one();
-    }
-    (F::one() / (alpha * mean_absolute_slope)).max(F::one())
-}

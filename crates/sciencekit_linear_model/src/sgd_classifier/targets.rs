@@ -73,15 +73,6 @@ pub(crate) fn sk_head_targets<F: SKFloat>(
         .collect()
 }
 
-/// The estimated offset `t₀ = max(1, 1 / (alpha · s))` of the optimal
-/// schedule, where `s` is the mean absolute slope at a zero predictor.
-pub(crate) fn sk_optimal_offset<F: SKFloat>(alpha: F, mean_absolute_slope: F) -> F {
-    if alpha <= F::zero() || mean_absolute_slope <= F::zero() {
-        return F::one();
-    }
-    (F::one() / (alpha * mean_absolute_slope)).max(F::one())
-}
-
 /// The mean absolute slope at a zero predictor for one head's targets.
 pub(crate) fn sk_initial_slope_scale<F: SKFloat>(loss: SKSGDClassifierLoss, targets: &[F]) -> F {
     if targets.is_empty() {

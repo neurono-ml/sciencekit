@@ -82,40 +82,6 @@ fn the_sample_weight_scales_the_gradient() {
 }
 
 #[test]
-fn an_l1_penalty_produces_exact_zeros() {
-    let mut config = unpenalized_config();
-    config.penalty = SKSGDPenalty::L1;
-    config.alpha = 1.0;
-    config.initial_learning_rate = 1.0;
-    let mut state = build_state(vec![0.05, -0.4], 0.0, &config);
-    let loss = sk_regressor_loss_adapter(SKSGDRegressorLoss::SquaredError, 0.0);
-    sk_apply_single_sample_update(
-        &mut state,
-        array![0.0, 0.0].view(),
-        1.0,
-        1.0,
-        &loss,
-        &config,
-    );
-    assert_eq!(state.weights[0], 0.0);
-    assert_eq!(state.weights[1], 0.0);
-}
-
-#[test]
-fn the_intercept_is_never_penalized() {
-    let mut config = unpenalized_config();
-    config.penalty = SKSGDPenalty::L2;
-    config.alpha = 0.5;
-    config.initial_learning_rate = 1.0;
-    let mut state = build_state(vec![2.0], 0.0, &config);
-    let loss = sk_regressor_loss_adapter(SKSGDRegressorLoss::SquaredError, 0.0);
-    // The feature is zero, so only the penalty touches the weight: 2 → 1.
-    sk_apply_single_sample_update(&mut state, array![0.0].view(), 1.0, 1.0, &loss, &config);
-    assert!((state.weights[0] - 1.0).abs() < 1e-12);
-    assert!((state.intercept - 1.0).abs() < 1e-12);
-}
-
-#[test]
 fn a_zero_slope_is_a_no_op() {
     let config = unpenalized_config();
     let mut state = build_state(vec![1.0, 2.0], 0.5, &config);
@@ -142,31 +108,6 @@ fn a_disabled_intercept_stays_zero() {
     let loss = sk_regressor_loss_adapter(SKSGDRegressorLoss::SquaredError, 0.0);
     sk_apply_single_sample_update(&mut state, array![1.0].view(), 4.0, 1.0, &loss, &config);
     assert_eq!(state.intercept, 0.0);
-}
-
-#[test]
-fn averaging_reports_the_mean_of_the_visited_iterates() {
-    let mut config = unpenalized_config();
-    config.average = true;
-    let mut state = build_state(vec![0.0], 0.0, &config);
-    let loss = sk_regressor_loss_adapter(SKSGDRegressorLoss::SquaredError, 0.0);
-    sk_apply_single_sample_update(&mut state, array![1.0].view(), 1.0, 1.0, &loss, &config);
-    let first = state.weights[0];
-    sk_apply_single_sample_update(&mut state, array![1.0].view(), 3.0, 1.0, &loss, &config);
-    let second = state.weights[0];
-    assert_eq!(state.average_count(), 2);
-    assert!((state.reported_weights()[0] - (first + second) / 2.0).abs() < 1e-12);
-}
-
-#[test]
-fn the_update_counter_advances_the_schedule() {
-    let mut config = unpenalized_config();
-    config.learning_rate = SKSGDLearningRate::InverseScaling;
-    let mut state = build_state(vec![0.0], 0.0, &config);
-    let loss = sk_regressor_loss_adapter(SKSGDRegressorLoss::SquaredError, 0.0);
-    let first_rate = state.learning_rate();
-    sk_apply_single_sample_update(&mut state, array![1.0].view(), 1.0, 1.0, &loss, &config);
-    assert!(state.learning_rate() < first_rate);
 }
 
 #[test]
