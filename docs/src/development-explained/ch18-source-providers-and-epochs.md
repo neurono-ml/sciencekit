@@ -16,12 +16,23 @@ sample at a time; one pass over the stream is **one epoch**, and one epoch of SG
 underfits. The in-memory `fit` runs up to a thousand epochs; the streamed fit ran one. The
 PRD promised out-of-core SGD, not out-of-core *one-epoch* SGD.
 
-```
-one-shot source                       reopenable provider
-  [b0]→[b1]→[b2]→ EOF                   pass 0: open() → [b0][b1][b2] → EOF
-       ✗ cannot rewind                  pass 1: open() → [b0][b1][b2] → EOF
-                                        pass 2: open() → [b0][b1][b2] → EOF
-                                          memory: one batch + the model state
+```mermaid
+flowchart LR
+  classDef once fill:#fee2e2,stroke:#dc2626,color:#7f1d1d,stroke-width:2px
+  classDef re fill:#dcfce7,stroke:#16a34a,color:#14532d,stroke-width:2px
+  classDef io fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e,stroke-width:2px
+
+  subgraph OneShot["one-shot source"]
+    O0["batch 0"]:::io --> O1["batch 1"]:::io --> O2["batch 2"]:::io --> OE["EOF"]:::once
+    OE -.->|"cannot rewind"| OX["stop"]:::once
+  end
+
+  subgraph Reopen["reopenable provider"]
+    P0["pass 0: open() → b0 b1 b2 → EOF"]:::re
+    P1["pass 1: open() → b0 b1 b2 → EOF"]:::re
+    P2["pass 2: open() → b0 b1 b2 → EOF"]:::re
+    P0 --> P1 --> P2
+  end
 ```
 
 ## 2. Why not `Into<Source>`?
@@ -105,6 +116,11 @@ A one-shot provider with a budget above one takes **one** pass and emits a
 `tracing::warn!`; the model reports `epochs_taken() == 1` so the clamp is observable without
 logs. Silently pretending the budget was honoured would be worse than the warning.
 
+`SKOneHotEncoder` is the declared exception: its streaming seam consumes **categorical
+views** (`IntoIterator<Item = SKCategoricalView>`), not numeric blocks, so it stays outside
+the provider trait until an owned categorical block exists. Every numeric estimator in the
+library uses the seam.
+
 ## 5. Multi-epoch SGD, pass by pass
 
 Each pass opens a source, runs one epoch over its batches with the **same** learning state,
@@ -147,7 +163,8 @@ not a silent no-op.
 - `sciencekit_common/src/batching/provider/*_tests.rs`: a concrete source reports itself as
   not reopenable and yields once; the factory is invoked once per pass; a factory error
   aborts; the feature-only and supervised families agree on passes and order.
-- `sciencekit_common/src/execution/streaming_driver/pass_policy_tests.rs`: a one-shot
+- `sciencekit_common/src/execution/streaming_driver/provider_entry_points_tests.rs`: a
+  one-shot
   provider runs one pass despite a budget of five; a reopenable provider runs the budget.
 - Scalers, polynomial features and the imputer: a reopenable provider with a larger budget
   still takes **one** pass and the model equals the dense fit.

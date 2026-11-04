@@ -290,3 +290,11 @@ Standing **study sources** (each also explained §2):
   estimated `t₀` for `optimal`.
 
 Next: the full contract, decision by decision, in [chapter 17](../development-explained/ch17-sgd-classifier-regressor.html).
+
+---
+
+> **Source providers (current API).** The shipped `fit_streaming` takes a
+> `SKSourceProvider<F>` (transformers) or `SKSupervisedSourceProvider<F>` (supervised
+> models). Passing `&mut source` still compiles and takes one pass; wrap a factory in
+> `SKReopenableSource::new(|| ...)` to let an iterative estimator run several epochs. See
+> [chapter 18](../development-explained/ch18-source-providers-and-epochs.html).
