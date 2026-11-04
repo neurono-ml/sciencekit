@@ -139,18 +139,18 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 
 ## 7. Shared deterministic test datasets
 
-- [ ] 7.1 Extract the shared datasets and helpers (a separable classifier design, an
+- [x] 7.1 Extract the shared datasets and helpers (a separable classifier design, an
   imbalanced design, a multi-class design, a well-conditioned regression design with a known
   OLS solution, an outlier-corrupted design, dense and CSR forms, fixed seeds,
   `assert_close`). *(folded into the corresponding feature commits)*
-- [ ] 7.2 Refactor the classifier, regressor, sparse, streaming and incremental suites onto
+- [x] 7.2 Refactor the classifier, regressor, sparse, streaming and incremental suites onto
   the shared datasets.
 
 ## 8. Acceptance and gates
 
-- [ ] 8.1 `cargo fmt --all --check`, `cargo clippy --workspace --all-targets`,
+- [x] 8.1 `cargo fmt --all --check`, `cargo clippy --workspace --all-targets`,
   `cargo test --workspace` all green.
-- [ ] 8.2 Small and large data validated; concurrency validated (the immutable estimator and
+- [x] 8.2 Small and large data validated; concurrency validated (the immutable estimator and
   model are shared across threads with identical results); dense, sparse, streaming and
   incremental fits cross-agree within the documented tolerance; probabilities are normalized
   and restricted to the probabilistic losses; regression converges to the OLS solution.
