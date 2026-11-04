@@ -68,27 +68,29 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 
 ## 6. Categorical exception
 
-- [ ] 6.1 Document `SKOneHotEncoder`'s categorical streaming seam as the deliberate
+- [x] 6.1 Document `SKOneHotEncoder`'s categorical streaming seam as the deliberate
   exception in the book and the spec, and record an owned categorical block as a follow-up.
 
 ## 7. Acceptance and gates
 
-- [ ] 7.1 `cargo fmt --all --check`, `cargo clippy --workspace --all-targets`,
+- [x] 7.1 `cargo fmt --all --check`, `cargo clippy --workspace --all-targets`,
   `cargo test --workspace` all green.
-- [ ] 7.2 For every streaming estimator: sparse stream ≡ dense stream ≡ dense fit on the
-  concatenated data; no dense `n × p` copy; the memory guard uses the sparse size; uneven
-  batches converge to the same model; both floats and concurrency are covered.
+- [x] 7.2 For every streaming estimator: sparse stream ≡ dense stream ≡ dense fit on the
+  concatenated data; the sparse stream completes at shapes whose dense twin is impractical
+  for the test budget; the read-time memory guard uses the sparse size; mixed dense+sparse
+  streams match the dense fit; uneven batches converge to the same model; both floats and
+  concurrency are covered.
 - [ ] 7.3 Model export and metrics remain deferred to their Phase 7 / W6.3 changes.
 
 ## 8. Documentation, changelog and review
 
-- [ ] 8.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0): **Changed** for the
+- [x] 8.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0): **Changed** for the
   representation-aware batch accessors (breaking), **Added** for the owned feature block and
   sparse streaming.
-- [ ] 8.2 Companion documentation change on its own `docs/*` branch (merged into
+- [x] 8.2 Companion documentation change on its own `docs/*` branch (merged into
   `docs/documentations`): a `Development Explained` chapter on the owned feature block and
   sparse out-of-core fits, registered in `SUMMARY.md`, plus the streaming chapter and
   `maintaining.md` updates; the PRD future-improvement note becomes a shipped feature.
-- [ ] 8.3 Independent-review fixes: address every finding (statistics with implicit zeros,
+- [x] 8.3 Independent-review fixes: address every finding (statistics with implicit zeros,
   memory accounting, densification, migration completeness, naming, test coverage) and re-run
   the gates.

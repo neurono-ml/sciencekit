@@ -43,7 +43,9 @@ copy, densify or convert the data.
 
 The block SHALL report its resident byte size from its actual buffers: `rows × columns ×
 size_of(scalar)` for a dense block, and the element, index and pointer arrays for a sparse
-block. The execution plan's memory guard SHALL use that size.
+block. The streaming driver SHALL check that size when a batch is read, before the batch
+reaches the update closure, requiring two resident batches to fit in the memory available to
+the operation.
 
 #### Scenario: Sparse size follows the non-zeros
 
@@ -52,9 +54,15 @@ block. The execution plan's memory guard SHALL use that size.
 
 #### Scenario: The guard measures the stored buffers
 
-- **WHEN** a streaming plan resolves over a sparse batch hint
-- **THEN** the doubled size checked against available memory is the sparse size, not the
-  dense size
+- **WHEN** a sparse batch whose doubled stored size fits is read
+- **THEN** the batch is delivered even though its dense `rows × columns × size_of(scalar)`
+  figure would not fit
+
+#### Scenario: An oversized batch is rejected when it is read
+
+- **WHEN** the doubled stored size of a batch exceeds the available memory
+- **THEN** reading raises `SKError::BatchBufferOversize` before the update closure sees the
+  batch
 
 ### Requirement: Streaming batches carry either representation
 

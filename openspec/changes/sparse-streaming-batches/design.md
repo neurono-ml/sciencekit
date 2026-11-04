@@ -10,7 +10,8 @@ See `proposal.md` — *Why*. Current constraints:
   targets), carry a position and a final-block flag, and are moved across threads by the
   prefetch driver.
 - `sprs` is already a dependency of `sciencekit_common`; no new crate is needed.
-- The execution plan's double-buffer guard takes a batch byte hint from the caller.
+- The execution plan carries the operation's available memory; the provider entry points
+  check every batch they read against it.
 - `SKOneHotEncoder` streams categorical views, not numeric blocks.
 
 ## Goals / Non-Goals
@@ -75,8 +76,10 @@ sparse path shareable with the dense one.
   indptr.len() · size_of::<usize>()`.
 
 The declaration order of `sprs::CsMat` is irrelevant to the accounting; the actual buffers are
-counted. The execution-plan guard keeps its contract (twice the hint against available
-memory) but now receives an honest sparse number instead of an `n × p` dense one.
+counted. The guard keeps its contract (twice the batch size against available memory) but
+runs when each batch is read, before the update closure, and receives an honest sparse number
+instead of an `n × p` dense one. A byte-size hint still lets resolution reject an obviously
+oversized plan early; the read-time check is what every streamed batch goes through.
 
 ### 5. Estimators reuse their sparse in-memory paths
 
