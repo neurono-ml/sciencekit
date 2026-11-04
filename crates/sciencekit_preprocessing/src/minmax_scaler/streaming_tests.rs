@@ -2,13 +2,18 @@
 //! batchings, streaming error paths and the large-scale run. Shared datasets
 //! and helpers live in `test_datasets`.
 
+use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
+
 use ndarray::array;
 use sciencekit_common::{
-    SKBuilder, SKError, SKExecutionMode, SKFeatureTransformer, SKUnsupervisedFit,
+    SKBuilder, SKError, SKExecutionMode, SKFeatureTransformer, SKReopenableSource,
+    SKUnsupervisedFit,
 };
 
 use super::test_datasets::{
-    VecSource, assert_close, chunked_source, default_scaler, large_features, small_features,
+    VecSource, assert_close, chunk_rows, chunked_source, default_scaler, large_features,
+    small_features,
 };
 use crate::minmax_scaler::core_implementation::SKMinMaxScaler;
 
@@ -112,6 +117,28 @@ fn streaming_accepts_either_float() {
         .fit_streaming(&mut source)
         .expect("streaming fit succeeds");
     assert_eq!(streamed.minimum().clone(), array![1.0_f32, 2.0]);
+}
+
+/// A reopenable provider takes exactly one pass: the running extrema must not
+/// be re-fed and the model equals the dense fit.
+#[test]
+fn reopenable_provider_takes_one_pass_and_matches_dense_fit() {
+    let features = large_features();
+    let reference = default_scaler().fit(&features).expect("fit succeeds");
+    let batches = chunk_rows(&features, &[40_000, 60_000]);
+    let factory_calls = Arc::new(AtomicUsize::new(0));
+    let counted = Arc::clone(&factory_calls);
+    let provider = SKReopenableSource::new(move || {
+        counted.fetch_add(1, Ordering::SeqCst);
+        Ok(VecSource::new(batches.clone()))
+    });
+    let streamed = default_scaler()
+        .fit_streaming(provider)
+        .expect("streaming fit succeeds");
+    assert_eq!(factory_calls.load(Ordering::SeqCst), 1);
+    assert_eq!(streamed.sample_count(), reference.sample_count());
+    assert_eq!(streamed.minimum(), reference.minimum());
+    assert_eq!(streamed.range(), reference.range());
 }
 
 /// Streaming the large dataset in uneven batches matches the dense fit exactly.

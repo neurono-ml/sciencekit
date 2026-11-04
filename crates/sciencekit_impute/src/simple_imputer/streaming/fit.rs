@@ -4,8 +4,8 @@
 use ndarray::{Array2, ArrayView2, Axis};
 use sciencekit_common::{
     SKError, SKExecutionContext, SKExecutionMode, SKExecutionPlan, SKFloat, SKLazySource,
-    SKOperationAttributes, SKOperationKind, SKUnsupervisedFit,
-    execution::{SKAccessPattern, sk_run_streaming_driver},
+    SKOperationAttributes, SKOperationKind, SKSourceProvider, SKUnsupervisedFit,
+    execution::{SKAccessPattern, SKStreamingPassPolicy, sk_run_streaming_provider},
     observability::sk_run_operation,
 };
 use sciencekit_math::kernels::SK_AXIS_SUM_GRAIN;
@@ -25,10 +25,12 @@ impl<F: SKFloat> SKSimpleImputer<F> {
     /// state, which is exact for `Mean`, `MostFrequent` and `Constant` and
     /// within the median sketch's documented tolerance. Every batch is
     /// instrumented as `PartialFit`.
-    pub fn fit_streaming<S>(&self, source: &mut S) -> Result<SKSimpleImputerModel<F>, SKError>
+    pub fn fit_streaming<Provider>(
+        &self,
+        mut provider: Provider,
+    ) -> Result<SKSimpleImputerModel<F>, SKError>
     where
-        S: SKLazySource<F> + Send,
-        S::Error: From<SKError> + Into<SKError>,
+        Provider: SKSourceProvider<F>,
     {
         // Single-pass source: totals are unknown upfront, so the outer span
         // carries zero dimensions while each batch reports its real ones.
@@ -44,9 +46,10 @@ impl<F: SKFloat> SKSimpleImputer<F> {
             if plan.mode == SKExecutionMode::InProcessSynchronous
                 || plan.mode == SKExecutionMode::InProcessAsynchronous
             {
-                self.fit_collected(source)
+                let mut source = provider.open()?;
+                self.fit_collected(&mut source)
             } else {
-                self.fit_via_driver(source, &plan)
+                self.fit_via_driver(&mut provider, &plan)
             }
         })
     }
@@ -67,7 +70,7 @@ impl<F: SKFloat> SKSimpleImputer<F> {
     fn fit_collected<S>(&self, source: &mut S) -> Result<SKSimpleImputerModel<F>, SKError>
     where
         S: SKLazySource<F> + Send,
-        S::Error: From<SKError> + Into<SKError>,
+        S::Error: Into<SKError>,
     {
         let mut batches: Vec<Array2<F>> = Vec::new();
         let mut columns_count = None;
@@ -102,21 +105,21 @@ impl<F: SKFloat> SKSimpleImputer<F> {
 
     /// Drive the incremental state through the prefetch pipeline, then
     /// assemble the model from the accumulated statistics.
-    fn fit_via_driver<S>(
+    fn fit_via_driver<Provider>(
         &self,
-        source: &mut S,
+        provider: &mut Provider,
         plan: &SKExecutionPlan,
     ) -> Result<SKSimpleImputerModel<F>, SKError>
     where
-        S: SKLazySource<F> + Send,
-        S::Error: From<SKError> + Into<SKError>,
+        Provider: SKSourceProvider<F>,
     {
         let mut state = StreamingImputation::empty();
-        sk_run_streaming_driver(
-            source,
+        sk_run_streaming_provider(
+            provider,
             &mut state,
             |batch, _, state| update_imputation(self, batch, state),
             plan,
+            SKStreamingPassPolicy::SinglePass,
         )?;
         if let Some(error) = state.error.take() {
             return Err(error);

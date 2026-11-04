@@ -92,13 +92,15 @@ impl<F: SKFloat> SKElasticNet<F> {
     ///
     /// The result equals the dense `fit` on the concatenated data within
     /// floating point tolerance, regardless of batch order or size.
-    pub fn fit_streaming<S>(&self, source: &mut S) -> Result<SKElasticNetModel<F>, SKError>
+    pub fn fit_streaming<Provider>(
+        &self,
+        provider: Provider,
+    ) -> Result<SKElasticNetModel<F>, SKError>
     where
-        S: sciencekit_common::SKSupervisedLazySource<F> + Send,
-        S::Error: From<SKError> + Into<SKError>,
+        Provider: sciencekit_common::SKSupervisedSourceProvider<F>,
     {
         let core = crate::coordinate_descent::sk_fit_streaming(
-            source,
+            provider,
             &self.alphas,
             self.l1_ratio,
             self.include_intercept,

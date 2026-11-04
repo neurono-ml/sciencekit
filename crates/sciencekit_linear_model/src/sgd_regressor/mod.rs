@@ -38,6 +38,8 @@ mod penalties_tests;
 #[cfg(test)]
 mod sparse_tests;
 #[cfg(test)]
+mod streaming_policy_tests;
+#[cfg(test)]
 mod streaming_tests;
 #[cfg(test)]
 mod warm_start_tests;

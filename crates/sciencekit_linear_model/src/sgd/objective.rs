@@ -31,6 +31,12 @@ impl<F: SKFloat> SKEpochObjective<F> {
         self.count += 1;
     }
 
+    /// Fold another objective's samples into this one.
+    pub(crate) fn merge(&mut self, other: &Self) {
+        self.total = self.total + other.total;
+        self.count += other.count;
+    }
+
     /// The mean weighted loss, or zero before any sample was recorded.
     pub(crate) fn mean(&self) -> F {
         if self.count == 0 {

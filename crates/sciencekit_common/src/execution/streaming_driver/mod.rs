@@ -7,18 +7,28 @@
 //! computes), bounded by the plan's buffer depth; batches are delivered in
 //! order, fully owned.
 //!
-//! Two public entry points share one prefetch engine: [`sk_run_streaming_driver`]
-//! for feature-only [`SKLazySource`](crate::SKLazySource) blocks and
-//! [`sk_run_supervised_streaming_driver`] for the supervised
-//! [`SKSupervisedLazySource`](crate::SKSupervisedLazySource) blocks (features plus
-//! targets).
+//! Two families of entry points share one prefetch engine: the one-pass
+//! [`sk_run_streaming_driver`] / [`sk_run_supervised_streaming_driver`]
+//! adapters, and the provider-based [`sk_run_streaming_provider`] /
+//! [`sk_run_supervised_streaming_provider`] which open one source per pass.
 //!
 //! This is a **pure dispatcher** module: `mod.rs` only declares and re-exports
 //! submodules; every implementation lives in its own file.
 
 mod channel;
 mod entry_points;
+mod pass_policy;
 mod prefetch;
+mod provider_entry_points;
 
 pub use entry_points::{sk_run_streaming_driver, sk_run_supervised_streaming_driver};
+pub use pass_policy::SKStreamingPassPolicy;
 pub use prefetch::SKStreamDecision;
+pub use provider_entry_points::{sk_run_streaming_provider, sk_run_supervised_streaming_provider};
+
+#[cfg(test)]
+mod provider_entry_point_test_sources;
+#[cfg(test)]
+mod provider_entry_points_tests;
+#[cfg(test)]
+mod supervised_provider_entry_points_tests;

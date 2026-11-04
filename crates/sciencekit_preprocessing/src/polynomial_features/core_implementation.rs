@@ -3,9 +3,13 @@
 
 use ndarray::{Array2, ArrayView2, Axis};
 use sciencekit_common::{
-    SKBackendKind, SKBuilderState, SKDataView, SKError, SKExecutionContext, SKExecutionMode,
-    SKExecutionPlan, SKFloat, SKLazySource, SKOperationAttributes, SKOperationKind,
-    execution::SKAccessPattern, sk_run_operation,
+    SKBackendKind, SKBuilderState, SKDataBatch, SKDataView, SKError, SKExecutionContext,
+    SKExecutionMode, SKExecutionPlan, SKFloat, SKOperationAttributes, SKOperationKind,
+    SKSourceProvider,
+    execution::{
+        SKAccessPattern, SKStreamDecision, SKStreamingPassPolicy, sk_run_streaming_provider,
+    },
+    sk_run_operation,
 };
 
 use crate::polynomial_features::builder::SKPolynomialFeaturesBuilder;
@@ -68,11 +72,13 @@ impl SKPolynomialFeatures {
 
     /// Fit on a sequential batch source, learning the same expansion the dense
     /// `fit` would learn for the concatenated data.
-    pub fn fit_streaming<F, S>(&self, source: &mut S) -> Result<SKPolynomialFeaturesModel, SKError>
+    pub fn fit_streaming<F, Provider>(
+        &self,
+        mut provider: Provider,
+    ) -> Result<SKPolynomialFeaturesModel, SKError>
     where
         F: SKFloat,
-        S: SKLazySource<F> + Send,
-        S::Error: From<SKError> + Into<SKError>,
+        Provider: SKSourceProvider<F>,
     {
         let attributes = SKOperationAttributes {
             operation: SKOperationKind::Fit,
@@ -85,38 +91,25 @@ impl SKPolynomialFeatures {
             let plan = self.resolve_streaming_plan()?;
             let in_process = plan.mode == SKExecutionMode::InProcessSynchronous
                 || plan.mode == SKExecutionMode::InProcessAsynchronous;
-            let mut columns_count: Option<usize> = None;
-            let mut collected: Vec<Array2<F>> = Vec::new();
-            while let Some(batch) = source.next_batch().map_err(Into::into)? {
-                let data = batch.data();
-                if data.nrows() == 0 {
-                    continue;
-                }
-                if data.ncols() == 0 {
-                    return Err(SKError::shape_mismatch_2d(data.nrows(), 1, data.nrows(), 0));
-                }
-                match columns_count {
-                    None => columns_count = Some(data.ncols()),
-                    Some(expected) if expected != data.ncols() => {
-                        return Err(SKError::ShapeMismatch {
-                            expected: vec![expected],
-                            found: vec![data.ncols()],
-                        });
-                    }
-                    _ => {}
-                }
-                if in_process {
-                    collected.push(data.to_owned());
-                }
+            let mut state = SKPolynomialFeaturesStreamState::new(in_process);
+            sk_run_streaming_provider(
+                &mut provider,
+                &mut state,
+                |batch, parallelism, state| state.update(batch, parallelism),
+                &plan,
+                SKStreamingPassPolicy::SinglePass,
+            )?;
+            if let Some(error) = state.error.take() {
+                return Err(error);
             }
-            let Some(columns_count) = columns_count else {
+            let Some(columns_count) = state.columns_count else {
                 return Err(SKError::Conversion(
                     "streaming fit received no batches".into(),
                 ));
             };
             if in_process {
                 let views: Vec<ArrayView2<F>> =
-                    collected.iter().map(|batch| batch.view()).collect();
+                    state.collected.iter().map(|batch| batch.view()).collect();
                 let concatenated = ndarray::concatenate(Axis(0), &views)
                     .map_err(|_| SKError::Conversion("batch concatenation failed".into()))?;
                 return Ok(self.model_from_input_features(concatenated.ncols()));
@@ -149,5 +142,59 @@ impl SKPolynomialFeatures {
         context.dataset_elements = None;
         context.access_pattern = SKAccessPattern::Sequential;
         self.state.resolve_plan(&context)
+    }
+}
+
+/// The expander's single-pass accumulator: the observed column count and, under
+/// an in-memory intent, the retained batches for the dense path.
+struct SKPolynomialFeaturesStreamState<F> {
+    in_process: bool,
+    columns_count: Option<usize>,
+    collected: Vec<Array2<F>>,
+    error: Option<SKError>,
+}
+
+impl<F: SKFloat> SKPolynomialFeaturesStreamState<F> {
+    fn new(in_process: bool) -> Self {
+        Self {
+            in_process,
+            columns_count: None,
+            collected: Vec::new(),
+            error: None,
+        }
+    }
+
+    fn update(&mut self, batch: SKDataBatch<F>, _parallelism: usize) -> SKStreamDecision {
+        match self.accumulate(batch) {
+            Ok(()) => SKStreamDecision::Continue,
+            Err(error) => {
+                self.error = Some(error);
+                SKStreamDecision::Stop
+            }
+        }
+    }
+
+    fn accumulate(&mut self, batch: SKDataBatch<F>) -> Result<(), SKError> {
+        let data = batch.data();
+        if data.nrows() == 0 {
+            return Ok(());
+        }
+        if data.ncols() == 0 {
+            return Err(SKError::shape_mismatch_2d(data.nrows(), 1, data.nrows(), 0));
+        }
+        match self.columns_count {
+            None => self.columns_count = Some(data.ncols()),
+            Some(expected) if expected != data.ncols() => {
+                return Err(SKError::ShapeMismatch {
+                    expected: vec![expected],
+                    found: vec![data.ncols()],
+                });
+            }
+            _ => {}
+        }
+        if self.in_process {
+            self.collected.push(data.to_owned());
+        }
+        Ok(())
     }
 }

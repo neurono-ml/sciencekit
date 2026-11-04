@@ -1,25 +1,28 @@
 //! Companion tests for the out-of-core fit (spec `simple-imputer`).
+//!
+//! This sibling owns the shared fixtures and the tests comparing the streaming
+//! drivers against the dense fit.
 
 use ndarray::{Array2, array, s};
 use sciencekit_common::{
-    SKBackendKind, SKBuilder, SKDataBatch, SKError, SKExecutionMode, SKFeatureTransformer, SKFloat,
-    SKLazySource, SKUnsupervisedFit,
+    SKBuilder, SKDataBatch, SKError, SKExecutionMode, SKFeatureTransformer, SKFloat, SKLazySource,
+    SKUnsupervisedFit,
 };
 
 use super::core_implementation::SKSimpleImputer;
 use super::strategy::SKImputationStrategy;
 
 /// The documented relative tolerance of the online median sketch.
-const SKETCH_RELATIVE_TOLERANCE: f64 = 0.05;
+pub(super) const SKETCH_RELATIVE_TOLERANCE: f64 = 0.05;
 
 /// A finite source replaying in-memory batches, mirroring the scaler fixture.
-struct SKVectorSource<F> {
+pub(super) struct SKVectorSource<F> {
     batches: Vec<Array2<F>>,
     next: usize,
 }
 
 impl<F> SKVectorSource<F> {
-    fn new(batches: Vec<Array2<F>>) -> Self {
+    pub(super) fn new(batches: Vec<Array2<F>>) -> Self {
         Self { batches, next: 0 }
     }
 }
@@ -43,7 +46,7 @@ impl<F: SKFloat> SKLazySource<F> for SKVectorSource<F> {
 }
 
 /// Split a matrix into row chunks of the given lengths.
-fn chunk_rows<F: SKFloat>(features: &Array2<F>, lengths: &[usize]) -> Vec<Array2<F>> {
+pub(super) fn chunk_rows<F: SKFloat>(features: &Array2<F>, lengths: &[usize]) -> Vec<Array2<F>> {
     let mut batches = Vec::new();
     let mut start = 0;
     for &length in lengths {
@@ -55,7 +58,7 @@ fn chunk_rows<F: SKFloat>(features: &Array2<F>, lengths: &[usize]) -> Vec<Array2
 }
 
 /// A deterministic column of values with every seventh cell missing.
-fn median_features(rows_count: usize) -> Array2<f64> {
+pub(super) fn median_features(rows_count: usize) -> Array2<f64> {
     Array2::from_shape_fn((rows_count, 1), |(row, _)| {
         if row % 7 == 0 {
             f64::NAN
@@ -155,44 +158,4 @@ fn streaming_driver_median_stays_within_the_sketch_tolerance() {
         (actual - expected).abs() <= allowed,
         "expected {expected}, found {actual} (tolerance {allowed})"
     );
-}
-
-#[test]
-fn streaming_empty_source_errors() {
-    let mut source = SKVectorSource::new(Vec::new());
-    let error = SKSimpleImputer::<f64>::build()
-        .build()
-        .unwrap()
-        .fit_streaming(&mut source)
-        .err()
-        .expect("an empty stream must fail");
-    assert!(matches!(error, SKError::Conversion(_)));
-}
-
-#[test]
-fn streaming_column_mismatch_errors() {
-    let mut source = SKVectorSource::new(vec![
-        array![[1.0, 2.0], [3.0, 4.0]],
-        array![[5.0, 6.0, 7.0]],
-    ]);
-    let error = SKSimpleImputer::<f64>::build()
-        .build()
-        .unwrap()
-        .fit_streaming(&mut source)
-        .err()
-        .expect("mismatched columns must fail");
-    assert!(matches!(error, SKError::ShapeMismatch { .. }));
-}
-
-#[test]
-fn streaming_carries_the_configured_backend() {
-    let features = array![[1.0], [f64::NAN], [3.0]];
-    let mut source = SKVectorSource::new(chunk_rows(&features, &[1, 2]));
-    let streamed = SKSimpleImputer::<f64>::build()
-        .backend(SKBackendKind::MatrixMultiply)
-        .build()
-        .unwrap()
-        .fit_streaming(&mut source)
-        .unwrap();
-    assert_eq!(streamed.backend(), SKBackendKind::MatrixMultiply);
 }

@@ -2,9 +2,15 @@
 //! (spec `coordinate-descent-solver`, Decision 7).
 
 use sciencekit_common::{
-    SKBackendKind, SKError, SKExecutionMode, SKFloat, SKOperationAttributes, SKOperationKind,
-    SKSupervisedLazySource, sk_run_operation,
+    SKBackendKind, SKError, SKExecutionContext, SKExecutionMode, SKExecutionPlan, SKFloat,
+    SKOperationAttributes, SKOperationKind, SKSupervisedBatch, SKSupervisedSourceProvider,
+    execution::{
+        SKAccessPattern, SKStreamDecision, SKStreamingPassPolicy, sk_resolve_execution_plan,
+        sk_run_supervised_streaming_provider,
+    },
+    sk_run_operation,
 };
+use sciencekit_math::kernels::SK_AXIS_SUM_GRAIN;
 
 use super::accumulator::SKCoordinateDescentState;
 use super::config::SKCoordinateDescentConfig;
@@ -16,8 +22,8 @@ use super::core::SKCoordinateDescentModelCore;
 /// The result equals the dense `fit` on the concatenated data within floating
 /// point tolerance, regardless of batch order or size. An empty source is
 /// rejected with a structured error.
-pub(crate) fn sk_fit_streaming<F, S>(
-    source: &mut S,
+pub(crate) fn sk_fit_streaming<F, Provider>(
+    mut provider: Provider,
     alphas: &[F],
     l1_ratio: F,
     include_intercept: bool,
@@ -27,8 +33,7 @@ pub(crate) fn sk_fit_streaming<F, S>(
 ) -> Result<SKCoordinateDescentModelCore<F>, SKError>
 where
     F: SKFloat,
-    S: SKSupervisedLazySource<F> + Send,
-    S::Error: From<SKError> + Into<SKError>,
+    Provider: SKSupervisedSourceProvider<F>,
 {
     // Single-pass source: totals are unknown upfront, so the outer span carries
     // zero dimensions.
@@ -40,7 +45,19 @@ where
         backend,
     };
     sk_run_operation(attributes, || {
-        let state = collect_batches(source)?;
+        let plan = sk_resolve_streaming_plan()?;
+        let mut accumulator = SKCoordinateDescentStreamAccumulator::new();
+        sk_run_supervised_streaming_provider(
+            &mut provider,
+            &mut accumulator,
+            |batch, parallelism, accumulator| accumulator.update(batch, parallelism),
+            &plan,
+            SKStreamingPassPolicy::SinglePass,
+        )?;
+        if let Some(error) = accumulator.error.take() {
+            return Err(error);
+        }
+        let state = accumulator.state;
         if state.is_empty() {
             return Err(SKError::Conversion(
                 "streaming fit received no batches".into(),
@@ -60,20 +77,35 @@ where
     })
 }
 
-/// Retain every batch's design and targets into one accumulator, validating the
-/// column count.
-fn collect_batches<F, S>(source: &mut S) -> Result<SKCoordinateDescentState<F>, SKError>
-where
-    F: SKFloat,
-    S: SKSupervisedLazySource<F> + Send,
-    S::Error: From<SKError> + Into<SKError>,
-{
-    let mut state = SKCoordinateDescentState::new_dense();
-    while let Some(batch) = source.next_supervised_batch().map_err(Into::into)? {
+/// The single-pass accumulator: one retained-design state plus a read error.
+struct SKCoordinateDescentStreamAccumulator<F> {
+    state: SKCoordinateDescentState<F>,
+    error: Option<SKError>,
+}
+
+impl<F: SKFloat> SKCoordinateDescentStreamAccumulator<F> {
+    fn new() -> Self {
+        Self {
+            state: SKCoordinateDescentState::new_dense(),
+            error: None,
+        }
+    }
+
+    fn update(&mut self, batch: SKSupervisedBatch<F>, _parallelism: usize) -> SKStreamDecision {
+        match self.accumulate(batch) {
+            Ok(()) => SKStreamDecision::Continue,
+            Err(error) => {
+                self.error = Some(error);
+                SKStreamDecision::Stop
+            }
+        }
+    }
+
+    fn accumulate(&mut self, batch: SKSupervisedBatch<F>) -> Result<(), SKError> {
         let features = batch.features();
         let targets = batch.targets();
         if features.nrows() == 0 {
-            continue;
+            return Ok(());
         }
         if targets.len() != features.nrows() {
             return Err(SKError::ShapeMismatch {
@@ -81,14 +113,25 @@ where
                 found: vec![targets.len()],
             });
         }
-        let columns_count = state.columns_count();
+        let columns_count = self.state.columns_count();
         if columns_count != 0 && columns_count != features.ncols() {
             return Err(SKError::ShapeMismatch {
                 expected: vec![columns_count],
                 found: vec![features.ncols()],
             });
         }
-        state.accumulate_dense(features, targets);
+        self.state.accumulate_dense(features, targets);
+        Ok(())
     }
-    Ok(state)
+}
+
+/// Resolve the plan for an unbounded stream (Sequential access pattern).
+fn sk_resolve_streaming_plan() -> Result<SKExecutionPlan, SKError> {
+    let mut context = SKExecutionContext::real();
+    context.dataset_size_bytes = u64::MAX;
+    context.scalar_size_bytes = 8;
+    context.dataset_elements = None;
+    context.access_pattern = SKAccessPattern::Sequential;
+    context.grain = SK_AXIS_SUM_GRAIN;
+    sk_resolve_execution_plan(SKExecutionMode::Automatic, &context)
 }

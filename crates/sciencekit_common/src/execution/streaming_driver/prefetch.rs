@@ -23,14 +23,16 @@ pub enum SKStreamDecision {
 /// caller's thread, receiving the batch, the plan's `parallelism` and the
 /// mutable algorithm state. `update` returns [`SKStreamDecision::Continue`] to
 /// keep going or [`SKStreamDecision::Stop`] to halt the pipeline, keeping the
-/// current batch's effect. A mid-stream read failure surfaces as the central
+/// current batch's effect. The returned decision reports whether the consumer
+/// asked to stop before the source ended, so a multi-pass caller can skip the
+/// remaining passes. A mid-stream read failure surfaces as the central
 /// taxonomy error with the effects of earlier batches preserved.
 pub(super) fn run_prefetch_driver<T, State, Read, Update>(
     read: Read,
     state: &mut State,
     update: Update,
     plan: &SKExecutionPlan,
-) -> Result<(), SKError>
+) -> Result<SKStreamDecision, SKError>
 where
     T: Send,
     Read: FnMut() -> Result<Option<T>, SKError> + Send,
@@ -41,13 +43,14 @@ where
         let producer_shared = Arc::clone(&shared);
         let handle = scope.spawn(move || run_producer(read, &producer_shared));
 
-        let mut result = Ok(());
+        let mut result = Ok(SKStreamDecision::Continue);
         loop {
             match next_item(&shared) {
                 Some(Item::Batch(batch)) => match update(batch, plan.parallelism, state) {
                     SKStreamDecision::Continue => continue,
                     SKStreamDecision::Stop => {
                         request_stop(&shared);
+                        result = Ok(SKStreamDecision::Stop);
                         break;
                     }
                 },

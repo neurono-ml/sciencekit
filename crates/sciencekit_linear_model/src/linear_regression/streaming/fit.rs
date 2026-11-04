@@ -4,8 +4,10 @@
 use ndarray::{Array1, Array2, ArrayView1, ArrayView2, Axis};
 use sciencekit_common::{
     SKError, SKExecutionContext, SKExecutionMode, SKExecutionPlan, SKFloat, SKOperationAttributes,
-    SKOperationKind, SKSupervisedLazySource, execution::SKAccessPattern,
-    execution::sk_run_supervised_streaming_driver, sk_run_operation,
+    SKOperationKind, SKSupervisedLazySource, SKSupervisedSourceProvider,
+    execution::SKAccessPattern,
+    execution::{SKStreamingPassPolicy, sk_run_supervised_streaming_provider},
+    sk_run_operation,
 };
 use sciencekit_math::SKBackendSelection;
 use sciencekit_math::kernels::SK_AXIS_SUM_GRAIN;
@@ -23,11 +25,13 @@ impl SKLinearRegression {
     /// through the dense path; otherwise the supervised streaming driver
     /// accumulates cross products per batch and solves once at the end. Every
     /// batch is instrumented as `PartialFit`.
-    pub fn fit_streaming<F, S>(&self, source: &mut S) -> Result<SKLinearRegressionModel<F>, SKError>
+    pub fn fit_streaming<F, Provider>(
+        &self,
+        mut provider: Provider,
+    ) -> Result<SKLinearRegressionModel<F>, SKError>
     where
         F: SKFloat,
-        S: SKSupervisedLazySource<F> + Send,
-        S::Error: From<SKError> + Into<SKError>,
+        Provider: SKSupervisedSourceProvider<F>,
         F: SKBackendSelection,
     {
         // Single-pass source: totals are unknown upfront, so the outer span
@@ -44,9 +48,10 @@ impl SKLinearRegression {
             if plan.mode == SKExecutionMode::InProcessSynchronous
                 || plan.mode == SKExecutionMode::InProcessAsynchronous
             {
-                self.fit_collected(source)
+                let mut source = provider.open()?;
+                self.fit_collected(&mut source)
             } else {
-                self.fit_via_driver(source, &plan)
+                self.fit_via_driver(&mut provider, &plan)
             }
         })
     }
@@ -68,7 +73,7 @@ impl SKLinearRegression {
     where
         F: SKFloat,
         S: SKSupervisedLazySource<F> + Send,
-        S::Error: From<SKError> + Into<SKError>,
+        S::Error: Into<SKError>,
         F: SKBackendSelection,
     {
         use sciencekit_common::SKSupervisedFit;
@@ -107,24 +112,24 @@ impl SKLinearRegression {
     }
 
     /// Drive the Gram state through the prefetch pipeline, then solve once.
-    fn fit_via_driver<F, S>(
+    fn fit_via_driver<F, Provider>(
         &self,
-        source: &mut S,
+        provider: &mut Provider,
         plan: &SKExecutionPlan,
     ) -> Result<SKLinearRegressionModel<F>, SKError>
     where
         F: SKFloat,
-        S: SKSupervisedLazySource<F> + Send,
-        S::Error: From<SKError> + Into<SKError>,
+        Provider: SKSupervisedSourceProvider<F>,
         F: SKBackendSelection,
     {
         let machine = SKExecutionContext::real();
         let mut state = StreamingGramState::new(machine.available_memory_bytes, machine.cpu_cores);
-        sk_run_supervised_streaming_driver(
-            source,
+        sk_run_supervised_streaming_provider(
+            provider,
             &mut state,
             |batch, _, state| update_gram(self, batch, state),
             plan,
+            SKStreamingPassPolicy::SinglePass,
         )?;
         if let Some(error) = state.error.take() {
             return Err(error);

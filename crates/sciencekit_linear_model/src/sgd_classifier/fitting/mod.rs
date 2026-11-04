@@ -1,5 +1,5 @@
 //! The classifier's fitting machinery: head creation, the dense/CSR epoch loop
-//! and the single-pass stream.
+//! and the multi-epoch stream.
 //!
 //! This is a **pure dispatcher** module: `mod.rs` only declares and re-exports
 //! submodules; every implementation lives in its own file.

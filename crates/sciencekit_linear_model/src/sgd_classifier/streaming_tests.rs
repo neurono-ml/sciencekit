@@ -1,18 +1,21 @@
-//! Companion tests for the single-pass out-of-core fit (spec
-//! `stochastic-gradient-classifier`).
+//! Companion tests for the multi-epoch out-of-core fit over source providers
+//! (spec `stochastic-gradient-classifier`).
+//!
+//! This sibling owns the shared batch splitter and the tests comparing the
+//! streamed trajectory with the in-memory fit.
 
 use ndarray::{Array1, Array2};
 use sciencekit_common::builders::SKBuilder;
-use sciencekit_common::{SKError, SKSupervisedFit};
+use sciencekit_common::{SKReopenableSource, SKSupervisedFit};
 
 use super::SKSGDClassifier;
 use crate::sgd::SKConvergencePolicy;
 use crate::test_datasets::{
     SKSupervisedFloatSource, assert_close, labels_i64, labels_scalar, separable_binary_design,
-    to_f32,
+    three_class_design, to_f32,
 };
 
-fn split_batches<F: sciencekit_common::SKFloat>(
+pub(super) fn split_batches<F: sciencekit_common::SKFloat>(
     features: &Array2<F>,
     labels: &[usize],
     split: usize,
@@ -60,6 +63,75 @@ fn one_streaming_pass_equals_one_in_memory_epoch() {
     assert!(!streamed.converged());
 }
 
+/// A reopenable provider runs the same epoch budget as the in-memory fit: with
+/// a fixed seed and one batch per pass the streamed trajectory is identical.
+#[test]
+fn a_reopenable_source_runs_the_epoch_budget_and_matches_the_in_memory_fit() {
+    let (features, raw) = separable_binary_design();
+    let labels = labels_i64(&raw);
+    let estimator = || {
+        SKSGDClassifier::<f64>::build()
+            .shuffle(true)
+            .random_seed(7)
+            .maximum_number_of_iterations(3)
+            .average(true)
+            .convergence_policy(SKConvergencePolicy::Permissive)
+            .build()
+            .unwrap()
+    };
+    let in_memory = estimator().fit(features.view(), labels.view()).unwrap();
+    let batches = vec![(features.clone(), labels_scalar::<f64>(&raw))];
+    let provider =
+        SKReopenableSource::new(move || Ok(SKSupervisedFloatSource::<f64>::new(batches.clone())));
+    let streamed = estimator().fit_streaming(provider).unwrap();
+    assert_eq!(streamed.epochs_taken(), 3);
+    assert!(!streamed.converged());
+    assert_close(
+        in_memory.coefficients().as_slice().unwrap(),
+        streamed.coefficients().as_slice().unwrap(),
+        1e-12,
+    );
+    assert_close(
+        in_memory.intercepts().as_slice().unwrap(),
+        streamed.intercepts().as_slice().unwrap(),
+        1e-12,
+    );
+}
+
+/// A multi-class reopenable stream draws one shuffled order per epoch and shares
+/// it across every head, exactly like the in-memory one-vs-rest fit.
+#[test]
+fn a_multiclass_reopenable_source_shares_one_order_across_heads() {
+    let (features, raw) = three_class_design();
+    let labels = labels_i64(&raw);
+    let estimator = || {
+        SKSGDClassifier::<f64>::build()
+            .shuffle(true)
+            .random_seed(0)
+            .maximum_number_of_iterations(4)
+            .average(true)
+            .convergence_policy(SKConvergencePolicy::Permissive)
+            .build()
+            .unwrap()
+    };
+    let in_memory = estimator().fit(features.view(), labels.view()).unwrap();
+    let batches = vec![(features.clone(), labels_scalar::<f64>(&raw))];
+    let provider =
+        SKReopenableSource::new(move || Ok(SKSupervisedFloatSource::<f64>::new(batches.clone())));
+    let streamed = estimator().fit_streaming(provider).unwrap();
+    assert_eq!(streamed.epochs_taken(), 4);
+    assert_close(
+        in_memory.coefficients().as_slice().unwrap(),
+        streamed.coefficients().as_slice().unwrap(),
+        1e-12,
+    );
+    assert_close(
+        in_memory.intercepts().as_slice().unwrap(),
+        streamed.intercepts().as_slice().unwrap(),
+        1e-12,
+    );
+}
+
 #[test]
 fn an_f32_stream_fits() {
     let (features, raw) = separable_binary_design();
@@ -74,73 +146,4 @@ fn an_f32_stream_fits() {
         .unwrap();
     assert_eq!(model.number_of_heads(), 1);
     assert_eq!(model.epochs_taken(), 1);
-}
-
-#[test]
-fn an_empty_source_is_rejected() {
-    let mut source = SKSupervisedFloatSource::<f64>::new(Vec::new());
-    let error = SKSGDClassifier::<f64>::build()
-        .build()
-        .unwrap()
-        .fit_streaming(&mut source)
-        .unwrap_err();
-    assert!(matches!(error, SKError::Conversion(_)));
-}
-
-#[test]
-fn a_column_mismatch_is_rejected() {
-    let batches = vec![
-        (
-            Array2::from_elem((2, 1), 1.0),
-            Array1::from_vec(vec![0.0, 1.0]),
-        ),
-        (
-            Array2::from_elem((2, 2), 1.0),
-            Array1::from_vec(vec![0.0, 1.0]),
-        ),
-    ];
-    let mut source = SKSupervisedFloatSource::new(batches);
-    let error = SKSGDClassifier::<f64>::build()
-        .build()
-        .unwrap()
-        .fit_streaming(&mut source)
-        .unwrap_err();
-    assert!(matches!(error, SKError::ShapeMismatch { .. }));
-}
-
-#[test]
-fn early_stopping_over_a_stream_is_refused() {
-    let (features, raw) = separable_binary_design();
-    let mut source = SKSupervisedFloatSource::new(split_batches(&features, &raw, 4));
-    let error = SKSGDClassifier::<f64>::build()
-        .early_stopping(true)
-        .maximum_number_of_iterations(2)
-        .build()
-        .unwrap()
-        .fit_streaming(&mut source)
-        .unwrap_err();
-    assert!(
-        matches!(error, SKError::UnsupportedOperation { operation, .. } if operation == "early_stopping")
-    );
-}
-
-#[test]
-fn a_class_introduced_after_the_first_batch_is_rejected() {
-    let batches = vec![
-        (
-            Array2::from_shape_vec((2, 1), vec![-1.0, 1.0]).unwrap(),
-            Array1::from_vec(vec![0.0, 1.0]),
-        ),
-        (
-            Array2::from_shape_vec((1, 1), vec![2.0]).unwrap(),
-            Array1::from_vec(vec![2.0]),
-        ),
-    ];
-    let mut source = SKSupervisedFloatSource::new(batches);
-    let error = SKSGDClassifier::<f64>::build()
-        .build()
-        .unwrap()
-        .fit_streaming(&mut source)
-        .unwrap_err();
-    assert!(matches!(error, SKError::InvalidHyperparameter { name, .. } if name == "targets"));
 }

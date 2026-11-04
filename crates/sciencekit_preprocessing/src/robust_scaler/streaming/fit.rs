@@ -4,8 +4,8 @@
 use ndarray::{Array2, ArrayView2, Axis};
 use sciencekit_common::{
     SKError, SKExecutionContext, SKExecutionMode, SKExecutionPlan, SKFloat, SKLazySource,
-    SKOperationAttributes, SKOperationKind,
-    execution::{SKAccessPattern, sk_run_streaming_driver},
+    SKOperationAttributes, SKOperationKind, SKSourceProvider,
+    execution::{SKAccessPattern, SKStreamingPassPolicy, sk_run_streaming_provider},
     observability::sk_run_operation,
 };
 use sciencekit_math::kernels::SK_AXIS_SUM_GRAIN;
@@ -24,10 +24,12 @@ impl<F: SKFloat> SKRobustScaler<F> {
     /// Under an in-memory execution intent the batches are collected and run
     /// through the dense path; otherwise the streaming driver feeds each batch
     /// into the online sketch. Every batch is instrumented as `PartialFit`.
-    pub fn fit_streaming<S>(&self, source: &mut S) -> Result<SKRobustScalerModel<F>, SKError>
+    pub fn fit_streaming<Provider>(
+        &self,
+        mut provider: Provider,
+    ) -> Result<SKRobustScalerModel<F>, SKError>
     where
-        S: SKLazySource<F> + Send,
-        S::Error: From<SKError> + Into<SKError>,
+        Provider: SKSourceProvider<F>,
     {
         // Single-pass source: totals are unknown upfront, so the outer span
         // carries zero dimensions while each batch reports its real ones.
@@ -43,9 +45,10 @@ impl<F: SKFloat> SKRobustScaler<F> {
             if plan.mode == SKExecutionMode::InProcessSynchronous
                 || plan.mode == SKExecutionMode::InProcessAsynchronous
             {
-                self.fit_collected(source)
+                let mut source = provider.open()?;
+                self.fit_collected(&mut source)
             } else {
-                self.fit_via_driver(source, &plan)
+                self.fit_via_driver(&mut provider, &plan)
             }
         })
     }
@@ -66,7 +69,7 @@ impl<F: SKFloat> SKRobustScaler<F> {
     fn fit_collected<S>(&self, source: &mut S) -> Result<SKRobustScalerModel<F>, SKError>
     where
         S: SKLazySource<F> + Send,
-        S::Error: From<SKError> + Into<SKError>,
+        S::Error: Into<SKError>,
     {
         let mut batches: Vec<Array2<F>> = Vec::new();
         let mut columns_count = None;
@@ -107,21 +110,21 @@ impl<F: SKFloat> SKRobustScaler<F> {
 
     /// Drive the online sketches through the prefetch pipeline, then finalize
     /// the sketch-derived model.
-    fn fit_via_driver<S>(
+    fn fit_via_driver<Provider>(
         &self,
-        source: &mut S,
+        provider: &mut Provider,
         plan: &SKExecutionPlan,
     ) -> Result<SKRobustScalerModel<F>, SKError>
     where
-        S: SKLazySource<F> + Send,
-        S::Error: From<SKError> + Into<SKError>,
+        Provider: SKSourceProvider<F>,
     {
         let mut state = StreamingSketches::empty();
-        sk_run_streaming_driver(
-            source,
+        sk_run_streaming_provider(
+            provider,
             &mut state,
             |batch, _, state| update_sketches(self, batch, state),
             plan,
+            SKStreamingPassPolicy::SinglePass,
         )?;
         if let Some(error) = state.error.take() {
             return Err(error);

@@ -13,12 +13,14 @@
 mod data_batch;
 mod lazy_source;
 mod mappable_source;
+pub mod provider;
 mod supervised_batch;
 mod supervised_source;
 
 pub use data_batch::SKDataBatch;
 pub use lazy_source::SKLazySource;
 pub use mappable_source::SKMappableSource;
+pub use provider::{SKReopenableSource, SKSourceProvider, SKSupervisedSourceProvider};
 pub use supervised_batch::SKSupervisedBatch;
 pub use supervised_source::SKSupervisedLazySource;
 
