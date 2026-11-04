@@ -29,6 +29,17 @@ pub use learning_rate::SKSGDLearningRate;
 pub use loss::{SKSGDClassifierLoss, SKSGDLoss, SKSGDRegressorLoss};
 pub use penalty::SKSGDPenalty;
 
+// Crate-visible plumbing the estimators drive the substrate with. The pieces
+// stay out of the public surface: only the learning loop, the drivers and the
+// bookkeeping the estimator owns are re-exported.
+pub(crate) use convergence::{SKConvergenceTracker, sk_finish_epochs};
+pub(crate) use early_stopping::{SKEarlyStopping, sk_split_validation_indices};
+pub(crate) use epoch::{sk_run_dense_epoch, sk_run_sparse_epoch};
+pub(crate) use learning_rate::schedule::SKLearningRateSchedule;
+pub(crate) use objective::sk_objective_improved;
+pub(crate) use shuffle::SKRandomGenerator;
+pub(crate) use state::SKLearningState;
+
 #[cfg(test)]
 mod averaging_tests;
 #[cfg(test)]

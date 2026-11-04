@@ -28,5 +28,8 @@ pub mod logistic;
 pub mod logistic_regression;
 pub mod ridge;
 pub mod sgd;
-
+pub mod sgd_classifier;
 pub use sgd::SKConvergencePolicy;
+
+#[cfg(test)]
+pub(crate) mod test_datasets;
