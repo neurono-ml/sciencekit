@@ -45,12 +45,12 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 
 ## 4. Imputation estimator
 
-- [ ] 4.1 Red: conformance tests for `SKSimpleImputer` over sparse batches (mean/median/mode/
+- [x] 4.1 Red: conformance tests for `SKSimpleImputer` over sparse batches (mean/median/mode/
   constant equal the dense stream; the `0.0` marker still claims implicit zeros; the missing
   indicator stacks after the imputed block, sparse or dense). *(commit
   `feat(impute): stream the simple imputer from sparse batches`)*
-- [ ] 4.2 Implement the sparse streaming path.
-- [ ] 4.3 Green: the impute conformance suite passes.
+- [x] 4.2 Implement the sparse streaming path.
+- [x] 4.3 Green: the impute conformance suite passes.
 
 ## 5. Linear models
 
