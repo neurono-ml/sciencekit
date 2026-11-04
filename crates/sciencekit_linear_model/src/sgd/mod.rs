@@ -9,6 +9,16 @@
 
 #![allow(dead_code)]
 
+pub(crate) mod config;
+mod learning_rate;
 mod loss;
+mod penalty;
 
+pub use learning_rate::SKSGDLearningRate;
 pub use loss::{SKSGDClassifierLoss, SKSGDLoss, SKSGDRegressorLoss};
+pub use penalty::SKSGDPenalty;
+
+#[cfg(test)]
+mod config_tests;
+#[cfg(test)]
+mod penalty_tests;
