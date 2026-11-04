@@ -91,15 +91,14 @@ fn empty_input_errors() {
     assert!(result.is_err());
 }
 
-/// Sparse input is rejected at the dense-only input boundary.
+/// Sparse input learns the same expansion from its shape.
 #[test]
-fn sparse_input_rejected() {
+fn sparse_input_is_accepted() {
     let sparse = sprs::CsMat::new_csc((1, 2), vec![0, 0, 0], vec![], Vec::<f64>::new());
-    let result = default_expander().fit(sparse.view());
-    assert!(matches!(
-        result,
-        Err(SKError::UnsupportedRepresentation { .. })
-    ));
+    let model = default_expander()
+        .fit(sparse.view())
+        .expect("sparse fit succeeds");
+    assert_eq!(model.number_of_input_features(), 2);
 }
 
 /// A transform with an unexpected column count fails.

@@ -18,6 +18,8 @@ pub use output::SKExpandedOutput;
 #[cfg(test)]
 mod polynomial_features_output_tests;
 #[cfg(test)]
+mod polynomial_features_sparse_streaming_tests;
+#[cfg(test)]
 mod polynomial_features_streaming_tests;
 #[cfg(test)]
 mod polynomial_features_tests;

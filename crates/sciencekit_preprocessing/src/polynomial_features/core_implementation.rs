@@ -1,7 +1,6 @@
 //! The `SKPolynomialFeatures` estimator: builder entry, dense `fit` and
 //! out-of-core `fit_streaming`.
 
-use ndarray::{Array2, ArrayView2, Axis};
 use sciencekit_common::{
     SKBackendKind, SKBuilderState, SKDataBatch, SKDataView, SKError, SKExecutionContext,
     SKExecutionMode, SKExecutionPlan, SKFloat, SKOperationAttributes, SKOperationKind,
@@ -48,8 +47,16 @@ impl SKPolynomialFeatures {
         F: SKFloat,
         X: TryInto<SKDataView<'a, F>, Error = SKError>,
     {
-        let dense = features.try_into()?.as_dense()?;
-        let (rows_count, columns_count) = dense.dim();
+        let (rows_count, columns_count) = match features.try_into()? {
+            SKDataView::Dense(dense) => dense.dim(),
+            SKDataView::Sparse(sparse) => (sparse.rows(), sparse.cols()),
+            _ => {
+                return Err(SKError::UnsupportedRepresentation {
+                    representation: "unknown",
+                    suggestion: "convert the features to a dense matrix or a CSR matrix",
+                });
+            }
+        };
         if rows_count == 0 || columns_count == 0 {
             return Err(SKError::shape_mismatch_2d(
                 rows_count.max(1),
@@ -89,9 +96,7 @@ impl SKPolynomialFeatures {
         };
         sk_run_operation(attributes, || {
             let plan = self.resolve_streaming_plan()?;
-            let in_process = plan.mode == SKExecutionMode::InProcessSynchronous
-                || plan.mode == SKExecutionMode::InProcessAsynchronous;
-            let mut state = SKPolynomialFeaturesStreamState::new(in_process);
+            let mut state = SKPolynomialFeaturesStreamState::new();
             sk_run_streaming_provider(
                 &mut provider,
                 &mut state,
@@ -107,13 +112,6 @@ impl SKPolynomialFeatures {
                     "streaming fit received no batches".into(),
                 ));
             };
-            if in_process {
-                let views: Vec<ArrayView2<F>> =
-                    state.collected.iter().map(|batch| batch.view()).collect();
-                let concatenated = ndarray::concatenate(Axis(0), &views)
-                    .map_err(|_| SKError::Conversion("batch concatenation failed".into()))?;
-                return Ok(self.model_from_input_features(concatenated.ncols()));
-            }
             Ok(self.model_from_input_features(columns_count))
         })
     }
@@ -145,26 +143,26 @@ impl SKPolynomialFeatures {
     }
 }
 
-/// The expander's single-pass accumulator: the observed column count and, under
-/// an in-memory intent, the retained batches for the dense path.
-struct SKPolynomialFeaturesStreamState<F> {
-    in_process: bool,
+/// The expander's single-pass accumulator: the observed column count. The
+/// expansion depends only on that count, whichever representation carries it.
+struct SKPolynomialFeaturesStreamState {
     columns_count: Option<usize>,
-    collected: Vec<Array2<F>>,
     error: Option<SKError>,
 }
 
-impl<F: SKFloat> SKPolynomialFeaturesStreamState<F> {
-    fn new(in_process: bool) -> Self {
+impl SKPolynomialFeaturesStreamState {
+    fn new() -> Self {
         Self {
-            in_process,
             columns_count: None,
-            collected: Vec::new(),
             error: None,
         }
     }
 
-    fn update(&mut self, batch: SKDataBatch<F>, _parallelism: usize) -> SKStreamDecision {
+    fn update<F: SKFloat>(
+        &mut self,
+        batch: SKDataBatch<F>,
+        _parallelism: usize,
+    ) -> SKStreamDecision {
         match self.accumulate(batch) {
             Ok(()) => SKStreamDecision::Continue,
             Err(error) => {
@@ -174,26 +172,24 @@ impl<F: SKFloat> SKPolynomialFeaturesStreamState<F> {
         }
     }
 
-    fn accumulate(&mut self, batch: SKDataBatch<F>) -> Result<(), SKError> {
-        let data = batch.view().as_dense()?;
-        if data.nrows() == 0 {
+    fn accumulate<F: SKFloat>(&mut self, batch: SKDataBatch<F>) -> Result<(), SKError> {
+        let rows_count = batch.number_of_rows();
+        let columns_count = batch.number_of_columns();
+        if rows_count == 0 {
             return Ok(());
         }
-        if data.ncols() == 0 {
-            return Err(SKError::shape_mismatch_2d(data.nrows(), 1, data.nrows(), 0));
+        if columns_count == 0 {
+            return Err(SKError::shape_mismatch_2d(rows_count, 1, rows_count, 0));
         }
         match self.columns_count {
-            None => self.columns_count = Some(data.ncols()),
-            Some(expected) if expected != data.ncols() => {
+            None => self.columns_count = Some(columns_count),
+            Some(expected) if expected != columns_count => {
                 return Err(SKError::ShapeMismatch {
                     expected: vec![expected],
-                    found: vec![data.ncols()],
+                    found: vec![columns_count],
                 });
             }
             _ => {}
-        }
-        if self.in_process {
-            self.collected.push(data.to_owned());
         }
         Ok(())
     }
