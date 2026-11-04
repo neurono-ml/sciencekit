@@ -105,7 +105,7 @@ pub(crate) fn sk_fit_epochs<F: SKFloat>(
     )?;
     let (mut coefficients, mut intercept) = sk_reported_parts(&state, design.columns());
     if let Some((weights, best_intercept)) = &best {
-        if early_stopped {
+        if early_stopped || converged {
             state.reset_iterate(weights.view(), *best_intercept);
         }
         coefficients = weights.clone();

@@ -123,7 +123,7 @@ pub(crate) fn sk_fit_epochs<F: SKFloat>(
     let (mut coefficients, mut intercepts) = sk_reported_parts(&states, design.columns());
     for (head, entry) in best.iter().enumerate() {
         if let Some((weights, intercept)) = entry {
-            if early_stopped {
+            if early_stopped || converged {
                 states[head].reset_iterate(weights.view(), *intercept);
             }
             coefficients.row_mut(head).assign(weights);
