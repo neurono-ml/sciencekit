@@ -27,3 +27,5 @@ mod losses_tests;
 mod penalties_tests;
 #[cfg(test)]
 mod sparse_tests;
+#[cfg(test)]
+mod streaming_tests;
