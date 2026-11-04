@@ -44,35 +44,59 @@ context: |
 
 rules:
   proposal:
-    - Plan changes in separate groups: (1) algorithm implementation, (2) changes for the different accelerators (GPU OpenCL/CUDA/ROCm, BLAS/SIMD, allocators, Python bindings), (3) documentation changes.
-    - Small changes with minimal scope; Python bindings and GPU backend are separate associated changes, created after the algorithm is ready on CPU.
-    - Include acceptance criteria from PRD §8.7/§10.3: large and small data, concurrency, model export + metrics.
-    - Every new or touched estimator complies with spec `backend-selection`: builder exposes `backend(SKBackendKind)` defaulting to Faer, operations record the configured kind, models carry it.
-    - Write every artifact (proposal, specs, tasks, design) in English.
+    - >-
+      Plan changes in separate groups: (1) algorithm implementation, (2) changes for the different accelerators (GPU OpenCL/CUDA/ROCm, BLAS/SIMD, allocators, Python bindings), (3) documentation changes.
+    - >-
+      Small changes with minimal scope; Python bindings and GPU backend are separate associated changes, created after the algorithm is ready on CPU.
+    - >-
+      Include acceptance criteria from PRD §8.7/§10.3: large and small data, concurrency, model export + metrics.
+    - >-
+      Every new or touched estimator complies with spec `backend-selection`: builder exposes `backend(SKBackendKind)` defaulting to Faer, operations record the configured kind, models carry it.
+    - >-
+      Write every artifact (proposal, specs, tasks, design) in English.
 
   tasks:
-    - Every task must be implemented using the tdd skill: test first, confirmed failure, minimal implementation, refactoring keeping tests green.
-    - Tests live in companion *_tests.rs modules beside the implementation; mock data in ndarray/sprs.
-    - Mandatory iterative evolution: naive → tests → performance (SIMD/rayon/layout) → streaming/out-of-core; no step may be skipped.
+    - >-
+      Every task must be implemented using the tdd skill: test first, confirmed failure, minimal implementation, refactoring keeping tests green.
+    - >-
+      Tests live in companion *_tests.rs modules beside the implementation; mock data in ndarray/sprs.
+    - >-
+      Mandatory iterative evolution: naive → tests → performance (SIMD/rayon/layout) → streaming/out-of-core; no step may be skipped.
 
 operations:
   apply:
     guidance:
-      - Implement in git worktree temporary/worktrees/<type>/<change-name> on branch <type>/<change-name> (type ∈ feat|bugfix|chore|docs). Never commit to main.
-      - Commit one commit per task as each task completes, scoped to that task's changes only; keep the commit history 1:1 with openspec/changes/<change-name>/tasks.md.
-      - As each task completes, also update and commit the change's openspec/ files in the -openspec worktree (mark the task - [x] in tasks.md, update touched spec/design artifacts) on branch <type>/<change-name>-openspec, so the openspec worktree stays in lockstep with the code worktree.
-      - When the change's apply finishes (all tasks done), push BOTH worktrees — the code branch and the -openspec branch — and open or update both PRs (code PR and openspec PR), each referencing the ADR issue via closing keywords.
-      - Before pushing the code branch, run the CI gates locally and fix any failures: cargo fmt --all --check (formatting), cargo clippy --workspace --all-targets (static analysis, warnings as errors) and cargo test --workspace (tests + doctests). Never push a branch whose local gates fail, so the PR's CI check does not fail on formatting.
-      - Write every temporary artifact (experiments, validation screenshots, throwaway scripts, probes) under temporary/YYYY-MM-DD if generic, or temporary/YYYY-MM-DD/<change-name> if related to this change; never commit them.
-      - When opening the change, create the matching GitHub issue in English formatted as an ADR — Y-statement template for simple decisions, Nygard format for more complete ones (https://adr.github.io/adr-templates/); draft the text with the architecture-decision-records skill.
-      - Reference the corresponding issue(s) in the PR description with closing keywords (Closes/Fixes/Resolves #n) so GitHub closes them deterministically when the PR merges.
-      - Commit this change's openspec/ definitions on branch <type>/<change-name>-openspec, in worktree temporary/worktrees/<type>/<change-name>-openspec.
-      - Develop the code branch and the openspec branch in parallel; each is merged into main via its own PR, in any order. Code does NOT wait for the openspec planning PR to merge (agile), and vice versa.
-      - Each code change is accompanied by a documentation change that updates the mdBook (docs/src/) for the new behavior, on its own doc branch whose PR merges into docs/documentations; create the doc branch and PR alongside the code change.
-      - Every code change that introduces, changes, or fixes behavior must also update the `Development Explained` textbook under docs/src/development-explained/ (a doc change on a branch merged into docs/documentations): new features/algorithms/kernels/methods get a NEW chapter registered in SUMMARY.md under the `## Development Explained` part; fixes and refactors EDIT the existing chapter covering that behavior. Ground the chapter in the real code, specs and the companion *_tests.rs modules. See AGENTS.md → Documentation.
-      - Use the tdd skill for each task.
-      - When all tasks are done, trigger review by an independent agent validating that the spec was effectively met before opening the code PR.
+      - >-
+        Implement in git worktree temporary/worktrees/<type>/<change-name> on branch <type>/<change-name> (type ∈ feat|bugfix|chore|docs). Never commit to main.
+      - >-
+        Commit one commit per task as each task completes, scoped to that task's changes only; keep the commit history 1:1 with openspec/changes/<change-name>/tasks.md.
+      - >-
+        As each task completes, also update and commit the change's openspec/ files in the -openspec worktree (mark the task - [x] in tasks.md, update touched spec/design artifacts) on branch <type>/<change-name>-openspec, so the openspec worktree stays in lockstep with the code worktree.
+      - >-
+        When the change's apply finishes (all tasks done), push BOTH worktrees — the code branch and the -openspec branch — and open or update both PRs (code PR and openspec PR), each referencing the ADR issue via closing keywords.
+      - >-
+        Before pushing the code branch, run the CI gates locally and fix any failures: cargo fmt --all --check (formatting), cargo clippy --workspace --all-targets (static analysis, warnings as errors) and cargo test --workspace (tests + doctests). Never push a branch whose local gates fail, so the PR's CI check does not fail on formatting.
+      - >-
+        Write every temporary artifact (experiments, validation screenshots, throwaway scripts, probes) under temporary/YYYY-MM-DD if generic, or temporary/YYYY-MM-DD/<change-name> if related to this change; never commit them.
+      - >-
+        When opening the change, create the matching GitHub issue in English formatted as an ADR — Y-statement template for simple decisions, Nygard format for more complete ones (https://adr.github.io/adr-templates/); draft the text with the architecture-decision-records skill.
+      - >-
+        Reference the corresponding issue(s) in the PR description with closing keywords (Closes/Fixes/Resolves #n) so GitHub closes them deterministically when the PR merges.
+      - >-
+        Commit this change's openspec/ definitions on branch <type>/<change-name>-openspec, in worktree temporary/worktrees/<type>/<change-name>-openspec.
+      - >-
+        Develop the code branch and the openspec branch in parallel; each is merged into main via its own PR, in any order. Code does NOT wait for the openspec planning PR to merge (agile), and vice versa.
+      - >-
+        Each code change is accompanied by a documentation change that updates the mdBook (docs/src/) for the new behavior, on its own doc branch whose PR merges into docs/documentations; create the doc branch and PR alongside the code change.
+      - >-
+        Every code change that introduces, changes, or fixes behavior must also update the `Development Explained` textbook under docs/src/development-explained/ (a doc change on a branch merged into docs/documentations): new features/algorithms/kernels/methods get a NEW chapter registered in SUMMARY.md under the `## Development Explained` part; fixes and refactors EDIT the existing chapter covering that behavior. Ground the chapter in the real code, specs and the companion *_tests.rs modules. See AGENTS.md → Documentation.
+      - >-
+        Use the tdd skill for each task.
+      - >-
+        When all tasks are done, trigger review by an independent agent validating that the spec was effectively met before opening the code PR.
   archive:
     guidance:
-      - Each change has two branches (code and openspec) merged into main via separate PRs, in any order. When the change's PRs are merged, the opencode agent on GitHub runs sync + archive of the change.
-      - Every finished and merged change must update CHANGELOG.md, in English, following https://keepachangelog.com/en/1.1.0/. The snippet between releases in the changelog is used to describe the released version.
+      - >-
+        Each change has two branches (code and openspec) merged into main via separate PRs, in any order. When the change's PRs are merged, the opencode agent on GitHub runs sync + archive of the change.
+      - >-
+        Every finished and merged change must update CHANGELOG.md, in English, following https://keepachangelog.com/en/1.1.0/. The snippet between releases in the changelog is used to describe the released version.
