@@ -4,7 +4,7 @@
 use sciencekit_common::{
     SKBackendKind, SKBuilderState, SKDataView, SKError, SKExecutionContext, SKExecutionMode,
     SKExecutionPlan, SKFloat, SKOperationAttributes, SKOperationKind, SKSupervisedFit,
-    SKSupervisedLazySource, SKTargetView, sk_run_operation,
+    SKTargetView, sk_run_operation,
 };
 
 use super::builder::SKSGDClassifierBuilder;
@@ -52,18 +52,20 @@ impl<F: SKFloat> SKSGDClassifier<F> {
         self.backend
     }
 
-    /// Fit on a one-shot supervised source in a single pass, retaining only one
-    /// batch plus the coefficient state.
+    /// Fit on a supervised source provider, running one epoch per pass.
     ///
-    /// Every class must appear in the first non-empty batch. The model reports
-    /// `epochs_taken() == 1` and `converged() == false`.
-    pub fn fit_streaming<S>(&self, source: &mut S) -> Result<SKSGDClassifierModel<F>, SKError>
+    /// A reopenable provider supplies the same epoch budget as the in-memory
+    /// fit; a one-shot provider supplies a single pass. Every class must appear
+    /// in the first non-empty batch.
+    pub fn fit_streaming<Provider>(
+        &self,
+        provider: Provider,
+    ) -> Result<SKSGDClassifierModel<F>, SKError>
     where
-        S: SKSupervisedLazySource<F> + Send,
-        S::Error: From<SKError> + Into<SKError>,
+        Provider: sciencekit_common::SKSupervisedSourceProvider<F>,
     {
         sk_fit_streaming(
-            source,
+            provider,
             &self.config,
             self.loss,
             &self.class_weight,

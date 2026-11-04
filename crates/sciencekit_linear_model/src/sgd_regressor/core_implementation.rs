@@ -4,7 +4,7 @@
 use sciencekit_common::{
     SKBackendKind, SKBuilderState, SKDataView, SKError, SKExecutionContext, SKExecutionMode,
     SKExecutionPlan, SKFloat, SKOperationAttributes, SKOperationKind, SKSupervisedFit,
-    SKSupervisedLazySource, SKTargetView, sk_run_operation,
+    SKTargetView, sk_run_operation,
 };
 
 use super::builder::SKSGDRegressorBuilder;
@@ -51,17 +51,19 @@ impl<F: SKFloat> SKSGDRegressor<F> {
         self.backend
     }
 
-    /// Fit on a one-shot supervised source in a single pass, retaining only one
-    /// batch plus the coefficient state.
+    /// Fit on a supervised source provider, running one epoch per pass.
     ///
-    /// The model reports `epochs_taken() == 1` and `converged() == false`.
-    pub fn fit_streaming<S>(&self, source: &mut S) -> Result<SKSGDRegressorModel<F>, SKError>
+    /// A reopenable provider supplies the same epoch budget as the in-memory
+    /// fit; a one-shot provider supplies a single pass.
+    pub fn fit_streaming<Provider>(
+        &self,
+        provider: Provider,
+    ) -> Result<SKSGDRegressorModel<F>, SKError>
     where
-        S: SKSupervisedLazySource<F> + Send,
-        S::Error: From<SKError> + Into<SKError>,
+        Provider: sciencekit_common::SKSupervisedSourceProvider<F>,
     {
         sk_fit_streaming(
-            source,
+            provider,
             &self.config,
             self.loss,
             self.epsilon,

@@ -3,7 +3,7 @@
 
 use ndarray::{Array1, Array2};
 use sciencekit_common::builders::SKBuilder;
-use sciencekit_common::{SKError, SKSupervisedFit};
+use sciencekit_common::{SKError, SKReopenableSource, SKSupervisedFit};
 
 use super::SKSGDClassifier;
 use crate::sgd::SKConvergencePolicy;
@@ -58,6 +58,77 @@ fn one_streaming_pass_equals_one_in_memory_epoch() {
     );
     assert_eq!(streamed.epochs_taken(), 1);
     assert!(!streamed.converged());
+}
+
+/// A reopenable provider runs the same epoch budget as the in-memory fit: with
+/// a fixed seed and one batch per pass the streamed trajectory is identical.
+#[test]
+fn a_reopenable_source_runs_the_epoch_budget_and_matches_the_in_memory_fit() {
+    let (features, raw) = separable_binary_design();
+    let labels = labels_i64(&raw);
+    let estimator = || {
+        SKSGDClassifier::<f64>::build()
+            .shuffle(true)
+            .random_seed(7)
+            .maximum_number_of_iterations(3)
+            .average(true)
+            .convergence_policy(SKConvergencePolicy::Permissive)
+            .build()
+            .unwrap()
+    };
+    let in_memory = estimator().fit(features.view(), labels.view()).unwrap();
+    let batches = vec![(features.clone(), labels_scalar::<f64>(&raw))];
+    let provider =
+        SKReopenableSource::new(move || Ok(SKSupervisedFloatSource::<f64>::new(batches.clone())));
+    let streamed = estimator().fit_streaming(provider).unwrap();
+    assert_eq!(streamed.epochs_taken(), 3);
+    assert!(!streamed.converged());
+    assert_close(
+        in_memory.coefficients().as_slice().unwrap(),
+        streamed.coefficients().as_slice().unwrap(),
+        1e-12,
+    );
+    assert_close(
+        in_memory.intercepts().as_slice().unwrap(),
+        streamed.intercepts().as_slice().unwrap(),
+        1e-12,
+    );
+}
+
+/// A one-shot source with a larger budget still takes exactly one pass and does
+/// not raise under the strict policy.
+#[test]
+fn a_one_shot_source_with_a_larger_budget_takes_one_pass() {
+    let (features, raw) = separable_binary_design();
+    let mut source = SKSupervisedFloatSource::new(split_batches(&features, &raw, 4));
+    let model = SKSGDClassifier::<f64>::build()
+        .shuffle(false)
+        .maximum_number_of_iterations(5)
+        .build()
+        .unwrap()
+        .fit_streaming(&mut source)
+        .unwrap();
+    assert_eq!(model.epochs_taken(), 1);
+    assert!(!model.converged());
+}
+
+/// A reopenable source that exhausts the whole requested budget without
+/// converging raises under the strict policy.
+#[test]
+fn an_exhausted_reopenable_budget_raises_under_strict() {
+    let (features, raw) = separable_binary_design();
+    let batches = split_batches(&features, &raw, 4);
+    let provider =
+        SKReopenableSource::new(move || Ok(SKSupervisedFloatSource::<f64>::new(batches.clone())));
+    let error = SKSGDClassifier::<f64>::build()
+        .shuffle(false)
+        .maximum_number_of_iterations(2)
+        .number_of_epochs_without_improvement(10)
+        .build()
+        .unwrap()
+        .fit_streaming(provider)
+        .unwrap_err();
+    assert!(matches!(error, SKError::NotConverged { iterations: 2 }));
 }
 
 #[test]

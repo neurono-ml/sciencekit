@@ -21,6 +21,18 @@ fn the_running_loss_equals_the_mean_of_the_batch_losses() {
 }
 
 #[test]
+fn merging_two_objectives_folds_their_samples() {
+    let mut objective = SKEpochObjective::<f64>::new();
+    objective.record(1.0);
+    let mut batch = SKEpochObjective::<f64>::new();
+    batch.record(3.0);
+    batch.record(5.0);
+    objective.merge(&batch);
+    assert_eq!(objective.count(), 3);
+    assert!((objective.mean() - 3.0).abs() < 1e-12);
+}
+
+#[test]
 fn improvement_is_measured_beyond_the_tolerance() {
     assert!(sk_objective_improved(10.0_f64, 9.0, 0.5));
     assert!(!sk_objective_improved(10.0_f64, 9.8, 0.5));
