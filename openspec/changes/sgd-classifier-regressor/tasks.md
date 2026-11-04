@@ -85,12 +85,12 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
   probabilities refused for non-probabilistic losses). *(commit
   `feat(linear_model): cover every classifier loss in SKSGDClassifier`)*
 - [x] 3.10 Wire the loss catalogue through the fitting path and prediction.
-- [ ] 3.11 Red: companion tests for class weighting (`Balanced` improves minority recall,
+- [x] 3.11 Red: companion tests for class weighting (`Balanced` improves minority recall,
   explicit weights in class order, negative rejected) and warm start (seeded refit starts
   from the source and never regresses within the same budget, misaligned source rejected).
   *(commit `feat(linear_model): add class weighting and warm start to SKSGDClassifier`)*
-- [ ] 3.12 Implement the weighting expansion and the warm-start seeding.
-- [ ] 3.13 Green: weighting and warm-start suites pass on both floats.
+- [x] 3.12 Implement the weighting expansion and the warm-start seeding.
+- [x] 3.13 Green: weighting and warm-start suites pass on both floats.
 
 ## 4. `SKSGDRegressor`
 
