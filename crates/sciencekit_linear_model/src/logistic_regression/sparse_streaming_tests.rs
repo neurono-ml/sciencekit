@@ -1,7 +1,9 @@
 //! Sparse streaming conformance tests for `SKLogisticRegression`.
 //!
 //! The retained CSR design and its canonical labels reproduce the dense stream
-//! and the dense `fit`, without densifying a block.
+//! and the dense `fit`. The guarded test retains a CSR design at a shape whose
+//! dense twin is impractical for the test budget. It compares against the dense
+//! `fit` only; no dense stream of the same data is exercised here.
 
 use ndarray::Array1;
 use sciencekit_common::SKSupervisedFit;
@@ -44,12 +46,13 @@ fn sparse_stream_matches_dense_fit() {
     assert_eq!(streamed.row_count(), reference.row_count());
 }
 
-/// The retained design is stacked as CSR, never densified.
+/// The retained design streams at a shape whose dense twin is impractical for
+/// the test budget.
 #[test]
-fn sparse_stream_builds_no_dense_copy() {
+fn sparse_stream_handles_a_shape_beyond_the_test_budget() {
     let rows = 100_000;
     let labels = Array1::from_shape_fn(rows, |row| (row % 2) as f64);
-    let mut source = SparseSupervisedSource::new(vec![(guard_matrix(rows, 32), labels)]);
+    let mut source = SparseSupervisedSource::<f64>::new(vec![(guard_matrix(rows, 32), labels)]);
     let streamed = SKLogisticRegression::<f64>::build()
         .maximum_number_of_iterations(10)
         .build()

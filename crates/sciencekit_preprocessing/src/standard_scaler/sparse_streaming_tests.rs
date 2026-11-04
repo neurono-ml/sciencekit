@@ -2,7 +2,9 @@
 //!
 //! A sparse CSR stream must learn the same moments as the dense stream and the
 //! dense `fit` on the concatenated data: implicit zeros participate in every
-//! column's count, mean and M2, and no `n × p` dense copy is ever built.
+//! column's count, mean and M2. The guarded test streams a shape whose dense
+//! twin cannot be allocated, so completing it is evidence that no dense copy
+//! is made.
 
 use sciencekit_common::{SKBuilder, SKExecutionMode, SKUnsupervisedFit};
 
@@ -70,9 +72,10 @@ fn implicit_zeros_participate_in_the_column_statistics() {
     assert_eq!(sparse_stream.mean()[1], 0.0);
 }
 
-/// The sparse path never builds the dense `n × p` twin of the batch.
+/// The stream completes at a shape whose dense twin cannot be allocated on the
+/// test machine.
 #[test]
-fn sparse_stream_builds_no_dense_copy() {
+fn sparse_stream_handles_an_unallocatable_dense_shape() {
     let batches = vec![
         guard_matrix(100_000, 100_000),
         guard_matrix(100_000, 100_000),

@@ -3,7 +3,9 @@
 //! A sparse CSR stream learns the same per-column statistics as the dense stream
 //! and the dense `fit` on the concatenated data; the `0.0` marker still claims
 //! the implicit zeros as missing; the missing indicator stacks after the imputed
-//! block; and no `n × p` dense copy is built.
+//! block. The guarded test streams a shape whose dense twin is impractical for
+//! the test budget; it proves the stream completes there, not that no dense copy
+//! exists.
 
 use ndarray::{Array2, array};
 use sciencekit_common::{SKBuilder, SKExecutionMode, SKFeatureTransformer, SKUnsupervisedFit};
@@ -147,9 +149,10 @@ fn add_indicator_stacks_after_the_imputed_block() {
     assert_eq!(actual, expected);
 }
 
-/// The sparse path never builds the dense `n × p` twin of the batch.
+/// The stream completes at a shape whose dense twin is impractical for the test
+/// budget.
 #[test]
-fn sparse_stream_builds_no_dense_copy() {
+fn sparse_stream_handles_a_shape_beyond_the_test_budget() {
     let batches = vec![
         guard_matrix(700_000, 256),
         guard_matrix(700_000, 256),

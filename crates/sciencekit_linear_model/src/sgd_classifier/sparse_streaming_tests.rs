@@ -2,7 +2,9 @@
 //!
 //! A sparse epoch visits the same rows in the same seeded order as the dense
 //! epoch, so a sparse stream equals the dense stream and the dense `fit` under a
-//! fixed seed, without densifying a block.
+//! fixed seed. The guarded test streams a shape whose dense twin is impractical
+//! for the test budget; it proves the epoch completes there, not that no dense
+//! copy exists.
 
 use sciencekit_common::SKSupervisedFit;
 use sciencekit_common::builders::SKBuilder;
@@ -61,12 +63,13 @@ fn sparse_stream_matches_dense_stream_and_fit() {
     }
 }
 
-/// A sparse epoch never builds the dense `n × p` twin of the batch.
+/// A sparse epoch completes at a shape whose dense twin is impractical for the
+/// test budget.
 #[test]
-fn sparse_stream_builds_no_dense_copy() {
+fn sparse_stream_handles_a_shape_beyond_the_test_budget() {
     let rows = 200_000;
     let labels = ndarray::Array1::from_shape_fn(rows, |row| (row % 2) as f64);
-    let mut source = SparseSupervisedSource::new(vec![(guard_matrix(rows, 64), labels)]);
+    let mut source = SparseSupervisedSource::<f64>::new(vec![(guard_matrix(rows, 64), labels)]);
     let streamed = SKSGDClassifier::<f64>::build()
         .maximum_number_of_iterations(1)
         .convergence_policy(SKConvergencePolicy::Permissive)

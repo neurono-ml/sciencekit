@@ -2,7 +2,9 @@
 //!
 //! A sparse input expands into a sparse output in the documented column order,
 //! agreeing with the dense transform; a sparse stream learns the same expansion
-//! as the dense fit; and no `n × p` dense copy is built.
+//! as the dense fit. The guarded test streams a tall shape whose dense twin is
+//! impractical for the test budget; it proves the sparse transform completes
+//! there, not that no dense copy exists.
 
 use sciencekit_common::SKBuilder;
 
@@ -52,9 +54,10 @@ fn sparse_stream_matches_the_dense_fit() {
     );
 }
 
-/// Expanding a tall sparse design never builds its dense twin.
+/// The sparse transform completes at a tall shape whose dense twin is
+/// impractical for the test budget.
 #[test]
-fn sparse_transform_builds_no_dense_copy() {
+fn sparse_transform_handles_a_shape_beyond_the_test_budget() {
     let rows = 2_000_000;
     let columns = 256;
     let guarded = guard_matrix(rows, columns);

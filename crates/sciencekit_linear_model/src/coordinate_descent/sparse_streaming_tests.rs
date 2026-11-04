@@ -1,8 +1,9 @@
 //! Sparse streaming conformance tests for the coordinate-descent models.
 //!
 //! `SKLasso` and `SKElasticNet` retain the stacked CSR batches and re-solve, so
-//! a sparse stream equals the dense stream and the dense `fit` without ever
-//! densifying a block.
+//! a sparse stream equals the dense stream and the dense `fit`. The guarded test
+//! retains a CSR design at a shape whose dense twin is impractical for the test
+//! budget.
 
 use sciencekit_common::SKSupervisedFit;
 use sciencekit_common::builders::SKBuilder;
@@ -86,12 +87,13 @@ fn elastic_net_sparse_stream_matches_dense_stream_and_fit() {
     }
 }
 
-/// The retained design is stacked as CSR, never densified.
+/// The retained design streams at a shape whose dense twin is impractical for
+/// the test budget.
 #[test]
-fn sparse_stream_builds_no_dense_copy() {
+fn sparse_stream_handles_a_shape_beyond_the_test_budget() {
     let rows = 200_000;
     let mut source =
-        SparseSupervisedSource::new(vec![(guard_matrix(rows, 32), guard_targets(rows))]);
+        SparseSupervisedSource::<f64>::new(vec![(guard_matrix(rows, 32), guard_targets(rows))]);
     let streamed = SKLasso::<f64>::build()
         .alpha(0.1)
         .maximum_number_of_iterations(20)

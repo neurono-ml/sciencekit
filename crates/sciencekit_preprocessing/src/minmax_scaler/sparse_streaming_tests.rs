@@ -79,9 +79,10 @@ fn explicitly_dense_columns_ignore_the_implicit_zeros() {
     assert_eq!(sparse_stream.minimum()[0], 1.0);
 }
 
-/// The sparse path never builds the dense `n × p` twin of the batch.
+/// The stream completes at a shape whose dense twin cannot be allocated on the
+/// test machine.
 #[test]
-fn sparse_stream_builds_no_dense_copy() {
+fn sparse_stream_handles_an_unallocatable_dense_shape() {
     let batches = vec![
         guard_matrix(100_000, 100_000),
         guard_matrix(100_000, 100_000),

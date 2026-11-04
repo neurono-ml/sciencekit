@@ -2,7 +2,9 @@
 //!
 //! The per-column sketches see the explicit values plus the implicit-zero
 //! multiplicity, so a sparse stream approximates the dense stream and the exact
-//! dense `fit` within the documented sketch tolerance, without an `n × p` copy.
+//! dense `fit` within the documented sketch tolerance. The guarded test streams
+//! a shape whose dense twin is impractical for the test budget; it proves the
+//! stream completes there, not that no dense copy exists.
 
 use sciencekit_common::{SKBuilder, SKExecutionMode, SKUnsupervisedFit};
 
@@ -58,9 +60,10 @@ fn implicit_zeros_drive_the_sketch_quantiles() {
     assert_eq!(sparse_stream.center()[0], 0.0);
 }
 
-/// The sparse path never builds the dense `n × p` twin of the batch.
+/// The stream completes at a shape whose dense twin is impractical for the test
+/// budget.
 #[test]
-fn sparse_stream_builds_no_dense_copy() {
+fn sparse_stream_handles_a_shape_beyond_the_test_budget() {
     let batches = vec![
         guard_matrix(100_000, 1_000),
         guard_matrix(100_000, 1_000),

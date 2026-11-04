@@ -2,7 +2,9 @@
 //!
 //! A sparse CSR batch stream accumulates the same augmented Gram state as the
 //! dense stream and the dense `fit` on the concatenated data, counting each row
-//! once, and never builds an `n × p` dense copy.
+//! once. The guarded test streams a shape whose dense twin is impractical for
+//! the test budget; it proves the stream completes there, not that no dense copy
+//! exists.
 
 use sciencekit_common::{SKBuilder, SKExecutionMode, SKSupervisedFit};
 
@@ -71,12 +73,13 @@ fn in_process_intent_accepts_sparse_batches() {
     );
 }
 
-/// The sparse path never builds the dense `n × p` twin of the batch.
+/// The stream completes at a shape whose dense twin is impractical for the test
+/// budget.
 #[test]
-fn sparse_stream_builds_no_dense_copy() {
+fn sparse_stream_handles_a_shape_beyond_the_test_budget() {
     let rows = 250_000;
     let targets = guard_targets(rows);
-    let mut source = SparseSupervisedSource::new(vec![(guard_matrix(rows, 64), targets)]);
+    let mut source = SparseSupervisedSource::<f64>::new(vec![(guard_matrix(rows, 64), targets)]);
     let streamed = default_regressor()
         .fit_streaming(&mut source)
         .expect("sparse stream");
