@@ -161,10 +161,10 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 
 ## 9. Documentation, changelog and review
 
-- [ ] 9.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under `Unreleased → Added`
+- [x] 9.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under `Unreleased → Added`
   for `SKSGDClassifier`, `SKSGDRegressor`, the `stochastic-gradient-solver` substrate, the
   shared class weighting and the `UnsupportedOperation` error variant.
-- [ ] 9.2 Companion documentation change on its own `docs/*` branch (merged into
+- [x] 9.2 Companion documentation change on its own `docs/*` branch (merged into
   `docs/documentations`): the two estimator entries in `docs/src/algorithms.md` and a new
   `Development Explained` chapter (`docs/src/development-explained/`) registered in
   `SUMMARY.md`, walking through the per-sample update, the loss catalogue, the schedules,
