@@ -5,7 +5,9 @@ use ndarray::{ArrayView2, Axis};
 use sciencekit_common::{
     SKDataBatch, SKError, SKExecutionContext, SKExecutionMode, SKExecutionPlan, SKFloat,
     SKLazySource, SKOperationAttributes, SKOperationKind, SKSourceProvider,
-    execution::{SKAccessPattern, SKStreamingPassPolicy, sk_run_streaming_provider},
+    execution::{
+        SKAccessPattern, SKStreamDecision, SKStreamingPassPolicy, sk_run_streaming_provider,
+    },
     observability::sk_run_operation,
 };
 use sciencekit_math::kernels::SK_AXIS_SUM_GRAIN;
@@ -129,7 +131,9 @@ impl<F: SKFloat> SKMinMaxScaler<F> {
     ) -> Result<SKMinMaxScalerModel<F>, SKError> {
         let mut state = StreamingExtrema::empty(u64::MAX, 1);
         for batch in batches {
-            update_extrema(self, batch, &mut state);
+            if update_extrema(self, batch, &mut state) == SKStreamDecision::Stop {
+                break;
+            }
         }
         if let Some(error) = state.error.take() {
             return Err(error);

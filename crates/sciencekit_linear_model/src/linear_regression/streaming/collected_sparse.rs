@@ -1,6 +1,7 @@
 //! The in-memory sparse branch of the OLS streaming fit: accumulate the same
 //! Gram state over owned batches and solve once, without densifying.
 
+use sciencekit_common::execution::SKStreamDecision;
 use sciencekit_common::{SKError, SKExecutionContext, SKFloat, SKSupervisedBatch};
 use sciencekit_math::SKBackendSelection;
 
@@ -21,7 +22,9 @@ impl SKLinearRegression {
         let machine = SKExecutionContext::real();
         let mut state = StreamingGramState::new(machine.available_memory_bytes, machine.cpu_cores);
         for batch in batches {
-            update_gram(self, batch, &mut state);
+            if update_gram(self, batch, &mut state) == SKStreamDecision::Stop {
+                break;
+            }
         }
         if let Some(error) = state.error.take() {
             return Err(error);

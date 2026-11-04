@@ -35,7 +35,9 @@ fn sk_stack_batches<F: SKFloat>(
         match batch.view() {
             SKDataView::Dense(data) => {
                 data.indexed_iter().for_each(|((row, column), &value)| {
-                    triplets.add_triplet(row_offset + row, column, value);
+                    if value != F::zero() {
+                        triplets.add_triplet(row_offset + row, column, value);
+                    }
                 });
             }
             SKDataView::Sparse(data) => {
