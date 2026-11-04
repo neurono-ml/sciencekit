@@ -6,8 +6,8 @@ use sciencekit_common::{
     sk_run_operation,
 };
 
+use super::super::core_implementation::sk_dimensions;
 use super::core_implementation::SKSGDClassifierModel;
-use super::prediction::dimensions;
 use crate::class_weight::sk_expand_class_weights;
 use crate::sgd::SKRandomGenerator;
 use crate::sgd_classifier::fitting::SKFeatureDesign;
@@ -31,7 +31,7 @@ impl<F: SKFloat> SKSGDClassifierModel<F> {
         let data = features.try_into()?;
         let target = targets.try_into()?;
         let class_indices = sk_canonicalize_against_classes(&self.classes, target)?;
-        let (rows_count, columns_count) = dimensions(&data);
+        let (rows_count, columns_count) = sk_dimensions(&data)?;
         if columns_count != self.feature_count() {
             return Err(SKError::ShapeMismatch {
                 expected: vec![self.feature_count()],

@@ -8,6 +8,7 @@ use sciencekit_common::{
 };
 use sciencekit_math::sk_csr_dense_product;
 
+use super::super::core_implementation::{sk_dimensions, sk_unsupported_representation};
 use super::core_implementation::SKSGDClassifierModel;
 use crate::sgd::SKSGDLoss;
 
@@ -18,7 +19,7 @@ impl<F: SKFloat> SKSGDClassifierModel<F> {
         X: TryInto<SKDataView<'a, F>, Error = SKError>,
     {
         let data = features.try_into()?;
-        let (rows_count, columns_count) = dimensions(&data);
+        let (rows_count, columns_count) = sk_dimensions(&data)?;
         if columns_count != self.feature_count() {
             return Err(self.feature_mismatch(rows_count, columns_count));
         }
@@ -52,7 +53,7 @@ impl<F: SKFloat> SKSGDClassifierModel<F> {
                         );
                     }
                 }
-                _ => return Err(unknown_representation()),
+                _ => return Err(sk_unsupported_representation(data.representation())),
             }
             Ok(scores)
         })
@@ -64,13 +65,17 @@ impl<F: SKFloat> SKSGDClassifierModel<F> {
             if self.is_binary() {
                 if scores[[row, 0]] > F::zero() { 1 } else { 0 }
             } else {
-                let mut best = 0usize;
-                for head in 1..scores.ncols() {
-                    if scores[[row, head]] > scores[[row, best]] {
-                        best = head;
-                    }
-                }
-                best as i64
+                let row_scores = scores.row(row);
+                row_scores
+                    .iter()
+                    .enumerate()
+                    .skip(1)
+                    .fold(
+                        0,
+                        |best, (head, &score)| {
+                            if score > row_scores[best] { head } else { best }
+                        },
+                    ) as i64
             }
         })
     }
@@ -142,24 +147,7 @@ impl<F: SKFloat> SKClassifierPredictor<F> for SKSGDClassifierModel<F> {
     }
 }
 
-/// The row and column counts of a feature view.
-pub(crate) fn dimensions<F>(data: &SKDataView<'_, F>) -> (usize, usize) {
-    match data {
-        SKDataView::Dense(dense) => dense.dim(),
-        SKDataView::Sparse(sparse) => (sparse.rows(), sparse.cols()),
-        _ => (0, 0),
-    }
-}
-
 /// Clamp a probability to the closed unit interval.
 fn clamp<F: SKFloat>(value: F) -> F {
     value.max(F::zero()).min(F::one())
-}
-
-/// The error for a representation prediction cannot consume.
-fn unknown_representation() -> SKError {
-    SKError::UnsupportedRepresentation {
-        representation: "unknown",
-        suggestion: "convert the features to a dense matrix or a CSR matrix",
-    }
 }
