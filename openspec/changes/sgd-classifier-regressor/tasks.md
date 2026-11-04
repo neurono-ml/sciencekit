@@ -46,10 +46,10 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
   penalized, a zero slope is a no-op, the running loss equals the mean of batch losses).
   *(commit `feat(linear_model): add the sgd single-sample update and epoch objective`)*
 - [x] 2.10 Implement `state.rs`, `update.rs` and `objective.rs`.
-- [ ] 2.11 Red: companion tests for the three epoch drivers (dense, CSR and batch agree
+- [x] 2.11 Red: companion tests for the three epoch drivers (dense, CSR and batch agree
   under the same seed; CSR never densifies; the batch driver visits rows in order and stops
   on the final block). *(commit `feat(linear_model): add the sgd epoch drivers`)*
-- [ ] 2.12 Implement `epoch/dense.rs`, `epoch/sparse.rs`, `epoch/batch.rs` and the dispatcher.
+- [x] 2.12 Implement `epoch/dense.rs`, `epoch/sparse.rs`, `epoch/batch.rs` and the dispatcher.
 - [ ] 2.13 Red: companion tests for the convergence bookkeeping (a plateau converges before
   the budget, `Strict` budget exhaustion raises `NotConverged { iterations }`, `Permissive`
   returns the last iterate with `converged() == false` and a warning, a provider-limited fit
