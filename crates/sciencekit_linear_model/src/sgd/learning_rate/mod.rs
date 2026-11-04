@@ -6,7 +6,7 @@
 
 mod optimal;
 mod policy;
-mod schedule;
+pub(crate) mod schedule;
 
 pub use policy::SKSGDLearningRate;
 

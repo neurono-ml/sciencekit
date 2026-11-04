@@ -6,7 +6,7 @@
 
 mod classifier;
 pub(crate) mod definition;
-mod regressor;
+pub(crate) mod regressor;
 
 pub use classifier::SKSGDClassifierLoss;
 pub use definition::SKSGDLoss;

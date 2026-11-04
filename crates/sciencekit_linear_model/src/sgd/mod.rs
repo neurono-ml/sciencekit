@@ -13,8 +13,11 @@ mod averaging;
 pub(crate) mod config;
 mod learning_rate;
 mod loss;
+pub(crate) mod objective;
 mod penalty;
 mod shuffle;
+mod state;
+mod update;
 
 pub use learning_rate::SKSGDLearningRate;
 pub use loss::{SKSGDClassifierLoss, SKSGDLoss, SKSGDRegressorLoss};
@@ -25,6 +28,10 @@ mod averaging_tests;
 #[cfg(test)]
 mod config_tests;
 #[cfg(test)]
+mod objective_tests;
+#[cfg(test)]
 mod penalty_tests;
 #[cfg(test)]
 mod shuffle_tests;
+#[cfg(test)]
+mod update_tests;
