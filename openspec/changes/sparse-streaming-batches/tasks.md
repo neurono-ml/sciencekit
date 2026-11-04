@@ -6,29 +6,29 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 
 ## 1. Owned feature block (`sciencekit_common/src/batching/feature_block/`)
 
-- [ ] 1.1 Red: companion tests for `SKFeatureBlock` (dense and sparse construction, shape
+- [x] 1.1 Red: companion tests for `SKFeatureBlock` (dense and sparse construction, shape
   counts, `is_sparse`, zero-copy `view()`, byte size from the stored buffers, a sparse block
   moved across threads). *(commit `feat(common): add the owned streaming feature block`)*
-- [ ] 1.2 Implement `SKFeatureBlock<F>` over `Array2` and `CsMat`, with `view()`,
+- [x] 1.2 Implement `SKFeatureBlock<F>` over `Array2` and `CsMat`, with `view()`,
   `number_of_rows`, `number_of_columns`, `is_sparse` and `byte_size`.
-- [ ] 1.3 Red: companion tests for the representation-aware batches (`new_dense`/`new_sparse`,
+- [x] 1.3 Red: companion tests for the representation-aware batches (`new_dense`/`new_sparse`,
   position and final flag preserved, supervised target-count mismatch rejected, dense
   constructors keep their meaning). *(commit `feat(common): carry feature blocks in streaming batches`)*
-- [ ] 1.4 Replace the `Array2` field of `SKDataBatch` and `SKSupervisedBatch` with
+- [x] 1.4 Replace the `Array2` field of `SKDataBatch` and `SKSupervisedBatch` with
   `SKFeatureBlock`; expose `view()`, `number_of_rows`, `number_of_columns`, `is_sparse` and
   remove the dense-only accessors.
-- [ ] 1.5 Green: the block and batch suites pass on both floats, and the existing dense
+- [x] 1.5 Green: the block and batch suites pass on both floats, and the existing dense
   streaming tests pass unchanged.
 
 ## 2. Prefetch driver and memory accounting
 
-- [ ] 2.1 Red: companion tests for the driver (a sparse block reaches the update closure
+- [x] 2.1 Red: companion tests for the driver (a sparse block reaches the update closure
   unchanged, block order is preserved, and the double-buffer guard uses the sparse byte
   size rather than `rows × columns × size_of`). *(commit
   `feat(common): pass feature blocks through the streaming driver`)*
-- [ ] 2.2 Update the prefetch driver and the plan resolution to consume and account for the
+- [x] 2.2 Update the prefetch driver and the plan resolution to consume and account for the
   block representation.
-- [ ] 2.3 Green: the streaming-executor suite passes, including the sparse memory-guard case.
+- [x] 2.3 Green: the streaming-executor suite passes, including the sparse memory-guard case.
 
 ## 3. Preprocessing estimators
 
