@@ -54,11 +54,11 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 
 ## 5. Linear models
 
-- [ ] 5.1 Red: conformance tests for `SKLinearRegression` and `SKRidge` over sparse batches
+- [x] 5.1 Red: conformance tests for `SKLinearRegression` and `SKRidge` over sparse batches
   (equals the dense stream and the dense `fit`; the Gram accumulation counts rows once; no
   densification). *(commit
   `feat(linear_model): stream OLS and ridge from sparse batches`)*
-- [ ] 5.2 Implement the sparse streaming path by reusing the in-memory sparse accumulators.
+- [x] 5.2 Implement the sparse streaming path by reusing the in-memory sparse accumulators.
 - [ ] 5.3 Red: conformance tests for `SKLasso`, `SKElasticNet`, `SKLogisticRegression`,
   `SKSGDClassifier` and `SKSGDRegressor` over sparse batches (retained design, class table,
   schedule counter and averaging preserved; no densification). *(commit
