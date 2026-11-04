@@ -1,41 +1,107 @@
 //! The owned supervised streaming block (spec `streaming-batches`).
 
-use ndarray::{Array1, Array2, ArrayView1, ArrayView2};
+use ndarray::{Array1, ArrayView1};
+use sprs::CsMat;
 
-/// An owned supervised streaming block: a feature matrix paired with its
+use super::SKFeatureBlock;
+use crate::{SKDataView, SKError};
+
+/// An owned supervised streaming block: a feature block paired with its
 /// targets.
 ///
 /// Like [`SKDataBatch`](super::SKDataBatch) it fully owns its data (no borrowing
 /// from the source) so the pair can be moved to another thread while the source
 /// advances; it carries its position in the sequence and a final-block
-/// indication. Supervised algorithms that stream out-of-core (the first being
-/// linear regression) consume it.
+/// indication. Construction rejects a target count different from the block's
+/// row count.
 #[derive(Debug, Clone)]
 pub struct SKSupervisedBatch<F> {
-    features: Array2<F>,
+    block: SKFeatureBlock<F>,
     targets: Array1<F>,
     position: usize,
     is_final: bool,
 }
 
 impl<F> SKSupervisedBatch<F> {
-    /// Create a supervised batch.
-    pub fn new(features: Array2<F>, targets: Array1<F>, position: usize, is_final: bool) -> Self {
-        SKSupervisedBatch {
-            features,
+    /// Create a supervised batch from a dense matrix — the dense alias of
+    /// [`Self::new_dense`].
+    pub fn new(
+        features: ndarray::Array2<F>,
+        targets: Array1<F>,
+        position: usize,
+        is_final: bool,
+    ) -> Result<Self, SKError> {
+        Self::new_dense(features, targets, position, is_final)
+    }
+
+    /// Create a supervised batch that owns a dense matrix.
+    pub fn new_dense(
+        features: ndarray::Array2<F>,
+        targets: Array1<F>,
+        position: usize,
+        is_final: bool,
+    ) -> Result<Self, SKError> {
+        Self::from_block(SKFeatureBlock::Dense(features), targets, position, is_final)
+    }
+
+    /// Create a supervised batch that owns a CSR matrix.
+    pub fn new_sparse(
+        features: CsMat<F>,
+        targets: Array1<F>,
+        position: usize,
+        is_final: bool,
+    ) -> Result<Self, SKError> {
+        Self::from_block(
+            SKFeatureBlock::Sparse(features),
             targets,
             position,
             is_final,
-        }
+        )
     }
 
-    /// Borrow the batch's feature matrix.
-    pub fn features(&self) -> ArrayView2<F> {
-        self.features.view()
+    fn from_block(
+        block: SKFeatureBlock<F>,
+        targets: Array1<F>,
+        position: usize,
+        is_final: bool,
+    ) -> Result<Self, SKError> {
+        let rows = block.number_of_rows();
+        if targets.len() != rows {
+            return Err(SKError::ShapeMismatch {
+                expected: vec![rows],
+                found: vec![targets.len()],
+            });
+        }
+        Ok(SKSupervisedBatch {
+            block,
+            targets,
+            position,
+            is_final,
+        })
+    }
+
+    /// Borrow the batch's feature block as a [`SKDataView`].
+    pub fn view(&self) -> SKDataView<'_, F> {
+        self.block.view()
+    }
+
+    /// The number of rows in the feature block.
+    pub fn number_of_rows(&self) -> usize {
+        self.block.number_of_rows()
+    }
+
+    /// The number of columns in the feature block.
+    pub fn number_of_columns(&self) -> usize {
+        self.block.number_of_columns()
+    }
+
+    /// Whether the feature block carries a CSR matrix.
+    pub fn is_sparse(&self) -> bool {
+        self.block.is_sparse()
     }
 
     /// Borrow the batch's targets.
-    pub fn targets(&self) -> ArrayView1<F> {
+    pub fn targets(&self) -> ArrayView1<'_, F> {
         self.targets.view()
     }
 

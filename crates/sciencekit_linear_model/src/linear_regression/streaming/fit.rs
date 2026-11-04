@@ -81,7 +81,7 @@ impl SKLinearRegression {
         let mut target_batches: Vec<Array1<F>> = Vec::new();
         let mut columns_count = None;
         while let Some(batch) = source.next_supervised_batch().map_err(Into::into)? {
-            let features = batch.features();
+            let features = batch.view().as_dense()?;
             match columns_count {
                 None => columns_count = Some(features.ncols()),
                 Some(expected) if expected != features.ncols() => {

@@ -20,7 +20,13 @@ pub(super) fn update_extrema<F: SKFloat>(
     batch: SKDataBatch<F>,
     state: &mut StreamingExtrema<F>,
 ) -> SKStreamDecision {
-    let data = batch.data();
+    let data = match batch.view().as_dense() {
+        Ok(data) => data,
+        Err(error) => {
+            state.error = Some(error);
+            return SKStreamDecision::Stop;
+        }
+    };
     if state.columns_count == 0 {
         state.columns_count = data.ncols();
         state.minimum = Array1::zeros(data.ncols());

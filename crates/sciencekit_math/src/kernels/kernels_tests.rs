@@ -367,7 +367,7 @@ fn driver_applies_plan_parallelism_to_each_batch() {
     };
     let mut results = Vec::new();
     let update = |batch: SKDataBatch<f64>, parallelism: usize, results: &mut Vec<f64>| {
-        let view = batch.data();
+        let view = batch.view().as_dense().unwrap();
         let row = Array1::from_shape_vec(2, vec![view[(0, 0)], view[(0, 1)]]).unwrap();
         let scaled = sk_elementwise_transform(&row.view(), |x| 2.0 * x + 1.0, parallelism);
         results.push(scaled[0] + scaled[1]);

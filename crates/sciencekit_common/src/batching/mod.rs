@@ -28,3 +28,7 @@ pub use supervised_source::SKSupervisedLazySource;
 
 #[cfg(test)]
 mod batching_tests;
+#[cfg(test)]
+mod data_batch_tests;
+#[cfg(test)]
+mod supervised_batch_tests;

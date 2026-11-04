@@ -74,7 +74,7 @@ impl<F: SKFloat> SKRobustScaler<F> {
         let mut batches: Vec<Array2<F>> = Vec::new();
         let mut columns_count = None;
         while let Some(batch) = source.next_batch().map_err(Into::into)? {
-            let data = batch.data();
+            let data = batch.view().as_dense()?;
             match columns_count {
                 None => columns_count = Some(data.ncols()),
                 Some(expected) if expected != data.ncols() => {

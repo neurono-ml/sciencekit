@@ -43,7 +43,7 @@ impl<F: SKFloat> SKClassifierStreamState<'_, F> {
     }
 
     fn apply_batch(&mut self, batch: SKSupervisedBatch<F>) -> Result<(), SKError> {
-        let features = batch.features();
+        let features = batch.view().as_dense()?;
         if features.nrows() == 0 {
             return Ok(());
         }

@@ -21,7 +21,13 @@ pub(super) fn update_gram<F: SKFloat>(
     batch: SKSupervisedBatch<F>,
     state: &mut StreamingCenteredGramState<F>,
 ) -> SKStreamDecision {
-    let features = batch.features();
+    let features = match batch.view().as_dense() {
+        Ok(features) => features,
+        Err(error) => {
+            state.error = Some(error);
+            return SKStreamDecision::Stop;
+        }
+    };
     let targets = batch.targets();
     if state.columns_count == 0 {
         state.columns_count = features.ncols();

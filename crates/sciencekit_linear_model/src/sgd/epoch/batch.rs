@@ -22,7 +22,7 @@ pub(crate) fn sk_run_batch_epoch<F: SKFloat, L: SKSGDLoss<F>>(
     config: &SKSGDConfig<F>,
     order: &[usize],
 ) -> Result<SKEpochObjective<F>, SKError> {
-    let features = batch.features();
+    let features = batch.view().as_dense()?;
     let targets = batch.targets();
     if features.nrows() != targets.len() {
         return Err(SKError::shape_mismatch_2d(

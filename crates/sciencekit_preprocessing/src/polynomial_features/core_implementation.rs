@@ -175,7 +175,7 @@ impl<F: SKFloat> SKPolynomialFeaturesStreamState<F> {
     }
 
     fn accumulate(&mut self, batch: SKDataBatch<F>) -> Result<(), SKError> {
-        let data = batch.data();
+        let data = batch.view().as_dense()?;
         if data.nrows() == 0 {
             return Ok(());
         }

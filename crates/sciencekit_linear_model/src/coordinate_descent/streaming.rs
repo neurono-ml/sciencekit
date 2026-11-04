@@ -102,7 +102,7 @@ impl<F: SKFloat> SKCoordinateDescentStreamAccumulator<F> {
     }
 
     fn accumulate(&mut self, batch: SKSupervisedBatch<F>) -> Result<(), SKError> {
-        let features = batch.features();
+        let features = batch.view().as_dense()?;
         let targets = batch.targets();
         if features.nrows() == 0 {
             return Ok(());
