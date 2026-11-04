@@ -3,10 +3,16 @@
 
 use ndarray::Array2;
 use sciencekit_common::{
-    SKBackendKind, SKError, SKExecutionMode, SKFloat, SKLabelTable, SKOperationAttributes,
-    SKOperationKind, SKSupervisedLazySource, SKSupervisedSourceProvider, sk_canonicalize_labels,
-    sk_run_operation,
+    SKBackendKind, SKError, SKExecutionContext, SKExecutionMode, SKExecutionPlan, SKFloat,
+    SKLabelTable, SKOperationAttributes, SKOperationKind, SKSupervisedBatch,
+    SKSupervisedSourceProvider,
+    execution::{
+        SKAccessPattern, SKStreamDecision, SKStreamingPassPolicy, sk_resolve_execution_plan,
+        sk_run_supervised_streaming_provider,
+    },
+    sk_canonicalize_labels, sk_run_operation,
 };
+use sciencekit_math::kernels::SK_AXIS_SUM_GRAIN;
 
 use crate::logistic::SKLogisticState;
 use crate::logistic::config::SKLogisticConfig;
@@ -38,14 +44,27 @@ where
         backend,
     };
     sk_run_operation(attributes, || {
-        let mut source = provider.open()?;
-        let (batches, raw_labels) = collect_batches(&mut source)?;
+        let plan = sk_resolve_streaming_plan()?;
+        let mut accumulator = SKLogisticStreamAccumulator::new();
+        sk_run_supervised_streaming_provider(
+            &mut provider,
+            &mut accumulator,
+            |batch, parallelism, accumulator| accumulator.update(batch, parallelism),
+            &plan,
+            SKStreamingPassPolicy::SinglePass,
+        )?;
+        if let Some(error) = accumulator.error.take() {
+            return Err(error);
+        }
+        let SKLogisticStreamAccumulator {
+            batches, labels, ..
+        } = accumulator;
         if batches.is_empty() {
             return Err(SKError::Conversion(
                 "streaming fit received no batches".into(),
             ));
         }
-        let borrowed: Vec<&str> = raw_labels.iter().map(String::as_str).collect();
+        let borrowed: Vec<&str> = labels.iter().map(String::as_str).collect();
         let (labels, classes): (Vec<usize>, SKLabelTable) = sk_canonicalize_labels(&borrowed);
         let number_of_classes = classes.number_of_classes();
         let strategy =
@@ -71,28 +90,46 @@ where
     })
 }
 
-/// Retain every batch's design and its integer-coded labels.
-fn collect_batches<F, S>(source: &mut S) -> Result<(Vec<Array2<F>>, Vec<String>), SKError>
-where
-    F: SKFloat,
-    S: SKSupervisedLazySource<F> + Send,
-    S::Error: From<SKError> + Into<SKError>,
-{
-    let mut batches = Vec::new();
-    let mut labels = Vec::new();
-    let mut columns_count = 0usize;
-    while let Some(batch) = source.next_supervised_batch().map_err(Into::into)? {
+/// The single-pass accumulator: every batch's design and integer-coded labels.
+struct SKLogisticStreamAccumulator<F> {
+    batches: Vec<Array2<F>>,
+    labels: Vec<String>,
+    columns_count: usize,
+    error: Option<SKError>,
+}
+
+impl<F: SKFloat> SKLogisticStreamAccumulator<F> {
+    fn new() -> Self {
+        Self {
+            batches: Vec::new(),
+            labels: Vec::new(),
+            columns_count: 0,
+            error: None,
+        }
+    }
+
+    fn update(&mut self, batch: SKSupervisedBatch<F>, _parallelism: usize) -> SKStreamDecision {
+        match self.accumulate(batch) {
+            Ok(()) => SKStreamDecision::Continue,
+            Err(error) => {
+                self.error = Some(error);
+                SKStreamDecision::Stop
+            }
+        }
+    }
+
+    fn accumulate(&mut self, batch: SKSupervisedBatch<F>) -> Result<(), SKError> {
         let features = batch.features();
         if features.nrows() == 0 {
-            continue;
+            return Ok(());
         }
-        if columns_count != 0 && columns_count != features.ncols() {
+        if self.columns_count != 0 && self.columns_count != features.ncols() {
             return Err(SKError::ShapeMismatch {
-                expected: vec![columns_count],
+                expected: vec![self.columns_count],
                 found: vec![features.ncols()],
             });
         }
-        columns_count = features.ncols();
+        self.columns_count = features.ncols();
         let targets = batch.targets();
         if targets.len() != features.nrows() {
             return Err(SKError::ShapeMismatch {
@@ -102,10 +139,21 @@ where
         }
         targets
             .iter()
-            .for_each(|value| labels.push(sk_float_label(*value)));
-        batches.push(features.to_owned());
+            .for_each(|value| self.labels.push(sk_float_label(*value)));
+        self.batches.push(features.to_owned());
+        Ok(())
     }
-    Ok((batches, labels))
+}
+
+/// Resolve the plan for an unbounded stream (Sequential access pattern).
+fn sk_resolve_streaming_plan() -> Result<SKExecutionPlan, SKError> {
+    let mut context = SKExecutionContext::real();
+    context.dataset_size_bytes = u64::MAX;
+    context.scalar_size_bytes = 8;
+    context.dataset_elements = None;
+    context.access_pattern = SKAccessPattern::Sequential;
+    context.grain = SK_AXIS_SUM_GRAIN;
+    sk_resolve_execution_plan(SKExecutionMode::Automatic, &context)
 }
 
 /// The decimal representation of a float-encoded class label, rounded to the
