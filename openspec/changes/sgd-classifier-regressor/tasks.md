@@ -108,10 +108,10 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
   squared error, epsilon zero insensitive approaches absolute error). *(commit
   `feat(linear_model): cover the huber and insensitive losses in SKSGDRegressor`)*
 - [x] 4.7 Wire the regressor loss catalogue through fitting.
-- [ ] 4.8 Red: companion tests for convergence to OLS (`squared_error`, `alpha(0.0)`,
+- [x] 4.8 Red: companion tests for convergence to OLS (`squared_error`, `alpha(0.0)`,
   generous budget, agreement with `SKLinearRegression`) and for the L1/L2/ElasticNet
   penalties on the regressor. *(commit `feat(linear_model): add the penalty portfolio and OLS convergence to SKSGDRegressor`)*
-- [ ] 4.9 Green: the regressor suite passes on both floats.
+- [x] 4.9 Green: the regressor suite passes on both floats.
 
 ## 5. Sparse input (both estimators)
 
