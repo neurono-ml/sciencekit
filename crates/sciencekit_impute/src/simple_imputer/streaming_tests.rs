@@ -1,9 +1,12 @@
 //! Companion tests for the out-of-core fit (spec `simple-imputer`).
 
+use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
+
 use ndarray::{Array2, array, s};
 use sciencekit_common::{
     SKBackendKind, SKBuilder, SKDataBatch, SKError, SKExecutionMode, SKFeatureTransformer, SKFloat,
-    SKLazySource, SKUnsupervisedFit,
+    SKLazySource, SKReopenableSource, SKUnsupervisedFit,
 };
 
 use super::core_implementation::SKSimpleImputer;
@@ -155,6 +158,31 @@ fn streaming_driver_median_stays_within_the_sketch_tolerance() {
         (actual - expected).abs() <= allowed,
         "expected {expected}, found {actual} (tolerance {allowed})"
     );
+}
+
+#[test]
+fn reopenable_provider_takes_one_pass_and_matches_the_dense_fit() {
+    let features = array![[1.0, 10.0], [3.0, f64::NAN], [5.0, 14.0], [7.0, 18.0]];
+    let reference = SKSimpleImputer::<f64>::build()
+        .build()
+        .unwrap()
+        .fit(&features)
+        .unwrap();
+    let batches = chunk_rows(&features, &[1, 2, 1]);
+    let factory_calls = Arc::new(AtomicUsize::new(0));
+    let counted = Arc::clone(&factory_calls);
+    let provider = SKReopenableSource::new(move || {
+        counted.fetch_add(1, Ordering::SeqCst);
+        Ok(SKVectorSource::new(batches.clone()))
+    });
+    let streamed = SKSimpleImputer::<f64>::build()
+        .execution_mode(SKExecutionMode::OutOfCoreStreaming)
+        .build()
+        .unwrap()
+        .fit_streaming(provider)
+        .unwrap();
+    assert_eq!(factory_calls.load(Ordering::SeqCst), 1);
+    assert_eq!(streamed.statistics(), reference.statistics());
 }
 
 #[test]
