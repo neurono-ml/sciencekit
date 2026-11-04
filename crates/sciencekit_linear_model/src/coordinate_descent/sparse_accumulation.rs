@@ -4,7 +4,7 @@
 //! upgraded to CSR once and every later dense batch is converted, so no block is
 //! ever densified.
 
-use ndarray::{ArrayView1, ArrayView2};
+use ndarray::{Array1, ArrayView1, ArrayView2};
 use sciencekit_common::SKFloat;
 use sprs::{CsMat, TriMat};
 
@@ -13,21 +13,22 @@ use super::accumulator::SKCoordinateDescentState;
 impl<F: SKFloat> SKCoordinateDescentState<F> {
     /// Convert a dense accumulator to the CSR variant, keeping its targets.
     pub(crate) fn ensure_sparse(&mut self) {
-        if matches!(self, Self::Sparse { .. }) {
-            return;
-        }
-        let previous = std::mem::replace(self, Self::new_sparse());
-        if let Self::Dense { batches, targets } = previous {
-            let columns_count = batches.first().map_or(0, ndarray::Array2::ncols);
-            let sparse_batches = batches
-                .iter()
-                .map(|batch| sk_dense_to_csr(&batch.view()))
-                .collect();
-            *self = Self::Sparse {
-                batches: sparse_batches,
-                targets,
-                columns_count,
-            };
+        match self {
+            Self::Sparse { .. } => (),
+            Self::Dense { batches, targets } => {
+                let columns_count = batches.first().map_or(0, ndarray::Array2::ncols);
+                let sparse_batches = batches
+                    .iter()
+                    .map(|batch| sk_dense_to_csr(&batch.view()))
+                    .collect();
+                let mut dense_targets = Array1::zeros(0);
+                std::mem::swap(targets, &mut dense_targets);
+                *self = Self::Sparse {
+                    batches: sparse_batches,
+                    targets: dense_targets,
+                    columns_count,
+                };
+            }
         }
     }
 
