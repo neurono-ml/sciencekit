@@ -4,8 +4,10 @@
 use ndarray::{Array1, Array2, ArrayView1, ArrayView2, Axis};
 use sciencekit_common::{
     SKError, SKExecutionContext, SKExecutionMode, SKExecutionPlan, SKOperationAttributes,
-    SKOperationKind, SKSupervisedLazySource, execution::SKAccessPattern,
-    execution::sk_run_supervised_streaming_driver, sk_run_operation,
+    SKOperationKind, SKSupervisedLazySource, SKSupervisedSourceProvider,
+    execution::SKAccessPattern,
+    execution::{SKStreamingPassPolicy, sk_run_supervised_streaming_provider},
+    sk_run_operation,
 };
 use sciencekit_math::SKBackendSelection;
 use sciencekit_math::kernels::SK_AXIS_SUM_GRAIN;
@@ -25,10 +27,12 @@ impl<F: SKBackendSelection> SKRidge<F> {
     /// accumulates centered cross products per batch and solves once at the
     /// end, recording the `Cholesky` Gram solver actually used. Every batch is
     /// instrumented as `PartialFit`.
-    pub fn fit_streaming<S>(&self, source: &mut S) -> Result<SKRidgeModel<F>, SKError>
+    pub fn fit_streaming<Provider>(
+        &self,
+        mut provider: Provider,
+    ) -> Result<SKRidgeModel<F>, SKError>
     where
-        S: SKSupervisedLazySource<F> + Send,
-        S::Error: From<SKError> + Into<SKError>,
+        Provider: SKSupervisedSourceProvider<F>,
     {
         // Single-pass source: totals are unknown upfront, so the outer span
         // carries zero dimensions while each batch reports its real ones.
@@ -44,9 +48,10 @@ impl<F: SKBackendSelection> SKRidge<F> {
             if plan.mode == SKExecutionMode::InProcessSynchronous
                 || plan.mode == SKExecutionMode::InProcessAsynchronous
             {
-                self.fit_collected(source)
+                let mut source = provider.open()?;
+                self.fit_collected(&mut source)
             } else {
-                self.fit_via_driver(source, &plan)
+                self.fit_via_driver(&mut provider, &plan)
             }
         })
     }
@@ -106,23 +111,23 @@ impl<F: SKBackendSelection> SKRidge<F> {
 
     /// Drive the centered Gram state through the prefetch pipeline, then solve
     /// the accumulated normal equations once.
-    fn fit_via_driver<S>(
+    fn fit_via_driver<Provider>(
         &self,
-        source: &mut S,
+        provider: &mut Provider,
         plan: &SKExecutionPlan,
     ) -> Result<SKRidgeModel<F>, SKError>
     where
-        S: SKSupervisedLazySource<F> + Send,
-        S::Error: From<SKError> + Into<SKError>,
+        Provider: SKSupervisedSourceProvider<F>,
     {
         let machine = SKExecutionContext::real();
         let mut state =
             StreamingCenteredGramState::new(machine.available_memory_bytes, machine.cpu_cores);
-        sk_run_supervised_streaming_driver(
-            source,
+        sk_run_supervised_streaming_provider(
+            provider,
             &mut state,
             |batch, _, state| update_gram(self, batch, state),
             plan,
+            SKStreamingPassPolicy::SinglePass,
         )?;
         if let Some(error) = state.error.take() {
             return Err(error);

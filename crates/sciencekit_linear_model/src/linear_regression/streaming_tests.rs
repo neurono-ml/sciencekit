@@ -1,13 +1,16 @@
 //! Streaming fit tests (spec `linear-regression`).
 
+use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
+
 use ndarray::array;
 use sciencekit_common::builders::SKBuilder;
-use sciencekit_common::{SKError, SKExecutionMode, SKSupervisedFit};
+use sciencekit_common::{SKError, SKExecutionMode, SKReopenableSource, SKSupervisedFit};
 
 use super::core_implementation::SKLinearRegression;
 use super::test_datasets::{
     SMALL_COEFFICIENTS, SupervisedVecSource, assert_close_scalar, assert_close_with_tolerance,
-    chunked_source, default_regressor, large_features, large_targets, small_features,
+    chunk_pairs, chunked_source, default_regressor, large_features, large_targets, small_features,
     small_targets,
 };
 
@@ -21,6 +24,32 @@ fn uneven_batches_match_the_dense_fit() {
         .unwrap();
     let mut source = chunked_source(&features, &targets, &[1, 3]);
     let streamed = default_regressor().fit_streaming(&mut source).unwrap();
+    assert_close_with_tolerance(
+        streamed.coefficients(),
+        dense.coefficients().as_slice().unwrap(),
+        1e-9,
+    );
+    assert_close_scalar(streamed.intercept(), dense.intercept(), 1e-9);
+}
+
+/// A reopenable provider takes exactly one pass: the Gram accumulator must not
+/// be doubled.
+#[test]
+fn reopenable_provider_takes_one_pass_and_matches_the_dense_fit() {
+    let features = small_features();
+    let targets = small_targets(&features);
+    let dense = default_regressor()
+        .fit(features.view(), targets.view())
+        .unwrap();
+    let batches = chunk_pairs(&features, &targets, &[1, 3]);
+    let factory_calls = Arc::new(AtomicUsize::new(0));
+    let counted = Arc::clone(&factory_calls);
+    let provider = SKReopenableSource::new(move || {
+        counted.fetch_add(1, Ordering::SeqCst);
+        Ok(SupervisedVecSource::<f64>::new(batches.clone()))
+    });
+    let streamed = default_regressor().fit_streaming(provider).unwrap();
+    assert_eq!(factory_calls.load(Ordering::SeqCst), 1);
     assert_close_with_tolerance(
         streamed.coefficients(),
         dense.coefficients().as_slice().unwrap(),
