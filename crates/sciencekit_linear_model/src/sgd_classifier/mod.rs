@@ -22,6 +22,8 @@ mod binary_tests;
 #[cfg(test)]
 mod builder_tests;
 #[cfg(test)]
+mod multiclass_tests;
+#[cfg(test)]
 mod partial_fit_tests;
 #[cfg(test)]
 mod streaming_tests;
