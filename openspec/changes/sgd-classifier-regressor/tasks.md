@@ -35,12 +35,12 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
   zero alpha, the counter continues across incremental calls). *(commit
   `feat(linear_model): add the sgd learning-rate schedules`)*
 - [x] 2.6 Implement `learning_rate/`.
-- [ ] 2.7 Red: companion tests for the seeded shuffler (same seed same order, different seeds
+- [x] 2.7 Red: companion tests for the seeded shuffler (same seed same order, different seeds
   differ, empty/single row, index range covers every row exactly once, dense and CSR orders
   agree) and for the averaged iterate (running mean equals the explicit mean of visited
   iterates, averaging survives an incremental continuation). *(commit
   `feat(linear_model): add the sgd shuffler and averaged iterate`)*
-- [ ] 2.8 Implement `shuffle.rs` (`SKRandomGenerator` + Fisher–Yates) and `averaging.rs`.
+- [x] 2.8 Implement `shuffle.rs` (`SKRandomGenerator` + Fisher–Yates) and `averaging.rs`.
 - [ ] 2.9 Red: companion tests for the single-sample update and the running objective
   (one update equals the closed-form step, L1 produces exact zeros, the intercept is not
   penalized, a zero slope is a no-op, the running loss equals the mean of batch losses).
