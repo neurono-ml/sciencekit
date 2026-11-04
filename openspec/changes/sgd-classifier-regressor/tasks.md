@@ -62,19 +62,19 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 
 ## 3. `SKSGDClassifier`
 
-- [ ] 3.1 Red: companion tests for the builder (defaults, every setter, validation errors,
+- [x] 3.1 Red: companion tests for the builder (defaults, every setter, validation errors,
   configuration flows into the model) and for a binary dense fit (a separable design is
   learned exactly, decisions order the labels, `f32`/`f64`). *(commit
   `feat(linear_model): add SKSGDClassifier with a binary one-vs-rest fit`)*
-- [ ] 3.2 `SKSGDClassifierBuilder<F>` + the `SKBuilder` impl (private constructor,
+- [x] 3.2 `SKSGDClassifierBuilder<F>` + the `SKBuilder` impl (private constructor,
   validation, warm-start source).
-- [ ] 3.3 `SKSGDClassifier<F>` + the `SKSupervisedFit<F>` impl (shape validation, target
+- [x] 3.3 `SKSGDClassifier<F>` + the `SKSupervisedFit<F>` impl (shape validation, target
   canonicalization through `SKLabelTable`, representation dispatch, `Fit` span, backend
   transfer).
-- [ ] 3.4 `SKSGDClassifierModel<F>` (accessors including `converged()` and `epochs_taken()`,
+- [x] 3.4 `SKSGDClassifierModel<F>` (accessors including `converged()` and `epochs_taken()`,
   `SKClassifierPredictor<F>`, `decision_function`, the class table, probabilities for the
   probabilistic losses and `UnsupportedOperation` otherwise).
-- [ ] 3.5 Green: binary fit/predict/probabilities behave per spec.
+- [x] 3.5 Green: binary fit/predict/probabilities behave per spec.
 - [ ] 3.6 Red: companion tests for multi-class one-vs-rest (three classes produce three
   heads, arg-max labels, probability rows sum to one for `log_loss`, single head for two
   classes). *(commit `feat(linear_model): add one-vs-rest multi-class fits to SKSGDClassifier`)*
