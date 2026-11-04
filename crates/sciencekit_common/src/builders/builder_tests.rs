@@ -23,6 +23,7 @@ fn simulated(
         grain: 1024,
         access_pattern: pattern,
         batch_size_hint: batch,
+        batch_byte_size_hint: None,
     }
 }
 

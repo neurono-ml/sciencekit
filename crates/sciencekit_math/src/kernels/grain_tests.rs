@@ -49,5 +49,6 @@ fn context(dataset_elements: Option<u64>, grain: usize, cores: usize) -> SKExecu
         grain,
         access_pattern: SKAccessPattern::Sequential,
         batch_size_hint: None,
+        batch_byte_size_hint: None,
     }
 }

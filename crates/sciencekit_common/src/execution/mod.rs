@@ -28,4 +28,8 @@ pub use streaming_driver::{
 #[cfg(test)]
 mod execution_tests;
 #[cfg(test)]
+mod sparse_guard_tests;
+#[cfg(test)]
+mod streaming_driver_sparse_tests;
+#[cfg(test)]
 mod streaming_driver_tests;
