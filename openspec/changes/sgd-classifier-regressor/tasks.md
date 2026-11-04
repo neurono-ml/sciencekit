@@ -124,18 +124,18 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 
 ## 6. Out-of-core and incremental fits (both estimators)
 
-- [ ] 6.1 Red: companion tests for `fit_streaming` (one pass equals one in-memory epoch in
+- [x] 6.1 Red: companion tests for `fit_streaming` (one pass equals one in-memory epoch in
   the same order, uneven batches, single batch, empty source error, column mismatch, early
   stopping refused with `UnsupportedOperation`, both floats) and for retention (a source
   yielding many batches leaves only one batch plus the state alive). *(commit
   `feat(linear_model): add sgd fit_streaming over the supervised source`)*
-- [ ] 6.2 Implement the streaming drivers for both estimators over the batch epoch driver.
-- [ ] 6.3 Red: companion tests for `partial_fit` (continuation improves or preserves the
+- [x] 6.2 Implement the streaming drivers for both estimators over the batch epoch driver.
+- [x] 6.3 Red: companion tests for `partial_fit` (continuation improves or preserves the
   objective, matches the equivalent concatenated fit within tolerance, the schedule counter
   continues, the average continues, a column mismatch is rejected, an unseen class is
   rejected, both floats). *(commit `feat(linear_model): add partial_fit continuation to the sgd models`)*
-- [ ] 6.4 Implement `partial_fit` on both fitted models.
-- [ ] 6.5 Green: streaming and incremental suites pass.
+- [x] 6.4 Implement `partial_fit` on both fitted models.
+- [x] 6.5 Green: streaming and incremental suites pass.
 
 ## 7. Shared deterministic test datasets
 
