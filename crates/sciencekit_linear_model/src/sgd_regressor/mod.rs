@@ -33,3 +33,5 @@ mod penalties_tests;
 mod sparse_tests;
 #[cfg(test)]
 mod streaming_tests;
+#[cfg(test)]
+mod warm_start_tests;

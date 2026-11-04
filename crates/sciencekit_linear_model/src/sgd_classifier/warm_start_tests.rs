@@ -97,6 +97,43 @@ fn a_seeded_refit_never_regresses_within_the_same_budget() {
 }
 
 #[test]
+fn a_warm_start_without_intercept_starts_from_zero() {
+    let (features, raw) = separable_binary_design();
+    let labels = labels_i64(&raw);
+    let fitted = SKSGDClassifier::<f64>::build()
+        .build()
+        .unwrap()
+        .fit(features.view(), labels.view())
+        .unwrap();
+    let source = SKSGDClassifierCoefficients::<f64>::new(
+        fitted.classes().clone(),
+        Array2::zeros((1, 2)).view(),
+        Array1::from_vec(vec![7.0]).view(),
+    )
+    .unwrap();
+    let model = SKSGDClassifier::<f64>::build()
+        .include_intercept(false)
+        .warm_start_from(source)
+        .learning_rate(SKSGDLearningRate::Constant)
+        .alpha(0.0)
+        .shuffle(false)
+        .maximum_number_of_iterations(3)
+        .convergence_policy(SKConvergencePolicy::Permissive)
+        .build()
+        .unwrap()
+        .fit(features.view(), labels.view())
+        .unwrap();
+    assert!(model.intercepts().iter().all(|&value| value == 0.0));
+    let decisions = model.decision_function(features.view()).unwrap();
+    let expected = features.dot(&model.coefficients().row(0));
+    assert_close(
+        decisions.column(0).to_slice().unwrap(),
+        expected.as_slice().unwrap(),
+        1e-12,
+    );
+}
+
+#[test]
 fn a_misaligned_feature_count_is_rejected() {
     let (features, raw) = separable_binary_design();
     let labels = labels_i64(&raw);

@@ -6,11 +6,10 @@ use sciencekit_common::{SKError, SKFloat, SKLabelTable};
 
 use super::super::coefficients::SKSGDClassifierCoefficients;
 use super::super::targets::{
-    sk_head_targets, sk_initial_slope_scale, sk_number_of_heads, sk_optimal_offset,
-    sk_positive_classes,
+    sk_head_targets, sk_initial_slope_scale, sk_number_of_heads, sk_positive_classes,
 };
 use crate::sgd::config::SKSGDConfig;
-use crate::sgd::{SKLearningRateSchedule, SKLearningState, SKSGDClassifierLoss};
+use crate::sgd::{SKLearningRateSchedule, SKLearningState, SKSGDClassifierLoss, sk_optimal_offset};
 
 /// The initial learning states, one per one-vs-rest head.
 ///
@@ -51,9 +50,14 @@ pub(crate) fn sk_create_states<F: SKFloat>(
             sk_validate_warm_start(source, classes, features, number_of_heads)?;
             Ok((0..number_of_heads)
                 .map(|head| {
+                    let intercept = if config.include_intercept {
+                        source.intercepts[head]
+                    } else {
+                        F::zero()
+                    };
                     SKLearningState::new(
                         source.coefficients.row(head).to_owned(),
-                        source.intercepts[head],
+                        intercept,
                         schedule.clone(),
                         config.average,
                     )

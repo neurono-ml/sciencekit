@@ -5,9 +5,9 @@ use ndarray::Array1;
 use sciencekit_common::{SKError, SKFloat};
 
 use super::super::coefficients::SKSGDRegressorCoefficients;
-use super::super::targets::{sk_initial_slope_scale, sk_optimal_offset};
+use super::super::targets::sk_initial_slope_scale;
 use crate::sgd::config::SKSGDConfig;
-use crate::sgd::{SKLearningRateSchedule, SKLearningState, SKSGDRegressorLoss};
+use crate::sgd::{SKLearningRateSchedule, SKLearningState, SKSGDRegressorLoss, sk_optimal_offset};
 
 /// The initial learning state.
 ///
@@ -43,9 +43,14 @@ pub(crate) fn sk_create_state<F: SKFloat>(
                     found: vec![source.feature_count()],
                 });
             }
+            let intercept = if config.include_intercept {
+                source.intercept
+            } else {
+                F::zero()
+            };
             Ok(SKLearningState::new(
                 source.coefficients.clone(),
-                source.intercept,
+                intercept,
                 schedule,
                 config.average,
             ))
