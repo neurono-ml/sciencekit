@@ -90,6 +90,27 @@ fn error_display_is_informative() {
     assert!(format!("{err}").contains("99"));
 }
 
+/// An unsupported operation names both the operation and the reason.
+#[test]
+fn unsupported_operation_names_the_operation_and_the_reason() {
+    let err = SKError::UnsupportedOperation {
+        operation: "predict_probabilities",
+        reason: "the configured loss is not probabilistic".to_string(),
+    };
+    match &err {
+        SKError::UnsupportedOperation { operation, reason } => {
+            assert_eq!(*operation, "predict_probabilities");
+            assert!(reason.contains("probabilistic"));
+        }
+        other => panic!("expected unsupported-operation variant, got {other:?}"),
+    }
+    let message = format!("{err}");
+    assert!(
+        message.contains("predict_probabilities") && message.contains("probabilistic"),
+        "the rendered message must name the operation and the reason: {message}"
+    );
+}
+
 /// New missingness names the never-missing feature and the way out.
 #[test]
 fn unexpected_missingness_names_the_feature() {

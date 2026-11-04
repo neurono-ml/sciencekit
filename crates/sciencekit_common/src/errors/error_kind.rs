@@ -28,6 +28,21 @@ pub enum SKError {
         suggestion: &'static str,
     },
 
+    /// An operation requested from an otherwise valid configuration, which that
+    /// configuration cannot perform.
+    ///
+    /// Distinct from [`SKError::UnsupportedRepresentation`], which reports an
+    /// input representation the algorithm cannot consume, and from
+    /// [`SKError::InvalidHyperparameter`], which reports a value rejected when
+    /// the configuration was built.
+    #[error("operation `{operation}` is not supported: {reason}")]
+    UnsupportedOperation {
+        /// The name of the requested operation.
+        operation: &'static str,
+        /// Why the operation is unavailable.
+        reason: String,
+    },
+
     /// An identifiable invalid hyperparameter value.
     #[error("invalid hyperparameter `{name}`: {reason}")]
     InvalidHyperparameter {

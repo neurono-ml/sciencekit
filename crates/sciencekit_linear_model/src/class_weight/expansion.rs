@@ -1,9 +1,9 @@
-//! The class-weight expansion of the logistic substrate (spec
-//! `logistic-solver`).
+//! The per-sample expansion of the class-weighting policy (spec
+//! `stochastic-gradient-solver`, decision 11).
 
 use sciencekit_common::{SKError, SKFloat};
 
-use super::config::SKClassWeight;
+use super::policy::SKClassWeight;
 
 /// Expand a class-weighting policy into one non-negative weight per sample,
 /// indexed by the sample's canonical class index.
@@ -12,7 +12,7 @@ use super::config::SKClassWeight;
 /// `n_samples / (n_classes · class_count)`; `Explicit` uses the supplied
 /// per-class vector. A weight vector of the wrong length, a negative weight or
 /// an all-zero weighting is rejected with a structured error.
-pub(crate) fn sk_expand_class_weights<F: SKFloat>(
+pub fn sk_expand_class_weights<F: SKFloat>(
     class_weight: &SKClassWeight<F>,
     class_indices: &[usize],
     number_of_classes: usize,
@@ -22,14 +22,14 @@ pub(crate) fn sk_expand_class_weights<F: SKFloat>(
         SKClassWeight::Balanced => {
             let mut counts = vec![0usize; number_of_classes];
             class_indices.iter().for_each(|&index| counts[index] += 1);
-            let n_samples = class_indices.len();
+            let number_of_samples = class_indices.len();
             counts
                 .iter()
                 .map(|&count| {
                     if count == 0 {
                         F::zero()
                     } else {
-                        F::from(n_samples).expect("sample counts fit in the scalar")
+                        F::from(number_of_samples).expect("sample counts fit in the scalar")
                             / F::from(number_of_classes * count).expect("counts fit in the scalar")
                     }
                 })

@@ -19,6 +19,7 @@
 
 #![warn(missing_docs)]
 
+pub mod class_weight;
 pub mod coordinate_descent;
 pub mod elastic_net;
 pub mod lasso;
@@ -26,3 +27,10 @@ pub mod linear_regression;
 pub mod logistic;
 pub mod logistic_regression;
 pub mod ridge;
+pub mod sgd;
+pub mod sgd_classifier;
+pub mod sgd_regressor;
+pub use sgd::SKConvergencePolicy;
+
+#[cfg(test)]
+pub(crate) mod test_datasets;

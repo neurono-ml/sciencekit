@@ -9,7 +9,8 @@ use ndarray::{Array2, ArrayView2, Axis};
 use sciencekit_common::{SKError, SKFloat};
 use sprs::{CsMat, CsMatView};
 
-use super::class_weight::sk_expand_class_weights;
+use crate::class_weight::sk_expand_class_weights;
+
 use super::config::SKLogisticConfig;
 use super::design::{SKDenseDesign, SKSparseDesign};
 use super::resolution::SKResolvedMultiClass;
