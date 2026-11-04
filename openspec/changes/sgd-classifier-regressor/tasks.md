@@ -154,10 +154,10 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
   model are shared across threads with identical results); dense, sparse, streaming and
   incremental fits cross-agree within the documented tolerance; probabilities are normalized
   and restricted to the probabilistic losses; regression converges to the OLS solution.
-- [ ] 8.3 Model export (Safetensors/JSON) and metric generation deferred: no
-  `sciencekit_interop` (Phase 7) or metrics-suite (W6.3) crate exists yet. The fitted models
-  are the distinct, backend-carrying export boundaries this change establishes; tracked for
-  the interop/metrics changes.
+- [ ] 8.3 Model export (Safetensors/JSON) and metric generation — deferred deliberately:
+  no `sciencekit_interop` (Phase 7) or metrics-suite (W6.3) crate exists yet. The fitted
+  models are the distinct, backend-carrying export boundaries this change establishes;
+  tracked for the interop/metrics changes.
 
 ## 9. Documentation, changelog and review
 
