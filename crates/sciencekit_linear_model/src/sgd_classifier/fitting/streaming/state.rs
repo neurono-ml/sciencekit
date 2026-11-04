@@ -80,9 +80,9 @@ impl<F: SKFloat> SKClassifierStreamState<'_, F> {
         let weights =
             sk_expand_class_weights(self.class_weight, &class_indices, number_of_classes)?;
         let positive_classes = sk_positive_classes(number_of_classes);
+        let order = sk_batch_order(self.config, features.nrows(), &mut self.generator);
         for head in 0..live.len() {
             let targets = Array1::from_vec(sk_head_targets(&class_indices, positive_classes[head]));
-            let order = sk_batch_order(self.config, features.nrows(), &mut self.generator);
             let batch_objective = sk_run_dense_epoch(
                 &mut live[head],
                 features,

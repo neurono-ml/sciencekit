@@ -9,7 +9,7 @@ use super::SKSGDClassifier;
 use crate::sgd::SKConvergencePolicy;
 use crate::test_datasets::{
     SKSupervisedFloatSource, assert_close, labels_i64, labels_scalar, separable_binary_design,
-    to_f32,
+    three_class_design, to_f32,
 };
 
 fn split_batches<F: sciencekit_common::SKFloat>(
@@ -83,6 +83,40 @@ fn a_reopenable_source_runs_the_epoch_budget_and_matches_the_in_memory_fit() {
     let streamed = estimator().fit_streaming(provider).unwrap();
     assert_eq!(streamed.epochs_taken(), 3);
     assert!(!streamed.converged());
+    assert_close(
+        in_memory.coefficients().as_slice().unwrap(),
+        streamed.coefficients().as_slice().unwrap(),
+        1e-12,
+    );
+    assert_close(
+        in_memory.intercepts().as_slice().unwrap(),
+        streamed.intercepts().as_slice().unwrap(),
+        1e-12,
+    );
+}
+
+/// A multi-class reopenable stream draws one shuffled order per epoch and shares
+/// it across every head, exactly like the in-memory one-vs-rest fit.
+#[test]
+fn a_multiclass_reopenable_source_shares_one_order_across_heads() {
+    let (features, raw) = three_class_design();
+    let labels = labels_i64(&raw);
+    let estimator = || {
+        SKSGDClassifier::<f64>::build()
+            .shuffle(true)
+            .random_seed(0)
+            .maximum_number_of_iterations(4)
+            .average(true)
+            .convergence_policy(SKConvergencePolicy::Permissive)
+            .build()
+            .unwrap()
+    };
+    let in_memory = estimator().fit(features.view(), labels.view()).unwrap();
+    let batches = vec![(features.clone(), labels_scalar::<f64>(&raw))];
+    let provider =
+        SKReopenableSource::new(move || Ok(SKSupervisedFloatSource::<f64>::new(batches.clone())));
+    let streamed = estimator().fit_streaming(provider).unwrap();
+    assert_eq!(streamed.epochs_taken(), 4);
     assert_close(
         in_memory.coefficients().as_slice().unwrap(),
         streamed.coefficients().as_slice().unwrap(),
