@@ -11,6 +11,7 @@
 //! submodules; every implementation lives in its own file.
 
 mod data_batch;
+pub mod feature_block;
 mod lazy_source;
 mod mappable_source;
 pub mod provider;
@@ -18,6 +19,7 @@ mod supervised_batch;
 mod supervised_source;
 
 pub use data_batch::SKDataBatch;
+pub use feature_block::SKFeatureBlock;
 pub use lazy_source::SKLazySource;
 pub use mappable_source::SKMappableSource;
 pub use provider::{SKReopenableSource, SKSourceProvider, SKSupervisedSourceProvider};
