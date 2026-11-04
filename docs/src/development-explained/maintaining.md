@@ -195,4 +195,7 @@ with these rules — [`SKStandardScaler`](./ch08-standard-scaler.html),
 [`SKLogisticRegression`](./ch16-logistic-regression.html) — show the whole procedure in action.
 The stochastic-gradient family
 ([`SKSGDClassifier` & `SKSGDRegressor`](./ch17-sgd-classifier-regressor.html)) then shows the
-same rules applied to an estimator whose cost does not depend on the dataset size.
+same rules applied to an estimator whose cost does not depend on the dataset size. The
+[source-provider chapter](./ch18-source-providers-and-epochs.html) closes the streaming story:
+one seam that accepts both a concrete source and a reopenable factory, and the epoch rule
+each estimator class follows.
