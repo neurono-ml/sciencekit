@@ -78,11 +78,13 @@ impl<F: SKFloat> SKEarlyStopping<F> {
     }
 
     /// The best validation objective.
+    #[cfg(test)]
     pub(crate) fn best_objective(&self) -> Option<F> {
         self.best_objective
     }
 
     /// The consecutive non-improving epochs observed so far.
+    #[cfg(test)]
     pub(crate) fn epochs_without_improvement(&self) -> usize {
         self.epochs_without_improvement
     }

@@ -39,11 +39,6 @@ impl<F: SKFloat> SKLearningRateSchedule<F> {
         }
     }
 
-    /// The selected schedule.
-    pub(crate) fn policy(&self) -> SKSGDLearningRate {
-        self.policy
-    }
-
     /// The learning rate for a total update count of `step`.
     pub(crate) fn rate(&self, step: usize) -> F {
         let step = F::from(step).expect("the update counter fits in the scalar");
@@ -65,10 +60,5 @@ impl<F: SKFloat> SKLearningRateSchedule<F> {
         if self.policy == SKSGDLearningRate::Adaptive {
             self.adaptive_learning_rate = self.adaptive_learning_rate / F::from(2).expect("two");
         }
-    }
-
-    /// The current adaptive rate (the initial rate for the other schedules).
-    pub(crate) fn current_learning_rate(&self) -> F {
-        self.adaptive_learning_rate
     }
 }

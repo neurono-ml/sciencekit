@@ -41,6 +41,7 @@ impl<F: SKFloat> SKEpochObjective<F> {
     }
 
     /// The number of samples recorded.
+    #[cfg(test)]
     pub(crate) fn count(&self) -> usize {
         self.count
     }

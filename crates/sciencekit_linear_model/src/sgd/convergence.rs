@@ -60,18 +60,15 @@ impl<F: SKFloat> SKConvergenceTracker<F> {
     }
 
     /// Whether the plateau criterion has been met.
+    #[cfg(test)]
     pub(crate) fn converged(&self) -> bool {
         self.converged
     }
 
     /// The consecutive non-improving epochs observed so far.
+    #[cfg(test)]
     pub(crate) fn epochs_without_improvement(&self) -> usize {
         self.epochs_without_improvement
-    }
-
-    /// The best objective seen so far.
-    pub(crate) fn best_objective(&self) -> Option<F> {
-        self.best_objective
     }
 }
 

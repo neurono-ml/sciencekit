@@ -2,7 +2,9 @@
 //! `stochastic-gradient-regressor`).
 
 use sciencekit_common::builders::SKBuilder;
-use sciencekit_common::{SKBackendKind, SKError, SKExecutionMode, SKSupervisedFit};
+use sciencekit_common::{
+    SKBackendKind, SKError, SKExecutionMode, SKRegressorPredictor, SKSupervisedFit,
+};
 
 use super::SKSGDRegressor;
 use crate::sgd::{SKConvergencePolicy, SKSGDLearningRate, SKSGDPenalty, SKSGDRegressorLoss};
@@ -165,4 +167,34 @@ fn configuration_flows_into_the_model() {
     assert!(model.average());
     assert_eq!(model.backend(), SKBackendKind::MatrixMultiply);
     assert!(model.epochs_taken() > 0);
+}
+
+#[test]
+fn the_same_seed_reproduces_and_the_model_serves_threads() {
+    let (features, targets) = regression_design();
+    let first = SKSGDRegressor::<f64>::build()
+        .convergence_policy(SKConvergencePolicy::Permissive)
+        .build()
+        .unwrap()
+        .fit(features.view(), targets.view())
+        .unwrap();
+    let second = SKSGDRegressor::<f64>::build()
+        .convergence_policy(SKConvergencePolicy::Permissive)
+        .build()
+        .unwrap()
+        .fit(features.view(), targets.view())
+        .unwrap();
+    assert_eq!(first.coefficients(), second.coefficients());
+    let expected = first.predict(features.view()).unwrap();
+    std::thread::scope(|scope| {
+        let model = &first;
+        let features = features.view();
+        let expected = &expected;
+        for _ in 0..4 {
+            scope.spawn(move || {
+                let predicted = model.predict(features).unwrap();
+                assert_eq!(&predicted, expected);
+            });
+        }
+    });
 }

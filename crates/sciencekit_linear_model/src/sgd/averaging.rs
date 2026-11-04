@@ -27,6 +27,7 @@ impl<F: SKFloat> SKAveragedIterate<F> {
     }
 
     /// Restore an average from its persisted parts, continuing its counter.
+    #[cfg(test)]
     pub(crate) fn from_parts(weights: Array1<F>, intercept: F, count: usize) -> Self {
         Self {
             weights,
@@ -56,6 +57,7 @@ impl<F: SKFloat> SKAveragedIterate<F> {
     }
 
     /// The number of iterates folded into the mean.
+    #[cfg(test)]
     pub(crate) fn count(&self) -> usize {
         self.count
     }

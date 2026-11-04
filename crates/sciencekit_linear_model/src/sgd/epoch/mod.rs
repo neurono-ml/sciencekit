@@ -9,13 +9,9 @@ mod dense;
 mod indexed;
 mod sparse;
 
-// The drivers are consumed by the estimators in the same change, but not by
-// the substrate's own non-test build yet.
-#[allow(unused_imports)]
+// The drivers are consumed by the estimators in this change.
 pub(crate) use batch::sk_run_batch_epoch;
-#[allow(unused_imports)]
 pub(crate) use dense::sk_run_dense_epoch;
-#[allow(unused_imports)]
 pub(crate) use sparse::sk_run_sparse_epoch;
 
 #[cfg(test)]

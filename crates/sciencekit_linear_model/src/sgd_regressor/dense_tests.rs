@@ -171,33 +171,3 @@ fn an_f32_fit_predicts() {
         0.05,
     );
 }
-
-#[test]
-fn the_same_seed_reproduces_and_the_model_serves_threads() {
-    let (features, targets) = regression_design();
-    let first = SKSGDRegressor::<f64>::build()
-        .convergence_policy(SKConvergencePolicy::Permissive)
-        .build()
-        .unwrap()
-        .fit(features.view(), targets.view())
-        .unwrap();
-    let second = SKSGDRegressor::<f64>::build()
-        .convergence_policy(SKConvergencePolicy::Permissive)
-        .build()
-        .unwrap()
-        .fit(features.view(), targets.view())
-        .unwrap();
-    assert_eq!(first.coefficients(), second.coefficients());
-    let expected = first.predict(features.view()).unwrap();
-    std::thread::scope(|scope| {
-        let model = &first;
-        let features = features.view();
-        let expected = &expected;
-        for _ in 0..4 {
-            scope.spawn(move || {
-                let predicted = model.predict(features).unwrap();
-                assert_eq!(&predicted, expected);
-            });
-        }
-    });
-}

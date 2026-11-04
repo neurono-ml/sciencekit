@@ -75,6 +75,7 @@ impl<F: SKFloat> SKLearningState<F> {
     }
 
     /// The number of iterates folded into the average (zero without averaging).
+    #[cfg(test)]
     pub(crate) fn average_count(&self) -> usize {
         self.average.as_ref().map_or(0, |average| average.count())
     }

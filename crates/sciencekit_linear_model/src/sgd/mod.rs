@@ -7,8 +7,6 @@
 //! its internal pieces are crate-visible while the loss catalogue, the schedule
 //! selection, the penalty selection and the convergence policy are public.
 
-#![allow(dead_code)]
-
 mod averaging;
 pub(crate) mod config;
 mod convergence;

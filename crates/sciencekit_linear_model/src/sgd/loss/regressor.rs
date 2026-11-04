@@ -101,10 +101,3 @@ impl<F: SKFloat> SKSGDLoss<F> for SKSGDRegressorLossAdapter<F> {
         F::nan()
     }
 }
-
-impl<F: SKFloat> SKSGDRegressorLossAdapter<F> {
-    /// The epsilon band the loss was bound to.
-    pub(crate) fn epsilon(&self) -> F {
-        self.epsilon
-    }
-}
