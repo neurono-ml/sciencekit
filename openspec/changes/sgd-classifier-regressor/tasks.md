@@ -80,11 +80,11 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
   classes). *(commit `feat(linear_model): add one-vs-rest multi-class fits to SKSGDClassifier`)*
 - [x] 3.7 Implement the per-head fitting and prediction.
 - [x] 3.8 Green: the multi-class suite passes.
-- [ ] 3.9 Red: companion tests for every classifier loss (separable exactness for `hinge` and
+- [x] 3.9 Red: companion tests for every classifier loss (separable exactness for `hinge` and
   `perceptron`, `squared_hinge` and `modified_huber` convergence, `log_loss` calibration,
   probabilities refused for non-probabilistic losses). *(commit
   `feat(linear_model): cover every classifier loss in SKSGDClassifier`)*
-- [ ] 3.10 Wire the loss catalogue through the fitting path and prediction.
+- [x] 3.10 Wire the loss catalogue through the fitting path and prediction.
 - [ ] 3.11 Red: companion tests for class weighting (`Balanced` improves minority recall,
   explicit weights in class order, negative rejected) and warm start (seeded refit starts
   from the source and never regresses within the same budget, misaligned source rejected).
