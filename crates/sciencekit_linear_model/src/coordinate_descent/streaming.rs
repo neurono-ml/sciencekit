@@ -2,8 +2,8 @@
 //! (spec `coordinate-descent-solver`, Decision 7).
 
 use sciencekit_common::{
-    SKBackendKind, SKError, SKExecutionContext, SKExecutionMode, SKExecutionPlan, SKFloat,
-    SKOperationAttributes, SKOperationKind, SKSupervisedBatch, SKSupervisedSourceProvider,
+    SKBackendKind, SKDataView, SKError, SKExecutionContext, SKExecutionMode, SKExecutionPlan,
+    SKFloat, SKOperationAttributes, SKOperationKind, SKSupervisedBatch, SKSupervisedSourceProvider,
     execution::{
         SKAccessPattern, SKStreamDecision, SKStreamingPassPolicy, sk_resolve_execution_plan,
         sk_run_supervised_streaming_provider,
@@ -102,25 +102,48 @@ impl<F: SKFloat> SKCoordinateDescentStreamAccumulator<F> {
     }
 
     fn accumulate(&mut self, batch: SKSupervisedBatch<F>) -> Result<(), SKError> {
-        let features = batch.view().as_dense()?;
+        let view = batch.view();
+        let (rows_count, columns_count) = match view {
+            SKDataView::Dense(features) => features.dim(),
+            SKDataView::Sparse(features) => (features.rows(), features.cols()),
+            _ => {
+                return Err(SKError::UnsupportedRepresentation {
+                    representation: "unknown",
+                    suggestion: "convert the features to a dense matrix or a CSR matrix",
+                });
+            }
+        };
         let targets = batch.targets();
-        if features.nrows() == 0 {
+        if rows_count == 0 {
             return Ok(());
         }
-        if targets.len() != features.nrows() {
+        if targets.len() != rows_count {
             return Err(SKError::ShapeMismatch {
-                expected: vec![features.nrows()],
+                expected: vec![rows_count],
                 found: vec![targets.len()],
             });
         }
-        let columns_count = self.state.columns_count();
-        if columns_count != 0 && columns_count != features.ncols() {
+        let accumulated_columns = self.state.columns_count();
+        if accumulated_columns != 0 && accumulated_columns != columns_count {
             return Err(SKError::ShapeMismatch {
-                expected: vec![columns_count],
-                found: vec![features.ncols()],
+                expected: vec![accumulated_columns],
+                found: vec![columns_count],
             });
         }
-        self.state.accumulate_dense(features, targets);
+        match view {
+            SKDataView::Dense(features) => {
+                if matches!(self.state, SKCoordinateDescentState::Sparse { .. }) {
+                    self.state.accumulate_dense_into_sparse(features, targets);
+                } else {
+                    self.state.accumulate_dense(features, targets);
+                }
+            }
+            SKDataView::Sparse(features) => {
+                self.state.ensure_sparse();
+                self.state.accumulate_sparse(features, targets);
+            }
+            _ => unreachable!("the shape check rejected every other representation"),
+        }
         Ok(())
     }
 }

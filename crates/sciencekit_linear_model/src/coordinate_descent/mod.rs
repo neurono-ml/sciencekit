@@ -12,6 +12,7 @@ mod fit;
 mod screening;
 mod solution;
 mod solver;
+mod sparse_accumulation;
 mod streaming;
 
 pub(crate) use config::SKCoordinateDescentConfig;
@@ -28,5 +29,7 @@ mod config_tests;
 mod screening_tests;
 #[cfg(test)]
 mod solver_tests;
+#[cfg(test)]
+mod sparse_streaming_tests;
 #[cfg(test)]
 pub(crate) mod test_datasets;

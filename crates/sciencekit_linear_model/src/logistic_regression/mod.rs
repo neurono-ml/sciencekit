@@ -15,4 +15,6 @@ pub use model::SKLogisticRegressionModel;
 #[cfg(test)]
 mod logistic_regression_tests;
 #[cfg(test)]
+mod sparse_streaming_tests;
+#[cfg(test)]
 mod streaming_tests;

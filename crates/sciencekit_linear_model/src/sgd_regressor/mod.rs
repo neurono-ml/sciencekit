@@ -36,6 +36,8 @@ mod partial_fit_tests;
 #[cfg(test)]
 mod penalties_tests;
 #[cfg(test)]
+mod sparse_streaming_tests;
+#[cfg(test)]
 mod sparse_tests;
 #[cfg(test)]
 mod streaming_policy_tests;
