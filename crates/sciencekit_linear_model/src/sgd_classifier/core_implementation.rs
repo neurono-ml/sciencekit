@@ -87,7 +87,7 @@ impl<F: SKFloat> SKSupervisedFit<F> for SKSGDClassifier<F> {
         let target = targets.try_into()?;
         let (class_indices, classes) = sk_canonicalize_classifier_targets(target)?;
         sk_validate_number_of_classes(&classes)?;
-        let (rows_count, columns_count) = dimensions(&data);
+        let (rows_count, columns_count) = sk_dimensions(&data)?;
         sk_validate_shape(rows_count, columns_count, class_indices.len())?;
         let execution_intent = self.execution_intent();
         let attributes = SKOperationAttributes {
@@ -134,11 +134,19 @@ impl<F: SKFloat> SKSupervisedFit<F> for SKSGDClassifier<F> {
 }
 
 /// The row and column counts of a feature view.
-fn dimensions<F>(data: &SKDataView<'_, F>) -> (usize, usize) {
+pub(crate) fn sk_dimensions<F>(data: &SKDataView<'_, F>) -> Result<(usize, usize), SKError> {
     match data {
-        SKDataView::Dense(dense) => dense.dim(),
-        SKDataView::Sparse(sparse) => (sparse.rows(), sparse.cols()),
-        _ => (0, 0),
+        SKDataView::Dense(dense) => Ok(dense.dim()),
+        SKDataView::Sparse(sparse) => Ok((sparse.rows(), sparse.cols())),
+        _ => Err(sk_unsupported_representation(data.representation())),
+    }
+}
+
+/// The error for a representation the estimator cannot consume.
+pub(crate) fn sk_unsupported_representation(representation: &'static str) -> SKError {
+    SKError::UnsupportedRepresentation {
+        representation,
+        suggestion: "use a dense matrix or a CSR matrix as the features",
     }
 }
 
