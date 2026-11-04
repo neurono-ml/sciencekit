@@ -18,6 +18,8 @@ pub use core_implementation::SKSGDRegressor;
 pub use model::SKSGDRegressorModel;
 
 #[cfg(test)]
+mod builder_epsilon_tests;
+#[cfg(test)]
 mod builder_tests;
 #[cfg(test)]
 mod dense_tests;

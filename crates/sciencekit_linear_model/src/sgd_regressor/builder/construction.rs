@@ -60,6 +60,12 @@ impl<F: SKFloat> SKBuilder<SKSGDRegressor<F>> for SKSGDRegressorBuilder<F> {
             self.epsilon >= F::zero() && self.epsilon.is_finite(),
             "must be non-negative and finite",
         )?;
+        sk_validate_hyperparameter(
+            "epsilon",
+            self.loss != SKSGDRegressorLoss::Huber || self.epsilon > F::zero(),
+            "must be positive for the huber loss",
+        )?;
+
         Ok(SKSGDRegressor {
             plan: self.state,
             config: self.config,
