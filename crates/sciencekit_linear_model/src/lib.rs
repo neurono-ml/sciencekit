@@ -33,4 +33,6 @@ pub mod sgd_regressor;
 pub use sgd::SKConvergencePolicy;
 
 #[cfg(test)]
+pub(crate) mod sparse_streaming_test_datasets;
+#[cfg(test)]
 pub(crate) mod test_datasets;

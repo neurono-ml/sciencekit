@@ -10,7 +10,7 @@ pub mod model;
 mod fitting_logic;
 mod gram;
 mod solving;
-mod sparse;
+pub(crate) mod sparse;
 mod streaming;
 
 pub use builder::{SKIntoRidgeAlphas, SKRidgeBuilder, SKRidgeSolver};
@@ -27,6 +27,8 @@ mod ridge_tests;
 mod solver_tests;
 #[cfg(test)]
 mod sparse_prediction_tests;
+#[cfg(test)]
+mod sparse_streaming_tests;
 #[cfg(test)]
 mod sparse_test_datasets;
 #[cfg(test)]

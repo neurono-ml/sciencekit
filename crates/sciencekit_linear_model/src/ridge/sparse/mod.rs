@@ -6,7 +6,7 @@ mod cg;
 mod normal_equation_operator;
 mod solve;
 
-pub(super) use normal_equation_operator::{
+pub(crate) use normal_equation_operator::{
     sk_csr_column_sums, sk_csr_transpose_vector_product, sk_sparse_gram,
 };
 pub(super) use solve::solve_sparse_ridge;
