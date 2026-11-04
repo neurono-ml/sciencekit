@@ -30,11 +30,11 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
   honored only by `ElasticNet`). *(commit `feat(linear_model): add the sgd configuration and proximal penalty`)*
 - [x] 2.4 Implement `config.rs` (validation) and `penalty.rs` (the L2 gradient term and the
   L1 soft-threshold, intercept never penalized).
-- [ ] 2.5 Red: companion tests for the learning-rate schedules (constant, inverse scaling
+- [x] 2.5 Red: companion tests for the learning-rate schedules (constant, inverse scaling
   monotone decay, optimal asymptotic form, adaptive halving on a plateau, optimal rejects
   zero alpha, the counter continues across incremental calls). *(commit
   `feat(linear_model): add the sgd learning-rate schedules`)*
-- [ ] 2.6 Implement `learning_rate/`.
+- [x] 2.6 Implement `learning_rate/`.
 - [ ] 2.7 Red: companion tests for the seeded shuffler (same seed same order, different seeds
   differ, empty/single row, index range covers every row exactly once, dense and CSR orders
   agree) and for the averaged iterate (running mean equals the explicit mean of visited
