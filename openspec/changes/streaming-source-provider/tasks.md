@@ -29,16 +29,16 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 
 ## 3. Preprocessing estimators
 
-- [ ] 3.1 Red: companion tests for `SKStandardScaler`, `SKMinMaxScaler` and
+- [x] 3.1 Red: companion tests for `SKStandardScaler`, `SKMinMaxScaler` and
   `SKRobustScaler` streaming from a reopenable provider (the model equals the dense fit on
   the concatenated data; exactly one pass is taken and the statistics are not double
   counted). *(commit `refactor(preprocessing): stream the scalers over source providers`)*
-- [ ] 3.2 Migrate the three scalers' `fit_streaming` to the provider seam.
-- [ ] 3.3 Red: companion tests for `SKPolynomialFeatures` streaming from a reopenable
+- [x] 3.2 Migrate the three scalers' `fit_streaming` to the provider seam.
+- [x] 3.3 Red: companion tests for `SKPolynomialFeatures` streaming from a reopenable
   provider (equals the dense fit, one pass). *(commit
   `refactor(preprocessing): stream polynomial features over source providers`)*
-- [ ] 3.4 Migrate `SKPolynomialFeatures`.
-- [ ] 3.5 Green: the preprocessing suites pass and the existing one-shot call shape compiles
+- [x] 3.4 Migrate `SKPolynomialFeatures`.
+- [x] 3.5 Green: the preprocessing suites pass and the existing one-shot call shape compiles
   unchanged.
 
 ## 4. Imputation estimators
