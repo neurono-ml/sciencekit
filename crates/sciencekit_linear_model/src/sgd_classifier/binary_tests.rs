@@ -5,6 +5,7 @@ use sciencekit_common::builders::SKBuilder;
 use sciencekit_common::{SKClassifierPredictor, SKError, SKSupervisedFit};
 
 use super::SKSGDClassifier;
+use crate::sgd::SKConvergencePolicy;
 use crate::test_datasets::{assert_close, labels_i64, separable_binary_design, to_csr, to_f32};
 
 #[test]
@@ -82,6 +83,17 @@ fn nominal_labels_round_trip() {
         .unwrap();
     assert_eq!(model.classes().label_of(0), Some("no"));
     assert_eq!(model.classes().label_of(1), Some("yes"));
+    let predicted = model.predict_labels(features.view()).unwrap();
+    let round_tripped: Vec<&str> = predicted
+        .iter()
+        .map(|&index| {
+            model
+                .classes()
+                .label_of(index as usize)
+                .expect("every predicted index is in the class table")
+        })
+        .collect();
+    assert_eq!(round_tripped, labels);
 }
 
 #[test]
@@ -113,6 +125,31 @@ fn a_label_count_mismatch_is_rejected() {
         .fit(features.view(), labels.view())
         .unwrap_err();
     assert!(matches!(error, SKError::ShapeMismatch { .. }));
+}
+
+#[test]
+fn the_policy_decides_what_an_exhausted_budget_does() {
+    let (features, raw) = separable_binary_design();
+    let labels = labels_i64(&raw);
+    let strict = SKSGDClassifier::<f64>::build()
+        .shuffle(false)
+        .maximum_number_of_iterations(2)
+        .build()
+        .unwrap()
+        .fit(features.view(), labels.view())
+        .unwrap_err();
+    assert!(matches!(strict, SKError::NotConverged { iterations } if iterations == 2));
+
+    let permissive = SKSGDClassifier::<f64>::build()
+        .shuffle(false)
+        .maximum_number_of_iterations(2)
+        .convergence_policy(SKConvergencePolicy::Permissive)
+        .build()
+        .unwrap()
+        .fit(features.view(), labels.view())
+        .unwrap();
+    assert!(!permissive.converged());
+    assert_eq!(permissive.epochs_taken(), 2);
 }
 
 #[test]

@@ -48,21 +48,44 @@ fn balanced_improves_the_minority_class() {
 fn explicit_weights_are_applied_in_class_order() {
     let (features, raw) = imbalanced_binary_design();
     let labels = labels_i64(&raw);
-    let plain = SKSGDClassifier::<f64>::build()
-        .shuffle(false)
-        .convergence_policy(SKConvergencePolicy::Permissive)
-        .build()
-        .unwrap()
-        .fit(features.view(), labels.view())
-        .unwrap();
-    let uniform = SKSGDClassifier::<f64>::build()
-        .class_weight(SKClassWeight::Explicit(vec![1.0, 1.0]))
-        .shuffle(false)
-        .convergence_policy(SKConvergencePolicy::Permissive)
-        .build()
-        .unwrap()
-        .fit(features.view(), labels.view())
-        .unwrap();
+    // Nine samples of class 0 and two of class 1: the balanced weights are
+    // 11 / (2 · 9) and 11 / (2 · 2), in that order.
+    let balanced_weight = 11.0 / 18.0;
+    let minority_weight = 2.75;
+    let fit = |class_weight: SKClassWeight<f64>| {
+        SKSGDClassifier::<f64>::build()
+            .class_weight(class_weight)
+            .shuffle(false)
+            .convergence_policy(SKConvergencePolicy::Permissive)
+            .build()
+            .unwrap()
+            .fit(features.view(), labels.view())
+            .unwrap()
+    };
+    let balanced = fit(SKClassWeight::Balanced);
+    let explicit = fit(SKClassWeight::Explicit(vec![
+        balanced_weight,
+        minority_weight,
+    ]));
+    assert_close(
+        explicit.coefficients().as_slice().unwrap(),
+        balanced.coefficients().as_slice().unwrap(),
+        1e-12,
+    );
+    let reversed = fit(SKClassWeight::Explicit(vec![
+        minority_weight,
+        balanced_weight,
+    ]));
+    assert!(
+        reversed
+            .coefficients()
+            .iter()
+            .zip(explicit.coefficients().iter())
+            .any(|(left, right)| (left - right).abs() > 1e-9),
+        "swapping the class weights must change the fit"
+    );
+    let plain = fit(SKClassWeight::None);
+    let uniform = fit(SKClassWeight::Explicit(vec![1.0, 1.0]));
     assert_close(
         plain.coefficients().as_slice().unwrap(),
         uniform.coefficients().as_slice().unwrap(),

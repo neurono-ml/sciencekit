@@ -147,6 +147,30 @@ fn a_converged_fit_reports_its_epochs() {
 }
 
 #[test]
+fn the_policy_decides_what_an_exhausted_budget_does() {
+    let (features, targets) = regression_design();
+    let strict = SKSGDRegressor::<f64>::build()
+        .shuffle(false)
+        .maximum_number_of_iterations(2)
+        .build()
+        .unwrap()
+        .fit(features.view(), targets.view())
+        .unwrap_err();
+    assert!(matches!(strict, SKError::NotConverged { iterations } if iterations == 2));
+
+    let permissive = SKSGDRegressor::<f64>::build()
+        .shuffle(false)
+        .maximum_number_of_iterations(2)
+        .convergence_policy(SKConvergencePolicy::Permissive)
+        .build()
+        .unwrap()
+        .fit(features.view(), targets.view())
+        .unwrap();
+    assert!(!permissive.converged());
+    assert_eq!(permissive.epochs_taken(), 2);
+}
+
+#[test]
 fn an_f32_fit_predicts() {
     let (features, targets) = regression_design();
     let features = to_f32(&features);

@@ -82,6 +82,34 @@ fn log_loss_is_calibrated_and_normalized() {
 }
 
 #[test]
+fn modified_huber_produces_normalized_probabilities() {
+    let (features, raw) = separable_binary_design();
+    let labels = labels_i64(&raw);
+    let model = SKSGDClassifier::<f64>::build()
+        .loss(SKSGDClassifierLoss::ModifiedHuber)
+        .convergence_policy(SKConvergencePolicy::Permissive)
+        .build()
+        .unwrap()
+        .fit(features.view(), labels.view())
+        .unwrap();
+    let probabilities = model.predict_probabilities(features.view()).unwrap();
+    assert_eq!(probabilities.dim(), (6, 2));
+    for row in probabilities.rows() {
+        assert!(row.iter().all(|&value| (0.0..=1.0).contains(&value)));
+        assert!((row.sum() - 1.0).abs() < 1e-9);
+    }
+    let predicted = model.predict_labels(features.view()).unwrap();
+    for row in 0..probabilities.nrows() {
+        let best = if probabilities[[row, 1]] >= probabilities[[row, 0]] {
+            1
+        } else {
+            0
+        };
+        assert_eq!(predicted[row], best);
+    }
+}
+
+#[test]
 fn probabilities_are_refused_for_non_probabilistic_losses() {
     let (features, raw) = separable_binary_design();
     let labels = labels_i64(&raw);

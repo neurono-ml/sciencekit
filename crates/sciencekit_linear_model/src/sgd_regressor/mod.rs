@@ -26,6 +26,8 @@ mod dense_tests;
 #[cfg(test)]
 mod early_stopping_tests;
 #[cfg(test)]
+mod large_data_tests;
+#[cfg(test)]
 mod losses_tests;
 #[cfg(test)]
 mod partial_fit_tests;

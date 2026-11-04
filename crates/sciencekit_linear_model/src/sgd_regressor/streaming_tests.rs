@@ -98,6 +98,46 @@ fn an_f32_stream_fits() {
 }
 
 #[test]
+fn a_many_batch_stream_is_consumed_in_one_pass() {
+    // The streaming driver binds one batch at a time and never stores a
+    // trajectory, so a long source must be exactly one in-memory epoch in the
+    // same order. Retention is a structural property (the driver holds only the
+    // current batch); this test observes the resulting one-pass contract.
+    let rows = 64;
+    let features = Array2::from_shape_fn((rows, 2), |(row, column)| {
+        ((row * (column + 3)) % 17) as f64 / 17.0
+    });
+    let targets = Array1::from_shape_fn(rows, |row| {
+        let x0 = ((row * 3) % 17) as f64 / 17.0;
+        let x1 = ((row * 4) % 17) as f64 / 17.0;
+        3.0 * x0 + 2.0 * x1
+    });
+    let in_memory = permissive_single_epoch()
+        .fit(features.view(), targets.view())
+        .unwrap();
+    let batches = (0..rows)
+        .map(|row| {
+            (
+                features.slice(ndarray::s![row..row + 1, ..]).to_owned(),
+                targets.slice(ndarray::s![row..row + 1]).to_owned(),
+            )
+        })
+        .collect();
+    let mut source = SKSupervisedFloatSource::new(batches);
+    let streamed = permissive_single_epoch()
+        .fit_streaming(&mut source)
+        .unwrap();
+    assert_close(
+        in_memory.coefficients().as_slice().unwrap(),
+        streamed.coefficients().as_slice().unwrap(),
+        1e-9,
+    );
+    assert_close(&[in_memory.intercept()], &[streamed.intercept()], 1e-9);
+    assert_eq!(streamed.epochs_taken(), 1);
+    assert!(!streamed.converged());
+}
+
+#[test]
 fn an_empty_source_is_rejected() {
     let mut source = SKSupervisedFloatSource::<f64>::new(Vec::new());
     let error = SKSGDRegressor::<f64>::build()
