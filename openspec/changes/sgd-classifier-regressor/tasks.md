@@ -6,15 +6,15 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 
 ## 1. Shared class weighting and the central error variant
 
-- [ ] 1.1 Red: companion tests for the relocated `SKClassWeight` (`None`, `Balanced`,
+- [x] 1.1 Red: companion tests for the relocated `SKClassWeight` (`None`, `Balanced`,
   explicit, wrong length, negative rejected, all-zero rejected) and for
   `SKError::UnsupportedOperation` (the message names the operation and the reason).
   *(commit `refactor(linear_model): share the class-weighting policy and add UnsupportedOperation`)*
-- [ ] 1.2 Move `SKClassWeight` and `sk_expand_class_weights` into
+- [x] 1.2 Move `SKClassWeight` and `sk_expand_class_weights` into
   `crates/sciencekit_linear_model/src/class_weight/`, re-export it from `logistic` so
   `logistic::SKClassWeight` keeps resolving, and add the `UnsupportedOperation` variant to
   `sciencekit_common`'s central enum.
-- [ ] 1.3 Green: the existing logistic suite passes unchanged and the new companion tests pass.
+- [x] 1.3 Green: the existing logistic suite passes unchanged and the new companion tests pass.
 
 ## 2. Stochastic-gradient substrate (`crates/sciencekit_linear_model/src/sgd/`)
 
