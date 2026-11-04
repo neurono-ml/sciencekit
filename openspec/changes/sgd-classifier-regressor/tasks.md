@@ -103,11 +103,11 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 - [x] 4.4 `SKSGDRegressorModel<F>` (accessors including `converged()` and `epochs_taken()`,
   and the `SKRegressorPredictor<F>` impl).
 - [x] 4.5 Green: dense fit/predict behaves per spec.
-- [ ] 4.6 Red: companion tests for the robust and insensitive losses (large epsilon huber ≡
+- [x] 4.6 Red: companion tests for the robust and insensitive losses (large epsilon huber ≡
   squared error, insensitive band keeps the start, huber resists an outlier better than
   squared error, epsilon zero insensitive approaches absolute error). *(commit
   `feat(linear_model): cover the huber and insensitive losses in SKSGDRegressor`)*
-- [ ] 4.7 Wire the regressor loss catalogue through fitting.
+- [x] 4.7 Wire the regressor loss catalogue through fitting.
 - [ ] 4.8 Red: companion tests for convergence to OLS (`squared_error`, `alpha(0.0)`,
   generous budget, agreement with `SKLinearRegression`) and for the L1/L2/ElasticNet
   penalties on the regressor. *(commit `feat(linear_model): add the penalty portfolio and OLS convergence to SKSGDRegressor`)*
