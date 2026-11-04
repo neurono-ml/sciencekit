@@ -64,15 +64,15 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 
 ## 6. Stochastic estimators: multi-epoch streaming
 
-- [ ] 6.1 Red: companion tests for `SKSGDClassifier` and `SKSGDRegressor` streaming from a
+- [x] 6.1 Red: companion tests for `SKSGDClassifier` and `SKSGDRegressor` streaming from a
   reopenable provider (the streamed fit with the same budget equals the in-memory fit within
   tolerance; a one-shot provider still takes one pass; `epochs_taken()` and `converged()`
   report the truth). *(commit
   `feat(linear_model): run multi-epoch sgd fits over reopenable sources`)*
-- [ ] 6.2 Migrate both SGD streaming drivers and remove the one-pass limitation from their
+- [x] 6.2 Migrate both SGD streaming drivers and remove the one-pass limitation from their
   specs (amend `sgd-classifier-regressor` in place if still open; otherwise add the delta
   here once it archives).
-- [ ] 6.3 Green: streamed and in-memory SGD fits agree under a fixed seed.
+- [x] 6.3 Green: streamed and in-memory SGD fits agree under a fixed seed.
 
 ## 7. Categorical streaming seam
 
