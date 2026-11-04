@@ -6,15 +6,15 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 
 ## 1. Provider contract (`sciencekit_common/src/batching/provider/`)
 
-- [ ] 1.1 Red: companion tests for the feature-only and supervised providers (a concrete
+- [x] 1.1 Red: companion tests for the feature-only and supervised providers (a concrete
   source reports itself as not reopenable and yields once; a reopenable factory is invoked
   once per pass; a factory error propagates; both families agree on passes and order).
   *(commit `feat(common): add the streaming source provider contract`)*
-- [ ] 1.2 Implement `SKSourceProvider<F>` and `SKSupervisedSourceProvider<F>` (GAT source,
+- [x] 1.2 Implement `SKSourceProvider<F>` and `SKSupervisedSourceProvider<F>` (GAT source,
   `IS_REOPENABLE`, fallible `open`).
-- [ ] 1.3 Implement the residual `&mut S` provider for both families and
+- [x] 1.3 Implement the residual `&mut S` provider for both families and
   `SKReopenableSource<G>` for both, exporting them from the crate root.
-- [ ] 1.4 Green: the provider suite passes on both floats.
+- [x] 1.4 Green: the provider suite passes on both floats.
 
 ## 2. Streaming executor over providers
 
