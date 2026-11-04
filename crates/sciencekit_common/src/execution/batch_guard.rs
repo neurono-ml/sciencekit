@@ -11,6 +11,11 @@ use crate::SKError;
 /// — the stored buffers for a sparse block, not its dense `rows × columns`
 /// figure — so a sparse stream is accepted whenever its actual representation
 /// fits even if a hypothetical dense copy would not.
+///
+/// The factor of `2` encodes the current double-buffer contract, with
+/// [`buffer_depth`](super::SKExecutionPlan::buffer_depth) pinned to `1`: one
+/// batch computes while one is resident. Raising the depth must scale this
+/// factor to `(depth + 1) ×`.
 pub fn sk_check_batch_buffer_guard(
     batch_byte_size: usize,
     available_memory_bytes: u64,
