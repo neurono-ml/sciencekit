@@ -170,5 +170,5 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
   `SUMMARY.md`, walking through the per-sample update, the loss catalogue, the schedules,
   averaging, early stopping and the streaming regime — including the `maintaining.md`
   pointer.
-- [ ] 9.3 Independent-review fixes: address every finding (spec conformance, numerics,
+- [x] 9.3 Independent-review fixes: address every finding (spec conformance, numerics,
   convergence criteria, representation dispatch, naming, test coverage) and re-run the gates.
