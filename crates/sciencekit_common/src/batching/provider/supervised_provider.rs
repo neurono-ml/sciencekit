@@ -14,8 +14,15 @@ use super::super::SKSupervisedLazySource;
 /// [`SKReopenableSource`](super::SKReopenableSource) wraps a factory and opens a
 /// fresh source per pass.
 pub trait SKSupervisedSourceProvider<F> {
+    /// The iteration error of every source this provider opens.
+    ///
+    /// The executor maps it into the central [`SKError`] to report a read
+    /// failure, so it must convert into the taxonomy. The source trait itself
+    /// keeps only the opposite direction ([`SKSupervisedLazySource::Error`]).
+    type Error: Into<SKError>;
+
     /// The source opened for one pass.
-    type Source<'pass>: SKSupervisedLazySource<F> + Send
+    type Source<'pass>: SKSupervisedLazySource<F, Error = Self::Error> + Send
     where
         Self: 'pass;
 
@@ -31,7 +38,10 @@ pub trait SKSupervisedSourceProvider<F> {
 impl<F, Source> SKSupervisedSourceProvider<F> for &mut Source
 where
     Source: SKSupervisedLazySource<F> + Send,
+    Source::Error: Into<SKError>,
 {
+    type Error = Source::Error;
+
     type Source<'pass>
         = &'pass mut Source
     where

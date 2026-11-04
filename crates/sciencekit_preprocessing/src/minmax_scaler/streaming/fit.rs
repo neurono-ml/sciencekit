@@ -67,7 +67,7 @@ impl<F: SKFloat> SKMinMaxScaler<F> {
     fn fit_collected<S>(&self, source: &mut S) -> Result<SKMinMaxScalerModel<F>, SKError>
     where
         S: SKLazySource<F> + Send,
-        S::Error: From<SKError> + Into<SKError>,
+        S::Error: Into<SKError>,
     {
         let mut batches: Vec<Array2<F>> = Vec::new();
         let mut columns_count = None;

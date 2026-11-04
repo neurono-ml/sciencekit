@@ -14,8 +14,15 @@ use super::super::SKLazySource;
 /// trait without dynamic dispatch: the one-shot implementation returns a
 /// reborrow of the source, the reopenable implementation an owned source.
 pub trait SKSourceProvider<F> {
+    /// The iteration error of every source this provider opens.
+    ///
+    /// The executor maps it into the central [`SKError`] to report a read
+    /// failure, so it must convert into the taxonomy. The source trait itself
+    /// keeps only the opposite direction ([`SKLazySource::Error`]).
+    type Error: Into<SKError>;
+
     /// The source opened for one pass.
-    type Source<'pass>: SKLazySource<F> + Send
+    type Source<'pass>: SKLazySource<F, Error = Self::Error> + Send
     where
         Self: 'pass;
 
@@ -31,7 +38,10 @@ pub trait SKSourceProvider<F> {
 impl<F, Source> SKSourceProvider<F> for &mut Source
 where
     Source: SKLazySource<F> + Send,
+    Source::Error: Into<SKError>,
 {
+    type Error = Source::Error;
+
     type Source<'pass>
         = &'pass mut Source
     where

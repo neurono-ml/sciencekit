@@ -27,8 +27,11 @@ impl<Factory> SKReopenableSource<Factory> {
 impl<F, Source, Factory> SKSourceProvider<F> for SKReopenableSource<Factory>
 where
     Source: SKLazySource<F> + Send,
+    Source::Error: Into<SKError>,
     Factory: FnMut() -> Result<Source, SKError>,
 {
+    type Error = Source::Error;
+
     type Source<'pass>
         = Source
     where
@@ -44,8 +47,11 @@ where
 impl<F, Source, Factory> SKSupervisedSourceProvider<F> for SKReopenableSource<Factory>
 where
     Source: SKSupervisedLazySource<F> + Send,
+    Source::Error: Into<SKError>,
     Factory: FnMut() -> Result<Source, SKError>,
 {
+    type Error = Source::Error;
+
     type Source<'pass>
         = Source
     where

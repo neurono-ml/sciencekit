@@ -73,7 +73,7 @@ impl SKLinearRegression {
     where
         F: SKFloat,
         S: SKSupervisedLazySource<F> + Send,
-        S::Error: From<SKError> + Into<SKError>,
+        S::Error: Into<SKError>,
         F: SKBackendSelection,
     {
         use sciencekit_common::SKSupervisedFit;

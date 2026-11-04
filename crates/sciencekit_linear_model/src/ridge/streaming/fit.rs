@@ -72,7 +72,7 @@ impl<F: SKBackendSelection> SKRidge<F> {
     fn fit_collected<S>(&self, source: &mut S) -> Result<SKRidgeModel<F>, SKError>
     where
         S: SKSupervisedLazySource<F> + Send,
-        S::Error: From<SKError> + Into<SKError>,
+        S::Error: Into<SKError>,
     {
         use sciencekit_common::SKSupervisedFit;
         let mut feature_batches: Vec<Array2<F>> = Vec::new();

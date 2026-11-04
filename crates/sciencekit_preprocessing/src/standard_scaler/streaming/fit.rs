@@ -69,7 +69,7 @@ impl SKStandardScaler {
     where
         F: SKFloat,
         S: SKLazySource<F> + Send,
-        S::Error: From<SKError> + Into<SKError>,
+        S::Error: Into<SKError>,
     {
         let mut batches: Vec<Array2<F>> = Vec::new();
         let mut columns_count = None;
