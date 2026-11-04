@@ -11,7 +11,7 @@ use sciencekit_math::sk_csr_dense_product;
 use super::SKLogisticRegressionModel;
 use crate::logistic::objective::{sk_sigmoid, sk_softmax};
 use crate::logistic::resolution::SKResolvedMultiClass;
-use crate::logistic_regression::core_implementation::sk_dimensions;
+use crate::logistic_regression::validation::sk_dimensions;
 
 impl<F: SKFloat> SKLogisticRegressionModel<F> {
     /// The linear decision function, one column per head.

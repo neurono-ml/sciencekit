@@ -32,7 +32,7 @@ use crate::sgd::{
 /// for the missing budget. Every class must appear in the first non-empty batch.
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn sk_fit_streaming<F, Provider>(
-    provider: Provider,
+    mut provider: Provider,
     config: &SKSGDConfig<F>,
     loss: SKSGDClassifierLoss,
     class_weight: &SKClassWeight<F>,
@@ -60,7 +60,6 @@ where
     };
     sk_run_operation(attributes, || {
         let plan = sk_resolve_streaming_plan()?;
-        let mut provider = provider;
         let mut state = SKClassifierStreamState {
             config,
             loss,

@@ -31,7 +31,7 @@ use crate::sgd::{
 /// for the missing budget.
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn sk_fit_streaming<F, Provider>(
-    provider: Provider,
+    mut provider: Provider,
     config: &SKSGDConfig<F>,
     loss: SKSGDRegressorLoss,
     epsilon: F,
@@ -59,7 +59,6 @@ where
     };
     sk_run_operation(attributes, || {
         let plan = sk_resolve_streaming_plan()?;
-        let mut provider = provider;
         let mut state = SKRegressorStreamState {
             config,
             loss,

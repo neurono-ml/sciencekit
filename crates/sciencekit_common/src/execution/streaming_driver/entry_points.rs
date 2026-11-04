@@ -22,6 +22,9 @@ pub fn sk_run_streaming_driver<F, Source, State, Update>(
 where
     F: SKFloat + Send,
     Source: SKLazySource<F> + Send,
+    // Only `Into` is required by the provider residual implementation; the
+    // redundant `From` was kept for compatibility with callers whose concrete
+    // source errors are built by converting an `SKError` with `?`.
     Source::Error: From<SKError> + Into<SKError>,
     Update: Fn(SKDataBatch<F>, usize, &mut State) -> super::SKStreamDecision,
 {
@@ -49,6 +52,9 @@ pub fn sk_run_supervised_streaming_driver<F, Source, State, Update>(
 where
     F: SKFloat + Send,
     Source: SKSupervisedLazySource<F> + Send,
+    // Only `Into` is required by the provider residual implementation; the
+    // redundant `From` was kept for compatibility with callers whose concrete
+    // source errors are built by converting an `SKError` with `?`.
     Source::Error: From<SKError> + Into<SKError>,
     Update: Fn(SKSupervisedBatch<F>, usize, &mut State) -> super::SKStreamDecision,
 {

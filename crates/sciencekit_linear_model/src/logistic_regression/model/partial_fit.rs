@@ -11,7 +11,7 @@ use sprs::{CsMat, TriMat};
 use super::SKLogisticRegressionModel;
 use crate::logistic::SKLogisticState;
 use crate::logistic::sk_canonicalize_against;
-use crate::logistic_regression::core_implementation::sk_dimensions;
+use crate::logistic_regression::validation::sk_dimensions;
 
 impl<F: SKFloat> SKLogisticRegressionModel<F> {
     /// Continue learning from one more batch, retaining the batch and re-solving
