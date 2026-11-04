@@ -11,16 +11,22 @@ streaming to a batch algorithm — it presents the estimator **as a state machin
 in-memory fit is simply the degenerate case of one batch carrying everything**, exactly the
 "one formulation, two regimes" principle from the Tutorials index.
 
+> **Note (Wave 2.5).** This tutorial was written as a design narrative before the
+> implementation landed. The shipped code uses **one update per sample**, all four schedules,
+> the full loss catalogue and a class table **frozen at fit time**; the code blocks below are
+> illustrative of the architecture, not verbatim API. The authoritative, code-grounded
+> account is [chapter 17](../development-explained/ch17-sgd-classifier-regressor.html).
+
 ## 1. Story & decisions
 
 | Decision | Chosen | Roads not taken — and why they are wrong here specifically |
 |---|---|---|
-| Update granularity per step | **mini-batch** (a whole `SKDataBatch` per `update`) | Pure online per-sample SGD (n=1) maximizes streaming purity but wastes the library's core competence: vectorized kernels over a batch. One `azip!`-shaped pass over a batch is what the CPU actually likes. |
-| In-memory path | The **same** batch update over one batch containing the full array | A separate closed-form/batch route would fork the semantics: two "fits" with answers that drift apart on ill-conditioned inputs — the exact problem the dual-regime principle exists to prevent. |
-| Learning-rate schedules | `constant` and `inverse_scaling` (ηₜ = η₀·t^−power_t); scikit-learn's `optimal` analyzed, not shipped | `optimal` ηₜ = 1/(α·(t+t₀)) comes with a *theory-installed* constant (per Bottou's fine-print in "SGD Tricks"), not a portable default; the honest move is to state why, cite it, and leave the door open. §2.1 details it. |
-| Losses | Regressor: squared error. Classifier: log-loss. Regularization: L2 (ridge, λ) | Huber loss is the honest loss for outliers but adds scale-parameter bookkeeping this introductory chapter should not carry; it stays a documented extension. λ = 0 is legal here — the builder accepts it — with one note: a fully quadratic, unregularized problem already has a better home in [SKLinearRegression](adding-a-linear-model.md). |
+| Update granularity per step | **one sample per update**, wrapped in an epoch loop | Mini-batch updates would vectorize better, but they change the convergence theory and the schedule semantics; scikit-learn's SGD is per-sample and the library keeps parity. |
+| In-memory path | The **same** per-sample update over the whole matrix, one epoch at a time | A separate closed-form/batch route would fork the semantics: two "fits" with answers that drift apart on ill-conditioned inputs — the exact problem the dual-regime principle exists to prevent. |
+| Learning-rate schedules | all four shipped: `constant`, `inverse_scaling`, `optimal` (with `t₀` estimated from the first batch) and `adaptive` | Dropping `optimal` would break parity; shipping it with a *fixed* constant would hard-code a dataset-dependent number, so the constant is estimated and documented. |
+| Losses | the full catalogue: 5 classifier (hinge, log-loss, modified huber, squared hinge, perceptron) and 4 regressor (squared error, huber, epsilon-insensitive, squared epsilon-insensitive); penalties L2/L1/ElasticNet/None | A reduced catalogue would not be scikit-learn-compatible; the substrate pays for the catalogue once and both estimators reuse it. |
 | PartialFit spans | Every batch's `update` wrapped in one `SKOperationKind::PartialFit` span | One fit-wide span for a 10⁵-batch job reports *nothing*; per-batch spans form the legible trace that makes streaming jobs debuggable. |
-| Classifier labels | `sk_canonicalize_labels`-shaped **grow-only table**: indices frozen at first occurrence, extensible forever | Per-batch `HashMap` label→index without a frozen table would silently re-index history: batch 4 introducing `"dog"` must not move `"cat"`'s index 0 — and nothing in `Array2<F>`'s shape would catch it. Shapes lie; freeze the table. |
+| Classifier labels | a `SKLabelTable` **frozen at fit time**, first-occurrence order | Re-indexing per batch would silently move earlier classes; a class unseen at fit is rejected instead of growing the table, because a new column invalidates the trained coefficients. |
 
 ```mermaid
 flowchart TB
@@ -28,19 +34,18 @@ flowchart TB
     classDef computeNode fill:#f0fdf4,stroke:#16a34a,color:#14532d,stroke-width:2px
     classDef modelNode fill:#ede9fe,stroke:#7c3aed,color:#3b0764,stroke-width:2px
 
-    B["SKSGDRegressorBuilder<br>.maximum_batch_samples(1024)<br>.execution_mode(Automatic)"]:::planNode
+    B["SKSGDRegressorBuilder<br>.maximum_number_of_iterations(1000)<br>.execution_mode(Automatic)"]:::planNode
     B --> E["SKSGDRegressor<br>(immutable estimator)"]:::planNode
     E -->|fit X y| R{"plan"}:::planNode
-    R -->|fits in RAM| C["IN-MEMORY<br>one batch = the entire dataset<br>update(batch, parallelism)"]:::computeNode
+    R -->|fits in RAM| C["IN-MEMORY<br>shuffled epochs over the whole matrix<br>one update per sample"]:::computeNode
     R -->|larger than RAM| St["STREAMING<br>sk_run_streaming_driver<br>PartialFit span per batch"]:::computeNode
-    C --> Acc["SKSGDState<br>θ, clock, label table (grow-only)<br>θ ← θ − η·∇L"]:::computeNode
+    C --> Acc["learning state<br>θ, intercept, clock, average<br>θ ← θ − η·∇L"]:::computeNode
     St --> Acc
     Acc --> Ms["SKSGDRegressorModel<br>θ (exportable)"]:::modelNode
     Ms --> P["ŷ = X·θ"]:::modelNode
 ```
 
-*(`Acc` marks the accumulator the two regimes share; the classifier carries `SKLabelTable`
-in the same state slot.)*
+*(`Acc` marks the state both regimes share; the classifier also carries its fixed `SKLabelTable`.)*
 
 ## 2. Theory from zero — gradient descent, without the magic
 
@@ -48,9 +53,9 @@ Both families are supervised, so let us be explicit about the data: you have
 rows `xᵢ ∈ ℝᵖ`, and either
 
 - **regressor:** continuous `yᵢ`; the loss is squared error `L(θ) = ½ Σᵢ (xᵢ·θ − yᵢ)²`;
-- **classifier:** labels `yᵢ ∈ {0..C−1}`; the loss is log-loss over a linear map, with
-  softmax turning the class scores into probabilities, and each class carrying its own
-  weight column.
+- **classifier:** labels `yᵢ ∈ {0..C−1}`; one-vs-rest fits one linear head per class,
+  and probabilities come from the sigmoid (log-loss) or the clipped affine map (modified
+  huber) — the only two probabilistic losses.
 
 **The property that carries this chapter is convexity.** Squared error is a quadratic in θ;
 log-loss with a linear map is convex. Both are convex, so **plain gradient descent
@@ -60,32 +65,32 @@ demand before their own elaborate bells are even *considered*.
 
 ### 2.1 The single formula to understand
 
-For a mini-batch Xᵦ (a `batch.nrows() × p` block) and targets yᵦ, with ridge penalty λ weighed on the coefficient vector:
+For one sample `x`, target `y` and sample weight `c`, with ridge penalty λ weighed on the coefficient vector:
 
 ```text
-gradient(θ)   = (1/|B|) · X_Bᵀ (X_B θ − y_B) + λ θ     ← regressor; squared error's gradient
-θ_new         = θ − ηₜ · gradient(θ)
+gradient(w)  = c · ℓ'(xᵀw + b, y) · x + λ w     ← regressor; squared error's slope
+w_new        = w − ηₜ · gradient(w)
+b_new        = b − ηₜ · c · ℓ'(xᵀw + b, y)       ← the intercept is never penalized
 ```
 
 Separate facts carry each symbol, and each one is a classic textbook door:
 
 - **ηₜ, the learning rate** — how far to travel per step. Too high = divergence; too low =
-  days to converge. The two shipped schedules:
-  - `constant`: `ηₜ = η₀` — the simplest; tuning sensitivity then lands on the batch length;
-  - `inverse_scaling`: `ηₜ = η₀ · t^(−power_t)`, `power_t = 0.25` matching scikit-learn's
-    default — the Robbins–Monro annealing family, "give a different step scale across
-    the training wave".
-  - **`optimal` (why we analyzed it, not shipped it):** scikit-learn's `optimal` schedule
-    ηₜ = 1/(α·(t+t₀)) is, in the Pegasos framework, a theorem-coupled rate whose t₀ is
-    derived per Bottou's practical rules (Bottou 2012, "Stochastic Gradient Descent Tricks"):
-    the constant is *dataset-state dependent*, and a partial-fit **resumable** schedule must
-    reproduce that derivation exactly across process restarts to stay a theorem. That is a
-    textbook-level claim worth the chapter's citation, but not its default: shipping it as
-    pseudo-code without the derivation would hand the reader an unverifiable constant.
+  days to converge. The four shipped schedules:
+  - `constant`: `ηₜ = η₀` — the simplest baseline;
+  - `inverse_scaling`: `ηₜ = η₀ / (1 + t)^p`, `p = 0.25` for the regressor (scikit-learn's
+    default) — the Robbins–Monro annealing family;
+  - `optimal`: `ηₜ = 1/(α·(t+t₀))`, the classical rate. The constant `t₀` is **estimated**
+    from the first batch's slope scale (Bottou 2012, "Stochastic Gradient Descent Tricks")
+    instead of hard-coded, because it is dataset-dependent; the estimate is documented and
+    reproducible, not a false universal;
+  - `adaptive`: keep `η` while the epoch objective improves, halve it on a plateau.
 - **λ (ridge), as the L2 penalty you already know from the PRD** — the coefficient
   shrink is *temporal-independent*: the same penalty every step; the library holds λ = 0 as
   *legal but noted* — a fully quadratic, non-regularized problem is exactly
   [SKLinearRegression](adding-a-linear-model.md), shipped elsewhere by design (convex but *closed-form*).
+  The L1 component is applied as a **proximal soft-threshold** after the step, which is what
+  produces exact zeros.
 
 **Sources:**
 
@@ -99,14 +104,13 @@ Separate facts carry each symbol, and each one is a classic textbook door:
 
 ### 2.2 Why the classifier's labels survive streaming (`SKLabelTable`)
 
-A streaming classifier sees classes as they arrive: batch one shows `["frog", "cat"]`,
-batch four introduces `"dog"` — the label table must grow **without changing the meaning of
-any earlier index**. The label table's deterministic first-occurrence canonicalization is
-exactly that mechanism: existing labels' indices are frozen at construction, so batch 4
-extends the table from `["frog","cat"]` to `["frog","cat","dog"]` and index 0/1 are
-*cannot change* after first occurrence). A classifier
-whose coefficient matrix re-indexes labels per batch is buggy in a way that type safety
-will *not* catch (shapes stay `p × C`); §5's test is the boundary.
+A streaming classifier sees classes in whatever order the batches arrive. The fitted
+table freezes the canonical indices at **first occurrence during `fit`**, so `"frog"` stays
+index 0 for every later batch. A class that never appeared at fit time is **rejected** by
+`partial_fit` (and by a later streaming batch) instead of being silently appended: a new
+column would invalidate the coefficient matrix that was already trained. That is a
+documented, deliberate deviation from scikit-learn's grow-only `classes=` protocol, and
+`an_unseen_class_is_rejected` in §5 is the boundary.
 
 ## 3. The combinable state, spelled out
 
@@ -118,7 +122,7 @@ pub struct SKSGDState {
     /// (p, C) — C = 1 for the regressor; f64 state unconditionally, per the anchor
     pub coefficients: ndarray::Array2<f64>,
     pub intercept: ndarray::Array1<f64>,
-    /// classifier only — grow-only first-occurrence canonicalization
+    /// classifier only — first-occurrence canonicalization, frozen at fit
     pub labels: Option<SKLabelTable>,
 }
 
@@ -243,36 +247,27 @@ integer back into its frozen label string. The regressor simply returns one `F` 
 matching the anchor §3.2 rule: `SKRegressorPredictor<F>` returns `Array1<F>`.
 
 The structural rule this encodes: label lookups always go *through* the table, never an
-ad-hoc map in the model — §5's grow-only test is the enforcement.
+ad-hoc map in the model — chapter 17's `nominal_labels_round_trip` and
+`an_unseen_class_is_rejected` are the enforcement.
 
 ## 5. Tests — the streaming-native four
 
 ```rust
-// sgd_tests.rs
+// sgd_classifier/*_tests.rs and sgd_regressor/*_tests.rs
 #[test]
-fn in_memory_equals_single_batch_streaming() {
-    // identical answers: fit(whole array) == fit_streaming(one batch holding the array)
-    // — the anchor principle, tested at the numerical level
-}
+fn one_streaming_pass_equals_one_in_memory_epoch() { /* regimes-equivalence */ }
 
 #[test]
-fn learning_rate_schedule_matches_specified() {
-    // schedule-only change: constant vs inverse_scaling on the SAME fixture batch
-    // (θ paths differ *by the schedule formula*, nothing else)
-}
+fn dense_and_csr_fits_agree_across_losses_and_penalties() { /* never densify */ }
 
 #[test]
-fn labels_table_is_grow_only_in_stream() {
-    // batch 1: ["frog","cat"]; batch 4 introduces "dog"
-    // asserts: pre-"dog" indices unchanged after the fourth batch, first-occurrence
-    // — inference at `sk_canonicalize_labels` — and prediction decodes via `label_of`
-}
+fn partial_fit_continues_the_schedule_counter() { /* the clock survives */ }
 
 #[test]
-fn per_batch_partial_fit_spans() {
-    // asserts count of PartialFit spans == count of batches — the legible trace
-    // that makes streaming jobs debuggable rather than one opaque fit span
-}
+fn an_unseen_class_is_rejected() { /* frozen class table */ }
+
+#[test]
+fn early_stopping_over_a_stream_is_refused() { /* explicit refusal */ }
 ```
 
 ## 6. Acceptance & sources — mapped, not repeated
@@ -280,7 +275,7 @@ fn per_batch_partial_fit_spans() {
 | Acceptance criterion (PRD §8.7) | Realized |
 |---|---|
 | Lots and little data | §5 test 1 — literally the regimes-equivalence |
-| Under concurrency | gradient is parallel (partial accumulation), θ update sequential; `&self` fit; model `Sync` |
+| Under concurrency | per-sample updates are sequential by definition; the estimator and model are immutable, `Send + Sync`, and serve concurrent predictions |
 | Model export | θ + clock + label table — plain fitted structure |
 | Metrics | `SKSupervisedScorer` (R² for the regressor) / `SKLabelScorer` (accuracy for the classifier through the scorer chapter) |
 
@@ -292,6 +287,6 @@ Standing **study sources** (each also explained §2):
 - Robbins & Monro (see §2)
 - scikit-learn `sklearn.linear_model.SGDClassifier`/`SGDRegressor` documentation and the
   `partial_fit` protocol docs — the semantics referenced in this chapter, including the
-  honest caveat on `optimal`.
+  estimated `t₀` for `optimal`.
 
-Next: the family where streaming does not apply — and explaining *why* is the lesson.
+Next: the full contract, decision by decision, in [chapter 17](../development-explained/ch17-sgd-classifier-regressor.html).

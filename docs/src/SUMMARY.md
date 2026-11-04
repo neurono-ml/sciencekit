@@ -45,4 +45,5 @@
   - [Regularized linear models: SKRidge](development-explained/ch14-ridge-regression.md)
   - [L1-regularized linear models: SKLasso & SKElasticNet](development-explained/ch15-lasso-elastic-net.md)
   - [The first classifier: SKLogisticRegression](development-explained/ch16-logistic-regression.md)
+  - [Stochastic gradient: SKSGDClassifier & SKSGDRegressor](development-explained/ch17-sgd-classifier-regressor.md)
   - [Maintaining this book](development-explained/maintaining.md)
