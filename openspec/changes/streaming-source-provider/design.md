@@ -160,6 +160,12 @@ throughout, so the workspace never sits in a broken state.
 - **GAT borrow friction** (the one-shot impl returns a reborrow from `&mut self`) → the
   implementation is tiny and covered by a dedicated test; if the borrow checker fights the
   driver loop, the driver opens the source and fully consumes it inside the same scope.
+  Implementation note: the shipped contract bounds the GAT with `Send` and the source
+  iteration error with `From<SKError> + Into<SKError>`. The prefetch driver moves the opened
+  source to its I/O thread, and higher-ranked bounds on the source's `Send`/`Error` otherwise
+  hit a borrow-checker limitation that forces a `'static` borrow. Forwarding
+  `SKLazySource`/`SKSupervisedLazySource` impls for `&mut S` keep the one-shot reborrow a
+  valid source.
 - **Coherence between the `&mut S` impl and the reopenable wrapper** → the wrapper is a
   concrete local type that does not implement the source trait; if rustc still flags
   potential overlap, the trait is sealed and the wrapper's impl moves to a private module.
