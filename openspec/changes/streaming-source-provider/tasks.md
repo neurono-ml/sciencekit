@@ -18,13 +18,13 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 
 ## 2. Streaming executor over providers
 
-- [ ] 2.1 Red: companion tests for the provider entry points (one-shot provider runs one
+- [x] 2.1 Red: companion tests for the provider entry points (one-shot provider runs one
   pass; reopenable provider runs the budget's passes; a budget above one over a one-shot
   provider runs one pass and records it; a factory failure aborts; block order is preserved
   inside a pass). *(commit `feat(common): drive streaming fits over source providers`)*
-- [ ] 2.2 Implement the provider-based streaming entry points, keeping the one-pass entry
+- [x] 2.2 Implement the provider-based streaming entry points, keeping the one-pass entry
   points as adapters for un-migrated estimators.
-- [ ] 2.3 Green: the executor suite passes and the existing streaming-batch tests are
+- [x] 2.3 Green: the executor suite passes and the existing streaming-batch tests are
   unchanged.
 
 ## 3. Preprocessing estimators
