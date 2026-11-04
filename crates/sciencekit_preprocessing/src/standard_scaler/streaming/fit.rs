@@ -1,10 +1,10 @@
 //! The streaming entry point: plan dispatch, batch collection and the driver
 //! run that finalizes the dense-equivalent model.
 
-use ndarray::{Array2, ArrayView2, Axis};
+use ndarray::{ArrayView2, Axis};
 use sciencekit_common::{
-    SKError, SKExecutionContext, SKExecutionMode, SKExecutionPlan, SKFloat, SKLazySource,
-    SKOperationAttributes, SKOperationKind, SKSourceProvider,
+    SKDataBatch, SKError, SKExecutionContext, SKExecutionMode, SKExecutionPlan, SKFloat,
+    SKLazySource, SKOperationAttributes, SKOperationKind, SKSourceProvider,
     execution::{SKAccessPattern, SKStreamingPassPolicy, sk_run_streaming_provider},
     observability::sk_run_operation,
 };
@@ -71,28 +71,42 @@ impl SKStandardScaler {
         S: SKLazySource<F> + Send,
         S::Error: Into<SKError>,
     {
-        let mut batches: Vec<Array2<F>> = Vec::new();
+        let mut batches: Vec<SKDataBatch<F>> = Vec::new();
         let mut columns_count = None;
+        let mut any_sparse = false;
         while let Some(batch) = source.next_batch().map_err(Into::into)? {
-            let data = batch.view().as_dense()?;
             match columns_count {
-                None => columns_count = Some(data.ncols()),
-                Some(expected) if expected != data.ncols() => {
+                None => columns_count = Some(batch.number_of_columns()),
+                Some(expected) if expected != batch.number_of_columns() => {
                     return Err(SKError::ShapeMismatch {
                         expected: vec![expected],
-                        found: vec![data.ncols()],
+                        found: vec![batch.number_of_columns()],
                     });
                 }
                 _ => {}
             }
-            batches.push(data.to_owned());
+            any_sparse |= batch.is_sparse();
+            batches.push(batch);
         }
         let Some(columns) = columns_count else {
             return Err(SKError::Conversion(
                 "streaming fit received no batches".into(),
             ));
         };
-        let views: Vec<ArrayView2<F>> = batches.iter().map(|batch| batch.view()).collect();
+        if any_sparse {
+            return self.fit_collected_sparse(batches);
+        }
+        let dense_batches: Vec<ndarray::Array2<F>> = batches
+            .iter()
+            .map(|batch| {
+                batch
+                    .view()
+                    .as_dense()
+                    .expect("the stream had no sparse block")
+                    .to_owned()
+            })
+            .collect();
+        let views: Vec<ArrayView2<F>> = dense_batches.iter().map(|batch| batch.view()).collect();
         let concatenated = ndarray::concatenate(Axis(0), &views)
             .map_err(|_| SKError::Conversion("batch concatenation failed".into()))?;
         debug_assert_eq!(concatenated.ncols(), columns);
@@ -101,6 +115,37 @@ impl SKStandardScaler {
             concatenated.nrows() as u64,
             raw_mean,
             raw_deviations,
+            self.with_mean,
+            self.with_std,
+            self.backend,
+            self.execution_intent(),
+        ))
+    }
+
+    /// Collect sparse batches through the same moment state the driver uses:
+    /// the concatenated `fit` is dense-only, so the sparse in-memory branch
+    /// accumulates the identical per-batch moments instead of densifying.
+    fn fit_collected_sparse<F>(
+        &self,
+        batches: Vec<SKDataBatch<F>>,
+    ) -> Result<SKStandardScalerModel<F>, SKError>
+    where
+        F: SKFloat,
+    {
+        let mut state = StreamingMoments::empty(u64::MAX, 1);
+        for batch in batches {
+            update_moments(self, batch, &mut state);
+        }
+        if let Some(error) = state.error.take() {
+            return Err(error);
+        }
+        if state.count == 0 {
+            return Err(SKError::Conversion("streaming fit received no rows".into()));
+        }
+        Ok(SKStandardScalerModel::from_moments(
+            state.count,
+            state.mean.clone(),
+            state.sum_squared_deviations.clone(),
             self.with_mean,
             self.with_std,
             self.backend,

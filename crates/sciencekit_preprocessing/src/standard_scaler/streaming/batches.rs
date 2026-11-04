@@ -2,14 +2,15 @@
 
 use ndarray::{Array1, ArrayView2};
 use sciencekit_common::{
-    SKDataBatch, SKError, SKExecutionContext, SKExecutionMode, SKFloat, SKOperationAttributes,
-    SKOperationKind,
+    SKDataBatch, SKDataView, SKError, SKExecutionContext, SKExecutionMode, SKFloat,
+    SKOperationAttributes, SKOperationKind,
     execution::{SKAccessPattern, SKStreamDecision, sk_resolve_execution_plan},
     observability::sk_run_operation,
 };
 use sciencekit_math::kernels::{SK_AXIS_SUM_GRAIN, sk_axis_sum, sk_axis_sum_squares};
+use sprs::CsMatView;
 
-use super::super::core_implementation::SKStandardScaler;
+use super::super::core_implementation::{SKStandardScaler, moments_from_sums};
 use super::state::{StreamingMoments, merge_batch};
 
 /// Validate one batch and merge its moments into the running state. The driver
@@ -20,39 +21,51 @@ pub(super) fn update_moments<F: SKFloat>(
     batch: SKDataBatch<F>,
     state: &mut StreamingMoments<F>,
 ) -> SKStreamDecision {
-    let data = match batch.view().as_dense() {
-        Ok(data) => data,
-        Err(error) => {
-            state.error = Some(error);
+    let view = batch.view();
+    let (rows_count, columns_count) = match view {
+        SKDataView::Dense(data) => data.dim(),
+        SKDataView::Sparse(data) => (data.rows(), data.cols()),
+        _ => {
+            state.error = Some(SKError::UnsupportedRepresentation {
+                representation: "unknown",
+                suggestion: "convert the features to a dense matrix or a CSR matrix",
+            });
             return SKStreamDecision::Stop;
         }
     };
     if state.columns_count == 0 {
-        state.columns_count = data.ncols();
-        state.mean = Array1::zeros(data.ncols());
-        state.sum_squared_deviations = Array1::zeros(data.ncols());
+        state.columns_count = columns_count;
+        state.mean = Array1::zeros(columns_count);
+        state.sum_squared_deviations = Array1::zeros(columns_count);
     }
-    if state.columns_count != data.ncols() {
+    if state.columns_count != columns_count {
         state.error = Some(SKError::ShapeMismatch {
             expected: vec![state.columns_count],
-            found: vec![data.ncols()],
+            found: vec![columns_count],
         });
         return SKStreamDecision::Stop;
     }
-    if data.nrows() == 0 {
+    if rows_count == 0 {
         return SKStreamDecision::Continue;
     }
     let attributes = SKOperationAttributes {
         operation: SKOperationKind::PartialFit,
-        rows_count: data.nrows(),
-        columns_count: data.ncols(),
+        rows_count,
+        columns_count,
         execution_mode: estimator.execution_intent(),
         backend: estimator.backend,
     };
     sk_run_operation(attributes, || -> Result<(), SKError> {
-        let parallelism = batch_parallelism(&data, state.available_memory_bytes, state.cpu_cores);
-        let (batch_mean, batch_deviations) = batch_moments(&data, parallelism);
-        merge_batch(state, &batch_mean, &batch_deviations, data.nrows() as u64);
+        let (batch_mean, batch_deviations) = match view {
+            SKDataView::Dense(data) => {
+                let parallelism =
+                    batch_parallelism(&data, state.available_memory_bytes, state.cpu_cores);
+                batch_moments(&data, parallelism)
+            }
+            SKDataView::Sparse(data) => sparse_batch_moments(&data),
+            _ => unreachable!("the shape check rejected every other representation"),
+        };
+        merge_batch(state, &batch_mean, &batch_deviations, rows_count as u64);
         Ok(())
     })
     .expect("batch moment update is infallible");
@@ -89,16 +102,23 @@ pub(crate) fn batch_moments<F: SKFloat>(
     data: &ArrayView2<F>,
     parallelism: usize,
 ) -> (Array1<F>, Array1<F>) {
-    let rows_as_scalar = F::from(data.nrows()).expect("batch row count fits in scalar");
     let sums = sk_axis_sum(data, 0, parallelism);
     let sum_squares = sk_axis_sum_squares(data, 0, parallelism);
-    let mut mean = Array1::zeros(data.ncols());
-    let mut deviations = Array1::zeros(data.ncols());
-    for (index, (sum, sum_squares)) in sums.iter().zip(sum_squares.iter()).enumerate() {
-        let column_mean = *sum / rows_as_scalar;
-        mean[index] = column_mean;
-        deviations[index] = *sum_squares - F::from(2).unwrap() * column_mean * *sum
-            + rows_as_scalar * column_mean * column_mean;
+    moments_from_sums(&sums, &sum_squares, data.nrows())
+}
+
+/// One sparse batch's mean and Σ(x − μ)² in `O(nnz)`.
+///
+/// Implicit zeros contribute nothing to `Σx` or `Σx²`, but they do count as
+/// rows in the moments identity, so every column's mean and M2 include them.
+fn sparse_batch_moments<F: SKFloat>(features: &CsMatView<'_, F>) -> (Array1<F>, Array1<F>) {
+    let mut sums = Array1::zeros(features.cols());
+    let mut sum_squares = Array1::zeros(features.cols());
+    for sparse_row in features.outer_iterator() {
+        for (&column, &value) in sparse_row.indices().iter().zip(sparse_row.data()) {
+            sums[column] = sums[column] + value;
+            sum_squares[column] = sum_squares[column] + value * value;
+        }
     }
-    (mean, deviations)
+    moments_from_sums(&sums, &sum_squares, features.rows())
 }

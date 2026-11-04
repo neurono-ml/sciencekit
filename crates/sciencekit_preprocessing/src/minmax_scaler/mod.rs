@@ -8,6 +8,8 @@ mod minmax_scaler_tests;
 #[cfg(test)]
 mod partial_fit_tests;
 #[cfg(test)]
+mod sparse_streaming_tests;
+#[cfg(test)]
 mod streaming_tests;
 #[cfg(test)]
 mod test_datasets;
