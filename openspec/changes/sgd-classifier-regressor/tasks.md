@@ -115,12 +115,12 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 
 ## 5. Sparse input (both estimators)
 
-- [ ] 5.1 Red: companion tests fitting the same design densely and as CSR with a fixed seed
+- [x] 5.1 Red: companion tests fitting the same design densely and as CSR with a fixed seed
   and shuffling disabled — coefficients, intercepts, decisions and probabilities agree across
   every loss and penalty, and no `n × p` dense copy is built. *(commit
   `feat(linear_model): add zero-copy CSR fits to the sgd estimators`)*
-- [ ] 5.2 Wire `SKDataView::Sparse` through the estimators and the sparse epoch driver.
-- [ ] 5.3 Green: sparse and dense agree within the documented relative tolerance.
+- [x] 5.2 Wire `SKDataView::Sparse` through the estimators and the sparse epoch driver.
+- [x] 5.3 Green: sparse and dense agree within the documented relative tolerance.
 
 ## 6. Out-of-core and incremental fits (both estimators)
 
