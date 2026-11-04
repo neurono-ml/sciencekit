@@ -24,11 +24,11 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
   family mismatch rejection. *(commit `feat(linear_model): add the stochastic-gradient loss catalogue`)*
 - [x] 2.2 Implement the sealed `SKSGDLoss` trait, the classifier and regressor loss
   implementations and the two public enums.
-- [ ] 2.3 Red: companion tests for the penalty and configuration validation (negative
+- [x] 2.3 Red: companion tests for the penalty and configuration validation (negative
   `alpha`, out-of-range `l1_ratio`, non-positive tolerance / initial rate / power /
   validation fraction, zero iteration budget, `Optimal` with zero `alpha`, `l1_ratio`
   honored only by `ElasticNet`). *(commit `feat(linear_model): add the sgd configuration and proximal penalty`)*
-- [ ] 2.4 Implement `config.rs` (validation) and `penalty.rs` (the L2 gradient term and the
+- [x] 2.4 Implement `config.rs` (validation) and `penalty.rs` (the L2 gradient term and the
   L1 soft-threshold, intercept never penalized).
 - [ ] 2.5 Red: companion tests for the learning-rate schedules (constant, inverse scaling
   monotone decay, optimal asymptotic form, adaptive halving on a plateau, optimal rejects
