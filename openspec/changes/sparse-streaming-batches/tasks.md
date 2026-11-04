@@ -59,12 +59,12 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
   densification). *(commit
   `feat(linear_model): stream OLS and ridge from sparse batches`)*
 - [x] 5.2 Implement the sparse streaming path by reusing the in-memory sparse accumulators.
-- [ ] 5.3 Red: conformance tests for `SKLasso`, `SKElasticNet`, `SKLogisticRegression`,
+- [x] 5.3 Red: conformance tests for `SKLasso`, `SKElasticNet`, `SKLogisticRegression`,
   `SKSGDClassifier` and `SKSGDRegressor` over sparse batches (retained design, class table,
   schedule counter and averaging preserved; no densification). *(commit
   `feat(linear_model): stream the remaining linear models from sparse batches`)*
-- [ ] 5.4 Implement the sparse streaming paths.
-- [ ] 5.5 Green: the linear-model conformance suite passes.
+- [x] 5.4 Implement the sparse streaming paths.
+- [x] 5.5 Green: the linear-model conformance suite passes.
 
 ## 6. Categorical exception
 
