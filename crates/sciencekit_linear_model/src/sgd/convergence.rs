@@ -91,14 +91,6 @@ pub(crate) fn sk_finish_epochs(
         );
         return Ok(false);
     }
-    if epochs_taken < requested_budget {
-        tracing::warn!(
-            epochs_taken,
-            requested_budget,
-            "the fit stopped before exhausting its budget (early stopping); returning the best iterate"
-        );
-        return Ok(false);
-    }
     match policy {
         SKConvergencePolicy::Strict => Err(SKError::NotConverged {
             iterations: epochs_taken,
@@ -106,6 +98,7 @@ pub(crate) fn sk_finish_epochs(
         SKConvergencePolicy::Permissive => {
             tracing::warn!(
                 epochs_taken,
+                requested_budget,
                 "the fit exhausted its budget without converging; returning the last iterate"
             );
             Ok(false)

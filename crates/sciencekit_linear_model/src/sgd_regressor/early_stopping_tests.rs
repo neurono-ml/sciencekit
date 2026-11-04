@@ -45,6 +45,23 @@ fn fit(patience: usize, budget: usize) -> SKSGDRegressorModel<f64> {
         .unwrap()
 }
 
+/// The same design without early stopping: the reported iterate is the last one.
+fn fit_without_early_stopping(budget: usize) -> SKSGDRegressorModel<f64> {
+    let (features, targets) = anti_correlated_design();
+    SKSGDRegressor::<f64>::build()
+        .learning_rate(SKSGDLearningRate::Constant)
+        .initial_learning_rate(0.05)
+        .alpha(0.0)
+        .shuffle(false)
+        .early_stopping(false)
+        .maximum_number_of_iterations(budget)
+        .convergence_policy(SKConvergencePolicy::Permissive)
+        .build()
+        .unwrap()
+        .fit(features.view(), targets.view())
+        .unwrap()
+}
+
 #[test]
 fn early_stopping_keeps_the_best_validation_iterate() {
     let early = fit(1, 10);
@@ -52,14 +69,21 @@ fn early_stopping_keeps_the_best_validation_iterate() {
         early.converged(),
         "the patience stop must report convergence"
     );
-    assert!(early.epochs_taken() <= 10);
     assert_eq!(early.epochs_taken(), 2);
 
-    // The same trajectory without the patience stop exposes its last iterate
-    // through the retained state, so the best and the last can be compared.
     let two_epochs = fit(10, 2);
     assert_eq!(two_epochs.epochs_taken(), 2);
     assert_eq!(early.coefficients(), two_epochs.coefficients());
-    assert_ne!(two_epochs.coefficients(), two_epochs.state.weights.view());
+    assert_eq!(
+        two_epochs.coefficients(),
+        two_epochs.state.weights.view(),
+        "the retained state must be the reported best iterate"
+    );
+    let plain = fit_without_early_stopping(2);
+    assert_ne!(
+        two_epochs.coefficients(),
+        plain.coefficients(),
+        "the best validation iterate must differ from the last training iterate"
+    );
     assert_eq!(early.coefficients(), early.state.weights.view());
 }

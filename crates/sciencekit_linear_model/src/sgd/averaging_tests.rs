@@ -41,3 +41,17 @@ fn the_average_of_a_constant_trajectory_is_that_constant() {
     assert!((average.weights()[1] + 1.0).abs() < 1e-12);
     assert!((average.intercept() - 2.0).abs() < 1e-12);
 }
+
+#[test]
+fn reset_restarts_the_average_from_the_chosen_iterate() {
+    let mut average = SKAveragedIterate::new(array![0.0_f64], 0.0);
+    average.record(array![4.0].view(), 1.0);
+    average.record(array![6.0].view(), 2.0);
+    average.reset(array![2.0].view(), 3.0);
+    assert_eq!(average.count(), 0);
+    assert!((average.weights()[0] - 2.0).abs() < 1e-12);
+    assert!((average.intercept() - 3.0).abs() < 1e-12);
+    average.record(array![2.0].view(), 3.0);
+    assert_eq!(average.count(), 1);
+    assert!((average.weights()[0] - 2.0).abs() < 1e-12);
+}

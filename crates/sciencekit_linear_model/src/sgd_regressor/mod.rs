@@ -30,6 +30,8 @@ mod large_data_tests;
 #[cfg(test)]
 mod losses_tests;
 #[cfg(test)]
+mod partial_fit_early_stopping_tests;
+#[cfg(test)]
 mod partial_fit_tests;
 #[cfg(test)]
 mod penalties_tests;

@@ -46,6 +46,24 @@ fn fit(patience: usize, budget: usize) -> SKSGDClassifierModel<f64> {
         .unwrap()
 }
 
+/// The same design without early stopping: the reported iterate is the last one.
+fn fit_without_early_stopping(budget: usize) -> SKSGDClassifierModel<f64> {
+    let (features, targets) = anti_correlated_design();
+    SKSGDClassifier::<f64>::build()
+        .loss(SKSGDClassifierLoss::Hinge)
+        .learning_rate(SKSGDLearningRate::Constant)
+        .initial_learning_rate(0.2)
+        .alpha(0.0)
+        .shuffle(false)
+        .early_stopping(false)
+        .maximum_number_of_iterations(budget)
+        .convergence_policy(SKConvergencePolicy::Permissive)
+        .build()
+        .unwrap()
+        .fit(features.view(), targets.view())
+        .unwrap()
+}
+
 #[test]
 fn early_stopping_keeps_the_best_validation_iterate() {
     let early = fit(1, 10);
@@ -59,9 +77,16 @@ fn early_stopping_keeps_the_best_validation_iterate() {
     let two_epochs = fit(10, 2);
     assert_eq!(two_epochs.epochs_taken(), 2);
     assert_eq!(early.coefficients(), two_epochs.coefficients());
+    assert_eq!(
+        two_epochs.coefficients().row(0),
+        two_epochs.states[0].weights.view(),
+        "the retained state must be the reported best iterate"
+    );
+    let plain = fit_without_early_stopping(2);
     assert_ne!(
         two_epochs.coefficients().row(0),
-        two_epochs.states[0].weights.view()
+        plain.coefficients().row(0),
+        "the best validation iterate must differ from the last training iterate"
     );
     assert_eq!(early.coefficients().row(0), early.states[0].weights.view());
 }

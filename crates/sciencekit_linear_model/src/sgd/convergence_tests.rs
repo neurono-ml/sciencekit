@@ -37,12 +37,6 @@ fn a_provider_limited_fit_never_raises_even_under_strict() {
 }
 
 #[test]
-fn an_early_stopped_fit_returns_without_raising() {
-    let converged = sk_finish_epochs(SKConvergencePolicy::Strict, 100, 4, false, false).unwrap();
-    assert!(!converged);
-}
-
-#[test]
 fn a_converged_fit_reports_success_even_under_strict() {
     assert!(sk_finish_epochs(SKConvergencePolicy::Strict, 10, 3, true, false).unwrap());
 }
