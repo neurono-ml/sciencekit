@@ -9,6 +9,7 @@ use super::epoch::{sk_run_dense_epoch, sk_run_sparse_epoch};
 use super::learning_rate::schedule::SKLearningRateSchedule;
 use super::loss::SKSGDRegressorLoss;
 use super::loss::regressor::sk_regressor_loss_adapter;
+use super::penalty::SKSGDPenalty;
 use super::shuffle::SKRandomGenerator;
 use super::state::SKLearningState;
 use crate::test_datasets::to_csr;
@@ -62,12 +63,13 @@ fn the_seeded_order_applies_identically_to_dense_and_sparse_designs() {
     sorted.sort_unstable();
     assert_eq!(sorted, (0..rows).collect::<Vec<usize>>());
 
-    let mut values = Vec::with_capacity(rows * 2);
-    for row in 0..rows {
-        values.push(((row * 7) % 11) as f64 / 11.0);
-        values.push(((row * 5) % 13) as f64 / 13.0);
-    }
-    let design = Array2::from_shape_vec((rows, 2), values).unwrap();
+    let design = Array2::from_shape_fn((rows, 2), |(row, column)| {
+        if column == 0 {
+            ((row * 7) % 11) as f64 / 11.0
+        } else {
+            ((row * 5) % 13) as f64 / 13.0
+        }
+    });
     let targets = Array1::from_iter((0..rows).map(|row| ((row * 3) % 7) as f64));
     let weights = vec![1.0; rows];
     let config = SKSGDConfig::<f64>::default();
@@ -96,11 +98,71 @@ fn the_seeded_order_applies_identically_to_dense_and_sparse_designs() {
         &order,
     )
     .unwrap();
-    for column in 0..2 {
-        assert!((dense_state.weights[column] - sparse_state.weights[column]).abs() < 1e-12);
-    }
+    dense_state
+        .weights
+        .iter()
+        .zip(sparse_state.weights.iter())
+        .for_each(|(&dense_value, &sparse_value)| {
+            assert!((dense_value - sparse_value).abs() < 1e-12);
+        });
     assert!((dense_state.intercept - sparse_state.intercept).abs() < 1e-12);
     assert_eq!(dense_state.step, rows);
+}
+
+#[test]
+fn disabled_shuffle_follows_the_input_row_order() {
+    // One dense epoch with shuffling disabled, checked against a hand-computed
+    // sequential update (spec scenario "shuffling disabled keeps the order").
+    //
+    // Rows: x = [1] with y = 0, then x = [2] with y = 1; squared-error slope,
+    // constant rate 0.1, no penalty. Visiting row 0 first: prediction 0 gives
+    // slope 0, so nothing moves; row 1 then sees prediction 0, slope −1, so
+    // w = 0.1·2 = 0.2, b = 0.1. Visiting row 1 first: (w, b) = (0.2, 0.1)
+    // after it; row 0 then sees prediction 0.3, slope +0.3, so
+    // w = 0.2 − 0.03 = 0.17, b = 0.1 − 0.03 = 0.07. The visiting order is the
+    // coefficient trail.
+    let design = Array2::from_shape_fn((2, 1), |(row, _)| if row == 1 { 2.0 } else { 1.0 });
+    let targets = Array1::from_shape_fn(2, |row| if row == 1 { 1.0 } else { 0.0 });
+    let weights = vec![1.0, 1.0];
+    let loss = sk_regressor_loss_adapter(SKSGDRegressorLoss::SquaredError, 0.0);
+    let config = SKSGDConfig::<f64> {
+        alpha: 0.0,
+        penalty: SKSGDPenalty::None,
+        initial_learning_rate: 0.1,
+        ..SKSGDConfig::default()
+    };
+
+    let input_order = (0..2).collect::<Vec<usize>>();
+    let mut sequential = epoch_state(&config, 1);
+    sk_run_dense_epoch(
+        &mut sequential,
+        design.view(),
+        targets.view(),
+        &weights,
+        &loss,
+        &config,
+        &input_order,
+    )
+    .unwrap();
+    assert!((sequential.weights[0] - 0.2).abs() < 1e-12);
+    assert!((sequential.intercept - 0.1).abs() < 1e-12);
+    assert_eq!(sequential.step, 2);
+
+    // The deliberately reversed order produces a different, equally
+    // predictable trail: only the row order changed.
+    let mut reversed = epoch_state(&config, 1);
+    sk_run_dense_epoch(
+        &mut reversed,
+        design.view(),
+        targets.view(),
+        &weights,
+        &loss,
+        &config,
+        &[1, 0],
+    )
+    .unwrap();
+    assert!((reversed.weights[0] - 0.17).abs() < 1e-12);
+    assert!((reversed.intercept - 0.07).abs() < 1e-12);
 }
 
 #[test]
