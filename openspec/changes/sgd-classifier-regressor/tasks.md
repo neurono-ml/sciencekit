@@ -50,15 +50,15 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
   under the same seed; CSR never densifies; the batch driver visits rows in order and stops
   on the final block). *(commit `feat(linear_model): add the sgd epoch drivers`)*
 - [x] 2.12 Implement `epoch/dense.rs`, `epoch/sparse.rs`, `epoch/batch.rs` and the dispatcher.
-- [ ] 2.13 Red: companion tests for the convergence bookkeeping (a plateau converges before
+- [x] 2.13 Red: companion tests for the convergence bookkeeping (a plateau converges before
   the budget, `Strict` budget exhaustion raises `NotConverged { iterations }`, `Permissive`
   returns the last iterate with `converged() == false` and a warning, a provider-limited fit
   never raises, early stopping keeps the best iterate, early stopping requires more than one
   epoch). *(commit
   `feat(linear_model): add the sgd convergence policy and early-stopping bookkeeping`)*
-- [ ] 2.14 Implement `early_stopping.rs` and the epoch bookkeeping, including the
+- [x] 2.14 Implement `early_stopping.rs` and the epoch bookkeeping, including the
   `SKConvergencePolicy { Strict, Permissive }` selection.
-- [ ] 2.15 Green: the full substrate suite passes on both floats.
+- [x] 2.15 Green: the full substrate suite passes on both floats.
 
 ## 3. `SKSGDClassifier`
 
