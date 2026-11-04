@@ -11,10 +11,12 @@
 
 mod averaging;
 pub(crate) mod config;
+mod epoch;
 mod learning_rate;
 mod loss;
 pub(crate) mod objective;
 mod penalty;
+mod row;
 mod shuffle;
 mod state;
 mod update;

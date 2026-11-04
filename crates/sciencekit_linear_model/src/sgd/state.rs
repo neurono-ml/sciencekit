@@ -40,11 +40,6 @@ impl<F: SKFloat> SKLearningState<F> {
         }
     }
 
-    /// The linear predictor `xᵀw + b` of one row.
-    pub(crate) fn predicted(&self, features: ArrayView1<F>) -> F {
-        self.weights.dot(&features) + self.intercept
-    }
-
     /// The learning rate for the current update count.
     pub(crate) fn learning_rate(&self) -> F {
         self.schedule.rate(self.step)
