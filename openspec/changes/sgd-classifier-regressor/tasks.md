@@ -18,11 +18,11 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 
 ## 2. Stochastic-gradient substrate (`crates/sciencekit_linear_model/src/sgd/`)
 
-- [ ] 2.1 Red: companion tests for the loss catalogue — each classifier and regressor loss
+- [x] 2.1 Red: companion tests for the loss catalogue — each classifier and regressor loss
   value and slope on hand-checkable points (margin outside the band, inside the band, zero
   residual, epsilon band), the probabilistic flag of the two probabilistic losses, and the
   family mismatch rejection. *(commit `feat(linear_model): add the stochastic-gradient loss catalogue`)*
-- [ ] 2.2 Implement the sealed `SKSGDLoss` trait, the classifier and regressor loss
+- [x] 2.2 Implement the sealed `SKSGDLoss` trait, the classifier and regressor loss
   implementations and the two public enums.
 - [ ] 2.3 Red: companion tests for the penalty and configuration validation (negative
   `alpha`, out-of-range `l1_ratio`, non-positive tolerance / initial rate / power /
