@@ -51,16 +51,16 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 
 ## 5. Accumulating linear models
 
-- [ ] 5.1 Red: companion tests for `SKLinearRegression` and `SKRidge` streaming from a
+- [x] 5.1 Red: companion tests for `SKLinearRegression` and `SKRidge` streaming from a
   reopenable provider (equals the dense fit; one pass; the Gram state is not doubled).
   *(commit `refactor(linear_model): stream OLS and ridge over source providers`)*
-- [ ] 5.2 Migrate both.
-- [ ] 5.3 Red: companion tests for `SKLasso`, `SKElasticNet` and `SKLogisticRegression`
+- [x] 5.2 Migrate both.
+- [x] 5.3 Red: companion tests for `SKLasso`, `SKElasticNet` and `SKLogisticRegression`
   streaming from a reopenable provider (equals the dense fit; one pass; the retained design
   is not doubled). *(commit
   `refactor(linear_model): stream the retained-design models over source providers`)*
-- [ ] 5.4 Migrate the three retained-design models.
-- [ ] 5.5 Green: the linear-model suites pass.
+- [x] 5.4 Migrate the three retained-design models.
+- [x] 5.5 Green: the linear-model suites pass.
 
 ## 6. Stochastic estimators: multi-epoch streaming
 
