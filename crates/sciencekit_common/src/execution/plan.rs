@@ -15,4 +15,9 @@ pub struct SKExecutionPlan {
     /// ahead of compute. Double buffering is `1` (one batch computing, one
     /// prefetched); depth greater than one is future work.
     pub buffer_depth: usize,
+    /// The memory available to the operation, in bytes, copied from the
+    /// [`SKExecutionContext`](super::SKExecutionContext) at resolution. The
+    /// provider entry points use it to reject a batch whose doubled resident
+    /// size would not fit before the update closure sees it.
+    pub available_memory_bytes: u64,
 }

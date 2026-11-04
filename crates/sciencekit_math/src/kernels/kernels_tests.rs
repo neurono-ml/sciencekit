@@ -364,6 +364,7 @@ fn driver_applies_plan_parallelism_to_each_batch() {
         parallelism: 8,
         batch_size: Some(1),
         buffer_depth: 1,
+        available_memory_bytes: u64::MAX,
     };
     let mut results = Vec::new();
     let update = |batch: SKDataBatch<f64>, parallelism: usize, results: &mut Vec<f64>| {

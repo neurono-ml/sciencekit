@@ -10,6 +10,7 @@ use crate::batching::{
     SKSupervisedSourceProvider,
 };
 use crate::execution::SKExecutionPlan;
+use crate::execution::sk_check_batch_buffer_guard;
 
 /// Run the policy's passes over a feature-only provider, returning the passes
 /// actually taken.
@@ -35,8 +36,15 @@ where
     let mut passes_taken = 0;
     for _pass in 0..pass_count {
         let mut source = provider.open()?;
+        let available_memory_bytes = plan.available_memory_bytes;
         let decision = run_prefetch_driver(
-            || source.next_batch().map_err(Into::into),
+            || {
+                let batch = source.next_batch().map_err(Into::into)?;
+                if let Some(batch) = batch.as_ref() {
+                    sk_check_batch_buffer_guard(batch.byte_size(), available_memory_bytes)?;
+                }
+                Ok(batch)
+            },
             state,
             &update,
             plan,
@@ -70,8 +78,15 @@ where
     let mut passes_taken = 0;
     for _pass in 0..pass_count {
         let mut source = provider.open()?;
+        let available_memory_bytes = plan.available_memory_bytes;
         let decision = run_prefetch_driver(
-            || source.next_supervised_batch().map_err(Into::into),
+            || {
+                let batch = source.next_supervised_batch().map_err(Into::into)?;
+                if let Some(batch) = batch.as_ref() {
+                    sk_check_batch_buffer_guard(batch.byte_size(), available_memory_bytes)?;
+                }
+                Ok(batch)
+            },
             state,
             &update,
             plan,

@@ -51,6 +51,10 @@ impl<F> SKSupervisedBatch<F> {
         position: usize,
         is_final: bool,
     ) -> Result<Self, SKError> {
+        debug_assert!(
+            features.is_csr(),
+            "a sparse supervised batch must store its matrix in CSR"
+        );
         Self::from_block(
             SKFeatureBlock::Sparse(features),
             targets,
@@ -98,6 +102,12 @@ impl<F> SKSupervisedBatch<F> {
     /// Whether the feature block carries a CSR matrix.
     pub fn is_sparse(&self) -> bool {
         self.block.is_sparse()
+    }
+
+    /// The resident byte size of the feature block's stored buffers, a lower
+    /// bound; targets are not included.
+    pub fn byte_size(&self) -> usize {
+        self.block.byte_size()
     }
 
     /// Borrow the batch's targets.

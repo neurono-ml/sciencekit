@@ -22,7 +22,6 @@ fn sparse_block() -> SKFeatureBlock<f64> {
     ))
 }
 
-#[allow(clippy::too_many_arguments)]
 fn simulated(
     memory: u64,
     batch_elements: usize,

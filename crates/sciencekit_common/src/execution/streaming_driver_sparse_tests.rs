@@ -23,12 +23,7 @@ impl SKLazySource<f64> for SparseRecordingSource {
         }
         let position = self.next;
         self.next += 1;
-        let block = CsMat::new(
-            (1, 4),
-            vec![0, 2],
-            vec![1, 3],
-            vec![position as f64, (position * 10) as f64],
-        );
+        let block = sparse_row(position);
         Ok(Some(SKDataBatch::new_sparse(
             block,
             position,
@@ -37,12 +32,22 @@ impl SKLazySource<f64> for SparseRecordingSource {
     }
 }
 
+fn sparse_row(position: usize) -> CsMat<f64> {
+    CsMat::new(
+        (1, 4),
+        vec![0, 2],
+        vec![1, 3],
+        vec![position as f64, (position * 10) as f64],
+    )
+}
+
 fn streaming_plan() -> SKExecutionPlan {
     SKExecutionPlan {
         mode: SKExecutionMode::OutOfCoreStreaming,
         parallelism: 2,
         batch_size: Some(2),
         buffer_depth: 1,
+        available_memory_bytes: u64::MAX,
     }
 }
 
@@ -77,4 +82,28 @@ fn sparse_block_reaches_the_update_closure_unchanged() {
             (3, vec![3.0, 30.0]),
         ]
     );
+}
+
+/// With a deeper buffer and more than one compute thread, block order and the
+/// sparse representation are preserved.
+#[test]
+fn deep_buffer_and_parallelism_preserve_order_and_representation() {
+    let plan = SKExecutionPlan {
+        parallelism: 4,
+        buffer_depth: 2,
+        ..streaming_plan()
+    };
+    let mut source = SparseRecordingSource { total: 12, next: 0 };
+    let mut state = Vec::new();
+    let update = |batch: SKDataBatch<f64>, _parallelism: usize, state: &mut Vec<(usize, bool)>| {
+        assert!(batch.is_sparse());
+        state.push((batch.position(), batch.is_sparse()));
+        SKStreamDecision::Continue
+    };
+    sk_run_streaming_driver(&mut source, &mut state, update, &plan).unwrap();
+    assert_eq!(state.len(), 12);
+    for (expected, (position, is_sparse)) in state.iter().enumerate() {
+        assert_eq!(*position, expected);
+        assert!(*is_sparse);
+    }
 }

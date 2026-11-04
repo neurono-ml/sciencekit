@@ -86,6 +86,7 @@ fn streaming_plan() -> SKExecutionPlan {
         parallelism: 2,
         batch_size: Some(1),
         buffer_depth: 1,
+        available_memory_bytes: u64::MAX,
     }
 }
 

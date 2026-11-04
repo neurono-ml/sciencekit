@@ -11,7 +11,7 @@
 //! submodules; every implementation lives in its own file.
 
 mod data_batch;
-pub mod feature_block;
+mod feature_block;
 mod lazy_source;
 mod mappable_source;
 pub mod provider;

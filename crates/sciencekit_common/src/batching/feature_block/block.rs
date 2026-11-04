@@ -19,6 +19,10 @@ pub enum SKFeatureBlock<F> {
     /// Dense, row-major feature matrix.
     Dense(Array2<F>),
     /// Sparse compressed-row feature matrix.
+    ///
+    /// The block's accessors assume row-compressed storage; construct blocks
+    /// through the batch constructors, which assert the CSR layout, rather
+    /// than building a CSC matrix directly.
     Sparse(CsMat<F>),
 }
 
@@ -52,11 +56,12 @@ impl<F> SKFeatureBlock<F> {
         matches!(self, SKFeatureBlock::Sparse(_))
     }
 
-    /// The resident byte size of the stored buffers.
+    /// The resident byte size of the stored buffers, a lower bound.
     ///
-    /// Dense blocks count `rows × columns × size_of(scalar)`; sparse blocks
-    /// count the element, index and pointer arrays actually stored, so a sparse
-    /// block with few non-zeros is far below the dense figure.
+    /// Dense blocks count the logical `rows × columns × size_of(scalar)`; sparse
+    /// blocks sum the stored element, index and pointer array lengths. The
+    /// figure excludes any spare capacity beyond those lengths, so it is a
+    /// lower bound rather than an exact allocator measurement.
     pub fn byte_size(&self) -> usize {
         match self {
             SKFeatureBlock::Dense(matrix) => matrix.len().saturating_mul(size_of::<F>()),

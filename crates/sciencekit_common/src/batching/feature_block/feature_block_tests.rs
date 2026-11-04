@@ -108,6 +108,21 @@ fn block_owns_its_data() {
     );
 }
 
+/// A dense block fully owns its matrix: dropping the source leaves it intact.
+#[test]
+fn dense_block_owns_its_matrix() {
+    let block = {
+        let matrix = Array2::from_shape_vec((2, 2), vec![1.0_f64, 2.0, 3.0, 4.0]).unwrap();
+        SKFeatureBlock::Dense(matrix)
+    };
+    assert_eq!(block.number_of_rows(), 2);
+    assert_eq!(block.byte_size(), 4 * size_of::<f64>());
+    match block.view() {
+        SKDataView::Dense(view) => assert_eq!(view, ndarray::array![[1.0_f64, 2.0], [3.0, 4.0]]),
+        SKDataView::Sparse(_) => panic!("expected a dense view"),
+    }
+}
+
 /// A block and its representation survive a move to another thread.
 #[test]
 fn block_moves_across_threads() {

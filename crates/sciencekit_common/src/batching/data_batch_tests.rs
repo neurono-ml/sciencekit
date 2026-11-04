@@ -40,6 +40,10 @@ fn dense_alias_equals_new_dense() {
     assert!(!batch.is_sparse());
     assert_eq!(batch.number_of_rows(), 1);
     assert_eq!(batch.number_of_columns(), 2);
+    match batch.view() {
+        SKDataView::Dense(view) => assert_eq!(view, ndarray::array![[1.0_f64, 2.0]]),
+        SKDataView::Sparse(_) => panic!("expected a dense view"),
+    }
 }
 
 #[test]

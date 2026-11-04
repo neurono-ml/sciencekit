@@ -34,7 +34,11 @@ impl<F> SKDataBatch<F> {
     }
 
     /// Create a batch that owns a CSR matrix.
+    ///
+    /// The block's accessors assume row-compressed storage; a column-compressed
+    /// matrix trips a debug assertion.
     pub fn new_sparse(data: CsMat<F>, position: usize, is_final: bool) -> Self {
+        debug_assert!(data.is_csr(), "a sparse batch must store its matrix in CSR");
         SKDataBatch {
             block: SKFeatureBlock::Sparse(data),
             position,
@@ -60,6 +64,11 @@ impl<F> SKDataBatch<F> {
     /// Whether the block carries a CSR matrix.
     pub fn is_sparse(&self) -> bool {
         self.block.is_sparse()
+    }
+
+    /// The resident byte size of the batch's stored buffers, a lower bound.
+    pub fn byte_size(&self) -> usize {
+        self.block.byte_size()
     }
 
     /// The zero-based position of this batch in the sequence.
