@@ -32,11 +32,11 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 
 ## 3. Preprocessing estimators
 
-- [ ] 3.1 Red: conformance tests — streaming `SKStandardScaler`, `SKMinMaxScaler` and
+- [x] 3.1 Red: conformance tests — streaming `SKStandardScaler`, `SKMinMaxScaler` and
   `SKRobustScaler` from sparse batches equals the dense stream and the dense `fit` on the
   concatenated data, with implicit zeros counted per column and no `n × p` dense copy.
   *(commit `feat(preprocessing): stream the scalers from sparse batches`)*
-- [ ] 3.2 Implement per-column CSR statistics for the three scalers.
+- [x] 3.2 Implement per-column CSR statistics for the three scalers.
 - [ ] 3.3 Red: conformance tests for `SKPolynomialFeatures` (sparse in, sparse out, dense
   agreement, no densification). *(commit
   `feat(preprocessing): stream polynomial features from sparse batches`)*
