@@ -21,3 +21,5 @@ pub use model::SKSGDRegressorModel;
 mod builder_tests;
 #[cfg(test)]
 mod dense_tests;
+#[cfg(test)]
+mod losses_tests;
