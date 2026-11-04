@@ -1,10 +1,10 @@
 //! The streaming entry point: plan dispatch, batch collection and the driver
 //! run that assembles the model (spec `simple-imputer`).
 
-use ndarray::{Array2, ArrayView2, Axis};
+use ndarray::{ArrayView2, Axis};
 use sciencekit_common::{
-    SKError, SKExecutionContext, SKExecutionMode, SKExecutionPlan, SKFloat, SKLazySource,
-    SKOperationAttributes, SKOperationKind, SKSourceProvider, SKUnsupervisedFit,
+    SKDataBatch, SKError, SKExecutionContext, SKExecutionMode, SKExecutionPlan, SKFloat,
+    SKLazySource, SKOperationAttributes, SKOperationKind, SKSourceProvider, SKUnsupervisedFit,
     execution::{SKAccessPattern, SKStreamingPassPolicy, sk_run_streaming_provider},
     observability::sk_run_operation,
 };
@@ -72,31 +72,45 @@ impl<F: SKFloat> SKSimpleImputer<F> {
         S: SKLazySource<F> + Send,
         S::Error: Into<SKError>,
     {
-        let mut batches: Vec<Array2<F>> = Vec::new();
+        let mut batches: Vec<SKDataBatch<F>> = Vec::new();
         let mut columns_count = None;
+        let mut any_sparse = false;
         while let Some(batch) = source.next_batch().map_err(Into::into)? {
-            let data = batch.view().as_dense()?;
             match columns_count {
-                None => columns_count = Some(data.ncols()),
-                Some(expected) if expected != data.ncols() => {
+                None => columns_count = Some(batch.number_of_columns()),
+                Some(expected) if expected != batch.number_of_columns() => {
                     return Err(SKError::ShapeMismatch {
                         expected: vec![expected],
-                        found: vec![data.ncols()],
+                        found: vec![batch.number_of_columns()],
                     });
                 }
                 _ => {}
             }
-            batches.push(data.to_owned());
+            any_sparse |= batch.is_sparse();
+            batches.push(batch);
         }
         let Some(columns_count) = columns_count else {
             return Err(SKError::Conversion(
                 "streaming fit received no batches".into(),
             ));
         };
-        if batches.iter().all(|batch| batch.nrows() == 0) {
+        if any_sparse {
+            return self.fit_collected_sparse(batches);
+        }
+        if batches.iter().all(|batch| batch.number_of_rows() == 0) {
             return Err(SKError::Conversion("streaming fit received no rows".into()));
         }
-        let views: Vec<ArrayView2<F>> = batches.iter().map(|batch| batch.view()).collect();
+        let dense_batches: Vec<ndarray::Array2<F>> = batches
+            .iter()
+            .map(|batch| {
+                batch
+                    .view()
+                    .as_dense()
+                    .expect("the stream had no sparse block")
+                    .to_owned()
+            })
+            .collect();
+        let views: Vec<ArrayView2<F>> = dense_batches.iter().map(|batch| batch.view()).collect();
         let concatenated = ndarray::concatenate(Axis(0), &views)
             .map_err(|_| SKError::Conversion("batch concatenation failed".into()))?;
         debug_assert_eq!(concatenated.ncols(), columns_count);

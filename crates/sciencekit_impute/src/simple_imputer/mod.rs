@@ -37,6 +37,8 @@ mod stacking_tests;
 mod streaming_provider_tests;
 
 #[cfg(test)]
+mod sparse_streaming_tests;
+#[cfg(test)]
 mod streaming_tests;
 
 #[cfg(test)]
