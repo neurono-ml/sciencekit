@@ -75,11 +75,11 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
   `SKClassifierPredictor<F>`, `decision_function`, the class table, probabilities for the
   probabilistic losses and `UnsupportedOperation` otherwise).
 - [x] 3.5 Green: binary fit/predict/probabilities behave per spec.
-- [ ] 3.6 Red: companion tests for multi-class one-vs-rest (three classes produce three
+- [x] 3.6 Red: companion tests for multi-class one-vs-rest (three classes produce three
   heads, arg-max labels, probability rows sum to one for `log_loss`, single head for two
   classes). *(commit `feat(linear_model): add one-vs-rest multi-class fits to SKSGDClassifier`)*
-- [ ] 3.7 Implement the per-head fitting and prediction.
-- [ ] 3.8 Green: the multi-class suite passes.
+- [x] 3.7 Implement the per-head fitting and prediction.
+- [x] 3.8 Green: the multi-class suite passes.
 - [ ] 3.9 Red: companion tests for every classifier loss (separable exactness for `hinge` and
   `perceptron`, `squared_hinge` and `modified_huber` convergence, `log_loss` calibration,
   probabilities refused for non-probabilistic losses). *(commit
