@@ -1,13 +1,16 @@
 //! Out-of-core `fit_streaming` and incremental `partial_fit` tests for `SKLasso`
 //! (spec `lasso`).
 
+use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
+
 use crate::coordinate_descent::test_datasets::{
-    SupervisedVecSource, assert_close, chunked_source, large_features, large_targets,
+    SupervisedVecSource, assert_close, chunk_pairs, chunked_source, large_features, large_targets,
     orthogonal_design, to_csr,
 };
 use ndarray::{Array1, Array2, array, s};
 use sciencekit_common::builders::SKBuilder;
-use sciencekit_common::{SKError, SKSupervisedFit};
+use sciencekit_common::{SKError, SKReopenableSource, SKSupervisedFit};
 
 use super::core_implementation::SKLasso;
 
@@ -28,6 +31,28 @@ fn uneven_batches_match_the_dense_fit() {
     let dense = lasso(0.5).fit(features.view(), targets.view()).unwrap();
     let mut source = chunked_source(&features, &targets, &[1, 2, 1]);
     let streamed = lasso(0.5).fit_streaming(&mut source).unwrap();
+    assert_close(
+        &streamed.coefficient_for(0).to_vec(),
+        &dense.coefficient_for(0).to_vec(),
+        1e-8,
+    );
+}
+
+/// A reopenable provider takes exactly one pass: the retained design must not
+/// be doubled.
+#[test]
+fn reopenable_provider_takes_one_pass_and_matches_the_dense_fit() {
+    let (features, targets) = orthogonal_design();
+    let dense = lasso(0.5).fit(features.view(), targets.view()).unwrap();
+    let batches = chunk_pairs(&features, &targets, &[1, 2, 1]);
+    let factory_calls = Arc::new(AtomicUsize::new(0));
+    let counted = Arc::clone(&factory_calls);
+    let provider = SKReopenableSource::new(move || {
+        counted.fetch_add(1, Ordering::SeqCst);
+        Ok(SupervisedVecSource::<f64>::new(batches.clone()))
+    });
+    let streamed = lasso(0.5).fit_streaming(provider).unwrap();
+    assert_eq!(factory_calls.load(Ordering::SeqCst), 1);
     assert_close(
         &streamed.coefficient_for(0).to_vec(),
         &dense.coefficient_for(0).to_vec(),

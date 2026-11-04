@@ -4,7 +4,7 @@
 use sciencekit_common::{
     SKBackendKind, SKBuilderState, SKDataView, SKError, SKExecutionContext, SKExecutionMode,
     SKExecutionPlan, SKFloat, SKOperationAttributes, SKOperationKind, SKSupervisedFit,
-    SKSupervisedLazySource, SKTargetView, sk_run_operation,
+    SKSupervisedSourceProvider, SKTargetView, sk_run_operation,
 };
 
 use crate::logistic::SKLogisticState;
@@ -102,13 +102,15 @@ impl<F: SKFloat> SKLogisticRegression<F> {
 
     /// Fit on a sequential supervised source, retaining each batch's design and
     /// solving the whole accumulated design once at the end.
-    pub fn fit_streaming<S>(&self, source: &mut S) -> Result<SKLogisticRegressionModel<F>, SKError>
+    pub fn fit_streaming<Provider>(
+        &self,
+        provider: Provider,
+    ) -> Result<SKLogisticRegressionModel<F>, SKError>
     where
-        S: SKSupervisedLazySource<F> + Send,
-        S::Error: From<SKError> + Into<SKError>,
+        Provider: SKSupervisedSourceProvider<F>,
     {
         crate::logistic_regression::streaming::sk_fit_streaming(
-            source,
+            provider,
             &self.config,
             self.backend,
             self.execution_intent(),

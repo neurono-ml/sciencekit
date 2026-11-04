@@ -3,7 +3,7 @@
 
 use sciencekit_common::{
     SKBackendKind, SKError, SKExecutionMode, SKFloat, SKOperationAttributes, SKOperationKind,
-    SKSupervisedLazySource, sk_run_operation,
+    SKSupervisedLazySource, SKSupervisedSourceProvider, sk_run_operation,
 };
 
 use super::accumulator::SKCoordinateDescentState;
@@ -16,8 +16,8 @@ use super::core::SKCoordinateDescentModelCore;
 /// The result equals the dense `fit` on the concatenated data within floating
 /// point tolerance, regardless of batch order or size. An empty source is
 /// rejected with a structured error.
-pub(crate) fn sk_fit_streaming<F, S>(
-    source: &mut S,
+pub(crate) fn sk_fit_streaming<F, Provider>(
+    mut provider: Provider,
     alphas: &[F],
     l1_ratio: F,
     include_intercept: bool,
@@ -27,8 +27,7 @@ pub(crate) fn sk_fit_streaming<F, S>(
 ) -> Result<SKCoordinateDescentModelCore<F>, SKError>
 where
     F: SKFloat,
-    S: SKSupervisedLazySource<F> + Send,
-    S::Error: From<SKError> + Into<SKError>,
+    Provider: SKSupervisedSourceProvider<F>,
 {
     // Single-pass source: totals are unknown upfront, so the outer span carries
     // zero dimensions.
@@ -40,7 +39,8 @@ where
         backend,
     };
     sk_run_operation(attributes, || {
-        let state = collect_batches(source)?;
+        let mut source = provider.open()?;
+        let state = collect_batches(&mut source)?;
         if state.is_empty() {
             return Err(SKError::Conversion(
                 "streaming fit received no batches".into(),

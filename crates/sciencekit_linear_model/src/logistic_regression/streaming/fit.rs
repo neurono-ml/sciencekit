@@ -4,7 +4,8 @@
 use ndarray::Array2;
 use sciencekit_common::{
     SKBackendKind, SKError, SKExecutionMode, SKFloat, SKLabelTable, SKOperationAttributes,
-    SKOperationKind, SKSupervisedLazySource, sk_canonicalize_labels, sk_run_operation,
+    SKOperationKind, SKSupervisedLazySource, SKSupervisedSourceProvider, sk_canonicalize_labels,
+    sk_run_operation,
 };
 
 use crate::logistic::SKLogisticState;
@@ -19,16 +20,15 @@ use crate::logistic_regression::model::SKLogisticRegressionModel;
 /// point tolerance, regardless of batch order or size. Batch targets are
 /// integer-coded class labels. An empty source is rejected with a structured
 /// error.
-pub(crate) fn sk_fit_streaming<F, S>(
-    source: &mut S,
+pub(crate) fn sk_fit_streaming<F, Provider>(
+    mut provider: Provider,
     config: &SKLogisticConfig<F>,
     backend: SKBackendKind,
     execution_intent: SKExecutionMode,
 ) -> Result<SKLogisticRegressionModel<F>, SKError>
 where
     F: SKFloat,
-    S: SKSupervisedLazySource<F> + Send,
-    S::Error: From<SKError> + Into<SKError>,
+    Provider: SKSupervisedSourceProvider<F>,
 {
     let attributes = SKOperationAttributes {
         operation: SKOperationKind::Fit,
@@ -38,7 +38,8 @@ where
         backend,
     };
     sk_run_operation(attributes, || {
-        let (batches, raw_labels) = collect_batches(source)?;
+        let mut source = provider.open()?;
+        let (batches, raw_labels) = collect_batches(&mut source)?;
         if batches.is_empty() {
             return Err(SKError::Conversion(
                 "streaming fit received no batches".into(),
