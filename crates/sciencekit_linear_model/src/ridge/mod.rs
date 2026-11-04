@@ -32,6 +32,8 @@ mod sparse_test_datasets;
 #[cfg(test)]
 mod sparse_tests;
 #[cfg(test)]
+mod streaming_options_tests;
+#[cfg(test)]
 mod streaming_test_datasets;
 #[cfg(test)]
 mod streaming_tests;

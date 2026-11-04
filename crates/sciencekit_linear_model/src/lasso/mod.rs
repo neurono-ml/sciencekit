@@ -18,6 +18,8 @@ mod lasso_tests;
 #[cfg(test)]
 mod sparse_tests;
 #[cfg(test)]
+mod streaming_partial_fit_tests;
+#[cfg(test)]
 mod streaming_tests;
 #[cfg(test)]
 mod thread_tests;

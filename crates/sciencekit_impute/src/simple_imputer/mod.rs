@@ -34,6 +34,9 @@ mod partial_fit_tests;
 mod stacking_tests;
 
 #[cfg(test)]
+mod streaming_provider_tests;
+
+#[cfg(test)]
 mod streaming_tests;
 
 #[cfg(test)]
