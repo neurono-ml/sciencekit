@@ -88,10 +88,13 @@ sparse: data.len() · size_of<F>()
        + indptr.len() · size_of::<usize>()
 ```
 
-`SKFeatureBlock::byte_size` implements exactly that, and the plan consumes it through the new
-`SKExecutionContext::batch_byte_size_hint`. A 10⁶ × 10⁶ matrix with one nonzero per row now
-passes a guard that the dense figure would reject — correctly, because the block really is
-that small.
+`SKFeatureBlock::byte_size` implements exactly that. The plan carries
+`available_memory_bytes`, and the executor checks each batch **when it is read, before it is
+processed**: two resident batches must fit, or the read fails with `BatchBufferOversize`. A
+10⁶ × 10⁶ matrix with one nonzero per row passes a guard that the dense figure would reject —
+correctly, because the block really is that small. The optional
+`SKExecutionContext::batch_byte_size_hint` remains available when a source knows the size
+before opening.
 
 ## 5. The subtle part: implicit zeros
 
@@ -153,7 +156,9 @@ algebra; it routes the block to the same code:
   and the order preserved.
 - Per-estimator conformance: sparse stream ≡ dense stream ≡ dense `fit` on the concatenated
   data, with implicit-zero edge cases, `sample_count()` equality where available, and a
-  no-densification guard (a large shape with one nonzero per row).
+  read-time batch guard test (a sparse block fits a memory budget its dense twin would
+  exceed). The older large-shape tests are shape sanity: they prove a stream completes at a
+  shape whose dense twin is impractical for the test budget, not that no copy was ever made.
 - The scaler tests assert the **sample count**, not just the mean: a mean is invariant under
   duplication, so it cannot prove that the data was read once.
 

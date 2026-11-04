@@ -216,11 +216,11 @@ impl SKSGDRegressor {
             sk_run_operation(
                 SKOperationAttributes {
                     operation: SKOperationKind::PartialFit,   // one span per batch
-                    rows: batch.data().nrows(), columns: batch.data().ncols(),
+                    rows: batch.number_of_rows(), columns: batch.number_of_columns(),
                     execution_mode: self.execution_intent(), backend: SKBackendKind::Faer,
                 },
                 || {
-                    state.absorb_batch(&batch.data(), &batch_targets, parallelism, &self.hyperparameters());
+                    state.absorb_batch(&batch.view().as_dense().expect("dense batch"), &batch_targets, parallelism, &self.hyperparameters());
                     SKStreamDecision::Continue   // keep streaming until the source ends
                 },
             )?,
