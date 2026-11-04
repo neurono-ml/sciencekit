@@ -78,28 +78,29 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 
 - [ ] 7.1 Document `SKOneHotEncoder`'s iterator seam as the deliberate exception and record
   the categorical provider contract as a follow-up in the book and the PRD's future list.
-- [ ] 7.2 If the categorical contract proves trivial during review, migrate it; otherwise
-  leave the documented exception.
+- [x] 7.2 If the categorical contract proves trivial during review, migrate it; otherwise
+  leave the documented exception. *(review kept the documented exception; the design records
+  the categorical contract as a follow-up)*
 
 ## 8. Acceptance and gates
 
-- [ ] 8.1 `cargo fmt --all --check`, `cargo clippy --workspace --all-targets`,
+- [x] 8.1 `cargo fmt --all --check`, `cargo clippy --workspace --all-targets`,
   `cargo test --workspace` all green.
-- [ ] 8.2 Every migrated estimator's streamed fit equals its dense fit on the concatenated
+- [x] 8.2 Every migrated estimator's streamed fit equals its dense fit on the concatenated
   data; a one-shot source is consumed exactly once; a non-iterative estimator's statistics
   are not double counted; a reopenable source over the same data reproduces the in-memory
   result; concurrency and both floats are covered.
-- [ ] 8.3 Model export and metrics remain deferred to their Phase 7 / W6.3 changes, as the
+- [x] 8.3 Model export and metrics remain deferred to their Phase 7 / W6.3 changes, as the
   estimator changes already record.
 
 ## 9. Documentation, changelog and review
 
-- [ ] 9.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under
+- [x] 9.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under
   `Unreleased → Added/Changed` for the provider seam, the reopenable source and the
   multi-epoch streaming regime.
 - [ ] 9.2 Companion documentation change on its own `docs/*` branch (merged into
   `docs/documentations`): a `Development Explained` chapter on source providers, reopenable
   sources and the epoch rule, registered in `SUMMARY.md`, plus the streaming chapter and
   `maintaining.md` updates.
-- [ ] 9.3 Independent-review fixes: address every finding (provider semantics, coherence,
+- [x] 9.3 Independent-review fixes: address every finding (provider semantics, coherence,
   pass counts, migration completeness, naming, test coverage) and re-run the gates.

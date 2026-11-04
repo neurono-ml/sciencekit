@@ -29,7 +29,7 @@ may take. Doing it once — for every estimator, with tests — replaces twelve 
   executor warns through `tracing` when a larger budget was requested; a non-iterative
   (accumulating) estimator always takes exactly one pass because re-feeding would double
   count its statistics.
-- **All eleven `fit_streaming` implementations migrate** to the provider seam:
+- **All twelve `fit_streaming` implementations migrate** to the provider seam:
   `SKStandardScaler`, `SKMinMaxScaler`, `SKRobustScaler`, `SKPolynomialFeatures`,
   `SKSimpleImputer`, `SKLinearRegression`, `SKRidge`, `SKLasso`, `SKElasticNet`,
   `SKLogisticRegression` and the new `SKSGDClassifier`/`SKSGDRegressor`.
