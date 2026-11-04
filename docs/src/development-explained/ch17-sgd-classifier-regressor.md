@@ -190,8 +190,16 @@ The executable source of truth is the companion `*_tests.rs` modules under
   `sparse_prediction_matches_dense` are the never-densify guarantee.
 - **Streaming.** `one_streaming_pass_equals_one_in_memory_epoch` states the honest contract;
   `early_stopping_over_a_stream_is_refused` pins the explicit refusal.
+- **Order.** `the_same_seed_produces_the_same_order` and
+  `the_seeded_order_applies_identically_to_dense_and_sparse_designs` prove the seed alone
+  decides the visiting sequence, while `disabled_shuffle_follows_the_input_row_order` pins
+  the opposite contract: with shuffling off, rows are visited in input order, checked against
+  a hand-computed coefficient trail.
 - **Convergence.** `a_converged_fit_reports_its_epochs`, `permissive_single_epoch` and
-  `a_seeded_refit_never_regresses_within_the_same_budget`.
+  `a_seeded_refit_never_regresses_within_the_same_budget`; the policy warnings are observed
+  rather than assumed — `permissive_exhaustion_emits_a_warning`,
+  `a_provider_limited_fit_emits_a_warning` and `a_converged_fit_emits_no_warning` capture the
+  tracing events with a test subscriber.
 - **Classifier surface.** `three_classes_produce_three_heads`,
   `ties_resolve_to_the_lowest_canonical_index`,
   `probabilities_are_refused_for_non_probabilistic_losses`,
