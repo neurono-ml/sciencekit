@@ -76,7 +76,7 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 
 ## 7. Categorical streaming seam
 
-- [ ] 7.1 Document `SKOneHotEncoder`'s iterator seam as the deliberate exception and record
+- [x] 7.1 Document `SKOneHotEncoder`'s iterator seam as the deliberate exception and record
   the categorical provider contract as a follow-up in the book and the PRD's future list.
 - [x] 7.2 If the categorical contract proves trivial during review, migrate it; otherwise
   leave the documented exception. *(review kept the documented exception; the design records
@@ -98,7 +98,7 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 - [x] 9.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under
   `Unreleased → Added/Changed` for the provider seam, the reopenable source and the
   multi-epoch streaming regime.
-- [ ] 9.2 Companion documentation change on its own `docs/*` branch (merged into
+- [x] 9.2 Companion documentation change on its own `docs/*` branch (merged into
   `docs/documentations`): a `Development Explained` chapter on source providers, reopenable
   sources and the epoch rule, registered in `SUMMARY.md`, plus the streaming chapter and
   `maintaining.md` updates.
