@@ -43,11 +43,11 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 
 ## 4. Imputation estimators
 
-- [ ] 4.1 Red: companion tests for `SKSimpleImputer` streaming from a reopenable provider
+- [x] 4.1 Red: companion tests for `SKSimpleImputer` streaming from a reopenable provider
   (equals the dense fit, one pass, sketch-based median unchanged). *(commit
   `refactor(impute): stream the simple imputer over source providers`)*
-- [ ] 4.2 Migrate `SKSimpleImputer` and, if it exposes a streaming fit, `SKMissingIndicator`.
-- [ ] 4.3 Green: the impute suite passes.
+- [x] 4.2 Migrate `SKSimpleImputer` and, if it exposes a streaming fit, `SKMissingIndicator`.
+- [x] 4.3 Green: the impute suite passes.
 
 ## 5. Accumulating linear models
 
