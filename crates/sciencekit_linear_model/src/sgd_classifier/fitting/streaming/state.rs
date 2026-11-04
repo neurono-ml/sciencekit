@@ -13,7 +13,7 @@ use super::super::state::sk_create_states;
 use crate::class_weight::{SKClassWeight, sk_expand_class_weights};
 use crate::sgd::config::SKSGDConfig;
 use crate::sgd::objective::SKEpochObjective;
-use crate::sgd::{SKLearningState, SKRandomGenerator, SKSGDClassifierLoss, sk_run_dense_epoch};
+use crate::sgd::{SKLearningState, SKRandomGenerator, SKSGDClassifierLoss, sk_run_block_epoch};
 
 /// The mutable state shared by every pass of the fit.
 pub(super) struct SKClassifierStreamState<'a, F> {
@@ -43,17 +43,18 @@ impl<F: SKFloat> SKClassifierStreamState<'_, F> {
     }
 
     fn apply_batch(&mut self, batch: SKSupervisedBatch<F>) -> Result<(), SKError> {
-        let features = batch.features();
-        if features.nrows() == 0 {
+        let rows_count = batch.number_of_rows();
+        let columns_count = batch.number_of_columns();
+        if rows_count == 0 {
             return Ok(());
         }
-        if self.columns != 0 && self.columns != features.ncols() {
+        if self.columns != 0 && self.columns != columns_count {
             return Err(SKError::ShapeMismatch {
                 expected: vec![self.columns],
-                found: vec![features.ncols()],
+                found: vec![columns_count],
             });
         }
-        self.columns = features.ncols();
+        self.columns = columns_count;
         self.batches_this_pass += 1;
         let labels: Vec<i64> = batch
             .targets()
@@ -80,12 +81,12 @@ impl<F: SKFloat> SKClassifierStreamState<'_, F> {
         let weights =
             sk_expand_class_weights(self.class_weight, &class_indices, number_of_classes)?;
         let positive_classes = sk_positive_classes(number_of_classes);
-        let order = sk_batch_order(self.config, features.nrows(), &mut self.generator);
+        let order = sk_batch_order(self.config, rows_count, &mut self.generator);
         for head in 0..live.len() {
             let targets = Array1::from_vec(sk_head_targets(&class_indices, positive_classes[head]));
-            let batch_objective = sk_run_dense_epoch(
+            let batch_objective = sk_run_block_epoch(
                 &mut live[head],
-                features,
+                batch.view(),
                 targets.view(),
                 &weights,
                 &self.loss,

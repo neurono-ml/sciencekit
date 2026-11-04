@@ -8,6 +8,7 @@
 
 use ndarray::{Array1, ArrayView2};
 use sciencekit_common::SKFloat;
+use sprs::CsMatView;
 
 /// The exact per-column `(median, interquantile range)` over the percentile
 /// pair `[quantile_low, quantile_high]`, computed from the sorted column.
@@ -30,6 +31,80 @@ pub(super) fn column_quantile_statistics<F: SKFloat>(
         scales[column] = high - low;
     }
     (centers, scales)
+}
+
+/// The exact per-column `(median, interquantile range)` over a sparse design.
+///
+/// Each column's explicit values are sorted and the implicit zeros are inserted
+/// as a virtual block, so the exact order statistics include them without ever
+/// materializing the `rows × columns` dense matrix.
+pub(super) fn sparse_column_quantile_statistics<F: SKFloat>(
+    features: &CsMatView<'_, F>,
+    quantile_low: F,
+    quantile_high: F,
+) -> (Array1<F>, Array1<F>) {
+    let hundred = F::from(100.0).expect("100 fits in scalar");
+    let fifty = F::from(50.0).expect("50 fits in scalar");
+    let mut explicit_values: Vec<Vec<F>> = (0..features.cols()).map(|_| Vec::new()).collect();
+    for sparse_row in features.outer_iterator() {
+        for (&column, &value) in sparse_row.indices().iter().zip(sparse_row.data()) {
+            explicit_values[column].push(value);
+        }
+    }
+    let rows = features.rows();
+    let mut centers = Array1::zeros(features.cols());
+    let mut scales = Array1::zeros(features.cols());
+    for (column, values) in explicit_values.iter_mut().enumerate() {
+        values.sort_by(|left, right| left.partial_cmp(right).unwrap_or(std::cmp::Ordering::Equal));
+        let implicit_zeros = rows - values.len();
+        centers[column] = sparse_exact_quantile(values, implicit_zeros, fifty / hundred);
+        let low = sparse_exact_quantile(values, implicit_zeros, quantile_low / hundred);
+        let high = sparse_exact_quantile(values, implicit_zeros, quantile_high / hundred);
+        scales[column] = high - low;
+    }
+    (centers, scales)
+}
+
+/// The exact quantile of a sorted explicit column plus `implicit_zeros` zeros
+/// at `probability` in `[0, 1]`.
+fn sparse_exact_quantile<F: SKFloat>(
+    sorted_values: &[F],
+    implicit_zeros: usize,
+    probability: F,
+) -> F {
+    let explicit_count = sorted_values.len();
+    let total = explicit_count + implicit_zeros;
+    if total == 0 {
+        return F::zero();
+    }
+    if total == 1 {
+        return virtual_value(sorted_values, implicit_zeros, 0);
+    }
+    let position = probability * F::from(total - 1).expect("index fits in scalar");
+    let lower = position.floor().to_usize().unwrap_or(0);
+    let upper = position.ceil().to_usize().unwrap_or(lower);
+    if lower == upper {
+        return virtual_value(sorted_values, implicit_zeros, lower);
+    }
+    let fraction = position - F::from(lower).expect("index fits in scalar");
+    let lower_value = virtual_value(sorted_values, implicit_zeros, lower);
+    let upper_value = virtual_value(sorted_values, implicit_zeros, upper);
+    lower_value + (upper_value - lower_value) * fraction
+}
+
+/// The virtual order statistic at `index` of the sorted explicit values with the
+/// implicit zeros merged in.
+fn virtual_value<F: SKFloat>(sorted_values: &[F], implicit_zeros: usize, index: usize) -> F {
+    let negative_count = sorted_values.partition_point(|value| *value < F::zero());
+    let at_or_below_zero = sorted_values.partition_point(|value| *value <= F::zero());
+    let zeros_total = implicit_zeros + (at_or_below_zero - negative_count);
+    if index < negative_count {
+        sorted_values[index]
+    } else if index < negative_count + zeros_total {
+        F::zero()
+    } else {
+        sorted_values[index - implicit_zeros]
+    }
 }
 
 /// The exact quantile of an ascending slice at `probability` in `[0, 1]`, using

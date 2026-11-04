@@ -14,7 +14,7 @@ use crate::sgd::loss::regressor::sk_regressor_loss_adapter;
 fn the_batch_driver_visits_exactly_its_block() {
     let features = array![[1.0], [2.0], [3.0]];
     let targets = array![1.0, 2.0, 3.0];
-    let batch = SKSupervisedBatch::new(features.clone(), targets.clone(), 0, true);
+    let batch = SKSupervisedBatch::new(features.clone(), targets.clone(), 0, true).unwrap();
     let config = config();
     let loss = sk_regressor_loss_adapter(SKSGDRegressorLoss::SquaredError, 0.0);
 

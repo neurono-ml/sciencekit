@@ -11,7 +11,9 @@ use super::streaming_driver::{
     SKStreamDecision, sk_run_streaming_driver, sk_run_supervised_streaming_driver,
 };
 use super::{SKExecutionMode, SKExecutionPlan};
-use crate::{SKDataBatch, SKError, SKLazySource, SKSupervisedBatch, SKSupervisedLazySource};
+use crate::{
+    SKDataBatch, SKDataView, SKError, SKLazySource, SKSupervisedBatch, SKSupervisedLazySource,
+};
 
 /// An instrumented sequential source: logs every read and can fail mid-stream.
 struct RecordingSource {
@@ -84,6 +86,7 @@ fn streaming_plan() -> SKExecutionPlan {
         parallelism: 2,
         batch_size: Some(1),
         buffer_depth: 1,
+        available_memory_bytes: u64::MAX,
     }
 }
 
@@ -132,7 +135,10 @@ fn ordered_delivery_of_owned_batches() {
     let (mut source, _read_log, _outstanding, _max) = RecordingSource::new(5, None);
     let update =
         |batch: SKDataBatch<f64>, _parallelism: usize, state: &mut Vec<(usize, Vec<f64>)>| {
-            let data = batch.data().as_slice_memory_order().unwrap().to_vec();
+            let SKDataView::Dense(view) = batch.view() else {
+                panic!("expected a dense batch");
+            };
+            let data = view.as_slice_memory_order().unwrap().to_vec();
             state.push((batch.position(), data));
             SKStreamDecision::Continue
         };
@@ -253,7 +259,7 @@ fn final_batch_is_delivered_exactly_once() {
 fn streaming_consumer_produces_correct_metric() {
     let (mut source, _read_log, _outstanding, _max) = RecordingSource::new(6, None);
     let update = |batch: SKDataBatch<f64>, _parallelism: usize, state: &mut f64| {
-        *state += batch.data()[(0, 0)];
+        *state += batch.view().as_dense().unwrap()[(0, 0)];
         SKStreamDecision::Continue
     };
     let mut metric = 0.0;
@@ -337,12 +343,10 @@ impl SKSupervisedLazySource<f64> for SupervisedRecordingSource {
         self.next += 1;
         let features = Array2::from_shape_vec((1, 1), vec![position as f64]).unwrap();
         let targets = Array1::from_vec(vec![(position * 10) as f64]);
-        Ok(Some(SKSupervisedBatch::new(
-            features,
-            targets,
-            position,
-            position == self.total - 1,
-        )))
+        Ok(Some(
+            SKSupervisedBatch::new(features, targets, position, position == self.total - 1)
+                .unwrap(),
+        ))
     }
 }
 

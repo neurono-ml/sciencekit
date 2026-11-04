@@ -47,6 +47,7 @@ pub fn sk_resolve_execution_plan(
                 parallelism: parallelism_for(mode, context),
                 batch_size,
                 buffer_depth: 1,
+                available_memory_bytes: context.available_memory_bytes,
             })
         }
         SKExecutionMode::InProcessSynchronous
@@ -56,6 +57,7 @@ pub fn sk_resolve_execution_plan(
             parallelism: parallelism_for(intent, context),
             batch_size: None,
             buffer_depth: 1,
+            available_memory_bytes: context.available_memory_bytes,
         }),
         SKExecutionMode::OutOfCoreStreaming => {
             if context.access_pattern == SKAccessPattern::RandomAccess {
@@ -70,6 +72,7 @@ pub fn sk_resolve_execution_plan(
                     parallelism: parallelism_for(intent, context),
                     batch_size: context.batch_size_hint,
                     buffer_depth: 1,
+                    available_memory_bytes: context.available_memory_bytes,
                 })
             }
         }
@@ -78,19 +81,29 @@ pub fn sk_resolve_execution_plan(
 
 /// The double-buffer memory guard for streaming plans: two resident batches
 /// must fit in available memory. Raised before any data is processed, when a
-/// batch hint is present and its byte size is known.
+/// batch hint is present.
+///
+/// A byte-size hint takes precedence over the dense element figure: a sparse
+/// block reports its stored CSR arrays, so the guard checks the honest size
+/// instead of `rows × columns × size_of(scalar)`.
 fn check_buffer_guard(context: &SKExecutionContext) -> Result<(), SKError> {
-    if let Some(batch_elements) = context.batch_size_hint {
-        if context.scalar_size_bytes > 0 {
-            let batch_bytes = (batch_elements as u64).saturating_mul(context.scalar_size_bytes);
-            let required_bytes = batch_bytes.saturating_mul(2);
-            if required_bytes > context.available_memory_bytes {
-                return Err(SKError::BatchBufferOversize {
-                    batch_bytes,
-                    required_bytes,
-                    available_bytes: context.available_memory_bytes,
-                });
+    let batch_bytes = match context.batch_byte_size_hint {
+        Some(batch_bytes) => Some(batch_bytes),
+        None => match context.batch_size_hint {
+            Some(batch_elements) if context.scalar_size_bytes > 0 => {
+                Some((batch_elements as u64).saturating_mul(context.scalar_size_bytes))
             }
+            _ => None,
+        },
+    };
+    if let Some(batch_bytes) = batch_bytes {
+        let required_bytes = batch_bytes.saturating_mul(2);
+        if required_bytes > context.available_memory_bytes {
+            return Err(SKError::BatchBufferOversize {
+                batch_bytes,
+                required_bytes,
+                available_bytes: context.available_memory_bytes,
+            });
         }
     }
     Ok(())

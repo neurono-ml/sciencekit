@@ -13,6 +13,8 @@ mod quantiles_tests;
 #[cfg(test)]
 mod robust_scaler_tests;
 #[cfg(test)]
+mod sparse_streaming_tests;
+#[cfg(test)]
 mod streaming_tests;
 #[cfg(test)]
 mod test_datasets;

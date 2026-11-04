@@ -55,12 +55,10 @@ impl<F: SKFloat> SKSupervisedLazySource<F> for FiniteSource<F> {
         let features =
             Array2::from_shape_vec((1, 1), vec![F::from(position as f64).unwrap()]).unwrap();
         let targets = Array1::from_vec(vec![F::from((position * 10) as f64).unwrap()]);
-        Ok(Some(SKSupervisedBatch::new(
-            features,
-            targets,
-            position,
-            position == self.total - 1,
-        )))
+        Ok(Some(
+            SKSupervisedBatch::new(features, targets, position, position == self.total - 1)
+                .unwrap(),
+        ))
     }
 }
 

@@ -8,6 +8,7 @@ use crate::execution::SKExecutionPlan;
 
 /// The decision an update step returns to steer the pipeline.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[must_use]
 pub enum SKStreamDecision {
     /// Keep reading and computing the next batch.
     Continue,

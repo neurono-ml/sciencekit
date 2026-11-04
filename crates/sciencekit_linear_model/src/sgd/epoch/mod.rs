@@ -5,12 +5,14 @@
 //! submodules; every implementation lives in its own file.
 
 mod batch;
+mod block;
 mod dense;
 mod indexed;
 mod sparse;
 
 // The drivers are consumed by the estimators in this change.
 pub(crate) use batch::sk_run_batch_epoch;
+pub(crate) use block::sk_run_block_epoch;
 pub(crate) use dense::sk_run_dense_epoch;
 pub(crate) use sparse::sk_run_sparse_epoch;
 

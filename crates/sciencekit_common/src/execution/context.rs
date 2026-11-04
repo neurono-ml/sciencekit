@@ -26,6 +26,10 @@ pub struct SKExecutionContext {
     pub access_pattern: SKAccessPattern,
     /// An optional batch-size hint (in elements) from the consumer.
     pub batch_size_hint: Option<usize>,
+    /// An optional resident byte-size hint for one streaming batch. When
+    /// present, the buffer guard uses it verbatim — the honest size of a sparse
+    /// block's stored CSR arrays rather than its dense `rows × columns` figure.
+    pub batch_byte_size_hint: Option<u64>,
 }
 
 impl SKExecutionContext {
@@ -51,6 +55,7 @@ impl SKExecutionContext {
             grain: 1_000_000,
             access_pattern: SKAccessPattern::Sequential,
             batch_size_hint: None,
+            batch_byte_size_hint: None,
         }
     }
 }

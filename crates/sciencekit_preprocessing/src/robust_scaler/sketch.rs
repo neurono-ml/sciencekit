@@ -9,7 +9,8 @@
 
 use ndarray::{Array1, ArrayView2};
 use sciencekit_common::SKFloat;
-use tdigest::TDigest;
+use sprs::CsMatView;
+use tdigest::{Centroid, TDigest};
 
 use crate::robust_scaler::configuration::SKRobustScalerConfiguration;
 
@@ -25,8 +26,8 @@ pub(crate) fn new_sketches(columns_count: usize) -> Vec<TDigest> {
         .collect()
 }
 
-/// Feed every row of one batch into the per-column sketches and compress them,
-/// so quantile queries see the new values.
+/// Feed every row of one dense batch into the per-column sketches and compress
+/// them, so quantile queries see the new values.
 pub(crate) fn extend_sketches<F: SKFloat>(sketches: &mut [TDigest], features: &ArrayView2<F>) {
     for (column, sketch) in sketches.iter_mut().enumerate() {
         sketch.extend_values(
@@ -35,6 +36,42 @@ pub(crate) fn extend_sketches<F: SKFloat>(sketches: &mut [TDigest], features: &A
                 .iter()
                 .map(|&value| value.to_f64().unwrap_or(0.0)),
         );
+        sketch.flush();
+    }
+}
+
+/// Feed one sparse batch into the per-column sketches.
+///
+/// Only the explicit values enter the sketch; the structural zeros enter as a
+/// single weighted centroid per column, so a matrix with millions of implicit
+/// zeros keeps bounded memory and never densifies. The documented sketch
+/// tolerance applies to the merged distribution.
+pub(crate) fn extend_sparse_sketches<F: SKFloat>(
+    sketches: &mut [TDigest],
+    features: &CsMatView<'_, F>,
+) {
+    let mut explicit_counts = vec![0usize; sketches.len()];
+    for sparse_row in features.outer_iterator() {
+        for (&column, &value) in sparse_row.indices().iter().zip(sparse_row.data()) {
+            explicit_counts[column] += 1;
+            sketches[column].push(value.to_f64().unwrap_or(0.0));
+        }
+    }
+    for (column, sketch) in sketches.iter_mut().enumerate() {
+        sketch.flush();
+        let implicit_zeros = (features.rows() - explicit_counts[column]) as f64;
+        if implicit_zeros > 0.0 {
+            let zeros = TDigest::new(
+                vec![Centroid::new(0.0, implicit_zeros)],
+                0.0,
+                implicit_zeros,
+                Some(0.0),
+                Some(0.0),
+                TDIGEST_COMPRESSION,
+            );
+            let previous = std::mem::replace(sketch, TDigest::new_with_size(TDIGEST_COMPRESSION));
+            *sketch = TDigest::merge_digests(vec![previous, zeros]);
+        }
         sketch.flush();
     }
 }

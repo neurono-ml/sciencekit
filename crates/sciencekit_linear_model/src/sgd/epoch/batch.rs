@@ -7,7 +7,6 @@ use super::super::config::SKSGDConfig;
 use super::super::loss::SKSGDLoss;
 use super::super::objective::SKEpochObjective;
 use super::super::state::SKLearningState;
-use super::indexed::sk_run_indexed_epoch;
 
 /// Run one epoch over a single supervised streaming batch.
 ///
@@ -22,23 +21,15 @@ pub(crate) fn sk_run_batch_epoch<F: SKFloat, L: SKSGDLoss<F>>(
     config: &SKSGDConfig<F>,
     order: &[usize],
 ) -> Result<SKEpochObjective<F>, SKError> {
-    let features = batch.features();
+    let view = batch.view();
     let targets = batch.targets();
-    if features.nrows() != targets.len() {
+    if batch.number_of_rows() != targets.len() {
         return Err(SKError::shape_mismatch_2d(
-            features.nrows(),
-            features.ncols(),
+            batch.number_of_rows(),
+            batch.number_of_columns(),
             targets.len(),
-            features.ncols(),
+            batch.number_of_columns(),
         ));
     }
-    sk_run_indexed_epoch(
-        state,
-        order,
-        targets,
-        sample_weights,
-        loss,
-        config,
-        |index| features.row(index),
-    )
+    super::block::sk_run_block_epoch(state, view, targets, sample_weights, loss, config, order)
 }

@@ -99,9 +99,9 @@ impl<F: SKFloat> SKSupervisedLazySource<F> for SupervisedVecSource<F> {
         self.next += 1;
         let (features, targets) = self.batches[position].clone();
         let is_final = self.next == self.batches.len();
-        Ok(Some(SKSupervisedBatch::new(
-            features, targets, position, is_final,
-        )))
+        Ok(Some(
+            SKSupervisedBatch::new(features, targets, position, is_final).unwrap(),
+        ))
     }
 }
 

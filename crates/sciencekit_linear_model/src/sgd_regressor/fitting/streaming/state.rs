@@ -40,22 +40,23 @@ impl<F: SKFloat> SKRegressorStreamState<'_, F> {
     }
 
     fn apply_batch(&mut self, batch: SKSupervisedBatch<F>) -> Result<(), SKError> {
-        let features = batch.features();
-        if features.nrows() == 0 {
+        let rows_count = batch.number_of_rows();
+        let columns_count = batch.number_of_columns();
+        if rows_count == 0 {
             return Ok(());
         }
-        if self.columns != 0 && self.columns != features.ncols() {
+        if self.columns != 0 && self.columns != columns_count {
             return Err(SKError::ShapeMismatch {
                 expected: vec![self.columns],
-                found: vec![features.ncols()],
+                found: vec![columns_count],
             });
         }
-        self.columns = features.ncols();
+        self.columns = columns_count;
         self.batches_this_pass += 1;
         let targets = batch.targets();
-        if targets.len() != features.nrows() {
+        if targets.len() != rows_count {
             return Err(SKError::ShapeMismatch {
-                expected: vec![features.nrows()],
+                expected: vec![rows_count],
                 found: vec![targets.len()],
             });
         }
@@ -73,8 +74,8 @@ impl<F: SKFloat> SKRegressorStreamState<'_, F> {
             .state
             .as_mut()
             .expect("the state exists after the first batch");
-        let weights = vec![F::one(); features.nrows()];
-        let order = sk_batch_order(self.config, features.nrows(), &mut self.generator);
+        let weights = vec![F::one(); rows_count];
+        let order = sk_batch_order(self.config, rows_count, &mut self.generator);
         let batch_objective =
             sk_run_batch_epoch(live, &batch, &weights, &self.adapter, self.config, &order)?;
         self.objective.merge(&batch_objective);

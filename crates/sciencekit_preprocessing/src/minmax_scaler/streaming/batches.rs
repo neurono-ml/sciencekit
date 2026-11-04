@@ -2,12 +2,13 @@
 
 use ndarray::{Array1, ArrayView2};
 use sciencekit_common::{
-    SKDataBatch, SKError, SKExecutionContext, SKExecutionMode, SKFloat, SKOperationAttributes,
-    SKOperationKind,
+    SKDataBatch, SKDataView, SKError, SKExecutionContext, SKExecutionMode, SKFloat,
+    SKOperationAttributes, SKOperationKind,
     execution::{SKAccessPattern, SKStreamDecision, sk_resolve_execution_plan},
     observability::sk_run_operation,
 };
 use sciencekit_math::kernels::{SK_AXIS_SUM_GRAIN, sk_axis_min_max};
+use sprs::CsMatView;
 
 use super::super::core_implementation::SKMinMaxScaler;
 use super::state::{StreamingExtrema, merge_batch};
@@ -20,41 +21,59 @@ pub(super) fn update_extrema<F: SKFloat>(
     batch: SKDataBatch<F>,
     state: &mut StreamingExtrema<F>,
 ) -> SKStreamDecision {
-    let data = batch.data();
+    let view = batch.view();
+    let (rows_count, columns_count) = match view {
+        SKDataView::Dense(data) => data.dim(),
+        SKDataView::Sparse(data) => (data.rows(), data.cols()),
+        _ => {
+            state.error = Some(SKError::UnsupportedRepresentation {
+                representation: "unknown",
+                suggestion: "convert the features to a dense matrix or a CSR matrix",
+            });
+            return SKStreamDecision::Stop;
+        }
+    };
     if state.columns_count == 0 {
-        state.columns_count = data.ncols();
-        state.minimum = Array1::zeros(data.ncols());
-        state.maximum = Array1::zeros(data.ncols());
-        state.data_range = Array1::zeros(data.ncols());
+        state.columns_count = columns_count;
+        state.minimum = Array1::zeros(columns_count);
+        state.maximum = Array1::zeros(columns_count);
+        state.data_range = Array1::zeros(columns_count);
     }
-    if state.columns_count != data.ncols() {
+    if state.columns_count != columns_count {
         state.error = Some(SKError::ShapeMismatch {
             expected: vec![state.columns_count],
-            found: vec![data.ncols()],
+            found: vec![columns_count],
         });
         return SKStreamDecision::Stop;
     }
-    if data.nrows() == 0 {
+    if rows_count == 0 {
         return SKStreamDecision::Continue;
     }
     let attributes = SKOperationAttributes {
         operation: SKOperationKind::PartialFit,
-        rows_count: data.nrows(),
-        columns_count: data.ncols(),
+        rows_count,
+        columns_count,
         execution_mode: estimator.execution_intent(),
         backend: estimator.backend,
     };
     sk_run_operation(attributes, || -> Result<(), SKError> {
-        let parallelism = batch_parallelism(&data, state.available_memory_bytes, state.cpu_cores);
-        let (batch_minimum, batch_maximum) = batch_extrema(&data, parallelism);
+        let (batch_minimum, batch_maximum) = match view {
+            SKDataView::Dense(data) => {
+                let parallelism =
+                    batch_parallelism(&data, state.available_memory_bytes, state.cpu_cores);
+                batch_extrema(&data, parallelism)
+            }
+            SKDataView::Sparse(data) => sparse_batch_extrema(&data),
+            _ => unreachable!("the shape check rejected every other representation"),
+        };
         if state.count == 0 {
             // First batch: the running extrema are exactly this batch's.
             state.minimum.assign(&batch_minimum);
             state.maximum.assign(&batch_maximum);
             state.data_range.assign(&(&batch_maximum - &batch_minimum));
-            state.count = data.nrows() as u64;
+            state.count = rows_count as u64;
         } else {
-            merge_batch(state, &batch_minimum, &batch_maximum, data.nrows() as u64);
+            merge_batch(state, &batch_minimum, &batch_maximum, rows_count as u64);
         }
         Ok(())
     })
@@ -79,6 +98,7 @@ pub(crate) fn batch_parallelism<F: SKFloat>(
         grain: SK_AXIS_SUM_GRAIN,
         access_pattern: SKAccessPattern::Sequential,
         batch_size_hint: None,
+        batch_byte_size_hint: None,
     };
     sk_resolve_execution_plan(SKExecutionMode::Automatic, &context)
         .map(|plan| plan.parallelism)
@@ -92,4 +112,31 @@ pub(crate) fn batch_extrema<F: SKFloat>(
     parallelism: usize,
 ) -> (Array1<F>, Array1<F>) {
     sk_axis_min_max(data, 0, parallelism)
+}
+
+/// One sparse batch's per-column extrema in `O(nnz + p)`.
+///
+/// An implicit zero participates in a column's extrema whenever that column has
+/// no explicit entry in some row; a column explicitly dense in every row keeps
+/// its true extrema, so a sparse matrix of strictly positive values is never
+/// lowered to zero artificially.
+fn sparse_batch_extrema<F: SKFloat>(features: &CsMatView<'_, F>) -> (Array1<F>, Array1<F>) {
+    let mut minimum = Array1::from_elem(features.cols(), F::infinity());
+    let mut maximum = Array1::from_elem(features.cols(), F::neg_infinity());
+    let mut explicit_counts = vec![0usize; features.cols()];
+    for sparse_row in features.outer_iterator() {
+        for (&column, &value) in sparse_row.indices().iter().zip(sparse_row.data()) {
+            explicit_counts[column] += 1;
+            minimum[column] = minimum[column].min(value);
+            maximum[column] = maximum[column].max(value);
+        }
+    }
+    let rows = features.rows();
+    for column in 0..features.cols() {
+        if explicit_counts[column] < rows {
+            minimum[column] = minimum[column].min(F::zero());
+            maximum[column] = maximum[column].max(F::zero());
+        }
+    }
+    (minimum, maximum)
 }

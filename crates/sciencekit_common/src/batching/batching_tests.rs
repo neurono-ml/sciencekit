@@ -5,7 +5,7 @@ use ndarray::{Array1, Array2, ArrayView1};
 use super::{
     SKDataBatch, SKLazySource, SKMappableSource, SKSupervisedBatch, SKSupervisedLazySource,
 };
-use crate::SKError;
+use crate::{SKDataView, SKError};
 
 /// An owned block survives the source's drop (its data is fully owned).
 #[test]
@@ -15,10 +15,12 @@ fn block_survives_the_source() {
 
     // The batch owns its data — extracting it (and dropping any "source") leaves it intact.
     let extracted = batch.clone();
-    assert_eq!(
-        extracted.data().as_slice_memory_order().unwrap(),
-        &[1.0, 2.0, 3.0, 4.0]
-    );
+    match extracted.view() {
+        SKDataView::Dense(view) => {
+            assert_eq!(view.as_slice_memory_order().unwrap(), &[1.0, 2.0, 3.0, 4.0])
+        }
+        SKDataView::Sparse(_) => panic!("expected a dense view"),
+    }
 }
 
 /// Exactly one final block is identifiable on a finite source.
@@ -73,13 +75,15 @@ fn random_access_contract_does_not_couple_storage() {
 fn supervised_block_owns_features_and_targets() {
     let features = Array2::from_shape_vec((2, 2), vec![1.0_f64, 2.0, 3.0, 4.0]).unwrap();
     let targets = Array1::from_vec(vec![5.0_f64, 6.0]);
-    let batch = SKSupervisedBatch::new(features, targets, 0, true);
+    let batch = SKSupervisedBatch::new(features, targets, 0, true).unwrap();
 
     let extracted = batch.clone();
-    assert_eq!(
-        extracted.features().as_slice_memory_order().unwrap(),
-        &[1.0, 2.0, 3.0, 4.0]
-    );
+    match extracted.view() {
+        SKDataView::Dense(view) => {
+            assert_eq!(view.as_slice_memory_order().unwrap(), &[1.0, 2.0, 3.0, 4.0])
+        }
+        SKDataView::Sparse(_) => panic!("expected a dense view"),
+    }
     assert_eq!(extracted.targets().as_slice().unwrap(), &[5.0, 6.0]);
     assert!(extracted.is_final());
 }
@@ -92,7 +96,7 @@ fn supervised_source_yields_pairs_with_one_final_block() {
     let mut count = 0;
     while let Some(batch) = source.next_supervised_batch().unwrap() {
         count += 1;
-        assert_eq!(batch.features().nrows(), batch.targets().len());
+        assert_eq!(batch.number_of_rows(), batch.targets().len());
         if batch.is_final() {
             finals += 1;
         }
@@ -109,7 +113,7 @@ fn supervised_block_survives_its_source() {
         source.next_supervised_batch().unwrap().unwrap()
     };
     // The source is dropped here; the block still owns its data.
-    assert_eq!(block.features().nrows(), 1);
+    assert_eq!(block.number_of_rows(), 1);
     assert_eq!(block.targets().len(), 1);
 }
 
@@ -134,12 +138,9 @@ impl SKSupervisedLazySource<f64> for FiniteSupervisedSource {
         self.next_position += 1;
         let features = Array2::from_shape_vec((1, 1), vec![position as f64]).unwrap();
         let targets = Array1::from_vec(vec![(position * 2) as f64]);
-        Ok(Some(SKSupervisedBatch::new(
-            features,
-            targets,
-            position,
-            position == 2,
-        )))
+        Ok(Some(
+            SKSupervisedBatch::new(features, targets, position, position == 2).unwrap(),
+        ))
     }
 }
 

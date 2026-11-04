@@ -1,32 +1,74 @@
 //! The owned streaming data block.
 
-use ndarray::{Array2, ArrayView2};
+use ndarray::Array2;
+use sprs::CsMat;
+
+use super::SKFeatureBlock;
+use crate::SKDataView;
 
 /// An owned streaming block with minimal metadata.
 ///
-/// Owns its data (no borrowing from the source) so it can be moved to another
-/// thread while the source advances. Carries its position in the sequence and a
-/// final-block indication.
+/// Owns a [`SKFeatureBlock`] (no borrowing from the source) so it can be moved
+/// to another thread while the source advances. Carries its position in the
+/// sequence and a final-block indication.
 #[derive(Debug, Clone)]
 pub struct SKDataBatch<F> {
-    data: Array2<F>,
+    block: SKFeatureBlock<F>,
     position: usize,
     is_final: bool,
 }
 
 impl<F> SKDataBatch<F> {
-    /// Create a batch.
+    /// Create a batch from a dense matrix — the dense alias of [`Self::new_dense`].
     pub fn new(data: Array2<F>, position: usize, is_final: bool) -> Self {
+        Self::new_dense(data, position, is_final)
+    }
+
+    /// Create a batch that owns a dense matrix.
+    pub fn new_dense(data: Array2<F>, position: usize, is_final: bool) -> Self {
         SKDataBatch {
-            data,
+            block: SKFeatureBlock::Dense(data),
             position,
             is_final,
         }
     }
 
-    /// Borrow the batch's data.
-    pub fn data(&self) -> ArrayView2<F> {
-        self.data.view()
+    /// Create a batch that owns a CSR matrix.
+    ///
+    /// The block's accessors assume row-compressed storage; a column-compressed
+    /// matrix trips a debug assertion.
+    pub fn new_sparse(data: CsMat<F>, position: usize, is_final: bool) -> Self {
+        debug_assert!(data.is_csr(), "a sparse batch must store its matrix in CSR");
+        SKDataBatch {
+            block: SKFeatureBlock::Sparse(data),
+            position,
+            is_final,
+        }
+    }
+
+    /// Borrow the batch's feature block as a [`SKDataView`].
+    pub fn view(&self) -> SKDataView<'_, F> {
+        self.block.view()
+    }
+
+    /// The number of rows in the block.
+    pub fn number_of_rows(&self) -> usize {
+        self.block.number_of_rows()
+    }
+
+    /// The number of columns in the block.
+    pub fn number_of_columns(&self) -> usize {
+        self.block.number_of_columns()
+    }
+
+    /// Whether the block carries a CSR matrix.
+    pub fn is_sparse(&self) -> bool {
+        self.block.is_sparse()
+    }
+
+    /// The resident byte size of the batch's stored buffers, a lower bound.
+    pub fn byte_size(&self) -> usize {
+        self.block.byte_size()
     }
 
     /// The zero-based position of this batch in the sequence.

@@ -124,7 +124,7 @@ fn column_statistics<F: SKFloat>(
 /// Derive raw per-column mean and Σ(x − μ)² from the column sums, the latter
 /// via the exact identity Σx² − 2μΣx + nμ² — the same moments the streaming
 /// path accumulates, so both regimes agree.
-fn moments_from_sums<F: SKFloat>(
+pub(super) fn moments_from_sums<F: SKFloat>(
     column_sums: &Array1<F>,
     column_sum_squares: &Array1<F>,
     rows_count: usize,

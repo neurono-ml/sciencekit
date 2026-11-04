@@ -4,5 +4,6 @@
 //! implementation lives in its own file under this folder.
 
 mod batches;
+mod collected_sparse;
 mod fit;
 mod state;

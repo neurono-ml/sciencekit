@@ -12,3 +12,5 @@ pub mod simple_imputer;
 
 #[cfg(test)]
 mod acceptance_tests;
+#[cfg(test)]
+mod sparse_streaming_test_datasets;

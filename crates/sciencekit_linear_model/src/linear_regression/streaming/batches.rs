@@ -3,8 +3,8 @@
 
 use ndarray::ArrayView2;
 use sciencekit_common::{
-    SKError, SKExecutionContext, SKExecutionMode, SKFloat, SKOperationAttributes, SKOperationKind,
-    SKSupervisedBatch, execution::SKAccessPattern, execution::SKStreamDecision,
+    SKDataView, SKError, SKExecutionContext, SKExecutionMode, SKFloat, SKOperationAttributes,
+    SKOperationKind, SKSupervisedBatch, execution::SKAccessPattern, execution::SKStreamDecision,
     execution::sk_resolve_execution_plan, sk_run_operation,
 };
 use sciencekit_math::kernels::SK_AXIS_SUM_GRAIN;
@@ -21,42 +21,62 @@ pub(super) fn update_gram<F: SKFloat>(
     batch: SKSupervisedBatch<F>,
     state: &mut StreamingGramState<F>,
 ) -> SKStreamDecision {
-    let features = batch.features();
+    let view = batch.view();
+    let (rows_count, columns_count) = match view {
+        SKDataView::Dense(features) => features.dim(),
+        SKDataView::Sparse(features) => (features.rows(), features.cols()),
+        _ => {
+            state.error = Some(SKError::UnsupportedRepresentation {
+                representation: "unknown",
+                suggestion: "convert the features to a dense matrix or a CSR matrix",
+            });
+            return SKStreamDecision::Stop;
+        }
+    };
     let targets = batch.targets();
     if state.columns_count == 0 {
-        state.columns_count = features.ncols();
-        state.gram =
-            SKGramState::empty(state.columns_count + usize::from(estimator.include_intercept()));
+        state.columns_count = columns_count;
+        state.gram = SKGramState::empty(columns_count + usize::from(estimator.include_intercept()));
     }
-    if state.columns_count != features.ncols() {
+    if state.columns_count != columns_count {
         state.error = Some(SKError::ShapeMismatch {
             expected: vec![state.columns_count],
-            found: vec![features.ncols()],
+            found: vec![columns_count],
         });
         return SKStreamDecision::Stop;
     }
-    if features.nrows() == 0 {
+    if rows_count == 0 {
         return SKStreamDecision::Continue;
     }
-    if targets.len() != features.nrows() {
+    if targets.len() != rows_count {
         state.error = Some(SKError::ShapeMismatch {
-            expected: vec![features.nrows()],
+            expected: vec![rows_count],
             found: vec![targets.len()],
         });
         return SKStreamDecision::Stop;
     }
     let attributes = SKOperationAttributes {
         operation: SKOperationKind::PartialFit,
-        rows_count: features.nrows(),
-        columns_count: features.ncols(),
+        rows_count,
+        columns_count,
         execution_mode: estimator.execution_intent(),
         backend: estimator.backend(),
     };
     sk_run_operation(attributes, || -> Result<(), SKError> {
-        let parallelism =
-            batch_parallelism(&features, state.available_memory_bytes, state.cpu_cores);
-        let design = build_design(&features, estimator.include_intercept());
-        state.gram.accumulate(&design.view(), &targets, parallelism);
+        match view {
+            SKDataView::Dense(features) => {
+                let parallelism =
+                    batch_parallelism(&features, state.available_memory_bytes, state.cpu_cores);
+                let design = build_design(&features, estimator.include_intercept());
+                state.gram.accumulate(&design.view(), &targets, parallelism);
+            }
+            SKDataView::Sparse(features) => {
+                state
+                    .gram
+                    .accumulate_sparse(&features, &targets, estimator.include_intercept());
+            }
+            _ => unreachable!("the shape check rejected every other representation"),
+        }
         Ok(())
     })
     .expect("cross-product accumulation is infallible");
@@ -80,6 +100,7 @@ pub(crate) fn batch_parallelism<F: SKFloat>(
         grain: SK_AXIS_SUM_GRAIN,
         access_pattern: SKAccessPattern::Sequential,
         batch_size_hint: None,
+        batch_byte_size_hint: None,
     };
     sk_resolve_execution_plan(SKExecutionMode::Automatic, &context)
         .map(|plan| plan.parallelism)
