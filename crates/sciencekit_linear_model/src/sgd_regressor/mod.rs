@@ -25,3 +25,5 @@ mod dense_tests;
 mod losses_tests;
 #[cfg(test)]
 mod penalties_tests;
+#[cfg(test)]
+mod sparse_tests;
