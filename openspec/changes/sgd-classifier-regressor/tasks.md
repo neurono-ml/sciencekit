@@ -94,15 +94,15 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
 
 ## 4. `SKSGDRegressor`
 
-- [ ] 4.1 Red: companion tests for the builder (defaults, setters, validation, configuration
+- [x] 4.1 Red: companion tests for the builder (defaults, setters, validation, configuration
   flows into the model) and for a dense squared-error fit (closed-form step, prediction
   matches the linear predictor, prediction shape error, integer targets promoted, nominal
   rejected, `f32`/`f64`). *(commit `feat(linear_model): add SKSGDRegressor with a squared-error fit`)*
-- [ ] 4.2 `SKSGDRegressorBuilder<F>` + the `SKBuilder` impl.
-- [ ] 4.3 `SKSGDRegressor<F>` + the `SKSupervisedFit<F>` impl.
-- [ ] 4.4 `SKSGDRegressorModel<F>` (accessors including `converged()` and `epochs_taken()`,
+- [x] 4.2 `SKSGDRegressorBuilder<F>` + the `SKBuilder` impl.
+- [x] 4.3 `SKSGDRegressor<F>` + the `SKSupervisedFit<F>` impl.
+- [x] 4.4 `SKSGDRegressorModel<F>` (accessors including `converged()` and `epochs_taken()`,
   and the `SKRegressorPredictor<F>` impl).
-- [ ] 4.5 Green: dense fit/predict behaves per spec.
+- [x] 4.5 Green: dense fit/predict behaves per spec.
 - [ ] 4.6 Red: companion tests for the robust and insensitive losses (large epsilon huber ≡
   squared error, insensitive band keeps the start, huber resists an outlier better than
   squared error, epsilon zero insensitive approaches absolute error). *(commit
