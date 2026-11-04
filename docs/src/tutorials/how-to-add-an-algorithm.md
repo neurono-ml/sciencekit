@@ -400,7 +400,7 @@ fn fit_streaming<F: SKFloat>(
 
     sk_run_streaming_driver(source, &mut state, |batch, parallelism, state| {
         // ← THE "partial fit": one batch, one update of the combinable state.
-        update_moments(batch.data(), parallelism, state);
+        update_moments(batch.view().as_dense().expect("dense batch"), parallelism, state);
         SKStreamDecision::Continue
     }, plan)?;
 

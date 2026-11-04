@@ -470,7 +470,7 @@ fn ordered_delivery_of_owned_batches() {
     let (mut source, _read_log, _outstanding, _max) = RecordingSource::new(5, None);
     let update =
         |batch: SKDataBatch<f64>, _parallelism: usize, state: &mut Vec<(usize, Vec<f64>)>| {
-            let data = batch.data().as_slice_memory_order().unwrap().to_vec();
+            let data = batch.view().as_dense().expect("dense batch").as_slice_memory_order().unwrap().to_vec();
             state.push((batch.position(), data));
             SKStreamDecision::Continue
         };
@@ -492,7 +492,7 @@ Line by line:
    (`read_log`, `outstanding`, `max`) we ignore here.
 2. The `update` closure is the algorithm's per-batch step. Its signature is
    `(batch, parallelism, state)`. Here `state` is a `Vec<(position, data)>` we accumulate.
-   Inside, `batch.data()` returns a view of the batch's matrix; `.as_slice_memory_order()
+   Inside, `batch.view()` returns a `SKDataView` over the block (dense or CSR); `.as_dense()` selects the dense view and `.as_slice_memory_order()
    .unwrap().to_vec()` copies it into an owned `Vec<f64>`, and we push `(position, data)`.
    We return `SKStreamDecision::Continue` to keep going.
 3. `let mut state = Vec::new()` — the algorithm's mutable accumulator.

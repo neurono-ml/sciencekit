@@ -198,4 +198,6 @@ The stochastic-gradient family
 same rules applied to an estimator whose cost does not depend on the dataset size. The
 [source-provider chapter](./ch18-source-providers-and-epochs.html) closes the streaming story:
 one seam that accepts both a concrete source and a reopenable factory, and the epoch rule
-each estimator class follows.
+each estimator class follows. The
+[owned feature block chapter](./ch19-sparse-streaming-blocks.html) completes it: sparse data
+streams without ever being densified, and implicit zeros shape every statistic.

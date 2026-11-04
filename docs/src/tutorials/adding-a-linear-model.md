@@ -216,11 +216,11 @@ impl SKLinearRegression {
             sk_run_operation(
                 SKOperationAttributes {
                     operation: SKOperationKind::PartialFit,
-                    rows: batch.data().nrows(), columns: batch.data().ncols(),
+                    rows: batch.number_of_rows(), columns: batch.number_of_columns(),
                     execution_mode: self.execution_intent(),
                     backend: SKBackendKind::Faer,
                 },
-                || state.absorb_batch(&batch.data(), parallelism),
+                || state.absorb_batch(&batch.view().as_dense().expect("dense batch"), parallelism),
             )?;
             SKStreamDecision::Continue
         }, plan)?;
@@ -308,3 +308,11 @@ equations got *kept* streaming but with the §2 caveat printed as a test contrac
 
 Next: the family where streaming is not an adaptation but the *home* — gradient descent,
 state-as-accumulator, and why in-memory training is just "the batch of everything".
+
+---
+
+> **Source providers (current API).** The shipped `fit_streaming` takes a
+> `SKSourceProvider<F>` (transformers) or `SKSupervisedSourceProvider<F>` (supervised
+> models). Passing `&mut source` still compiles and takes one pass; wrap a factory in
+> `SKReopenableSource::new(|| ...)` to let an iterative estimator run several epochs. See
+> [chapter 18](../development-explained/ch18-source-providers-and-epochs.html).
