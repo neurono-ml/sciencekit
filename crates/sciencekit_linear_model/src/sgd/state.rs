@@ -50,6 +50,19 @@ impl<F: SKFloat> SKLearningState<F> {
         self.schedule.halve();
     }
 
+    /// Move the last iterate, and the origin of the average, to a chosen
+    /// iterate.
+    ///
+    /// Early stopping uses this so the state the model continues from is
+    /// exactly the best-validation iterate the model reports.
+    pub(crate) fn reset_iterate(&mut self, weights: ArrayView1<F>, intercept: F) {
+        self.weights.assign(&weights);
+        self.intercept = intercept;
+        if let Some(average) = &mut self.average {
+            average.reset(weights, intercept);
+        }
+    }
+
     /// Fold the current iterate into the running average, when enabled.
     pub(crate) fn record_visited_iterate(&mut self) {
         if let Some(average) = &mut self.average {

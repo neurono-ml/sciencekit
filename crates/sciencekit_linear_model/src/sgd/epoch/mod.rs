@@ -19,6 +19,8 @@ mod batch_tests;
 #[cfg(test)]
 mod dense_tests;
 #[cfg(test)]
+mod shape_tests;
+#[cfg(test)]
 mod sparse_tests;
 #[cfg(test)]
 mod test_helpers;

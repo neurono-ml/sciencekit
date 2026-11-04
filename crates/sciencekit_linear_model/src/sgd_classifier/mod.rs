@@ -22,6 +22,8 @@ mod binary_tests;
 #[cfg(test)]
 mod builder_tests;
 #[cfg(test)]
+mod early_stopping_tests;
+#[cfg(test)]
 mod losses_tests;
 #[cfg(test)]
 mod multiclass_tests;

@@ -46,6 +46,14 @@ impl<F: SKFloat> SKAveragedIterate<F> {
         self.intercept = self.intercept + (intercept - self.intercept) * inverse_count;
     }
 
+    /// Restart the average from a chosen iterate (used by early stopping so a
+    /// continuation starts from the iterate the model reports).
+    pub(crate) fn reset(&mut self, weights: ArrayView1<F>, intercept: F) {
+        self.weights.assign(&weights);
+        self.intercept = intercept;
+        self.count = 0;
+    }
+
     /// The averaged coefficients.
     pub(crate) fn weights(&self) -> ArrayView1<F> {
         self.weights.view()

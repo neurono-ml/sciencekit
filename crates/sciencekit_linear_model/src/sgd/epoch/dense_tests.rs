@@ -4,7 +4,6 @@
 #![allow(clippy::field_reassign_with_default)]
 
 use ndarray::array;
-use sciencekit_common::SKError;
 
 use super::sk_run_dense_epoch;
 use super::sk_run_sparse_epoch;
@@ -146,50 +145,4 @@ fn dense_and_sparse_agree_on_f32() {
         assert!((dense_state.weights[column] - sparse_state.weights[column]).abs() < 1e-6);
     }
     assert!((dense_state.intercept - sparse_state.intercept).abs() < 1e-6);
-}
-
-#[test]
-fn shape_mismatches_are_rejected() {
-    let design = array![[1.0], [2.0]];
-    let config = config();
-    let loss = sk_regressor_loss_adapter(SKSGDRegressorLoss::SquaredError, 0.0);
-    let mut state = state(&config, 1);
-
-    let targets = array![1.0];
-    let error = sk_run_dense_epoch(
-        &mut state,
-        design.view(),
-        targets.view(),
-        &[1.0],
-        &loss,
-        &config,
-        &[0],
-    )
-    .unwrap_err();
-    assert!(matches!(error, SKError::ShapeMismatch { .. }));
-
-    let targets = array![1.0, 2.0];
-    let error = sk_run_dense_epoch(
-        &mut state,
-        design.view(),
-        targets.view(),
-        &[1.0],
-        &loss,
-        &config,
-        &[0, 1],
-    )
-    .unwrap_err();
-    assert!(matches!(error, SKError::ShapeMismatch { .. }));
-
-    let error = sk_run_dense_epoch(
-        &mut state,
-        design.view(),
-        targets.view(),
-        &[1.0, 1.0],
-        &loss,
-        &config,
-        &[0, 1, 2],
-    )
-    .unwrap_err();
-    assert!(matches!(error, SKError::ShapeMismatch { .. }));
 }

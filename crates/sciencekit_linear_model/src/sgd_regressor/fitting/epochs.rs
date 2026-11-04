@@ -48,6 +48,7 @@ pub(crate) fn sk_fit_epochs<F: SKFloat>(
     let mut previous_objective: Option<F> = None;
     let mut epochs_taken = 0;
     let mut converged = false;
+    let mut early_stopped = false;
 
     for _ in 0..config.maximum_number_of_iterations {
         epochs_taken += 1;
@@ -88,8 +89,9 @@ pub(crate) fn sk_fit_epochs<F: SKFloat>(
         if !improved {
             state.halve_learning_rate();
         }
-        converged = tracker.record(objective);
-        if converged || early_stop {
+        converged = tracker.record(objective) || early_stop;
+        early_stopped = early_stop;
+        if converged {
             break;
         }
     }
@@ -102,9 +104,12 @@ pub(crate) fn sk_fit_epochs<F: SKFloat>(
         false,
     )?;
     let (mut coefficients, mut intercept) = sk_reported_parts(&state, design.columns());
-    if let Some((weights, best_intercept)) = best {
-        coefficients = weights;
-        intercept = best_intercept;
+    if let Some((weights, best_intercept)) = &best {
+        if early_stopped {
+            state.reset_iterate(weights.view(), *best_intercept);
+        }
+        coefficients = weights.clone();
+        intercept = *best_intercept;
     }
     Ok(SKEpochOutcome {
         coefficients,

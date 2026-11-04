@@ -22,6 +22,8 @@ mod builder_tests;
 #[cfg(test)]
 mod dense_tests;
 #[cfg(test)]
+mod early_stopping_tests;
+#[cfg(test)]
 mod losses_tests;
 #[cfg(test)]
 mod partial_fit_tests;

@@ -38,12 +38,6 @@ where
             found: vec![sample_weights.len()],
         });
     }
-    if order.len() != number_of_rows {
-        return Err(SKError::ShapeMismatch {
-            expected: vec![number_of_rows],
-            found: vec![order.len()],
-        });
-    }
     let mut objective = SKEpochObjective::new();
     for &index in order {
         if index >= number_of_rows {
