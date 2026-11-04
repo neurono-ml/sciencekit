@@ -14,3 +14,18 @@ pub trait SKLazySource<F> {
     /// Produce the next batch, `None` at the end of a finite source.
     fn next_batch(&mut self) -> Result<Option<SKDataBatch<F>>, Self::Error>;
 }
+
+/// A mutable reference to a source is itself a source, forwarding every read.
+///
+/// This keeps the one-pass provider's reborrow ([`&mut S`]) a valid
+/// [`SKLazySource`] without wrapping the concrete source.
+impl<F, Source> SKLazySource<F> for &mut Source
+where
+    Source: SKLazySource<F>,
+{
+    type Error = Source::Error;
+
+    fn next_batch(&mut self) -> Result<Option<SKDataBatch<F>>, Self::Error> {
+        (**self).next_batch()
+    }
+}
