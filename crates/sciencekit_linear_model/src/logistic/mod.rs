@@ -5,7 +5,6 @@
 //! submodules; every implementation lives in its own file.
 
 mod accumulator;
-mod class_weight;
 pub mod config;
 mod design;
 pub(crate) mod objective;

@@ -19,6 +19,7 @@
 
 #![warn(missing_docs)]
 
+pub mod class_weight;
 pub mod coordinate_descent;
 pub mod elastic_net;
 pub mod lasso;

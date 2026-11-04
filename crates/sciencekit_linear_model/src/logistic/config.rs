@@ -40,22 +40,10 @@ pub enum SKMultiClass {
 }
 
 /// The class-weighting policy of a logistic fit.
-#[derive(Debug, Clone, PartialEq)]
-pub enum SKClassWeight<F> {
-    /// Every sample weighs one.
-    None,
-    /// Weight each class inversely to its frequency.
-    Balanced,
-    /// An explicit weight per class, in canonical class order.
-    Explicit(Vec<F>),
-}
-
-#[allow(clippy::derivable_impls)]
-impl<F> Default for SKClassWeight<F> {
-    fn default() -> Self {
-        SKClassWeight::None
-    }
-}
+///
+/// The type is shared with the stochastic-gradient family and re-exported here
+/// so `logistic::SKClassWeight` keeps resolving.
+pub use crate::class_weight::SKClassWeight;
 
 /// The objective configuration shared by the logistic estimators.
 ///
