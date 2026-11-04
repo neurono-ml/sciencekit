@@ -66,7 +66,34 @@ impl SKLazySource<f64> for SparseVecSource {
     }
 }
 
-/// A one-nonzero-per-row CSR design whose dense twin exceeds any test budget.
+/// An in-memory source of already-built batches, dense or sparse, in order.
+pub(crate) struct OwnedBatchSource {
+    batches: Vec<SKDataBatch<f64>>,
+    next: usize,
+}
+
+impl OwnedBatchSource {
+    /// A source that yields the given batches in order.
+    pub(crate) fn new(batches: Vec<SKDataBatch<f64>>) -> Self {
+        Self { batches, next: 0 }
+    }
+}
+
+impl SKLazySource<f64> for OwnedBatchSource {
+    type Error = SKError;
+
+    fn next_batch(&mut self) -> Result<Option<SKDataBatch<f64>>, Self::Error> {
+        if self.next >= self.batches.len() {
+            return Ok(None);
+        }
+        let batch = self.batches[self.next].clone();
+        self.next += 1;
+        Ok(Some(batch))
+    }
+}
+
+/// A one-nonzero-per-row CSR design whose dense twin is impractical for the
+/// test budget.
 pub(crate) fn guard_matrix(rows: usize, columns: usize) -> CsMat<f64> {
     let mut triplets = TriMat::new((rows, columns));
     for row in 0..rows {

@@ -2,19 +2,19 @@
 //!
 //! The sparse conformance suites build their batches from deterministic dense
 //! matrices so the same data can be streamed both ways: dense blocks and CSR
-//! blocks. A guard matrix builds a CSR design whose dense twin would be
-//! astronomically large, so a hidden `n × p` copy fails by exhaustion rather
-//! than by an assertion.
+//! blocks. A guard matrix builds a CSR design whose dense twin is larger than
+//! the test budget allows; that only proves the stream completes at that
+//! shape, not that no dense copy exists.
 
 use ndarray::Array2;
-use sciencekit_common::{SKDataBatch, SKError, SKLazySource};
+use sciencekit_common::{SKDataBatch, SKError, SKFloat, SKLazySource};
 use sprs::{CsMat, TriMat};
 
 /// Convert a dense matrix to its equivalent CSR, dropping exact zeros.
-pub(crate) fn dense_to_csr(features: &Array2<f64>) -> CsMat<f64> {
+pub(crate) fn dense_to_csr<F: SKFloat>(features: &Array2<F>) -> CsMat<F> {
     let mut triplets = TriMat::new((features.nrows(), features.ncols()));
     features.indexed_iter().for_each(|((row, column), &value)| {
-        if value != 0.0 {
+        if value != F::zero() {
             triplets.add_triplet(row, column, value);
         }
     });
@@ -22,7 +22,7 @@ pub(crate) fn dense_to_csr(features: &Array2<f64>) -> CsMat<f64> {
 }
 
 /// Split a dense matrix into CSR row chunks of the given lengths.
-pub(crate) fn chunk_csr(features: &Array2<f64>, lengths: &[usize]) -> Vec<CsMat<f64>> {
+pub(crate) fn chunk_csr<F: SKFloat>(features: &Array2<F>, lengths: &[usize]) -> Vec<CsMat<F>> {
     assert_eq!(
         lengths.iter().sum::<usize>(),
         features.nrows(),
@@ -68,22 +68,22 @@ pub(crate) fn zeros_rich_large_features(rows: usize) -> Array2<f64> {
 }
 
 /// An in-memory CSR batch source: each entry is one owned sparse batch.
-pub(crate) struct SparseVecSource {
-    batches: Vec<CsMat<f64>>,
+pub(crate) struct SparseVecSource<F> {
+    batches: Vec<CsMat<F>>,
     next: usize,
 }
 
-impl SparseVecSource {
+impl<F> SparseVecSource<F> {
     /// A source that yields the given batches in order.
-    pub(crate) fn new(batches: Vec<CsMat<f64>>) -> Self {
+    pub(crate) fn new(batches: Vec<CsMat<F>>) -> Self {
         Self { batches, next: 0 }
     }
 }
 
-impl SKLazySource<f64> for SparseVecSource {
+impl<F: SKFloat> SKLazySource<F> for SparseVecSource<F> {
     type Error = SKError;
 
-    fn next_batch(&mut self) -> Result<Option<SKDataBatch<f64>>, Self::Error> {
+    fn next_batch(&mut self) -> Result<Option<SKDataBatch<F>>, Self::Error> {
         if self.next >= self.batches.len() {
             return Ok(None);
         }
@@ -98,7 +98,34 @@ impl SKLazySource<f64> for SparseVecSource {
     }
 }
 
-/// A one-nonzero-per-row CSR design whose dense twin exceeds any test budget.
+/// An in-memory source of already-built batches, dense or sparse, in order.
+pub(crate) struct OwnedBatchSource<F> {
+    batches: Vec<SKDataBatch<F>>,
+    next: usize,
+}
+
+impl<F> OwnedBatchSource<F> {
+    /// A source that yields the given batches in order.
+    pub(crate) fn new(batches: Vec<SKDataBatch<F>>) -> Self {
+        Self { batches, next: 0 }
+    }
+}
+
+impl<F: SKFloat> SKLazySource<F> for OwnedBatchSource<F> {
+    type Error = SKError;
+
+    fn next_batch(&mut self) -> Result<Option<SKDataBatch<F>>, Self::Error> {
+        if self.next >= self.batches.len() {
+            return Ok(None);
+        }
+        let batch = self.batches[self.next].clone();
+        self.next += 1;
+        Ok(Some(batch))
+    }
+}
+
+/// A one-nonzero-per-row CSR design whose dense twin is impractical for the
+/// test budget.
 pub(crate) fn guard_matrix(rows: usize, columns: usize) -> CsMat<f64> {
     let mut triplets = TriMat::new((rows, columns));
     for row in 0..rows {
@@ -108,9 +135,11 @@ pub(crate) fn guard_matrix(rows: usize, columns: usize) -> CsMat<f64> {
 }
 
 /// Assert two float slices agree within a caller-chosen relative tolerance.
-pub(crate) fn assert_close_sparse(actual: &[f64], expected: &[f64], tolerance: f64) {
+pub(crate) fn assert_close_sparse<F: SKFloat>(actual: &[F], expected: &[F], tolerance: f64) {
     assert_eq!(actual.len(), expected.len());
     for (value, target) in actual.iter().zip(expected.iter()) {
+        let value = value.to_f64().expect("scalars convert to f64");
+        let target = target.to_f64().expect("scalars convert to f64");
         let bound = tolerance * (1.0 + value.abs().max(target.abs()));
         assert!(
             (value - target).abs() <= bound,

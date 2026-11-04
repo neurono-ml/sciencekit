@@ -3,18 +3,18 @@
 //!
 //! Batches are built from deterministic dense designs so the same data can be
 //! streamed both ways. The guard matrix has one nonzero per row and a shape
-//! whose dense twin exceeds any test budget, so a hidden `n × p` copy fails by
-//! exhaustion rather than by an assertion.
+//! whose dense twin is impractical for the test budget; that only proves the
+//! stream completes at that shape, not that no dense copy exists.
 
 use ndarray::{Array1, Array2};
-use sciencekit_common::{SKError, SKSupervisedBatch, SKSupervisedLazySource};
+use sciencekit_common::{SKError, SKFloat, SKSupervisedBatch, SKSupervisedLazySource};
 use sprs::{CsMat, TriMat};
 
 /// Convert a dense design to its equivalent CSR, dropping exact zeros.
-pub(crate) fn dense_to_csr(features: &Array2<f64>) -> CsMat<f64> {
+pub(crate) fn dense_to_csr<F: SKFloat>(features: &Array2<F>) -> CsMat<F> {
     let mut triplets = TriMat::new((features.nrows(), features.ncols()));
     features.indexed_iter().for_each(|((row, column), &value)| {
-        if value != 0.0 {
+        if value != F::zero() {
             triplets.add_triplet(row, column, value);
         }
     });
@@ -22,11 +22,11 @@ pub(crate) fn dense_to_csr(features: &Array2<f64>) -> CsMat<f64> {
 }
 
 /// Split a design and its targets into CSR row chunks of the given lengths.
-pub(crate) fn chunk_pairs_csr(
-    features: &Array2<f64>,
-    targets: &Array1<f64>,
+pub(crate) fn chunk_pairs_csr<F: SKFloat>(
+    features: &Array2<F>,
+    targets: &Array1<F>,
     lengths: &[usize],
-) -> Vec<(CsMat<f64>, Array1<f64>)> {
+) -> Vec<(CsMat<F>, Array1<F>)> {
     assert_eq!(
         lengths.iter().sum::<usize>(),
         features.nrows(),
@@ -47,22 +47,22 @@ pub(crate) fn chunk_pairs_csr(
 }
 
 /// An in-memory sparse supervised source: each entry is one owned batch.
-pub(crate) struct SparseSupervisedSource {
-    batches: Vec<(CsMat<f64>, Array1<f64>)>,
+pub(crate) struct SparseSupervisedSource<F> {
+    batches: Vec<(CsMat<F>, Array1<F>)>,
     next: usize,
 }
 
-impl SparseSupervisedSource {
+impl<F> SparseSupervisedSource<F> {
     /// A source that yields the given batches in order.
-    pub(crate) fn new(batches: Vec<(CsMat<f64>, Array1<f64>)>) -> Self {
+    pub(crate) fn new(batches: Vec<(CsMat<F>, Array1<F>)>) -> Self {
         Self { batches, next: 0 }
     }
 }
 
-impl SKSupervisedLazySource<f64> for SparseSupervisedSource {
+impl<F: SKFloat> SKSupervisedLazySource<F> for SparseSupervisedSource<F> {
     type Error = SKError;
 
-    fn next_supervised_batch(&mut self) -> Result<Option<SKSupervisedBatch<f64>>, Self::Error> {
+    fn next_supervised_batch(&mut self) -> Result<Option<SKSupervisedBatch<F>>, Self::Error> {
         if self.next >= self.batches.len() {
             return Ok(None);
         }
@@ -77,7 +77,34 @@ impl SKSupervisedLazySource<f64> for SparseSupervisedSource {
     }
 }
 
-/// A one-nonzero-per-row CSR design whose dense twin exceeds any test budget.
+/// An in-memory source of already-built supervised batches, dense or sparse.
+pub(crate) struct OwnedSupervisedBatchSource<F> {
+    batches: Vec<SKSupervisedBatch<F>>,
+    next: usize,
+}
+
+impl<F> OwnedSupervisedBatchSource<F> {
+    /// A source that yields the given batches in order.
+    pub(crate) fn new(batches: Vec<SKSupervisedBatch<F>>) -> Self {
+        Self { batches, next: 0 }
+    }
+}
+
+impl<F: SKFloat> SKSupervisedLazySource<F> for OwnedSupervisedBatchSource<F> {
+    type Error = SKError;
+
+    fn next_supervised_batch(&mut self) -> Result<Option<SKSupervisedBatch<F>>, Self::Error> {
+        if self.next >= self.batches.len() {
+            return Ok(None);
+        }
+        let batch = self.batches[self.next].clone();
+        self.next += 1;
+        Ok(Some(batch))
+    }
+}
+
+/// A one-nonzero-per-row CSR design whose dense twin is impractical for the
+/// test budget.
 pub(crate) fn guard_matrix(rows: usize, columns: usize) -> CsMat<f64> {
     let mut triplets = TriMat::new((rows, columns));
     for row in 0..rows {
@@ -89,4 +116,18 @@ pub(crate) fn guard_matrix(rows: usize, columns: usize) -> CsMat<f64> {
 /// Deterministic targets for [`guard_matrix`].
 pub(crate) fn guard_targets(rows: usize) -> Array1<f64> {
     Array1::from_shape_fn(rows, |row| 1.0 + (row % 3) as f64)
+}
+
+/// Assert two float slices agree within a caller-chosen relative tolerance.
+pub(crate) fn assert_close_sparse<F: SKFloat>(actual: &[F], expected: &[F], tolerance: f64) {
+    assert_eq!(actual.len(), expected.len());
+    for (value, target) in actual.iter().zip(expected.iter()) {
+        let value = value.to_f64().expect("scalars convert to f64");
+        let target = target.to_f64().expect("scalars convert to f64");
+        let bound = tolerance * (1.0 + value.abs().max(target.abs()));
+        assert!(
+            (value - target).abs() <= bound,
+            "values {value} and {target} differ beyond {bound}"
+        );
+    }
 }
