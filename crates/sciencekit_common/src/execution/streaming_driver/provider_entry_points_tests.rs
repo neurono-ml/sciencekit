@@ -87,6 +87,36 @@ fn single_pass_policy_runs_one_pass_on_reopenable() {
     assert_eq!(state, vec![0, 1, 2], "an accumulator sees the data once");
 }
 
+fn a_stop_in_the_first_pass_skips_the_remaining_passes() {
+    let opens = Rc::new(Cell::new(0));
+    let counter = Rc::clone(&opens);
+    let mut provider = SKReopenableSource::new(move || {
+        counter.set(counter.get() + 1);
+        Ok(RecordingSource::<f64>::new(3))
+    });
+    let mut state = Vec::new();
+    let stop_after_first =
+        |batch: SKDataBatch<f64>, _parallelism: usize, state: &mut Vec<usize>| {
+            state.push(batch.position());
+            SKStreamDecision::Stop
+        };
+
+    let passes = sk_run_streaming_provider(
+        &mut provider,
+        &mut state,
+        stop_after_first,
+        &streaming_plan(),
+        SKStreamingPassPolicy::Iterative {
+            maximum_number_of_passes: 3,
+        },
+    )
+    .unwrap();
+
+    assert_eq!(passes, 1, "a stop must abort the remaining passes");
+    assert_eq!(opens.get(), 1, "the factory must not be called again");
+    assert_eq!(state, vec![0]);
+}
+
 fn factory_failure_aborts_the_fit() {
     let mut calls = 0usize;
     let mut provider = SKReopenableSource::new(move || {
@@ -141,4 +171,9 @@ fn single_pass_policy_runs_one_pass_on_reopenable_f64() {
 #[test]
 fn factory_failure_aborts_the_fit_f64() {
     factory_failure_aborts_the_fit();
+}
+
+#[test]
+fn a_stop_in_the_first_pass_skips_the_remaining_passes_f64() {
+    a_stop_in_the_first_pass_skips_the_remaining_passes();
 }

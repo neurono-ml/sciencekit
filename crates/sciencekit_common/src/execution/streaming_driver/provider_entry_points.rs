@@ -32,16 +32,21 @@ where
     Update: Fn(SKDataBatch<F>, usize, &mut State) -> SKStreamDecision,
 {
     let pass_count = sk_resolve_feature_pass_count::<F, Provider>(policy);
+    let mut passes_taken = 0;
     for _pass in 0..pass_count {
         let mut source = provider.open()?;
-        run_prefetch_driver(
+        let decision = run_prefetch_driver(
             || source.next_batch().map_err(Into::into),
             state,
             &update,
             plan,
         )?;
+        passes_taken += 1;
+        if decision == SKStreamDecision::Stop {
+            break;
+        }
     }
-    Ok(pass_count)
+    Ok(passes_taken)
 }
 
 /// Run the policy's passes over a supervised provider, returning the passes
@@ -62,16 +67,21 @@ where
     Update: Fn(SKSupervisedBatch<F>, usize, &mut State) -> SKStreamDecision,
 {
     let pass_count = sk_resolve_supervised_pass_count::<F, Provider>(policy);
+    let mut passes_taken = 0;
     for _pass in 0..pass_count {
         let mut source = provider.open()?;
-        run_prefetch_driver(
+        let decision = run_prefetch_driver(
             || source.next_supervised_batch().map_err(Into::into),
             state,
             &update,
             plan,
         )?;
+        passes_taken += 1;
+        if decision == SKStreamDecision::Stop {
+            break;
+        }
     }
-    Ok(pass_count)
+    Ok(passes_taken)
 }
 
 fn sk_resolve_feature_pass_count<F, Provider>(policy: SKStreamingPassPolicy) -> usize
