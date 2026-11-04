@@ -29,3 +29,7 @@ mod multiclass_tests;
 mod partial_fit_tests;
 #[cfg(test)]
 mod streaming_tests;
+#[cfg(test)]
+mod warm_start_tests;
+#[cfg(test)]
+mod weighting_tests;
