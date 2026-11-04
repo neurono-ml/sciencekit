@@ -41,11 +41,11 @@ pure-dispatcher `mod.rs`. One commit per task; the mapping to history is noted p
   iterates, averaging survives an incremental continuation). *(commit
   `feat(linear_model): add the sgd shuffler and averaged iterate`)*
 - [x] 2.8 Implement `shuffle.rs` (`SKRandomGenerator` + Fisher–Yates) and `averaging.rs`.
-- [ ] 2.9 Red: companion tests for the single-sample update and the running objective
+- [x] 2.9 Red: companion tests for the single-sample update and the running objective
   (one update equals the closed-form step, L1 produces exact zeros, the intercept is not
   penalized, a zero slope is a no-op, the running loss equals the mean of batch losses).
   *(commit `feat(linear_model): add the sgd single-sample update and epoch objective`)*
-- [ ] 2.10 Implement `state.rs`, `update.rs` and `objective.rs`.
+- [x] 2.10 Implement `state.rs`, `update.rs` and `objective.rs`.
 - [ ] 2.11 Red: companion tests for the three epoch drivers (dense, CSR and batch agree
   under the same seed; CSR never densifies; the batch driver visits rows in order and stops
   on the final block). *(commit `feat(linear_model): add the sgd epoch drivers`)*
