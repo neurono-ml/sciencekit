@@ -14,3 +14,8 @@ pub mod accumulators;
 pub mod classification;
 pub mod regression;
 pub mod scorers;
+
+mod validation;
+
+#[cfg(test)]
+mod validation_tests;
