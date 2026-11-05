@@ -22,6 +22,7 @@ members = [
     "crates/sciencekit_impute",
     "crates/sciencekit_linear_model",
     "crates/sciencekit_math",
+    "crates/sciencekit_metrics",
     "crates/sciencekit_preprocessing",
 ]
 
