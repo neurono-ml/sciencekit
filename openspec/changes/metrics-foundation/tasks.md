@@ -62,7 +62,7 @@
 
 ## 5. Regression metrics
 
-- [ ] 5.1 Implement the Neumaier compensated accumulator helper in `regression` and prove it
+- [x] 5.1 Implement the Neumaier compensated accumulator helper in `regression` and prove it
   beats naive f32 summation on a large mixed-magnitude series with a unit test; verify with
   `cargo test -p sciencekit_metrics`.
 - [ ] 5.2 Implement `sk_mean_squared_error`, `sk_root_mean_squared_error` and
