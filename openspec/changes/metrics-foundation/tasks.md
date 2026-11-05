@@ -108,7 +108,7 @@
 
 ## 9. Documentation, changelog and review
 
-- [ ] 9.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under `Unreleased → Added`
+- [x] 9.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under `Unreleased → Added`
   for `sciencekit_metrics`, the two pairwise kernels and the three error variants; verify the
   entry lists every public artifact shipped.
 - [ ] 9.2 Companion documentation change on its own `docs/*` branch (merged into
