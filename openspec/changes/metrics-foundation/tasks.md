@@ -35,7 +35,7 @@
   unique, internally sorted) and the default sorted union of observed labels, returning
   `UnknownLabel` outside an explicit space and `InvalidHyperparameter` for duplicates; cover
   every branch in `label_space_tests.rs`; verify with `cargo test -p sciencekit_metrics`.
-- [ ] 3.2 Implement the shared non-finite guard over target/prediction views, returning
+- [x] 3.2 Implement the shared non-finite guard over target/prediction views, returning
   `NonFiniteValue { position }`, with tests for NaN and infinity at a known position and for
   accepted finite input; verify with `cargo test -p sciencekit_metrics`.
 
