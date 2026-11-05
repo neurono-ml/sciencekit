@@ -75,3 +75,45 @@ fn chebyshev_large_data_matches_direct_computation() {
         }
     }
 }
+
+/// The row-parallel path agrees with a direct reference on a large input.
+#[test]
+fn chebyshev_parallel_path_matches_direct_computation() {
+    let points: Array2<f64> = Array2::from_shape_fn((64, 40), |(i, j)| {
+        ((i * 13 + j * 7) % 89) as f64 - 44.0
+    });
+    let distance = sk_chebyshev_distance_matrix(&points.view(), &points.view());
+    assert_eq!(distance.shape(), &[64, 64]);
+    for i in 0..64 {
+        for j in 0..64 {
+            let expected = (0..40)
+                .map(|k| (points[[i, k]] - points[[j, k]]).abs())
+                .fold(0.0_f64, f64::max);
+            assert!((distance[[i, j]] - expected).abs() < 1e-12);
+        }
+    }
+}
+
+/// Concurrent computations are deterministic and equal (PRD §8.7).
+#[test]
+fn chebyshev_is_deterministic_under_concurrency() {
+    let left: Array2<f64> = Array2::from_shape_fn((40, 6), |(i, j)| ((i * 3 + j) % 7) as f64);
+    let right: Array2<f64> = Array2::from_shape_fn((30, 6), |(i, j)| ((i + j * 2) % 5) as f64);
+    let expected = sk_chebyshev_distance_matrix(&left.view(), &right.view());
+    let handles: Vec<_> = (0..8)
+        .map(|_| {
+            let left = left.clone();
+            let right = right.clone();
+            std::thread::spawn(move || sk_chebyshev_distance_matrix(&left.view(), &right.view()))
+        })
+        .collect();
+    for handle in handles {
+        let result = handle.join().unwrap();
+        for ((index, value), expected_value) in result.indexed_iter().zip(expected.iter()) {
+            assert!(
+                (value - expected_value).abs() < 1e-12,
+                "mismatch at {index:?}: {value} vs {expected_value}"
+            );
+        }
+    }
+}
