@@ -9,8 +9,7 @@ mod targets;
 
 pub use classification::{SKAccuracyScorer, SKF1Scorer, SKPrecisionScorer, SKRecallScorer};
 pub use regression::{
-    SKMeanAbsoluteErrorScorer, SKMeanSquaredErrorScorer, SKR2Scorer,
-    SKRootMeanSquaredErrorScorer,
+    SKMeanAbsoluteErrorScorer, SKMeanSquaredErrorScorer, SKR2Scorer, SKRootMeanSquaredErrorScorer,
 };
 
 #[cfg(test)]

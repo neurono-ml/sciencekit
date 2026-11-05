@@ -58,12 +58,9 @@ fn weighted_averaging_follows_support() {
 fn binary_averaging_reports_the_positive_class() {
     let matrix = unbalanced_matrix();
     let scores = sk_per_class_precision_recall_f1::<f64>(&matrix);
-    let aggregated = sk_aggregate_class_scores(
-        &matrix,
-        &scores,
-        SKAveraging::Binary { positive_label: 1 },
-    )
-    .expect("valid");
+    let aggregated =
+        sk_aggregate_class_scores(&matrix, &scores, SKAveraging::Binary { positive_label: 1 })
+            .expect("valid");
     assert!((aggregated.precision() - 0.5).abs() < 1e-12);
     assert!((aggregated.recall() - 1.0).abs() < 1e-12);
 }
@@ -73,11 +70,8 @@ fn binary_averaging_reports_the_positive_class() {
 fn binary_averaging_rejects_an_unknown_positive_label() {
     let matrix = unbalanced_matrix();
     let scores = sk_per_class_precision_recall_f1::<f64>(&matrix);
-    let error = sk_aggregate_class_scores(
-        &matrix,
-        &scores,
-        SKAveraging::Binary { positive_label: 9 },
-    )
-    .expect_err("label 9 is unknown");
+    let error =
+        sk_aggregate_class_scores(&matrix, &scores, SKAveraging::Binary { positive_label: 9 })
+            .expect_err("label 9 is unknown");
     assert!(matches!(error, SKError::UnknownLabel { label: 9 }));
 }

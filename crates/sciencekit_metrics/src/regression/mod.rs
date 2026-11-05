@@ -11,9 +11,7 @@ mod sums;
 
 pub(crate) use sums::SKCompensatedSum;
 
-pub use mean_errors::{
-    sk_mean_absolute_error, sk_mean_squared_error, sk_root_mean_squared_error,
-};
+pub use mean_errors::{sk_mean_absolute_error, sk_mean_squared_error, sk_root_mean_squared_error};
 pub use r2::sk_r2_score;
 
 #[cfg(test)]

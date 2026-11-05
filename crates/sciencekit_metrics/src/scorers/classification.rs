@@ -1,9 +1,7 @@
 //! Classification scorer adapters.
 
 use ndarray::ArrayView1;
-use sciencekit_common::{
-    SKClassifierPredictor, SKError, SKFloat, SKLabelScorer, SKTargetView,
-};
+use sciencekit_common::{SKClassifierPredictor, SKError, SKFloat, SKLabelScorer, SKTargetView};
 
 use super::targets::sk_labels_from_targets;
 use crate::classification::{
@@ -28,7 +26,9 @@ where
         let truth = sk_labels_from_targets(&true_targets)?;
         sk_accuracy_score(
             truth.as_slice().expect("an owned array is contiguous"),
-            labels.as_slice().expect("a one-dimensional view is contiguous"),
+            labels
+                .as_slice()
+                .expect("a one-dimensional view is contiguous"),
         )
     }
 }
@@ -70,7 +70,9 @@ where
         let truth = sk_labels_from_targets(&true_targets)?;
         sk_precision_score(
             truth.as_slice().expect("an owned array is contiguous"),
-            labels.as_slice().expect("a one-dimensional view is contiguous"),
+            labels
+                .as_slice()
+                .expect("a one-dimensional view is contiguous"),
             self.labels.as_deref(),
             self.averaging,
         )
@@ -114,7 +116,9 @@ where
         let truth = sk_labels_from_targets(&true_targets)?;
         sk_recall_score(
             truth.as_slice().expect("an owned array is contiguous"),
-            labels.as_slice().expect("a one-dimensional view is contiguous"),
+            labels
+                .as_slice()
+                .expect("a one-dimensional view is contiguous"),
             self.labels.as_deref(),
             self.averaging,
         )
@@ -158,7 +162,9 @@ where
         let truth = sk_labels_from_targets(&true_targets)?;
         sk_f1_score(
             truth.as_slice().expect("an owned array is contiguous"),
-            labels.as_slice().expect("a one-dimensional view is contiguous"),
+            labels
+                .as_slice()
+                .expect("a one-dimensional view is contiguous"),
             self.labels.as_deref(),
             self.averaging,
         )

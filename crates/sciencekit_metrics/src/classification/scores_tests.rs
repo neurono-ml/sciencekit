@@ -1,8 +1,6 @@
 //! TDD tests for the classification score functions (spec `evaluation-metrics`).
 
-use super::{
-    SKAveraging, sk_f1_score, sk_precision_score, sk_recall_score,
-};
+use super::{SKAveraging, sk_f1_score, sk_precision_score, sk_recall_score};
 
 /// The shared unbalanced example: truth [0,0,0,0,1], predictions [0,0,0,1,1].
 const TRUE_LABELS: [i64; 5] = [0, 0, 0, 0, 1];
@@ -69,13 +67,9 @@ fn f1_matches_hand_computed_values() {
 #[test]
 fn explicit_labels_are_honoured() {
     // With label 2 resolved but unobserved, macro averaging includes its zeros.
-    let score = sk_precision_score::<f64>(
-        &[0, 0, 1],
-        &[0, 1, 0],
-        Some(&[0, 1, 2]),
-        SKAveraging::Macro,
-    )
-    .expect("valid input");
+    let score =
+        sk_precision_score::<f64>(&[0, 0, 1], &[0, 1, 0], Some(&[0, 1, 2]), SKAveraging::Macro)
+            .expect("valid input");
     // Class 0: 1/2, class 1: 0, class 2: 0 -> mean 1/6.
     assert!((score - 1.0 / 6.0).abs() < 1e-12);
 }

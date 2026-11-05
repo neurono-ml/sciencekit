@@ -22,15 +22,14 @@ pub fn sk_nan_euclidean_distance_matrix<F: SKFloat>(
         right.ncols(),
         "pairwise distances require matching feature dimensions"
     );
-    let total_features = num_traits::cast::<usize, F>(left.ncols())
-        .expect("feature counts fit in the scalar");
+    let total_features =
+        num_traits::cast::<usize, F>(left.ncols()).expect("feature counts fit in the scalar");
     let (left_rows, right_rows) = (left.nrows(), right.nrows());
     let mut output = Array::zeros((left_rows, right_rows));
     if left_rows * right_rows < SK_NAN_EUCLIDEAN_PARALLEL_GRAIN {
         for (i, left_row) in left.rows().into_iter().enumerate() {
             for (j, right_row) in right.rows().into_iter().enumerate() {
-                output[[i, j]] =
-                    sk_nan_euclidean_distance(&left_row, &right_row, total_features);
+                output[[i, j]] = sk_nan_euclidean_distance(&left_row, &right_row, total_features);
             }
         }
         return output;

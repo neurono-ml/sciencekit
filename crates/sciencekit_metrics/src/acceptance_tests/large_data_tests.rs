@@ -26,8 +26,7 @@ fn labels() -> (Vec<i64>, Vec<i64>) {
 #[test]
 fn accuracy_on_large_data_matches_the_known_pattern() {
     let (true_labels, predicted_labels) = labels();
-    let accuracy =
-        sk_accuracy_score::<f64>(&true_labels, &predicted_labels).expect("valid input");
+    let accuracy = sk_accuracy_score::<f64>(&true_labels, &predicted_labels).expect("valid input");
     assert!((accuracy - 0.9).abs() < 1e-12);
 }
 
@@ -40,10 +39,13 @@ fn classification_accumulator_on_large_data() {
         accumulator.observe(*true_label, *predicted_label);
     }
     let matrix = accumulator.confusion_matrix(None).expect("non-empty");
-    let correct: usize = (0..matrix.shape().0).map(|index| matrix.get(
-        matrix.labels()[index],
-        matrix.labels()[index],
-    ).expect("resolved label")).sum();
+    let correct: usize = (0..matrix.shape().0)
+        .map(|index| {
+            matrix
+                .get(matrix.labels()[index], matrix.labels()[index])
+                .expect("resolved label")
+        })
+        .sum();
     let accuracy = correct as f64 / matrix.number_of_observations() as f64;
     assert!((accuracy - 0.9).abs() < 1e-12);
 }
@@ -57,7 +59,13 @@ fn regression_errors_on_large_data() {
     let predictions: Vec<f64> = targets
         .iter()
         .enumerate()
-        .map(|(index, target)| if index % 100 == 0 { target + 1.0 } else { *target })
+        .map(|(index, target)| {
+            if index % 100 == 0 {
+                target + 1.0
+            } else {
+                *target
+            }
+        })
         .collect();
     let targets = ndarray::Array1::from_vec(targets);
     let predictions = ndarray::Array1::from_vec(predictions);

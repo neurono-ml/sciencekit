@@ -46,10 +46,7 @@ pub fn sk_chebyshev_distance_matrix<F: SKFloat>(
 }
 
 /// The Chebyshev distance between two rows.
-pub(crate) fn sk_chebyshev_distance<F: SKFloat>(
-    left: &ArrayView1<F>,
-    right: &ArrayView1<F>,
-) -> F {
+pub(crate) fn sk_chebyshev_distance<F: SKFloat>(left: &ArrayView1<F>, right: &ArrayView1<F>) -> F {
     left.iter()
         .zip(right.iter())
         .map(|(left_value, right_value)| (*left_value - *right_value).abs())

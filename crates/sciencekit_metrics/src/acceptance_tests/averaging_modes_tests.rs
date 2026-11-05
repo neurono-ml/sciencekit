@@ -37,14 +37,8 @@ fn every_averaging_mode_is_defined() {
 /// Micro-averaged F1 equals accuracy for single-label classification.
 #[test]
 fn micro_f1_equals_accuracy() {
-    let accuracy =
-        sk_accuracy_score::<f64>(&TRUE_LABELS, &PREDICTED_LABELS).expect("valid input");
-    let micro = sk_f1_score::<f64>(
-        &TRUE_LABELS,
-        &PREDICTED_LABELS,
-        None,
-        SKAveraging::Micro,
-    )
-    .expect("valid input");
+    let accuracy = sk_accuracy_score::<f64>(&TRUE_LABELS, &PREDICTED_LABELS).expect("valid input");
+    let micro = sk_f1_score::<f64>(&TRUE_LABELS, &PREDICTED_LABELS, None, SKAveraging::Micro)
+        .expect("valid input");
     assert!((micro - accuracy).abs() < 1e-12);
 }

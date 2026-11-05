@@ -79,9 +79,8 @@ fn chebyshev_large_data_matches_direct_computation() {
 /// The row-parallel path agrees with a direct reference on a large input.
 #[test]
 fn chebyshev_parallel_path_matches_direct_computation() {
-    let points: Array2<f64> = Array2::from_shape_fn((64, 40), |(i, j)| {
-        ((i * 13 + j * 7) % 89) as f64 - 44.0
-    });
+    let points: Array2<f64> =
+        Array2::from_shape_fn((64, 40), |(i, j)| ((i * 13 + j * 7) % 89) as f64 - 44.0);
     let distance = sk_chebyshev_distance_matrix(&points.view(), &points.view());
     assert_eq!(distance.shape(), &[64, 64]);
     for i in 0..64 {

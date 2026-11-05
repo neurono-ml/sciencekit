@@ -63,12 +63,13 @@ fn convenient_form_equals_pure_form() {
     let convenient = scorer
         .score(&model, SKDataView::Dense(features.view()), truth)
         .expect("valid input");
-    let pure = <SKR2Scorer as SKSupervisedScorer<f64, FixedRegressor<f64>>>::score_from_predictions(
-        &scorer,
-        truth,
-        array![1.0_f64, 2.0, 4.0].view(),
-    )
-    .expect("valid input");
+    let pure =
+        <SKR2Scorer as SKSupervisedScorer<f64, FixedRegressor<f64>>>::score_from_predictions(
+            &scorer,
+            truth,
+            array![1.0_f64, 2.0, 4.0].view(),
+        )
+        .expect("valid input");
     assert!((convenient - pure).abs() < 1e-12);
     assert!((convenient - 0.5).abs() < 1e-12);
 }

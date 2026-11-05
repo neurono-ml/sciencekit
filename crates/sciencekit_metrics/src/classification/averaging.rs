@@ -119,11 +119,10 @@ fn sk_weighted_mean<F: SKFloat>(
         .iter()
         .enumerate()
         .fold(F::zero(), |sum, (index, value)| {
-            let support =
-                num_traits::cast::<usize, F>(matrix.support(index)).expect("counts fit in the scalar");
+            let support = num_traits::cast::<usize, F>(matrix.support(index))
+                .expect("counts fit in the scalar");
             sum + *value * support
         });
-    let total =
-        num_traits::cast::<usize, F>(total_support).expect("counts fit in the scalar");
+    let total = num_traits::cast::<usize, F>(total_support).expect("counts fit in the scalar");
     weighted / total
 }

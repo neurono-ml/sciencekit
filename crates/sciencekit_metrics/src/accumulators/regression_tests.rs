@@ -55,7 +55,9 @@ fn merging_two_accumulators_equals_concatenation() {
     for (target, prediction) in targets.iter().zip(predictions.iter()) {
         whole.observe(*target, *prediction).expect("finite values");
     }
-    assert!((left.mean_squared_error().unwrap() - whole.mean_squared_error().unwrap()).abs() < 1e-12);
+    assert!(
+        (left.mean_squared_error().unwrap() - whole.mean_squared_error().unwrap()).abs() < 1e-12
+    );
     assert!((left.r2_score().unwrap() - whole.r2_score().unwrap()).abs() < 1e-12);
     assert_eq!(left.number_of_observations(), 5);
 }

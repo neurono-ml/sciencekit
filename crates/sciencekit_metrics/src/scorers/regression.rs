@@ -1,9 +1,7 @@
 //! Regression scorer adapters.
 
 use ndarray::ArrayView1;
-use sciencekit_common::{
-    SKError, SKFloat, SKRegressorPredictor, SKSupervisedScorer, SKTargetView,
-};
+use sciencekit_common::{SKError, SKFloat, SKRegressorPredictor, SKSupervisedScorer, SKTargetView};
 
 use crate::regression::{
     sk_mean_absolute_error, sk_mean_squared_error, sk_r2_score, sk_root_mean_squared_error,
@@ -13,8 +11,7 @@ use crate::regression::{
 #[derive(Debug, Clone, Copy, Default)]
 pub struct SKMeanSquaredErrorScorer;
 
-impl<F: SKFloat, M: SKRegressorPredictor<F>> SKSupervisedScorer<F, M>
-    for SKMeanSquaredErrorScorer
+impl<F: SKFloat, M: SKRegressorPredictor<F>> SKSupervisedScorer<F, M> for SKMeanSquaredErrorScorer
 where
     SKError: From<M::Error>,
 {
@@ -55,8 +52,7 @@ where
 #[derive(Debug, Clone, Copy, Default)]
 pub struct SKMeanAbsoluteErrorScorer;
 
-impl<F: SKFloat, M: SKRegressorPredictor<F>> SKSupervisedScorer<F, M>
-    for SKMeanAbsoluteErrorScorer
+impl<F: SKFloat, M: SKRegressorPredictor<F>> SKSupervisedScorer<F, M> for SKMeanAbsoluteErrorScorer
 where
     SKError: From<M::Error>,
 {

@@ -64,7 +64,9 @@ impl SKConfusionMatrix {
 
     /// The number of observations whose true label is the class at `index`.
     pub(crate) fn support(&self, index: usize) -> usize {
-        (0..self.labels.len()).map(|column| self.at(index, column)).sum()
+        (0..self.labels.len())
+            .map(|column| self.at(index, column))
+            .sum()
     }
 
     /// The number of predictions of the class at `index`.

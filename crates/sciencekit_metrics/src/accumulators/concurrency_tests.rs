@@ -47,7 +47,9 @@ fn classification_parallel_partitions_match_sequential() {
     let sequential_matrix = sequential
         .confusion_matrix(None)
         .expect("non-empty accumulator");
-    let parallel_matrix = merged.confusion_matrix(None).expect("non-empty accumulator");
+    let parallel_matrix = merged
+        .confusion_matrix(None)
+        .expect("non-empty accumulator");
     assert_eq!(sequential_matrix.labels(), parallel_matrix.labels());
     assert_eq!(sequential_matrix.counts(), parallel_matrix.counts());
     assert_eq!(merged.number_of_observations(), OBSERVATIONS);

@@ -17,8 +17,7 @@ fn batched_accumulation_equals_whole_input() {
     let matrix = accumulator
         .confusion_matrix(None)
         .expect("non-empty accumulator");
-    let expected =
-        sk_confusion_matrix(&true_labels, &predicted_labels, None).expect("valid input");
+    let expected = sk_confusion_matrix(&true_labels, &predicted_labels, None).expect("valid input");
     assert_eq!(matrix.labels(), expected.labels());
     assert_eq!(matrix.counts(), expected.counts());
     assert_eq!(accumulator.number_of_observations(), 6);
@@ -30,19 +29,16 @@ fn merging_two_accumulators_equals_concatenation() {
     let true_labels = [0_i64, 1, 1, 2, 2, 0];
     let predicted_labels = [0_i64, 1, 0, 2, 1, 1];
     let mut left = SKClassificationAccumulator::new();
-    for (true_label, predicted_label) in true_labels[..3].iter().zip(predicted_labels[..3].iter())
-    {
+    for (true_label, predicted_label) in true_labels[..3].iter().zip(predicted_labels[..3].iter()) {
         left.observe(*true_label, *predicted_label);
     }
     let mut right = SKClassificationAccumulator::new();
-    for (true_label, predicted_label) in true_labels[3..].iter().zip(predicted_labels[3..].iter())
-    {
+    for (true_label, predicted_label) in true_labels[3..].iter().zip(predicted_labels[3..].iter()) {
         right.observe(*true_label, *predicted_label);
     }
     left.merge(&right);
     let merged = left.confusion_matrix(None).expect("non-empty accumulator");
-    let expected =
-        sk_confusion_matrix(&true_labels, &predicted_labels, None).expect("valid input");
+    let expected = sk_confusion_matrix(&true_labels, &predicted_labels, None).expect("valid input");
     assert_eq!(merged.labels(), expected.labels());
     assert_eq!(merged.counts(), expected.counts());
     assert_eq!(left.number_of_observations(), 6);

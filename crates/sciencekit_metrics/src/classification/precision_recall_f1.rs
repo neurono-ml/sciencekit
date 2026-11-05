@@ -68,7 +68,6 @@ pub(super) fn sk_ratio<F: SKFloat>(numerator: usize, denominator: usize) -> F {
         return F::zero();
     }
     let numerator = num_traits::cast::<usize, F>(numerator).expect("counts fit in the scalar");
-    let denominator =
-        num_traits::cast::<usize, F>(denominator).expect("counts fit in the scalar");
+    let denominator = num_traits::cast::<usize, F>(denominator).expect("counts fit in the scalar");
     numerator / denominator
 }
