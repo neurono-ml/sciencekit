@@ -63,7 +63,7 @@ pub fn sk_per_class_precision_recall_f1<F: SKFloat>(
 }
 
 /// A ratio that yields zero on a zero denominator.
-fn sk_ratio<F: SKFloat>(numerator: usize, denominator: usize) -> F {
+pub(super) fn sk_ratio<F: SKFloat>(numerator: usize, denominator: usize) -> F {
     if denominator == 0 {
         return F::zero();
     }
