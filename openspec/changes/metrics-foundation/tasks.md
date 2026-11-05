@@ -13,7 +13,7 @@
 
 ## 2. Pairwise distances in `sciencekit_math`
 
-- [ ] 2.1 Write `pairwise/chebyshev_tests.rs` covering identical rows, the largest coordinate
+- [x] 2.1 Write `pairwise/chebyshev_tests.rs` covering identical rows, the largest coordinate
   dominating, non-negativity, symmetry, a large input and unequal row counts, confirm the
   failure, then implement the sequential `sk_chebyshev_distance_matrix` with `azip!` and
   re-export it from `pairwise/mod.rs`; verify with `cargo test -p sciencekit_math pairwise`.
