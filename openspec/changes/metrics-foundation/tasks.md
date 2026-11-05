@@ -17,7 +17,7 @@
   dominating, non-negativity, symmetry, a large input and unequal row counts, confirm the
   failure, then implement the sequential `sk_chebyshev_distance_matrix` with `azip!` and
   re-export it from `pairwise/mod.rs`; verify with `cargo test -p sciencekit_math pairwise`.
-- [ ] 2.2 Add the rayon row-parallel path to the Chebyshev kernel and a test asserting the
+- [x] 2.2 Add the rayon row-parallel path to the Chebyshev kernel and a test asserting the
   parallel and sequential results are equal on a large input; verify with
   `cargo test -p sciencekit_math pairwise`.
 - [ ] 2.3 Write `pairwise/nan_euclidean_tests.rs` for the spec scenarios — co-observed-only
