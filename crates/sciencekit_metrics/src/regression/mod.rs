@@ -6,6 +6,7 @@
 
 mod inputs;
 mod mean_errors;
+mod r2;
 mod sums;
 
 pub(crate) use sums::SKCompensatedSum;
@@ -13,8 +14,11 @@ pub(crate) use sums::SKCompensatedSum;
 pub use mean_errors::{
     sk_mean_absolute_error, sk_mean_squared_error, sk_root_mean_squared_error,
 };
+pub use r2::sk_r2_score;
 
 #[cfg(test)]
 mod mean_errors_tests;
+#[cfg(test)]
+mod r2_tests;
 #[cfg(test)]
 mod sums_tests;
