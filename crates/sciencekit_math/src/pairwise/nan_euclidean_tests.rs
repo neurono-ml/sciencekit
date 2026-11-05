@@ -106,3 +106,40 @@ fn nan_euclidean_large_data_matches_direct_computation() {
         }
     }
 }
+
+/// The row-parallel path agrees with a direct reference on a large input.
+#[test]
+fn nan_euclidean_parallel_path_matches_direct_computation() {
+    let points: Array2<f64> = Array2::from_shape_fn((64, 40), |(i, j)| {
+        if (i * 3 + j * 7) % 5 == 0 {
+            f64::NAN
+        } else {
+            ((i * 11 + j * 13) % 31) as f64 * 0.5
+        }
+    });
+    let distance = sk_nan_euclidean_distance_matrix(&points.view(), &points.view());
+    assert_eq!(distance.shape(), &[64, 64]);
+    for i in 0..64 {
+        for j in 0..64 {
+            let mut sum = 0.0_f64;
+            let mut present = 0_usize;
+            for k in 0..40 {
+                let (left, right) = (points[[i, k]], points[[j, k]]);
+                if !left.is_nan() && !right.is_nan() {
+                    sum += (left - right) * (left - right);
+                    present += 1;
+                }
+            }
+            let expected = if present == 0 {
+                f64::NAN
+            } else {
+                (sum * 40.0 / present as f64).sqrt()
+            };
+            let got = distance[[i, j]];
+            assert!(
+                (got.is_nan() && expected.is_nan()) || (got - expected).abs() < 1e-12,
+                "mismatch at ({i}, {j}): {got} vs {expected}"
+            );
+        }
+    }
+}
