@@ -18,4 +18,6 @@ pub mod scorers;
 mod validation;
 
 #[cfg(test)]
+mod acceptance_tests;
+#[cfg(test)]
 mod validation_tests;
