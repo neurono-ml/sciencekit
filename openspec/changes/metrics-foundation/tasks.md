@@ -102,7 +102,7 @@
   observation), large data (at least 100 000 rows), every averaging mode, the NaN-aware
   distance on a hand-computed matrix and concurrent accumulation, asserting documented
   tolerances; verify with `cargo test -p sciencekit_metrics`.
-- [ ] 8.2 Verify the workspace gates `cargo fmt --all --check`,
+- [x] 8.2 Verify the workspace gates `cargo fmt --all --check`,
   `cargo clippy --workspace --all-targets -- -D warnings` and `cargo test --workspace` are
   green before any push.
 
