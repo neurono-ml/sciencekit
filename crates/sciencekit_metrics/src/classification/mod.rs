@@ -7,10 +7,14 @@
 mod accuracy;
 mod confusion;
 mod label_space;
+mod precision_recall_f1;
 
 pub use accuracy::sk_accuracy_score;
 pub use confusion::{SKConfusionMatrix, sk_confusion_matrix};
 pub use label_space::SKLabelSpace;
+pub use precision_recall_f1::{
+    SKClassScores, sk_per_class_precision_recall_f1,
+};
 
 #[cfg(test)]
 mod accuracy_tests;
@@ -18,3 +22,5 @@ mod accuracy_tests;
 mod confusion_tests;
 #[cfg(test)]
 mod label_space_tests;
+#[cfg(test)]
+mod precision_recall_f1_tests;
