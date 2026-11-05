@@ -68,7 +68,7 @@
 - [x] 5.2 Implement `sk_mean_squared_error`, `sk_root_mean_squared_error` and
   `sk_mean_absolute_error`, with tests for perfect predictions, the `[1,2,3]` / `[1,2,4]`
   example, length mismatch and empty input; verify with `cargo test -p sciencekit_metrics`.
-- [ ] 5.3 Implement `sk_r2_score` with the zero-total-sum-of-squares policy (one for zero
+- [x] 5.3 Implement `sk_r2_score` with the zero-total-sum-of-squares policy (one for zero
   residual, zero otherwise), covered by tests for a perfect fit, a known non-perfect fit and
   constant targets; verify with `cargo test -p sciencekit_metrics`.
 
