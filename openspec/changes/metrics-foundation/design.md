@@ -115,17 +115,21 @@ boundary for no gain.
 
 ### Decision 7 — Accumulator representation and merging
 
-Classification accumulation uses a `BTreeMap<i64, usize>` label-to-index map plus a
-row-major `Vec<usize>` count matrix. Observing an unseen label appends a row and column;
-`merge` unions label sets and sums counts; finalization optionally validates an explicit
-label space. Memory is `O(k²)` in observed classes, and the `BTreeMap` keeps the class
-order deterministic independent of observation order.
+Classification accumulation uses a `BTreeMap<(i64, i64), usize>` keyed by the observed
+(true, predicted) pair. Observed labels need no index until finalization, `merge` is a
+per-pair sum, and finalization materializes the dense `k × k` matrix in ascending label
+order, optionally validating an explicit label space. Memory is `O(k²)` observed pairs and
+the key order keeps the class order deterministic independent of observation order; the
+per-pair map overhead is acceptable for the class cardinalities metrics target, and a dense
+accumulator can replace it later if very high cardinality demands it.
 
-Regression accumulation stores `count`, `Σy`, `Σy²`, `Σ(y−ŷ)²` and `Σ|y−ŷ|`, using
-Neumaier compensated summation in `F`. `merge` is element-wise addition. Every finalized
-metric is derived from these five accumulators, so batches and parallel partitions
-produce exactly the single-pass result (up to floating-point association, which the
-compensated sums keep within tolerance).
+Regression accumulation stores `count`, the running mean, `M2` (the Welford/Chan sum of
+squared deviations from the mean) and Neumaier-compensated `Σ(y−ŷ)²` and `Σ|y−ŷ|`. The
+`M2` form avoids the catastrophic cancellation of `Σy² − n·mean²` for large-magnitude `f32`
+targets, and merges with the standard parallel formula
+`M2 = M2a + M2b + δ²·na·nb/(na+nb)`. Every finalized metric is derived from this
+constant-size state, so batches and parallel partitions produce the single-pass result
+within the documented tolerance.
 
 Alternatives considered: storing predictions (unbounded memory), a `HashMap` (nondeterministic
 iteration order), and accumulating regression in `f64` (a scalar detour inconsistent with
@@ -169,9 +173,10 @@ crates/sciencekit_metrics/src/
 
 ## Risks / Trade-offs
 
-- **f32 accumulation error over large inputs** → Neumaier compensated sums in the
-  regression accumulator; tests compare against hand-computed f64 references within a
-  documented relative tolerance.
+- **f32 accumulation error over large inputs, including R² cancellation** → Neumaier
+  compensated sums plus the Welford/Chan `M2` state in the regression accumulator; tests
+  compare `f32` accuracy, MSE and R² against hand-computed `f64` references within a
+  documented relative tolerance, including a large-magnitude target series.
 - **O(k²) confusion memory for high-cardinality labels** → documented bound; the explicit
   label list lets callers pin the space, and the full suite can add top-k or sparse
   confusion later. Not a blocker for the current classifiers.
