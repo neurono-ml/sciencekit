@@ -4,9 +4,16 @@
 //! submodules; every implementation lives in its own file.
 
 mod classification;
+mod regression;
 mod targets;
 
 pub use classification::{SKAccuracyScorer, SKF1Scorer, SKPrecisionScorer, SKRecallScorer};
+pub use regression::{
+    SKMeanAbsoluteErrorScorer, SKMeanSquaredErrorScorer, SKR2Scorer,
+    SKRootMeanSquaredErrorScorer,
+};
 
 #[cfg(test)]
 mod classification_tests;
+#[cfg(test)]
+mod regression_tests;
