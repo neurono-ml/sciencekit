@@ -42,6 +42,11 @@ impl SKConfusionMatrix {
         Some(self.at(true_index, predicted_index))
     }
 
+    /// Build a matrix from already-indexed counts.
+    pub(crate) fn from_counts(labels: Vec<i64>, counts: Vec<usize>) -> Self {
+        Self { labels, counts }
+    }
+
     /// The number of resolved classes.
     pub(crate) fn number_of_classes(&self) -> usize {
         self.labels.len()
