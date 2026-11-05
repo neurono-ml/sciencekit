@@ -183,6 +183,42 @@ For horizontal bars reuse `.sk-bars` rows as seen in [Plan & Roadmap](./roadmap.
 10. **Equations must be LaTeX, not plain text.** Write `$...$` (inline) or `$$...$$` (display) so KaTeX renders them. Do not paste `‖a‖²`, `Σ`, `√` etc. as plain text.
 11. **Every image needs descriptive alt text.** Diagrams carry `accTitle`/`accDescr`; images (`.png`/`.svg`) must have an `alt` attribute that explains the content as read, not just a filename or raw code.
 
+## Analytics, search indexing and SEO
+
+The published book carries its own analytics and search-discovery setup, so traffic
+and indexing can be measured without touching every chapter.
+
+### Analytics and verification tags
+
+`docs/theme/head.hbs` injects, into the `<head>` of every generated page:
+
+| Tag | Purpose | Identifier |
+| --- | --- | --- |
+| Google Analytics 4 | traffic and behaviour reports | `G-HSGHJJVTEX` (property "sciencekit docs") |
+| Microsoft Clarity | session replays and heatmaps (Bing/Microsoft) | `z93niam8d4` (project "sciencekit documentation") |
+| Google Search Console | Google ownership verification | `8SLqi9ZwwJxRL7gm08BvIqJdCRUKCn3Lc0fatfK_OFA` |
+| Bing Webmaster Tools | Bing ownership verification | `A59C6DA6DA95C4B3AAC7D9FC2D822269` |
+
+To verify ownership manually, the Search Console HTML file
+(`docs/src/google29e18863a8e69344.html`) and the Bing verification meta tag must stay
+in place — removing them revokes ownership.
+
+### SEO metadata
+
+`docs/theme/head.hbs` also writes the author, robots, Open Graph, Twitter Card and
+`SoftwareSourceCode` JSON-LD metadata. Per-page canonical and `og:url` values are
+added after `mdbook build` by `docs/scripts/postbuild.mjs`, which also generates
+`sitemap.xml` from every rendered chapter. `docs/src/robots.txt` points crawlers at
+that sitemap.
+
+### IndexNow
+
+Bing, Yandex and other IndexNow participants receive an instant notification after
+each Pages deployment. The workflow runs `docs/scripts/submit-indexnow.mjs`, which
+reads the sitemap and posts every URL to `api.indexnow.org`. The key file
+`docs/src/4f6c6bea947c13936cc169b2f9e34826.txt` must remain reachable at the site
+root; the key itself is not a secret, it only proves control of the host.
+
 ## Checklist for a docs change
 
 - [ ] Worktree created on `temporary/worktrees/docs/<name>`
