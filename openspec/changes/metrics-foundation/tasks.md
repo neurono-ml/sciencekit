@@ -44,7 +44,7 @@
 - [x] 4.1 Implement `sk_confusion_matrix` returning `SKConfusionMatrix` (row-major counts plus
   the resolved labels), with tests for known counts, zero-count resolved classes, explicit
   label ordering and unknown labels; verify with `cargo test -p sciencekit_metrics`.
-- [ ] 4.2 Implement `sk_accuracy_score` with tests for the known `0.75` example, perfect and
+- [x] 4.2 Implement `sk_accuracy_score` with tests for the known `0.75` example, perfect and
   zero accuracy, and `EmptyInput` over no observations; verify with
   `cargo test -p sciencekit_metrics`.
 - [ ] 4.3 Implement per-class precision, recall and F1 from the confusion matrix, with the
