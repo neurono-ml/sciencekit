@@ -47,7 +47,7 @@
 - [x] 4.2 Implement `sk_accuracy_score` with tests for the known `0.75` example, perfect and
   zero accuracy, and `EmptyInput` over no observations; verify with
   `cargo test -p sciencekit_metrics`.
-- [ ] 4.3 Implement per-class precision, recall and F1 from the confusion matrix, with the
+- [x] 4.3 Implement per-class precision, recall and F1 from the confusion matrix, with the
   harmonic-mean definition and the zero-denominator-zero policy, covered by tests for an
   absent predicted class and an absent true class; verify with
   `cargo test -p sciencekit_metrics`.
