@@ -84,7 +84,7 @@
 
 ## 7. Streaming accumulators
 
-- [ ] 7.1 Implement `SKClassificationAccumulator` (`observe`, `merge`, label space and
+- [x] 7.1 Implement `SKClassificationAccumulator` (`observe`, `merge`, label space and
   confusion finalization) with tests proving batched equals whole-input, merging two
   partitions equals one concatenated pass, an empty accumulator returns `EmptyInput`, and
   unseen labels extend the class space deterministically; verify with
