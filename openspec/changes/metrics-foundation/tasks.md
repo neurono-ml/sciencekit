@@ -116,7 +116,7 @@
   `Development Explained` chapter covering metric semantics, label spaces, averaging,
   accumulators and the NaN-aware distance, register it in `SUMMARY.md`, update
   `maintaining.md`, and verify with `mdbook build docs`.
-- [ ] 9.3 Independent review by a separate agent validating every scenario in
+- [x] 9.3 Independent review by a separate agent validating every scenario in
   `evaluation-metrics`, `pairwise-distances`, `error-model` and `backend-selection` against
   the code and tests; address every finding and re-run the gates.
 
