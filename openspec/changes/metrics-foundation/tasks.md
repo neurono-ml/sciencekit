@@ -6,7 +6,7 @@
   variants — `EmptyInput` naming the operation, `NonFiniteValue { position }` and
   `UnknownLabel { label }` — then add them to the `#[non_exhaustive]` `SKError`; verify with
   `cargo test -p sciencekit_common errors`.
-- [ ] 1.2 Create `crates/sciencekit_metrics` with `lib.rs` and the dispatcher `mod.rs` files for
+- [x] 1.2 Create `crates/sciencekit_metrics` with `lib.rs` and the dispatcher `mod.rs` files for
   `classification`, `regression`, `scorers` and `accumulators`, add it to
   `[workspace.members]` and workspace dependencies; verify the crate compiles empty with
   `cargo test -p sciencekit_metrics`.
