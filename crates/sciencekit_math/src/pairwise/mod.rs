@@ -11,14 +11,18 @@
 //! This is a **pure dispatcher** module: `mod.rs` only declares and re-exports
 //! submodules; every implementation lives in its own file.
 
+mod chebyshev;
 mod cosine;
 mod manhattan;
 mod simd_dot;
 mod squared_euclidean;
 
+pub use chebyshev::sk_chebyshev_distance_matrix;
 pub use cosine::sk_cosine_distance_matrix;
 pub use manhattan::sk_manhattan_distance_matrix;
 pub use squared_euclidean::{sk_euclidean_distance_matrix, sk_squared_euclidean_distance_matrix};
 
+#[cfg(test)]
+mod chebyshev_tests;
 #[cfg(test)]
 mod pairwise_tests;
