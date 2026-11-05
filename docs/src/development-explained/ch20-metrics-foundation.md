@@ -116,7 +116,7 @@ policy returns `1` for an exact prediction and `0` otherwise, instead of dividin
 ### 2.5 Streaming: sums, not predictions
 
 A metric over a million rows must not store a million predictions. The regression accumulator
-stores five running sums — count, `Σy`, `Σy²`, `Σ(y−ŷ)²`, `Σ|y−ŷ|` — and the classification
+stores constant-size state — count, a running mean, `M2` (the Welford/Chan sum of squared deviations from the mean), and compensated `Σ(y−ŷ)²` and `Σ|y−ŷ|` — and the classification
 accumulator stores one counter per observed label pair. Both can be merged, so batches and
 parallel partitions finalize to exactly the whole-input result.
 
@@ -138,9 +138,11 @@ flowchart TB
     class G violet
 ```
 
-Long sums in `f32` lose small addends next to large ones. The regression accumulator therefore
-uses **Neumaier compensated summation**: it keeps a second term holding the bits lost at each
-step. A test sums `[1e8, 1, -1e8, 1]` in `f32` and proves the compensated value is `2` while
+Long sums in `f32` lose small addends next to large ones, and `Σy² − n·mean²` cancels
+catastrophically for large targets. The regression accumulator therefore uses
+**Neumaier compensated summation** for the error sums and the **Welford/Chan `M2`** state for
+the target variance: `M2` accumulates squared deviations from the running mean, so no large
+terms cancel and merges use the standard parallel formula. A test sums `[1e8, 1, -1e8, 1]` in `f32` and proves the compensated value is `2` while
 the naive sum is `1`.
 
 ### 2.6 Missing values: the NaN-aware distance
