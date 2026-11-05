@@ -20,7 +20,7 @@ algorithm crates consume.
 |---|---|
 | `kernels` | Elementwise transform, binary combine, axis reductions and in-place scaling. |
 | `layout` | C/F-contiguity detection and contiguity-forcing. |
-| `pairwise` | Squared-Euclidean ($\|a\|^2 - 2a \cdot b + \|b\|^2$), Euclidean, Manhattan and Cosine distance matrices. |
+| `pairwise` | Squared-Euclidean ($\|a\|^2 - 2a \cdot b + \|b\|^2$), Euclidean, Manhattan, Cosine, Chebyshev and NaN-aware Euclidean distance matrices. |
 | `sparse_ops` | `sprs` CSR×dense and sparse×sparse products over zero-copy views. |
 | `backend` | `SKMathBackend` trait + `SKFaerBackend` (default), `SKMatrixMultiplyBackend`, and the opt-in `blas-backend` feature. |
 
@@ -48,7 +48,8 @@ flowchart LR
 - **Layout** — `SKMemoryLayout`, `sk_is_c_contiguous`, `sk_is_f_contiguous`,
   `sk_force_contiguous`.
 - **Distances** — `sk_squared_euclidean_distance_matrix`, `sk_euclidean_distance_matrix`,
-  `sk_manhattan_distance_matrix`, `sk_cosine_distance_matrix`.
+  `sk_manhattan_distance_matrix`, `sk_cosine_distance_matrix`,
+  `sk_chebyshev_distance_matrix`, `sk_nan_euclidean_distance_matrix`.
 - **Sparse** — `sk_csr_dense_product`, `sk_sparse_product`.
 - **Backend** — `SKMathBackend` (trait), `SKFaerBackend`, `SKMatrixMultiplyBackend`,
   `SKNdArrayLinalgBackend` (`blas-backend` only), `sk_default_math_backend`.
