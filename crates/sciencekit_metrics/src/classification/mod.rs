@@ -4,9 +4,13 @@
 //! This is a **pure dispatcher** module: `mod.rs` only declares and re-exports
 //! submodules; every implementation lives in its own file.
 
+mod confusion;
 mod label_space;
 
+pub use confusion::{SKConfusionMatrix, sk_confusion_matrix};
 pub use label_space::SKLabelSpace;
 
+#[cfg(test)]
+mod confusion_tests;
 #[cfg(test)]
 mod label_space_tests;
