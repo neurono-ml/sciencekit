@@ -25,7 +25,7 @@
   yielding NaN, all-present rows equal to Euclidean, symmetry and large data — confirm the
   failure, then implement the sequential `sk_nan_euclidean_distance_matrix` and re-export
   it; verify with `cargo test -p sciencekit_math pairwise`.
-- [ ] 2.4 Add the rayon row-parallel path to the NaN-aware kernel and a test asserting parallel
+- [x] 2.4 Add the rayon row-parallel path to the NaN-aware kernel and a test asserting parallel
   equals sequential on a large input, including rows with missing values; verify with
   `cargo test -p sciencekit_math pairwise`.
 
