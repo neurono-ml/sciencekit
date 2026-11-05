@@ -78,7 +78,7 @@
   `SKF1Scorer` over `SKLabelScorer` for any compatible classifier, with mock classifiers
   proving the pure form scores stored labels without inference and the convenient form
   equals the pure form; verify with `cargo test -p sciencekit_metrics`.
-- [ ] 6.2 Implement the regression scorer adapters over `SKSupervisedScorer` for any
+- [x] 6.2 Implement the regression scorer adapters over `SKSupervisedScorer` for any
   compatible regressor, with the same pure/convenient equivalence tests and a nominal-target
   rejection test; verify with `cargo test -p sciencekit_metrics`.
 
