@@ -74,7 +74,7 @@
 
 ## 6. Scorer adapters over the shared contracts
 
-- [ ] 6.1 Implement `SKAccuracyScorer`, `SKPrecisionScorer`, `SKRecallScorer` and
+- [x] 6.1 Implement `SKAccuracyScorer`, `SKPrecisionScorer`, `SKRecallScorer` and
   `SKF1Scorer` over `SKLabelScorer` for any compatible classifier, with mock classifiers
   proving the pure form scores stored labels without inference and the convenient form
   equals the pure form; verify with `cargo test -p sciencekit_metrics`.
