@@ -2,7 +2,7 @@
 
 ## 1. Workspace and central errors
 
-- [ ] 1.1 Write failing tests in `sciencekit_common/src/errors/errors_tests.rs` for the three new
+- [x] 1.1 Write failing tests in `sciencekit_common/src/errors/errors_tests.rs` for the three new
   variants — `EmptyInput` naming the operation, `NonFiniteValue { position }` and
   `UnknownLabel { label }` — then add them to the `#[non_exhaustive]` `SKError`; verify with
   `cargo test -p sciencekit_common errors`.
