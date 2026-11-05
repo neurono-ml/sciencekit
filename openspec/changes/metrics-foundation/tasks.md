@@ -89,7 +89,7 @@
   partitions equals one concatenated pass, an empty accumulator returns `EmptyInput`, and
   unseen labels extend the class space deterministically; verify with
   `cargo test -p sciencekit_metrics`.
-- [ ] 7.2 Implement `SKRegressionAccumulator` (count, `Σy`, `Σy²`, `Σ(y−ŷ)²`, `Σ|y−ŷ|`,
+- [x] 7.2 Implement `SKRegressionAccumulator` (count, `Σy`, `Σy²`, `Σ(y−ŷ)²`, `Σ|y−ŷ|`,
   `merge`, metric finalization) with the same batched/merge/empty tests and a comparison
   against the free functions; verify with `cargo test -p sciencekit_metrics`.
 - [ ] 7.3 Add a concurrency test that partitions a large input across rayon tasks, accumulates
