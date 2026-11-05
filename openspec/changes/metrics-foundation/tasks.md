@@ -31,7 +31,7 @@
 
 ## 3. Shared evaluation validation and label space
 
-- [ ] 3.1 Implement `classification/label_space.rs`: explicit list validation (non-empty,
+- [x] 3.1 Implement `classification/label_space.rs`: explicit list validation (non-empty,
   unique, internally sorted) and the default sorted union of observed labels, returning
   `UnknownLabel` outside an explicit space and `InvalidHyperparameter` for duplicates; cover
   every branch in `label_space_tests.rs`; verify with `cargo test -p sciencekit_metrics`.
