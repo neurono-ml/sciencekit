@@ -56,7 +56,7 @@
   to accuracy on single-label multiclass, weighted support proportionality and the binary
   positive-label result equal to that class's per-class score; verify with
   `cargo test -p sciencekit_metrics`.
-- [ ] 4.5 Implement `sk_precision_score`, `sk_recall_score` and `sk_f1_score` over the
+- [x] 4.5 Implement `sk_precision_score`, `sk_recall_score` and `sk_f1_score` over the
   aggregation layer, with tests matching hand-computed multiclass examples for every
   averaging mode; verify with `cargo test -p sciencekit_metrics`.
 
