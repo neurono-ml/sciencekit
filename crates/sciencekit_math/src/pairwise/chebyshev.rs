@@ -1,6 +1,6 @@
 //! Chebyshev (L∞) pairwise-distance kernel.
 
-use ndarray::{Array, Array2, ArrayView1, ArrayView2, Axis};
+use ndarray::{Array, Array2, ArrayView1, ArrayView2, Axis, azip};
 use rayon::prelude::*;
 use sciencekit_common::SKFloat;
 
@@ -47,8 +47,9 @@ pub fn sk_chebyshev_distance_matrix<F: SKFloat>(
 
 /// The Chebyshev distance between two rows.
 pub(crate) fn sk_chebyshev_distance<F: SKFloat>(left: &ArrayView1<F>, right: &ArrayView1<F>) -> F {
-    left.iter()
-        .zip(right.iter())
-        .map(|(left_value, right_value)| (*left_value - *right_value).abs())
-        .fold(F::zero(), |maximum, difference| maximum.max(difference))
+    let mut maximum = F::zero();
+    azip!((left_value in left, right_value in right) {
+        maximum = maximum.max((*left_value - *right_value).abs());
+    });
+    maximum
 }

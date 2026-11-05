@@ -2,7 +2,7 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use sciencekit_common::SKError;
+use sciencekit_common::{SKError, SKFloat};
 
 use crate::classification::{SKConfusionMatrix, SKLabelSpace};
 
@@ -43,6 +43,25 @@ impl SKClassificationAccumulator {
     /// The number of observations accumulated.
     pub fn number_of_observations(&self) -> usize {
         self.observations
+    }
+
+    /// The accuracy over the accumulated label pairs.
+    pub fn accuracy<F: SKFloat>(&self) -> Result<F, SKError> {
+        if self.observations == 0 {
+            return Err(SKError::EmptyInput {
+                operation: "classification_accumulator",
+            });
+        }
+        let correct: usize = self
+            .counts
+            .iter()
+            .filter(|((true_label, predicted_label), _)| true_label == predicted_label)
+            .map(|(_, count)| *count)
+            .sum();
+        let correct = num_traits::cast::<usize, F>(correct).expect("counts fit in the scalar");
+        let total =
+            num_traits::cast::<usize, F>(self.observations).expect("counts fit in the scalar");
+        Ok(correct / total)
     }
 
     /// Finalize the confusion matrix over the resolved label space.

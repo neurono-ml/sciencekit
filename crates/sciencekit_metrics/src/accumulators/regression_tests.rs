@@ -94,3 +94,35 @@ fn non_finite_observation_is_rejected() {
         .expect_err("NaN must be rejected");
     assert!(matches!(error, SKError::NonFiniteValue { position: 1 }));
 }
+
+/// Large-magnitude `f32` targets keep batched R² equal to whole-input R².
+#[test]
+fn f32_large_magnitude_r2_matches_whole_input() {
+    let count = 2_000_usize;
+    let targets: Vec<f32> = (0..count)
+        .map(|index| 3.0e6 + (index % 7) as f32 * 0.5)
+        .collect();
+    let predictions: Vec<f32> = targets
+        .iter()
+        .enumerate()
+        .map(|(index, target)| target + ((index % 5) as f32 - 2.0) * 0.1)
+        .collect();
+    let targets_array = ndarray::Array1::from_vec(targets.clone());
+    let predictions_array = ndarray::Array1::from_vec(predictions.clone());
+    let expected =
+        sk_r2_score(targets_array.view(), predictions_array.view()).expect("valid input");
+
+    let mut accumulator = SKRegressionAccumulator::new();
+    for (target, prediction) in targets.iter().zip(predictions.iter()) {
+        accumulator.observe(*target, *prediction).expect("finite");
+    }
+    let got = accumulator.r2_score().expect("non-empty");
+    assert!(
+        (got - expected).abs() < 1e-3,
+        "batched f32 R² {got} differs from whole-input {expected}"
+    );
+    assert!(
+        got > 0.0 && got < 1.0,
+        "must not trigger the constant policy: {got}"
+    );
+}

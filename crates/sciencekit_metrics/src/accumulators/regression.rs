@@ -6,14 +6,16 @@ use crate::regression::SKCompensatedSum;
 
 /// A mergeable accumulator of regression target/prediction pairs.
 ///
-/// Holds five constant-size sums (count, `Σy`, `Σy²`, `Σ(y−ŷ)²`, `Σ|y−ŷ|`) in
-/// compensated arithmetic, so batches and parallel partitions finalize to the
-/// same metrics as a whole-input evaluation.
+/// Holds the observation count, the running mean and `M2` (the sum of squared
+/// deviations from the mean, in the Welford/Chan form) plus compensated error
+/// sums. The `M2` state avoids the catastrophic cancellation of `Σy² − n·mean²`
+/// for large-magnitude `f32` targets, so batches and parallel partitions
+/// finalize to the same metrics as a whole-input evaluation.
 #[derive(Debug, Clone)]
 pub struct SKRegressionAccumulator<F> {
     count: usize,
-    targets: SKCompensatedSum<F>,
-    squared_targets: SKCompensatedSum<F>,
+    mean: F,
+    m2: F,
     squared_errors: SKCompensatedSum<F>,
     absolute_errors: SKCompensatedSum<F>,
 }
@@ -23,14 +25,17 @@ impl<F: SKFloat> SKRegressionAccumulator<F> {
     pub fn new() -> Self {
         Self {
             count: 0,
-            targets: SKCompensatedSum::new(),
-            squared_targets: SKCompensatedSum::new(),
+            mean: F::zero(),
+            m2: F::zero(),
             squared_errors: SKCompensatedSum::new(),
             absolute_errors: SKCompensatedSum::new(),
         }
     }
 
     /// Observe one target/prediction pair, rejecting non-finite values.
+    ///
+    /// The reported position is the observation's index in this accumulator's
+    /// stream, not its index inside the current batch.
     pub fn observe(&mut self, target: F, prediction: F) -> Result<(), SKError> {
         if !target.is_finite() || !prediction.is_finite() {
             return Err(SKError::NonFiniteValue {
@@ -38,18 +43,31 @@ impl<F: SKFloat> SKRegressionAccumulator<F> {
             });
         }
         let error = target - prediction;
-        self.targets.add(target);
-        self.squared_targets.add(target * target);
+        self.count += 1;
+        let delta = target - self.mean;
+        self.mean = self.mean + delta / self.count_scalar();
+        let delta_after = target - self.mean;
+        self.m2 = self.m2 + delta * delta_after;
         self.squared_errors.add(error * error);
         self.absolute_errors.add(error.abs());
-        self.count += 1;
         Ok(())
     }
 
     /// Merge another accumulator into this one.
     pub fn merge(&mut self, other: &Self) {
-        self.targets.merge(other.targets);
-        self.squared_targets.merge(other.squared_targets);
+        if other.count == 0 {
+            return;
+        }
+        if self.count == 0 {
+            *self = other.clone();
+            return;
+        }
+        let left_count = self.count_scalar();
+        let right_count = other.count_scalar();
+        let total = left_count + right_count;
+        let delta = other.mean - self.mean;
+        self.mean = self.mean + delta * right_count / total;
+        self.m2 = self.m2 + other.m2 + delta * delta * left_count * right_count / total;
         self.squared_errors.merge(other.squared_errors);
         self.absolute_errors.merge(other.absolute_errors);
         self.count += other.count;
@@ -81,17 +99,15 @@ impl<F: SKFloat> SKRegressionAccumulator<F> {
     /// The coefficient of determination over the accumulated pairs.
     pub fn r2_score(&self) -> Result<F, SKError> {
         self.require_observations("r2")?;
-        let mean = self.targets.value() / self.count_scalar();
-        let total = self.squared_targets.value() - self.targets.value() * mean;
-        let residual = self.squared_errors.value();
+        let total = self.m2;
         if total <= F::zero() {
-            return Ok(if residual.is_zero() {
+            return Ok(if self.squared_errors.value().is_zero() {
                 F::one()
             } else {
                 F::zero()
             });
         }
-        Ok(F::one() - residual / total)
+        Ok(F::one() - self.squared_errors.value() / total)
     }
 
     /// Reject finalization over no observations.

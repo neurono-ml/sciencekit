@@ -6,5 +6,6 @@
 mod averaging_modes_tests;
 mod concurrency_tests;
 mod distance_tests;
+mod f32_precision_tests;
 mod large_data_tests;
 mod small_data_tests;

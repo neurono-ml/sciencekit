@@ -144,3 +144,18 @@ fn configured_adapters_carry_explicit_labels() {
     // Classes 0, 1 and 2: F1 1/2, 0 and 0 -> macro mean 1/6.
     assert!((value - 1.0 / 6.0).abs() < 1e-12);
 }
+
+/// A finite continuous label outside the i64 range is a conversion failure.
+#[test]
+fn out_of_range_continuous_labels_are_rejected() {
+    let truth_values = array![1.0e300_f64];
+    let truth = SKTargetView::<f64>::Continuous(truth_values.view());
+    let labels = array![0_i64];
+    let error = <SKAccuracyScorer as SKLabelScorer<f64, PanickingClassifier>>::score_from_labels(
+        &SKAccuracyScorer,
+        truth,
+        labels.view(),
+    )
+    .expect_err("the label does not fit i64");
+    assert!(matches!(error, SKError::Conversion(_)));
+}

@@ -19,8 +19,12 @@ pub(super) fn sk_labels_from_targets<F: SKFloat>(
                 if !value.is_finite() {
                     return Err(SKError::NonFiniteValue { position });
                 }
-                let label = num_traits::ToPrimitive::to_i64(&value.round())
-                    .ok_or(SKError::NonFiniteValue { position })?;
+                let label = num_traits::ToPrimitive::to_i64(&value.round()).ok_or_else(|| {
+                    SKError::Conversion(
+                        "a continuous label outside the i64 range cannot be represented as i64"
+                            .to_string(),
+                    )
+                })?;
                 labels.push(label);
             }
             Ok(Array1::from_vec(labels))

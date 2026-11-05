@@ -11,8 +11,8 @@ repository = "https://github.com/neurono-ml/sciencekit"
 sciencekit_common = { path = "../sciencekit_common" }
 
 ndarray = { workspace = true }
-rayon = { workspace = true }
 num-traits = "0.2"
 
 [dev-dependencies]
 sciencekit_math = { path = "../sciencekit_math" }
+rayon = { workspace = true }
