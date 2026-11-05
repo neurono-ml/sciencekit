@@ -100,6 +100,27 @@ pub enum SKError {
     /// A conversion failure at the data boundary.
     #[error("conversion failure: {0}")]
     Conversion(String),
+
+    /// An operation that requires at least one observation received none.
+    #[error("operation `{operation}` requires at least one observation")]
+    EmptyInput {
+        /// The operation that required observations.
+        operation: &'static str,
+    },
+
+    /// A non-finite numeric value received where finite values are required.
+    #[error("non-finite value at position {position}")]
+    NonFiniteValue {
+        /// The zero-based position of the offending value.
+        position: usize,
+    },
+
+    /// A label observed outside an explicitly supplied label space.
+    #[error("label {label} is outside the resolved label space")]
+    UnknownLabel {
+        /// The offending label.
+        label: i64,
+    },
 }
 
 /// Convenience constructors for the most common variants.
