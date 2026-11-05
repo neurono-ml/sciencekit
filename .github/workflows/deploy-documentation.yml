@@ -29,6 +29,9 @@ jobs:
       - name: Build book
         run: mdbook build docs
 
+      - name: Generate sitemap and page metadata
+        run: node docs/scripts/postbuild.mjs
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
@@ -44,6 +47,13 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Submit URLs to IndexNow (Bing)
+        run: node docs/scripts/submit-indexnow.mjs
+        continue-on-error: true

@@ -10,6 +10,7 @@ build-dir = "book"
 create-missing = false
 
 [output.html]
+theme = "theme"
 default-theme = "coal"
 preferred-dark-theme = "coal"
 additional-css = ["skin/custom.css", "skin/katex.min.css"]
@@ -23,7 +24,7 @@ additional-js = [
 ]
 git-repository-url = "https://github.com/neurono-ml/sciencekit"
 edit-url-template = "https://github.com/neurono-ml/sciencekit/edit/docs/documentations/{path}"
-site-url = "/sciencekit/"
+site-url = "https://neurono-ml.github.io/sciencekit/"
 no-section-label = true
 
 [output.html.search]
