@@ -65,7 +65,7 @@
 - [x] 5.1 Implement the Neumaier compensated accumulator helper in `regression` and prove it
   beats naive f32 summation on a large mixed-magnitude series with a unit test; verify with
   `cargo test -p sciencekit_metrics`.
-- [ ] 5.2 Implement `sk_mean_squared_error`, `sk_root_mean_squared_error` and
+- [x] 5.2 Implement `sk_mean_squared_error`, `sk_root_mean_squared_error` and
   `sk_mean_absolute_error`, with tests for perfect predictions, the `[1,2,3]` / `[1,2,4]`
   example, length mismatch and empty input; verify with `cargo test -p sciencekit_metrics`.
 - [ ] 5.3 Implement `sk_r2_score` with the zero-total-sum-of-squares policy (one for zero
