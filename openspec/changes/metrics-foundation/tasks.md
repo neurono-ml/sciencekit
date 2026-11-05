@@ -98,7 +98,7 @@
 
 ## 8. Acceptance and integration
 
-- [ ] 8.1 Add `crates/sciencekit_metrics/src/acceptance_tests/` covering tiny data (one
+- [x] 8.1 Add `crates/sciencekit_metrics/src/acceptance_tests/` covering tiny data (one
   observation), large data (at least 100 000 rows), every averaging mode, the NaN-aware
   distance on a hand-computed matrix and concurrent accumulation, asserting documented
   tolerances; verify with `cargo test -p sciencekit_metrics`.
