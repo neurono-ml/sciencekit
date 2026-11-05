@@ -20,7 +20,7 @@
 - [x] 2.2 Add the rayon row-parallel path to the Chebyshev kernel and a test asserting the
   parallel and sequential results are equal on a large input; verify with
   `cargo test -p sciencekit_math pairwise`.
-- [ ] 2.3 Write `pairwise/nan_euclidean_tests.rs` for the spec scenarios — co-observed-only
+- [x] 2.3 Write `pairwise/nan_euclidean_tests.rs` for the spec scenarios — co-observed-only
   comparison, the `total_features / present_features` scale, zero co-observed features
   yielding NaN, all-present rows equal to Euclidean, symmetry and large data — confirm the
   failure, then implement the sequential `sk_nan_euclidean_distance_matrix` and re-export
