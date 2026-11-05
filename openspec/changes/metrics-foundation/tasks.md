@@ -92,7 +92,7 @@
 - [x] 7.2 Implement `SKRegressionAccumulator` (count, `Σy`, `Σy²`, `Σ(y−ŷ)²`, `Σ|y−ŷ|`,
   `merge`, metric finalization) with the same batched/merge/empty tests and a comparison
   against the free functions; verify with `cargo test -p sciencekit_metrics`.
-- [ ] 7.3 Add a concurrency test that partitions a large input across rayon tasks, accumulates
+- [x] 7.3 Add a concurrency test that partitions a large input across rayon tasks, accumulates
   in parallel, merges and asserts equality with the sequential result for both accumulators,
   plus a compile-time `Send + Sync` assertion; verify with `cargo test -p sciencekit_metrics`.
 
