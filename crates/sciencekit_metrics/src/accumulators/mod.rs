@@ -4,8 +4,12 @@
 //! submodules; every implementation lives in its own file.
 
 mod classification;
+mod regression;
 
 pub use classification::SKClassificationAccumulator;
+pub use regression::SKRegressionAccumulator;
 
 #[cfg(test)]
 mod classification_tests;
+#[cfg(test)]
+mod regression_tests;
