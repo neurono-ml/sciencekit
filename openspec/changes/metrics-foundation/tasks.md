@@ -51,7 +51,7 @@
   harmonic-mean definition and the zero-denominator-zero policy, covered by tests for an
   absent predicted class and an absent true class; verify with
   `cargo test -p sciencekit_metrics`.
-- [ ] 4.4 Implement `SKAveraging` aggregation (`Macro`, `Micro`, `Weighted`,
+- [x] 4.4 Implement `SKAveraging` aggregation (`Macro`, `Micro`, `Weighted`,
   `Binary { positive_label }`), with tests proving macro equal class weights, micro F1 equal
   to accuracy on single-label multiclass, weighted support proportionality and the binary
   positive-label result equal to that class's per-class score; verify with
