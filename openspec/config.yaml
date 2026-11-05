@@ -62,6 +62,8 @@ rules:
       Tests live in companion *_tests.rs modules beside the implementation; mock data in ndarray/sprs.
     - >-
       Mandatory iterative evolution: naive → tests → performance (SIMD/rayon/layout) → streaming/out-of-core; no step may be skipped.
+    - >-
+      Documentation changes must keep sitemap.xml current: it is regenerated from every rendered chapter by docs/scripts/postbuild.mjs on each GitHub Pages deploy, so never commit a hand-written sitemap.xml — adding, renaming, or removing a page under docs/src/ (registered in SUMMARY.md) is enough. If the published site URL changes, update BASE_URL in docs/scripts/postbuild.mjs together with site-url in docs/book.toml.
 
 operations:
   apply:

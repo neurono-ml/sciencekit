@@ -83,6 +83,7 @@ Instructions for agents working in this repository. Product source of truth: `do
 - **Book language: English.** Write new chapters and edits in English; translate PRD concepts faithfully.
 - **Documentation agents:** instructions and component catalog in `docs/src/documentation-guide.md`.
 - **Publishing:** the GitHub Actions workflow (`.github/workflows/deploy-documentation.yml`) builds and deploys the book to GitHub Pages on every push to `docs/documentations`. Run `mdbook build docs` locally before pushing.
+- **Sitemap is generated, never hand-edited:** `docs/scripts/postbuild.mjs` regenerates `sitemap.xml` from every rendered chapter on each Pages deploy. Any documentation change that adds, renames, or removes a page under `docs/src/` (and registers it in `SUMMARY.md`) is automatically reflected in the sitemap — never commit a hand-written `sitemap.xml`. If the published site URL changes, update `BASE_URL` in `docs/scripts/postbuild.mjs` and `site-url` in `docs/book.toml` together.
 - **README:** keep `README.md` up to date, small, pointing to the documentation, with the expected badges for a Rust project hosted on GitHub (CI status, crates.io, docs.rs, Rust version).
 
 ## Agent skill
