@@ -10,10 +10,11 @@ clusterer exists yet, so the bound can change before the first implementation sh
 ## Goals / Non-Goals
 
 **Goals:**
-- One honest assignment contract shared by KMeans, MiniBatchKMeans, DBSCAN and future
-  clusterers.
-- An unsupervised scorer that consumes assignments directly.
-- A documented noise convention.
+- One honest, typed assignment contract shared by KMeans, MiniBatchKMeans, DBSCAN and
+  future clusterers.
+- A noise representation that cannot collide with a cluster identifier.
+- An unsupervised scorer that consumes typed assignments directly.
+- A compact representation (at most four bytes per element).
 
 **Non-Goals:**
 - Any concrete clusterer or metric.
@@ -22,53 +23,84 @@ clusterer exists yet, so the bound can change before the first implementation sh
 
 ## Decisions
 
-### Decision 1 — New `SKClustererPredictor<F>` in the fit contracts
+### Decision 1 — A typed `SKClusterLabel` with a niche-based identifier
+
+```rust
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+pub enum SKClusterLabel {
+    Noise,
+    Cluster(NonZeroU32),
+}
+```
+
+`NonZeroU32` gives the enum a zero niche, so `Noise` uses the otherwise-invalid zero value
+and the enum stays four bytes. Cluster index `0` is stored as `NonZeroU32::new(1)`;
+conversion helpers subtract one at the boundary. This is safer than `i64` with `-1` and
+smaller than an enum with a plain `u32` (which needs a separate discriminant and becomes
+eight bytes).
+
+Alternative considered: `Option<NonZeroU32>` (equally compact but less expressive at call
+sites) and `i64` with `-1` (scikit-learn compatibility, but a sentinel that can leak into
+indexing). The typed enum wins on safety without a memory penalty.
+
+### Decision 2 — `SKClustererPredictor<F>` returns typed labels
 
 The trait lives beside `SKRegressorPredictor`/`SKClassifierPredictor`:
 
 ```rust
 pub trait SKClustererPredictor<F: SKFloat> {
     type Error: From<SKError>;
-    fn predict_assignments<'a, X>(&self, features: X) -> Result<Array1<i64>, Self::Error>
+    fn predict_assignments<'a, X>(
+        &self,
+        features: X,
+    ) -> Result<Array1<SKClusterLabel>, Self::Error>
     where
         X: TryInto<SKDataView<'a, F>, Error = SKError>;
 }
 ```
 
-It is model-side only (no configured-estimator method), mirroring the other predictors.
-The `i64` return is scalar-independent and leaves room for `-1` noise.
+It is model-side only, mirroring the other predictors. KMeans/MiniBatch only produce
+`Cluster`; DBSCAN produces both variants.
 
-Alternative considered: reusing `SKClassifierPredictor` (wrong semantics: classifiers have
-probabilities and canonical class tables) and keeping the regressor contract (cannot
-represent noise and forces float encoding).
+### Decision 3 — `SKUnsupervisedScorer` consumes typed assignments
 
-### Decision 2 — `SKUnsupervisedScorer` becomes generic over the clusterer contract
+The pure form changes to `assignments: ArrayView1<'_, SKClusterLabel>`; the convenient
+form calls `predict_assignments` and delegates. The trait bound becomes
+`M: SKClustererPredictor<F>` and the existing `Self::Error: From<M::Error>` bound stays.
+This is a breaking change, but no concrete implementation exists and the library is
+pre-1.0.
 
-The pure form changes to `assignments: ArrayView1<'_, i64>`; the convenient form calls
-`predict_assignments` and delegates. The trait bound becomes `M: SKClustererPredictor<F>`
-and the existing `Self::Error: From<M::Error>` bound stays. This is a breaking change, but
-no concrete implementation exists and the library is pre-1.0.
+### Decision 4 — Noise policy belongs to the scorer
 
-### Decision 3 — Noise policy belongs to the scorer
-
-The contract does not silently drop `-1`; each scorer documents whether it excludes noise
+The contract does not silently drop noise; each scorer documents whether it excludes noise
 rows or rejects them. A shared helper `sk_validate_assignments(features_rows, assignments)`
 checks length and returns `ShapeMismatch`; the silhouette scorer will exclude noise, while
 a future cluster-accuracy scorer can reject it.
 
-### Decision 4 — Re-export and tests
+### Decision 5 — Interoperability stays at the boundary
 
-`SKClustererPredictor` is re-exported from `sciencekit_common` and covered by the existing
-scorer-contract tests with a constant clusterer. The tests prove the convenient form
-delegates to the pure form, the noise label is visible and a length mismatch errors.
+`SKClusterLabel` implements `to_i64`/`from_i64` mapping `Noise ↔ -1` and `Cluster(id) ↔
+id`. Only Python/ONNX/CSV adapters use the integer convention; the Rust API never sees a
+sentinel. `from_i64` rejects values below `-1` with `InvalidHyperparameter` (or a
+conversion error).
+
+### Decision 6 — Re-export and tests
+
+`SKClusterLabel` and `SKClustererPredictor` are re-exported from `sciencekit_common`. Tests
+cover: a constant clusterer with both variants, the four-byte size assertion, the
+conversion round-trip and invalid values, the convenient scorer form, and a length
+mismatch.
 
 ## Risks / Trade-offs
 
 - **Breaking bound change** → documented as breaking; pre-1.0 and no implementors.
+- **NonZero encoding requires `id + 1`** → conversion helpers centralize it and tests
+  cover cluster `0`.
+- **Four-byte assumption** → asserted by a `size_of` test; if a future Rust layout changes,
+  the test fails loudly.
+- **Interop needs conversion** → a single pair of helpers, used only at the boundary.
 - **Noise semantics vary per metric** → the scorer documents its policy; the contract only
-  reserves `-1`.
-- **`i64` assignments are wider than `usize`** → intentional; cluster counts are small and
-  noise needs a sentinel.
+  models the variant.
 
 ## Migration Plan
 

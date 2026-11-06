@@ -3,29 +3,69 @@
 ## Purpose
 
 Defines the model-side cluster assignment contract: how a fitted clusterer exposes
-assignments, how noise is represented and what shape/scalar guarantees consumers rely on.
+assignments, how noise is represented without a numeric sentinel, and what shape, scalar
+and interoperability guarantees consumers rely on.
 
 ## ADDED Requirements
 
-### Requirement: Cluster assignment prediction
+### Requirement: Typed cluster assignments
 
-A fitted clusterer SHALL expose cluster assignments as canonical `i64` indices, one per
-input row, independent of the feature scalar, with `-1` reserved for noise.
+A fitted clusterer SHALL expose one assignment per input row as a typed value that is
+either a cluster identifier or the explicit noise variant, independent of the feature
+scalar.
 
-#### Scenario: Assignments are canonical integers
+#### Scenario: KMeans returns cluster variants
 
-- **WHEN** a fitted KMeans model predicts over `f32` and `f64` features of identical values
-- **THEN** both return identical `Array1<i64>` assignments
+- **WHEN** a fitted KMeans model assigns a batch
+- **THEN** every element is a cluster variant and no element is noise
 
-#### Scenario: Noise uses the reserved label
+#### Scenario: DBSCAN returns the noise variant
 
 - **WHEN** a density clusterer marks a point as noise
-- **THEN** its assignment is `-1` and never a fabricated cluster index
+- **THEN** its assignment is the explicit `Noise` variant, never a fabricated cluster
+  identifier
 
 #### Scenario: Assignment count follows the input
 
 - **WHEN** a batch of `m` rows is assigned
 - **THEN** the result has length `m`
+
+### Requirement: Compact assignment representation
+
+The assignment type SHALL use a niche-based cluster identifier so that the noise variant
+and a cluster identifier fit in a 32-bit-sized value, and SHALL NOT rely on a plain signed
+integer sentinel.
+
+#### Scenario: Size is bounded
+
+- **WHEN** the assignment type is inspected
+- **THEN** its size is at most four bytes per element
+
+#### Scenario: No sentinel collision
+
+- **WHEN** a cluster identifier is constructed
+- **THEN** it cannot collide with the noise representation
+
+### Requirement: Interoperability conversion
+
+The library SHALL provide explicit conversions between the typed assignment and the
+`i64` convention used by external tools, mapping `Noise` to `-1` and a cluster identifier
+to its non-negative index.
+
+#### Scenario: Noise maps to -1
+
+- **WHEN** a `Noise` assignment is converted for external interop
+- **THEN** it becomes `-1`
+
+#### Scenario: Cluster maps to its index
+
+- **WHEN** a cluster assignment is converted for external interop
+- **THEN** it becomes its non-negative cluster index
+
+#### Scenario: Invalid external value is rejected
+
+- **WHEN** an external `i64` below `-1` is converted into the typed assignment
+- **THEN** the conversion returns a structured error instead of inventing a cluster
 
 ### Requirement: Assignment input boundary
 
