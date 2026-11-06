@@ -12,10 +12,12 @@ views and observability. Centering is the key constraint: it turns a sparse desi
 **Goals:**
 - A correct PCA with a solver portfolio and a clear `Auto` policy.
 - Deterministic components and signs.
-- A documented dense-only exception with a concrete sparse alternative.
+- Sparse support for the randomized solver through implicit centering.
+- Explicit, never silent, densification for the dense-only solvers.
 
 **Non-Goals:**
-- Sparse PCA, kernel PCA, incremental PCA (W5.6), GPU, `memmap2`, export.
+- Sparse full/eigh solvers (they need a dense centered design or covariance).
+- Kernel PCA, incremental PCA (W5.6), GPU, `memmap2`, export.
 - Whitening beyond the standard component scaling.
 - Missing values.
 
@@ -27,13 +29,20 @@ The crate owns PCA, TruncatedSVD and IncrementalPCA. PCA stores the mean, compon
 variance state. It implements `SKUnsupervisedFit` and `SKFeatureTransformer` (output
 `Array2<F>`); `transform`/`inverse_transform` are inherent methods on the model.
 
-### Decision 2 — Centering and the dense-only exception
+### Decision 2 — Centering and representation policy
 
-`Xc = X - mean` is materialized as a dense matrix. A sparse input would become dense, so
-sparse is rejected with `UnsupportedRepresentation` and a suggestion to use
-`SKTruncatedSVD`, which does not center. This is the documented dense-only exception in
-`representation-parity`; the decomposition family still covers sparse data through
-TruncatedSVD and IncrementalPCA.
+`Xc = X - mean` is the mathematical object every solver needs. For dense input it is a
+dense matrix. For sparse input it would be dense, so:
+
+- `Randomized` passes the mean to `sk_randomized_svd`, which computes the centered
+  products implicitly and never materializes `Xc`;
+- `Full` and `CovarianceEigh` reject sparse input with `UnsupportedRepresentation` unless
+  the builder's `allow_densification(true)` is set;
+- when `allow_densification` is true, the estimator densifies explicitly, emits a warning
+  with the estimated dense size and proceeds.
+
+There is no silent densification. `SKTruncatedSVD` remains the uncentered sparse
+alternative, and the decomposition family covers sparse data without a dense copy.
 
 ### Decision 3 — Full SVD solver
 
@@ -44,7 +53,9 @@ randomized kernel (largest-magnitude component positive).
 
 ### Decision 4 — Randomized solver
 
-Use `sk_randomized_svd` with `number_of_power_iterations` and `random_seed`. The result is
+Use `sk_randomized_svd` with `number_of_power_iterations`, `random_seed` and the feature
+mean as the optional centering vector. Dense input is centered explicitly (or implicitly
+by the kernel); sparse input uses the kernel's implicit centered products. The result is
 already truncated; components and singular values are stored directly.
 
 ### Decision 5 — Covariance eigensolver
@@ -74,7 +85,9 @@ by `components` and adds the mean. The model stores the mean and the scaling vec
 
 Builder validation: components in `1..=min(n, d)`, tolerance ≥ 0, power iterations > 0,
 valid solver. Fit validates non-empty input and finiteness; transform validates the feature
-count. Spans record the backend; fit transfers it to the model.
+count. A sparse `Full`/`CovarianceEigh` fit requires `allow_densification(true)`; the
+warning reports the estimated dense bytes. Spans record the backend; fit transfers it to
+the model.
 
 ### Decision 9 — File layout
 
@@ -89,8 +102,8 @@ crates/sciencekit_decomposition/src/
 
 ## Risks / Trade-offs
 
-- **Centering memory** → the dense copy is inherent to PCA; sparse users are routed to
-  TruncatedSVD.
+- **Centering memory** → the randomized solver avoids the dense copy; full/eigh require
+  explicit densification or a future sparse eigensolver.
 - **Auto heuristic** → exposed and tested; an explicit solver always wins.
 - **Randomized approximation** → power iterations and a tolerance in tests; full SVD remains
   available.

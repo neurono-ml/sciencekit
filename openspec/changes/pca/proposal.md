@@ -20,17 +20,20 @@ documented dense-only exception.
   components, explained variance, explained-variance ratio, singular values and the mean.
 - `transform` and `inverse_transform` are provided; `fit_transform` is available; `whiten`
   scales the transformed components by the inverse singular values.
-- Dense input only: centering a sparse matrix destroys its sparsity, so a sparse view is
-  rejected with `UnsupportedRepresentation` and a suggestion to use `SKTruncatedSVD` (the
-  documented dense-only exception). The decomposition family still covers sparse data
-  through TruncatedSVD and IncrementalPCA.
+- Representation support: the `Randomized` solver accepts sparse input through implicit
+  centering (no dense `Xc` is materialized). `Full` and `CovarianceEigh` are dense-only
+  because they need the centered design or its covariance; a sparse view is rejected with
+  `UnsupportedRepresentation` unless the explicit `allow_densification(true)` flag is set.
+  That flag densifies with a warning and a stated memory cost; there is no silent
+  densification. `SKTruncatedSVD` remains the uncentered sparse alternative.
 - Solver resolution: `Auto` chooses full SVD for small designs and randomized SVD for
   large ones; `CovarianceEigh` uses the covariance matrix and is appropriate when
   `n_samples > n_features`.
 - Validation: empty input, zero or excessive components, non-positive tolerance/power
   iterations, invalid solver and feature-count mismatch.
-- Explicit non-goals: sparse PCA, kernel PCA, incremental PCA (W5.6), `memmap2` and
-  export (Wave 7).
+- Explicit non-goals: kernel PCA, incremental PCA (W5.6), `memmap2` and export (Wave 7).
+  Sparse PCA is supported only by the randomized solver; full/eigh sparse solvers are
+  future work.
 - Companion tests: hand-checkable 2-D projection, reconstruction, explained variance,
   white transform, solver equivalence, determinism, concurrency, large data and metric
   production.

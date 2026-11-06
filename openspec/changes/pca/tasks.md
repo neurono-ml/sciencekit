@@ -32,9 +32,10 @@
 - [ ] 3.3 Implement `transform`, `inverse_transform` and `fit_transform`, including the
   whitening scaling and the full-component reconstruction test; verify with
   `cargo test -p sciencekit_decomposition pca_transform`.
-- [ ] 3.4 Add the sparse rejection test with the `SKTruncatedSVD` suggestion and the
-  feature-count mismatch test; verify with
-  `cargo test -p sciencekit_decomposition pca_validation`.
+- [ ] 3.4 Add the sparse randomized test (no dense `Xc`, equals dense centered), the
+  `Full`/`CovarianceEigh` sparse rejection with alternatives, the explicit
+  `allow_densification(true)` warning path and the feature-count mismatch test; verify
+  with `cargo test -p sciencekit_decomposition pca_validation`.
 - [ ] 3.5 Add repeated-fit determinism, concurrent transform and `Send + Sync` tests;
   verify with `cargo test -p sciencekit_decomposition pca_concurrency`.
 
@@ -48,8 +49,8 @@
 - [ ] 4.3 Update `CHANGELOG.md` and the companion mdBook chapter (including a
   `Development Explained` chapter on centering, SVD, eigh, whitening and the dense-only
   exception); verify with `mdbook build docs`.
-- [ ] 4.4 Record the sparse/kernel/incremental/GPU/memmap/export non-goals in
-  `docs/PRD.md`.
+- [ ] 4.4 Record the sparse-full/eigh solver, kernel PCA, incremental PCA, GPU, `memmap2`
+  and export non-goals in `docs/PRD.md`.
 - [ ] 4.5 Independent review by a separate agent validating every scenario in
   `principal-component-analysis`; address every finding and re-run the gates.
 

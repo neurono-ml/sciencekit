@@ -3,7 +3,7 @@
 ## Purpose
 
 Defines `SKPCA`: builder surface, centering, full/randomized/covariance solvers, component
-and variance state, transform/inverse transform, whitening, the dense-only exception and
+and variance state, transform/inverse transform, whitening, representation support and
 validation.
 
 ## ADDED Requirements
@@ -12,14 +12,16 @@ validation.
 
 `SKPCA` SHALL be constructible only through its builder, exposing `number_of_components`
 (default `None`), `svd_solver` (`Auto` default), `whiten` (default false), `tolerance`
-(default 0.0), `number_of_power_iterations` (default 5), `random_seed` (default 0),
-`backend` (default `Faer`) and `execution_mode` (default `Automatic`).
+(default 0.0), `number_of_power_iterations` (default 5), `allow_densification` (default
+false), `random_seed` (default 0), `backend` (default `Faer`) and `execution_mode`
+(default `Automatic`).
 
 #### Scenario: Default configuration
 
 - **WHEN** an estimator is built without calling any setter
 - **THEN** it keeps all possible components, resolves the solver automatically, does not
-  whiten, uses five power iterations, `Faer` and `Automatic`
+  whiten, uses five power iterations, never densifies implicitly, uses `Faer` and
+  `Automatic`
 
 #### Scenario: Backend reaches the fitted model
 
@@ -123,20 +125,33 @@ values, the mean and the resolved solver.
 - **THEN** explained variance is non-increasing and the ratio is the variance divided by
   the total variance
 
-### Requirement: Dense-only exception
+### Requirement: Representation support
 
-PCA SHALL accept dense input only and SHALL reject a sparse view with
-`UnsupportedRepresentation` and a suggestion to use `SKTruncatedSVD`, because centering a
-sparse matrix destroys its sparsity.
+PCA SHALL accept dense input for every solver. The `Randomized` solver SHALL also accept
+sparse input through implicit centering and SHALL not materialize a dense centered matrix.
+`Full` and `CovarianceEigh` SHALL reject a sparse view with `UnsupportedRepresentation`
+unless `allow_densification` is enabled, in which case they densify explicitly and emit a
+warning stating the memory cost.
 
-#### Scenario: Sparse input is rejected
+#### Scenario: Randomized accepts sparse input
 
-- **WHEN** a sparse view is passed to fit or transform
-- **THEN** the operation returns `UnsupportedRepresentation` with the alternative suggestion
+- **WHEN** a sparse view is fitted with `Randomized`
+- **THEN** the operation succeeds without materializing a dense centered matrix
 
-#### Scenario: Dense input works
+#### Scenario: Full rejects sparse input by default
 
-- **WHEN** a dense view is fitted and transformed
+- **WHEN** a sparse view is fitted with `Full` and `allow_densification` is false
+- **THEN** the operation returns `UnsupportedRepresentation` with the
+  `Randomized`/`SKTruncatedSVD` alternatives
+
+#### Scenario: Explicit densification is honored
+
+- **WHEN** a sparse view is fitted with `Full` and `allow_densification` is true
+- **THEN** the operation densifies explicitly, emits a warning and proceeds
+
+#### Scenario: Dense input works with every solver
+
+- **WHEN** a dense view is fitted with any solver
 - **THEN** the operation succeeds through the dense path
 
 ### Requirement: Validation
