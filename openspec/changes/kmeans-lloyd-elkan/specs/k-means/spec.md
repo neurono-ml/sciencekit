@@ -111,29 +111,36 @@ farthest point to that center before continuing.
 
 ### Requirement: Fitted model state and accessors
 
-The model SHALL expose the cluster centers, the training labels, the inertia, the number of
-iterations executed and the convergence flag.
+The model SHALL expose the cluster centers, the typed training assignments, the inertia,
+the number of iterations executed and the convergence flag.
 
 #### Scenario: Accessors describe the fit
 
 - **WHEN** a fit completes
-- **THEN** `cluster_centers` has one row per cluster, `labels` has one entry per training
-  row and `inertia` equals the sum of squared distances to the assigned centers
+- **THEN** `cluster_centers` has one row per cluster, `labels` has one typed cluster
+  variant per training row and `inertia` equals the sum of squared distances to the
+  assigned centers
 
 ### Requirement: Cluster assignment prediction
 
-The fitted model SHALL implement `SKClustererPredictor<F>`, returning canonical `i64`
-assignments in `0..number_of_clusters` for dense and sparse inputs.
+The fitted model SHALL implement `SKClustererPredictor<F>`, returning typed
+`SKClusterLabel::Cluster` assignments for dense and sparse inputs; KMeans never emits
+`Noise`.
 
 #### Scenario: New rows are assigned to the nearest center
 
 - **WHEN** a dense or sparse batch is assigned
-- **THEN** each row receives the index of its nearest center
+- **THEN** each row receives the cluster variant of its nearest center
 
 #### Scenario: Assignment is scalar-independent
 
 - **WHEN** the same logical batch is `f32` and `f64`
-- **THEN** the assignments are identical
+- **THEN** the typed assignments are identical
+
+#### Scenario: KMeans never emits noise
+
+- **WHEN** any KMeans assignment is inspected
+- **THEN** every element is a cluster variant, never `Noise`
 
 ### Requirement: Distance-to-centers transform
 

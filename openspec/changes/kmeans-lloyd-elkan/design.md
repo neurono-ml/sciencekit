@@ -5,7 +5,8 @@
 See `proposal.md` — Why. `sciencekit_cluster` is new. `sciencekit_common` supplies
 `SKUnsupervisedFit`, `SKClustererPredictor` (from `clustering-contracts`), builder state,
 data views and observability. `sciencekit_math` supplies dense/sparse products and
-reductions. The assignment contract returns `i64` labels.
+reductions. The assignment contract returns the typed `SKClusterLabel` from
+`clustering-contracts`; KMeans only produces `Cluster` variants.
 
 ## Goals / Non-Goals
 
@@ -24,8 +25,9 @@ reductions. The assignment contract returns `i64` labels.
 ### Decision 1 — New `sciencekit_cluster` crate
 
 The crate owns KMeans, MiniBatchKMeans and DBSCAN. KMeans stores dense centers and the
-training labels; sparse input is read through the sparse norm-expansion distance. A
-`SKClusterModel` type is the fitted model; no configured-estimator prediction exists.
+typed training assignments; sparse input is read through the sparse norm-expansion
+distance. A `SKClusterModel` type is the fitted model; no configured-estimator prediction
+exists.
 
 ### Decision 2 — Squared Euclidean assignment via norm expansion
 
@@ -76,7 +78,7 @@ optimization.
 ```rust
 pub struct SKKMeansModel<F: SKFloat> {
     centers: Array2<F>,
-    labels: Array1<i64>,
+    labels: Array1<SKClusterLabel>,
     inertia: F,
     iterations: usize,
     converged: bool,
