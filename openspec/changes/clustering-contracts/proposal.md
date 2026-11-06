@@ -11,11 +11,14 @@ needs one honest assignment surface before KMeans, MiniBatchKMeans and DBSCAN ar
 ## What Changes
 
 - Add `SKClustererPredictor<F>` to `sciencekit_common`: a model-side contract returning
-  `Array1<i64>` cluster assignments, with `-1` reserved for noise.
+  `Array1<SKClusterLabel>` assignments, where a label is either a cluster variant or the
+  explicit `Noise` variant.
+- Define `SKClusterLabel` as a compact typed enum with a niche-based cluster identifier,
+  plus `to_i64`/`from_i64` conversions for external interop (`Noise ↔ -1`).
 - Change `SKUnsupervisedScorer` to be generic over `SKClustererPredictor<F>` instead of
-  `SKRegressorPredictor<F>`; its pure form accepts `ArrayView1<i64>` assignments and its
-  convenient form obtains assignments directly from the model.
-- Define how scorers treat noise assignments: a scorer SHALL either exclude `-1` rows or
+  `SKRegressorPredictor<F>`; its pure form accepts typed assignments and its convenient
+  form obtains them directly from the model.
+- Define how scorers treat noise assignments: a scorer SHALL either exclude noise rows or
   reject them, and the contract SHALL make that choice explicit per scorer.
 - Keep `SKUnsupervisedFit` as the fitting contract; clusterers implement it and the new
   predictor on their fitted model.
