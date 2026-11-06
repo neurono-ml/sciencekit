@@ -17,13 +17,13 @@ index from Wave 3 (W3.2) through its region query.
   `execution_mode` (default `Automatic`).
 - Fit uses a region query: trees for dense metric-compatible data, brute force for sparse
   or mixed data; dense and sparse inputs are both accepted and sparse is never densified.
-- Labeling: core points, density-reachable border points and noise (`-1`), with
-  deterministic label order (the smallest training index in each component seeds the
-  cluster id).
-- The model exposes labels, core sample indices, cluster count and the fitted `eps`, and
-  implements `SKUnsupervisedFit` plus `SKClustererPredictor`. `fit_predict` is provided;
-  `predict` assigns a new point to the nearest core sample's cluster when it lies within
-  `eps`, otherwise `-1`, and documents this extension.
+- Labeling: core points, density-reachable border points and the explicit
+  `SKClusterLabel::Noise` variant, with deterministic label order (the smallest training
+  index in each component seeds the cluster id).
+- The model exposes typed assignments, core sample indices, cluster count and the fitted
+  `eps`, and implements `SKUnsupervisedFit` plus `SKClustererPredictor`. `fit_predict` is
+  provided; `predict` assigns a new point to the nearest core sample's cluster when it lies
+  within `eps`, otherwise `SKClusterLabel::Noise`, and documents this extension.
 - Validation: empty input, non-positive `eps`, zero `minimum_samples`, feature-count
   mismatch, non-finite values and an unsupported metric/algorithm pair.
 - Explicit non-goals: HDBSCAN/OPTICS, streaming, missing values, GPU, `memmap2` and
