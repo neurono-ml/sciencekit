@@ -200,4 +200,7 @@ same rules applied to an estimator whose cost does not depend on the dataset siz
 one seam that accepts both a concrete source and a reopenable factory, and the epoch rule
 each estimator class follows. The
 [owned feature block chapter](./ch19-sparse-streaming-blocks.html) completes it: sparse data
-streams without ever being densified, and implicit zeros shape every statistic.
+streams without ever being densified, and implicit zeros shape every statistic. The
+[metrics foundation chapter](./ch20-metrics-foundation.html) then turns all of that work into
+numbers: a label space, a confusion matrix, per-class scores, regression errors and the
+mergeable accumulators that make evaluation streaming and parallel.
