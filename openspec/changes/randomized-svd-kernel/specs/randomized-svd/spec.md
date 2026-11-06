@@ -54,6 +54,30 @@ and never densify a sparse input.
 - **WHEN** a wide sparse matrix with few stored entries is factorized
 - **THEN** the computation succeeds without materializing a dense copy of the input
 
+### Requirement: Optional implicit centering
+
+The factorization SHALL accept an optional per-feature centering vector. When supplied, it
+SHALL compute `Xc = X − 1μᵀ` implicitly through the projected products and SHALL NOT
+materialize a dense centered matrix, for dense or sparse input.
+
+#### Scenario: Centered dense equals explicit centering
+
+- **WHEN** a dense matrix is factorized with a centering vector
+- **THEN** the result equals factorizing the explicitly centered matrix within the
+  documented tolerance
+
+#### Scenario: Centered sparse avoids densification
+
+- **WHEN** a sparse matrix with a non-zero centering vector is factorized
+- **THEN** the computation succeeds without materializing the dense centered matrix
+
+#### Scenario: Centered sparse equals centered dense
+
+- **WHEN** the same logical matrix is factorized with the same centering vector densely and
+  as CSR
+- **THEN** the singular values and reconstructed centered matrices agree within the
+  documented tolerance
+
 ### Requirement: Deterministic projection and signs
 
 The random projection SHALL be derived from the caller's seed, and the singular-vector

@@ -89,10 +89,28 @@ pub fn sk_randomized_svd<F: SKFloat>(
     number_of_power_iterations: usize,
     oversampling: usize,
     random_seed: u64,
+    centering: Option<ArrayView1<'_, F>>,
 ) -> Result<SKRandomizedSvdResult<F>, SKError>;
 ```
 
-### Decision 6 — Validation and errors
+### Decision 6 — Implicit centering for sparse PCA
+
+When a centering vector `μ` is supplied, the kernel computes the centered products without
+materializing `Xc`:
+
+```
+Y = XΩ − 1(μᵀΩ)
+Z = XᵀY − μ(1ᵀY)
+Y = X Z − 1(μᵀZ)          // power iteration
+B = QᵀX − (Qᵀ1)μᵀ
+```
+
+The dense path uses the same formulas (or an explicitly centered copy, which is small
+enough for dense input); the sparse path only uses sparse products with dense vectors.
+This is what lets `SKPCA` accept a sparse matrix for the randomized solver without
+densifying it.
+
+### Decision 7 — Validation and errors
 
 Validate non-empty input, `k <= min(m, n)`, `power_iterations >= 1` and
 `oversampling >= 1`; return `InvalidHyperparameter`/`EmptyInput` before computing.

@@ -25,6 +25,10 @@
   `cargo test -p sciencekit_math randomized_sparse`.
 - [ ] 3.2 Add a large sparse fixture proving the dense intermediate is limited to
   `m × (k + oversampling)`; verify with `cargo test -p sciencekit_math randomized_sparse`.
+- [ ] 3.3 Implement the optional centering vector with the implicit centered products,
+  and test centered dense vs explicit centering, centered sparse vs centered dense and
+  no densification; verify with
+  `cargo test -p sciencekit_math randomized_centered`.
 
 ## 4. Validation, determinism and acceptance
 
