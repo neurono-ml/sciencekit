@@ -12,8 +12,9 @@ unsupervised block.
 - New sub-crate `sciencekit_outlier` with `SKIsolationForest<F>` and a distinct fitted
   model.
 - Add an outlier prediction contract to `sciencekit_common`: `SKOutlierPredictor<F>` with
-  `predict` returning `-1` for outliers and `1` for inliers, `decision_function` and
-  `score_samples`.
+  `predict` returning a one-byte typed `SKOutlierLabel { Inlier, Outlier }`,
+  `decision_function` and `score_samples`; integer `-1`/`1` exists only at the interop
+  boundary.
 - Builder-only surface: `number_of_trees` (default 100), `maximum_samples` (`Auto`
   default, meaning `min(256, n_samples)`), `contamination` (`Auto` default or a fraction
   in `(0, 0.5]`), `maximum_features` (default 1.0), `bootstrap` (default false),
