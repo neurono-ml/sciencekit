@@ -25,10 +25,11 @@
 
 - [ ] 3.1 Implement `SKDBSCANBuilder` with the documented defaults and invalid-value tests;
   verify with `cargo test -p sciencekit_cluster dbscan_builder`.
-- [ ] 3.2 Implement `SKUnsupervisedFit` returning the model with labels, core indices,
-  cluster count and `eps`; verify with `cargo test -p sciencekit_cluster dbscan_model`.
+- [ ] 3.2 Implement `SKUnsupervisedFit` returning the model with typed assignments, core
+  indices, cluster count and `eps`; verify with `cargo test -p sciencekit_cluster
+  dbscan_model`.
 - [ ] 3.3 Implement `SKClustererPredictor` via the nearest core sample within `eps`, with
-  tests for a nearby and a distant query; verify with
+  tests for a nearby query (cluster variant) and a distant query (`Noise`); verify with
   `cargo test -p sciencekit_cluster dbscan_predict`.
 - [ ] 3.4 Add validation tests for empty input, non-positive `eps`, zero
   `minimum_samples`, feature-count mismatch, non-finite values and unsupported

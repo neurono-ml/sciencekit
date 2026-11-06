@@ -40,7 +40,7 @@ include the point itself.
 
 A point SHALL be core when its neighbourhood contains at least `minimum_samples` points.
 A non-core point within `eps` of a core point SHALL be a border point of that core point's
-cluster; every other point SHALL be noise with label `-1`.
+cluster; every other point SHALL carry the explicit `SKClusterLabel::Noise` variant.
 
 #### Scenario: Core point seeds a cluster
 
@@ -50,13 +50,13 @@ cluster; every other point SHALL be noise with label `-1`.
 #### Scenario: Border point joins a cluster
 
 - **WHEN** a non-core point lies within `eps` of a core point
-- **THEN** it receives that cluster's label and is not noise
+- **THEN** it receives that cluster's variant and is not noise
 
 #### Scenario: Isolated point is noise
 
 - **WHEN** a point has fewer than `minimum_samples` neighbours and is not within `eps` of
   any core point
-- **THEN** its label is `-1`
+- **THEN** its assignment is `SKClusterLabel::Noise`
 
 ### Requirement: Deterministic labeling
 
@@ -75,29 +75,30 @@ seeds each component, so repeated fits and thread counts produce identical label
 
 ### Requirement: Model state
 
-The model SHALL expose the labels, the core-sample indices, the cluster count and the
-fitted `eps`, and SHALL be safely shareable.
+The model SHALL expose the typed assignments, the core-sample indices, the cluster count
+and the fitted `eps`, and SHALL be safely shareable.
 
 #### Scenario: Accessors describe the fit
 
 - **WHEN** a fit completes
-- **THEN** `labels` has one entry per training row, core indices are a subset of rows and
-  the cluster count is the number of distinct non-noise labels
+- **THEN** the assignment vector has one typed entry per training row, core indices are a
+  subset of rows and the cluster count is the number of distinct cluster variants
 
 ### Requirement: Assignment extension
 
 The fitted model SHALL implement `SKClustererPredictor<F>` by assigning a query to the
-cluster of its nearest core sample when that sample lies within `eps`, otherwise to `-1`.
+cluster of its nearest core sample when that sample lies within `eps`, otherwise to
+`SKClusterLabel::Noise`.
 
 #### Scenario: Query near a core point joins its cluster
 
 - **WHEN** a query's nearest core sample is within `eps`
-- **THEN** the query receives that sample's cluster label
+- **THEN** the query receives that sample's cluster variant
 
 #### Scenario: Distant query is noise
 
 - **WHEN** no core sample lies within `eps` of a query
-- **THEN** the query receives `-1`
+- **THEN** the query receives the `Noise` variant
 
 ### Requirement: Representation parity
 

@@ -44,20 +44,22 @@ The order is deterministic because the outer loop and the queue use training ind
 ### Decision 3 — Cluster ids
 
 Cluster ids are assigned sequentially as core points seed components, starting at zero.
-Noise is `-1`. The smallest training index in a component therefore determines its id.
+Noise is the explicit `SKClusterLabel::Noise` variant. The smallest training index in a
+component therefore determines its id.
 
 ### Decision 4 — Assignment extension
 
 `predict_assignments` finds the nearest core sample (through the same searcher) and assigns
-its cluster if the distance is within `eps`; otherwise it returns `-1`. This is an
+its cluster if the distance is within `eps`; otherwise it returns
+`SKClusterLabel::Noise`. This is an
 extension beyond scikit-learn (which has no DBSCAN `predict`) and is documented as a
 nearest-core heuristic, not a re-clustering.
 
 ### Decision 5 — Representation parity
 
 Dense trees are used when possible; sparse data goes through the brute-force searcher over
-the stored CSR rows. No path densifies a sparse matrix. The labels are `i64` from the
-shared clustering contract.
+the stored CSR rows. No path densifies a sparse matrix. The assignments are the typed
+`SKClusterLabel` from the shared clustering contract.
 
 ### Decision 6 — Model state and observability
 
