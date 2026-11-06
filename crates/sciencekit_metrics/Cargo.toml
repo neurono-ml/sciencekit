@@ -1,0 +1,18 @@
+[package]
+name = "sciencekit_metrics"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+rust-version = "1.85"
+description = "Evaluation metrics and streaming accumulators for sciencekit: classification and regression scores, scorer adapters over the shared scoring contracts."
+repository = "https://github.com/neurono-ml/sciencekit"
+
+[dependencies]
+sciencekit_common = { path = "../sciencekit_common" }
+
+ndarray = { workspace = true }
+num-traits = "0.2"
+
+[dev-dependencies]
+sciencekit_math = { path = "../sciencekit_math" }
+rayon = { workspace = true }

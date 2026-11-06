@@ -119,3 +119,38 @@ fn unexpected_missingness_names_the_feature() {
     assert!(message.contains("3"), "the feature column must be named");
     assert!(message.contains("error_on_new"), "the remedy must be named");
 }
+
+/// An empty observation set names the operation that required observations.
+#[test]
+fn empty_input_names_the_operation() {
+    let err = SKError::EmptyInput {
+        operation: "accuracy",
+    };
+    match &err {
+        SKError::EmptyInput { operation } => assert_eq!(*operation, "accuracy"),
+        other => panic!("expected empty-input variant, got {other:?}"),
+    }
+    assert!(format!("{err}").contains("accuracy"));
+}
+
+/// A non-finite value carries the zero-based position that produced it.
+#[test]
+fn non_finite_value_carries_its_position() {
+    let err = SKError::NonFiniteValue { position: 3 };
+    match &err {
+        SKError::NonFiniteValue { position } => assert_eq!(*position, 3),
+        other => panic!("expected non-finite variant, got {other:?}"),
+    }
+    assert!(format!("{err}").contains('3'));
+}
+
+/// A label outside the resolved space carries the offending value.
+#[test]
+fn unknown_label_carries_the_label() {
+    let err = SKError::UnknownLabel { label: 7 };
+    match &err {
+        SKError::UnknownLabel { label } => assert_eq!(*label, 7),
+        other => panic!("expected unknown-label variant, got {other:?}"),
+    }
+    assert!(format!("{err}").contains('7'));
+}
