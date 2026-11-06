@@ -22,7 +22,8 @@ streaming MiniBatch variant.
 - The fitted model exposes cluster centers, labels, inertia, the number of iterations and
   the convergence flag, and implements `SKUnsupervisedFit` plus `SKClustererPredictor`.
 - `predict`, `fit_predict` and `transform` (distances to centers) are available; labels are
-  canonical `i64` indices in `0..number_of_clusters`.
+  typed `SKClusterLabel::Cluster` variants in `0..number_of_clusters`; KMeans never emits
+  `Noise`.
 - Validation: empty input, zero clusters, clusters greater than samples, non-finite values,
   invalid tolerance/iteration/initialization parameters and feature-count mismatch.
 - Explicit non-goals: streaming/`partial_fit` (W5.2), missing values, GPU, `memmap2` and
