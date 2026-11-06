@@ -102,9 +102,9 @@ deterministically, and reset its count.
 
 ### Requirement: Model state and assignment
 
-The model SHALL expose centers, per-center counts, training labels when fitted in memory,
-inertia, batches processed and epochs consumed, and SHALL implement
-`SKClustererPredictor<F>` plus `transform`.
+The model SHALL expose centers, per-center counts, typed training assignments when fitted
+in memory, inertia, batches processed and epochs consumed, and SHALL implement
+`SKClustererPredictor<F>` plus `transform`. It never emits `Noise`.
 
 #### Scenario: State accessors
 
@@ -114,7 +114,7 @@ inertia, batches processed and epochs consumed, and SHALL implement
 #### Scenario: Assignment uses the nearest center
 
 - **WHEN** a dense or sparse batch is assigned
-- **THEN** each row receives its nearest center's index
+- **THEN** each row receives the typed cluster variant of its nearest center
 
 ### Requirement: Representation parity
 
