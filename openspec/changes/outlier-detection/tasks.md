@@ -2,9 +2,10 @@
 
 ## 1. Contract and crate
 
-- [ ] 1.1 Add `SKOutlierPredictor<F>` to `sciencekit_common` (`predict`, `decision_function`,
-  `score_samples`) with a constant detector test, and re-export it; verify with
-  `cargo test -p sciencekit_common outlier`.
+- [ ] 1.1 Add `SKOutlierLabel { Inlier, Outlier }` with its one-byte size assertion and
+  `to_i64`/`from_i64` conversions, plus `SKOutlierPredictor<F>` (`predict`,
+  `decision_function`, `score_samples`), with a constant detector test; re-export both and
+  verify with `cargo test -p sciencekit_common outlier`.
 - [ ] 1.2 Create `crates/sciencekit_outlier` with `Cargo.toml`, `lib.rs` and the
   `isolation_forest` dispatcher; add it to `[workspace.members]`; verify
   `cargo test -p sciencekit_outlier` compiles.
@@ -26,8 +27,8 @@
   verify with `cargo test -p sciencekit_outlier isolation_builder`.
 - [ ] 3.2 Implement fit (subsample, per-tree seeds, forest assembly) and the model state;
   verify with `cargo test -p sciencekit_outlier isolation_fit`.
-- [ ] 3.3 Implement `score_samples`, `decision_function`, `predict` and `fit_predict` with
-  the contamination offset and the label convention; verify with
+- [ ] 3.3 Implement `score_samples`, `decision_function`, typed `predict` and `fit_predict`
+  with the contamination offset; verify with
   `cargo test -p sciencekit_outlier isolation_score`.
 - [ ] 3.4 Add validation tests for empty input, zero trees, invalid sample size,
   contamination range, feature-count mismatch and non-finite values; verify with

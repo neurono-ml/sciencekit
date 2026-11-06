@@ -22,8 +22,10 @@ search is not reused; only the node representation/traversal is shared.
 
 ### Decision 1 — New `sciencekit_outlier` crate
 
-The crate owns the detector and its isolation-tree builder. `SKOutlierPredictor<F>` is
-added to `sciencekit_common` and re-exported, mirroring the other model-side predictors.
+The crate owns the detector and its isolation-tree builder. `SKOutlierPredictor<F>` and
+the one-byte `SKOutlierLabel { Inlier, Outlier }` are added to `sciencekit_common` and
+re-exported, mirroring the other model-side predictors. Integer `-1`/`1` exists only at
+the interop boundary.
 
 ### Decision 2 — Random isolation trees on the shared node array
 

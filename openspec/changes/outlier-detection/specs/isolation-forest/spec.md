@@ -71,13 +71,14 @@ The offset SHALL be exposed on the model.
 
 ### Requirement: Label, decision and score outputs
 
-The model SHALL expose `predict` (`-1`/`1`), `decision_function` and `score_samples` for
-dense and sparse inputs, and SHALL implement `SKOutlierPredictor<F>`.
+The model SHALL expose `predict` returning the typed `Inlier`/`Outlier` labels,
+`decision_function` and `score_samples` for dense and sparse inputs, and SHALL implement
+`SKOutlierPredictor<F>`.
 
 #### Scenario: Outliers are labeled
 
 - **WHEN** a row's decision value is negative
-- **THEN** `predict` returns `-1`
+- **THEN** `predict` returns the `Outlier` variant
 
 #### Scenario: Batch shapes
 

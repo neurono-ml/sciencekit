@@ -2,25 +2,50 @@
 
 ## Purpose
 
-Defines the model-side outlier contract: the label convention, the decision function and
-the anomaly score used by `SKIsolationForest` and later detectors.
+Defines the model-side outlier contract: the typed label convention, the decision function
+and the anomaly score used by `SKIsolationForest` and later detectors.
 
 ## ADDED Requirements
 
-### Requirement: Outlier labels
+### Requirement: Typed outlier labels
 
-An outlier detector SHALL return `-1` for outliers and `1` for inliers, independent of the
-feature scalar.
+An outlier detector SHALL return one typed label per input row, either the explicit
+`Inlier` or `Outlier` variant, independent of the feature scalar.
 
-#### Scenario: Labels are canonical integers
+#### Scenario: Labels are typed variants
 
 - **WHEN** a fitted detector predicts over `f32` and `f64` features of identical values
-- **THEN** both return identical `Array1<i64>` labels
+- **THEN** both return identical typed label arrays
 
 #### Scenario: Label count follows the input
 
 - **WHEN** a batch of `m` rows is predicted
 - **THEN** the result has length `m`
+
+#### Scenario: Label size is bounded
+
+- **WHEN** the label type is inspected
+- **THEN** it occupies at most one byte per element
+
+### Requirement: Interoperability conversion
+
+The library SHALL provide explicit conversions between the typed label and the `i64`
+convention used by external tools, mapping `Outlier` to `-1` and `Inlier` to `1`.
+
+#### Scenario: Outlier maps to -1
+
+- **WHEN** an `Outlier` label is converted for external interop
+- **THEN** it becomes `-1`
+
+#### Scenario: Inlier maps to 1
+
+- **WHEN** an `Inlier` label is converted for external interop
+- **THEN** it becomes `1`
+
+#### Scenario: Invalid external value is rejected
+
+- **WHEN** an external `i64` other than `-1` or `1` is converted into the typed label
+- **THEN** the conversion returns a structured error
 
 ### Requirement: Decision function
 
@@ -31,7 +56,7 @@ them.
 #### Scenario: Decision sign matches the label
 
 - **WHEN** a row's decision value is negative
-- **THEN** its label is `-1`; a non-negative value yields `1`
+- **THEN** its label is `Outlier`; a non-negative value yields `Inlier`
 
 #### Scenario: Offset is exposed
 
