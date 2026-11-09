@@ -57,6 +57,8 @@ rules:
 
   tasks:
     - >-
+      Before starting any task, verify the change is ready in openspec/changes/implementation-dag/dag.yaml: its hard dependencies are merged, its lane has no other change in progress, and its completion checks are known. If blocked, stop and report instead of implementing out of order.
+    - >-
       Every task must be implemented using the tdd skill: test first, confirmed failure, minimal implementation, refactoring keeping tests green.
     - >-
       Tests live in companion *_tests.rs modules beside the implementation; mock data in ndarray/sprs.
@@ -68,6 +70,18 @@ rules:
 operations:
   apply:
     guidance:
+      - >-
+        Implementation order is governed by openspec/changes/implementation-dag/dag.yaml. Before starting a change, read its entry, resolve its lane and depends_on, and verify every hard dependency has its code PR merged into main (and its openspec PR merged). Do not start a blocked change. soft_depends_on entries do not block start but must be merged before the change is marked done.
+      - >-
+        One change per lane may be in progress at a time; different lanes may run in parallel. The lane merge_order in dag.yaml is authoritative for merge order. Rebase on main before merging and never merge a change out of its lane order.
+      - >-
+        Join changes (model-export-retrofit, umbrella-crate, python-bindings-complete, workflows-cli) must wait for every hard dependency listed in the DAG. They may be split into family-level branches, but the join is complete only when all sub-branches are merged.
+      - >-
+        A change is done only when: openspec status shows all tasks done/skipped, openspec validate is green, the change-specific completion tests in dag.yaml pass, the global gates pass (cargo fmt --all --check, cargo clippy --workspace --all-targets -- -D warnings, cargo test --workspace), docs build when applicable (mdbook build docs), independent review passed, and the code/openspec/docs PRs are merged. Never mark a change done because its tasks are checked while its PR is still open.
+      - >-
+        If dag.yaml and the repository disagree (a dependency is not merged, a change is missing, or a lane conflict appears), stop and fix the DAG through the implementation-dag change instead of improvising an order.
+      - >-
+        Record the selected lane, the verified dependency PRs and the completion evidence in the change's PR description.
       - >-
         Implement in git worktree temporary/worktrees/<type>/<change-name> on branch <type>/<change-name> (type ∈ feat|bugfix|chore|docs). Never commit to main.
       - >-
