@@ -7,6 +7,9 @@
   `cargo test -p sciencekit_common interop_tensor`.
 - [ ] 1.2 Implement `SKParameterValue`, `SKModelMetadata` and `SKModelState` with unique-
   name and metadata validation; verify with `cargo test -p sciencekit_common interop_state`.
+- [ ] 1.3 Create the `crates/sciencekit_interop` crate skeleton (`Cargo.toml`, `lib.rs`)
+  and workspace membership so format adapters share one crate; verify with
+  `cargo test -p sciencekit_interop`.
 
 ## 2. Traits and round-trip
 
