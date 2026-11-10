@@ -8,7 +8,8 @@ use super::configuration::SKKFoldConfiguration;
 use crate::{SKIndexSplit, SKSplitter, sk_shuffle_indices};
 
 use crate::split::validation::{
-    sk_number_of_rows, sk_partition_into_chunks, sk_split_from_test, sk_validate_non_empty,
+    sk_number_of_rows, sk_partition_into_chunks, sk_split_from_test,
+    sk_validate_finite_features, sk_validate_finite_targets, sk_validate_non_empty,
     sk_validate_number_of_splits,
 };
 
@@ -71,6 +72,8 @@ impl<F: SKFloat> SKSplitter<F> for SKKFold {
     ) -> Result<Vec<SKIndexSplit>, SKError> {
         let number_of_rows = sk_number_of_rows(&features);
         sk_validate_non_empty(number_of_rows, "SKKFold::split")?;
+        sk_validate_finite_features(&features)?;
+        sk_validate_finite_targets(_targets)?;
         sk_validate_number_of_splits(self.configuration.number_of_splits, number_of_rows)?;
 
         let order = self.ordered_rows(number_of_rows);

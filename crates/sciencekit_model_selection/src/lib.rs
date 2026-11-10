@@ -21,19 +21,22 @@ pub mod shuffle;
 pub mod split;
 pub mod train_test_split;
 
+pub use cross_validation::{sk_cross_val_score_classifier, sk_cross_val_score_regressor};
 pub use gather::{SKTargetPartition, sk_gather_rows};
 pub use index_split::SKIndexSplit;
 pub use shuffle::sk_shuffle_indices;
+pub use split::group::{SKGroupKFold, SKGroupKFoldBuilder};
+pub use split::kfold::{SKKFold, SKKFoldBuilder};
+pub use split::stratified::{SKStratifiedKFold, SKStratifiedKFoldBuilder};
 pub use split::SKSplitter;
 pub use train_test_split::{
     SKPartitionSize, SKTrainTestSplit, SKTrainTestSplitBuilder, SKTrainTestSplitter,
     sk_train_test_split,
 };
-pub use split::group::{SKGroupKFold, SKGroupKFoldBuilder};
-pub use split::kfold::{SKKFold, SKKFoldBuilder};
-pub use split::stratified::{SKStratifiedKFold, SKStratifiedKFoldBuilder};
 
 #[cfg(test)]
 mod index_split_tests;
 #[cfg(test)]
 mod shuffle_tests;
+#[cfg(test)]
+mod validation_tests;

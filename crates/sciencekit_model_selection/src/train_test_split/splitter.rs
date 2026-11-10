@@ -13,7 +13,8 @@ use super::stratification::sk_allocate_class_counts;
 use crate::{SKIndexSplit, SKSplitter};
 
 use crate::split::validation::{
-    sk_class_groups, sk_number_of_rows, sk_validate_non_empty,
+    sk_class_groups, sk_number_of_rows, sk_validate_finite_features, sk_validate_finite_targets,
+    sk_validate_non_empty,
 };
 
 /// Splits features and optional targets into train and test partitions.
@@ -110,6 +111,8 @@ impl SKTrainTestSplitter {
     ) -> Result<SKIndexSplit, SKError> {
         let number_of_rows = sk_number_of_rows(&features);
         sk_validate_non_empty(number_of_rows, "sk_train_test_split")?;
+        sk_validate_finite_features(&features)?;
+        sk_validate_finite_targets(targets)?;
         if let Some(targets) = targets {
             if targets.len() != number_of_rows {
                 return Err(SKError::ShapeMismatch {

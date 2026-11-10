@@ -12,7 +12,8 @@ use crate::{SKIndexSplit, SKSplitter};
 
 use crate::split::validation::{
     sk_class_groups, sk_number_of_rows, sk_split_from_test, sk_validate_cardinality,
-    sk_validate_non_empty, sk_validate_number_of_splits,
+    sk_validate_finite_features, sk_validate_finite_targets, sk_validate_non_empty,
+    sk_validate_number_of_splits,
 };
 
 /// Stratified K-fold, constructed only through [`SKStratifiedKFoldBuilder`].
@@ -82,6 +83,8 @@ impl<F: SKFloat> SKSplitter<F> for SKStratifiedKFold {
     ) -> Result<Vec<SKIndexSplit>, SKError> {
         let number_of_rows = sk_number_of_rows(&features);
         sk_validate_non_empty(number_of_rows, "SKStratifiedKFold::split")?;
+        sk_validate_finite_features(&features)?;
+        sk_validate_finite_targets(targets)?;
         let number_of_splits = self.configuration.number_of_splits;
         sk_validate_number_of_splits(number_of_splits, number_of_rows)?;
 

@@ -24,6 +24,59 @@ pub(crate) fn sk_validate_non_empty(
     Ok(())
 }
 
+/// Validates that every stored feature value is finite.
+///
+/// Dense values are checked in logical row-major order; sparse values are
+/// checked over the stored entries only, never densifying the matrix. The
+/// reported position is the flattened `row * columns + column` index.
+pub(crate) fn sk_validate_finite_features<F: SKFloat>(
+    features: &SKDataView<'_, F>,
+) -> Result<(), SKError> {
+    match features {
+        SKDataView::Dense(view) => {
+            for (position, value) in view.iter().enumerate() {
+                if !value.is_finite() {
+                    return Err(SKError::NonFiniteValue { position });
+                }
+            }
+        }
+        SKDataView::Sparse(view) => {
+            let columns = view.cols();
+            for row in 0..view.rows() {
+                let outer = view
+                    .outer_view(row)
+                    .expect("a row below the row count has an outer view");
+                for (&column, value) in outer.indices().iter().zip(outer.data()) {
+                    if !value.is_finite() {
+                        return Err(SKError::NonFiniteValue {
+                            position: row * columns + column,
+                        });
+                    }
+                }
+            }
+        }
+        _ => {}
+    }
+    Ok(())
+}
+
+/// Validates that continuous targets are finite; other representations carry no
+/// non-finite values.
+pub(crate) fn sk_validate_finite_targets<F: SKFloat>(
+    targets: Option<sciencekit_common::SKTargetView<'_, F>>,
+) -> Result<(), SKError> {
+    use sciencekit_common::SKTargetView;
+
+    if let Some(SKTargetView::Continuous(values)) = targets {
+        for (position, value) in values.iter().enumerate() {
+            if !value.is_finite() {
+                return Err(SKError::NonFiniteValue { position });
+            }
+        }
+    }
+    Ok(())
+}
+
 /// Validates an explicit split count against the row count.
 pub(crate) fn sk_validate_number_of_splits(
     number_of_splits: usize,

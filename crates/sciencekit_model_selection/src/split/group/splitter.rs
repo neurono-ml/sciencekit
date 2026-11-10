@@ -12,7 +12,8 @@ use super::configuration::SKGroupKFoldConfiguration;
 use crate::{SKIndexSplit, SKSplitter};
 
 use crate::split::validation::{
-    sk_number_of_rows, sk_split_from_test, sk_validate_cardinality, sk_validate_non_empty,
+    sk_number_of_rows, sk_split_from_test, sk_validate_cardinality,
+    sk_validate_finite_features, sk_validate_finite_targets, sk_validate_non_empty,
     sk_validate_number_of_splits,
 };
 
@@ -67,6 +68,8 @@ impl<F: SKFloat> SKSplitter<F> for SKGroupKFold {
     ) -> Result<Vec<SKIndexSplit>, SKError> {
         let number_of_rows = sk_number_of_rows(&features);
         sk_validate_non_empty(number_of_rows, "SKGroupKFold::split")?;
+        sk_validate_finite_features(&features)?;
+        sk_validate_finite_targets(_targets)?;
         let groups = groups.ok_or_else(|| SKError::InvalidHyperparameter {
             name: "groups",
             reason: "group K-fold requires group labels".to_owned(),
