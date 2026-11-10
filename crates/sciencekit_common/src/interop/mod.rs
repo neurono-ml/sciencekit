@@ -12,11 +12,13 @@ mod metadata;
 mod parameter;
 mod state;
 mod tensor;
+mod traits;
 
 pub use metadata::SKModelMetadata;
 pub use parameter::SKParameterValue;
 pub use state::SKModelState;
 pub use tensor::{SKTensor, SKTensorDType, SKTensorValues};
+pub use traits::{SKExportable, SKImportable, sk_validate_import_metadata};
 
 #[cfg(test)]
 mod metadata_tests;
@@ -26,3 +28,8 @@ mod parameter_tests;
 mod state_tests;
 #[cfg(test)]
 mod tensor_tests;
+#[cfg(test)]
+mod traits_tests;
+
+#[cfg(test)]
+pub(crate) mod mock_model;

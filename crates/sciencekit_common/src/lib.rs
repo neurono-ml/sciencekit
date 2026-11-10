@@ -45,7 +45,8 @@ pub use fit_traits::{
     sk_validate_cluster_assignments,
 };
 pub use interop::{
-    SKModelMetadata, SKModelState, SKParameterValue, SKTensor, SKTensorDType, SKTensorValues,
+    SKExportable, SKImportable, SKModelMetadata, SKModelState, SKParameterValue, SKTensor,
+    SKTensorDType, SKTensorValues, sk_validate_import_metadata,
 };
 pub use label_table::{SKLabelTable, sk_canonicalize_labels};
 pub use observability::{
