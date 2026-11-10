@@ -25,4 +25,6 @@ pub use run_operation::sk_run_operation;
 pub use opentelemetry_layer::sk_opentelemetry_layer;
 
 #[cfg(test)]
+mod backend_kind_tests;
+#[cfg(test)]
 mod observability_tests;
