@@ -14,4 +14,4 @@ pub use regressor::sk_cross_val_score_regressor;
 #[cfg(test)]
 mod cross_validation_tests;
 #[cfg(test)]
-mod mock_estimators;
+pub(crate) mod mock_estimators;

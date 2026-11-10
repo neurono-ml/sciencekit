@@ -40,3 +40,5 @@ mod index_split_tests;
 mod shuffle_tests;
 #[cfg(test)]
 mod validation_tests;
+#[cfg(test)]
+mod acceptance_tests;
