@@ -43,7 +43,10 @@ impl<F: SKFloat> SKKNNImputerModel<F> {
 
     /// The training rows that observed `column`, ascending.
     pub fn donor_indices(&self, column: usize) -> &[usize] {
-        &self.column_donors[column]
+        self.column_donors
+            .get(column)
+            .map(Vec::as_slice)
+            .unwrap_or(&[])
     }
 
     /// The input columns the transform emits, in ascending order.

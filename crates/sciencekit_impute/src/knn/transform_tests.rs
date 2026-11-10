@@ -156,3 +156,21 @@ fn knn_transform_parallel_equals_sequential() {
         }
     }
 }
+
+/// A column that was all-missing at fit and retained by `keep_empty_features`
+/// is emitted as zeros — even for a receiver row that observes it.
+#[test]
+fn knn_transform_keeps_a_retained_empty_column_at_zero() {
+    let training = ndarray::array![[1.0_f64, f64::NAN], [2.0, f64::NAN]];
+    let model = crate::knn::SKKNNImputer::<f64>::build()
+        .nearest_neighbors_count(1)
+        .keep_empty_features(true)
+        .build()
+        .unwrap()
+        .fit(training.view())
+        .unwrap();
+    let receiver = ndarray::array![[f64::NAN, 7.0_f64]];
+    let output = dense(model.transform(receiver.view()).unwrap());
+    assert!((output[[0, 0]] - 1.5).abs() < 1e-12);
+    assert_eq!(output[[0, 1]], 0.0);
+}

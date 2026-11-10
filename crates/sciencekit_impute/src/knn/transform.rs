@@ -164,6 +164,13 @@ impl<F: SKFloat> SKKNNImputerModel<F> {
         mut target: ArrayViewMut1<'_, F>,
     ) {
         for (column, &source) in self.kept_columns.iter().enumerate() {
+            // A column that was all-missing at fit and retained by
+            // `keep_empty_features` has no donor and is documented to be kept
+            // at zero for every row, even a row that observes it.
+            if self.column_donors[source].is_empty() {
+                target[column] = F::zero();
+                continue;
+            }
             target[column] = if missing[source] {
                 sk_impute_cell(
                     &distances,
