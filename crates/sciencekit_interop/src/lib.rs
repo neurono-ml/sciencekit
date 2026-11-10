@@ -25,3 +25,4 @@ pub mod columns;
 pub mod missing;
 pub mod schema;
 pub mod selection;
+pub mod views;
