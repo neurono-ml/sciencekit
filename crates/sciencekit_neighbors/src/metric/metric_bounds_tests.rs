@@ -83,20 +83,32 @@ fn ball_bound_equals_the_distance_gap_outside_the_ball() {
     let centroid = [4.0, 5.0];
     let radius = 1.0;
 
-    assert_eq!(
+    // The bound is conservative: it never exceeds, and may undercut by rounding.
+    let assert_lower_bound = |actual: f64, expected: f64| {
+        assert!(
+            actual <= expected + 1e-12,
+            "the bound {actual} must not exceed the true gap {expected}"
+        );
+        assert!(
+            (actual - expected).abs() < 1e-9,
+            "the bound {actual} must stay close to the true gap {expected}"
+        );
+    };
+
+    assert_lower_bound(
         SKNeighborMetric::Euclidean.ball_lower_bound(query().view(), &centroid, radius),
-        4.0
+        4.0,
     );
-    assert_eq!(
+    assert_lower_bound(
         SKNeighborMetric::SquaredEuclidean.ball_lower_bound(query().view(), &centroid, radius),
-        16.0
+        16.0,
     );
-    assert_eq!(
+    assert_lower_bound(
         SKNeighborMetric::Manhattan.ball_lower_bound(query().view(), &centroid, radius),
-        4.0
+        4.0,
     );
-    assert!(
-        SKNeighborMetric::Chebyshev.ball_lower_bound(query().view(), &centroid, radius)
-            <= 4.0 / 2.0_f64.sqrt() + 1e-12
+    assert_lower_bound(
+        SKNeighborMetric::Chebyshev.ball_lower_bound(query().view(), &centroid, radius),
+        4.0 / 2.0_f64.sqrt(),
     );
 }

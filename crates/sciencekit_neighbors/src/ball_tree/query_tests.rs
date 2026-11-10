@@ -214,3 +214,61 @@ fn ball_partition_does_not_change_the_answer() {
         assert_eq!(answer.distances(), answers[0].distances());
     }
 }
+
+/// A query far from the node centroid: the gap is a difference of large
+/// magnitudes, so its rounding error scales with them. The bound must stay
+/// conservative and keep the row exactly at the radius.
+#[test]
+fn ball_radius_query_keeps_a_row_exactly_at_the_radius_far_from_the_centroid() {
+    let rows = [
+        0.7505112077324925_f64,
+        574_586_945.2780745,
+        533_990_166.7282869,
+        612_015_909.525534,
+    ];
+    let training =
+        Array2::from_shape_vec((4, 1), rows.iter().copied().collect::<Vec<f64>>()).unwrap();
+    let query = Array2::from_shape_vec((1, 1), vec![-0.118_451_843_924_760_82_f64]).unwrap();
+    let radius = 0.868_963_051_657_253_3_f64;
+    let tree = SKBallTreeBuilder::<f64>::new()
+        .build(SKDataView::Dense(training.view()))
+        .unwrap();
+    let neighbors = tree
+        .radius_neighbors(SKDataView::Dense(query.view()), radius)
+        .unwrap();
+    assert_eq!(neighbors.indices(0), &[0_usize]);
+}
+
+/// Per-metric radius queries with a small leaf size and an exact-boundary
+/// radius exercise the pruning path.
+#[test]
+fn ball_radius_query_prunes_correctly_for_every_metric() {
+    let training = Array2::from_shape_vec(
+        (6, 2),
+        vec![
+            0.0_f64, 0.0, 1.0, 0.0, 0.0, 1.0, 5.0, 5.0, 6.0, 5.0, 5.0, 6.0,
+        ],
+    )
+    .unwrap();
+    let query = Array2::from_shape_vec((1, 2), vec![0.0_f64, 0.0]).unwrap();
+    for metric in [
+        SKRequestedNeighborMetric::Euclidean,
+        SKRequestedNeighborMetric::SquaredEuclidean,
+        SKRequestedNeighborMetric::Manhattan,
+        SKRequestedNeighborMetric::Chebyshev,
+    ] {
+        let tree = SKBallTreeBuilder::<f64>::new()
+            .metric(metric)
+            .leaf_size(1)
+            .build(SKDataView::Dense(training.view()))
+            .unwrap();
+        let neighbors = tree
+            .radius_neighbors(SKDataView::Dense(query.view()), 1.0)
+            .unwrap();
+        assert_eq!(
+            neighbors.neighbors_count(0),
+            3,
+            "{metric:?} must include every row within the radius"
+        );
+    }
+}

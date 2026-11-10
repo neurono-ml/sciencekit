@@ -116,7 +116,16 @@ impl SKNeighborMetric {
                 let difference = a - b;
                 total + difference * difference
             });
-        let gap = (squared.sqrt() - radius).max(F::zero());
+        // The gap is a difference of two large magnitudes, so its rounding
+        // error scales with those magnitudes — not with the gap or the radius.
+        // Shrinking it by that error keeps the bound conservative for a query
+        // far from the centroid, where a naive subtraction can overshoot the
+        // true minimum by many ulps and prune a row exactly at the radius.
+        let distance = squared.sqrt();
+        let rounding_error = F::epsilon()
+            * F::from(4).expect("the error factor fits in the scalar")
+            * (distance.abs() + radius.abs());
+        let gap = (distance - radius - rounding_error).max(F::zero());
         match self {
             SKNeighborMetric::Euclidean | SKNeighborMetric::Manhattan => gap,
             SKNeighborMetric::SquaredEuclidean => gap * gap,
