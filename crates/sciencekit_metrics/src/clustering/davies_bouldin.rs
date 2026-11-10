@@ -22,6 +22,11 @@ pub fn sk_davies_bouldin_score<F: SKFloat>(
 ) -> Result<F, SKError> {
     sk_validate_clustering_inputs(&features, assignments, "davies_bouldin")?;
     let number_of_clusters = sk_group_clusters(assignments).number_of_clusters();
+    if number_of_clusters == 0 {
+        return Err(SKError::EmptyInput {
+            operation: "davies_bouldin",
+        });
+    }
     if number_of_clusters < 2 {
         return Err(SKError::InvalidHyperparameter {
             name: "assignments",

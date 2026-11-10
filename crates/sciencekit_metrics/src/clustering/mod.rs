@@ -30,6 +30,8 @@ mod calinski_harabasz_tests;
 #[cfg(test)]
 mod clustering_representation_tests;
 #[cfg(test)]
+mod clustering_validation_tests;
+#[cfg(test)]
 mod davies_bouldin_tests;
 #[cfg(test)]
 mod homogeneity_tests;

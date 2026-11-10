@@ -24,6 +24,11 @@ pub fn sk_calinski_harabasz_score<F: SKFloat>(
     let (_, _) = sk_validate_clustering_inputs(&features, assignments, "calinski_harabasz")?;
     let grouping = sk_group_clusters(assignments);
     let number_of_clusters = grouping.number_of_clusters();
+    if number_of_clusters == 0 {
+        return Err(SKError::EmptyInput {
+            operation: "calinski_harabasz",
+        });
+    }
     if number_of_clusters < 2 {
         return Err(SKError::InvalidHyperparameter {
             name: "assignments",
