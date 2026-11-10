@@ -24,6 +24,7 @@ pub use index_split::SKIndexSplit;
 pub use shuffle::sk_shuffle_indices;
 pub use split::SKSplitter;
 pub use split::kfold::{SKKFold, SKKFoldBuilder};
+pub use split::stratified::{SKStratifiedKFold, SKStratifiedKFoldBuilder};
 
 #[cfg(test)]
 mod index_split_tests;

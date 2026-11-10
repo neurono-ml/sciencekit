@@ -5,6 +5,7 @@
 
 pub mod kfold;
 mod splitter;
+pub mod stratified;
 pub(crate) mod validation;
 
 pub use splitter::SKSplitter;
