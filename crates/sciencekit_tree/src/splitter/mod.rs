@@ -1,8 +1,10 @@
 //! Split search (spec `decision-trees`).
 
+mod best;
 mod candidate;
 mod scan;
 
+pub(crate) use best::sk_best_split;
 pub use candidate::SKSplitCandidate;
 pub(crate) use scan::{SKScanContext, SKThresholdChoice, sk_scan_feature};
 
