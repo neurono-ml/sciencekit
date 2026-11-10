@@ -52,12 +52,13 @@ fn silhouette_scorer_equals_the_free_function() {
     let assignments = Array1::from_vec(two_cluster_assignments());
     let scorer = SKSilhouetteScorer;
 
-    let from_assignments = <SKSilhouetteScorer as SKUnsupervisedScorer<f64, FixedClusterer>>::score_from_assignments(
-        &scorer,
-        SKDataView::Dense(features.view()),
-        assignments.view(),
-    )
-    .unwrap();
+    let from_assignments =
+        <SKSilhouetteScorer as SKUnsupervisedScorer<f64, FixedClusterer>>::score_from_assignments(
+            &scorer,
+            SKDataView::Dense(features.view()),
+            assignments.view(),
+        )
+        .unwrap();
     let expected =
         sk_silhouette_score(SKDataView::Dense(features.view()), assignments.view()).unwrap();
     assert!((from_assignments - expected).abs() < 1e-12);
@@ -79,12 +80,13 @@ fn silhouette_scorer_filters_noise_like_the_free_function() {
     let features = two_compact_clusters();
     let mut assignments = two_cluster_assignments();
     assignments[1] = SKClusterLabel::NOISE;
-    let from_assignments = <SKSilhouetteScorer as SKUnsupervisedScorer<f64, FixedClusterer>>::score_from_assignments(
-        &SKSilhouetteScorer,
-        SKDataView::Dense(features.view()),
-        Array1::from_vec(assignments.clone()).view(),
-    )
-    .unwrap();
+    let from_assignments =
+        <SKSilhouetteScorer as SKUnsupervisedScorer<f64, FixedClusterer>>::score_from_assignments(
+            &SKSilhouetteScorer,
+            SKDataView::Dense(features.view()),
+            Array1::from_vec(assignments.clone()).view(),
+        )
+        .unwrap();
     let expected = sk_silhouette_score(
         SKDataView::Dense(features.view()),
         Array1::from_vec(assignments).view(),

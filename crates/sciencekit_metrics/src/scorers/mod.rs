@@ -4,11 +4,13 @@
 //! submodules; every implementation lives in its own file.
 
 mod classification;
+mod clustering;
 mod ranking;
 mod regression;
 mod targets;
 
 pub use classification::{SKAccuracyScorer, SKF1Scorer, SKPrecisionScorer, SKRecallScorer};
+pub use clustering::SKSilhouetteScorer;
 pub use ranking::{
     SKAucScorer, SKAveragePrecisionScorer, SKBalancedAccuracyScorer, SKLogLossScorer,
     SKMatthewsCorrelationScorer,
@@ -19,6 +21,8 @@ pub use regression::{
 
 #[cfg(test)]
 mod classification_tests;
+#[cfg(test)]
+mod clustering_tests;
 #[cfg(test)]
 mod ranking_scorers_tests;
 #[cfg(test)]
