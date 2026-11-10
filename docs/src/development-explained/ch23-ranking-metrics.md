@@ -111,8 +111,8 @@ $\varepsilon$ first — finite by construction, still enormous for a confident m
 ### Balanced accuracy and MCC
 
 **Balanced accuracy** is the mean of per-class recall: it refuses to reward a model that only
-learns the majority class. The **Matthews correlation coefficient** is a correlation between
-prediction and truth on a $2\times2$ table, ranging from $-1$ to $1$; it stays honest under
+learns the majority class. The **Matthews correlation coefficient** generalises beyond two classes (its binary form is
+the correlation on a $2\times2$ table) and ranges from $-1$ to $1$; it stays honest under
 strong class imbalance where accuracy flatters.
 
 ## 4. Each public object, explained
@@ -129,8 +129,9 @@ strong class imbalance where accuracy flatters.
   epsilon clipping.
 - **`sk_balanced_accuracy_score(...)`** and **`sk_matthews_correlation_coefficient(...)`**.
 - **`SKProbabilityScorer<F, M>`** in `sciencekit_common` — the pure form takes scores and
-  truth, the convenient form obtains probabilities from a fitted `SKClassifierPredictor`; the
-  shape is validated once.
+  truth, the convenient form obtains probabilities from a fitted `SKClassifierPredictor`. The
+  shared validator checks the row count and the non-empty class axis; each metric then checks
+  its own label/column rules.
 - **Scorers** — `SKAucScorer`, `SKAveragePrecisionScorer`, `SKLogLossScorer`,
   `SKBalancedAccuracyScorer`, `SKMatthewsCorrelationScorer`, each equal to its free function.
 - **`SKAucAccumulator`** — `observe` / `merge` / `finalize`, producing the same AUC as
@@ -173,7 +174,7 @@ streaming score trustworthy.
 | `ranking/matthews.rs` | Matthews correlation coefficient |
 | `ranking/averaging.rs` | `SKRankingAveraging` |
 | `ranking/accumulator.rs` | `SKAucAccumulator` |
-| `scorers/ranking.rs` | the five scorer adapters |
+| `scorers/ranking/` | the five scorer adapters (per-scorer files plus the label/column helpers) |
 | `sciencekit_common/src/scorer_traits/probability.rs` | `SKProbabilityScorer` |
 
 ## 7. What this completes
