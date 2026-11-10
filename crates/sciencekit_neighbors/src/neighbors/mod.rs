@@ -6,6 +6,7 @@
 
 mod algorithm;
 mod brute_force;
+mod configuration;
 mod metric;
 mod training_data;
 mod validation;
@@ -16,6 +17,7 @@ pub use algorithm::{
     SKFeatureRepresentation, SKNeighborsAlgorithm, SKSearchStrategy, sk_resolve_search_strategy,
 };
 pub use brute_force::SKBruteForceSearcher;
+pub(crate) use configuration::SKNeighborsConfiguration;
 pub use metric::SKNeighborsMetric;
 pub use training_data::SKTrainingData;
 pub use weights::{SKNeighborsWeights, sk_weighted_average};

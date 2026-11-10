@@ -21,12 +21,14 @@
 #![warn(missing_docs)]
 
 pub mod ball_tree;
+pub mod classifier;
 pub mod kd_tree;
 pub mod metric;
 pub mod neighbors;
 pub mod searcher;
 
 pub use ball_tree::{SKBallTree, SKBallTreeBuilder};
+pub use classifier::{SKKNeighborsClassifier, SKKNeighborsClassifierBuilder};
 pub use kd_tree::{SKKDTree, SKKDTreeBuilder};
 pub use metric::{SKNeighborMetric, SKRequestedNeighborMetric};
 pub use neighbors::{
