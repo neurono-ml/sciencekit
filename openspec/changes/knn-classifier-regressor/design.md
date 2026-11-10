@@ -103,8 +103,9 @@ Builders expose `backend` (default `Faer`) and `execution_mode` (default `Automa
 fit transfers both into the model. `fit` and `predict_*` run inside the shared operation
 span and record the backend. Errors use the central taxonomy: `EmptyInput`,
 `InvalidHyperparameter` (`nearest_neighbors_count` zero or larger than the training set,
-`leaf_size` zero), `ShapeMismatch`, `NonFiniteValue`, `UnsupportedRepresentation` and
-`UnsupportedOperation` for sparse NaN.
+`leaf_size` zero), `ShapeMismatch`, `NonFiniteValue` (including a non-finite value in a sparse stored entry,
+reported with its flat position), and `UnsupportedRepresentation`; `UnsupportedOperation`
+appears only when an internal brute-force build is asked to index a non-finite design directly.
 
 ### Decision 8 — File layout
 
@@ -112,7 +113,8 @@ span and record the backend. Errors use the central taxonomy: `EmptyInput`,
 crates/sciencekit_neighbors/src/
   classifier/{mod.rs, builder.rs, core_implementation.rs, model.rs, fit.rs, predict.rs, *_tests.rs}
   regressor/{mod.rs, builder.rs, core_implementation.rs, model.rs, fit.rs, predict.rs, *_tests.rs}
-  neighbors/{mod.rs, algorithm.rs, weights.rs, brute_force.rs, resolution.rs, *_tests.rs}
+  neighbors/{mod.rs, algorithm.rs, metric.rs, weights.rs, configuration.rs, index.rs,
+             search.rs, training_data.rs, validation.rs, brute_force/, *_tests.rs}
   acceptance_tests/mod.rs
 ```
 
