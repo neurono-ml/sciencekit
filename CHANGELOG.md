@@ -30,6 +30,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   feature-count mismatches, non-finite values and unsupported metrics return structured
   errors. Both indexes are `Send + Sync` and serve concurrent query batches.
 
+- `sciencekit_interop` sub-crate (spec `dataset-interop-core`): the engine-neutral tabular seam.
+  `SKTabularSchema` / `SKColumnSchema` / `SKColumnRole` / `SKLogicalType` describe ordered, named,
+  typed columns and reject empty or duplicate-name schemas; `SKColumnSelection` resolves ordered
+  features and at most one target by name or position, rejecting unknown, duplicate and multi-target
+  selections before any row is read; `SKMissingValuePolicy` defaults to `Reject` and documents
+  `NumericNaN`, `ConstantFill` and `CategoricalMissingCode`. `SKColumnData` stores nullable `f32`,
+  `f64`, `i64`, `bool`, nominal text and category codes; `SKTabularBatch` validates row alignment and
+  materializes dense `Array2`, CSR, `SKDataBatch`, `SKSupervisedBatch`, `SKTargetView` and
+  `SKCategoricalView` conversions, delegating label canonicalization to `SKLabelTable`. Contiguous
+  row-major matrices and single numeric columns are borrowed (`SKRowMajorFeatureView`,
+  `SKNumericColumnView`); columnar tables are materialized because the layout requires it.
+  `SKTabularSource` is the reopenable, fallible source contract, bridged into
+  `SKSourceProvider` / `SKSupervisedSourceProvider` by `SKTabularSourceProvider`; the
+  `SKAsyncTabularSource` bridge polls async streams on a dedicated reader thread with a bounded
+  channel, backpressure and cancellation. A conversion-span helper records source kind, shape and policy for adapters that use it.
+- `sciencekit_common` interop error variants in the central taxonomy (`UnknownColumn`,
+  `DuplicateColumn`, `UnsupportedColumnType`, `NullValueInColumn`, `UnevenColumnLengths`,
+  `SchemaMismatch`), each naming the offending column where the error is column-oriented.
+
 - `sciencekit_common` model export/import contracts (spec `model-export-contracts`): the format-agnostic `SKModelState<F>` (estimator metadata, a deterministically ordered map of named tensors and typed hyperparameters), `SKModelMetadata` (estimator name, format version, scalar dtype, feature count, canonical class labels and a `SKParameterValue` map), `SKTensor<F>` with `SKTensorDType` (`F32`/`F64`/`I64`/`Bool`) and shape/dtype/name validation, and the `SKExportable<F>`/`SKImportable<F>` trait pair with the shared `sk_validate_import_metadata` check — no file format and no `serde` dependency.
 
 - `sciencekit_pipeline` sub-crate (spec `typed-pipeline`): the compile-time typed linear

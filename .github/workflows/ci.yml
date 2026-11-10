@@ -66,6 +66,28 @@ jobs:
       - name: cargo test --workspace --all-targets
         run: cargo test --workspace --all-targets
 
+  interop:
+    name: Interop crate feature matrix (core first)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Install Rust 1.85 toolchain
+        uses: dtolnay/rust-toolchain@1.85
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+      - name: Pin psm to the last release that builds on the MSRV
+        run: cargo update -p psm --precise 0.1.24
+      - name: Core build + tests (no engine feature)
+        run: cargo test -p sciencekit_interop
+      - name: Each optional engine feature builds
+        run: |
+          for feature in arrow polars datafusion memmap; do
+            cargo build -p sciencekit_interop --features "$feature"
+          done
+
   examples:
     name: Examples (build + test)
     runs-on: ubuntu-latest

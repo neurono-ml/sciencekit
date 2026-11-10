@@ -1,0 +1,30 @@
+[package]
+name = "sciencekit_interop"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+rust-version = "1.85"
+description = "Engine-neutral interoperability layer for sciencekit: tabular schemas, typed column batches, missing-value policy, source providers and the async-to-sync bridge."
+repository = "https://github.com/neurono-ml/sciencekit"
+
+[dependencies]
+sciencekit_common = { path = "../sciencekit_common" }
+
+ndarray = { workspace = true }
+sprs = { workspace = true }
+num-traits = "0.2"
+tracing = { workspace = true }
+tokio = { version = "=1.53.1", features = ["rt"] }
+
+[dev-dependencies]
+tracing-subscriber = { workspace = true }
+
+[features]
+default = []
+# Optional engine adapters land in their own changes; the flags exist here so
+# the feature matrix can already build the neutral core alone or with each
+# adapter enabled.
+arrow = []
+polars = []
+datafusion = []
+memmap = []

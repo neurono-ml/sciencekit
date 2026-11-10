@@ -128,25 +128,64 @@ pub enum SKError {
         /// The offending label.
         label: i64,
     },
-}
 
-/// Convenience constructors for the most common variants.
-impl SKError {
-    /// Build a shape-mismatch error for a 2-D input (rows, columns).
-    pub fn shape_mismatch_2d(
-        expected_rows: usize,
-        expected_cols: usize,
-        found_rows: usize,
-        found_cols: usize,
-    ) -> Self {
-        SKError::ShapeMismatch {
-            expected: vec![expected_rows, expected_cols],
-            found: vec![found_rows, found_cols],
-        }
-    }
+    /// A tabular selection named a column the schema does not carry.
+    #[error("unknown column `{column}`; {suggestion}")]
+    UnknownColumn {
+        /// The name (or position) that could not be resolved.
+        column: String,
+        /// A way to correct the selection.
+        suggestion: String,
+    },
 
-    /// Build a not-converged error reporting the effort spent.
-    pub fn not_converged(iterations: usize) -> Self {
-        SKError::NotConverged { iterations }
-    }
+    /// A tabular schema or selection carries the same column more than once.
+    #[error("duplicate column `{column}`; {suggestion}")]
+    DuplicateColumn {
+        /// The duplicated column name.
+        column: String,
+        /// A way to resolve the duplication.
+        suggestion: String,
+    },
+
+    /// A column's logical type cannot enter the requested conversion path.
+    #[error("unsupported column type `{logical_type}` for column `{column}`; {suggestion}")]
+    UnsupportedColumnType {
+        /// The column whose type was rejected.
+        column: String,
+        /// The rejected logical type.
+        logical_type: String,
+        /// A conversion path the consumer can take.
+        suggestion: String,
+    },
+
+    /// A nullable column carries a null the selected policy does not handle.
+    #[error("column `{column}` contains a null value under the `{policy}` missing-value policy")]
+    NullValueInColumn {
+        /// The column carrying the null.
+        column: String,
+        /// The policy that rejected it.
+        policy: &'static str,
+    },
+
+    /// A tabular batch's columns do not all have the same length.
+    #[error(
+        "column `{column}` has {found} rows but the batch has {expected} rows; all columns must be row-aligned"
+    )]
+    UnevenColumnLengths {
+        /// The column whose length differs.
+        column: String,
+        /// The row count the batch expects.
+        expected: usize,
+        /// The row count the column carries.
+        found: usize,
+    },
+
+    /// A schema and the data (or another schema) do not describe the same table.
+    #[error("schema mismatch: expected {expected}, found {found}")]
+    SchemaMismatch {
+        /// What the receiving side expected.
+        expected: String,
+        /// What it actually received.
+        found: String,
+    },
 }
