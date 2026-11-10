@@ -10,7 +10,7 @@ This chapter builds `SKKNNImputer`: the missingness mask, the NaN-aware donor se
 weighting and fallback rules, the optional missingness indicator, and the memory bound that
 keeps a large transform affordable.
 
-The capability is `knn-imputer`; the code lives in `crates/sciencekit_impute/src/knn/`.
+The capability is `nearest-neighbor-imputation`; the code lives in `crates/sciencekit_impute/src/knn/`.
 
 ## 1. The problem, in plain words
 
@@ -78,9 +78,9 @@ densifying sparse input to reuse the dense path.
 
 Classic Euclidean distance treats a missing value as impossible to compare, so it either fails
 or substitutes a number (often zero), which invents a distance. The NaN-aware form instead
-computes the distance over the features **both** rows observe and rescales by
-$\text{total}/\text{observed}$, so a row missing half its features is not automatically far from
-everything. If two rows share no observed feature, the distance is `NaN` — and a `NaN` donor is
+computes the distance over the features **both** rows observe and multiplies it by
+$\text{total}/\text{observed}$, so two rows that happen to share only one feature are not treated as
+artificially close; the rescale restores the scale of a full-feature comparison. If two rows share no observed feature, the distance is `NaN` — and a `NaN` donor is
 never averaged in.
 
 ### Why the donor pool is per column
@@ -104,7 +104,7 @@ input size; the block plan is tested directly
   `add_indicator`, `keep_empty_features`, `backend` (default `Faer`) and `execution_mode`.
 - **`SKKNNImputerModel<F>`** — the learned state: the retained training design with missing
   cells normalised to `NaN`, the mask, the valid columns, the per-column means and the donor
-  pools; plus `transform`.
+  pools. It implements `SKFeatureTransformer`, which is what `transform` is.
 - **Marker and mask** — the shared predicate and the dense missingness mask.
 - **Distance blocks and donor selection** — the NaN-aware kernel and the partial selection.
 - **Weights and averaging** — uniform, inverse-distance, zero-distance and mean fallback.
@@ -128,8 +128,10 @@ instead of writing `NaN` or panicking.
 
 ### `knn_marker_predicate_is_the_shared_one`
 
-The k-NN imputer and `SKSimpleImputer` must agree on what missing means. The test asserts they
-use the same predicate, so a sentinel configured in one is not silently ignored by the other.
+The k-NN imputer and `SKSimpleImputer` share one marker predicate in `missingness`. The test
+pins the predicate's semantics (the `NaN`, scalar and categorical cases); the two estimators
+import the same function, so a sentinel configured in one cannot be interpreted differently by
+the other.
 
 ### `knn_validation_rejects_sparse_fit_input` and `…_sparse_transform_input`
 
