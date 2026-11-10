@@ -59,4 +59,5 @@
   - [Decision trees: CART, impurity and split search](development-explained/ch28-decision-trees.md)
   - [Model selection: splits, folds and honest scores](development-explained/ch29-model-selection.md)
   - [A stable C ABI](development-explained/ch30-c-abi.md)
+  - [Clustering metrics](development-explained/ch31-clustering-metrics.md)
   - [Maintaining this book](development-explained/maintaining.md)
