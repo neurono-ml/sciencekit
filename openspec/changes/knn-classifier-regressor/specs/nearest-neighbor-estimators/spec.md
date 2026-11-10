@@ -31,13 +31,15 @@ default), `metric` (`Euclidean` default), `leaf_size` (default 40), `backend` (d
 ### Requirement: Runtime search algorithm selection
 
 The estimator SHALL accept `Auto`, `KdTree`, `BallTree` and `BruteForce`, and `Auto` SHALL
-choose a tree for dense Euclidean, Manhattan or Chebyshev data and brute force for sparse,
-mixed or cosine data. An explicit algorithm that cannot serve the input representation
+choose a tree for dense Euclidean, Manhattan or Chebyshev data **with at least 64 training
+rows** (a k-d tree when the feature count is at most 20, a ball tree above that) and brute force
+for sparse, mixed or cosine data — below the threshold the scan is cheaper than building a
+tree. An explicit algorithm that cannot serve the input representation
 SHALL return `UnsupportedRepresentation` with guidance.
 
 #### Scenario: Auto uses a tree on dense Euclidean data
 
-- **WHEN** a dense Euclidean fit completes with `Auto`
+- **WHEN** a dense Euclidean fit with at least 64 training rows completes with `Auto`
 - **THEN** the model reports a tree-based search strategy
 
 #### Scenario: Auto uses brute force on sparse data
@@ -131,8 +133,9 @@ sparse input.
 
 ### Requirement: Target canonicalization
 
-The classifier SHALL accept integer and nominal targets through the shared label table,
-and SHALL order classes by the canonical table order rather than by observation order.
+The classifier SHALL accept integer and nominal targets through the shared label table
+(`SKLabelTable`), whose canonical indices follow first-occurrence order — the library-wide
+convention. Predictions are those indices and probabilities follow the table's column order.
 
 #### Scenario: Nominal labels are canonicalized
 
