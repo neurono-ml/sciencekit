@@ -15,6 +15,7 @@ mod init;
 mod iteration;
 mod lloyd;
 mod model;
+mod predict;
 mod result;
 mod validation;
 
@@ -46,3 +47,5 @@ mod kmeans_fit_tests;
 mod kmeans_init_tests;
 #[cfg(test)]
 mod kmeans_lloyd_tests;
+#[cfg(test)]
+mod kmeans_predict_tests;
