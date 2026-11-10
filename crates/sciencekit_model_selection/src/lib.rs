@@ -16,11 +16,15 @@
 
 pub mod gather;
 pub mod index_split;
+pub mod shuffle;
 pub mod split;
 
 pub use gather::{SKTargetPartition, sk_gather_rows};
 pub use index_split::SKIndexSplit;
+pub use shuffle::sk_shuffle_indices;
 pub use split::SKSplitter;
 
 #[cfg(test)]
 mod index_split_tests;
+#[cfg(test)]
+mod shuffle_tests;
