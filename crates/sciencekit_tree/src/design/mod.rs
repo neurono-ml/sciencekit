@@ -5,7 +5,7 @@
 
 mod design_view;
 
-pub(crate) use design_view::SKDesign;
+pub(crate) use design_view::{SKDesign, sk_to_csc};
 
 #[cfg(test)]
 mod design_tests;

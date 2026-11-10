@@ -17,7 +17,7 @@ fn sparse_design_reads_stored_entries_and_implicit_zeros() {
         vec![0, 2, 1],
         vec![1.0_f64, 2.0, 3.0],
     );
-    let csc = sparse.to_csc();
+    let csc = super::sk_to_csc(&sparse.view());
     let design = SKDesign::Sparse {
         csr: sparse.view(),
         csc: csc.view(),
@@ -36,7 +36,7 @@ fn sparse_design_reads_stored_entries_and_implicit_zeros() {
 #[test]
 fn sparse_design_rejects_non_finite_stored_values() {
     let sparse = CsMat::new((1, 3), vec![0, 1], vec![2], vec![f64::NAN]);
-    let csc = sparse.to_csc();
+    let csc = super::sk_to_csc(&sparse.view());
     let design = SKDesign::Sparse {
         csr: sparse.view(),
         csc: csc.view(),

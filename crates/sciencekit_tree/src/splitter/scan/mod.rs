@@ -14,7 +14,7 @@ use super::SKSplitCandidate;
 use crate::criterion::SKTreeCriterion;
 use crate::design::SKDesign;
 
-pub(crate) use classification::sk_scan_classification_feature;
+pub(crate) use classification::{sk_classification_impurity, sk_scan_classification_feature};
 pub(crate) use squared::sk_scan_squared_error_feature;
 
 use absolute::sk_scan_absolute_error_feature;

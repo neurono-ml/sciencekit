@@ -2,6 +2,7 @@
 
 mod builder;
 mod core_implementation;
+mod criterion;
 mod fit;
 mod model;
 mod predict;

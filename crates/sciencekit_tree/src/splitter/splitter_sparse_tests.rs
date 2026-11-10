@@ -40,7 +40,7 @@ fn context<'a>(classes: &'a [usize], weights: &'a [f64]) -> SKScanContext<'a, f6
 #[test]
 fn sparse_scan_matches_the_dense_scan() {
     let (dense, sparse, classes) = fixtures();
-    let csc = sparse.to_csc();
+    let csc = crate::design::sk_to_csc(&sparse.view());
     let dense_design = SKDesign::Dense(dense.view());
     let sparse_design = SKDesign::Sparse {
         csr: sparse.view(),
@@ -74,7 +74,7 @@ fn sparse_scan_matches_the_dense_scan() {
 #[test]
 fn sparse_design_stays_sparse() {
     let (_dense, sparse, _classes) = fixtures();
-    let csc = sparse.to_csc();
+    let csc = crate::design::sk_to_csc(&sparse.view());
     let design = SKDesign::Sparse {
         csr: sparse.view(),
         csc: csc.view(),
@@ -89,7 +89,7 @@ fn sparse_design_stays_sparse() {
 #[test]
 fn sparse_scan_recovers_the_implicit_zero_split() {
     let (_dense, sparse, classes) = fixtures();
-    let csc = sparse.to_csc();
+    let csc = crate::design::sk_to_csc(&sparse.view());
     let design = SKDesign::Sparse {
         csr: sparse.view(),
         csc: csc.view(),
