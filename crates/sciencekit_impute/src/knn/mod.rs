@@ -27,6 +27,9 @@ mod builder_tests;
 mod concurrency_tests;
 
 #[cfg(test)]
+mod acceptance_tests;
+
+#[cfg(test)]
 mod distance_block_tests;
 
 #[cfg(test)]
