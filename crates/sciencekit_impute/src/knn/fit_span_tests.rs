@@ -6,9 +6,7 @@ use std::fmt;
 use std::sync::{Arc, Mutex};
 
 use ndarray::array;
-use sciencekit_common::{
-    SKBackendKind, SKExecutionMode, SKUnsupervisedFit, SKBuilder,
-};
+use sciencekit_common::{SKBackendKind, SKBuilder, SKExecutionMode, SKUnsupervisedFit};
 use tracing::field::{Field, Visit};
 use tracing::span::{Attributes, Id, Record};
 use tracing::subscriber::Interest;

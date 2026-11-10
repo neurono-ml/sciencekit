@@ -24,20 +24,14 @@ fn knn_validation_rejects_empty_fit_input() {
         .unwrap();
     let error = model
         .fit(&Array2::<f64>::zeros((0, 3)))
-        .err()
-        .expect("an empty fit must fail");
-    assert!(matches!(
-        error,
-        SKError::EmptyInput { operation: "fit" }
-    ));
+        .map(|_| ())
+        .expect_err("an empty fit must fail");
+    assert!(matches!(error, SKError::EmptyInput { operation: "fit" }));
     let error = model
         .fit(&Array2::<f64>::zeros((3, 0)))
-        .err()
-        .expect("a zero-column fit must fail");
-    assert!(matches!(
-        error,
-        SKError::EmptyInput { operation: "fit" }
-    ));
+        .map(|_| ())
+        .expect_err("a zero-column fit must fail");
+    assert!(matches!(error, SKError::EmptyInput { operation: "fit" }));
 }
 
 #[test]
@@ -45,8 +39,7 @@ fn knn_validation_rejects_empty_transform_input() {
     let model = fitted(&array![[1.0_f64, 2.0], [3.0, 4.0]], 2);
     let error = model
         .transform(&Array2::<f64>::zeros((0, 2)))
-        .err()
-        .expect("an empty transform must fail");
+        .expect_err("an empty transform must fail");
     assert!(matches!(
         error,
         SKError::EmptyInput {
@@ -60,8 +53,8 @@ fn knn_validation_rejects_a_zero_neighbor_count() {
     let error = SKKNNImputer::<f64>::build()
         .nearest_neighbors_count(0)
         .build()
-        .err()
-        .expect("zero donors must fail");
+        .map(|_| ())
+        .expect_err("zero donors must fail");
     assert!(matches!(
         error,
         SKError::InvalidHyperparameter {
@@ -78,8 +71,8 @@ fn knn_validation_rejects_an_excessive_neighbor_count() {
         .build()
         .unwrap()
         .fit(&array![[1.0_f64, 2.0], [3.0, 4.0]])
-        .err()
-        .expect("more donors than training rows must fail");
+        .map(|_| ())
+        .expect_err("more donors than training rows must fail");
     assert!(matches!(
         error,
         SKError::InvalidHyperparameter {
@@ -94,8 +87,7 @@ fn knn_validation_reports_a_feature_count_mismatch_with_both_dimensions() {
     let model = fitted(&array![[1.0_f64, 2.0], [3.0, 4.0]], 2);
     let error = model
         .transform(&array![[1.0_f64, 2.0, 3.0]])
-        .err()
-        .expect("a feature-count mismatch must fail");
+        .expect_err("a feature-count mismatch must fail");
     assert!(matches!(
         error,
         SKError::ShapeMismatch {
@@ -113,12 +105,9 @@ fn knn_validation_rejects_nan_under_a_scalar_marker() {
         .build()
         .unwrap()
         .fit(&array![[1.0_f64, f64::NAN], [3.0, 4.0]])
-        .err()
-        .expect("NaN is not the configured marker");
-    assert!(matches!(
-        error,
-        SKError::NonFiniteValue { position: 1 }
-    ));
+        .map(|_| ())
+        .expect_err("NaN is not the configured marker");
+    assert!(matches!(error, SKError::NonFiniteValue { position: 1 }));
 }
 
 #[test]
@@ -128,12 +117,9 @@ fn knn_validation_rejects_an_infinity_under_the_nan_marker() {
         .build()
         .unwrap()
         .fit(&array![[1.0_f64, f64::INFINITY], [3.0, 4.0]])
-        .err()
-        .expect("an infinity is never a missing value");
-    assert!(matches!(
-        error,
-        SKError::NonFiniteValue { position: 1 }
-    ));
+        .map(|_| ())
+        .expect_err("an infinity is never a missing value");
+    assert!(matches!(error, SKError::NonFiniteValue { position: 1 }));
 }
 
 #[test]
@@ -141,12 +127,8 @@ fn knn_validation_rejects_a_non_finite_value_at_transform() {
     let model = fitted(&array![[1.0_f64, 2.0], [3.0, 4.0]], 2);
     let error = model
         .transform(&array![[f64::INFINITY, 2.0]])
-        .err()
-        .expect("an infinity must fail");
-    assert!(matches!(
-        error,
-        SKError::NonFiniteValue { position: 0 }
-    ));
+        .expect_err("an infinity must fail");
+    assert!(matches!(error, SKError::NonFiniteValue { position: 0 }));
 }
 
 fn sparse_fixture() -> sprs::CsMat<f64> {
@@ -164,8 +146,8 @@ fn knn_validation_rejects_sparse_fit_input() {
         .build()
         .unwrap()
         .fit(sparse.view())
-        .err()
-        .expect("sparse fit must be rejected");
+        .map(|_| ())
+        .expect_err("sparse fit must be rejected");
     match error {
         SKError::UnsupportedRepresentation {
             representation,
@@ -184,8 +166,7 @@ fn knn_validation_rejects_sparse_transform_input() {
     let sparse = sparse_fixture();
     let error = model
         .transform(sparse.view())
-        .err()
-        .expect("sparse transform must be rejected");
+        .expect_err("sparse transform must be rejected");
     assert!(matches!(
         error,
         SKError::UnsupportedRepresentation {

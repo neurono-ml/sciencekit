@@ -58,10 +58,7 @@ fn knn_concurrency_one_model_serves_several_threads() {
                 let found = dense(model.transform(&block).unwrap());
                 assert_eq!(
                     found,
-                    expected.slice_axis(
-                        Axis(0),
-                        Slice::from(chunk * batch..(chunk + 1) * batch)
-                    )
+                    expected.slice_axis(Axis(0), Slice::from(chunk * batch..(chunk + 1) * batch))
                 );
             });
         }
@@ -75,7 +72,11 @@ fn knn_concurrency_the_shared_estimator_fits_concurrently() {
         .nearest_neighbors_count(2)
         .build()
         .unwrap();
-    let expected = estimator.fit(training.view()).unwrap().column_means().to_owned();
+    let expected = estimator
+        .fit(training.view())
+        .unwrap()
+        .column_means()
+        .to_owned();
 
     std::thread::scope(|scope| {
         let handles: Vec<_> = (0..6)

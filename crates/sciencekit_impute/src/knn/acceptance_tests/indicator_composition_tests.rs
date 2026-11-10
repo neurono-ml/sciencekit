@@ -37,9 +37,7 @@ fn acceptance_knn_imputer_indicator_follows_the_imputed_features() {
 
 #[test]
 fn acceptance_knn_imputer_indicator_tolerates_new_missingness() {
-    let complete = Array2::from_shape_fn((40, 3), |(row, column)| {
-        row as f64 * 0.5 + column as f64
-    });
+    let complete = Array2::from_shape_fn((40, 3), |(row, column)| row as f64 * 0.5 + column as f64);
     let model = SKKNNImputer::<f64>::build()
         .nearest_neighbors_count(3)
         .add_indicator(true)

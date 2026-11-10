@@ -27,10 +27,7 @@ pub(super) fn sk_distance_block_rows(training_rows: usize, scalar_size_bytes: us
 ///
 /// The ranges partition `0..rows_count` without gaps or overlap, so every
 /// receiver row is processed exactly once regardless of the block width.
-pub(super) fn sk_distance_block_ranges(
-    rows_count: usize,
-    block_rows: usize,
-) -> Vec<Range<usize>> {
+pub(super) fn sk_distance_block_ranges(rows_count: usize, block_rows: usize) -> Vec<Range<usize>> {
     let block_rows = block_rows.max(1);
     (0..rows_count)
         .step_by(block_rows)

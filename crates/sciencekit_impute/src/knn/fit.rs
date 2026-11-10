@@ -11,7 +11,7 @@ use crate::knn::core_implementation::SKKNNImputer;
 use crate::knn::donors::sk_column_donors;
 use crate::knn::marker::{sk_canonicalize_missing, sk_dense_missing_mask};
 use crate::knn::model::SKKNNImputerModel;
-use crate::knn::validation::{sk_validate_finite, sk_validated_shape, sk_validate_neighbor_count};
+use crate::knn::validation::{sk_validate_finite, sk_validate_neighbor_count, sk_validated_shape};
 use crate::missing_indicator::{SKMissingIndicator, SKMissingIndicatorModel};
 
 impl<F: SKFloat> SKKNNImputer<F> {

@@ -4,9 +4,9 @@
 use ndarray::{Array1, Array2, ArrayView1, ArrayView2};
 use sciencekit_common::{SKBackendKind, SKExecutionMode, SKFloat};
 
-use crate::missing_indicator::SKMissingIndicatorModel;
 use crate::knn::distance_block::sk_distance_block_rows;
 use crate::knn::weights::SKImputationWeights;
+use crate::missing_indicator::SKMissingIndicatorModel;
 
 /// The learned state of a [`crate::knn::SKKNNImputer`]: the training design
 /// with missing cells normalized to `NaN`, its missingness mask, the donor

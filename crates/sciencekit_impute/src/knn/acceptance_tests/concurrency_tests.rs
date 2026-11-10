@@ -36,10 +36,7 @@ fn acceptance_knn_imputer_one_model_serves_several_threads() {
                 let found = dense(model.transform(&block).unwrap());
                 assert_eq!(
                     found,
-                    expected.slice_axis(
-                        Axis(0),
-                        Slice::from(chunk * batch..(chunk + 1) * batch)
-                    )
+                    expected.slice_axis(Axis(0), Slice::from(chunk * batch..(chunk + 1) * batch))
                 );
             });
         }
@@ -53,7 +50,11 @@ fn acceptance_knn_imputer_concurrent_fits_share_the_estimator() {
         .nearest_neighbors_count(3)
         .build()
         .unwrap();
-    let expected = estimator.fit(training.view()).unwrap().column_means().to_owned();
+    let expected = estimator
+        .fit(training.view())
+        .unwrap()
+        .column_means()
+        .to_owned();
 
     std::thread::scope(|scope| {
         let handles: Vec<_> = (0..8)

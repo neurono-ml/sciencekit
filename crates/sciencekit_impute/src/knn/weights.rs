@@ -25,9 +25,7 @@ impl SKImputationWeights {
         if self == SKImputationWeights::Uniform {
             return weights;
         }
-        let has_zero_distance = distances
-            .iter()
-            .any(|distance| *distance == F::zero());
+        let has_zero_distance = distances.iter().any(|distance| *distance == F::zero());
         for (weight, distance) in weights.iter_mut().zip(distances) {
             *weight = if has_zero_distance {
                 if *distance == F::zero() {

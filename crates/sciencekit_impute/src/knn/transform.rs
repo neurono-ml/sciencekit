@@ -12,7 +12,7 @@ use crate::knn::distance_block::{sk_distance_block, sk_distance_block_ranges};
 use crate::knn::donors::sk_impute_cell;
 use crate::knn::marker::{sk_canonicalize_missing, sk_dense_missing_mask};
 use crate::knn::model::SKKNNImputerModel;
-use crate::knn::validation::{sk_validated_shape, sk_validate_finite};
+use crate::knn::validation::{sk_validate_finite, sk_validated_shape};
 use crate::missing_indicator::SKIndicatorOutput;
 use crate::simple_imputer::SKImputedOutput;
 
@@ -97,7 +97,13 @@ impl<F: SKFloat> SKKNNImputerModel<F> {
             let missing_mask = sk_dense_missing_mask(&receivers, self.missing_values);
             let distances = sk_distance_block(&canonical.view(), &self.training.view());
             let mut output_block = output.slice_mut(ndarray::s![range, ..]);
-            self.impute_block(&receivers, &missing_mask, &distances, &mut output_block, parallel);
+            self.impute_block(
+                &receivers,
+                &missing_mask,
+                &distances,
+                &mut output_block,
+                parallel,
+            );
         }
         let Some(indicator) = self.indicator.as_ref() else {
             return Ok(output);

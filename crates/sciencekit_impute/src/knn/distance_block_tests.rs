@@ -16,8 +16,7 @@ fn knn_distance_block_rows_stays_within_the_byte_budget() {
         let block_rows = sk_distance_block_rows(training_rows, SCALAR_BYTES);
         assert!(block_rows >= 1);
         assert!(
-            block_rows * training_rows * SCALAR_BYTES <= SK_DISTANCE_BLOCK_BYTES
-                || block_rows == 1,
+            block_rows * training_rows * SCALAR_BYTES <= SK_DISTANCE_BLOCK_BYTES || block_rows == 1,
             "a block of {block_rows} × {training_rows} scalars must fit the budget"
         );
     }
