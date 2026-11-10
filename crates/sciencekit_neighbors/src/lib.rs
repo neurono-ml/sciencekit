@@ -28,7 +28,9 @@ pub mod neighbors;
 pub mod searcher;
 
 pub use ball_tree::{SKBallTree, SKBallTreeBuilder};
-pub use classifier::{SKKNeighborsClassifier, SKKNeighborsClassifierBuilder};
+pub use classifier::{
+    SKKNeighborsClassifier, SKKNeighborsClassifierBuilder, SKKNeighborsClassifierModel,
+};
 pub use kd_tree::{SKKDTree, SKKDTreeBuilder};
 pub use metric::{SKNeighborMetric, SKRequestedNeighborMetric};
 pub use neighbors::{

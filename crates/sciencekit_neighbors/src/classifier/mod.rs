@@ -5,9 +5,15 @@
 
 mod builder;
 mod core_implementation;
+mod fit;
+mod model;
+mod targets;
 
 pub use builder::SKKNeighborsClassifierBuilder;
 pub use core_implementation::SKKNeighborsClassifier;
+pub use model::SKKNeighborsClassifierModel;
 
 #[cfg(test)]
 mod classifier_builder_tests;
+#[cfg(test)]
+mod classifier_fit_tests;

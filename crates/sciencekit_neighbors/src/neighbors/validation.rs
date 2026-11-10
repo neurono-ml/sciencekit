@@ -43,6 +43,39 @@ pub(crate) fn sk_validate_finiteness<F: SKFloat>(
     }
 }
 
+/// Validate a training input: non-empty shape and finite values.
+pub(crate) fn sk_validate_training_features<F: SKFloat>(
+    features: SKDataView<'_, F>,
+    operation: &'static str,
+) -> Result<(), SKError> {
+    let (rows, columns) = sk_view_dimensions(&features);
+    if rows == 0 || columns == 0 {
+        return Err(SKError::EmptyInput { operation });
+    }
+    sk_validate_finiteness(features)
+}
+
+/// Validate a prediction batch against the fitted feature count.
+pub(crate) fn sk_validate_query_features<F: SKFloat>(
+    features: SKDataView<'_, F>,
+    training_columns: usize,
+    operation: &'static str,
+) -> Result<(), SKError> {
+    let (rows, columns) = sk_view_dimensions(&features);
+    if rows == 0 {
+        return Err(SKError::EmptyInput { operation });
+    }
+    if columns != training_columns {
+        return Err(SKError::shape_mismatch_2d(
+            rows,
+            training_columns,
+            rows,
+            columns,
+        ));
+    }
+    sk_validate_finiteness(features)
+}
+
 /// Validate a neighbor count against the training-row count.
 pub(crate) fn sk_validate_neighbors_count(
     neighbors_count: usize,

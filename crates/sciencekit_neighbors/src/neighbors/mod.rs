@@ -7,7 +7,9 @@
 mod algorithm;
 mod brute_force;
 mod configuration;
+mod index;
 mod metric;
+mod search;
 mod training_data;
 mod validation;
 mod weights;
@@ -23,6 +25,8 @@ pub use training_data::SKTrainingData;
 pub use weights::{SKNeighborsWeights, sk_weighted_average};
 
 pub(crate) use brute_force::sk_brute_force_k_nearest;
+pub(crate) use search::{SKFittedSearch, sk_prepare_search};
+pub(crate) use validation::sk_view_dimensions;
 
 #[cfg(test)]
 mod algorithm_tests;
