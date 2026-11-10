@@ -10,6 +10,10 @@ use super::inputs::sk_view_dimensions;
 pub(super) struct SKClusterGeometry<F> {
     /// One dense centroid per compact cluster (`number_of_clusters × features`).
     pub centroids: Array2<F>,
+    /// Non-noise rows per cluster.
+    pub sizes: Vec<usize>,
+    /// Sum of squared distances from each row to its centroid.
+    pub squared_scatter: Vec<F>,
     /// Mean Euclidean distance from each row to its centroid.
     pub mean_scatter: Vec<F>,
 }
@@ -59,7 +63,7 @@ pub(super) fn sk_cluster_geometry<F: SKFloat>(
         }
     }
 
-    let (_squared_scatter, mut mean_scatter) = match features {
+    let (squared_scatter, mut mean_scatter) = match features {
         SKDataView::Dense(dense) => sk_dense_scatter(&dense, &grouping, &centroids),
         SKDataView::Sparse(sparse) => sk_sparse_scatter(&sparse, &grouping, &centroids),
         _ => unreachable!("SKDataView only exposes dense and csr"),
@@ -71,6 +75,8 @@ pub(super) fn sk_cluster_geometry<F: SKFloat>(
 
     SKClusterGeometry {
         centroids,
+        sizes: grouping.cluster_sizes,
+        squared_scatter,
         mean_scatter,
     }
 }

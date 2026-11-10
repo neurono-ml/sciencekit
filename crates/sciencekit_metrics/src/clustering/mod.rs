@@ -4,6 +4,7 @@
 //! submodules; every implementation lives in its own file.
 
 mod adjusted_rand;
+mod calinski_harabasz;
 mod contingency;
 mod davies_bouldin;
 mod geometry;
@@ -14,6 +15,7 @@ mod mutual_information;
 mod silhouette;
 
 pub use adjusted_rand::sk_adjusted_rand_score;
+pub use calinski_harabasz::sk_calinski_harabasz_score;
 pub use davies_bouldin::sk_davies_bouldin_score;
 pub use homogeneity::{sk_completeness_score, sk_homogeneity_score, sk_v_measure_score};
 pub use mutual_information::{
@@ -23,6 +25,8 @@ pub use silhouette::{sk_silhouette_samples, sk_silhouette_score};
 
 #[cfg(test)]
 mod adjusted_rand_tests;
+#[cfg(test)]
+mod calinski_harabasz_tests;
 #[cfg(test)]
 mod davies_bouldin_tests;
 #[cfg(test)]
