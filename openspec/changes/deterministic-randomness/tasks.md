@@ -20,6 +20,14 @@
   `cargo test -p sciencekit_linear_model sgd`.
 - [x] 2.2 Add a cross-crate test proving the same seed produces the same shuffle order in
   the shared generator and in SGD; verify with `cargo test -p sciencekit_linear_model`.
+- [x] 2.3 Add `random_seed(u64)` (default `0`) to `SKLogisticRegression`, `SKLasso` and
+  `SKElasticNet`, replace the private xorshift64* permutations (SAGA and coordinate-descent
+  random selection) with `SKRandomGenerator` sub-seeds, and test the default, explicit and
+  distinct-seed behaviour; verify with `cargo test -p sciencekit_linear_model saga` and
+  `cargo test -p sciencekit_linear_model coordinate`.
+- [x] 2.4 Prove stable collection order: fit the same estimator under one and four rayon
+  threads and assert identical coefficient rows by index; verify with
+  `cargo test -p sciencekit_linear_model`.
 
 ## 3. Documentation and review
 

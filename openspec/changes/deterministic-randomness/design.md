@@ -61,7 +61,9 @@ gets the same seed regardless of when or on which thread it runs.
 
 ### Decision 4 — Ownership and thread safety
 
-The generator is `Send` but not `Sync` (it has mutable state). Each task owns its own
+The generator is `Send`; because every draw takes `&mut self`, sharing one between
+threads is a compile-time impossibility without external synchronization, so each
+component owns its own. Each task owns its own
 generator; no `Mutex` is needed. The only shared state is the immutable global seed and the
 domain/index values.
 
@@ -98,7 +100,7 @@ crates/sciencekit_linear_model/src/sgd/shuffle.rs   (deleted; imports the shared
 
 - **Box-Muller uses transcendental functions** → the same build/platform is deterministic;
   cross-platform bit-identity is not promised.
-- **`Send` but not `Sync`** → tasks own generators; sharing requires external
+- **`Send`, `&mut self` draw** → tasks own generators; sharing requires external
   synchronization, which the library does not need.
 - **Refactor touches SGD internals** → tests already pin seeded behavior; run the full
   linear-model suite.

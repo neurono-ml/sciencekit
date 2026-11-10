@@ -4,9 +4,10 @@
 
 Stochastic algorithms are arriving in every wave — SGD, k-means++, MiniBatchKMeans, random
 forests, bagging, boosting, randomized SVD, probability calibration and isolation forests.
-Today the only seeded generator is a `pub(crate)` SplitMix64 inside
-`sciencekit_linear_model`; every new crate would either duplicate it or reach for an
-ambient RNG. Reproducibility should be a library rule, not a per-change accident.
+Today SGD uses a `pub(crate)` SplitMix64 inside `sciencekit_linear_model`, while the
+logistic SAGA solver and the coordinate-descent random selection each keep a private
+xorshift64* stream with a hard-coded seed; every new crate would either duplicate one of
+them or reach for an ambient RNG. Reproducibility should be a library rule, not a per-change accident.
 
 ## What Changes
 
