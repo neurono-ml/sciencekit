@@ -206,4 +206,7 @@ numbers: a label space, a confusion matrix, per-class scores, regression errors 
 mergeable accumulators that make evaluation streaming and parallel. The
 [deterministic randomness chapter](./ch21-deterministic-randomness.html) adds the seed
 convention every stochastic estimator shares: SplitMix64, pure sub-seed derivation and
-thread-count invariance.
+thread-count invariance. The
+[sparse distance chapter](./ch22-sparse-pairwise-distances.html) then shows how one
+dispatcher serves all four dense/sparse representation pairs without ever densifying a
+sparse design.
