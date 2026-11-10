@@ -6,22 +6,18 @@ use ndarray::{Array1, array};
 use crate::grid_search::results::SKGridSearchResults;
 
 fn results() -> SKGridSearchResults<f64> {
-    SKGridSearchResults::from_scores(array![
-        [1.0, 2.0, 3.0],
-        [2.0, 2.0, 2.0],
-        [0.0, 5.0, 1.0],
-    ])
-    .expect("the score matrix is non-empty")
+    SKGridSearchResults::from_scores(array![[1.0, 2.0, 3.0], [2.0, 2.0, 2.0], [0.0, 5.0, 1.0],])
+        .expect("the score matrix is non-empty")
 }
 
 #[test]
 fn grid_selection_mean_and_population_deviation_match_hand_values() {
-    let results = SKGridSearchResults::from_scores(array![
-        [1.0, 2.0, 3.0],
-        [2.0, 2.0, 2.0],
-    ])
-    .unwrap();
-    assert_eq!(results.mean_scores(), Array1::from_vec(vec![2.0, 2.0]).view());
+    let results =
+        SKGridSearchResults::from_scores(array![[1.0, 2.0, 3.0], [2.0, 2.0, 2.0],]).unwrap();
+    assert_eq!(
+        results.mean_scores(),
+        Array1::from_vec(vec![2.0, 2.0]).view()
+    );
     let expected_deviation = (2.0_f64 / 3.0).sqrt();
     assert!((results.standard_deviations()[0] - expected_deviation).abs() < 1e-12);
     assert_eq!(results.standard_deviations()[1], 0.0);
@@ -29,12 +25,8 @@ fn grid_selection_mean_and_population_deviation_match_hand_values() {
 
 #[test]
 fn grid_selection_highest_mean_wins() {
-    let results = SKGridSearchResults::from_scores(array![
-        [1.0, 1.0],
-        [2.0, 2.0],
-        [0.5, 0.5],
-    ])
-    .unwrap();
+    let results =
+        SKGridSearchResults::from_scores(array![[1.0, 1.0], [2.0, 2.0], [0.5, 0.5],]).unwrap();
     assert_eq!(results.best_index(), 1);
     assert_eq!(results.best_score(), 2.0);
     assert_eq!(results.ranked_candidate_indices(), vec![1, 0, 2]);

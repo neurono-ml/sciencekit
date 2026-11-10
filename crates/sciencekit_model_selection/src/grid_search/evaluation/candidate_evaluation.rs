@@ -3,9 +3,7 @@
 
 use ndarray::{Array2, ArrayView1};
 use rayon::prelude::*;
-use sciencekit_common::{
-    SKDataView, SKError, SKFloat, SKSupervisedFit, SKTargetView,
-};
+use sciencekit_common::{SKDataView, SKError, SKFloat, SKSupervisedFit, SKTargetView};
 
 use super::super::error_score::SKErrorScore;
 use super::super::results::SKGridSearchResults;
@@ -100,14 +98,11 @@ where
     );
     let _entered = span.enter();
 
-    let (train_features, train_targets) =
-        sk_gather_rows(features, Some(targets), split.train())?;
+    let (train_features, train_targets) = sk_gather_rows(features, Some(targets), split.train())?;
     let (test_features, test_targets) = sk_gather_rows(features, Some(targets), split.test())?;
     let train_partition = train_targets.expect("targets were requested");
     let test_partition = test_targets.expect("targets were requested");
 
     let model = sk_fit_on_partition(&candidates[candidate], &train_features, &train_partition)?;
-    test_partition.with_view(|test_view| {
-        scoring.sk_score(&model, test_features.view(), test_view)
-    })
+    test_partition.with_view(|test_view| scoring.sk_score(&model, test_features.view(), test_view))
 }

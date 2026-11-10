@@ -79,6 +79,7 @@ fn grid_errors_numeric_score_keeps_a_healthy_candidate_winning() {
     .unwrap();
 
     assert_eq!(results.best_index(), 1);
-    let expected_healthy = -((64.0 + 49.0 + 36.0 + 25.0 + 16.0 + 9.0 + 4.0 + 1.0 + 0.0 + 1.0) / 10.0);
+    let expected_healthy =
+        -((64.0 + 49.0 + 36.0 + 25.0 + 16.0 + 9.0 + 4.0 + 1.0 + 0.0 + 1.0) / 10.0);
     assert!((results.best_score() - expected_healthy).abs() < 1e-12);
 }

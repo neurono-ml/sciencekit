@@ -195,6 +195,10 @@ impl SKMockThresholdClassifier {
     pub(crate) fn new(threshold: f64) -> Self {
         Self { threshold }
     }
+
+    pub(crate) fn threshold(&self) -> f64 {
+        self.threshold
+    }
 }
 
 /// The fitted threshold classifier.
