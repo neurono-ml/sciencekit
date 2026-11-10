@@ -21,13 +21,12 @@ create a cycle with `sciencekit_interop`).
 
 ## Decisions
 
-### Decision 1 — State = metadata + named tensors + parameters
+### Decision 1 — State = metadata + named tensors (parameters live in metadata)
 
 ```rust
 pub struct SKModelState<F: SKFloat> {
     pub metadata: SKModelMetadata,
     pub tensors: BTreeMap<String, SKTensor<F>>,
-    pub parameters: BTreeMap<String, SKParameterValue>,
 }
 ```
 
@@ -62,8 +61,9 @@ pub trait SKImportable<F: SKFloat>: Sized {
 }
 ```
 
-Export is model-side only. Import validates the estimator name, version and feature count
-before touching tensors. A model that cannot be reconstructed returns
+Export is model-side only. Import validates the estimator name and version before touching
+any tensor, then checks that the required tensors exist and that their feature count matches
+the metadata. A model that cannot be reconstructed returns
 `UnsupportedOperation` rather than a half-built value.
 
 ### Decision 5 — Validation
@@ -84,7 +84,7 @@ crates/sciencekit_common/src/interop/
 ## Risks / Trade-offs
 
 - **A generic tensor type can become a mini-serialization framework** → keep it small:
-  metadata, tensors and typed parameters only.
+  metadata (including typed parameters) and named tensors only.
 - **Stable names are a compatibility promise** → document them in the retrofit change and
   test round-trips.
 - **Import is optional per model** → `UnsupportedOperation` is explicit.
