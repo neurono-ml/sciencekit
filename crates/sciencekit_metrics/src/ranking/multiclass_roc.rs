@@ -1,7 +1,7 @@
 //! Multiclass one-vs-rest ROC/AUC.
 //!
 //! Each class is scored against all the others with the binary rank-sum AUC.
-//! Macro averages the per-class scores equallly, weighted by true support and
+//! Macro averages the per-class scores equally, weighted by true support and
 //! micro ranks every `(observation, class)` pair in one pass. One-vs-one is a
 //! documented non-goal of this change.
 
