@@ -23,21 +23,31 @@ impl<F: SKFloat> SKLinearRegressionModel<F> {
         T: TryInto<SKTargetView<'a, F>, Error = SKError>,
         F: SKBackendSelection,
     {
-        let dense = features.try_into()?.as_dense()?;
+        let view: SKDataView<'_, F> = features.try_into()?;
         let target = targets.try_into()?.as_continuous()?.into_owned();
+        let (rows_count, columns_count) = match &view {
+            SKDataView::Dense(dense) => dense.dim(),
+            SKDataView::Sparse(sparse) => (sparse.rows(), sparse.cols()),
+            _ => {
+                return Err(SKError::UnsupportedRepresentation {
+                    representation: "unknown",
+                    suggestion: "convert the features to a dense matrix or a CSR matrix",
+                });
+            }
+        };
         let expected_columns = self.gram.design_width - usize::from(self.include_intercept);
-        if dense.ncols() != expected_columns {
+        if columns_count != expected_columns {
             return Err(SKError::ShapeMismatch {
                 expected: vec![expected_columns],
-                found: vec![dense.ncols()],
+                found: vec![columns_count],
             });
         }
-        if dense.nrows() == 0 {
+        if rows_count == 0 {
             return Ok(self);
         }
-        if target.len() != dense.nrows() {
+        if target.len() != rows_count {
             return Err(SKError::ShapeMismatch {
-                expected: vec![dense.nrows()],
+                expected: vec![rows_count],
                 found: vec![target.len()],
             });
         }
@@ -45,18 +55,27 @@ impl<F: SKFloat> SKLinearRegressionModel<F> {
         let include_intercept = self.include_intercept;
         let attributes = SKOperationAttributes {
             operation: SKOperationKind::PartialFit,
-            rows_count: dense.nrows(),
-            columns_count: dense.ncols(),
+            rows_count,
+            columns_count,
             execution_mode: self.execution_intent,
             backend: self.backend,
         };
         sk_run_operation(attributes, || -> Result<(), SKError> {
-            let machine = SKExecutionContext::real();
-            let parallelism =
-                batch_parallelism(&dense, machine.available_memory_bytes, machine.cpu_cores);
-            let design = build_design(&dense, include_intercept);
-            self.gram
-                .accumulate(&design.view(), &target.view(), parallelism);
+            match &view {
+                SKDataView::Dense(dense) => {
+                    let machine = SKExecutionContext::real();
+                    let parallelism =
+                        batch_parallelism(dense, machine.available_memory_bytes, machine.cpu_cores);
+                    let design = build_design(dense, include_intercept);
+                    self.gram
+                        .accumulate(&design.view(), &target.view(), parallelism);
+                }
+                SKDataView::Sparse(sparse) => {
+                    self.gram
+                        .accumulate_sparse(sparse, &target.view(), include_intercept);
+                }
+                _ => unreachable!("the representation check rejected every other variant"),
+            }
             let solution = solve_least_squares(
                 backend,
                 self.gram.gram.view(),

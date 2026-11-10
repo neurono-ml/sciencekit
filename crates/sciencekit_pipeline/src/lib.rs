@@ -63,4 +63,4 @@ mod block_tests;
 mod stage_tests;
 
 #[cfg(test)]
-mod streaming_coverage_tests;
+mod streaming_coverage;
