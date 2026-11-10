@@ -400,7 +400,7 @@ promise on wide sparse matrices) and "dense-only everywhere" (throws away the sp
 support that lasso, linear SVMs and text classification depend on).
 
 
-#### Typed cluster assignments: a label that knows what noise is
+### `SKClusterLabel` (typed cluster assignments: a label that knows what noise is)
 
 Clustering has a problem the other predictors do not: a clusterer's output is not a
 number you can round into an index. KMeans returns cluster `0`, `1`, `2`…, but DBSCAN can
@@ -440,6 +440,8 @@ flowchart LR
     class Z,N niche
     class S result
 ```
+
+`SKClustererPredictor<F>` is the model-side sibling of the other predictors.
 
 The external world, however, uses the `i64` convention: scikit-learn and most file
 formats write noise as `-1` and a cluster as its non-negative index. `to_i64` and
