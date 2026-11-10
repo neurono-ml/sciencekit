@@ -10,8 +10,12 @@
 #![warn(missing_docs)]
 
 mod block;
+mod stage;
 
 pub use block::{SKFeatureBlock, SKIntoFeatureBlock};
+pub use stage::SKPipelineTransformer;
 
 #[cfg(test)]
 mod block_tests;
+#[cfg(test)]
+mod stage_tests;
