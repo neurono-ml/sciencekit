@@ -55,7 +55,7 @@ model and prediction returns `UnsupportedOperation`, mirroring the reference sem
 
 `SKErrorScore` is either `Raise` (propagate the first candidate error) or `Value(F)`
 (record the value for the failing fold and continue). A candidate that fails every fold
-gets that value as its mean; it can never win unless all candidates fail.
+gets that value as its mean; it loses only when the value is worse than every achievable score; `NaN` is guaranteed to rank below any finite mean, and any other value is the caller's declared penalty.
 
 ### Decision 6 — Representation and grouping
 
