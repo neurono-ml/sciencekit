@@ -4,7 +4,7 @@ use ndarray::{Array1, Array2};
 use sciencekit_common::{SKBuilder, SKDataView, SKError, SKTargetView};
 
 use super::fixtures::dense_features;
-use crate::train_test_split::{SKTrainTestSplitter, sk_train_test_split};
+use crate::train_test_split::{SKPartitionSize, SKTrainTestSplitter, sk_train_test_split};
 
 #[test]
 fn train_test_split_rejects_invalid_fractions_and_counts_at_build() {
@@ -104,4 +104,27 @@ fn train_test_split_rejects_a_target_length_mismatch() {
             found,
         } if expected == vec![10] && found == vec![3]
     ));
+}
+
+/// An explicit count larger than the input is rejected, not an overflow.
+#[test]
+fn train_test_split_rejects_a_count_larger_than_the_input() {
+    let features = ndarray::Array2::<f64>::zeros((10, 1));
+    for splitter in [
+        SKTrainTestSplitter::build()
+            .test_size(SKPartitionSize::Count(15))
+            .build()
+            .unwrap(),
+        SKTrainTestSplitter::build()
+            .train_size(SKPartitionSize::Count(15))
+            .build()
+            .unwrap(),
+    ] {
+        let error =
+            sk_train_test_split(&splitter, SKDataView::Dense(features.view()), None).unwrap_err();
+        assert!(matches!(
+            error,
+            sciencekit_common::SKError::InvalidHyperparameter { .. }
+        ));
+    }
 }

@@ -13,11 +13,17 @@ impl SKTrainTestSplitter {
                 (None, None) => sk_resolve_pair(default_fraction, number_of_rows),
                 (Some(test_size), None) => {
                     let test = sk_size_to_count(test_size, number_of_rows, true);
-                    (test, number_of_rows - test)
+                    let train = number_of_rows
+                        .checked_sub(test)
+                        .ok_or_else(|| sk_count_exceeds_rows("test_size", test, number_of_rows))?;
+                    (test, train)
                 }
                 (None, Some(train_size)) => {
                     let train = sk_size_to_count(train_size, number_of_rows, false);
-                    (number_of_rows - train, train)
+                    let test = number_of_rows.checked_sub(train).ok_or_else(|| {
+                        sk_count_exceeds_rows("train_size", train, number_of_rows)
+                    })?;
+                    (test, train)
                 }
                 (Some(test_size), Some(train_size)) => (
                     sk_size_to_count(test_size, number_of_rows, true),
@@ -38,6 +44,13 @@ impl SKTrainTestSplitter {
             });
         }
         Ok((number_of_train_rows, number_of_test_rows))
+    }
+}
+
+fn sk_count_exceeds_rows(name: &'static str, requested: usize, rows: usize) -> SKError {
+    SKError::InvalidHyperparameter {
+        name,
+        reason: format!("{requested} rows were requested but the input has only {rows}"),
     }
 }
 

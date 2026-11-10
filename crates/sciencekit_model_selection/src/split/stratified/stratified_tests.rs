@@ -195,3 +195,46 @@ fn stratified_supports_nominal_targets() {
         assert_eq!(first_class, second_class);
     }
 }
+
+/// A target vector longer than the features is rejected, never indexed out of bounds.
+#[test]
+fn stratified_rejects_targets_longer_than_the_features() {
+    let features = ndarray::array![[0.0_f64], [1.0], [2.0]];
+    let targets = ndarray::Array1::from_vec(vec![0_i64, 1, 0, 1, 0, 1]);
+    let error = SKStratifiedKFold::build()
+        .number_of_splits(2)
+        .build()
+        .unwrap()
+        .split(
+            SKDataView::Dense(features.view()),
+            Some(SKTargetView::Integer(targets.view())),
+            None,
+        )
+        .unwrap_err();
+    assert!(matches!(
+        error,
+        sciencekit_common::SKError::ShapeMismatch { .. }
+    ));
+}
+
+/// A target vector shorter than the features is rejected instead of silently
+/// leaving rows out of every test fold.
+#[test]
+fn stratified_rejects_targets_shorter_than_the_features() {
+    let features = ndarray::Array2::<f64>::zeros((10, 1));
+    let targets = ndarray::Array1::from_vec(vec![0_i64; 8]);
+    let error = SKStratifiedKFold::build()
+        .number_of_splits(2)
+        .build()
+        .unwrap()
+        .split(
+            SKDataView::Dense(features.view()),
+            Some(SKTargetView::Integer(targets.view())),
+            None,
+        )
+        .unwrap_err();
+    assert!(matches!(
+        error,
+        sciencekit_common::SKError::ShapeMismatch { .. }
+    ));
+}

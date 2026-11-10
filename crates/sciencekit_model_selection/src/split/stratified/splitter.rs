@@ -85,6 +85,15 @@ impl<F: SKFloat> SKSplitter<F> for SKStratifiedKFold {
         sk_validate_non_empty(number_of_rows, "SKStratifiedKFold::split")?;
         sk_validate_finite_features(&features)?;
         sk_validate_finite_targets(targets)?;
+        if let Some(targets) = targets {
+            let target_length = targets.len();
+            if target_length != number_of_rows {
+                return Err(SKError::ShapeMismatch {
+                    expected: vec![number_of_rows],
+                    found: vec![target_length],
+                });
+            }
+        }
         let number_of_splits = self.configuration.number_of_splits;
         sk_validate_number_of_splits(number_of_splits, number_of_rows)?;
 

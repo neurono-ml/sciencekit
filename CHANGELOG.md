@@ -75,8 +75,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   both sizes are configured). `sk_cross_val_score_classifier` and
   `sk_cross_val_score_regressor` fit one model per fold in parallel and return scores in
   fold order through the shared scorer contracts. Validation rejects empty input, invalid
-  fractions, too many splits, class/group cardinality below the split count, length
-  mismatches and non-finite dense or sparse values with structured central errors.
+  fractions or explicit counts larger than the input, too many splits, class/group cardinality
+  below the split count, feature/target/group length mismatches and non-finite dense or sparse
+  values with structured central errors.
   Companion tests cover tiny and 10 000-row data, dense/sparse parity, all splitters,
   stratification and group properties, determinism across threads, concurrency and metric
   production through `sciencekit_metrics`.

@@ -102,3 +102,54 @@ fn acceptance_metric_classification_cross_validation_scores_accuracy() {
     assert_eq!(scores.len(), 5);
     assert!(scores.iter().all(|score| (*score - 0.5).abs() < 1e-12));
 }
+
+/// Each cross-validation fold is scored on its own test rows with a fresh
+/// model: the reported score equals a manual fit/score on the fold.
+#[test]
+fn acceptance_metric_cross_validation_matches_a_manual_fold_scoring() {
+    use ndarray::Axis;
+    use sciencekit_common::SKClassifierPredictor;
+
+    let features = dense_design(60, 3);
+    let labels = cyclic_labels(60, 3);
+    let splitter = SKKFold::build()
+        .number_of_splits(3)
+        .shuffle(true)
+        .random_seed(5)
+        .build()
+        .unwrap();
+    let scores = sk_cross_val_score_classifier(
+        &SKMockMajorityClassifier::new(),
+        &splitter,
+        SKDataView::Dense(features.view()),
+        SKTargetView::Integer(labels.view()),
+        &SKAccuracyScorer,
+    )
+    .unwrap();
+    let folds = splitter
+        .split(
+            SKDataView::Dense(features.view()),
+            Some(SKTargetView::Integer(labels.view())),
+            None,
+        )
+        .unwrap();
+    assert_eq!(scores.len(), folds.len());
+
+    for (fold, score) in folds.iter().zip(scores.iter()) {
+        let train_features = features.select(Axis(0), fold.train());
+        let train_labels = labels.select(Axis(0), fold.train());
+        let test_features = features.select(Axis(0), fold.test());
+        let test_labels = labels.select(Axis(0), fold.test());
+        let model = SKMockMajorityClassifier::new()
+            .fit(&train_features, train_labels.view())
+            .unwrap();
+        let predicted = model.predict_labels(test_features.view()).unwrap();
+        let correct = test_labels
+            .iter()
+            .zip(predicted.iter())
+            .filter(|(truth, prediction)| **truth == **prediction)
+            .count() as f64;
+        let manual = correct / test_labels.len() as f64;
+        assert!((score - manual).abs() < 1e-12);
+    }
+}
