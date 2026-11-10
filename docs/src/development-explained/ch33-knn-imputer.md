@@ -78,8 +78,8 @@ densifying sparse input to reuse the dense path.
 
 Classic Euclidean distance treats a missing value as impossible to compare, so it either fails
 or substitutes a number (often zero), which invents a distance. The NaN-aware form instead
-computes the distance over the features **both** rows observe and multiplies it by
-$\text{total}/\text{observed}$, so two rows that happen to share only one feature are not treated as
+computes the squared distance over the features **both** rows observe and multiplies it by
+$\text{total}/\text{observed}$ (so the distance scales by $\sqrt{\text{total}/\text{observed}}$), so two rows that happen to share only one feature are not treated as
 artificially close; the rescale restores the scale of a full-feature comparison. If two rows share no observed feature, the distance is `NaN` — and a `NaN` donor is
 never averaged in.
 
@@ -118,8 +118,15 @@ nearest donors. This pins the whole pipeline — mask, pool, distance, selection
 
 ### `knn_transform_preserves_observed_cells_bit_identically`
 
-Imputation must never perturb a value that was present. A bit-identical assertion catches any
-accidental re-scaling or recomputation.
+Imputation must never perturb a value that was present — with one documented exception:
+a column that was all-missing at fit and kept by `keep_empty_features` is emitted as zero for
+**every** row, including a row that observes it. A bit-identical assertion on the normal
+columns catches any accidental re-scaling or recomputation.
+
+### `knn_transform_keeps_a_retained_empty_column_at_zero`
+
+An all-missing column kept by `keep_empty_features` produces zeros, even for a receiver that
+observes it — the documented exception to "observed cells are untouched".
 
 ### `knn_transform_falls_back_to_the_column_mean_without_a_comparable_donor`
 
