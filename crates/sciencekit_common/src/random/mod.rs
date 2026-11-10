@@ -15,8 +15,15 @@
 //! additionally require the same input and backend for identical results.
 
 mod generator;
+mod sub_seed;
 
 pub use generator::SKRandomGenerator;
+pub use sub_seed::{
+    SK_RANDOM_DOMAIN_FOLD, SK_RANDOM_DOMAIN_INITIALIZATION, SK_RANDOM_DOMAIN_PROJECTION,
+    SK_RANDOM_DOMAIN_STAGE, SK_RANDOM_DOMAIN_TREE, sk_derive_seed,
+};
 
 #[cfg(test)]
 mod generator_tests;
+#[cfg(test)]
+mod sub_seed_tests;
