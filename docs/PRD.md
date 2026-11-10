@@ -571,11 +571,12 @@ Order faithful to the scikit-learn mapping (from the handoff), respecting depend
 19. `sciencekit` umbrella crate: re-exports and unified documentation.
 20. `sciencekit_python`: complete PyO3 bindings.
 
-**Wave 7 also owns every memory-mapping and persistence deliverable.** `memmap2`-backed
-indexes and kernel caches, model persistence and model export belong to the interop wave,
-never to an algorithm wave. The neighbours, SVM and tree changes list them as explicit
-non-goals and rely on the `sciencekit_interop` contracts introduced here; no algorithm
-crate takes `memmap2` as a dependency on its own.
+**Phase 7 also owns the memory-mapping and persistence implementation.** `memmap2`-backed
+indexes and kernel caches, model persistence and model export are delivered here, not by
+an algorithm phase. Algorithms consume them through the Phase 0 `SKMappableSource` contract
+(§4.4) and through the interop storage contracts introduced here; no algorithm crate grows
+its own private `memmap2` layer. The Phase 3 and Phase 4 sections mark these pieces as
+explicit non-goals where the catalogue mentions them.
 
 ### Cross-cutting (continuous)
 
