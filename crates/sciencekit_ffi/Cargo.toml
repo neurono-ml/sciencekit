@@ -12,11 +12,11 @@ name = "sciencekit_ffi"
 crate-type = ["cdylib", "staticlib"]
 
 [dependencies]
-sciencekit_common = { path = "../sciencekit_common" }
-sciencekit_linear_model = { path = "../sciencekit_linear_model" }
-sciencekit_math = { path = "../sciencekit_math" }
-sciencekit_metrics = { path = "../sciencekit_metrics" }
-sciencekit_preprocessing = { path = "../sciencekit_preprocessing" }
+sciencekit_common = { path = "../sciencekit_common", version = "0.1.0" }
+sciencekit_linear_model = { path = "../sciencekit_linear_model", version = "0.1.0" }
+sciencekit_math = { path = "../sciencekit_math", version = "0.1.0" }
+sciencekit_metrics = { path = "../sciencekit_metrics", version = "0.1.0" }
+sciencekit_preprocessing = { path = "../sciencekit_preprocessing", version = "0.1.0" }
 
 ndarray = { workspace = true }
 
