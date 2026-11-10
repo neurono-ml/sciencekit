@@ -42,8 +42,7 @@ fn grid_selection_ties_are_broken_by_candidate_index() {
 #[test]
 fn grid_selection_rejects_an_empty_score_matrix() {
     let error = SKGridSearchResults::<f64>::from_scores(ndarray::Array2::zeros((0, 0)))
-        .err()
-        .expect("an empty matrix has no candidate");
+        .expect_err("an empty matrix has no candidate");
     assert!(matches!(
         error,
         sciencekit_common::SKError::EmptyInput { .. }

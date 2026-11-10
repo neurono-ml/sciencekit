@@ -6,18 +6,13 @@ use sciencekit_common::SKFloat;
 ///
 /// `Raise` (the default) propagates the candidate's structured error;
 /// `Value(value)` records the value for the failing fold and keeps evaluating.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub enum SKErrorScore<F: SKFloat> {
     /// Propagate the first failing fold's error.
+    #[default]
     Raise,
     /// Record this value for the failing fold and continue.
     Value(F),
-}
-
-impl<F: SKFloat> Default for SKErrorScore<F> {
-    fn default() -> Self {
-        SKErrorScore::Raise
-    }
 }
 
 impl<F: SKFloat> SKErrorScore<F> {

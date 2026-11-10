@@ -35,8 +35,7 @@ fn grid_errors_raise_propagates_the_candidate_error() {
         SKErrorScore::Raise,
         &SKRegressorScoring::NegativeMeanSquaredError,
     )
-    .err()
-    .expect("the failing candidate raises");
+    .expect_err("the failing candidate raises");
     assert!(matches!(error, SKError::NotConverged { iterations: 7 }));
 }
 

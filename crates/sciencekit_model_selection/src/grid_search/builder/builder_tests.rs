@@ -57,11 +57,13 @@ fn grid_builder_regressor_defaults_are_documented() {
 
 #[test]
 fn grid_builder_rejects_an_empty_candidate_list() {
-    let error = SKGridSearchCVClassifier::<f64, SKMockThresholdClassifier>::build()
+    let error = match SKGridSearchCVClassifier::<f64, SKMockThresholdClassifier>::build()
         .splitter(three_folds())
         .build()
-        .err()
-        .expect("an empty candidate list is invalid");
+    {
+        Err(error) => error,
+        Ok(_) => panic!("an empty candidate list is invalid"),
+    };
     assert!(matches!(
         error,
         SKError::InvalidHyperparameter {
@@ -73,10 +75,10 @@ fn grid_builder_rejects_an_empty_candidate_list() {
 
 #[test]
 fn grid_builder_rejects_a_missing_splitter() {
-    let error = classifier_builder()
-        .build()
-        .err()
-        .expect("a splitter is required");
+    let error = match classifier_builder().build() {
+        Err(error) => error,
+        Ok(_) => panic!("a splitter is required"),
+    };
     assert!(matches!(
         error,
         SKError::InvalidHyperparameter {

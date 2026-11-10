@@ -44,8 +44,7 @@ fn grid_concurrency_prediction_without_refit_returns_unsupported_operation() {
 
     let error = model
         .predict(features.view())
-        .err()
-        .expect("prediction is blocked");
+        .expect_err("prediction is blocked");
     assert!(matches!(
         error,
         SKError::UnsupportedOperation {
