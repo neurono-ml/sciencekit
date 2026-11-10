@@ -3,7 +3,7 @@
 
 use std::collections::HashMap;
 use std::fmt;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, OnceLock};
 
 use ndarray::array;
 use sciencekit_common::{SKBackendKind, SKBuilder, SKExecutionMode, SKUnsupervisedFit};
@@ -18,6 +18,26 @@ use crate::knn::core_implementation::SKKNNImputer;
 
 /// Captured spans as `(name, fields)` pairs.
 type RecordedSpans = Arc<Mutex<Vec<(String, Vec<(String, String)>)>>>;
+
+/// Span capture is process-global: tracing caches callsite interest across
+/// threads, so a per-test thread-local subscriber races with any other test
+/// that touches the same callsite. Install one permissive subscriber for the
+/// whole test binary and serialize the capture windows.
+static SPAN_TEST_LOCK: Mutex<()> = Mutex::new(());
+static SPAN_RECORDER: OnceLock<RecordingLayer> = OnceLock::new();
+
+fn recording_layer() -> &'static RecordingLayer {
+    SPAN_RECORDER.get_or_init(|| {
+        let recording = RecordingLayer::default();
+        let subscriber = tracing_subscriber::registry().with(recording.clone());
+        tracing::subscriber::set_global_default(subscriber)
+            .expect("the span recorder is installed once per test binary");
+        // Other subscribers may have cached this callsite as disabled before
+        // ours was installed; re-evaluate now that ours is the global default.
+        tracing::callsite::rebuild_interest_cache();
+        recording
+    })
+}
 
 struct FieldCollector {
     fields: Vec<(&'static str, String)>,
@@ -91,26 +111,32 @@ fn knn_fit_transfers_backend_and_execution_intent_to_the_model() {
 
 #[test]
 fn knn_fit_records_the_configured_backend_in_the_fit_span() {
-    let recording = RecordingLayer::default();
-    let subscriber = tracing_subscriber::registry().with(recording.clone());
-    tracing::subscriber::with_default(subscriber, || {
-        SKKNNImputer::<f64>::build()
-            .nearest_neighbors_count(2)
-            .backend(SKBackendKind::NdArrayLinalg)
-            .execution_mode(SKExecutionMode::InProcessSynchronous)
-            .build()
-            .unwrap()
-            .fit(&array![[1.0_f64, 2.0], [3.0, 4.0]])
-            .unwrap();
-    });
+    let _guard = SPAN_TEST_LOCK
+        .lock()
+        .unwrap_or_else(|error| error.into_inner());
+    let recording = recording_layer();
+    recording.spans.lock().unwrap().clear();
+
+    SKKNNImputer::<f64>::build()
+        .nearest_neighbors_count(2)
+        .backend(SKBackendKind::NdArrayLinalg)
+        .execution_mode(SKExecutionMode::InProcessSynchronous)
+        .build()
+        .unwrap()
+        .fit(&array![[1.0_f64, 2.0], [3.0, 4.0]])
+        .unwrap();
 
     let spans = recording.recorded();
-    let (name, fields) = spans
+    // Other tests run concurrently against the same global recorder, so pick
+    // the operation span this fit produced rather than the first one.
+    let operation = spans
         .iter()
-        .find(|(name, _)| name == "sciencekit.operation")
-        .expect("fit must emit the shared operation span");
+        .filter(|(name, _)| name == "sciencekit.operation")
+        .map(|(name, fields)| (name, fields_of(fields)))
+        .find(|(_, fields)| fields.get("backend") == Some(&"ndarray-linalg"))
+        .expect("fit must emit the shared operation span with the configured backend");
+    let (name, fields) = operation;
     assert_eq!(name, "sciencekit.operation");
-    let fields = fields_of(fields);
     assert_eq!(fields.get("operation"), Some(&"fit"));
     assert_eq!(fields.get("backend"), Some(&"ndarray-linalg"));
     assert_eq!(fields.get("mode"), Some(&"InProcessSynchronous"));
