@@ -25,5 +25,7 @@ pub mod kd_tree;
 pub mod metric;
 pub mod searcher;
 
+pub use searcher::{SKNeighborQuery, SKRadiusNeighbors};
+
 #[cfg(test)]
 mod acceptance_tests;
