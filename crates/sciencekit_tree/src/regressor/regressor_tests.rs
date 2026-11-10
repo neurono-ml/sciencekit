@@ -1,7 +1,7 @@
 //! Regressor fit and prediction tests (tasks 5.2 and 5.3).
 
 use ndarray::array;
-use sciencekit_common::{SKBuilder, SKRegressorPredictor, SKSupervisedFit};
+use sciencekit_common::{SKBackendKind, SKBuilder, SKRegressorPredictor, SKSupervisedFit};
 use sprs::CsMat;
 
 use crate::criterion::SKTreeCriterion;
@@ -115,4 +115,18 @@ fn prediction_rejects_a_feature_mismatch() {
         model.predict(array![[0.0, 1.0]].view()),
         Err(sciencekit_common::SKError::ShapeMismatch { .. })
     ));
+}
+
+/// The configured backend and execution intent reach the fitted model.
+#[test]
+fn backend_reaches_the_model() {
+    let features = array![[0.0], [1.0]];
+    let responses = array![1.0, 2.0];
+    let model = SKDecisionTreeRegressor::<f64>::build()
+        .backend(SKBackendKind::MatrixMultiply)
+        .build()
+        .expect("builds")
+        .fit(&features, responses.view())
+        .expect("fit succeeds");
+    assert_eq!(model.backend(), SKBackendKind::MatrixMultiply);
 }
