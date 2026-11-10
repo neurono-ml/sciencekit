@@ -32,3 +32,5 @@ pub use searcher::{SKNeighborQuery, SKRadiusNeighbors};
 
 #[cfg(test)]
 mod acceptance_tests;
+#[cfg(test)]
+mod builder_tests;
