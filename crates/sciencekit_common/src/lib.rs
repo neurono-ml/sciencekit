@@ -50,6 +50,8 @@ pub use random::{
     SK_RANDOM_DOMAIN_FOLD, SK_RANDOM_DOMAIN_INITIALIZATION, SK_RANDOM_DOMAIN_PROJECTION,
     SK_RANDOM_DOMAIN_STAGE, SK_RANDOM_DOMAIN_TREE, SKRandomGenerator, sk_derive_seed,
 };
-pub use scorer_traits::{SKLabelScorer, SKSupervisedScorer, SKUnsupervisedScorer};
+pub use scorer_traits::{
+    SKLabelScorer, SKProbabilityScorer, SKSupervisedScorer, SKUnsupervisedScorer,
+};
 pub use sk_float::SKFloat;
 pub use target_view::SKTargetView;
