@@ -23,3 +23,5 @@ mod classifier_fit_tests;
 mod classifier_predict_tests;
 #[cfg(test)]
 mod classifier_probability_tests;
+#[cfg(test)]
+mod classifier_target_tests;
