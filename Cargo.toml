@@ -20,6 +20,7 @@ resolver = "3"
 members = [
     "crates/sciencekit_common",
     "crates/sciencekit_impute",
+    "crates/sciencekit_interop",
     "crates/sciencekit_linear_model",
     "crates/sciencekit_math",
     "crates/sciencekit_metrics",
