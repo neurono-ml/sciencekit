@@ -332,6 +332,64 @@ returns the dense view or rejects a sparse input *before processing any element*
 representation (duplication, no uniformity). `#[non_exhaustive]` keeps room for future
 variants.
 
+#### Representation parity: dense, sparse and mixed inputs
+
+Having one type for both representations is only half the story. The other half is a
+**rule** about what an algorithm does with it — and that rule is *representation parity*
+(spec `data-view-boundary`, PRD §4.5.1).
+
+The rule has three parts:
+
+1. **Parity.** An algorithm that mathematically tolerates more than one representation
+   accepts dense, sparse and mixed dense/sparse inputs on *every* public operation. The
+   same logical matrix, supplied densely or as CSR, produces the same result within the
+   documented tolerance.
+2. **One dispatch, no densification.** The algorithm looks at
+   `SKDataView::representation()` once per operation and follows that path to the end. It
+   never materialises a dense copy of a sparse input — that would defeat the entire point
+   of sparse storage.
+3. **Two-matrix operations cover all four combinations.** `dense×dense`, `sparse×sparse`,
+   `sparse×dense` and `dense×sparse` agree, after shapes are validated *before* any
+   element is touched.
+
+Some mathematics, however, genuinely wants dense geometry: a k-d tree stores axis-aligned
+boxes, a ball tree stores centres and radii — neither has a meaningful sparse form. For
+those, the spec allows a **dense-only exception**, but only under three conditions: the
+kernel rejects a sparse view *before processing any element* with
+`UnsupportedRepresentation` and a suggestion; the **estimator** built on it still serves
+dense, sparse and mixed input through a documented alternative path (typically a
+brute-force searcher over the stored training features); and the change proposal explains
+why the mathematics needs dense geometry and names that path.
+
+```mermaid
+flowchart TD
+    A["Public operation receives<br/>dense, sparse or mixed input"] --> B{"representation()<br/>once per operation"}
+    B -->|dense| C["Dense path<br/>(tree index, dense kernel)"]
+    B -->|sparse| D{"Does the math<br/>require dense geometry?"}
+    D -->|no| E["Sparse path<br/>never densify"]
+    D -->|yes| F["UnsupportedRepresentation<br/>before processing any element"]
+    F --> G["Estimator alternative path<br/>(brute force over stored features)"]
+    C --> H["Same result within tolerance"]
+    E --> H
+    G --> H
+```
+
+The diagram reads as follows: whatever representation arrives, the operation dispatches
+once. A tolerant algorithm takes the dense or sparse path directly and never densifies. An
+algorithm that needs dense geometry rejects sparse immediately, and the estimator above it
+falls back to the documented alternative path so the *user* still gets parity.
+
+*Why we wrote the rule down instead of leaving it implicit:* every new algorithm change
+would otherwise re-decide the policy, and a silent `.to_dense()` inside a kernel is
+invisible in review. The rule lives in the `data-view-boundary` capability, is restated in
+PRD §4.5, and is part of the `AGENTS.md` code conventions so planners and implementers see
+it before they write code.
+
+*What we rejected:* "accept what you can, densify the rest" (silently breaks the memory
+promise on wide sparse matrices) and "dense-only everywhere" (throws away the sparse
+support that lasso, linear SVMs and text classification depend on).
+
+
 ### `SKTargetView` (the zero-copy target view)
 
 *What it is:* A `#[non_exhaustive]` enum over three target representations:
