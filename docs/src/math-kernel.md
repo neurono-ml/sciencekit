@@ -20,7 +20,7 @@ algorithm crates consume.
 |---|---|
 | `kernels` | Elementwise transform, binary combine, axis reductions and in-place scaling. |
 | `layout` | C/F-contiguity detection and contiguity-forcing. |
-| `pairwise` | Squared-Euclidean ($\|a\|^2 - 2a \cdot b + \|b\|^2$), Euclidean, Manhattan, Cosine, Chebyshev and NaN-aware Euclidean distance matrices. |
+| `pairwise` | Squared-Euclidean ($\|a\|^2 - 2a \cdot b + \|b\|^2$), Euclidean, Manhattan, Cosine, Chebyshev and NaN-aware Euclidean distance matrices, dense or sparse. |
 | `sparse_ops` | `sprs` CSR×dense and sparse×sparse products over zero-copy views. |
 | `backend` | `SKMathBackend` trait + `SKFaerBackend` (default), `SKMatrixMultiplyBackend`, and the opt-in `blas-backend` feature. |
 
@@ -49,7 +49,13 @@ flowchart LR
   `sk_force_contiguous`.
 - **Distances** — `sk_squared_euclidean_distance_matrix`, `sk_euclidean_distance_matrix`,
   `sk_manhattan_distance_matrix`, `sk_cosine_distance_matrix`,
-  `sk_chebyshev_distance_matrix`, `sk_nan_euclidean_distance_matrix`.
+  `sk_chebyshev_distance_matrix`, `sk_nan_euclidean_distance_matrix`; the dispatcher
+  `sk_pairwise_distance_matrix(metric, left, right)` picks the dense or sparse kernel for
+  any of the four representation pairs and never densifies a sparse input (the NaN-aware
+  metric is dense-only, since a CSR implicit zero is an observed value); the public sparse
+  kernels are `sk_sparse_squared_euclidean_distance_matrix`,
+  `sk_sparse_euclidean_distance_matrix`, `sk_sparse_manhattan_distance_matrix`,
+  `sk_sparse_chebyshev_distance_matrix` and `sk_sparse_cosine_distance_matrix`.
 - **Sparse** — `sk_csr_dense_product`, `sk_sparse_product`.
 - **Backend** — `SKMathBackend` (trait), `SKFaerBackend`, `SKMatrixMultiplyBackend`,
   `SKNdArrayLinalgBackend` (`blas-backend` only), `sk_default_math_backend`.
