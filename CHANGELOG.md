@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-11-10
+
+The first algorithm-and-contract batch after the evaluation foundation: representation
+parity, the Wave 7 scope clarification, shared deterministic randomness, typed cluster
+assignments, sparse pairwise distances and the ranking metrics. See the entries below.
+
+[Unreleased]: https://github.com/neurono-ml/sciencekit/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/neurono-ml/sciencekit/compare/v0.1.0...v0.2.0
+
 ### Added
 
 - `sciencekit_common` typed cluster assignments (spec `clustering-contracts`): `SKClusterLabel` (a cluster identifier or the explicit `SKClusterLabel::NOISE`, four bytes per element through a `NonZeroU32` niche), `SKClusterIdentifier`, `SKClustererPredictor<F>` returning one label per row through the shared `SKDataView` seam, the `to_i64`/`from_i64` interop conversions (`Noise ↔ -1`, values below `-1` or above the maximum cluster index rejected with a structured error, never a panic), and `sk_validate_cluster_assignments`, the shared assignment-shape check.
