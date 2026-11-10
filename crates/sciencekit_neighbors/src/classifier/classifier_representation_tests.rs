@@ -86,3 +86,43 @@ fn representation_sparse_classifier_probabilities_agree_within_tolerance() {
         assert!((dense - sparse).abs() < 1e-12);
     }
 }
+
+#[test]
+fn representation_dense_model_predicts_on_a_sparse_query() {
+    let dense = dense_design();
+    let labels = Array1::from_shape_fn(ROWS, |row| (row % 3) as i64);
+    let model = SKKNeighborsClassifier::<f64>::build()
+        .build()
+        .unwrap()
+        .fit(dense.view(), labels.view())
+        .unwrap();
+    let sparse_queries = sparse_design(&dense);
+
+    let dense_labels = model.predict_labels(dense.view()).unwrap();
+    let sparse_labels = model.predict_labels(sparse_queries.view()).unwrap();
+
+    assert_eq!(dense_labels, sparse_labels);
+    assert_eq!(model.search_strategy(), SKSearchStrategy::KdTree);
+}
+
+#[test]
+fn representation_sparse_model_predicts_on_a_dense_query() {
+    let dense = dense_design();
+    let labels = Array1::from_shape_fn(ROWS, |row| (row % 3) as i64);
+    let sparse_model = SKKNeighborsClassifier::<f64>::build()
+        .build()
+        .unwrap()
+        .fit(sparse_design(&dense).view(), labels.view())
+        .unwrap();
+    let dense_model = SKKNeighborsClassifier::<f64>::build()
+        .build()
+        .unwrap()
+        .fit(dense.view(), labels.view())
+        .unwrap();
+
+    let from_sparse_model = sparse_model.predict_labels(dense.view()).unwrap();
+    let from_dense_model = dense_model.predict_labels(dense.view()).unwrap();
+
+    assert_eq!(from_sparse_model, from_dense_model);
+    assert_eq!(sparse_model.training_representation(), "csr");
+}

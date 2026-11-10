@@ -85,3 +85,47 @@ fn representation_distance_weighted_sparse_and_dense_agree() {
         assert!((dense - sparse).abs() < 1e-12);
     }
 }
+
+#[test]
+fn representation_dense_regressor_predicts_on_a_sparse_query() {
+    let dense = dense_design();
+    let responses = responses();
+    let model = SKKNeighborsRegressor::<f64>::build()
+        .build()
+        .unwrap()
+        .fit(dense.view(), responses.view())
+        .unwrap();
+    let sparse_queries = sparse_design(&dense);
+
+    let dense_predictions = model.predict(dense.view()).unwrap();
+    let sparse_predictions = model.predict(sparse_queries.view()).unwrap();
+
+    for (dense, sparse) in dense_predictions.iter().zip(sparse_predictions.iter()) {
+        assert!((dense - sparse).abs() < 1e-12);
+    }
+    assert_eq!(model.search_strategy(), SKSearchStrategy::KdTree);
+}
+
+#[test]
+fn representation_sparse_regressor_predicts_on_a_dense_query() {
+    let dense = dense_design();
+    let responses = responses();
+    let sparse_model = SKKNeighborsRegressor::<f64>::build()
+        .build()
+        .unwrap()
+        .fit(sparse_design(&dense).view(), responses.view())
+        .unwrap();
+    let dense_model = SKKNeighborsRegressor::<f64>::build()
+        .build()
+        .unwrap()
+        .fit(dense.view(), responses.view())
+        .unwrap();
+
+    let from_sparse_model = sparse_model.predict(dense.view()).unwrap();
+    let from_dense_model = dense_model.predict(dense.view()).unwrap();
+
+    for (left, right) in from_sparse_model.iter().zip(from_dense_model.iter()) {
+        assert!((left - right).abs() < 1e-12);
+    }
+    assert_eq!(sparse_model.training_representation(), "csr");
+}
