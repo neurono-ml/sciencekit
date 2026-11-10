@@ -6,6 +6,7 @@
 
 mod builder;
 mod core_implementation;
+mod marker;
 mod weights;
 
 pub use builder::SKKNNImputerBuilder;
@@ -14,3 +15,6 @@ pub use weights::{SKImputationWeights, sk_weighted_average};
 
 #[cfg(test)]
 mod builder_tests;
+
+#[cfg(test)]
+mod marker_tests;
