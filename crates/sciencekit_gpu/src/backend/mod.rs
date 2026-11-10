@@ -8,6 +8,8 @@ mod contract;
 mod discovery;
 
 #[cfg(test)]
+mod concurrency_tests;
+#[cfg(test)]
 pub(crate) mod mock_device;
 
 pub use contract::SKComputeBackend;
