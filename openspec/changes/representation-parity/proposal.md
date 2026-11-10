@@ -21,7 +21,7 @@ change inherits it.
   support only when its public estimator surface still covers dense, sparse and mixed
   inputs through a documented alternative path, and it rejects the unsupported
   representation with `UnsupportedRepresentation` plus a suggestion.
-- `docs/PRD.md` (§4 representations, §6.4 sparse support, §12 Phase 3/4) is amended to
+- `docs/PRD.md` (§4.5 sparse representations and representation parity, §12 Phase 3/4) is amended to
   state the rule and to mark the algorithms that rely on the dense-only exception.
 - `AGENTS.md` code conventions gain the same rule so every future change plan carries it.
 - No code changes and no breaking changes.

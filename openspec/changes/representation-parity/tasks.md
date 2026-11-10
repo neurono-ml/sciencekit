@@ -10,7 +10,7 @@
 
 - [x] 2.1 Update `docs/PRD.md` §4 (representations) to state that algorithms tolerating
   dense and sparse representations must accept dense, sparse and mixed inputs.
-- [x] 2.2 Update `docs/PRD.md` §6.4 (sparse support) and §12 Phase 3/4 to name the
+- [x] 2.2 Update `docs/PRD.md` §4.5 (sparse support and representation parity) and §12 Phase 3/4 to name the
   algorithms that rely on the dense-only exception and the alternative path that keeps
   estimator-level parity.
 - [x] 2.3 Verify the amended PRD paragraphs are internally consistent with
@@ -22,7 +22,8 @@
 - [x] 3.1 Add the representation-parity rule and the dense-only exception to the
   `Code conventions` section of `AGENTS.md`, naming the spec as the normative source.
 - [x] 3.2 Verify every future algorithm change template still points at the affected
-  capabilities and that the new rule is visible in the planning instructions.
+  capabilities and that the new rule is visible in the planning instructions: the
+  `openspec/config.yaml` project context now restates it.
 
 ## 4. Documentation and changelog
 

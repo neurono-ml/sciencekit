@@ -1,5 +1,18 @@
 # Spec Delta
 
+## MODIFIED Requirements
+
+### Requirement: Precise rejection of unsupported representation
+Algorithms supporting only part of the representations SHALL reject the others at runtime with a specific unsupported-representation error, guiding the consumer toward the proper conversion; representation dispatch SHALL happen exactly once per operation, never per element. Rejection applies both to an algorithm that declares dense-only support under the dense-only exception and to one that rejects a representation whose mathematics is semantically undefined (for example, a NaN-aware distance over implicit CSR zeros). The rejection requirement does not by itself admit a dense-only algorithm: admission is governed by "Dense-only exception with a public alternative".
+
+#### Scenario: Sparse rejected by a dense-only algorithm
+- **WHEN** sparse data is delivered to an algorithm declaring dense-only support
+- **THEN** the operation fails before processing any element, with an error indicating the mismatch and the suggested conversion path
+
+#### Scenario: Semantically undefined representation is rejected
+- **WHEN** a representation has no defined meaning for the operation (for example a NaN-aware distance over implicit CSR zeros)
+- **THEN** the operation rejects it up front with the unsupported-representation error and no alternative path is required
+
 ## ADDED Requirements
 
 ### Requirement: Representation parity for tolerant algorithms
