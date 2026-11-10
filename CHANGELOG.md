@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `sciencekit_cluster` sub-crate (spec `k-means`): `SKKMeans<F>`, a builder-only
+  Lloyd/Elkan k-means estimator with `number_of_clusters` (default 8),
+  `initialization` (`KMeansPlusPlus` default, `Random`), `number_of_initializations`
+  (default 1 for k-means++ and 10 for random), `maximum_number_of_iterations`
+  (default 300), `tolerance` (default `1e-4`), `algorithm` (`Auto` default, `Lloyd`,
+  `Elkan`), `random_seed` (default 0), `backend` (default `Faer`) and
+  `execution_mode` (default `Automatic`). Centroid initialization is deterministic
+  from the seed: k-means++ D² sampling or distinct uniform rows, one derived seed per
+  initialization, with the lowest-inertia run winning and exact ties broken by the
+  earliest index. `Auto` selects Elkan for dense input and Lloyd for sparse input;
+  an explicit Elkan request over sparse data resolves to Lloyd and reports the
+  resolved algorithm. Empty clusters are repaired deterministically by moving the
+  farthest still-claimed point (largest distance, then smallest row index). The
+  fitted `SKKMeansModel<F>` exposes `cluster_centers`, typed `labels`,
+  `inertia`, `iterations_taken`, `converged`, `number_of_clusters`,
+  `number_of_features`, `algorithm` and `backend`, implements `SKUnsupervisedFit`
+  and `SKClustererPredictor` (always `SKClusterLabel::Cluster`, never `Noise`), and
+  offers `transform` distance-to-centers, `fit_predict` and concurrent assignment.
+  Dense and CSR training/assignment share one norm-expansion kernel without
+  densifying sparse input; validation rejects empty input, zero or excessive
+  clusters, non-finite values (naming their flat position), invalid tolerance,
+  iteration, initialization counts and feature-count mismatches. Companion tests
+  cover tiny, large (50 000-row) and wide sparse data, Lloyd/Elkan/Auto equivalence,
+  dense/sparse parity, determinism across repeated fits and thread counts,
+  concurrency, inertia and classification metric production through
+  `sciencekit_metrics`.
+
 ## [0.3.0] — 2026-11-10
 
 The interop, pipeline, spatial-index and streaming-audit batch: format-agnostic model
