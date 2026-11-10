@@ -21,6 +21,7 @@
 #![warn(missing_docs)]
 
 pub mod batch;
+pub mod bridge;
 pub mod columns;
 pub mod missing;
 pub mod schema;
