@@ -2,11 +2,11 @@
 //! (spec `nearest-neighbor-estimators`).
 
 use ndarray::{Array1, Array2};
-use sciencekit_common::{SKBuilder, SKRegressorPredictor, SKSupervisedFit};
+use sciencekit_common::{SKBuilder, SKError, SKRegressorPredictor, SKSupervisedFit};
 use sprs::{CsMat, TriMat};
 
 use super::SKKNeighborsRegressor;
-use crate::neighbors::SKSearchStrategy;
+use crate::neighbors::{SKNeighborsAlgorithm, SKSearchStrategy};
 
 const ROWS: usize = 80;
 
@@ -128,4 +128,42 @@ fn representation_sparse_regressor_predicts_on_a_dense_query() {
         assert!((left - right).abs() < 1e-12);
     }
     assert_eq!(sparse_model.training_representation(), "csr");
+}
+
+#[test]
+fn representation_auto_on_sparse_reports_brute_force_without_densifying() {
+    let dense = dense_design();
+    let responses = responses();
+    let model = SKKNeighborsRegressor::<f64>::build()
+        .build()
+        .unwrap()
+        .fit(sparse_design(&dense).view(), responses.view())
+        .unwrap();
+
+    assert_eq!(model.search_strategy(), SKSearchStrategy::BruteForce);
+    assert_eq!(model.training_representation(), "csr");
+}
+
+#[test]
+fn representation_explicit_trees_over_sparse_are_rejected() {
+    let dense = dense_design();
+    let responses = responses();
+    for algorithm in [SKNeighborsAlgorithm::KdTree, SKNeighborsAlgorithm::BallTree] {
+        let outcome = SKKNeighborsRegressor::<f64>::build()
+            .algorithm(algorithm)
+            .build()
+            .unwrap()
+            .fit(sparse_design(&dense).view(), responses.view());
+
+        match outcome {
+            Err(SKError::UnsupportedRepresentation {
+                representation,
+                suggestion,
+            }) => {
+                assert_eq!(representation, "csr");
+                assert!(suggestion.contains("BruteForce"));
+            }
+            other => panic!("expected UnsupportedRepresentation, found {other:?}"),
+        }
+    }
 }

@@ -2,11 +2,11 @@
 //! (spec `nearest-neighbor-estimators`).
 
 use ndarray::{Array1, Array2};
-use sciencekit_common::{SKBuilder, SKClassifierPredictor, SKSupervisedFit};
+use sciencekit_common::{SKBuilder, SKClassifierPredictor, SKError, SKSupervisedFit};
 use sprs::CsMat;
 
 use super::SKKNeighborsClassifier;
-use crate::neighbors::SKSearchStrategy;
+use crate::neighbors::{SKNeighborsAlgorithm, SKNeighborsMetric, SKSearchStrategy};
 
 const ROWS: usize = 80;
 
@@ -125,4 +125,53 @@ fn representation_sparse_model_predicts_on_a_dense_query() {
 
     assert_eq!(from_sparse_model, from_dense_model);
     assert_eq!(sparse_model.training_representation(), "csr");
+}
+
+#[test]
+fn representation_auto_on_sparse_reports_brute_force_without_densifying() {
+    let (_, model) = fitted_sparse();
+
+    assert_eq!(model.search_strategy(), SKSearchStrategy::BruteForce);
+    assert_eq!(model.training_representation(), "csr");
+    assert_eq!(model.training_rows(), ROWS);
+}
+
+#[test]
+fn representation_explicit_trees_over_sparse_are_rejected() {
+    let dense = dense_design();
+    let labels = Array1::from_shape_fn(ROWS, |row| (row % 3) as i64);
+    for algorithm in [SKNeighborsAlgorithm::KdTree, SKNeighborsAlgorithm::BallTree] {
+        let outcome = SKKNeighborsClassifier::<f64>::build()
+            .algorithm(algorithm)
+            .build()
+            .unwrap()
+            .fit(sparse_design(&dense).view(), labels.view());
+
+        match outcome {
+            Err(SKError::UnsupportedRepresentation {
+                representation,
+                suggestion,
+            }) => {
+                assert_eq!(representation, "csr");
+                assert!(suggestion.contains("BruteForce"));
+            }
+            other => panic!("expected UnsupportedRepresentation, found {other:?}"),
+        }
+    }
+}
+
+#[test]
+fn representation_auto_on_cosine_reports_brute_force() {
+    let dense = dense_design();
+    let labels = Array1::from_shape_fn(ROWS, |row| (row % 3) as i64);
+    let model = SKKNeighborsClassifier::<f64>::build()
+        .metric(SKNeighborsMetric::Cosine)
+        .build()
+        .unwrap()
+        .fit(dense.view(), labels.view())
+        .unwrap();
+
+    assert_eq!(model.search_strategy(), SKSearchStrategy::BruteForce);
+    let predictions = model.predict_labels(dense.view()).unwrap();
+    assert_eq!(predictions.len(), ROWS);
 }
