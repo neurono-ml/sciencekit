@@ -17,3 +17,6 @@ pub mod kmeans;
 pub use kmeans::{
     SKKMeans, SKKMeansAlgorithm, SKKMeansBuilder, SKKMeansInitialization, SKKMeansModel,
 };
+
+#[cfg(test)]
+mod acceptance_tests;
