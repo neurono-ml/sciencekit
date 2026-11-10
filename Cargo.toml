@@ -25,6 +25,7 @@ members = [
     "crates/sciencekit_linear_model",
     "crates/sciencekit_math",
     "crates/sciencekit_metrics",
+    "crates/sciencekit_model_selection",
     "crates/sciencekit_neighbors",
     "crates/sciencekit_pipeline",
     "crates/sciencekit_tree",
