@@ -88,6 +88,21 @@ impl SKBackendKind {
             SKBackendKind::OpenCl | SKBackendKind::Cuda | SKBackendKind::Rocm
         )
     }
+
+    /// The documented static display name of this kind.
+    ///
+    /// Unlike [`Display`](std::fmt::Display), this returns a `&'static str`, so
+    /// structured errors can carry the backend name without allocating.
+    pub fn name(self) -> &'static str {
+        match self {
+            SKBackendKind::Faer => "faer",
+            SKBackendKind::MatrixMultiply => "matrixmultiply",
+            SKBackendKind::NdArrayLinalg => "ndarray-linalg",
+            SKBackendKind::OpenCl => "opencl",
+            SKBackendKind::Cuda => "cuda",
+            SKBackendKind::Rocm => "rocm",
+        }
+    }
 }
 
 impl Default for SKBackendKind {
@@ -100,15 +115,7 @@ impl Default for SKBackendKind {
 
 impl fmt::Display for SKBackendKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let name = match self {
-            SKBackendKind::Faer => "faer",
-            SKBackendKind::MatrixMultiply => "matrixmultiply",
-            SKBackendKind::NdArrayLinalg => "ndarray-linalg",
-            SKBackendKind::OpenCl => "opencl",
-            SKBackendKind::Cuda => "cuda",
-            SKBackendKind::Rocm => "rocm",
-        };
-        f.write_str(name)
+        f.write_str(self.name())
     }
 }
 

@@ -1,13 +1,17 @@
 //! A mock device backend driving the contract tests.
 //!
 //! The mock stands in for a real runtime: it owns a fixed inventory, can be
-//! told to fail discovery, and (in later tasks) executes buffers and kernels in
-//! host memory. It is compiled only for tests, so the production surface stays
-//! free of mock machinery.
+//! told to fail discovery, and executes buffers and kernels in host memory. Its
+//! primary device — the one uploads target — is the first enumerated device. It
+//! is compiled only for tests, so the production surface stays free of mock
+//! machinery.
 
-use sciencekit_common::{SKBackendKind, SKDeviceCapabilities, SKDeviceInfo, SKError};
+use ndarray::{Array2, ArrayView2};
+use sciencekit_common::{SKBackendKind, SKDeviceCapabilities, SKDeviceInfo, SKError, SKFloat};
 
+use super::contract::SKComputeBackend;
 use super::discovery::SKDeviceDiscovery;
+use crate::buffer::{SKDeviceBuffer, SKDeviceBufferBuilder};
 
 /// A backend over a caller-supplied inventory.
 pub(crate) struct SKMockComputeBackend {
@@ -47,6 +51,16 @@ impl SKMockComputeBackend {
     ) -> SKDeviceInfo {
         SKDeviceInfo::new(index, kind, name, memory_bytes, capabilities)
     }
+
+    /// The device an upload targets: the first one enumerated.
+    fn primary_device(&self) -> Result<&SKDeviceInfo, SKError> {
+        self.devices
+            .first()
+            .ok_or_else(|| SKError::DeviceUnavailable {
+                backend: "mock",
+                reason: "no device is enumerated; the host fallback runs instead".to_string(),
+            })
+    }
 }
 
 impl SKDeviceDiscovery for SKMockComputeBackend {
@@ -60,5 +74,44 @@ impl SKDeviceDiscovery for SKMockComputeBackend {
             }),
             None => Ok(self.devices.clone()),
         }
+    }
+}
+
+impl<F: SKFloat> SKComputeBackend<F> for SKMockComputeBackend {
+    fn backend_kind(&self) -> SKBackendKind {
+        self.devices
+            .first()
+            .map(|device| device.kind)
+            .unwrap_or(SKBackendKind::Faer)
+    }
+
+    fn upload(&self, host: ArrayView2<'_, F>) -> Result<SKDeviceBuffer<F>, SKError> {
+        let device = self.primary_device()?;
+        let scalar_type = std::any::type_name::<F>();
+        if !device.supports_scalar_type(scalar_type) {
+            return Err(SKError::UnsupportedScalarType {
+                backend: "mock",
+                scalar_type,
+            });
+        }
+        SKDeviceBufferBuilder::new(device.kind, device.index)
+            .shape(host.nrows(), host.ncols())
+            .values(host.iter().copied().collect())
+            .build()
+    }
+
+    fn download(&self, buffer: &SKDeviceBuffer<F>) -> Result<Array2<F>, SKError> {
+        let own_kind = self
+            .devices
+            .first()
+            .map(|device| device.kind)
+            .unwrap_or(SKBackendKind::Faer);
+        if buffer.backend_kind() != own_kind {
+            return Err(SKError::DeviceUnavailable {
+                backend: buffer.backend_kind().name(),
+                reason: "the buffer belongs to a different backend".to_string(),
+            });
+        }
+        buffer.to_host_matrix()
     }
 }

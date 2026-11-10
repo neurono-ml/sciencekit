@@ -4,9 +4,11 @@
 //! This is a **pure dispatcher** module: `mod.rs` only declares and re-exports
 //! submodules; every implementation lives in its own file.
 
+mod contract;
 mod discovery;
 
 #[cfg(test)]
 pub(crate) mod mock_device;
 
+pub use contract::SKComputeBackend;
 pub use discovery::SKDeviceDiscovery;
