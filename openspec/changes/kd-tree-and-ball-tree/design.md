@@ -97,11 +97,15 @@ runtime without leaking the tree type into its model.
 Alternatives considered: a private enum inside the estimator (would duplicate the query
 surface and block DBSCAN reuse); free functions per tree (no shared type for the model).
 
-### Decision 7 — Best-first search with a bounded candidate heap
+### Decision 7 — Depth-first traversal with a bounded candidate list
 
-Each query keeps a max-heap of the current `k` best candidates and a min-heap of nodes
+The builder's `execution_mode` is recorded on the build span and carried by the index; query
+batches choose their parallel or sequential path from execution planning rather than from a
+hard-coded flag.
+
+Each query keeps a sorted, bounded list of the current `k` best candidates and a LIFO stack of nodes
 ordered by their lower bound. A node is expanded only when its bound is smaller than the
-current worst candidate. Leaves are scanned with `azip!`/SIMD and candidates are inserted
+current worst candidate. Leaves are scanned with auto-vectorizable iterator loops and candidates are inserted
 with a comparison on `(distance, index)`. Radius search uses the same traversal and pushes
 every point within the radius into a per-row vector.
 

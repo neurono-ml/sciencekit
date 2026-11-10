@@ -21,7 +21,7 @@ KNN private detail.
   `radius_neighbors` queries, implemented by both trees. The brute-force searcher joins
   the same contract in `knn-classifier-regressor` (W3.3).
 - Array-based node storage (start/end, left/right child, radius, bounds), median or
-  farthest-point splits, SIMD leaf scans and rayon work across query rows.
+  farthest-point splits, auto-vectorizable leaf scans and rayon work across query rows.
 - Deterministic query ordering: distances ascending, ties broken by the smallest training
   row index, never by hash-map iteration order.
 - Dense-only index contract: tree geometry (axis-aligned boxes and ball centres/radii) is
