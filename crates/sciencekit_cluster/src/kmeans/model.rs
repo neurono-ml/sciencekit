@@ -57,8 +57,7 @@ impl<F: SKFloat> SKKMeansModel<F> {
         self.inertia
     }
 
-    /// Iterations executed by the winning initialization (zero when the
-    /// initialization already met the tolerance before the first update).
+    /// Iterations executed by the winning initialization.
     pub fn iterations_taken(&self) -> usize {
         self.iterations
     }

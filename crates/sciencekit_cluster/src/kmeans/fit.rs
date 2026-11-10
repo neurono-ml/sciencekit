@@ -42,8 +42,19 @@ impl<F: SKFloat> SKKMeans<F> {
     where
         X: TryInto<SKDataView<'a, F>, Error = SKError>,
     {
-        let model = self.fit(features)?;
-        Ok(model.labels.to_owned())
+        let features = features.try_into()?;
+        let (rows_count, columns_count) = sk_view_dimensions(&features);
+        let attributes = SKOperationAttributes {
+            operation: SKOperationKind::FitPredict,
+            rows_count,
+            columns_count,
+            execution_mode: self.configuration.execution_mode,
+            backend: self.configuration.backend,
+        };
+        sk_run_operation(attributes, || {
+            let model = sk_fit_estimator(self, features)?;
+            Ok(model.labels.to_owned())
+        })
     }
 }
 
