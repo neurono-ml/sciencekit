@@ -538,6 +538,22 @@ Order faithful to the scikit-learn mapping (from the handoff), respecting depend
 ### Phase 1 — Preprocessing
 5. `sciencekit_preprocessing`: `SKStandardScaler`, `SKMinMaxScaler`, `SKRobustScaler`, `SKOneHotEncoder`, `SKPolynomialFeatures`.
 6. `sciencekit_impute`: simple strategies, `SKKNNImputer`.
+   - `SKKNNImputer` uses the exact `nan_euclidean` donor semantics: it compares only
+     co-observed features and rescales by `total_features / present_features`. That kernel
+     is **not a metric** — the triangle inequality fails once the observed sets differ — so
+     no KD-tree, ball tree or other spatial index can prune it soundly. The transform is
+     therefore a chunked brute-force distance computation sized from a fixed memory budget,
+     not a tree-backed search; a future lattice/pattern index with partial-distance pruning
+     is an accelerator that must keep the same observable result.
+   - Sparse input is rejected by `fit` and `transform` with `UnsupportedRepresentation` and
+     a suggestion to use `SKSimpleImputer`: in CSR an implicit zero is an **observed zero**,
+     so the representation cannot express the configured missing marker. This is the
+     semantically-undefined rejection of §4.5.2 (like the NaN-aware distance over implicit
+     zeros), not a dense-geometry exception with an alternative path; the estimator's
+     public surface does not claim sparse parity.
+   - `partial_fit`/`fit_streaming`, `memmap2` backing and model export are **out of scope
+     here**: the imputer retains its training design by definition, and persistence/export
+     remain Phase 7 (interop) work.
 
 ### Phase 2 — Linear models
 7. `sciencekit_linear_model`: `SKLinearRegression`, `SKRidge`, `SKLasso`, `SKElasticNet`, `SKLogisticRegression`; `SKSGDClassifier`/`SKSGDRegressor` with `SKLazySource`.

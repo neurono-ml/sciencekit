@@ -15,3 +15,8 @@ ndarray = { workspace = true }
 rayon = { workspace = true }
 sprs = { workspace = true }
 tdigest = { workspace = true }
+
+[dev-dependencies]
+sciencekit_metrics = { path = "../sciencekit_metrics" }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
