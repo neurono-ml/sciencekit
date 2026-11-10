@@ -2,7 +2,7 @@
 
 ## Why
 
-Wave 5 shipped KMeans, MiniBatchKMeans, DBSCAN and their typed assignments, but the
+Wave 5 has shipped `SKKMeans`, and `clustering-contracts` shipped the typed assignment surface and their typed assignments, but the
 metrics crate has no way to judge a clustering. Silhouette, adjusted Rand index, normalized
 mutual information, homogeneity/completeness/V-measure, Davies-Bouldin and
 Calinski-Harabasz are the standard tools, and the existing `SKUnsupervisedScorer` contract
