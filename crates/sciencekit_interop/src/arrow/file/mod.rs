@@ -16,6 +16,8 @@ pub use options::SKArrowFileOptions;
 pub use source::SKArrowFileSource;
 
 #[cfg(test)]
+mod csv_tests;
+#[cfg(test)]
 mod file_tests;
 #[cfg(test)]
 mod parquet_tests;
