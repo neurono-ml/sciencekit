@@ -9,7 +9,9 @@
 //! - [`layout`] — memory-layout helpers (C/F-contiguity detection, forcing
 //!   contiguity before hot loops).
 //! - [`pairwise`] — zero-copy pairwise distance kernels (squared Euclidean,
-//!   Manhattan, Cosine) with a SIMD-friendly hot path.
+//!   Euclidean, Manhattan, Chebyshev, Cosine, NaN-aware Euclidean) with a
+//!   SIMD-friendly dense hot path and sparse kernels behind the
+//!   `sk_pairwise_distance_matrix` dispatcher.
 //! - [`sparse_ops`] — sparse (`sprs`) product kernels (sparse×dense,
 //!   sparse×sparse) over zero-copy views.
 //! - [`solvers`] — iterative linear solvers: the zero-copy
@@ -51,7 +53,11 @@ pub use kernels::{
 };
 pub use layout::{sk_force_contiguous, sk_is_c_contiguous, sk_is_f_contiguous, sk_memory_layout};
 pub use pairwise::{
-    sk_cosine_distance_matrix, sk_euclidean_distance_matrix, sk_manhattan_distance_matrix,
+    SKPairwiseMetric, sk_chebyshev_distance_matrix, sk_cosine_distance_matrix,
+    sk_euclidean_distance_matrix, sk_manhattan_distance_matrix, sk_nan_euclidean_distance_matrix,
+    sk_pairwise_distance_matrix, sk_sparse_chebyshev_distance_matrix,
+    sk_sparse_cosine_distance_matrix, sk_sparse_euclidean_distance_matrix,
+    sk_sparse_manhattan_distance_matrix, sk_sparse_squared_euclidean_distance_matrix,
     sk_squared_euclidean_distance_matrix,
 };
 pub use solvers::{SKCsrNormalEquationOperator, SKLinearOperator, sk_conjugate_gradient};
