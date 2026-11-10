@@ -45,18 +45,21 @@ impl<F: SKFloat> SKRankedSummary<F> {
 
     fn update(&mut self, rank: usize, amount: usize, add: bool) {
         let value = self.values[rank];
+        if add {
+            self.total_count += amount;
+            self.total_sum = self.total_sum + value;
+        } else {
+            self.total_count -= amount;
+            self.total_sum = self.total_sum - value;
+        }
         let mut index = rank + 1;
         while index < self.counts.len() {
             if add {
                 self.counts[index] += amount;
                 self.sums[index] = self.sums[index] + value;
-                self.total_count += amount;
-                self.total_sum = self.total_sum + value;
             } else {
                 self.counts[index] -= amount;
                 self.sums[index] = self.sums[index] - value;
-                self.total_count -= amount;
-                self.total_sum = self.total_sum - value;
             }
             index += index & index.wrapping_neg();
         }
