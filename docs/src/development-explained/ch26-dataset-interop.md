@@ -64,8 +64,8 @@ drive the conversion (blocks the compute pool).
 
 A **columnar** table stores each column contiguously, which is why engines can compress and scan
 it efficiently. Each column has a **logical type** — what the values *mean*, not how they are
-laid out in memory. `SKLogicalType` is the neutral vocabulary: signed/unsigned integers,
-floats, booleans, strings, categoricals. A model never sees "an Arrow Int64 array"; it sees "an
+laid out in memory. `SKLogicalType` is the neutral vocabulary: integers, floats, booleans, strings and
+categoricals. A model never sees "an Arrow Int64 array"; it sees "an
 integer column", and the interop layer decides how to coerce it.
 
 ### Nulls are not zeros
@@ -131,13 +131,14 @@ memory, and dropping the consumer cancels the reader.
 ### `tiny_table_converts_for_both_scalars` and `large_table_converts_and_streams_in_order`
 
 The first proves the smallest end-to-end path (schema → selection → policy → matrix) for `f32`
-and `f64`. The second proves order and streaming: a large table converts batch by batch in the
-input order, so a streaming fit sees exactly what a dense fit would.
+and `f64`. The second proves order and streaming: a large table converts batch by batch in the input
+order and reports the expected row counts.
 
 ### `nullable_and_categorical_columns_follow_the_policy`
 
-Nulls and categoricals are where engines disagree. The test exercises the policy variants and
-the coded categorical path together, so the documented answer is pinned rather than incidental.
+Nulls and categoricals are where engines disagree. The test pins the numeric-null-to-`NaN`
+policy and the coded categorical path together, so the documented answer is not incidental.
+The `Reject` and `ConstantFill` variants have their own unit tests.
 
 ### `type_rejection_precedes_element_processing` and `unsupported_type_is_named_with_a_suggestion`
 
@@ -171,6 +172,12 @@ returning an empty second pass.
 | `acceptance/` | tiny/large, nullable, concurrent and error-path suites |
 
 ## 7. What this unlocks
+
+### Known limitation
+
+A nominal target is canonicalized **per batch**: a streamed supervised batch carries the encoded
+indices but not the label table, so the mapping is not recoverable from the stream. Callers that
+need it extract the target directly. Global canonicalization across a whole stream is deferred.
 
 Every engine change — Arrow, Polars, DataFusion, memory-mapped files, and the Python/Julia/JVM
 dataset bridges — becomes a translation into this vocabulary. The rules live in one crate, so a
