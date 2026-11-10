@@ -11,7 +11,7 @@ use super::{SKModelMetadata, SKParameterValue, SKTensor};
 ///
 /// The state pairs descriptive [`SKModelMetadata`] with a deterministic map of
 /// named tensors. Tensor names are unique and every floating tensor matches the
-/// metadata's scalar dtype; both are validated at construction.
+/// metadata's scalar data_type; both are validated at construction.
 #[derive(Debug, Clone, PartialEq)]
 pub struct SKModelState<F: SKFloat> {
     metadata: SKModelMetadata,
@@ -20,18 +20,19 @@ pub struct SKModelState<F: SKFloat> {
 
 impl<F: SKFloat> SKModelState<F> {
     /// Build a state from metadata and tensors, rejecting duplicate tensor names
-    /// and floating tensors whose dtype disagrees with the metadata scalar.
+    /// and floating tensors whose data_type disagrees with the metadata scalar.
     pub fn new(metadata: SKModelMetadata, tensors: Vec<SKTensor<F>>) -> Result<Self, SKError> {
         let mut named_tensors = BTreeMap::new();
         for tensor in tensors {
-            if tensor.dtype() != metadata.scalar_dtype() && tensor.dtype().is_floating() {
+            if tensor.data_type() != metadata.scalar_data_type() && tensor.data_type().is_floating()
+            {
                 return Err(SKError::InvalidHyperparameter {
-                    name: "tensor_dtype",
+                    name: "tensor_data_type",
                     reason: format!(
                         "tensor `{}` uses {} but the model scalar is {}",
                         tensor.name(),
-                        tensor.dtype().as_str(),
-                        metadata.scalar_dtype().as_str()
+                        tensor.data_type().as_str(),
+                        metadata.scalar_data_type().as_str()
                     ),
                 });
             }

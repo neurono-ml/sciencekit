@@ -1,6 +1,6 @@
 //! Tests for import-time state validation (spec `model-export-contracts`).
 
-use crate::{SKError, SKModelMetadata, SKModelState, SKTensorDType};
+use crate::{SKError, SKModelMetadata, SKModelState, SKTensorDataType};
 
 use super::mock_model::{
     MOCK_ESTIMATOR_NAME, MOCK_FORMAT_VERSION, SKMockLinearModel, SKUnsupportedMockModel,
@@ -19,7 +19,7 @@ fn state_with_metadata(
     let metadata = SKModelMetadata::new(
         estimator_name,
         format_version,
-        SKTensorDType::F64,
+        SKTensorDataType::F64,
         feature_count,
     )
     .unwrap();
@@ -78,7 +78,7 @@ fn interop_validation_rejects_missing_tensor() {
     let metadata = SKModelMetadata::new(
         MOCK_ESTIMATOR_NAME,
         MOCK_FORMAT_VERSION,
-        SKTensorDType::F64,
+        SKTensorDataType::F64,
         3,
     )
     .unwrap();

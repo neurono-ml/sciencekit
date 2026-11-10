@@ -46,7 +46,7 @@ pub use fit_traits::{
 };
 pub use interop::{
     SKExportable, SKImportable, SKModelMetadata, SKModelState, SKParameterValue, SKTensor,
-    SKTensorDType, SKTensorValues, sk_validate_import_metadata,
+    SKTensorDataType, SKTensorValues, sk_validate_import_metadata,
 };
 pub use label_table::{SKLabelTable, sk_canonicalize_labels};
 pub use observability::{

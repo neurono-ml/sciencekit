@@ -5,7 +5,7 @@ use ndarray::ArrayView1;
 use crate::SKError;
 use crate::sk_float::SKFloat;
 
-use super::tensor::tensor_dtype_for_scalar;
+use super::tensor::tensor_data_type_for_scalar;
 use super::{
     SKExportable, SKImportable, SKModelMetadata, SKModelState, SKParameterValue, SKTensor,
     SKTensorValues,
@@ -61,10 +61,13 @@ impl<F: SKFloat> SKExportable<F> for SKMockLinearModel<F> {
         let mut metadata = SKModelMetadata::new(
             MOCK_ESTIMATOR_NAME,
             MOCK_FORMAT_VERSION,
-            tensor_dtype_for_scalar::<F>(),
+            tensor_data_type_for_scalar::<F>(),
             self.feature_count(),
         )?
-        .with_parameter("intercept", SKParameterValue::from(true))?
+        .with_parameter(
+            "intercept",
+            SKParameterValue::from(self.intercept.to_f64().unwrap_or(0.0)),
+        )?
         .with_parameter("solver", SKParameterValue::from("mock"))?;
         if let Some(labels) = &self.class_labels {
             metadata = metadata.with_class_labels(labels.clone())?;
@@ -81,6 +84,14 @@ impl<F: SKFloat> SKExportable<F> for SKMockLinearModel<F> {
 
 impl<F: SKFloat> SKImportable<F> for SKMockLinearModel<F> {
     fn import_state(state: &SKModelState<F>) -> Result<Self, SKError> {
+        // Identity first: a foreign estimator or format version must be rejected
+        // before a single tensor is read.
+        super::sk_validate_import_metadata(
+            state,
+            MOCK_ESTIMATOR_NAME,
+            MOCK_FORMAT_VERSION,
+            state.metadata().feature_count(),
+        )?;
         let coefficients = floating_values(state, "linear.coefficients")?;
         let intercept = floating_values(state, "linear.intercept")?;
         if intercept.len() != 1 {
@@ -89,12 +100,12 @@ impl<F: SKFloat> SKImportable<F> for SKMockLinearModel<F> {
                 reason: "the intercept tensor must hold exactly one value".to_string(),
             });
         }
-        super::sk_validate_import_metadata(
-            state,
-            MOCK_ESTIMATOR_NAME,
-            MOCK_FORMAT_VERSION,
-            coefficients.len(),
-        )?;
+        if coefficients.len() != state.metadata().feature_count() {
+            return Err(SKError::ShapeMismatch {
+                expected: vec![state.metadata().feature_count()],
+                found: vec![coefficients.len()],
+            });
+        }
         Ok(SKMockLinearModel {
             coefficients,
             intercept: intercept[0],

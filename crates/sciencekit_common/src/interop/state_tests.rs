@@ -1,11 +1,11 @@
 //! Tests for the model state container (spec `model-export-contracts`).
 
-use crate::{SKError, SKTensor, SKTensorDType};
+use crate::{SKError, SKTensor, SKTensorDataType};
 
 use super::{SKModelMetadata, SKModelState, SKParameterValue};
 
 fn metadata() -> SKModelMetadata {
-    SKModelMetadata::new("SKMockEstimator", 1, SKTensorDType::F64, 2).unwrap()
+    SKModelMetadata::new("SKMockEstimator", 1, SKTensorDataType::F64, 2).unwrap()
 }
 
 /// A state collects its tensors under their stable names.
@@ -19,8 +19,8 @@ fn interop_state_collects_named_tensors() {
 
     assert_eq!(state.number_of_tensors(), 2);
     assert_eq!(
-        state.tensor("linear.coefficients").map(SKTensor::dtype),
-        Some(SKTensorDType::F64)
+        state.tensor("linear.coefficients").map(SKTensor::data_type),
+        Some(SKTensorDataType::F64)
     );
     assert!(state.tensors().contains_key("linear.intercept"));
     assert_eq!(state.metadata().feature_count(), 2);
@@ -40,12 +40,12 @@ fn interop_state_rejects_duplicate_tensor_names() {
     ));
 }
 
-/// A floating tensor must use the metadata's scalar dtype.
+/// A floating tensor must use the metadata's scalar data_type.
 #[test]
-fn interop_state_rejects_tensor_dtype_disagreeing_with_metadata_scalar() {
+fn interop_state_rejects_tensor_data_type_disagreeing_with_metadata_scalar() {
     let tensor = SKTensor::floating("linear.coefficients", vec![1], vec![1.0_f64]).unwrap();
     let single_precision =
-        SKModelMetadata::new("SKMockEstimator", 1, SKTensorDType::F32, 1).unwrap();
+        SKModelMetadata::new("SKMockEstimator", 1, SKTensorDataType::F32, 1).unwrap();
 
     let outcome = SKModelState::new(single_precision, vec![tensor]);
 
@@ -79,4 +79,26 @@ fn interop_state_unknown_tensor_is_absent() {
 
     assert!(state.tensor("linear.coefficients").is_none());
     assert_eq!(state.number_of_tensors(), 0);
+}
+
+/// Tensor order depends on the stable name, not on insertion order.
+#[test]
+fn interop_state_tensor_order_is_deterministic() {
+    let metadata =
+        crate::interop::SKModelMetadata::new("mock", 1, crate::interop::SKTensorDataType::F64, 2)
+            .unwrap();
+    let first = crate::interop::SKTensor::floating("zeta", vec![2], vec![1.0, 2.0]).unwrap();
+    let second = crate::interop::SKTensor::floating("alpha", vec![2], vec![3.0, 4.0]).unwrap();
+    let forward =
+        crate::interop::SKModelState::new(metadata.clone(), vec![first.clone(), second.clone()])
+            .unwrap();
+    let reverse = crate::interop::SKModelState::new(metadata, vec![second, first]).unwrap();
+    assert_eq!(
+        forward.tensors().keys().cloned().collect::<Vec<_>>(),
+        reverse.tensors().keys().cloned().collect::<Vec<_>>()
+    );
+    assert_eq!(
+        forward.tensors().keys().cloned().collect::<Vec<_>>(),
+        vec!["alpha".to_string(), "zeta".to_string()]
+    );
 }

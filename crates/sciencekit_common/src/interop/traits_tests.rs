@@ -4,9 +4,9 @@
 use ndarray::array;
 
 use super::mock_model::{MOCK_ESTIMATOR_NAME, SKMockLinearModel, mock_linear_model};
-use super::{SKExportable, SKImportable, SKTensorDType};
+use super::{SKExportable, SKImportable, SKTensorDataType};
 
-/// Export names the estimator, its scalar dtype, feature count and stable tensors.
+/// Export names the estimator, its scalar data_type, feature count and stable tensors.
 #[test]
 fn interop_traits_export_describes_the_model() {
     let model = mock_linear_model();
@@ -15,7 +15,7 @@ fn interop_traits_export_describes_the_model() {
 
     assert_eq!(state.metadata().estimator_name(), MOCK_ESTIMATOR_NAME);
     assert_eq!(state.metadata().format_version(), 1);
-    assert_eq!(state.metadata().scalar_dtype(), SKTensorDType::F64);
+    assert_eq!(state.metadata().scalar_data_type(), SKTensorDataType::F64);
     assert_eq!(state.metadata().feature_count(), 3);
     assert_eq!(state.number_of_tensors(), 2);
     assert_eq!(

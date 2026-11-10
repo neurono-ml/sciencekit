@@ -1,4 +1,4 @@
-//! Tensor dtypes and the scalar-to-dtype mapping.
+//! Tensor dtypes and the scalar-to-data_type mapping.
 
 use crate::sk_float::SKFloat;
 
@@ -8,7 +8,7 @@ use crate::sk_float::SKFloat;
 /// class tables and tree indices without forcing them into the scalar.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[non_exhaustive]
-pub enum SKTensorDType {
+pub enum SKTensorDataType {
     /// Single-precision floating point.
     F32,
     /// Double-precision floating point.
@@ -19,28 +19,28 @@ pub enum SKTensorDType {
     Bool,
 }
 
-impl SKTensorDType {
+impl SKTensorDataType {
     /// The canonical textual name used by every format adapter.
     pub fn as_str(self) -> &'static str {
         match self {
-            SKTensorDType::F32 => "F32",
-            SKTensorDType::F64 => "F64",
-            SKTensorDType::I64 => "I64",
-            SKTensorDType::Bool => "Bool",
+            SKTensorDataType::F32 => "F32",
+            SKTensorDataType::F64 => "F64",
+            SKTensorDataType::I64 => "I64",
+            SKTensorDataType::Bool => "Bool",
         }
     }
 
-    /// Whether the dtype stores floating-point values.
+    /// Whether the data_type stores floating-point values.
     pub fn is_floating(self) -> bool {
-        matches!(self, SKTensorDType::F32 | SKTensorDType::F64)
+        matches!(self, SKTensorDataType::F32 | SKTensorDataType::F64)
     }
 }
 
-/// The tensor dtype matching the model scalar `F`.
-pub(crate) fn tensor_dtype_for_scalar<F: SKFloat>() -> SKTensorDType {
+/// The tensor data_type matching the model scalar `F`.
+pub(crate) fn tensor_data_type_for_scalar<F: SKFloat>() -> SKTensorDataType {
     if std::mem::size_of::<F>() == std::mem::size_of::<f32>() {
-        SKTensorDType::F32
+        SKTensorDataType::F32
     } else {
-        SKTensorDType::F64
+        SKTensorDataType::F64
     }
 }

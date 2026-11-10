@@ -1,10 +1,10 @@
-//! The owned tensor payload matching a dtype.
+//! The owned tensor payload matching a data_type.
 
 use crate::sk_float::SKFloat;
 
-use super::dtype::{SKTensorDType, tensor_dtype_for_scalar};
+use super::data_type::{SKTensorDataType, tensor_data_type_for_scalar};
 
-/// The owned payload of a tensor, matching its [`SKTensorDType`].
+/// The owned payload of a tensor, matching its [`SKTensorDataType`].
 #[derive(Debug, Clone, PartialEq)]
 #[non_exhaustive]
 pub enum SKTensorValues<F: SKFloat> {
@@ -31,12 +31,12 @@ impl<F: SKFloat> SKTensorValues<F> {
         self.len() == 0
     }
 
-    /// The dtype implied by the payload variant.
-    pub(crate) fn dtype(&self) -> SKTensorDType {
+    /// The data_type implied by the payload variant.
+    pub(crate) fn data_type(&self) -> SKTensorDataType {
         match self {
-            SKTensorValues::Floating(_) => tensor_dtype_for_scalar::<F>(),
-            SKTensorValues::Integer(_) => SKTensorDType::I64,
-            SKTensorValues::Boolean(_) => SKTensorDType::Bool,
+            SKTensorValues::Floating(_) => tensor_data_type_for_scalar::<F>(),
+            SKTensorValues::Integer(_) => SKTensorDataType::I64,
+            SKTensorValues::Boolean(_) => SKTensorDataType::Bool,
         }
     }
 }

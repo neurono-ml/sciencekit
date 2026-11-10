@@ -4,18 +4,18 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::SKError;
 
-use super::{SKParameterValue, SKTensorDType};
+use super::{SKParameterValue, SKTensorDataType};
 
 /// The descriptive part of an exported model state.
 ///
-/// Metadata names the estimator, its format version, the scalar dtype and the
+/// Metadata names the estimator, its format version, the scalar data_type and the
 /// feature count, and carries class labels when applicable plus a typed
 /// hyperparameter map. Construction validates identity and label uniqueness.
 #[derive(Debug, Clone, PartialEq)]
 pub struct SKModelMetadata {
     estimator_name: String,
     format_version: u32,
-    scalar_dtype: SKTensorDType,
+    scalar_data_type: SKTensorDataType,
     feature_count: usize,
     class_labels: Option<Vec<String>>,
     parameters: BTreeMap<String, SKParameterValue>,
@@ -26,7 +26,7 @@ impl SKModelMetadata {
     pub fn new(
         estimator_name: impl Into<String>,
         format_version: u32,
-        scalar_dtype: SKTensorDType,
+        scalar_data_type: SKTensorDataType,
         feature_count: usize,
     ) -> Result<Self, SKError> {
         let estimator_name = estimator_name.into();
@@ -39,7 +39,7 @@ impl SKModelMetadata {
         Ok(SKModelMetadata {
             estimator_name,
             format_version,
-            scalar_dtype,
+            scalar_data_type,
             feature_count,
             class_labels: None,
             parameters: BTreeMap::new(),
@@ -97,9 +97,9 @@ impl SKModelMetadata {
         self.format_version
     }
 
-    /// The model scalar dtype.
-    pub fn scalar_dtype(&self) -> SKTensorDType {
-        self.scalar_dtype
+    /// The model scalar data_type.
+    pub fn scalar_data_type(&self) -> SKTensorDataType {
+        self.scalar_data_type
     }
 
     /// The number of features the model was fitted on.

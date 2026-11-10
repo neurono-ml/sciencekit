@@ -17,7 +17,7 @@ mod traits;
 pub use metadata::SKModelMetadata;
 pub use parameter::SKParameterValue;
 pub use state::SKModelState;
-pub use tensor::{SKTensor, SKTensorDType, SKTensorValues};
+pub use tensor::{SKTensor, SKTensorDataType, SKTensorValues};
 pub use traits::{SKExportable, SKImportable, sk_validate_import_metadata};
 
 #[cfg(test)]

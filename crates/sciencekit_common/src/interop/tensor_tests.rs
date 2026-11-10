@@ -2,9 +2,9 @@
 
 use crate::SKError;
 
-use super::{SKTensor, SKTensorDType, SKTensorValues};
+use super::{SKTensor, SKTensorDataType, SKTensorValues};
 
-/// A floating tensor keeps its shape, dtype and values.
+/// A floating tensor keeps its shape, data_type and values.
 #[test]
 fn interop_tensor_floating_keeps_shape_values_and_dtype() {
     let tensor = SKTensor::floating(
@@ -15,7 +15,7 @@ fn interop_tensor_floating_keeps_shape_values_and_dtype() {
     .unwrap();
 
     assert_eq!(tensor.name(), "linear.coefficients");
-    assert_eq!(tensor.dtype(), SKTensorDType::F64);
+    assert_eq!(tensor.data_type(), SKTensorDataType::F64);
     assert_eq!(tensor.shape(), &[2, 3]);
     assert_eq!(tensor.number_of_elements(), 6);
     assert_eq!(
@@ -32,14 +32,14 @@ fn interop_tensor_shape_mismatch_is_rejected() {
     assert!(matches!(outcome, Err(SKError::ShapeMismatch { .. })));
 }
 
-/// The floating dtype follows the model scalar, never a hardcoded one.
+/// The floating data_type follows the model scalar, never a hardcoded one.
 #[test]
-fn interop_tensor_dtype_follows_the_model_scalar() {
+fn interop_tensor_data_type_follows_the_model_scalar() {
     let single = SKTensor::floating("intercept", vec![], vec![0.5_f32]).unwrap();
     let double = SKTensor::floating("intercept", vec![], vec![0.5_f64]).unwrap();
 
-    assert_eq!(single.dtype(), SKTensorDType::F32);
-    assert_eq!(double.dtype(), SKTensorDType::F64);
+    assert_eq!(single.data_type(), SKTensorDataType::F32);
+    assert_eq!(double.data_type(), SKTensorDataType::F64);
 }
 
 /// A scalar tensor (empty shape) holds exactly one value.
@@ -51,7 +51,7 @@ fn interop_tensor_scalar_shape_holds_one_element() {
     assert!(tensor.shape().is_empty());
 }
 
-/// Integer and boolean tensors carry their own storage and dtype.
+/// Integer and boolean tensors carry their own storage and data_type.
 #[test]
 fn interop_tensor_integer_and_boolean_payloads() {
     let integer =
@@ -59,9 +59,9 @@ fn interop_tensor_integer_and_boolean_payloads() {
     let boolean =
         SKTensor::<f64>::boolean("tree.nodes.is_leaf", vec![3], vec![true, false, true]).unwrap();
 
-    assert_eq!(integer.dtype(), SKTensorDType::I64);
+    assert_eq!(integer.data_type(), SKTensorDataType::I64);
     assert_eq!(integer.values(), &SKTensorValues::Integer(vec![0, 2, 1]));
-    assert_eq!(boolean.dtype(), SKTensorDType::Bool);
+    assert_eq!(boolean.data_type(), SKTensorDataType::Bool);
     assert_eq!(
         boolean.values(),
         &SKTensorValues::Boolean(vec![true, false, true])
@@ -79,12 +79,12 @@ fn interop_tensor_empty_name_is_rejected() {
     ));
 }
 
-/// A dtype that disagrees with the stored enum variant is rejected.
+/// A data_type that disagrees with the stored enum variant is rejected.
 #[test]
-fn interop_tensor_dtype_disagreeing_with_values_is_rejected() {
+fn interop_tensor_data_type_disagreeing_with_values_is_rejected() {
     let outcome = SKTensor::new(
         "tree.nodes.feature",
-        SKTensorDType::F32,
+        SKTensorDataType::F32,
         vec![2],
         SKTensorValues::<f64>::Integer(vec![0, 1]),
     );
@@ -95,12 +95,12 @@ fn interop_tensor_dtype_disagreeing_with_values_is_rejected() {
     ));
 }
 
-/// A floating tensor whose dtype disagrees with the model scalar is rejected.
+/// A floating tensor whose data_type disagrees with the model scalar is rejected.
 #[test]
-fn interop_tensor_float_dtype_disagreeing_with_scalar_is_rejected() {
+fn interop_tensor_float_data_type_disagreeing_with_scalar_is_rejected() {
     let outcome = SKTensor::new(
         "linear.coefficients",
-        SKTensorDType::F32,
+        SKTensorDataType::F32,
         vec![2],
         SKTensorValues::Floating(vec![1.0_f64, 2.0]),
     );

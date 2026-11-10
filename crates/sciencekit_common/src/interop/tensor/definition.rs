@@ -3,7 +3,7 @@
 use crate::SKError;
 use crate::sk_float::SKFloat;
 
-use super::dtype::{SKTensorDType, tensor_dtype_for_scalar};
+use super::data_type::{SKTensorDataType, tensor_data_type_for_scalar};
 use super::values::SKTensorValues;
 
 /// A named, typed tensor with a shape and a value payload.
@@ -14,17 +14,17 @@ use super::values::SKTensorValues;
 #[derive(Debug, Clone, PartialEq)]
 pub struct SKTensor<F: SKFloat> {
     name: String,
-    dtype: SKTensorDType,
+    data_type: SKTensorDataType,
     shape: Vec<usize>,
     values: SKTensorValues<F>,
 }
 
 impl<F: SKFloat> SKTensor<F> {
-    /// Build a tensor from an explicit dtype and payload, validating the name,
-    /// the shape/value agreement and the dtype/payload agreement.
+    /// Build a tensor from an explicit data_type and payload, validating the name,
+    /// the shape/value agreement and the data_type/payload agreement.
     pub fn new(
         name: impl Into<String>,
-        dtype: SKTensorDType,
+        data_type: SKTensorDataType,
         shape: Vec<usize>,
         values: SKTensorValues<F>,
     ) -> Result<Self, SKError> {
@@ -35,14 +35,14 @@ impl<F: SKFloat> SKTensor<F> {
                 reason: "a tensor name must not be empty".to_string(),
             });
         }
-        let expected_dtype = values.dtype();
-        if dtype != expected_dtype {
+        let expected_data_type = values.data_type();
+        if data_type != expected_data_type {
             return Err(SKError::InvalidHyperparameter {
-                name: "tensor_dtype",
+                name: "tensor_data_type",
                 reason: format!(
-                    "dtype {} does not match the `{}` payload",
-                    dtype.as_str(),
-                    expected_dtype.as_str()
+                    "data type {} does not match the `{}` payload",
+                    data_type.as_str(),
+                    expected_data_type.as_str()
                 ),
             });
         }
@@ -57,7 +57,7 @@ impl<F: SKFloat> SKTensor<F> {
         }
         Ok(SKTensor {
             name,
-            dtype,
+            data_type,
             shape,
             values,
         })
@@ -71,7 +71,7 @@ impl<F: SKFloat> SKTensor<F> {
     ) -> Result<Self, SKError> {
         SKTensor::new(
             name,
-            tensor_dtype_for_scalar::<F>(),
+            tensor_data_type_for_scalar::<F>(),
             shape,
             SKTensorValues::Floating(values),
         )
@@ -85,7 +85,7 @@ impl<F: SKFloat> SKTensor<F> {
     ) -> Result<Self, SKError> {
         SKTensor::new(
             name,
-            SKTensorDType::I64,
+            SKTensorDataType::I64,
             shape,
             SKTensorValues::Integer(values),
         )
@@ -99,7 +99,7 @@ impl<F: SKFloat> SKTensor<F> {
     ) -> Result<Self, SKError> {
         SKTensor::new(
             name,
-            SKTensorDType::Bool,
+            SKTensorDataType::Bool,
             shape,
             SKTensorValues::Boolean(values),
         )
@@ -110,9 +110,9 @@ impl<F: SKFloat> SKTensor<F> {
         &self.name
     }
 
-    /// The element dtype.
-    pub fn dtype(&self) -> SKTensorDType {
-        self.dtype
+    /// The element data_type.
+    pub fn data_type(&self) -> SKTensorDataType {
+        self.data_type
     }
 
     /// The shape whose product equals [`Self::number_of_elements`].
