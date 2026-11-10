@@ -11,6 +11,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `sciencekit_common` model export/import contracts (spec `model-export-contracts`): the format-agnostic `SKModelState<F>` (estimator metadata, a deterministically ordered map of named tensors and typed hyperparameters), `SKModelMetadata` (estimator name, format version, scalar dtype, feature count, canonical class labels and a `SKParameterValue` map), `SKTensor<F>` with `SKTensorDType` (`F32`/`F64`/`I64`/`Bool`) and shape/dtype/name validation, and the `SKExportable<F>`/`SKImportable<F>` trait pair with the shared `sk_validate_import_metadata` check — no file format and no `serde` dependency.
 
+- `sciencekit_pipeline` sub-crate (spec `typed-pipeline`): the compile-time typed linear
+  pipeline. `SKPipeline::start` opens a builder whose nested-tuple type records every
+  composed stage; `then` appends a transformer stage and `finalize_classifier` /
+  `finalize_regressor` close the chain with a supervised estimator, rejecting an empty
+  chain with `SKError::InvalidHyperparameter`. The scalar and the stage output are checked
+  by the type system, with `compile_fail` doctests covering a mixed-scalar stage and a
+  regressor used as a classifier finalizer.
+- `sciencekit_pipeline` stage adapter: `SKPipelineTransformer` plus a blanket
+  implementation over every `SKUnsupervisedFit` estimator whose model implements
+  `SKFeatureTransformer` and whose output enters the owned block medium, so every existing
+  transformer (the three scalers, the simple imputer and the missing indicator) composes
+  without changing its trait.
+- `sciencekit_common` pipeline block boundary: `From<Array2>`, `From<CsMat>`,
+  `From<SKDataView>` and `TryFrom<&SKFeatureBlock>` conversions, plus the
+  `SKIntoFeatureBlock` trait implemented for the impute crate's `SKImputedOutput` and
+  `SKIndicatorOutput`, keeping the dense/CSR representation across the boundary.
+- `sciencekit_pipeline` fitted models: `SKPipelineClassifier` / `SKPipelineRegressor`
+  implement the shared classifier and regressor prediction contracts by transforming the
+  input through the fitted stages and delegating to the final model, and expose the
+  configured stages, the fitted stage models, the final model, the stage count and the
+  final feature count. Dense and sparse blocks flow without implicit densification, and
+  the fitted models are `Send + Sync` for concurrent prediction.
+
 ## [0.2.0] — 2026-11-10
 
 The first algorithm-and-contract batch after the evaluation foundation: representation

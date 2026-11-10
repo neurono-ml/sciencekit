@@ -1,0 +1,21 @@
+[package]
+name = "sciencekit_pipeline"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+rust-version = "1.85"
+description = "Compile-time typed linear pipelines for sciencekit estimators."
+repository = "https://github.com/neurono-ml/sciencekit"
+
+[dependencies]
+sciencekit_common = { path = "../sciencekit_common" }
+
+ndarray = { workspace = true }
+sprs = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+sciencekit_impute = { path = "../sciencekit_impute" }
+sciencekit_linear_model = { path = "../sciencekit_linear_model" }
+sciencekit_metrics = { path = "../sciencekit_metrics" }
+sciencekit_preprocessing = { path = "../sciencekit_preprocessing" }
