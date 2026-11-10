@@ -47,6 +47,25 @@ pub(crate) fn sk_binary_class_counts(
     Ok((positives, negatives))
 }
 
+/// Require at least one positive observation.
+pub(crate) fn sk_require_positive_class(
+    labels: &[i64],
+    positive_label: i64,
+    operation: &'static str,
+) -> Result<usize, SKError> {
+    let positives = labels
+        .iter()
+        .filter(|label| **label == positive_label)
+        .count();
+    if positives == 0 {
+        return Err(SKError::UnsupportedOperation {
+            operation,
+            reason: "the metric requires at least one positive observation".to_string(),
+        });
+    }
+    Ok(positives)
+}
+
 /// The indices of a slice ordered by increasing score.
 pub(crate) fn sk_ascending_score_order<F: SKFloat>(scores: &[F]) -> Vec<usize> {
     let mut order: Vec<usize> = (0..scores.len()).collect();
