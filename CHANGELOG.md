@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `sciencekit_common` typed cluster assignments (spec `clustering-contracts`): `SKClusterLabel` (a cluster identifier or the explicit `SKClusterLabel::NOISE`, four bytes per element through a `NonZeroU32` niche), `SKClusterIdentifier`, `SKClustererPredictor<F>` returning one label per row through the shared `SKDataView` seam, the `to_i64`/`from_i64` interop conversions (`Noise ↔ -1`, values below `-1` or above the maximum cluster index rejected with a structured error, never a panic), and `sk_validate_cluster_assignments`, the shared assignment-shape check.
 - `README.md` with project overview, status badges and a validated architecture diagram.
 - Repository workflow rules: keep-a-changelog policy, English-first durable artifacts, ADR issue per branch, Mermaid/SVG documentation standards.
 - `CHANGELOG.md` seeded following Keep a Changelog 1.1.0.
@@ -61,6 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **BREAKING** `sciencekit_common::SKUnsupervisedScorer` now binds its model to `SKClustererPredictor<F>` and its pure form takes `ArrayView1<SKClusterLabel>` instead of `ArrayView1<usize>`: clustering evaluation no longer rounds a regressor response into an index and can represent noise explicitly.
 - Representation parity is now a normative rule (spec `data-view-boundary`, PRD §4.5.1): an algorithm that mathematically tolerates more than one feature representation accepts dense, sparse and mixed inputs on every public operation, dispatches once per operation and never densifies a sparse input. A dense-only exception (§4.5.2) is admissible only when the mathematics requires dense geometry, the kernel rejects a sparse view with `UnsupportedRepresentation`, and the estimator keeps sparse/mixed parity through a documented alternative path.
 - The PRD now states that the `memmap2`-backed indexes and kernel caches, model persistence and model export are Phase 7 (interop) deliverables; the Phase 3 (neighbours/SVM) and Phase 4 (trees) sections carry the corresponding non-goal cross-references, and algorithms consume them through the Phase 0 `SKMappableSource` contract instead of growing private `memmap2` layers.
 
