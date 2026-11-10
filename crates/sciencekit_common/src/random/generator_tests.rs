@@ -4,6 +4,30 @@
 use super::generator::SKRandomGenerator;
 
 #[test]
+fn the_crate_root_reexports_the_random_surface() {
+    let mut generator = crate::SKRandomGenerator::new(3);
+    assert_eq!(
+        generator.next_u64(),
+        super::generator::SKRandomGenerator::new(3).next_u64()
+    );
+    assert_eq!(
+        crate::sk_derive_seed(1, crate::SK_RANDOM_DOMAIN_TREE, 2),
+        super::sub_seed::sk_derive_seed(1, super::sub_seed::SK_RANDOM_DOMAIN_TREE, 2)
+    );
+    let domains = [
+        crate::SK_RANDOM_DOMAIN_INITIALIZATION,
+        crate::SK_RANDOM_DOMAIN_STAGE,
+        crate::SK_RANDOM_DOMAIN_FOLD,
+        crate::SK_RANDOM_DOMAIN_PROJECTION,
+    ];
+    assert!(
+        domains
+            .iter()
+            .all(|&domain| domain != crate::SK_RANDOM_DOMAIN_TREE)
+    );
+}
+
+#[test]
 fn golden_vectors_pin_the_splitmix64_stream() {
     // Reference outputs of the SplitMix64 finalizer: a change to the
     // constants or the shift sequence breaks these vectors by construction.
