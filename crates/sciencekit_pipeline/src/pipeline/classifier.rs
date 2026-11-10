@@ -55,7 +55,7 @@ where
         let estimator = self.estimator;
         sk_run_operation(attributes, move || {
             let block = SKFeatureBlock::from(view);
-            let (fitted_stages, last_block) = stages.fit_stages(&block)?;
+            let (fitted_stages, last_block) = stages.fit_stages(block)?;
             let final_model = sk_fit_final(&estimator, &last_block, targets)?;
             let number_of_features = last_block.number_of_columns();
             Ok(SKPipelineClassifier::new(

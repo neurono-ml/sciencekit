@@ -73,7 +73,7 @@ fn a_sparse_chain_keeps_the_csr_representation() {
         .stages()
         .transform_stages(
             fitted.fitted_stages(),
-            &SKFeatureBlock::Sparse(sparse_features()),
+            SKFeatureBlock::Sparse(sparse_features()),
         )
         .unwrap();
     assert!(block.is_sparse());
@@ -87,7 +87,7 @@ fn dense_input_stays_dense_through_the_chain() {
         .stages()
         .transform_stages(
             fitted.fitted_stages(),
-            &SKFeatureBlock::from(dense_features()),
+            SKFeatureBlock::from(dense_features()),
         )
         .unwrap();
     assert!(!block.is_sparse());
@@ -171,7 +171,7 @@ fn a_stage_that_outputs_dense_changes_the_representation_explicitly() {
         .stages()
         .transform_stages(
             fitted.fitted_stages(),
-            &SKFeatureBlock::Sparse(sparse_features()),
+            SKFeatureBlock::Sparse(sparse_features()),
         )
         .unwrap();
     assert!(!block.is_sparse());
@@ -186,7 +186,7 @@ fn the_block_type_exposes_the_flow_without_a_pipeline_conversion() {
     let input = SKFeatureBlock::Sparse(sparse_features());
     let after_one = fitted
         .stages()
-        .transform_stages(fitted.fitted_stages(), &input)
+        .transform_stages(fitted.fitted_stages(), input.clone())
         .unwrap();
     assert!(input.is_sparse());
     assert!(after_one.is_sparse());

@@ -48,7 +48,7 @@ where
     Stages: SKConfiguredStages<F>,
 {
     let block = SKFeatureBlock::from(view);
-    stages.transform_stages(fitted_stages, &block)
+    stages.transform_stages(fitted_stages, block)
 }
 
 impl<F, Stages, FinalModel> SKClassifierPredictor<F> for SKPipelineClassifier<F, Stages, FinalModel>

@@ -3,7 +3,9 @@
 //! The conversions into a block are the seam the pipeline stage adapter uses:
 //! every existing transformer output (a dense `Array2` or a CSR `CsMat`) has a
 //! lossless, representation-preserving path into [`SKFeatureBlock`]. The
-//! conversion out of a block borrows, so a stage never copies its input.
+//! conversion out of a block borrows, so consumers never copy the block's data;
+//! the only copy is the one boundary conversion from a borrowed view into an
+//! owned block, made explicitly by the pipeline.
 
 use ndarray::Array2;
 use sprs::CsMat;

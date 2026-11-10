@@ -19,14 +19,14 @@ pub trait SKConfiguredStages<F: SKFloat> {
     /// the block the last stage produced.
     fn fit_stages(
         &self,
-        block: &SKFeatureBlock<F>,
+        block: SKFeatureBlock<F>,
     ) -> Result<(Self::FittedStages, SKFeatureBlock<F>), SKError>;
 
     /// Transform a block through every fitted stage in order.
     fn transform_stages(
         &self,
         fitted: &Self::FittedStages,
-        block: &SKFeatureBlock<F>,
+        block: SKFeatureBlock<F>,
     ) -> Result<SKFeatureBlock<F>, SKError>;
 
     /// The number of configured stages.
@@ -38,17 +38,17 @@ impl<F: SKFloat> SKConfiguredStages<F> for () {
 
     fn fit_stages(
         &self,
-        block: &SKFeatureBlock<F>,
+        block: SKFeatureBlock<F>,
     ) -> Result<(Self::FittedStages, SKFeatureBlock<F>), SKError> {
-        Ok(((), block.clone()))
+        Ok(((), block))
     }
 
     fn transform_stages(
         &self,
         _fitted: &Self::FittedStages,
-        block: &SKFeatureBlock<F>,
+        block: SKFeatureBlock<F>,
     ) -> Result<SKFeatureBlock<F>, SKError> {
-        Ok(block.clone())
+        Ok(block)
     }
 
     fn number_of_stages(&self) -> usize {
@@ -66,7 +66,7 @@ where
 
     fn fit_stages(
         &self,
-        block: &SKFeatureBlock<F>,
+        block: SKFeatureBlock<F>,
     ) -> Result<(Self::FittedStages, SKFeatureBlock<F>), SKError> {
         let (previous_fitted, previous_output) = self.0.fit_stages(block)?;
         let stage_span = tracing::info_span!(
@@ -83,7 +83,7 @@ where
     fn transform_stages(
         &self,
         fitted: &Self::FittedStages,
-        block: &SKFeatureBlock<F>,
+        block: SKFeatureBlock<F>,
     ) -> Result<SKFeatureBlock<F>, SKError> {
         let previous_output = self.0.transform_stages(&fitted.0, block)?;
         let stage_span = tracing::info_span!(

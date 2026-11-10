@@ -51,7 +51,7 @@ fn classifier_labels_equal_transform_then_final_model() {
         .predict_labels(
             &fitted
                 .stages()
-                .transform_stages(fitted.fitted_stages(), &new_block())
+                .transform_stages(fitted.fitted_stages(), new_block())
                 .unwrap(),
         )
         .unwrap();
@@ -67,7 +67,7 @@ fn classifier_probabilities_equal_transform_then_final_model() {
         .predict_probabilities(
             &fitted
                 .stages()
-                .transform_stages(fitted.fitted_stages(), &new_block())
+                .transform_stages(fitted.fitted_stages(), new_block())
                 .unwrap(),
         )
         .unwrap();
@@ -89,7 +89,7 @@ fn regressor_responses_equal_transform_then_final_model() {
         .predict(
             &fitted
                 .stages()
-                .transform_stages(fitted.fitted_stages(), &new_block())
+                .transform_stages(fitted.fitted_stages(), new_block())
                 .unwrap(),
         )
         .unwrap();
