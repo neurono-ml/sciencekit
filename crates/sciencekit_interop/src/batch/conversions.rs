@@ -53,15 +53,18 @@ impl SKTabularBatch {
         policy: SKMissingValuePolicy,
         layout: SKFeatureLayout,
     ) -> Result<SKSupervisedBatch<F>, SKError> {
+        // A nominal target becomes canonical indices from a **per-batch** label
+        // table. `SKSupervisedBatch` carries no table, so the mapping is not
+        // recoverable from the stream; callers that need it use
+        // `extract_target` directly.
         if !selection.has_target() {
             return Err(SKError::UnsupportedOperation {
                 operation: "supervised_conversion",
                 reason: "the selection does not declare a target column".to_string(),
             });
         }
-        let targets = self
-            .extract_target::<F>(selection, policy)?
-            .to_scalar_values()?;
+        let target = self.extract_target::<F>(selection, policy)?;
+        let targets = target.to_scalar_values()?;
         let block = self.to_feature_block(selection, policy, layout)?;
         match block {
             SKFeatureBlock::Dense(matrix) => {

@@ -32,9 +32,15 @@ fn sk_scalar_for_null<F: SKFloat>(
         }),
         SKMissingValuePolicy::NumericNaN => Ok(F::nan()),
         SKMissingValuePolicy::ConstantFill(value) => {
-            cast::<f64, F>(value).ok_or_else(|| SKError::InvalidHyperparameter {
+            // The public enum variant can bypass `constant_fill`, so the value
+            // is re-validated here — including after the cast, where a finite
+            // `f64` can overflow to an infinite `f32`.
+            let converted = cast::<f64, F>(value).filter(|converted| converted.is_finite());
+            converted.ok_or_else(|| SKError::InvalidHyperparameter {
                 name: "constant_fill_value",
-                reason: format!("the fill value {value} is not representable in the model scalar"),
+                reason: format!(
+                    "the fill value {value} is not representable as a finite model scalar"
+                ),
             })
         }
         SKMissingValuePolicy::CategoricalMissingCode => Err(SKError::NullValueInColumn {
@@ -83,14 +89,14 @@ pub fn sk_coerce_numeric_column<F: SKFloat>(
             })
             .collect::<Result<_, _>>()?,
         SKColumnData::Integer64(values) => {
-            let has_nulls = values.iter().any(Option::is_none);
-            if has_nulls {
-                for value in values.iter().flatten() {
-                    if !sk_integer_is_representable::<F>(*value) {
-                        return Err(SKError::Conversion(format!(
-                            "column `{column_name}` carries the integer {value}, which the model scalar cannot represent exactly; cast the column to a floating type in the adapter before promoting it"
-                        )));
-                    }
+            // Representability is a property of the value, not of the column's
+            // nullability: a complete integer column must not truncate silently
+            // either.
+            for value in values.iter().flatten() {
+                if !sk_integer_is_representable::<F>(*value) {
+                    return Err(SKError::Conversion(format!(
+                        "column `{column_name}` carries the integer {value}, which the model scalar cannot represent exactly; cast the column to a floating type in the adapter before promoting it"
+                    )));
                 }
             }
             values

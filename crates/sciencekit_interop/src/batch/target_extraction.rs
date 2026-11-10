@@ -1,6 +1,7 @@
 //! Extraction of the selected target column through the library's target view
 //! (spec `dataset-interop-core`).
 
+use crate::columns::sk_integer_is_representable;
 use ndarray::{Array1, ArrayView1};
 use num_traits::cast;
 use sciencekit_common::{SKError, SKFloat, SKLabelTable, SKTargetView};
@@ -94,6 +95,11 @@ impl<F: SKFloat> SKTargetExtraction<F> {
             SKTargetExtraction::Integer(values) => values
                 .iter()
                 .map(|value| {
+                    if !sk_integer_is_representable::<F>(*value) {
+                        return Err(SKError::Conversion(format!(
+                            "target value {value} is not representable in the model scalar"
+                        )));
+                    }
                     cast::<i64, F>(*value).ok_or_else(|| {
                         SKError::Conversion(format!(
                             "target value {value} is not representable in the model scalar"

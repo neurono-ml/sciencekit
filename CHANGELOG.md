@@ -44,7 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `SKTabularSource` is the reopenable, fallible source contract, bridged into
   `SKSourceProvider` / `SKSupervisedSourceProvider` by `SKTabularSourceProvider`; the
   `SKAsyncTabularSource` bridge polls async streams on a dedicated reader thread with a bounded
-  channel, backpressure and cancellation. Conversion spans record source kind, shape and policy.
+  channel, backpressure and cancellation. A conversion-span helper records source kind, shape and policy for adapters that use it.
 - `sciencekit_common` interop error variants in the central taxonomy (`UnknownColumn`,
   `DuplicateColumn`, `UnsupportedColumnType`, `NullValueInColumn`, `UnevenColumnLengths`,
   `SchemaMismatch`), each naming the offending column.

@@ -178,3 +178,28 @@ fn category_codes_are_unsupported_on_the_numeric_path() {
     .unwrap_err();
     assert!(matches!(error, SKError::UnsupportedColumnType { .. }));
 }
+
+/// A complete integer column must not truncate silently either.
+#[test]
+fn complete_integer_columns_above_the_mantissa_are_rejected() {
+    let large = (1_i64 << 53) + 1;
+    let error = sk_coerce_numeric_column::<f64>(
+        "count",
+        &SKColumnData::Integer64(vec![Some(1), Some(large)]),
+        SKMissingValuePolicy::Reject,
+    )
+    .unwrap_err();
+    assert!(matches!(error, SKError::Conversion(_)));
+}
+
+/// A constant fill that overflows the model scalar is rejected.
+#[test]
+fn constant_fill_rejects_a_value_that_overflows_the_scalar() {
+    let error = sk_coerce_numeric_column::<f32>(
+        "measurement",
+        &SKColumnData::Float64(vec![None]),
+        SKMissingValuePolicy::ConstantFill(1.0e300),
+    )
+    .unwrap_err();
+    assert!(matches!(error, SKError::InvalidHyperparameter { .. }));
+}

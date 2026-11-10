@@ -138,3 +138,23 @@ fn supervised_conversion_requires_a_target() {
         sciencekit_common::SKError::UnsupportedOperation { .. }
     ));
 }
+
+/// A nominal target cannot be streamed as a supervised batch: the label table
+/// would be lost, so the conversion is rejected instead of silently coding.
+/// A nominal target becomes canonical indices. The per-batch label table is
+/// **not** carried by the supervised batch (documented limitation); callers that
+/// need the mapping use `extract_target` directly.
+#[test]
+fn supervised_conversion_encodes_a_nominal_target_as_indices() {
+    let selection = selection();
+    let supervised = batch()
+        .to_supervised_batch::<f64>(
+            &selection,
+            SKMissingValuePolicy::CategoricalMissingCode,
+            SKFeatureLayout::Dense,
+        )
+        .unwrap();
+    let targets = supervised.targets();
+    assert_eq!(targets.len(), 2);
+    assert!(targets.iter().all(|value| value.is_finite()));
+}
