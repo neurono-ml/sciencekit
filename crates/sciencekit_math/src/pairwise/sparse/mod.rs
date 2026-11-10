@@ -27,6 +27,8 @@ pub use squared_euclidean::{
 #[cfg(test)]
 mod chebyshev_tests;
 #[cfg(test)]
+mod concurrency_tests;
+#[cfg(test)]
 mod cosine_tests;
 #[cfg(test)]
 mod fixtures;
