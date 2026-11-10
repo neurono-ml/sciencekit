@@ -242,6 +242,32 @@ Every algorithm supports out-of-core — it is a differentiator of the library. 
 
 Support from day one via **`sprs` + `ndarray`** (CSR/CSC/COO). Essential for Lasso, linear SVMs and text classification. Central traits accept dense or sparse views depending on the algorithm.
 
+#### 4.5.1. Representation parity
+
+An algorithm that **mathematically tolerates more than one representation** accepts
+**dense, sparse and mixed dense/sparse inputs on every public operation**. It dispatches on
+the representation exactly once per operation, never densifies a sparse input, and returns
+the same result (within the documented tolerance) regardless of how the same logical matrix
+is supplied. Two-matrix operations handle all four combinations — dense×dense,
+sparse×sparse, sparse×dense, dense×sparse — after validating shapes and representations.
+
+#### 4.5.2. Dense-only exception
+
+An algorithm whose mathematics genuinely requires **dense geometry** (for example, tree
+indexes whose nodes are axis-aligned boxes or balls) may declare dense-only support. The
+exception is admissible only when:
+
+- the dense-only kernel rejects a sparse view **before processing any element** with
+  `UnsupportedRepresentation` and a conversion/path suggestion; and
+- the **public estimator surface still covers dense, sparse and mixed inputs** through a
+  documented alternative path (typically a brute-force searcher over the stored training
+  features), so estimator-level parity is preserved without densification; and
+- the change's proposal states **why** the mathematics requires dense geometry and **names**
+  the alternative path.
+
+The normative source is the `data-view-boundary` capability
+(`openspec/specs/data-view-boundary/spec.md`).
+
 ---
 
 ## 5. Threads and Concurrency
@@ -515,10 +541,13 @@ Order faithful to the scikit-learn mapping (from the handoff), respecting depend
 
 ### Phase 3 — Neighborhood and SVM
 8. `sciencekit_metrics` (pairwise already in math) + `sciencekit_neighbors`: SKKNeighborsClassifier/SKKNeighborsRegressor, SKKDTree, SKBallTree.
+   - Representation parity (§4.5.1): the neighbors estimators accept dense, sparse and mixed inputs. The KD-tree and Ball-tree indexes invoke the **dense-only exception** (§4.5.2) because tree geometry is dense by construction; they reject sparse views with `UnsupportedRepresentation`, while the estimators keep parity through the brute-force searcher over the stored training features.
 9. `sciencekit_svm`: SKSVC, SKSVR, SKLinearSVC.
+   - `SKSVC`/`SKSVR` keep representation parity through the sparse-aware kernel and `SKLinearSVC` through the sparse linear path; neither needs the dense-only exception.
 
 ### Phase 4 — Trees and ensembles
 10. `sciencekit_tree`: SKDecisionTreeClassifier/SKDecisionTreeRegressor.
+    - The single-tree splitters invoke the **dense-only exception** (§4.5.2) because split search needs dense feature scans; the tree estimators keep representation parity by materializing each sparse training block once into a documented internal dense layout, never densifying at predict time when a sparse-aware path exists.
 11. `sciencekit_ensemble`: parallel aggregation with rayon (SKRandomForest, SKBagging, SKGradientBoosting).
 
 ### Phase 5 — Unsupervised
