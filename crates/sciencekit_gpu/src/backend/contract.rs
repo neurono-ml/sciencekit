@@ -7,10 +7,11 @@
 //! `kernel::dispatch`.
 
 use ndarray::{Array2, ArrayView2};
-use sciencekit_common::{SKBackendKind, SKFloat};
+use sciencekit_common::{SKBackendKind, SKFloat, SKGpuKernel};
 
 use super::discovery::SKDeviceDiscovery;
 use crate::buffer::SKDeviceBuffer;
+use crate::kernel::SKDeviceBufferRef;
 
 /// A backend that drives one or more devices.
 ///
@@ -27,4 +28,15 @@ pub trait SKComputeBackend<F: SKFloat>: SKDeviceDiscovery {
 
     /// Copy device storage back into an owned host matrix.
     fn download(&self, buffer: &SKDeviceBuffer<F>) -> Result<Array2<F>, Self::Error>;
+
+    /// Run `kernel` over `arguments` on the device and return the result buffer.
+    ///
+    /// A backend that does not implement the kernel returns
+    /// [`SKError::UnsupportedOperation`](sciencekit_common::SKError::UnsupportedOperation)
+    /// naming it; it never silently computes a different kernel.
+    fn dispatch(
+        &self,
+        kernel: SKGpuKernel,
+        arguments: &[SKDeviceBufferRef<'_, F>],
+    ) -> Result<SKDeviceBuffer<F>, Self::Error>;
 }

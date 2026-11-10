@@ -9,11 +9,13 @@
 mod capabilities;
 mod fallback;
 mod info;
+mod kernel;
 mod selection;
 
 pub use capabilities::SKDeviceCapabilities;
 pub use fallback::{SK_HOST_FALLBACK_BACKEND, SKFallbackReason};
 pub use info::SKDeviceInfo;
+pub use kernel::SKGpuKernel;
 pub use selection::{SKDevicePreference, sk_select_device};
 
 #[cfg(test)]

@@ -7,11 +7,14 @@
 //! machinery.
 
 use ndarray::{Array2, ArrayView2};
-use sciencekit_common::{SKBackendKind, SKDeviceCapabilities, SKDeviceInfo, SKError, SKFloat};
+use sciencekit_common::{
+    SKBackendKind, SKDeviceCapabilities, SKDeviceInfo, SKError, SKFloat, SKGpuKernel,
+};
 
 use super::contract::SKComputeBackend;
 use super::discovery::SKDeviceDiscovery;
 use crate::buffer::{SKDeviceBuffer, SKDeviceBufferBuilder};
+use crate::kernel::SKDeviceBufferRef;
 
 /// A backend over a caller-supplied inventory.
 pub(crate) struct SKMockComputeBackend {
@@ -113,5 +116,28 @@ impl<F: SKFloat> SKComputeBackend<F> for SKMockComputeBackend {
             });
         }
         buffer.to_host_matrix()
+    }
+
+    fn dispatch(
+        &self,
+        kernel: SKGpuKernel,
+        arguments: &[SKDeviceBufferRef<'_, F>],
+    ) -> Result<SKDeviceBuffer<F>, SKError> {
+        let device = self.primary_device()?;
+        if !device.capabilities.supports_kernel(kernel) {
+            return Err(SKError::UnsupportedOperation {
+                operation: kernel.name(),
+                reason: format!(
+                    "the mock device `{}` does not implement this kernel",
+                    device.name
+                ),
+            });
+        }
+        let input = arguments.first().ok_or_else(|| {
+            SKError::Conversion("kernel dispatch requires at least one argument buffer".to_string())
+        })?;
+        // The mock passes its input through: the contract under test is the
+        // dispatch surface, not a numerical kernel.
+        Ok((*input).clone())
     }
 }

@@ -31,8 +31,8 @@ fn multiple_devices_are_ordered_by_kind_priority_then_index() {
         device(0, SKBackendKind::Rocm, "ROCm 0"),
     ];
 
-    let selected =
-        sk_select_device(&inventory, SKDevicePreference::AnyDevice).expect("a device is present");
+    let selected = sk_select_device(&inventory, SKDevicePreference::AnyDevice, None)
+        .expect("a device is present");
     assert_eq!(selected.name, "OpenCL 0");
 }
 
@@ -46,8 +46,12 @@ fn a_configured_backend_selects_its_first_device() {
         device(0, SKBackendKind::Cuda, "CUDA 0"),
     ];
 
-    let selected = sk_select_device(&inventory, SKDevicePreference::Backend(SKBackendKind::Cuda))
-        .expect("a CUDA device is present");
+    let selected = sk_select_device(
+        &inventory,
+        SKDevicePreference::Backend(SKBackendKind::Cuda),
+        None,
+    )
+    .expect("a CUDA device is present");
     assert_eq!(selected.name, "CUDA 0");
 }
 
@@ -59,6 +63,7 @@ fn no_matching_device_reports_the_host_fallback() {
     let reason = sk_select_device(
         &inventory,
         SKDevicePreference::Backend(SKBackendKind::OpenCl),
+        None,
     )
     .expect_err("no OpenCL device is present");
     assert_eq!(reason, SKFallbackReason::NoDeviceAvailable);
@@ -68,8 +73,8 @@ fn no_matching_device_reports_the_host_fallback() {
 /// An empty inventory falls back without an error.
 #[test]
 fn an_empty_inventory_falls_back_to_the_host_backend() {
-    let reason =
-        sk_select_device(&[], SKDevicePreference::AnyDevice).expect_err("no device is present");
+    let reason = sk_select_device(&[], SKDevicePreference::AnyDevice, None)
+        .expect_err("no device is present");
     assert_eq!(reason, SKFallbackReason::NoDeviceAvailable);
 }
 
@@ -77,8 +82,12 @@ fn an_empty_inventory_falls_back_to_the_host_backend() {
 #[test]
 fn a_host_backend_preference_never_selects_a_device() {
     let inventory = vec![device(0, SKBackendKind::OpenCl, "OpenCL 0")];
-    let reason = sk_select_device(&inventory, SKDevicePreference::Backend(SKBackendKind::Faer))
-        .expect_err("a host backend is not a device");
+    let reason = sk_select_device(
+        &inventory,
+        SKDevicePreference::Backend(SKBackendKind::Faer),
+        None,
+    )
+    .expect_err("a host backend is not a device");
     assert_eq!(reason, SKFallbackReason::NoDeviceAvailable);
 }
 
@@ -90,10 +99,10 @@ fn selection_is_deterministic_across_repeated_calls() {
         device(1, SKBackendKind::OpenCl, "OpenCL 1"),
         device(0, SKBackendKind::OpenCl, "OpenCL 0"),
     ];
-    let first = sk_select_device(&inventory, SKDevicePreference::AnyDevice).unwrap();
+    let first = sk_select_device(&inventory, SKDevicePreference::AnyDevice, None).unwrap();
     for _ in 0..16 {
         assert_eq!(
-            sk_select_device(&inventory, SKDevicePreference::AnyDevice).unwrap(),
+            sk_select_device(&inventory, SKDevicePreference::AnyDevice, None).unwrap(),
             first
         );
     }

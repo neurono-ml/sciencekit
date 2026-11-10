@@ -10,6 +10,7 @@ use crate::observability::SKBackendKind;
 
 use super::fallback::SKFallbackReason;
 use super::info::SKDeviceInfo;
+use super::kernel::SKGpuKernel;
 
 /// Which devices a caller accepts.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -26,10 +27,13 @@ pub enum SKDevicePreference {
 /// The ordering is deterministic: devices of the preferred kind come first,
 /// then devices of the vendor-transparent OpenCL kind, then CUDA, then ROCm;
 /// within one kind the lowest device index wins. A host backend kind (or an
-/// empty inventory) yields [`SKFallbackReason::NoDeviceAvailable`].
+/// empty inventory) yields [`SKFallbackReason::NoDeviceAvailable`]; devices that
+/// exist but do not implement `required_kernel` yield
+/// [`SKFallbackReason::KernelNotSupported`].
 pub fn sk_select_device(
     inventory: &[SKDeviceInfo],
     preference: SKDevicePreference,
+    required_kernel: Option<SKGpuKernel>,
 ) -> Result<SKDeviceInfo, SKFallbackReason> {
     let mut candidates: Vec<&SKDeviceInfo> = inventory
         .iter()
@@ -39,6 +43,18 @@ pub fn sk_select_device(
             SKDevicePreference::Backend(kind) => device.kind == kind,
         })
         .collect();
+
+    if candidates.is_empty() {
+        return Err(SKFallbackReason::NoDeviceAvailable);
+    }
+
+    candidates.retain(|device| match required_kernel {
+        Some(kernel) => device.capabilities.supports_kernel(kernel),
+        None => true,
+    });
+    if candidates.is_empty() {
+        return Err(SKFallbackReason::KernelNotSupported);
+    }
 
     candidates.sort_by_key(|device| (kind_priority(device.kind, preference), device.index));
     candidates
