@@ -25,7 +25,7 @@ pub(crate) fn sk_grow_tree<F: SKFloat, C: SKTreeCriterion<F>>(
             .maximum_depth
             .is_none_or(|maximum_depth| depth < maximum_depth);
         let large_enough = sample_indices.len() >= config.minimum_samples_split
-            && sample_indices.len() >= 2 * config.minimum_samples_leaf;
+            && sample_indices.len() >= config.minimum_samples_leaf.saturating_mul(2);
         if can_descend && large_enough {
             let features = sk_select_features(config, feature_count, node_index);
             let node_seed =

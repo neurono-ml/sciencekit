@@ -52,8 +52,10 @@ pub(super) fn sk_validate_class_weight<F: SKFloat>(
         )?;
         sk_validate_hyperparameter(
             "class_weight",
-            weights.iter().all(|weight| *weight >= F::zero()),
-            "explicit class weights must be non-negative",
+            weights
+                .iter()
+                .all(|weight| weight.is_finite() && *weight >= F::zero()),
+            "explicit class weights must be finite and non-negative",
         )?;
         sk_validate_hyperparameter(
             "class_weight",

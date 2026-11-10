@@ -45,7 +45,10 @@ pub(crate) fn sk_scan_absolute_error_feature<F: SKFloat>(
         let right_cost = right.absolute_deviation_cost();
         let decrease = parent_cost - left_cost - right_cost;
         if decrease > F::zero() {
-            boundaries.push((sk_midpoint(value, right_value), decrease));
+            // The costs are totals; report the weighted mean decrease so the
+            // candidate is on the same scale as the other criteria.
+            let sample_count = F::from(sorted.len()).expect("a sample count fits the scalar");
+            boundaries.push((sk_midpoint(value, right_value), decrease / sample_count));
         }
     }
     let (threshold, decrease) = sk_choose_boundary(&boundaries, choice)?;

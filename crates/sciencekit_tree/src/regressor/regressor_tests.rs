@@ -130,3 +130,36 @@ fn backend_reaches_the_model() {
         .expect("fit succeeds");
     assert_eq!(model.backend(), SKBackendKind::MatrixMultiply);
 }
+
+/// A strided continuous target is valid caller data: fitting must not panic.
+#[test]
+fn strided_continuous_targets_are_accepted() {
+    use sciencekit_common::SKSupervisedFit;
+
+    let features = ndarray::array![[0.0_f64], [1.0], [2.0], [3.0]];
+    let wide_targets = ndarray::array![[0.0_f64, 9.0], [1.0, 9.0], [2.0, 9.0], [3.0, 9.0]];
+    let strided = wide_targets.column(0);
+    assert!(!strided.is_standard_layout());
+    let model = SKDecisionTreeRegressor::<f64>::build()
+        .build()
+        .unwrap()
+        .fit(&features, strided)
+        .expect("a strided continuous target is valid");
+    let predictions = model.predict(features.view()).expect("predict succeeds");
+    assert_eq!(predictions.len(), 4);
+}
+
+/// An explicit infinite class weight is rejected instead of producing NaNs.
+#[test]
+fn infinite_class_weights_are_rejected() {
+    use sciencekit_common::SKBuilder;
+
+    let error = crate::SKDecisionTreeClassifier::<f64>::build()
+        .class_weight(crate::SKClassWeight::Explicit(vec![f64::INFINITY, 1.0]))
+        .build()
+        .unwrap_err();
+    assert!(matches!(
+        error,
+        sciencekit_common::SKError::InvalidHyperparameter { .. }
+    ));
+}

@@ -553,7 +553,7 @@ Order faithful to the scikit-learn mapping (from the handoff), respecting depend
 ### Phase 4 — Trees and ensembles
 10. `sciencekit_tree`: SKDecisionTreeClassifier/SKDecisionTreeRegressor.
     - Representation parity (§4.5.1): the tree estimators accept dense, sparse and mixed inputs without densifying a sparse design. Split search over a borrowed CSR design scans the stored entries column-wise, so this algorithm needs **no** dense-only exception.
-    - Tree persistence (`memmap2`-backed node storage and model export) is **out of scope here** and delivered by Phase 7 (interop).
+    - Tree persistence (`memmap2`-backed node storage and model export) is **out of scope here** and delivered by Phase 7 (interop). Missing-value routing (surrogate splits) and cost-complexity pruning are explicit non-goals of the CART change; a tree fitted with missing values rejects them rather than routing them silently.
 11. `sciencekit_ensemble`: parallel aggregation with rayon (SKRandomForest, SKBagging, SKGradientBoosting).
 
 ### Phase 5 — Unsupervised

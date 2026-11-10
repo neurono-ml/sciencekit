@@ -47,18 +47,14 @@ pub(super) fn sk_fit_regressor<F: SKFloat>(
             splitter: estimator.splitter,
             random_seed: estimator.random_seed,
         };
+        let responses_values: Vec<F> = responses.iter().copied().collect();
         match features {
             SKDataView::Dense(dense) => {
                 if let Some(position) = dense.iter().position(|value| !value.is_finite()) {
                     return Err(SKError::NonFiniteValue { position });
                 }
                 let design = SKDesign::Dense(dense);
-                sk_fit_design(
-                    estimator,
-                    &design,
-                    &configuration,
-                    responses.as_slice().expect("contiguous targets"),
-                )
+                sk_fit_design(estimator, &design, &configuration, &responses_values)
             }
             SKDataView::Sparse(csr) => {
                 let csc = sk_to_csc(&csr);
@@ -67,12 +63,7 @@ pub(super) fn sk_fit_regressor<F: SKFloat>(
                     csc: csc.view(),
                 };
                 design.validate_finite()?;
-                sk_fit_design(
-                    estimator,
-                    &design,
-                    &configuration,
-                    responses.as_slice().expect("contiguous targets"),
-                )
+                sk_fit_design(estimator, &design, &configuration, &responses_values)
             }
             _ => Err(SKError::UnsupportedRepresentation {
                 representation: "unknown",
