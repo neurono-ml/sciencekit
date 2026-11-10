@@ -22,3 +22,5 @@ mod builder_tests;
 mod fit_tests;
 #[cfg(test)]
 mod model_tests;
+#[cfg(test)]
+mod predict_tests;
