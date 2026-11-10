@@ -2,24 +2,24 @@
 
 ## 1. Contract
 
-- [ ] 1.1 Write failing tests in `sciencekit_common` for `SKClusterLabel` — cluster `0`,
+- [x] 1.1 Write failing tests in `sciencekit_common` for `SKClusterLabel` — cluster `0`,
   a non-zero cluster, noise, the four-byte size assertion and the `to_i64`/`from_i64`
   round-trip (including rejection below `-1`) — then add the type in
   `fit_traits/clusterer.rs`; verify with `cargo test -p sciencekit_common cluster_label`.
-- [ ] 1.2 Add `SKClustererPredictor<F>` returning `Array1<SKClusterLabel>` and a constant
+- [x] 1.2 Add `SKClustererPredictor<F>` returning `Array1<SKClusterLabel>` and a constant
   clusterer test covering dense and sparse input; verify with
   `cargo test -p sciencekit_common clusterer`.
-- [ ] 1.3 Update `SKUnsupervisedScorer` to the clusterer bound and typed assignments, and
+- [x] 1.3 Update `SKUnsupervisedScorer` to the clusterer bound and typed assignments, and
   update the scorer-contract example tests; verify with
   `cargo test -p sciencekit_common scorer`.
-- [ ] 1.4 Add the shared assignment-shape validation helper and tests for a length mismatch
+- [x] 1.4 Add the shared assignment-shape validation helper and tests for a length mismatch
   and accepted noise; verify with `cargo test -p sciencekit_common assignment`.
 
 ## 2. Documentation and review
 
-- [ ] 2.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under `Unreleased →
+- [x] 2.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under `Unreleased →
   Changed` for the typed assignment contract and the breaking scorer bound.
-- [ ] 2.2 Add a short `Development Explained` subsection explaining the typed cluster
+- [x] 2.2 Add a short `Development Explained` subsection explaining the typed cluster
   label, the niche representation and the `-1` interop boundary; verify with `mdbook build
   docs`.
 - [ ] 2.3 Independent review by a separate agent validating every scenario in
