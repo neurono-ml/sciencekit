@@ -25,6 +25,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   values and insufficient degrees of freedom report structured errors, and
   every score is deterministic under concurrent calls.
 
+- `sciencekit_neighbors` gains the k-nearest-neighbour estimators (spec
+  `nearest-neighbor-estimators`): `SKKNeighborsClassifier<F>` and
+  `SKKNeighborsRegressor<F>`, both builder-only with `nearest_neighbors_count`
+  (default 5), `weights` (`Uniform` default, `Distance`), `algorithm` (`Auto`
+  default, `KdTree`, `BallTree`, `BruteForce`), `metric` (`Euclidean` default,
+  `Manhattan`, `Chebyshev`, `Cosine`), `leaf_size` (default 40), `backend`
+  (default `Faer`) and `execution_mode` (default `Automatic`). `Auto` builds a
+  tree for dense Euclidean, Manhattan or Chebyshev data with at least 64 rows
+  (a ball tree above 20 features) and uses brute force for sparse, mixed or
+  cosine data; an explicit tree request the input cannot serve returns
+  `UnsupportedRepresentation` with the alternative named. Classification takes
+  the weighted majority vote of the `k` nearest rows and reports class
+  probabilities as weighted neighbour fractions over the canonical class table;
+  vote ties go to the smallest canonical class index, distance ties to the
+  smallest training row index. Regression reports the weighted mean of the
+  neighbour responses. `Distance` weights follow the reference convention: when
+  a selected neighbour sits exactly on the query row, only the zero-distance
+  duplicates contribute. Both estimators accept dense, sparse and mixed
+  fit/predict inputs, dispatch once per operation, never densify sparse input
+  and expose the resolved search strategy, the stored training representation,
+  the carried backend and the execution intent on the fitted model. A new
+  sparse-aware brute-force searcher implements the shared
+  `SKNearestNeighborsSearcher` contract over chunks sized from a fixed memory
+  budget, selects the `k` smallest `(distance, training_index)` pairs with
+  `select_nth_unstable_by` and sorts them deterministically. Fitted models are
+  `Send + Sync`; the companion tests cover validation errors, determinism,
+  concurrency, dense/sparse parity and accuracy/R² production through
+  `sciencekit_metrics`.
+
 ## [0.4.0] — 2026-11-10
 
 Model selection and the C ABI: reproducible splits, folds and cross-validation scoring, plus
