@@ -19,3 +19,5 @@ mod regressor_builder_tests;
 mod regressor_representation_tests;
 #[cfg(test)]
 mod regressor_tests;
+#[cfg(test)]
+mod regressor_validation_tests;

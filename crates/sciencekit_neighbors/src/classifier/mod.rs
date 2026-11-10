@@ -27,3 +27,5 @@ mod classifier_probability_tests;
 mod classifier_representation_tests;
 #[cfg(test)]
 mod classifier_target_tests;
+#[cfg(test)]
+mod classifier_validation_tests;
