@@ -231,4 +231,6 @@ homogeneity/completeness/V-measure and the centroid indices. The
 [k-nearest neighbours chapter](./ch32-knn-estimators.html) adds the brute-force searcher, the
 runtime strategy dispatch, weighting and the estimator representation parity. The
 [k-NN imputer chapter](./ch33-knn-imputer.html) adds the NaN-aware donor search, chunked
-distance blocks, weighting with a column-mean fallback and the dense-only contract.
+distance blocks, weighting with a column-mean fallback and the dense-only contract. The
+[grid search chapter](./ch34-grid-search.html) adds candidate enumeration, shared folds,
+deterministic best selection, error policies and the refit.

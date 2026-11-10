@@ -62,4 +62,5 @@
   - [Clustering metrics](development-explained/ch31-clustering-metrics.md)
   - [k-nearest neighbours: one estimator, a search strategy](development-explained/ch32-knn-estimators.md)
   - [The k-NN imputer: filling a hole from its neighbours](development-explained/ch33-knn-imputer.md)
+  - [Grid search: trying every candidate honestly](development-explained/ch34-grid-search.md)
   - [Maintaining this book](development-explained/maintaining.md)
