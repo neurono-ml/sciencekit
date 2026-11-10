@@ -8,29 +8,11 @@ pub(crate) use best::sk_best_split;
 pub use candidate::SKSplitCandidate;
 pub(crate) use scan::{SKScanContext, SKThresholdChoice, sk_scan_feature};
 
-/// The feature-subsampling policy.
-#[derive(Debug, Clone, PartialEq)]
-pub enum SKMaximumFeatures<F> {
-    /// Consider every feature (default).
-    All,
-    /// Consider exactly this many features.
-    Count(usize),
-    /// Consider this fraction of the features.
-    Fraction(F),
-    /// Consider the square root of the feature count.
-    Sqrt,
-    /// Consider the base-2 logarithm of the feature count.
-    Log2,
-}
+mod maximum_features;
+mod splitter_kind;
 
-/// The split-selection strategy.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum SKSplitter {
-    /// Evaluate every candidate threshold and take the best (default).
-    Best,
-    /// Draw one random candidate threshold per considered feature.
-    Random,
-}
+pub use maximum_features::SKMaximumFeatures;
+pub use splitter_kind::SKSplitter;
 
 #[cfg(test)]
 mod splitter_best_tests;
