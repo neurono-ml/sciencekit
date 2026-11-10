@@ -36,6 +36,9 @@ pub mod regressor;
 
 pub use criterion::SKTreeCriterion;
 pub use node::{SKTree, SKTreeNode};
+pub use regressor::{
+    SKDecisionTreeRegressor, SKDecisionTreeRegressorBuilder, SKDecisionTreeRegressorModel,
+};
 pub use splitter::{SKMaximumFeatures, SKSplitCandidate, SKSplitter};
 
 #[cfg(test)]

@@ -154,7 +154,7 @@ pub(super) fn is_classification(criterion: SKTreeCriterion) -> bool {
     matches!(criterion, SKTreeCriterion::Gini | SKTreeCriterion::Entropy)
 }
 
-pub(super) fn sk_validate_common_configuration<F: SKFloat>(
+pub(crate) fn sk_validate_common_configuration<F: SKFloat>(
     _criterion: SKTreeCriterion,
     minimum_samples_split: usize,
     minimum_samples_leaf: usize,

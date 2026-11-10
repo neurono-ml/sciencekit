@@ -1,6 +1,6 @@
 //! The CART classifier (spec `decision-trees`).
 
-mod builder;
+pub(crate) mod builder;
 mod core_implementation;
 mod criterion;
 mod fit;

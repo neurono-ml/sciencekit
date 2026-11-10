@@ -11,9 +11,11 @@ mod feature_selection;
 pub(crate) use config::SKGrowthConfig;
 pub(crate) use criterion::SKTreeCriterion;
 pub(crate) use engine::sk_grow_tree;
-pub(crate) use feature_selection::sk_select_features;
 
 #[cfg(test)]
 mod feature_subsampling_tests;
+#[cfg(test)]
+pub(crate) use feature_selection::sk_select_features;
+
 #[cfg(test)]
 mod growth_tests;
