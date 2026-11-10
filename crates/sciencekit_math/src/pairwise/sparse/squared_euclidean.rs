@@ -4,7 +4,7 @@
 //! stored entries: the norms sum the stored squares and the dot product merges
 //! the two sorted rows, so the work is proportional to the stored entries.
 
-use ndarray::{Array, Array2, ArrayView2};
+use ndarray::{Array2, ArrayView2};
 use sciencekit_common::SKFloat;
 use sprs::CsMatView;
 

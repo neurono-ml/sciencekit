@@ -39,6 +39,8 @@ pub(crate) use squared_euclidean::{
 };
 
 #[cfg(test)]
+mod acceptance_tests;
+#[cfg(test)]
 mod chebyshev_tests;
 #[cfg(test)]
 mod concurrency_tests;
