@@ -2,7 +2,8 @@
 
 ## Context
 
-See `proposal.md` — Why. The source of truth is `dag.yaml` (55 active changes). This design
+See `proposal.md` — Why. The source of truth is `dag.yaml` (60 active changes, plus three
+superseded nodes kept for traceability). This design
 explains the layers, lanes and the automated cycle; it must stay in sync with the YAML.
 
 ## Goals / Non-Goals
