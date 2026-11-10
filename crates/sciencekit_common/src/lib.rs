@@ -30,8 +30,9 @@ pub mod sk_float;
 pub mod target_view;
 
 pub use batching::{
-    SKDataBatch, SKFeatureBlock, SKLazySource, SKMappableSource, SKReopenableSource,
-    SKSourceProvider, SKSupervisedBatch, SKSupervisedLazySource, SKSupervisedSourceProvider,
+    SKDataBatch, SKFeatureBlock, SKIntoFeatureBlock, SKLazySource, SKMappableSource,
+    SKReopenableSource, SKSourceProvider, SKSupervisedBatch, SKSupervisedLazySource,
+    SKSupervisedSourceProvider,
 };
 pub use builders::{SKBuilder, SKBuilderState, sk_validate_hyperparameter};
 pub use data_view::{

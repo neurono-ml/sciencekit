@@ -19,7 +19,7 @@ mod supervised_batch;
 mod supervised_source;
 
 pub use data_batch::SKDataBatch;
-pub use feature_block::SKFeatureBlock;
+pub use feature_block::{SKFeatureBlock, SKIntoFeatureBlock};
 pub use lazy_source::SKLazySource;
 pub use mappable_source::SKMappableSource;
 pub use provider::{SKReopenableSource, SKSourceProvider, SKSupervisedSourceProvider};
