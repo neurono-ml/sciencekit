@@ -42,8 +42,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   smallest training row index. Regression reports the weighted mean of the
   neighbour responses. `Distance` weights follow the reference convention: when
   a selected neighbour sits exactly on the query row, only the zero-distance
-  duplicates contribute. Both estimators accept dense, sparse and mixed
-  fit/predict inputs, dispatch once per operation, never densify sparse input
+  duplicates contribute. Both estimators accept dense and sparse fit inputs and dense, sparse
+  and mixed prediction inputs, dispatch once per operation, never densify sparse input
   and expose the resolved search strategy, the stored training representation,
   the carried backend and the execution intent on the fitted model. A new
   sparse-aware brute-force searcher implements the shared

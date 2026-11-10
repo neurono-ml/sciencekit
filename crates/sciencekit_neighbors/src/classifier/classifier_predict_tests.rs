@@ -115,3 +115,32 @@ fn classifier_predict_returns_one_label_per_query_row() {
     assert_eq!(label_text(&model, predictions[0]), "0");
     assert_eq!(label_text(&model, predictions[1]), "1");
 }
+
+/// Inverse-distance weighting lets two very close neighbours outvote three far
+/// ones — the scenario as written in the spec, with no zero distance involved.
+#[test]
+fn classifier_predict_distance_weighting_outvotes_a_far_majority() {
+    let features = array![[1.0_f64], [2.0], [100.0], [101.0], [102.0]];
+    let labels = array![0_i64, 0, 1, 1, 1];
+    let queries = array![[0.0_f64]];
+
+    let uniform = fit_fixture(features.clone(), labels.clone());
+    assert_eq!(
+        label_text(&uniform, uniform.predict_labels(queries.view()).unwrap()[0]),
+        "1"
+    );
+
+    let weighted = SKKNeighborsClassifier::<f64>::build()
+        .weights(SKNeighborsWeights::Distance)
+        .build()
+        .unwrap()
+        .fit(features.view(), labels.view())
+        .unwrap();
+    assert_eq!(
+        label_text(
+            &weighted,
+            weighted.predict_labels(queries.view()).unwrap()[0]
+        ),
+        "0"
+    );
+}

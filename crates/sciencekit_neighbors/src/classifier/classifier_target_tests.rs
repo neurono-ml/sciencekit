@@ -63,9 +63,10 @@ fn classifier_targets_preserve_integer_values_through_the_table() {
 }
 
 #[test]
-fn classifier_targets_order_classes_by_the_table_not_by_observation_order() {
+fn classifier_targets_follow_first_occurrence_not_a_numeric_sort() {
     let features = array![[1.0_f64], [2.0], [10.0], [11.0]];
-    let labels = array![-4_i64, 9, 9, -4];
+    // First occurrence is 9 then -4; a numeric sort would put -4 first.
+    let labels = array![9_i64, -4, -4, 9];
     let model = SKKNeighborsClassifier::<f64>::build()
         .nearest_neighbors_count(2)
         .build()
@@ -73,11 +74,11 @@ fn classifier_targets_order_classes_by_the_table_not_by_observation_order() {
         .fit(features.view(), labels.view())
         .unwrap();
 
-    // Canonical order is first-occurrence: -4 → 0, 9 → 1. A numeric sort would
+    // Canonical order is first-occurrence: 9 → 0, -4 → 1. A numeric sort would
     // invert it, so the assertion proves the table drives the ordering.
     assert_eq!(
         model.classes().labels().collect::<Vec<_>>(),
-        vec!["-4", "9"]
+        vec!["9", "-4"]
     );
-    assert_eq!(model.classes().index_of("9"), Some(1));
+    assert_eq!(model.classes().index_of("9"), Some(0));
 }
