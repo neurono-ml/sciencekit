@@ -10,12 +10,14 @@
 //! submodules; every implementation lives in its own file.
 
 mod chebyshev;
+mod cosine;
 mod manhattan;
 mod row_merge;
 mod row_statistics;
 mod squared_euclidean;
 
 pub use chebyshev::sk_sparse_chebyshev_distance_matrix;
+pub use cosine::sk_sparse_cosine_distance_matrix;
 pub use manhattan::sk_sparse_manhattan_distance_matrix;
 pub use squared_euclidean::{
     sk_sparse_euclidean_distance_matrix, sk_sparse_squared_euclidean_distance_matrix,
@@ -23,6 +25,8 @@ pub use squared_euclidean::{
 
 #[cfg(test)]
 mod chebyshev_tests;
+#[cfg(test)]
+mod cosine_tests;
 #[cfg(test)]
 mod fixtures;
 #[cfg(test)]
