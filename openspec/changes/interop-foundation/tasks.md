@@ -35,5 +35,5 @@
 - [x] 5.1 Add the interop error variants to `SKError` (unknown/duplicate column, unsupported type, null under reject, uneven lengths, schema mismatch) with unit tests for messages.
 - [x] 5.2 Add an interop conversion tracing span (source kind, rows, columns, policy) and test attribute recording.
 - [x] 5.3 Run the CI gates: `cargo fmt --all --check`, `cargo clippy --workspace --all-targets`, `cargo test --workspace`.
-- [ ] 5.4 Add a `Development Explained` chapter for the tabular seam and an interop chapter to the mdBook; register both in `SUMMARY.md`.
+- [x] 5.4 Add a `Development Explained` chapter for the tabular seam and an interop chapter to the mdBook; register both in `SUMMARY.md`.
 - [x] 5.5 Update `CHANGELOG.md` and open the ADR issue for this change.

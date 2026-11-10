@@ -153,3 +153,9 @@ and schema mismatches, each naming the offending column.
 #### Scenario: Error names the column
 - **WHEN** a conversion fails because of a specific column
 - **THEN** the error message contains that column's name
+
+## Known limitation
+
+Nominal targets are canonicalized per batch. A streamed supervised batch carries the encoded
+indices but not the label table, so the mapping is not recoverable from the stream; callers
+that need it extract the target directly.

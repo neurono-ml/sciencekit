@@ -121,3 +121,10 @@ No existing call site changes. Concrete adapters land in later changes and are f
 
 None blocking the spec: exact module split inside the crate (schema, selection, columns, conversion,
 source, bridge) follows the 200-line rule as the implementation lands.
+
+## Limitations
+
+- A nominal target in a streamed supervised batch is encoded as canonical indices from a
+  **per-batch** label table. `SKSupervisedBatch` carries no table, so the mapping is not
+  recoverable from the stream; callers that need it use `extract_target` directly.
+- Duplicate column names are rejected at schema construction, before any selection exists.
