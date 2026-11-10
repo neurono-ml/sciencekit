@@ -11,8 +11,9 @@ use crate::missing::SKMissingValuePolicy;
 /// Whether an integer survives the trip to `F` and back unchanged.
 ///
 /// Floating-point scalars represent integers exactly only up to their mantissa
-/// width (`2^53` for `f64`, `2^24` for `f32`). Promoting an integer column that
-/// carries nulls must not silently truncate values above that bound.
+/// width (`2^53` for `f64`, `2^24` for `f32`). Promoting any integer value above
+/// that bound — in a complete column or in a nullable one — would truncate it
+/// silently, so the value is rejected instead.
 pub fn sk_integer_is_representable<F: SKFloat>(value: i64) -> bool {
     match cast::<i64, F>(value) {
         Some(converted) => converted.is_finite() && cast::<F, i64>(converted) == Some(value),

@@ -139,8 +139,6 @@ fn supervised_conversion_requires_a_target() {
     ));
 }
 
-/// A nominal target cannot be streamed as a supervised batch: the label table
-/// would be lost, so the conversion is rejected instead of silently coding.
 /// A nominal target becomes canonical indices. The per-batch label table is
 /// **not** carried by the supervised batch (documented limitation); callers that
 /// need the mapping use `extract_target` directly.

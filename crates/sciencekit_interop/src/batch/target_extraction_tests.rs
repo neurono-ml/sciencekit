@@ -3,7 +3,7 @@
 
 use sciencekit_common::{SKError, SKTargetView};
 
-use super::SKTabularBatch;
+use super::{SKTabularBatch, SKTargetExtraction};
 use crate::columns::SKColumnData;
 use crate::missing::SKMissingValuePolicy;
 use crate::schema::{SKColumnRole, SKColumnSchema, SKLogicalType, SKTabularSchema};
@@ -176,4 +176,13 @@ fn missing_target_selection_is_rejected() {
         .extract_target::<f64>(&selection, SKMissingValuePolicy::Reject)
         .unwrap_err();
     assert!(matches!(error, SKError::UnsupportedOperation { .. }));
+}
+
+/// An integer target above the mantissa is rejected rather than truncated.
+#[test]
+fn integer_target_above_the_mantissa_is_rejected() {
+    let value = (1_i64 << 53) + 1;
+    let target = SKTargetExtraction::<f64>::Integer(ndarray::array![1, value]);
+    let error = target.to_scalar_values().unwrap_err();
+    assert!(matches!(error, SKError::Conversion(_)));
 }

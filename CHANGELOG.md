@@ -47,7 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   channel, backpressure and cancellation. A conversion-span helper records source kind, shape and policy for adapters that use it.
 - `sciencekit_common` interop error variants in the central taxonomy (`UnknownColumn`,
   `DuplicateColumn`, `UnsupportedColumnType`, `NullValueInColumn`, `UnevenColumnLengths`,
-  `SchemaMismatch`), each naming the offending column.
+  `SchemaMismatch`), each naming the offending column where the error is column-oriented.
 
 - `sciencekit_common` model export/import contracts (spec `model-export-contracts`): the format-agnostic `SKModelState<F>` (estimator metadata, a deterministically ordered map of named tensors and typed hyperparameters), `SKModelMetadata` (estimator name, format version, scalar dtype, feature count, canonical class labels and a `SKParameterValue` map), `SKTensor<F>` with `SKTensorDType` (`F32`/`F64`/`I64`/`Bool`) and shape/dtype/name validation, and the `SKExportable<F>`/`SKImportable<F>` trait pair with the shared `sk_validate_import_metadata` check — no file format and no `serde` dependency.
 
