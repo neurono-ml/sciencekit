@@ -12,7 +12,6 @@ use arrow_schema::Schema;
 use sciencekit_common::SKError;
 
 use super::options::SKArrowFileOptions;
-use crate::arrow::source::sk_projection_indices;
 
 fn sk_csv_error(path: &Path, error: impl std::fmt::Display) -> SKError {
     SKError::Conversion(format!(
@@ -47,13 +46,13 @@ pub(crate) fn sk_open_csv_reader(
     options: &SKArrowFileOptions,
 ) -> Result<Box<dyn RecordBatchReader + Send>, SKError> {
     let schema = sk_csv_schema(path, options)?;
-    let indices = sk_projection_indices(&schema, options.selection.as_ref())?;
+    // arrow-csv reports the full schema even when a projection is applied, so
+    // the source cursor owns the projection and CSV columns decode eagerly.
     let file = File::open(path)?;
     let reader = ReaderBuilder::new(Arc::new(schema))
         .with_header(options.has_csv_header)
         .with_delimiter(options.csv_delimiter)
         .with_batch_size(options.batch_size)
-        .with_projection(indices)
         .build(file)
         .map_err(|error| sk_csv_error(path, error))?;
     Ok(Box::new(reader))
