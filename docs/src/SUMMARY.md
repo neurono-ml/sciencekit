@@ -49,4 +49,5 @@
   - [Source providers: multi-epoch out-of-core fits](development-explained/ch18-source-providers-and-epochs.md)
   - [Sparse out-of-core: the owned feature block](development-explained/ch19-sparse-streaming-blocks.md)
   - [Measuring a model: the metrics foundation](development-explained/ch20-metrics-foundation.md)
+  - [Deterministic randomness](development-explained/ch21-deterministic-randomness.md)
   - [Maintaining this book](development-explained/maintaining.md)
