@@ -114,3 +114,23 @@ fn ball_radius_query_sorts_and_represents_empty_neighborhoods() {
     assert_eq!(result.distances(0), &[1.0, 1.0, 1.0, 2.0]);
     assert!(result.indices(1).is_empty());
 }
+
+#[test]
+fn ball_query_parallel_path_equals_the_sequential_path_on_a_large_batch() {
+    let data = Array2::from_shape_fn((3000, 3), |(row, column)| {
+        ((row * 13 + column * 7) % 97) as f64 / 7.0
+    });
+    let queries = Array2::from_shape_fn((200, 3), |(row, column)| {
+        ((row * 5 + column * 11) % 89) as f64 / 5.0
+    });
+    let tree = build(&data, 16);
+
+    let sequential = tree.k_nearest_with_mode(queries.view(), 5, false);
+    let parallel = tree.k_nearest_with_mode(queries.view(), 5, true);
+    assert_eq!(sequential.distances(), parallel.distances());
+    assert_eq!(sequential.indices(), parallel.indices());
+
+    let sequential_radius = tree.radius_neighbors_with_mode(queries.view(), 1.5, false);
+    let parallel_radius = tree.radius_neighbors_with_mode(queries.view(), 1.5, true);
+    assert_eq!(sequential_radius, parallel_radius);
+}
