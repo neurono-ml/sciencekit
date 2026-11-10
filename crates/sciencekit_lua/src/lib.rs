@@ -111,6 +111,10 @@ pub unsafe extern "C-unwind" fn luaopen_sciencekit(
 }
 
 #[cfg(test)]
+#[path = "error_tests.rs"]
+mod error_tests;
+
+#[cfg(test)]
 #[path = "lib_tests.rs"]
 mod lib_tests;
 
