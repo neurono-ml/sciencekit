@@ -63,12 +63,14 @@ operation:
 
 ```text
 SKPipelineBuilder<F, ()>
-    .then(scaler)  →  SKPipelineBuilder<F, (Scaler,)>
-    .then(imputer) →  SKPipelineBuilder<F, (Scaler, Imputer)>
+    .then(scaler)  →  SKPipelineBuilder<F, ((), Scaler)>
+    .then(imputer) →  SKPipelineBuilder<F, (((), Scaler), Imputer)>
 ```
 
-Nothing is stored dynamically; the tuple exists only in the type, and the values are moved in at
-`fit`. This is the "type-state" pattern: the compiler is the validator.
+The tuple is left-nested: every `then` wraps the previous tuple and the new stage, so the type
+grows without a variadic list. Nothing is stored dynamically — the stage **values** are moved
+into the builder by `then`, and `fit` turns them into fitted stage models. This is the
+"type-state" pattern: the compiler is the validator.
 
 ```mermaid
 flowchart LR
@@ -77,7 +79,7 @@ flowchart LR
     A["SKPipeline::start::<f64>()<br/>builder<( )>"] -->|".then(scaler)"| B["builder<(Scaler, )>"]
     B -->|".then(imputer)"| C["builder<(Scaler, Imputer)>"]
     C -->|"finalize_classifier"| D["SKPipelineClassifierBuilder"]
-    C -->|"finalize_regressor<br/>(rejected by the compiler)"| E["compile error"]
+    C -->|"finalize_classifier(regressor)<br/>rejected: not a classifier"| E["compile error"]
     D --> F[".fit(features, labels)"]
     classDef start fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#1e3a8a
     classDef built fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#14532d
@@ -144,8 +146,9 @@ ordered list of fitted stage models plus the fitted final estimator.
 
 This is the definition of correctness for the forward walk. It fits the scaler on the raw
 features, then the imputer on the **scaled** features, then the classifier on the **imputed**
-features, and asserts the pipeline's predictions equal that manual sequence. If the order were
-wrong, or a stage were fitted on the raw input, the predictions would diverge.
+features, and asserts the fitted stage statistics prove it: the scaler learned the mean of the
+raw columns (`[3, 4]`), and the imputer learned statistics near zero, which is only possible if
+it saw *scaled* data. If a stage were fitted on the raw input, those numbers would differ.
 
 ### `classifier_probabilities_equal_transform_then_final_model`
 
@@ -156,15 +159,18 @@ supervision kinds.
 
 ### `a_sparse_classifier_pipeline_matches_the_dense_one`
 
-The same logical design, once dense and once as CSR, produces the same labels through a
-pipeline. This is representation parity applied to composition: the chain may not densify, and
-the result may not depend on the input representation.
+A dense chain (scaler → imputer → classifier) and a sparse chain (imputer → classifier, since the
+scaler is dense-only in its fitted statistics) are fitted on the same logical design and produce
+the same labels. The chains differ in composition, but both keep their representation end to
+end; the parity claim is about the *data*, not about an identical stage list.
 
-### `then` and `finalize_regressor` compile-fail doctests
+### The two `compile_fail` doctests
 
-The two `compile_fail` doctests are tests of the *type system*: mixing scalars across stages, and
-finalizing a classifier chain as a regressor. They fail to compile, which is exactly what the
-doctest asserts.
+They are tests of the *type system*. The first passes a stage implemented only for `f64` into an
+`f32` pipeline, and the compiler rejects the `SKPipelineTransformer<f32>` bound. The second
+calls `finalize_classifier` with a regressor, and the compiler rejects it because
+`SKLinearRegressionModel<f64>` does not implement `SKClassifierPredictor`. Both doctests assert
+that the snippet does **not** compile — which is the contract.
 
 ### `the_same_pipeline_fitted_twice_produces_identical_predictions` and `concurrent_prediction_agrees_with_the_sequential_result`
 
@@ -179,12 +185,13 @@ threads predicting concurrently get their sequential answers.
 | `lib.rs` | crate documentation and the composition example |
 | `block.rs` | re-export of `SKFeatureBlock` / `SKIntoFeatureBlock` |
 | `stage.rs` | `SKPipelineTransformer`, the stage adapters and shape errors |
-| `stages/` | adapters for existing transformers and for the imputer outputs |
+| `stages/` | the left-nested stage chain (`chain.rs`) that fits and transforms in order |
 | `pipeline/builder.rs` | typed builder, `then`, the two finalizers |
 | `pipeline/model.rs` | fitted classifier/regressor models and accessors |
-| `pipeline/fitting.rs` | the forward fit walk |
-| `pipeline/prediction.rs` | prediction delegation |
-| `acceptance_tests/` | tiny/large, dense/sparse, determinism and concurrency |
+| `pipeline/fit.rs` | the forward fit walk |
+| `pipeline/predict.rs` | prediction delegation |
+| `pipeline/concurrency_tests.rs` | determinism and concurrent prediction |
+| `acceptance_tests/` | tiny/large, dense/sparse and composed-model acceptance |
 
 ## 7. What this enables
 

@@ -119,7 +119,7 @@ and receives a Python binding as soon as it is validated on CPU.
 | `sk_train_test_split` | `sciencekit_model_selection` | Deterministic data partitioning | <span class="sk-pill sk-pill--neutral">Planned</span> |
 | `SKKFold` | `sciencekit_model_selection` | k-fold cross-validation | <span class="sk-pill sk-pill--neutral">Planned</span> |
 | `SKGridSearchCV` | `sciencekit_model_selection` | Grid search with cross-validation | <span class="sk-pill sk-pill--neutral">Planned</span> |
-| `SKPipeline` | `sciencekit_pipeline` | Type-safe pipeline (associated types) and DAGs | <span class="sk-pill sk-pill--neutral">Planned</span> |
+| `SKPipeline` | `sciencekit_pipeline` | Type-safe linear pipeline (compiler-checked composition); DAGs remain planned | <span class="sk-pill sk-pill--ok">Implemented</span> |
 | Metrics foundation | `sciencekit_metrics` | Accuracy, precision/recall/F1 with macro/micro/weighted/binary averaging, confusion matrix, MSE/RMSE/MAE, R², scorer adapters and streaming accumulators | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | Full metrics | `sciencekit_metrics` | The remaining sklearn metrics (ROC/AUC, calibration, multilabel, ranking) | <span class="sk-pill sk-pill--neutral">Planned</span> |
 
