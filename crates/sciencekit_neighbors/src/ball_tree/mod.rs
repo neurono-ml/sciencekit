@@ -6,9 +6,12 @@
 mod build;
 mod builder;
 mod node;
+mod query;
 
 pub use build::SKBallTree;
 pub use builder::SKBallTreeBuilder;
 
 #[cfg(test)]
 mod build_tests;
+#[cfg(test)]
+mod query_tests;
