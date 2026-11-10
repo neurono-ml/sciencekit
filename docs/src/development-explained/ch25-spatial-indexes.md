@@ -93,8 +93,8 @@ flowchart TD
 
 ### The k-d tree: boxes on axes
 
-Each node splits its rows on one coordinate — the axis with the largest spread, or a rotating
-axis — by the **median**. The median guarantees balance, so the depth is $O(\log n)$. Every node
+Each node splits its rows on one coordinate — the axis with the largest spread — by the
+**median**. The median guarantees balance, so the depth is $O(\log n)$. Every node
 stores the box that encloses its members: the minimum and maximum on each axis.
 
 The lower bound is the **box gap**: for each axis, the distance from the query to the interval
@@ -105,14 +105,13 @@ is zero, which is why a query that lands inside a node always descends.
 ### The ball tree: nested balls
 
 The ball tree picks two far-apart pivots and splits the rows by which pivot is closer. Each node
-stores its centre and the radius that covers all members. The lower bound is the **ball gap**:
-
-$$
-b = \max\!\left(0,\; \lVert q - c \rVert - r\right)
-$$
-
-If the query is inside the ball, the bound is zero. Otherwise it is exactly how far outside the
-ball the query lies, which cannot exceed the distance to any member.
+stores its centre and the radius that covers all members. The **ball gap** is
+$g = \max(0, \lVert q - c \rVert - r)$: zero when the query is inside the ball, otherwise
+how far outside it lies. The bound is then converted to the metric's own unit — $g$ for
+Euclidean and Manhattan, $g^2$ for squared Euclidean, and $g/\sqrt{f}$ for Chebyshev, where
+$f$ is the feature count. Because a floating-point bound can round a few ulps above the true
+minimum, pruning only happens when the bound exceeds the limit by a small relative tolerance;
+exploring one extra node is cheap, while pruning a node exactly at the radius would be wrong.
 
 ### Ties, and why they need a rule
 
@@ -135,8 +134,8 @@ same order.
 - **`SKNeighborMetric`** — the implemented metrics: Euclidean, squared Euclidean, Manhattan and
   Chebyshev. `SKRequestedNeighborMetric` is the user-facing request type, which rejects Cosine
   and NaN-aware Euclidean at build time with a clear reason.
-- **Node types** (`SKKDTreeNode`, `SKBallTreeNode`) and the index accessors expose the built
-  structure for inspection and tests.
+- **Internal node types** (`SKKDTreeNode`, `SKBallTreeNode`) and the permutation are
+  crate-private; the public accessors expose only the configuration, `node_count` and `depth`.
 
 ## 5. A real walk-through, using the tests
 
