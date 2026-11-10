@@ -41,7 +41,8 @@ impl<F: SKFloat> SKKNNImputerModel<F> {
         self.missing_mask.view()
     }
 
-    /// The training rows that observed `column`, ascending.
+    /// The training rows that observed `column`, ascending. An out-of-range
+    /// column yields an empty slice.
     pub fn donor_indices(&self, column: usize) -> &[usize] {
         self.column_donors
             .get(column)
