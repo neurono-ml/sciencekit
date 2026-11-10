@@ -20,12 +20,16 @@
 #[derive(Debug, Clone)]
 pub struct SKRandomGenerator {
     state: u64,
+    cached_normal: Option<f64>,
 }
 
 impl SKRandomGenerator {
     /// Seeds the generator.
     pub fn new(seed: u64) -> Self {
-        Self { state: seed }
+        Self {
+            state: seed,
+            cached_normal: None,
+        }
     }
 
     /// Returns the next 64-bit value of the stream.
@@ -65,6 +69,76 @@ impl SKRandomGenerator {
             let drawn = self.next_index(position + 1);
             indices.swap(position, drawn);
         }
+        indices
+    }
+
+    /// Returns a uniform draw in `[0, 1)` built from the top 53 bits.
+    ///
+    /// Fifty-three bits is exactly the mantissa width of an `f64`, so every
+    /// representable value in the interval is reachable with equal spacing.
+    pub fn next_f64(&mut self) -> f64 {
+        // 2^-53 as an exact power of two.
+        const SCALE: f64 = 1.0 / (1_u64 << 53) as f64;
+        (self.next_u64() >> 11) as f64 * SCALE
+    }
+
+    /// Returns a uniform draw in `[low, high)`.
+    ///
+    /// The endpoints follow [`SKRandomGenerator::next_f64`], so the draw is
+    /// never equal to `high`.
+    pub fn uniform(&mut self, low: f64, high: f64) -> f64 {
+        low + (high - low) * self.next_f64()
+    }
+
+    /// Returns a standard normal draw (mean `0`, variance `1`).
+    ///
+    /// Uses the Box–Muller transform and caches the second of the pair, so two
+    /// consecutive calls consume a single uniform pair. The values depend only
+    /// on the stream and the platform's `sqrt`/`ln`/`cos`, never on ambient
+    /// entropy.
+    pub fn normal(&mut self) -> f64 {
+        if let Some(spare) = self.cached_normal.take() {
+            return spare;
+        }
+        // Clamp the radial uniform away from zero: `ln(0)` is not finite and
+        // the generator can legitimately emit exactly zero.
+        let radial_uniform = self.next_f64().max(f64::MIN_POSITIVE);
+        let angular_uniform = self.next_f64();
+        let radius = (-2.0 * radial_uniform.ln()).sqrt();
+        let angle = std::f64::consts::TAU * angular_uniform;
+        self.cached_normal = Some(radius * angle.sin());
+        radius * angle.cos()
+    }
+
+    /// Shuffles a slice in place with a Fisher–Yates permutation.
+    ///
+    /// The resulting order is the same one [`SKRandomGenerator::shuffled_indices`]
+    /// returns for the slice length and seed.
+    pub fn shuffle<T>(&mut self, values: &mut [T]) {
+        for position in (1..values.len()).rev() {
+            let drawn = self.next_index(position + 1);
+            values.swap(position, drawn);
+        }
+    }
+
+    /// Returns `sample_count` distinct indices drawn uniformly from `0..count`.
+    ///
+    /// Implements a partial Fisher–Yates shuffle: only the first
+    /// `sample_count` positions are settled, so sampling `k` of `n` costs `k`
+    /// draws instead of a full permutation. `sample_count` is clamped to
+    /// `count`; the order of the returned indices is part of the seeded stream.
+    pub fn sample_indices_without_replacement(
+        &mut self,
+        count: usize,
+        sample_count: usize,
+    ) -> Vec<usize> {
+        let mut indices: Vec<usize> = (0..count).collect();
+        let sample_count = sample_count.min(count);
+        for position in 0..sample_count {
+            let drawn = position + self.next_index(count - position);
+            indices.swap(position, drawn);
+        }
+        indices.truncate(sample_count);
         indices
     }
 }

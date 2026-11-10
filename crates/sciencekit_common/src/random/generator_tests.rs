@@ -118,3 +118,119 @@ fn empty_and_single_element_shuffles_are_trivial() {
     assert!(SKRandomGenerator::new(0).shuffled_indices(0).is_empty());
     assert_eq!(SKRandomGenerator::new(0).shuffled_indices(1), vec![0]);
 }
+
+#[test]
+fn next_f64_is_uniform_in_the_unit_interval() {
+    let mut generator = SKRandomGenerator::new(31);
+    let mut sum = 0.0;
+    let draws = 100_000;
+    for _ in 0..draws {
+        let value = generator.next_f64();
+        assert!((0.0..1.0).contains(&value), "value {value} out of range");
+        sum += value;
+    }
+    let mean = sum / f64::from(draws);
+    assert!((mean - 0.5).abs() < 0.01, "mean {mean}");
+}
+
+#[test]
+fn uniform_stays_inside_the_requested_interval() {
+    let mut generator = SKRandomGenerator::new(32);
+    for (low, high) in [(0.0, 1.0), (-3.5, 2.25), (1e6, 1e6 + 1.0)] {
+        for _ in 0..10_000 {
+            let value = generator.uniform(low, high);
+            assert!(
+                (low..high).contains(&value),
+                "value {value} outside [{low}, {high})"
+            );
+        }
+    }
+}
+
+#[test]
+fn normal_draws_have_zero_mean_and_unit_variance() {
+    let mut generator = SKRandomGenerator::new(33);
+    let draws = 100_000;
+    let observations: Vec<f64> = (0..draws).map(|_| generator.normal()).collect();
+    let mean = observations.iter().sum::<f64>() / f64::from(draws);
+    let variance = observations
+        .iter()
+        .map(|value| (value - mean) * (value - mean))
+        .sum::<f64>()
+        / f64::from(draws);
+    assert!(mean.abs() < 0.02, "mean {mean}");
+    assert!((variance - 1.0).abs() < 0.03, "variance {variance}");
+}
+
+#[test]
+fn two_normal_draws_consume_one_uniform_pair() {
+    // Box–Muller produces two normals per uniform pair; the second is cached,
+    // so after two draws the stream sits where it would after drawing two
+    // uniforms directly.
+    let mut generator = SKRandomGenerator::new(34);
+    let first = generator.normal();
+    let second = generator.normal();
+    let mut direct = SKRandomGenerator::new(34);
+    direct.next_f64();
+    direct.next_f64();
+    assert_eq!(generator.next_u64(), direct.next_u64());
+    assert_ne!(first, second, "the cached spare must differ from its pair");
+}
+
+#[test]
+fn the_same_seed_produces_the_same_normal_stream() {
+    let mut first = SKRandomGenerator::new(35);
+    let mut second = SKRandomGenerator::new(35);
+    for _ in 0..32 {
+        assert_eq!(first.normal(), second.normal());
+    }
+}
+
+#[test]
+fn shuffling_a_slice_matches_the_index_order() {
+    let mut values: Vec<usize> = (0..50).collect();
+    let mut generator = SKRandomGenerator::new(36);
+    generator.shuffle(&mut values);
+    let expected = SKRandomGenerator::new(36).shuffled_indices(50);
+    assert_eq!(values, expected);
+
+    let mut empty: [u8; 0] = [];
+    SKRandomGenerator::new(0).shuffle(&mut empty);
+    let mut single = [7_u8];
+    SKRandomGenerator::new(0).shuffle(&mut single);
+    assert_eq!(single, [7]);
+}
+
+#[test]
+fn sampling_without_replacement_returns_unique_indices_in_range() {
+    let mut generator = SKRandomGenerator::new(37);
+    let mut all = Vec::new();
+    for count in [0, 1, 5, 64, 1_000] {
+        let indices = generator.sample_indices_without_replacement(count, 20);
+        assert_eq!(indices.len(), count.min(20));
+        let mut sorted = indices.clone();
+        sorted.sort_unstable();
+        sorted.dedup();
+        assert_eq!(sorted.len(), indices.len(), "duplicate indices");
+        assert!(indices.iter().all(|&index| index < count));
+        all.extend(indices);
+    }
+    assert!(!all.is_empty());
+}
+
+#[test]
+fn sampling_without_replacement_is_reproducible_and_matches_a_full_sample() {
+    let first = SKRandomGenerator::new(38).sample_indices_without_replacement(40, 10);
+    let second = SKRandomGenerator::new(38).sample_indices_without_replacement(40, 10);
+    assert_eq!(first, second);
+
+    let mut all = SKRandomGenerator::new(39).sample_indices_without_replacement(40, 40);
+    all.sort_unstable();
+    assert_eq!(all, (0..40).collect::<Vec<usize>>());
+
+    assert!(
+        SKRandomGenerator::new(0)
+            .sample_indices_without_replacement(0, 0)
+            .is_empty()
+    );
+}
