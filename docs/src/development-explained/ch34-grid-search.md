@@ -5,10 +5,10 @@ answering the same question model selection already taught us — "how well woul
 configuration generalise?" — once per candidate, on the same folds, and then committing to the
 one that wins.
 
-This chapter builds `SKGridSearchCV`: the candidate enumeration, cross-validated scoring,
+This chapter builds `SKGridSearchCVClassifier` and `SKGridSearchCVRegressor`: the candidate enumeration, cross-validated scoring,
 deterministic winner selection, the refit, and the result surface a caller inspects afterwards.
 
-The capability is `grid-search-cv`; the code lives in
+The capability is `grid-search`; the code lives in
 `crates/sciencekit_model_selection/src/grid_search/`.
 
 ## 1. The problem, in plain words
@@ -55,7 +55,7 @@ flowchart TD
    the same indices, so differences come from the configuration, not from the data.
 3. **Classification and regression scoring are separate enums.** `SKClassifierScoring`
    (`Accuracy`, `BalancedAccuracy`, `F1`, `Precision`, `Recall`, `Auc`, `LogLoss`) and
-   `SKRegressorScoring` (`R2`, `NegMeanSquaredError`, `NegMeanAbsoluteError`) make a
+   `SKRegressorScoring` (`R2`, `NegativeMeanSquaredError`, `NegativeMeanAbsoluteError`) make a
    regressor scorer on a classifier **unwritable at compile time**.
 4. **Errors are a policy.** `SKErrorScore::Raise` propagates the first failing fold;
    `SKErrorScore::Value(v)` records `v` for that fold and continues. A `NaN` error score is
@@ -89,8 +89,11 @@ that is excellent on average but wildly variable is often not what you want to d
 
 A candidate can fail: a fold may not contain a class the scorer needs, or a solver may not
 converge. Silently dropping such a candidate biases the search. `Raise` stops and tells you;
-`Value(v)` lets the search continue with a penalty (commonly `0` or `-∞`), and the ordering
-guarantees a penalised candidate loses to any healthy one.
+`Value(v)` lets the search continue with a penalty. The penalty is the caller's declaration:
+it must be worse than any score a healthy configuration could reach under the chosen metric
+(for example `-1e9` under negative MSE, or `NaN`, which is **guaranteed** to rank below every
+finite mean). Choosing `0` under a negative metric would let a failing candidate win — that is
+the documented contract, not a hidden guarantee.
 
 ## 4. Each public object, explained
 
@@ -120,7 +123,8 @@ to the earlier candidate. A mean is easy; the tie rule is what makes a search re
 ### `grid_errors_*`
 
 `Raise` propagates, `Value` records per failing fold, and a healthy candidate beats a penalised
-one. The numeric-policy test uses `NaN` to prove the ordering is strict.
+one. The numeric-policy test uses `-999.0` to prove a declared penalty is recorded, and the
+acceptance suite uses `NaN` to prove a `NaN` penalty ranks below every finite mean.
 
 ### `grid_refit_*` and `grid_predict_*`
 
@@ -151,7 +155,7 @@ determinism, and the composition of an error policy with refit.
 | `grid_search/results.rs` | aggregation, ranking and best selection |
 | `grid_search/error_score.rs` | the `Raise`/`Value` policy |
 | `grid_search/classifier/`, `grid_search/regressor/` | refit, prediction delegation, models |
-| `grid_search/acceptance_tests/` | tiny/large, policies, splitters, determinism, metrics |
+| `acceptance_tests/grid_search/` | tiny/large, policies, splitters, determinism, metrics |
 
 ## 7. What this unlocks
 
