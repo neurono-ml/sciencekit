@@ -24,6 +24,7 @@ pub mod batch;
 pub mod bridge;
 pub mod columns;
 pub mod missing;
+pub mod observability;
 pub mod schema;
 pub mod selection;
 pub mod source;

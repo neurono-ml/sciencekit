@@ -16,6 +16,9 @@ num-traits = "0.2"
 tracing = { workspace = true }
 tokio = { version = "1.53", features = ["rt"] }
 
+[dev-dependencies]
+tracing-subscriber = { workspace = true }
+
 [features]
 default = []
 # Optional engine adapters land in their own changes; the flags exist here so
