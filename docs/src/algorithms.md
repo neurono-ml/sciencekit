@@ -105,7 +105,7 @@ and receives a Python binding as soon as it is validated on CPU.
 
 | Estimator | Description | Status |
 |---|---|---|
-| `SKKMeans` | K-means with O(1) random access via memmap | <span class="sk-pill sk-pill--neutral">Planned</span> |
+| `SKKMeans` | Lloyd + Elkan k-means with seeded k-means++ (memmap indexes remain Phase 7) | <span class="sk-pill sk-pill--ok">Implemented</span> |
 | `SKMiniBatchKMeans` | Mini-batch k-means with streaming (`SKLazySource`) | <span class="sk-pill sk-pill--neutral">Planned</span> |
 | `SKDBSCAN` | Density-based clustering | <span class="sk-pill sk-pill--neutral">Planned</span> |
 | `SKPCA` | Principal component analysis | <span class="sk-pill sk-pill--neutral">Planned</span> |

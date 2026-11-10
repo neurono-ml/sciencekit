@@ -55,4 +55,5 @@
   - [Type-safe pipelines](development-explained/ch24-type-safe-pipeline.md)
   - [Spatial indexes: k-d trees and ball trees](development-explained/ch25-spatial-indexes.md)
   - [Dataset interop: one seam from engines](development-explained/ch26-dataset-interop.md)
+  - [k-means: Lloyd, Elkan and trustworthy seeds](development-explained/ch27-kmeans.md)
   - [Maintaining this book](development-explained/maintaining.md)

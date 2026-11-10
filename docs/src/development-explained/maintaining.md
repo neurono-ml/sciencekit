@@ -217,4 +217,6 @@ The [spatial index chapter](./ch25-spatial-indexes.html) adds exact k-d and ball
 bounds, deterministic tie ordering, and the dense-only exception applied to geometry. The
 [dataset interop chapter](./ch26-dataset-interop.html) adds the engine-neutral seam: ordered
 schema, explicit selection, one missing-value policy, typed batches, streaming sources and the
-async bridge.
+async bridge. The [k-means chapter](./ch27-kmeans.html) adds the first unsupervised
+estimator: seeded k-means++, the Lloyd iteration, Elkan pruning, empty-cluster repair and
+the typed cluster assignments.
