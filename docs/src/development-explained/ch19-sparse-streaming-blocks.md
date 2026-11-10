@@ -145,6 +145,81 @@ algebra; it routes the block to the same code:
   later dense batch is converted to CSR, never the reverse).
 - **SGD**: one epoch over CSR rows through the sparse row driver.
 
+## 6.1 The coverage matrix: proving the set, not just the members
+
+Per-estimator tests prove that *each* estimator handles CSR. They cannot prove that the
+*set* is complete — that no streaming estimator was forgotten, and that the one dense-only
+exception is deliberate. A second layer does that: a workspace-level matrix, one row per
+`fit_streaming`/`partial_fit` implementation, recording whether it offers `partial_fit`,
+dense streaming and sparse streaming, plus a note justifying the row.
+
+```mermaid
+flowchart LR
+    accTitle: Two layers of streaming coverage
+    accDescr: Each estimator's own sparse streaming suite proves it matches the dense fit. The workspace coverage matrix proves the set is complete, that the only dense-only streaming path is the documented categorical encoder, and that a deliberately dense-only path rejects CSR before reading an element.
+    A["Per-estimator suite<br/>sparse stream = dense stream = dense fit"] --> C["Coverage matrix<br/>one row per streaming estimator"]
+    C --> B["Completeness test<br/>fails when a row is missing"]
+    C --> D["Exception test<br/>only SKOneHotEncoder is dense-only"]
+    B --> E["Dense-only guard test<br/>UnsupportedRepresentation before any element"]
+    classDef member fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#1e3a8a
+    classDef set fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#14532d
+    classDef guard fill:#fee2e2,stroke:#dc2626,stroke-width:2px,color:#7f1d1d
+    class A member
+    class C,B,D set
+    class E guard
+```
+
+Three properties come out of it:
+
+1. **Completeness.** The matrix pins the count (thirteen estimators) and every name, and a
+   source scan walks the sibling crates at test time counting `fn fit_streaming` and
+   `pub fn partial_fit` definitions — so adding a streaming estimator without an audit row
+   fails the suite.
+2. **The exception is explicit.** Exactly one row has `sparse_streaming: false`:
+   `SKOneHotEncoder`. Its streaming input is not a numeric block at all — it is an iterator
+   of categorical views — so numeric CSR support is meaningless there. Writing the exception
+   down stops it from being mistaken for an oversight.
+3. **The guard has a shape.** A deliberately dense-only streaming estimator must match the
+   representation once, before touching an element, and return
+   `UnsupportedRepresentation` with a conversion suggestion. A local fixture in the audit
+   module demonstrates that contract; no shipped **numeric** estimator is dense-only — the
+   one-hot encoder's seam is categorical, not numeric.
+
+The no-densification rule is the thread running through both layers: the per-estimator suites
+compare a sparse stream against a dense stream and a dense `fit`, so a densified block would
+have to produce the same numbers while never being observed; the memory guard additionally
+bounds a batch by its *stored* byte size. These are strong signals, not an allocation proof:
+the guarded shape tests prove a stream completes where its dense twin is impractical for the
+test budget.
+
+### Sparse `partial_fit`: the gap the audit closed
+
+Three scalers and OLS used to accept CSR only through `fit_streaming`; their `partial_fit`
+still called `as_dense()` and rejected a sparse batch. The audit made that visible, and the
+fix routes `partial_fit` through the **same** sparse accumulators the streaming driver uses:
+`sparse_batch_moments` (standard scaler), `sparse_batch_extrema` (min/max),
+`extend_sparse_sketches` (robust) and `GramState::accumulate_sparse` (OLS). One batch, two
+entry points, one code path — so an incremental sparse update learns exactly what a sparse
+stream would.
+
+### The audited surface
+
+| Estimator | `partial_fit` | Numeric streaming | CSR |
+|---|---|---|---|
+| `SKStandardScaler` | yes | yes | yes |
+| `SKMinMaxScaler` | yes | yes | yes |
+| `SKRobustScaler` | yes | yes | yes |
+| `SKPolynomialFeatures` | no | yes | yes |
+| `SKOneHotEncoder` | no | categorical seam | not applicable |
+| `SKSimpleImputer` | yes | yes | yes |
+| `SKLinearRegression` | yes | yes | yes |
+| `SKRidge` | yes | yes | yes |
+| `SKLasso` | yes | yes | yes |
+| `SKElasticNet` | yes | yes | yes |
+| `SKLogisticRegression` | yes | yes | yes |
+| `SKSGDClassifier` | yes | yes | yes |
+| `SKSGDRegressor` | yes | yes | yes |
+
 ## 7. Walking the real tests
 
 - `sciencekit_common/src/batching/feature_block/feature_block_tests.rs`: construction, shape,
@@ -161,6 +236,14 @@ algebra; it routes the block to the same code:
   shape whose dense twin is impractical for the test budget, not that no copy was ever made.
 - The scaler tests assert the **sample count**, not just the mean: a mean is invariant under
   duplication, so it cannot prove that the data was read once.
+- `sparse_streaming_partial_fit_matches_dense` (three scalers) and
+  `sparse_streaming_partial_fit_matches_the_dense_fit` (OLS) prove an incremental sparse
+  update reaches the same result as a dense fit.
+- `sparse_reopenable_provider_runs_multiple_epochs` proves a reopenable sparse provider feeds
+  several epochs and the model reports them.
+- `the_source_scan_matches_the_audited_streaming_surface` and
+  `the_source_scan_reaches_every_streaming_crate` run the completeness scan over the sibling
+  crates.
 
 ## 8. Recap
 
