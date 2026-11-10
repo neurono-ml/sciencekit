@@ -188,4 +188,30 @@ pub enum SKError {
         /// What it actually received.
         found: String,
     },
+
+    /// A device backend requested by the consumer is not usable: no device is
+    /// enumerated, the driver is missing or the device node is inaccessible.
+    #[error("device backend `{backend}` is unavailable: {reason}")]
+    DeviceUnavailable {
+        /// The backend whose device could not be used.
+        backend: &'static str,
+        /// Why the device is unavailable.
+        reason: String,
+    },
+
+    /// A device backend does not execute the scalar type an operation carries.
+    #[error("device backend `{backend}` does not support the scalar type `{scalar_type}`")]
+    UnsupportedScalarType {
+        /// The backend that rejected the scalar type.
+        backend: &'static str,
+        /// The rejected scalar type, by its Rust name (`f32`, `f64`).
+        scalar_type: &'static str,
+    },
+
+    /// A host↔device transfer failed after the device was selected.
+    #[error("device transfer failed: {reason}")]
+    DeviceTransferFailure {
+        /// Why the transfer failed.
+        reason: String,
+    },
 }

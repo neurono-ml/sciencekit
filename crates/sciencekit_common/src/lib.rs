@@ -18,6 +18,7 @@ pub mod allocator;
 pub mod batching;
 pub mod builders;
 pub mod data_view;
+pub mod device;
 pub mod errors;
 pub mod execution;
 pub mod fit_traits;
@@ -38,6 +39,7 @@ pub use builders::{SKBuilder, SKBuilderState, sk_validate_hyperparameter};
 pub use data_view::{
     SK_CATEGORICAL_MISSING_CODE, SKCategoricalView, SKDataView, SKNominalMatrixView,
 };
+pub use device::{SKDeviceCapabilities, SKDeviceInfo};
 pub use errors::SKError;
 pub use execution::{SKExecutionContext, SKExecutionMode, SKExecutionPlan};
 pub use fit_traits::{
