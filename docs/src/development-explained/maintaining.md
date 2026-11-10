@@ -209,4 +209,5 @@ convention every stochastic estimator shares: SplitMix64, pure sub-seed derivati
 thread-count invariance. The
 [sparse distance chapter](./ch22-sparse-pairwise-distances.html) then shows how one
 dispatcher serves all four dense/sparse representation pairs without ever densifying a
-sparse design.
+sparse design. The [ranking metrics chapter](./ch23-ranking-metrics.html) closes the
+evaluation story with ROC/AUC, precision-recall, log loss, balanced accuracy and MCC.

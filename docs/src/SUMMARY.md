@@ -51,4 +51,5 @@
   - [Measuring a model: the metrics foundation](development-explained/ch20-metrics-foundation.md)
   - [Deterministic randomness](development-explained/ch21-deterministic-randomness.md)
   - [Sparse distance matrices](development-explained/ch22-sparse-pairwise-distances.md)
+  - [Ranking metrics](development-explained/ch23-ranking-metrics.md)
   - [Maintaining this book](development-explained/maintaining.md)
