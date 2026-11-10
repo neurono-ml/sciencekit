@@ -17,6 +17,7 @@ mod dispatcher;
 mod manhattan;
 mod nan_euclidean;
 mod simd_dot;
+mod sparse;
 mod squared_euclidean;
 
 pub use chebyshev::sk_chebyshev_distance_matrix;
