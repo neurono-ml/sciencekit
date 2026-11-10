@@ -233,4 +233,6 @@ runtime strategy dispatch, weighting and the estimator representation parity. Th
 [k-NN imputer chapter](./ch33-knn-imputer.html) adds the NaN-aware donor search, chunked
 distance blocks, weighting with a column-mean fallback and the dense-only contract. The
 [grid search chapter](./ch34-grid-search.html) adds candidate enumeration, shared folds,
-deterministic best selection, error policies and the refit.
+deterministic best selection, error policies and the refit. The
+[Lua bindings chapter](./ch35-lua-bindings.html) adds the embedded interpreter, userdata
+lifecycle, table conversion and the packaged module.

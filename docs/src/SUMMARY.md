@@ -63,4 +63,5 @@
   - [k-nearest neighbours: one estimator, a search strategy](development-explained/ch32-knn-estimators.md)
   - [The k-NN imputer: filling a hole from its neighbours](development-explained/ch33-knn-imputer.md)
   - [Grid search: trying every candidate honestly](development-explained/ch34-grid-search.md)
+  - [Lua bindings: embedding Lua, not requiring it](development-explained/ch35-lua-bindings.md)
   - [Maintaining this book](development-explained/maintaining.md)
