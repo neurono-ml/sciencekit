@@ -29,7 +29,7 @@ clusterer exists yet, so the bound can change before the first implementation sh
 #[derive(Copy, Clone, PartialEq, Eq, Hash)]
 pub enum SKClusterLabel {
     Noise,
-    Cluster(NonZeroU32),
+    Cluster(SKClusterIdentifier) — a newtype over `NonZeroU32` storing `index + 1`,
 }
 ```
 
@@ -50,7 +50,7 @@ The trait lives beside `SKRegressorPredictor`/`SKClassifierPredictor`:
 ```rust
 pub trait SKClustererPredictor<F: SKFloat> {
     type Error: From<SKError>;
-    fn predict_assignments<'a, X>(
+    fn predict_clusters<'a, X>(
         &self,
         features: X,
     ) -> Result<Array1<SKClusterLabel>, Self::Error>
@@ -65,7 +65,7 @@ It is model-side only, mirroring the other predictors. KMeans/MiniBatch only pro
 ### Decision 3 — `SKUnsupervisedScorer` consumes typed assignments
 
 The pure form changes to `assignments: ArrayView1<'_, SKClusterLabel>`; the convenient
-form calls `predict_assignments` and delegates. The trait bound becomes
+form calls `predict_clusters` and delegates. The trait bound becomes
 `M: SKClustererPredictor<F>` and the existing `Self::Error: From<M::Error>` bound stays.
 This is a breaking change, but no concrete implementation exists and the library is
 pre-1.0.
@@ -73,7 +73,7 @@ pre-1.0.
 ### Decision 4 — Noise policy belongs to the scorer
 
 The contract does not silently drop noise; each scorer documents whether it excludes noise
-rows or rejects them. A shared helper `sk_validate_assignments(features_rows, assignments)`
+rows or rejects them. A shared helper `sk_validate_cluster_assignments(number_of_rows, assignments)`
 checks length and returns `ShapeMismatch`; the silhouette scorer will exclude noise, while
 a future cluster-accuracy scorer can reject it.
 

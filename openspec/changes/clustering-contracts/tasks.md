@@ -22,7 +22,7 @@
 - [x] 2.2 Add a short `Development Explained` subsection explaining the typed cluster
   label, the niche representation and the `-1` interop boundary; verify with `mdbook build
   docs`.
-- [ ] 2.3 Independent review by a separate agent validating every scenario in
+- [x] 2.3 Independent review by a separate agent validating every scenario in
   `clustering-contracts` and the modified `scoring-contracts` requirement; address every
   finding.
 
