@@ -400,6 +400,70 @@ promise on wide sparse matrices) and "dense-only everywhere" (throws away the sp
 support that lasso, linear SVMs and text classification depend on).
 
 
+### `SKModelState` (the format-agnostic export contract)
+
+*What it is:* Everything a format adapter needs to persist a fitted model: an
+`SKModelMetadata` (estimator name, format version, feature count, class labels, hyperparameters)
+plus a deterministic `BTreeMap<String, SKTensor<F>>` of **named tensors** — the learned arrays.
+
+*Why it exists:* Waves 7 and beyond export models to safetensors, ONNX and a JSON debug format.
+If each format crate invented its own container, every estimator would need one export method
+per format. Instead the model describes its state **once**, and each format crate serializes
+that state. `SKExportable` produces it, `SKImportable` consumes it, and
+`sk_validate_import_metadata` checks the identity triple before any tensor is trusted: an
+importer validates estimator and version first, reads the tensors, then confirms the feature
+count against the metadata.
+
+The two design rules that matter:
+
+1. **Names are stable and unique.** A tensor is addressed by a stable dotted name such as `linear.coefficients`, not
+   by array position. Reordering an internal struct must not silently change the file format.
+   Construction rejects duplicate names; `BTreeMap` gives a deterministic order, so the same
+   model always yields the same tensor order, so two adapters written against the same release
+   see the same layout.
+2. **No `serde` in the contract.** The contract is plain Rust values. `serde` would couple the
+   core crate to one serialization model and make the state of a model depend on a derive; the
+   format crates own their encodings. This keeps `sciencekit_common` dependency-light and lets
+   ONNX (protobuf), safetensors (a header plus a raw buffer) and JSON each do the right thing.
+
+```mermaid
+flowchart TD
+    accTitle: One model state, several format adapters
+    accDescr: A fitted model exports an SKModelState made of metadata and uniquely named tensors. The safetensors, ONNX and JSON debug formats each serialize that same state. Import validates the estimator name, format version and feature count before rebuilding the model, so no format needs its own export method per estimator.
+    M["Fitted model"] -->|"SKExportable::export_state"| S["SKModelState<br/>metadata + named tensors"]
+    S --> A["Safetensors adapter"]
+    S --> O["ONNX adapter"]
+    S --> J["JSON debug adapter"]
+    A --> I["SKImportable::import_state"]
+    O --> I
+    J --> I
+    I --> V["Validate estimator, version<br/>and feature count"]
+    V --> R["Rebuilt model"]
+    classDef model fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#1e3a8a
+    classDef state fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#14532d
+    classDef format fill:#ede9fe,stroke:#7c3aed,stroke-width:2px,color:#4c1d95
+    classDef result fill:#fef9c3,stroke:#ca8a04,stroke-width:2px,color:#713f12
+    class M model
+    class S,V state
+    class A,O,J,I format
+    class R result
+```
+
+### Test walk-through: `interop_traits_round_trip_preserves_predictions`
+
+The reference model in `interop/mock_model.rs` is a tiny linear scorer (`x·coefficients +
+intercept`). The test fits nothing: it builds the model directly, exports its state, imports it
+back and asserts that **both score the same rows identically**. That is the whole point of the
+contract — the state must carry *all* learned information, not just the arrays that happened to
+be convenient. A companion test, `interop_traits_export_preserves_class_labels`, proves the
+class table survives the round trip, and the validation tests prove a foreign state is rejected
+before it can be mistaken for this model.
+
+Validation is deliberately split: a wrong estimator or format version is an
+`UnsupportedRepresentation` (this state describes something else), a feature-count
+disagreement is a `ShapeMismatch` (right model, wrong shape), and a missing required tensor is
+an `InvalidHyperparameter` (the state is malformed for this estimator).
+
 ### `SKClusterLabel` (typed cluster assignments: a label that knows what noise is)
 
 Clustering has a problem the other predictors do not: a clusterer's output is not a
