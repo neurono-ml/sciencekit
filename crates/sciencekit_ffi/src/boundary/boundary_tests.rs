@@ -85,3 +85,25 @@ fn boundary_publish_and_release_output_round_trip() {
         sk_ffi_release_output(&mut descriptor).expect("a second release is a no-op");
     }
 }
+
+/// A descriptor whose data pointer is not aligned for its dtype is rejected
+/// before any typed view is built: alignment is a precondition of
+/// `slice::from_raw_parts`, and its violation aborts the process.
+#[test]
+fn boundary_rejects_a_misaligned_data_pointer() {
+    let buffer = [0_u8; 32];
+    // SAFETY of the test itself: the pointer stays inside `buffer`, and a
+    // misaligned descriptor must be rejected before any element is read.
+    let misaligned = unsafe { buffer.as_ptr().add(1) } as *const core::ffi::c_void;
+    let shape = [2_i64, 1];
+    let descriptor = SKFfiArray {
+        dtype: SKFfiDataType::F64 as i32,
+        ndim: 2,
+        shape: shape.as_ptr(),
+        strides: ptr::null(),
+        data: misaligned,
+        len: 2,
+    };
+    let error = unsafe { sk_ffi_validate_descriptor(&descriptor) }.unwrap_err();
+    assert!(format!("{error}").contains("not aligned"));
+}

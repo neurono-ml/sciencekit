@@ -142,3 +142,66 @@ fn persistence_file_round_trips() {
     assert_eq!(restored, state);
     std::fs::remove_file(&path).ok();
 }
+
+/// An f32 model cannot be saved yet; the ABI says so with a status instead of a
+/// corrupt file.
+#[test]
+fn persistence_rejects_saving_an_f32_model() {
+    let features = [0.0_f32, 0.0, 1.0, 0.0, 0.0, 1.0, 2.0, 3.0];
+    let targets = [1.0_f32, 3.0, 4.0, 14.0];
+    let feature_shape = [4_i64, 2];
+    let target_shape = [4_i64];
+    let x = SKFfiArray {
+        dtype: SKFfiDataType::F32 as i32,
+        ndim: 2,
+        shape: feature_shape.as_ptr(),
+        strides: ptr::null(),
+        data: features.as_ptr() as *const c_void,
+        len: 8,
+    };
+    let y = SKFfiArray {
+        dtype: SKFfiDataType::F32 as i32,
+        ndim: 1,
+        shape: target_shape.as_ptr(),
+        strides: ptr::null(),
+        data: targets.as_ptr() as *const c_void,
+        len: 4,
+    };
+    let builder = sk_ffi_builder_create(0, SKFfiDataType::F32 as i32);
+    let model = sk_ffi_fit(builder, &x, &y);
+    assert!(!model.is_null());
+    let path = temporary_path("f32_unsupported");
+    let c_path = std::ffi::CString::new(path.to_string_lossy().as_bytes()).unwrap();
+    assert_eq!(
+        sk_ffi_model_save(model, c_path.as_ptr()),
+        SKFfiStatus::Unsupported
+    );
+    assert_eq!(sk_ffi_model_free(model), SKFfiStatus::Ok);
+    assert_eq!(sk_ffi_builder_free(builder), SKFfiStatus::Ok);
+}
+
+/// A fitted scaler cannot be saved yet, and the status says why.
+#[test]
+fn persistence_rejects_saving_a_scaler() {
+    let features = [1.0_f64, 10.0, 2.0, 20.0, 3.0, 30.0];
+    let feature_shape = [3_i64, 2];
+    let x = SKFfiArray {
+        dtype: SKFfiDataType::F64 as i32,
+        ndim: 2,
+        shape: feature_shape.as_ptr(),
+        strides: ptr::null(),
+        data: features.as_ptr() as *const c_void,
+        len: 6,
+    };
+    let builder = sk_ffi_builder_create(1, SKFfiDataType::F64 as i32);
+    let model = sk_ffi_fit(builder, &x, ptr::null());
+    assert!(!model.is_null());
+    let path = temporary_path("scaler_unsupported");
+    let c_path = std::ffi::CString::new(path.to_string_lossy().as_bytes()).unwrap();
+    assert_eq!(
+        sk_ffi_model_save(model, c_path.as_ptr()),
+        SKFfiStatus::Unsupported
+    );
+    assert_eq!(sk_ffi_model_free(model), SKFfiStatus::Ok);
+    assert_eq!(sk_ffi_builder_free(builder), SKFfiStatus::Ok);
+}

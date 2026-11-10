@@ -15,9 +15,10 @@ pub use builder_entry_points::{
     sk_ffi_builder_set_include_intercept, sk_ffi_builder_set_with_mean,
     sk_ffi_builder_set_with_std,
 };
+#[cfg(any(test, feature = "test-hook"))]
+pub use misc_entry_points::sk_ffi_internal_test_panic;
 pub use misc_entry_points::{
-    sk_ffi_features, sk_ffi_internal_test_panic, sk_ffi_last_error, sk_ffi_status_name,
-    sk_ffi_version,
+    sk_ffi_features, sk_ffi_last_error, sk_ffi_status_name, sk_ffi_version,
 };
 pub use model_entry_points::{
     sk_ffi_fit, sk_ffi_model_free, sk_ffi_model_load, sk_ffi_model_save, sk_ffi_predict,

@@ -67,6 +67,7 @@ pub extern "C" fn sk_ffi_last_error() -> *const c_char {
 
 /// Test-only hook that proves panics never unwind across the ABI.
 #[doc(hidden)]
+#[cfg(any(test, feature = "test-hook"))]
 #[unsafe(no_mangle)]
 pub extern "C" fn sk_ffi_internal_test_panic() -> i32 {
     sk_ffi_guard_status(|| {

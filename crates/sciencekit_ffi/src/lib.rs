@@ -50,9 +50,9 @@ pub use array::{SKFfiArray, SKFfiDataType};
 pub use boundary::{
     sk_ffi_array_free, sk_ffi_builder_create, sk_ffi_builder_free, sk_ffi_builder_set_backend,
     sk_ffi_builder_set_include_intercept, sk_ffi_builder_set_with_mean,
-    sk_ffi_builder_set_with_std, sk_ffi_features, sk_ffi_fit, sk_ffi_internal_test_panic,
-    sk_ffi_last_error, sk_ffi_model_free, sk_ffi_model_load, sk_ffi_model_save, sk_ffi_predict,
-    sk_ffi_score, sk_ffi_status_name, sk_ffi_transform, sk_ffi_version,
+    sk_ffi_builder_set_with_std, sk_ffi_features, sk_ffi_fit, sk_ffi_last_error, sk_ffi_model_free,
+    sk_ffi_model_load, sk_ffi_model_save, sk_ffi_predict, sk_ffi_score, sk_ffi_status_name,
+    sk_ffi_transform, sk_ffi_version,
 };
 pub use builder::SKFfiEstimatorFamily;
 pub use error::{sk_ffi_clear_last_error, sk_ffi_set_last_error};

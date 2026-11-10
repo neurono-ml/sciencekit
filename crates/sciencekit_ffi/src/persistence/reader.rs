@@ -12,6 +12,7 @@ pub(crate) fn malformed(message: impl Into<String>) -> SKFfiError {
 /// Map a stored dtype byte onto its tensor dtype.
 pub(crate) fn dtype_from_code(code: u8) -> Result<SKTensorDataType, SKFfiError> {
     match code {
+        0 => Ok(SKTensorDataType::F32),
         1 => Ok(SKTensorDataType::F64),
         2 => Ok(SKTensorDataType::I64),
         3 => Ok(SKTensorDataType::Bool),

@@ -67,6 +67,13 @@ pub(crate) unsafe fn sk_ffi_release_output(array: *mut SKFfiArray) -> Result<(),
         ));
     }
     let length = descriptor.len as usize;
+    let dtype = if descriptor.data.is_null() {
+        None
+    } else {
+        Some(SKFfiDataType::from_code(descriptor.dtype).ok_or_else(|| {
+            SKFfiError::invalid_argument("output descriptor has an unknown dtype")
+        })?)
+    };
     if !descriptor.shape.is_null() {
         if descriptor.ndim < 1 {
             return Err(SKFfiError::invalid_argument(
@@ -84,10 +91,7 @@ pub(crate) unsafe fn sk_ffi_release_output(array: *mut SKFfiArray) -> Result<(),
         drop(shape);
         descriptor.shape = ptr::null();
     }
-    if !descriptor.data.is_null() {
-        let dtype = SKFfiDataType::from_code(descriptor.dtype).ok_or_else(|| {
-            SKFfiError::invalid_argument("output descriptor has an unknown dtype")
-        })?;
+    if let Some(dtype) = dtype {
         // SAFETY: the data pointer came from `publish_output` with `length`.
         unsafe {
             match dtype {

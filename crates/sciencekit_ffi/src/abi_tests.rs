@@ -68,3 +68,32 @@ fn version_status_names_are_stable() {
     let unknown = unsafe { std::ffi::CStr::from_ptr(sk_ffi_status_name(99)) };
     assert_eq!(unknown.to_str().unwrap(), "unknown");
 }
+
+/// Every `sk_ffi_*` the header declares is implemented and listed in the
+/// inventory: the check is bidirectional, so a stale declaration cannot drift.
+#[test]
+fn version_header_declares_no_symbol_outside_the_inventory() {
+    let header = include_str!("../include/sciencekit.h");
+    let mut declared: Vec<&str> = Vec::new();
+    for line in header.lines() {
+        let trimmed = line.trim_start();
+        if !trimmed.starts_with("SKFfiStatus sk_ffi_") && !trimmed.starts_with("void sk_ffi_") {
+            continue;
+        }
+        let start = trimmed
+            .find("sk_ffi_")
+            .expect("the prefix was just matched");
+        let name: String = trimmed[start..]
+            .chars()
+            .take_while(|character| character.is_ascii_alphanumeric() || *character == '_')
+            .collect();
+        declared.push(Box::leak(name.into_boxed_str()));
+    }
+    assert!(!declared.is_empty(), "the header declares no entry points");
+    for name in declared {
+        assert!(
+            super::SK_FFI_ENTRY_POINTS.contains(&name),
+            "`{name}` is declared in the header but missing from SK_FFI_ENTRY_POINTS"
+        );
+    }
+}

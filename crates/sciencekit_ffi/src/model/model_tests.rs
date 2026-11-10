@@ -177,3 +177,68 @@ fn fit_rejects_a_mismatched_dtype() {
     assert!(crate::error::sk_ffi_last_error_message().contains("dtype mismatch"));
     assert_eq!(sk_ffi_builder_free(builder), SKFfiStatus::Ok);
 }
+
+/// A prediction with the wrong feature count returns the shape status and a
+/// message carrying both dimensions.
+#[test]
+fn predict_rejects_a_mismatched_feature_count_with_a_shape_message() {
+    let features = [0.0_f64, 0.0, 1.0, 0.0, 0.0, 1.0, 2.0, 3.0];
+    let targets = [1.0_f64, 3.0, 4.0, 14.0];
+    let feature_shape = [4_i64, 2];
+    let target_shape = [4_i64];
+    let x = matrix_descriptor(&features, 4, 2, &feature_shape);
+    let y = vector_descriptor(&targets, 4, &target_shape);
+    let builder = sk_ffi_builder_create(0, SKFfiDataType::F64 as i32);
+    let model = sk_ffi_fit(builder, &x, &y);
+    assert!(!model.is_null());
+
+    let wide = [0.0_f64; 12];
+    let wide_shape = [4_i64, 3];
+    let wrong = matrix_descriptor(&wide, 4, 3, &wide_shape);
+    let mut output = SKFfiArray {
+        dtype: 0,
+        ndim: 0,
+        shape: ptr::null(),
+        strides: ptr::null(),
+        data: ptr::null(),
+        len: 0,
+    };
+    assert_eq!(
+        sk_ffi_predict(model, &wrong, &mut output),
+        SKFfiStatus::Shape
+    );
+    let message = crate::error::sk_ffi_last_error_message();
+    assert!(
+        message.contains('2'),
+        "message names the expected width: {message}"
+    );
+    assert!(
+        message.contains('3'),
+        "message names the received width: {message}"
+    );
+    assert_eq!(sk_ffi_model_free(model), SKFfiStatus::Ok);
+    assert_eq!(sk_ffi_builder_free(builder), SKFfiStatus::Ok);
+}
+
+/// A fit whose target length disagrees with the rows returns the shape status.
+#[test]
+fn fit_rejects_a_mismatched_target_length() {
+    let features = [0.0_f64, 0.0, 1.0, 0.0, 0.0, 1.0, 2.0, 3.0];
+    let targets = [1.0_f64, 3.0, 4.0];
+    let feature_shape = [4_i64, 2];
+    let target_shape = [3_i64];
+    let x = matrix_descriptor(&features, 4, 2, &feature_shape);
+    let y = vector_descriptor(&targets, 3, &target_shape);
+    let builder = sk_ffi_builder_create(0, SKFfiDataType::F64 as i32);
+    let model = sk_ffi_fit(builder, &x, &y);
+    assert!(
+        model.is_null(),
+        "a mismatched target must not produce a model"
+    );
+    let message = crate::error::sk_ffi_last_error_message();
+    assert!(
+        message.contains('4'),
+        "message names the row count: {message}"
+    );
+    assert_eq!(sk_ffi_builder_free(builder), SKFfiStatus::Ok);
+}

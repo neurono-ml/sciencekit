@@ -19,3 +19,8 @@ sciencekit_metrics = { path = "../sciencekit_metrics" }
 sciencekit_preprocessing = { path = "../sciencekit_preprocessing" }
 
 ndarray = { workspace = true }
+
+[features]
+# Exposes the deliberately panicking test hook in the cdylib; tests use it via
+# `cfg(test)` instead.
+test-hook = []

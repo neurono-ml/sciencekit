@@ -43,13 +43,16 @@ pub fn sk_ffi_encode_model_state(state: &SKModelState<f64>) -> Vec<u8> {
 }
 
 /// Map a tensor dtype onto its stable byte.
+///
+/// The writer supports the same dtypes the reader accepts: `F64`, `I64` and
+/// `Bool`. `F32` is rejected by the caller before reaching this function, and an
+/// unknown dtype would be a writer bug, not a caller error.
 fn dtype_code(dtype: SKTensorDataType) -> u8 {
     match dtype {
-        SKTensorDataType::F32 => 0,
         SKTensorDataType::F64 => 1,
         SKTensorDataType::I64 => 2,
         SKTensorDataType::Bool => 3,
-        _ => 1,
+        _ => unreachable!("the caller rejects unsupported tensor dtypes"),
     }
 }
 

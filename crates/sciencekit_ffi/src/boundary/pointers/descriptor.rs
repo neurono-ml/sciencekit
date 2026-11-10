@@ -109,6 +109,10 @@ pub(crate) unsafe fn sk_ffi_validate_descriptor<'a>(
     if descriptor.data.is_null() {
         return Err(SKFfiArrayError::NullData.into());
     }
+    let shape_alignment = std::mem::align_of::<i64>();
+    if (descriptor.shape as usize) % shape_alignment != 0 {
+        return Err(SKFfiArrayError::MisalignedPointer { field: "shape" }.into());
+    }
     if !(1..=2).contains(&descriptor.ndim) {
         return Err(SKFfiArrayError::InvalidNumberOfDimensions(descriptor.ndim).into());
     }
@@ -124,6 +128,12 @@ pub(crate) unsafe fn sk_ffi_validate_descriptor<'a>(
     };
     sk_ffi_validate_contiguous_strides(strides, &shape)?;
     let dtype = descriptor.data_type()?;
+    if (descriptor.data as usize) % dtype.element_size() != 0 {
+        return Err(SKFfiArrayError::MisalignedPointer { field: "data" }.into());
+    }
+    if !descriptor.strides.is_null() && (descriptor.strides as usize) % shape_alignment != 0 {
+        return Err(SKFfiArrayError::MisalignedPointer { field: "strides" }.into());
+    }
     let byte_length = length
         .checked_mul(dtype.element_size())
         .ok_or(SKFfiArrayError::LengthOutOfRange)?;

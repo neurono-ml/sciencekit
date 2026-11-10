@@ -10,7 +10,8 @@
  *   returns. Input descriptors are never released with `sk_ffi_array_free`.
  * - An array descriptor RETURNED by the library owns its shape and data
  *   buffers. Release it exactly once with `sk_ffi_array_free`; a second call
- *   is a safe no-op.
+ *   is a safe no-op. An output slot reused for another call must be released
+ *   (or zero-initialised) first, or the previous buffers leak.
  * - Builders and models are opaque handles. Free each one once with its
  *   matching free function. Passing a freed handle to any function returns
  *   `SK_FFI_STATUS_INVALID_HANDLE` without dereferencing memory.
@@ -127,7 +128,13 @@ SKFfiStatus sk_ffi_score(SKFfiModel *model,
                          const SKFfiArray *targets,
                          double *score);
 
-/* Persistence through the interop model-state contract. */
+/*
+ * Persistence through the interop model-state contract.
+ *
+ * Scope: save/load currently support fitted linear-regression models in f64.
+ * Saving an f32 model or a fitted scaler returns SK_FFI_STATUS_UNSUPPORTED;
+ * loading a state exported by another estimator is rejected the same way.
+ */
 SKFfiStatus sk_ffi_model_save(SKFfiModel *model, const char *path);
 SKFfiStatus sk_ffi_model_load(const char *path, SKFfiModel **output);
 

@@ -9,6 +9,11 @@ pub enum SKFfiArrayError {
     NullData,
     /// The shape pointer is null.
     NullShape,
+    /// The data or shape pointer is not aligned for its element type.
+    MisalignedPointer {
+        /// The field carrying the misaligned pointer.
+        field: &'static str,
+    },
     /// The dtype code is not one of [`super::super::SKFfiDataType`].
     UnknownDataType(i32),
     /// The descriptor declares a dimension count outside `1..=2`.
@@ -64,6 +69,9 @@ impl fmt::Display for SKFfiArrayError {
             }
             SKFfiArrayError::NullShape => {
                 formatter.write_str("array descriptor has a null shape pointer")
+            }
+            SKFfiArrayError::MisalignedPointer { field } => {
+                write!(formatter, "array descriptor field `{field}` is not aligned")
             }
             SKFfiArrayError::UnknownDataType(code) => {
                 write!(formatter, "unknown array dtype code {code}")
