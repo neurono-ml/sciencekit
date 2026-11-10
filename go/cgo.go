@@ -55,3 +55,84 @@ func cString(value string) (*C.char, func()) {
 	pointer := C.CString(value)
 	return pointer, func() { C.free(unsafe.Pointer(pointer)) }
 }
+
+// nativeBuilder wraps one opaque SKFfiBuilder handle.
+type nativeBuilder struct {
+	pointer *C.SKFfiBuilder
+}
+
+// newNativeBuilder creates a configured-with-defaults builder handle.
+func newNativeBuilder(estimatorFamily, dtype int32) (*nativeBuilder, error) {
+	pointer := C.sk_ffi_builder_create(C.int32_t(estimatorFamily), C.int32_t(dtype))
+	if pointer == nil {
+		return nil, newError(StatusUnknown, "builder_create", "the library returned a null builder")
+	}
+	registerBuilder()
+	return &nativeBuilder{pointer: pointer}, nil
+}
+
+// free releases the native builder.
+func (builder *nativeBuilder) free() error {
+	if builder.pointer == nil {
+		return nil
+	}
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+	status := C.sk_ffi_builder_free(builder.pointer)
+	builder.pointer = nil
+	unregisterBuilder()
+	return statusError("builder_free", status)
+}
+
+// callStatus runs one status-returning native call on a locked OS thread.
+func (builder *nativeBuilder) callStatus(operation string, call func() C.SKFfiStatus) error {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+	return statusError(operation, call())
+}
+
+// setIncludeIntercept configures the linear-regression intercept.
+func (builder *nativeBuilder) setIncludeIntercept(enabled bool) error {
+	return builder.callStatus("builder_set_include_intercept", func() C.SKFfiStatus {
+		return C.sk_ffi_builder_set_include_intercept(builder.pointer, C.bool(enabled))
+	})
+}
+
+// setWithMean configures scaler centering.
+func (builder *nativeBuilder) setWithMean(enabled bool) error {
+	return builder.callStatus("builder_set_with_mean", func() C.SKFfiStatus {
+		return C.sk_ffi_builder_set_with_mean(builder.pointer, C.bool(enabled))
+	})
+}
+
+// setWithStd configures scaler scaling.
+func (builder *nativeBuilder) setWithStd(enabled bool) error {
+	return builder.callStatus("builder_set_with_std", func() C.SKFfiStatus {
+		return C.sk_ffi_builder_set_with_std(builder.pointer, C.bool(enabled))
+	})
+}
+
+// setBackend configures the math backend.
+func (builder *nativeBuilder) setBackend(kind BackendKind) error {
+	return builder.callStatus("builder_set_backend", func() C.SKFfiStatus {
+		return C.sk_ffi_builder_set_backend(builder.pointer, C.int32_t(kind))
+	})
+}
+
+// nativeModel wraps one opaque SKFfiModel handle.
+type nativeModel struct {
+	pointer *C.SKFfiModel
+}
+
+// free releases the native model.
+func (model *nativeModel) free() error {
+	if model.pointer == nil {
+		return nil
+	}
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+	status := C.sk_ffi_model_free(model.pointer)
+	model.pointer = nil
+	unregisterModel()
+	return statusError("model_free", status)
+}
