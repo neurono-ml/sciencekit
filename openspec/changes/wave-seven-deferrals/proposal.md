@@ -32,7 +32,8 @@ None. This is a documentation/scope clarification; `.openspec.yaml` sets
 
 ## Impact
 
-- **Docs:** `docs/PRD.md`, `CHANGELOG.md`.
+- **Docs:** `docs/PRD.md`, `CHANGELOG.md`, `docs/src/roadmap.md`, and the published
+  `docs/documentations` roadmap cards.
 - **Downstream:** the neighbours, SVM and tree changes cite the PRD section in their
   non-goals instead of silently dropping `memmap2`/export.
 - **Acceptance criteria:** the amended PRD is internally consistent and renders in the

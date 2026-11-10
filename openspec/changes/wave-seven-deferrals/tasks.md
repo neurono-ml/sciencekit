@@ -13,7 +13,7 @@
 ## 2. Changelog and verification
 
 - [x] 2.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under `Unreleased →
-  Changed` for the clarified Wave 7 scope.
+  Changed` for the clarified Phase 7 scope.
 - [x] 2.2 Run `mdbook build docs` and verify the PRD-derived documentation renders
   without errors.
 
