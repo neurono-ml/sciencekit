@@ -23,11 +23,16 @@
 pub mod ball_tree;
 pub mod kd_tree;
 pub mod metric;
+pub mod neighbors;
 pub mod searcher;
 
 pub use ball_tree::{SKBallTree, SKBallTreeBuilder};
 pub use kd_tree::{SKKDTree, SKKDTreeBuilder};
 pub use metric::{SKNeighborMetric, SKRequestedNeighborMetric};
+pub use neighbors::{
+    SKFeatureRepresentation, SKNeighborsAlgorithm, SKNeighborsMetric, SKSearchStrategy,
+    sk_resolve_search_strategy,
+};
 pub use searcher::{SKNearestNeighborsSearcher, SKNeighborQuery, SKRadiusNeighbors};
 
 #[cfg(test)]
