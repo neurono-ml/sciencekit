@@ -12,6 +12,7 @@ mod float_conversion;
 mod integer_conversion;
 mod null_mapping;
 mod record_batch_conversion;
+mod text_borrowed_view;
 mod text_conversion;
 
 pub use boolean_conversion::sk_boolean_category_codes;
@@ -19,3 +20,4 @@ pub use chunked_conversion::sk_tabular_batch_from_column_chunks;
 pub use column_conversion::sk_column_data_from_arrow_array;
 pub use dictionary_conversion::{sk_dictionary_label_table, sk_label_tables_from_record_batch};
 pub use record_batch_conversion::sk_tabular_batch_from_record_batch;
+pub use text_borrowed_view::{SKArrowTextBorrowedView, sk_text_borrowed_view};
