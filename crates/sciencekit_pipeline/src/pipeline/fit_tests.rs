@@ -1,7 +1,7 @@
 //! Tests for the pipeline fit walk (spec `typed-pipeline`).
 
 use ndarray::{Array1, Array2};
-use sciencekit_common::SKBuilder;
+use sciencekit_common::{SKBuilder, SKClassifierPredictor};
 use sciencekit_impute::simple_imputer::SKSimpleImputer;
 use sciencekit_linear_model::logistic_regression::SKLogisticRegression;
 use sciencekit_preprocessing::standard_scaler::core_implementation::SKStandardScaler;
@@ -55,4 +55,7 @@ fn the_same_pipeline_can_be_refitted_without_touching_its_configuration() {
     let second = build().fit(&features, targets.view()).unwrap();
     assert_eq!(first.number_of_features(), second.number_of_features());
     assert_eq!(first.number_of_stages(), second.number_of_stages());
+    let first_labels = first.predict_labels(features.view()).unwrap();
+    let second_labels = second.predict_labels(features.view()).unwrap();
+    assert_eq!(first_labels, second_labels);
 }
