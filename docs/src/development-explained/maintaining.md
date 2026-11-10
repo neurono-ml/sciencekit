@@ -221,4 +221,6 @@ async bridge. The [k-means chapter](./ch27-kmeans.html) adds the first unsupervi
 estimator: seeded k-means++, the Lloyd iteration, Elkan pruning, empty-cluster repair and
 the typed cluster assignments. The
 [decision tree chapter](./ch28-decision-trees.html) adds CART: impurity, dense and sparse
-split search, deterministic ties, feature subsampling, class weights and importances.
+split search, deterministic ties, feature subsampling, class weights and importances. The
+[model selection chapter](./ch29-model-selection.html) adds train/test split, the three
+K-fold flavours, row gathering and cross-validation scoring.
