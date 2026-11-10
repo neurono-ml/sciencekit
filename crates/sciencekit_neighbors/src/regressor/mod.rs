@@ -16,4 +16,6 @@ pub use model::SKKNeighborsRegressorModel;
 #[cfg(test)]
 mod regressor_builder_tests;
 #[cfg(test)]
+mod regressor_representation_tests;
+#[cfg(test)]
 mod regressor_tests;

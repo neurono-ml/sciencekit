@@ -35,6 +35,11 @@ impl<F: SKFloat> SKKNeighborsClassifierModel<F> {
         self.search.number_of_features()
     }
 
+    /// The representation the training design is stored in (`dense` or `csr`).
+    pub fn training_representation(&self) -> &'static str {
+        self.search.training.representation()
+    }
+
     /// The canonical, reversible class table.
     pub fn classes(&self) -> &SKLabelTable {
         &self.classes

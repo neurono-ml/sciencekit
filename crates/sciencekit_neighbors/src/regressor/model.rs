@@ -34,6 +34,11 @@ impl<F: SKFloat> SKKNeighborsRegressorModel<F> {
         self.search.number_of_features()
     }
 
+    /// The representation the training design is stored in (`dense` or `csr`).
+    pub fn training_representation(&self) -> &'static str {
+        self.search.training.representation()
+    }
+
     /// Number of neighbours consulted per query row.
     pub fn nearest_neighbors_count(&self) -> usize {
         self.configuration.nearest_neighbors_count
