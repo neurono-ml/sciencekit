@@ -4,6 +4,7 @@
 //! concurrent accumulation. Tolerances are documented per test.
 
 mod averaging_modes_tests;
+mod clustering_acceptance_tests;
 mod concurrency_tests;
 mod distance_tests;
 mod f32_precision_tests;
