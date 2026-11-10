@@ -5,8 +5,12 @@
 //! submodules; every implementation lives in its own file.
 
 mod tabular_batch;
+mod validation;
 
 pub use tabular_batch::SKTabularBatch;
+pub use validation::sk_validate_numeric_feature_columns;
 
 #[cfg(test)]
 mod tabular_batch_tests;
+#[cfg(test)]
+mod validation_tests;
