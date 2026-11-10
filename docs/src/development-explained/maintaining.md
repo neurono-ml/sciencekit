@@ -210,4 +210,6 @@ thread-count invariance. The
 [sparse distance chapter](./ch22-sparse-pairwise-distances.html) then shows how one
 dispatcher serves all four dense/sparse representation pairs without ever densifying a
 sparse design. The [ranking metrics chapter](./ch23-ranking-metrics.html) closes the
-evaluation story with ROC/AUC, precision-recall, log loss, balanced accuracy and MCC.
+evaluation story with ROC/AUC, precision-recall, log loss, balanced accuracy and MCC. The
+[type-safe pipeline chapter](./ch24-type-safe-pipeline.html) then composes transformers and
+a final estimator into a chain whose validity is checked by the compiler, not at fit time.
