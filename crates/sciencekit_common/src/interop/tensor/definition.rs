@@ -1,87 +1,10 @@
-//! The named tensor and its dtype (spec `model-export-contracts`).
+//! The named tensor definition.
 
 use crate::SKError;
 use crate::sk_float::SKFloat;
 
-/// The element type stored in an exported tensor.
-///
-/// Floating tensors carry the model scalar; integer and boolean tensors carry
-/// class tables and tree indices without forcing them into the scalar.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[non_exhaustive]
-pub enum SKTensorDType {
-    /// Single-precision floating point.
-    F32,
-    /// Double-precision floating point.
-    F64,
-    /// Signed 64-bit integer.
-    I64,
-    /// Boolean.
-    Bool,
-}
-
-impl SKTensorDType {
-    /// The canonical textual name used by every format adapter.
-    pub fn as_str(self) -> &'static str {
-        match self {
-            SKTensorDType::F32 => "F32",
-            SKTensorDType::F64 => "F64",
-            SKTensorDType::I64 => "I64",
-            SKTensorDType::Bool => "Bool",
-        }
-    }
-
-    /// Whether the dtype stores floating-point values.
-    pub fn is_floating(self) -> bool {
-        matches!(self, SKTensorDType::F32 | SKTensorDType::F64)
-    }
-}
-
-/// The owned payload of a tensor, matching its [`SKTensorDType`].
-#[derive(Debug, Clone, PartialEq)]
-#[non_exhaustive]
-pub enum SKTensorValues<F: SKFloat> {
-    /// Floating-point values in the model scalar.
-    Floating(Vec<F>),
-    /// Signed 64-bit integer values.
-    Integer(Vec<i64>),
-    /// Boolean values.
-    Boolean(Vec<bool>),
-}
-
-impl<F: SKFloat> SKTensorValues<F> {
-    /// The number of stored values.
-    pub fn len(&self) -> usize {
-        match self {
-            SKTensorValues::Floating(values) => values.len(),
-            SKTensorValues::Integer(values) => values.len(),
-            SKTensorValues::Boolean(values) => values.len(),
-        }
-    }
-
-    /// Whether the payload holds no values.
-    pub fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
-
-    /// The dtype implied by the payload variant.
-    fn dtype(&self) -> SKTensorDType {
-        match self {
-            SKTensorValues::Floating(_) => tensor_dtype_for_scalar::<F>(),
-            SKTensorValues::Integer(_) => SKTensorDType::I64,
-            SKTensorValues::Boolean(_) => SKTensorDType::Bool,
-        }
-    }
-}
-
-/// The tensor dtype matching the model scalar `F`.
-pub(crate) fn tensor_dtype_for_scalar<F: SKFloat>() -> SKTensorDType {
-    if std::mem::size_of::<F>() == std::mem::size_of::<f32>() {
-        SKTensorDType::F32
-    } else {
-        SKTensorDType::F64
-    }
-}
+use super::dtype::{SKTensorDType, tensor_dtype_for_scalar};
+use super::values::SKTensorValues;
 
 /// A named, typed tensor with a shape and a value payload.
 ///
