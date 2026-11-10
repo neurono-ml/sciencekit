@@ -158,7 +158,7 @@ declaring one that is not implemented — fails a test rather than a user.
 | `handle/` | the registry and identifier allocation |
 | `array/`, `array/validation/` | descriptors, shape, length, stride and alignment checks, owned buffers |
 | `boundary/` | the only module that dereferences raw pointers, plus the entry points grouped by area |
-| `error/`, `error_kind/` | status codes and the thread-local message |
+| `error.rs`, `error_kind.rs` | status codes and the thread-local message |
 | `model/` | the model handle and its operations |
 | `persistence/` | the `SKModelState` file encoding |
 | `include/sciencekit.h` | the stable C header |
