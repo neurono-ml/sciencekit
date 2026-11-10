@@ -2,32 +2,32 @@
 
 ## 1. Shared generator
 
-- [ ] 1.1 Create `sciencekit_common/src/random/` with dispatcher `mod.rs`, the SplitMix64
+- [x] 1.1 Create `sciencekit_common/src/random/` with dispatcher `mod.rs`, the SplitMix64
   generator moved from `sciencekit_linear_model`, and golden-vector tests for `next_u64`;
   verify with `cargo test -p sciencekit_common random`.
-- [ ] 1.2 Add `next_f64`, `uniform`, `normal` (Box-Muller with cached spare), `shuffle`
+- [x] 1.2 Add `next_f64`, `uniform`, `normal` (Box-Muller with cached spare), `shuffle`
   and `sample_indices_without_replacement`, with range, permutation and moment tests; verify
   with `cargo test -p sciencekit_common random`.
-- [ ] 1.3 Add `sk_derive_seed` and domain constants, with distinctness and
+- [x] 1.3 Add `sk_derive_seed` and domain constants, with distinctness and
   order-independence tests; verify with `cargo test -p sciencekit_common sub_seed`.
-- [ ] 1.4 Re-export the generator and derive helper from `sciencekit_common`; verify with
+- [x] 1.4 Re-export the generator and derive helper from `sciencekit_common`; verify with
   `cargo test -p sciencekit_common`.
 
 ## 2. Linear-model refactor
 
-- [ ] 2.1 Replace the private SGD generator with the shared one and delete the duplicate
+- [x] 2.1 Replace the private SGD generator with the shared one and delete the duplicate
   implementation; verify the existing seeded SGD tests with
   `cargo test -p sciencekit_linear_model sgd`.
-- [ ] 2.2 Add a cross-crate test proving the same seed produces the same shuffle order in
+- [x] 2.2 Add a cross-crate test proving the same seed produces the same shuffle order in
   the shared generator and in SGD; verify with `cargo test -p sciencekit_linear_model`.
 
 ## 3. Documentation and review
 
-- [ ] 3.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under `Unreleased →
+- [x] 3.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under `Unreleased →
   Added` for the shared generator and the `random_seed` rule.
-- [ ] 3.2 Add a `Development Explained` subsection covering SplitMix64, sub-seeds,
+- [x] 3.2 Add a `Development Explained` subsection covering SplitMix64, sub-seeds,
   thread-count invariance and the reproducibility scope; verify with `mdbook build docs`.
-- [ ] 3.3 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
+- [x] 3.3 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
   warnings` and `cargo test --workspace`; fix every failure before pushing.
 - [ ] 3.4 Independent review by a separate agent validating every scenario in
   `deterministic-randomness`; address every finding and re-run the gates.
