@@ -102,8 +102,8 @@ on hash-map iteration order.
   `execution_mode`.
 - **`SKKNeighborsRegressor` / `SKKNeighborsRegressorBuilder`** — the same surface for responses.
 - **Fitted models** — implement `SKClassifierPredictor` (labels + probabilities) or
-  `SKRegressorPredictor`, and expose the stored design, `nearest_neighbors_count` and the
-  resolved search strategy.
+  `SKRegressorPredictor`, and expose the class table, the training row/feature counts, the
+  resolved search strategy and the carried backend.
 - **`SKNeighborsAlgorithm`**, **`SKNeighborsWeights`**, **`SKNeighborsMetric`** — the closed
   catalogues of choices.
 - **`SKBruteForceSearcher`** — the sparse-aware searcher implementing the shared contract.
@@ -124,7 +124,7 @@ parity rule applied to an estimator whose search depends on it.
 ### `classifier_probabilities_*`
 
 Probabilities are neighbour fractions (or weighted fractions) and must sum to one; the columns
-follow the canonical class table, not the order the labels happened to appear in.
+follow the canonical class table, which records classes in first-occurrence order.
 
 ### `acceptance_knn_equidistant_neighbors_*`
 
@@ -133,8 +133,8 @@ cannot drift between runs.
 
 ### `acceptance_knn_large_*` and `concurrency_*`
 
-A 20 000-row acceptance case, all representation combinations, and a fitted model shared across
-threads with the same predictions as a single thread.
+A 20 000-row acceptance case, the dense/sparse/mixed combinations exercised elsewhere in the
+suite, and a fitted model shared across threads with the same predictions as a single thread.
 
 ### `validation_rejects_*`
 
@@ -145,10 +145,11 @@ metric/algorithm pairs are rejected with the central error taxonomy.
 
 | File | Responsibility |
 |---|---|
-| `searcher/brute_force/` | sparse-aware brute-force neighbour search |
+| `neighbors/brute_force/` | sparse-aware brute-force neighbour search |
 | `classifier/` | builder, fit, labels, probabilities, target canonicalization |
 | `regressor/` | builder, fit and response prediction |
-| `algorithm.rs`, `weights.rs`, `metric.rs` | the closed catalogues and `Auto` resolution |
+| `neighbors/algorithm.rs`, `neighbors/weights.rs`, `neighbors/metric.rs` | the closed catalogues and `Auto` resolution |
+| `neighbors/{configuration,index,search,training_data,validation}.rs` | stored configuration, strategy resolution, query search and validation |
 | `acceptance_tests/` | tiny/large, representations, ties, parallelism, metrics |
 
 ## 7. What this unlocks
