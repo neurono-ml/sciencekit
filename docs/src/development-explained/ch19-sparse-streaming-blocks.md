@@ -145,6 +145,47 @@ algebra; it routes the block to the same code:
   later dense batch is converted to CSR, never the reverse).
 - **SGD**: one epoch over CSR rows through the sparse row driver.
 
+## 6.1 The coverage matrix: proving the set, not just the members
+
+Per-estimator tests prove that *each* estimator handles CSR. They cannot prove that the
+*set* is complete — that no streaming estimator was forgotten, and that the one dense-only
+exception is deliberate. A second layer does that: a workspace-level matrix, one row per
+`fit_streaming`/`partial_fit` implementation, recording whether it offers `partial_fit`,
+dense streaming and sparse streaming, plus a note justifying the row.
+
+```mermaid
+flowchart LR
+    accTitle: Two layers of streaming coverage
+    accDescr: Each estimator's own sparse streaming suite proves it matches the dense fit. The workspace coverage matrix proves the set is complete, that the only dense-only streaming path is the documented categorical encoder, and that a deliberately dense-only path rejects CSR before reading an element.
+    A["Per-estimator suite<br/>sparse stream = dense stream = dense fit"] --> C["Coverage matrix<br/>one row per streaming estimator"]
+    C --> B["Completeness test<br/>fails when a row is missing"]
+    C --> D["Exception test<br/>only SKOneHotEncoder is dense-only"]
+    B --> E["Dense-only guard test<br/>UnsupportedRepresentation before any element"]
+    classDef member fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#1e3a8a
+    classDef set fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#14532d
+    classDef guard fill:#fee2e2,stroke:#dc2626,stroke-width:2px,color:#7f1d1d
+    class A member
+    class C,B,D set
+    class E guard
+```
+
+Three properties come out of it:
+
+1. **Completeness.** The matrix pins the count (thirteen implementations) and every name, so
+   adding a streaming estimator without auditing it fails the test.
+2. **The exception is explicit.** Exactly one row has `sparse_streaming: false`:
+   `SKOneHotEncoder`. Its streaming input is not a numeric block at all — it is an iterator
+   of categorical views — so numeric CSR support is meaningless there. Writing the exception
+   down stops it from being mistaken for an oversight.
+3. **The guard has a shape.** A deliberately dense-only streaming estimator must match the
+   representation once, before touching an element, and return
+   `UnsupportedRepresentation` with a conversion suggestion. A local fixture in the audit
+   module demonstrates that contract; no shipped estimator is dense-only today.
+
+The no-densification rule is the thread running through both layers: the per-estimator suites
+compare a sparse stream against a dense stream and a dense `fit`, and the memory-guard test
+proves a batch's *stored* size drives the budget — a densified block would fail it.
+
 ## 7. Walking the real tests
 
 - `sciencekit_common/src/batching/feature_block/feature_block_tests.rs`: construction, shape,
