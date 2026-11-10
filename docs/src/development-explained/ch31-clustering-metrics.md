@@ -44,8 +44,9 @@ means identical (up to relabelling).
 2. **Noise is excluded, explicitly.** A `Noise` assignment has no cluster to be close to, so the
    silhouette/centroid metrics drop those rows and document it; the pairwise metrics take plain
    `i64` labels and treat noise as an ordinary label.
-3. **Chance correction is the point.** ARI and NMI are computed against the chance baseline, with
-   three NMI normalisations (arithmetic, geometric, max) available and documented.
+3. **Chance correction is explicit.** The adjusted Rand index subtracts the expected agreement
+   of independent partitions. NMI is not chance-corrected; it is mutual information normalised by
+   the two label entropies (arithmetic, geometric or max), with identical partitions scoring 1.
 4. **Homogeneity, completeness and V-measure** come from the same contingency table, so the three
    are consistent with each other by construction.
 5. **Degenerate cases are documented, not papered over.** Fewer than two clusters, all-noise
@@ -151,7 +152,7 @@ explicit and tested.
 Both centroid indices are pinned against a hand-computed value; `davies_bouldin_is_near_zero_for_separated_clusters`
 and `calinski_harabasz_is_large_for_separated_clusters` confirm the direction of "better".
 
-### `clustering_validation_rejects_single_cluster` and `clustering_validation_rejects_noise_only_input`
+### `clustering_validation_rejects_a_single_cluster` and `clustering_validation_rejects_noise_only_input`
 
 Degenerate inputs are rejected with a structured error rather than producing a meaningless
 number.
@@ -164,16 +165,19 @@ Large-data behaviour and thread-safety round out the acceptance checklist.
 
 | File | Responsibility |
 |---|---|
-| `clustering/silhouette/` | per-sample silhouette, chunked distances, mean score |
-| `clustering/pairwise/` | adjusted Rand, NMI and the homogeneity family |
-| `clustering/centroid/` | Davies-Bouldin and Calinski-Harabasz |
-| `scorers/clustering/` | `SKSilhouetteScorer` |
-| acceptance/validation tests | degenerate cases, dense/sparse parity, concurrency |
+| `clustering/silhouette.rs` | per-sample silhouette, chunked distances, mean score |
+| `clustering/adjusted_rand.rs` | chance-corrected pair agreement |
+| `clustering/mutual_information.rs` | NMI with three normalisations |
+| `clustering/homogeneity.rs` | homogeneity, completeness, V-measure |
+| `clustering/davies_bouldin.rs` | Davies-Bouldin index |
+| `clustering/calinski_harabasz.rs` | Calinski-Harabasz index |
+| `scorers/clustering.rs` | `SKSilhouetteScorer` |
+| `acceptance_tests/clustering_acceptance_tests.rs` | large data, concurrency, `Send + Sync` |
 
 ## 7. What this unlocks
 
-The clustering lane now has the same evaluation depth as the supervised one: `SKKMeans`, DBSCAN
-and MiniBatchKMeans can be compared on internal quality (silhouette, centroid indices) and, when
-a reference exists, on external agreement (ARI, NMI, homogeneity family). Because the metrics
+The clustering lane now has the same evaluation depth as the supervised one: `SKKMeans` can be
+compared on internal quality (silhouette, centroid indices) and, when a reference exists, on
+external agreement (ARI, NMI, homogeneity family); later clusterers inherit the same surface. Because the metrics
 share the pairwise kernels and the typed-assignment contract, a new clusterer gets all of them
 without new plumbing.
