@@ -558,6 +558,11 @@ Order faithful to the scikit-learn mapping (from the handoff), respecting depend
 
 ### Phase 5 — Unsupervised
 12. `sciencekit_cluster`: SKKMeans, SKDBSCAN, SKMiniBatchKMeans (streaming).
+    - KMeans supports dense, sparse and mixed fit/assignment through the shared
+      norm-expansion distance, never densifying a sparse design.
+    - Streaming/`partial_fit` (delivered by the MiniBatchKMeans change), missing
+      values, GPU acceleration, `memmap2`-backed sources and model export are
+      explicit KMeans non-goals; persistence and export remain Phase 7 work.
     - Clusterers expose typed assignments (`SKClusterLabel`: a cluster identifier or explicit noise) through `SKClustererPredictor`; the unsupervised scorer evaluates those assignments directly and documents whether it excludes or rejects noise.
 13. `sciencekit_decomposition`: SKPCA, SKTruncatedSVD.
 14. `sciencekit_outlier`: anomaly detection.
