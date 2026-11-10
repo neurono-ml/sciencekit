@@ -17,7 +17,7 @@ mod probability;
 mod supervised;
 mod unsupervised;
 
-pub use probability::SKProbabilityScorer;
+pub use probability::{SKProbabilityScorer, sk_validate_probability_shape};
 pub use supervised::{SKLabelScorer, SKSupervisedScorer};
 pub use unsupervised::SKUnsupervisedScorer;
 

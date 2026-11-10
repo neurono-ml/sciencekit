@@ -2,7 +2,7 @@
 
 use ndarray::{Array1, Array2, ArrayView2, array};
 
-use super::SKProbabilityScorer;
+use super::{SKProbabilityScorer, sk_validate_probability_shape};
 use crate::SKError;
 use crate::fit_traits::SKClassifierPredictor;
 use crate::sk_float::SKFloat;
@@ -164,4 +164,76 @@ fn probability_convenient_form_equals_pure_form() {
         )
         .expect("valid input");
     assert!((convenient - pure).abs() < 1e-12);
+}
+
+/// A classifier returning a fixed probability shape.
+struct WrongShapeClassifier {
+    rows: usize,
+    columns: usize,
+}
+
+impl<F: SKFloat> SKClassifierPredictor<F> for WrongShapeClassifier {
+    type Error = SKError;
+
+    fn predict_labels<'a, X>(&self, _features: X) -> Result<Array1<i64>, SKError>
+    where
+        X: TryInto<SKDataView<'a, F>, Error = SKError>,
+    {
+        Ok(Array1::zeros(self.rows))
+    }
+
+    fn predict_probabilities<'a, X>(&self, _features: X) -> Result<Array2<F>, SKError>
+    where
+        X: TryInto<SKDataView<'a, F>, Error = SKError>,
+    {
+        Ok(Array2::zeros((self.rows, self.columns)))
+    }
+}
+
+/// A probability matrix with the wrong row count is a shape mismatch.
+#[test]
+fn probability_shape_row_mismatch_is_rejected() {
+    let model = WrongShapeClassifier {
+        rows: 2,
+        columns: 2,
+    };
+    let features = Array2::<f64>::zeros((3, 2));
+    let truth_labels = array![0_i64, 1, 1];
+    let truth = SKTargetView::<f64>::Integer(truth_labels.view());
+    let error = ArgmaxAccuracy
+        .score(&model, SKDataView::Dense(features.view()), truth)
+        .expect_err("the probability rows disagree with the targets");
+    assert!(matches!(error, SKError::ShapeMismatch { .. }));
+}
+
+/// A probability matrix with no class column is a shape mismatch.
+#[test]
+fn probability_shape_empty_columns_are_rejected() {
+    let model = WrongShapeClassifier {
+        rows: 3,
+        columns: 0,
+    };
+    let features = Array2::<f64>::zeros((3, 2));
+    let truth_labels = array![0_i64, 1, 1];
+    let truth = SKTargetView::<f64>::Integer(truth_labels.view());
+    let error = ArgmaxAccuracy
+        .score(&model, SKDataView::Dense(features.view()), truth)
+        .expect_err("a probability matrix needs at least one class column");
+    assert!(matches!(error, SKError::ShapeMismatch { .. }));
+}
+
+/// The shared shape validator rejects empty targets.
+#[test]
+fn probability_shape_empty_targets_are_rejected() {
+    let probabilities = Array2::<f64>::zeros((0, 2));
+    let error = sk_validate_probability_shape(0, probabilities.view())
+        .expect_err("empty targets are rejected");
+    assert!(matches!(error, SKError::EmptyInput { .. }));
+}
+
+/// The shared shape validator accepts a matching matrix.
+#[test]
+fn probability_shape_accepts_matching_matrix() {
+    let probabilities = Array2::<f64>::zeros((3, 2));
+    sk_validate_probability_shape(3, probabilities.view()).expect("matching shape");
 }

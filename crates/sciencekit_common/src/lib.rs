@@ -52,6 +52,7 @@ pub use random::{
 };
 pub use scorer_traits::{
     SKLabelScorer, SKProbabilityScorer, SKSupervisedScorer, SKUnsupervisedScorer,
+    sk_validate_probability_shape,
 };
 pub use sk_float::SKFloat;
 pub use target_view::SKTargetView;

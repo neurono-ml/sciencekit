@@ -7,6 +7,39 @@ use crate::fit_traits::SKClassifierPredictor;
 use crate::sk_float::SKFloat;
 use crate::target_view::SKTargetView;
 
+/// Validate that a probability matrix matches the target count and has at
+/// least one class column.
+///
+/// Empty targets are [`crate::SKError::EmptyInput`]; a row-count disagreement
+/// or a matrix without columns is [`crate::SKError::ShapeMismatch`].
+pub fn sk_validate_probability_shape<F: SKFloat>(
+    number_of_targets: usize,
+    probabilities: ArrayView2<'_, F>,
+) -> Result<(), crate::SKError> {
+    if number_of_targets == 0 {
+        return Err(crate::SKError::EmptyInput {
+            operation: "probability_scorer",
+        });
+    }
+    if probabilities.nrows() != number_of_targets {
+        return Err(crate::SKError::shape_mismatch_2d(
+            number_of_targets,
+            probabilities.ncols(),
+            probabilities.nrows(),
+            probabilities.ncols(),
+        ));
+    }
+    if probabilities.ncols() == 0 {
+        return Err(crate::SKError::shape_mismatch_2d(
+            number_of_targets,
+            1,
+            number_of_targets,
+            0,
+        ));
+    }
+    Ok(())
+}
+
 /// A scorer comparing true targets with a classifier's class probabilities.
 ///
 /// The probability form exists alongside the label form because ranking and
@@ -40,6 +73,7 @@ where
             SKDataView::Dense(dense) => model.predict_probabilities(dense)?,
             SKDataView::Sparse(sparse) => model.predict_probabilities(sparse)?,
         };
+        sk_validate_probability_shape(true_targets.len(), probabilities.view())?;
         self.score_from_probabilities(true_targets, probabilities.view())
     }
 }
