@@ -1,0 +1,69 @@
+//! Round-trip tests for the exported linear-regression state
+//! (spec `model-export-contracts`).
+
+use ndarray::array;
+use sciencekit_common::{
+    SKBuilder, SKExportable, SKImportable, SKModelMetadata, SKModelState, SKSupervisedFit,
+};
+
+use super::SKLinearRegressionModel;
+use super::{SK_LINEAR_REGRESSION_ESTIMATOR_NAME, SK_LINEAR_REGRESSION_FORMAT_VERSION};
+use crate::linear_regression::core_implementation::SKLinearRegression;
+
+/// Fit a tiny exactly linear dataset with a known solution.
+fn fitted_model() -> SKLinearRegressionModel<f64> {
+    let features = array![[0.0_f64, 0.0], [1.0, 0.0], [0.0, 1.0], [2.0, 3.0]];
+    let targets = array![1.0_f64, 3.0, 4.0, 14.0];
+    let estimator = SKLinearRegression::build()
+        .build()
+        .expect("the default configuration is valid");
+    estimator
+        .fit(features.view(), targets.view())
+        .expect("the synthetic dataset is exactly linear")
+}
+
+/// Exporting then importing a model preserves coefficients and predictions.
+#[test]
+fn export_import_round_trip_preserves_coefficients() {
+    let model = fitted_model();
+    let state = model.export_state().expect("export succeeds");
+    assert_eq!(
+        state.metadata().estimator_name(),
+        SK_LINEAR_REGRESSION_ESTIMATOR_NAME
+    );
+    assert_eq!(
+        state.metadata().format_version(),
+        SK_LINEAR_REGRESSION_FORMAT_VERSION
+    );
+    let restored = SKLinearRegressionModel::<f64>::import_state(&state).expect("import succeeds");
+    assert_eq!(restored.coefficients(), model.coefficients());
+    assert_eq!(restored.intercept(), model.intercept());
+}
+
+/// A state carrying another estimator name is rejected before tensors are read.
+#[test]
+fn export_import_rejects_a_foreign_estimator() {
+    let metadata =
+        SKModelMetadata::new("SKOther", 1, sciencekit_common::SKTensorDataType::F64, 2).unwrap();
+    let state = SKModelState::new(metadata, Vec::new()).expect("an empty state is valid");
+    let error = SKLinearRegressionModel::<f64>::import_state(&state)
+        .expect_err("a foreign estimator must be rejected");
+    assert!(matches!(
+        error,
+        sciencekit_common::SKError::UnsupportedRepresentation { .. }
+    ));
+}
+
+/// Incomplete states are rejected instead of producing a half-built model.
+#[test]
+fn export_import_rejects_missing_tensors() {
+    let metadata = SKModelMetadata::new(
+        SK_LINEAR_REGRESSION_ESTIMATOR_NAME,
+        SK_LINEAR_REGRESSION_FORMAT_VERSION,
+        sciencekit_common::SKTensorDataType::F64,
+        2,
+    )
+    .unwrap();
+    let state = SKModelState::new(metadata, Vec::new()).expect("an empty state is valid");
+    assert!(SKLinearRegressionModel::<f64>::import_state(&state).is_err());
+}
