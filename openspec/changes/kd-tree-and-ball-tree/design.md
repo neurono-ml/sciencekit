@@ -99,9 +99,9 @@ surface and block DBSCAN reuse); free functions per tree (no shared type for the
 
 ### Decision 7 — Depth-first traversal with a bounded candidate list
 
-The builder's `execution_mode` is recorded on the build span and carried by the index; query
-batches choose their parallel or sequential path from execution planning rather than from a
-hard-coded flag.
+The builder's `execution_mode` is carried by the index as configuration. Query batches choose
+their parallel or sequential path from execution planning (`sk_should_run_parallel`) rather
+than from a hard-coded flag; the configured mode is not consulted at query time, by design.
 
 Each query keeps a sorted, bounded list of the current `k` best candidates and a LIFO stack of nodes
 ordered by their lower bound. A node is expanded only when its bound is smaller than the
