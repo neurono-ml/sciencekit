@@ -10,7 +10,7 @@ This chapter builds the CART tree: impurity, split search over dense and sparse 
 two splitters (best and random), growth constraints, class weights, feature importances,
 classification and regression, and the deterministic order that makes all of it testable.
 
-The capability is `cart-decision-trees`; the code lives in `crates/sciencekit_tree/`.
+The capability is `decision-trees`; the code lives in `crates/sciencekit_tree/`.
 
 ## 1. The problem, in plain words
 
@@ -46,7 +46,7 @@ $$
    `Random` draws a seeded threshold per feature, which the ensembles need.
 4. **Deterministic ties.** Equal impurity decreases go to the **smaller feature index**, then
    to the lower threshold. Growth is deterministic for the same data, seed and thread count.
-5. **Feature subsampling is seeded.** `maximum_features` (`All`, `SquareRoot`, `Log2`, `Count`)
+5. **Feature subsampling is seeded.** `maximum_features` (`All`, `Sqrt`, `Log2`, `Fraction`, `Count`)
    draws its subset through `sk_derive_seed` per node, so thread count never changes it.
 6. **Class weights change the impurity, not the vote.** Balanced or explicit weights enter the
    class counts, so the split and the leaf probability both respect them.
@@ -89,8 +89,10 @@ flowchart TD
 ### Implicit zeros in a sparse scan
 
 A CSR/CSC row may not store a coordinate — which means zero. A sparse split must therefore
-consider the zero side too: the sweep starts with every *implicit* zero on the left and the
-stored entries on the right, then moves stored values across one by one. The test
+consider the zero side too. The scan sorts the stored values; for non-negative designs it
+starts with every *implicit* zero on the left and the stored entries on the right, then moves
+stored values across one by one (negative stored values sort before zero, and the sweep follows
+the same ordering rule). The test
 `sparse_scan_recovers_the_implicit_zero_split` builds a case where the only useful threshold
 separates zeros from non-zeros, so a scan that ignored implicit zeros would miss it.
 
@@ -123,7 +125,7 @@ weighted fraction, not the raw count.
   leaf value, children), so the structure is inspectable.
 - **`SKTreeCriterion`** — Gini/entropy for classification, squared/absolute error for
   regression; using the wrong family is rejected at build time.
-- **`SKMaximumFeatures`** — `All`, `SquareRoot`, `Log2`, `Count(n)`, resolved per node.
+- **`SKMaximumFeatures`** — `All`, `Sqrt`, `Log2`, `Fraction`, `Count(n)`, resolved per node.
 - **`SKSplitter`** — `Best` (exhaustive, deterministic) or `Random` (seeded).
 - **`SKClassWeight`** — `None`, `Balanced`, `Explicit`.
 
@@ -145,7 +147,7 @@ wrong.
 Determinism at the split level: shuffling features must not change the chosen split, and exact
 ties resolve by feature index.
 
-### `classification_sparse_fit_equals_dense_fit` / `regressor_sparse_fit_equals_dense_fit`
+### `classifier_sparse_fit_equals_dense_fit` / `regressor_sparse_fit_equals_dense_fit`
 
 The whole estimator, not just the scan: a tree fitted on CSR predicts exactly what the same
 tree fitted densely predicts.
@@ -164,14 +166,15 @@ the sequential answer.
 
 | File | Responsibility |
 |---|---|
-| `node.rs` | `SKTree`, `SKTreeNode`, traversal |
+| `node.rs` | `SKTree`, `SKTreeNode`, traversal and value counting |
 | `impurity/` | Gini/entropy and squared/absolute error |
-| `splitter/` | best/random splitters and the dense/sparse scan |
-| `growth/` | depth, split and leaf constraints, feature subsampling |
-| `classifier/` | classifier builder, fit, prediction, probabilities |
-| `regressor/` | regressor builder, fit, prediction |
-| `class_weight.rs` | `None`/`Balanced`/`Explicit` |
-| `importances.rs` | normalised impurity-based importances |
+| `splitter/` | `Best`/`Random` splitters, candidate ordering and the scan |
+| `splitter/scan/` | per-criterion sweeps (`classification`, `squared`, `absolute`, `ranked`) and boundary selection |
+| `growth/` | growth engine: depth, split and leaf constraints, feature subsampling |
+| `classifier/` | builder, validation, fit, prediction, probabilities, class-weight expansion |
+| `regressor/` | builder, fit, prediction |
+| `class_weight/` | `None`/`Balanced`/`Explicit` expansion |
+| `design/` | dense/CSR/CSC design view and conversion |
 | `acceptance_tests/`, `determinism_tests.rs` | tiny/large, representations, determinism, concurrency |
 
 ## 7. What this unlocks
