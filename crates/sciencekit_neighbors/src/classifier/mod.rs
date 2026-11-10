@@ -7,7 +7,9 @@ mod builder;
 mod core_implementation;
 mod fit;
 mod model;
+mod predict;
 mod targets;
+mod voting;
 
 pub use builder::SKKNeighborsClassifierBuilder;
 pub use core_implementation::SKKNeighborsClassifier;
@@ -17,3 +19,7 @@ pub use model::SKKNeighborsClassifierModel;
 mod classifier_builder_tests;
 #[cfg(test)]
 mod classifier_fit_tests;
+#[cfg(test)]
+mod classifier_predict_tests;
+#[cfg(test)]
+mod classifier_probability_tests;

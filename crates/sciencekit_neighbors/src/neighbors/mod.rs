@@ -26,7 +26,7 @@ pub use weights::{SKNeighborsWeights, sk_weighted_average};
 
 pub(crate) use brute_force::sk_brute_force_k_nearest;
 pub(crate) use search::{SKFittedSearch, sk_prepare_search};
-pub(crate) use validation::sk_view_dimensions;
+pub(crate) use validation::{sk_validate_query_features, sk_view_dimensions};
 
 #[cfg(test)]
 mod algorithm_tests;

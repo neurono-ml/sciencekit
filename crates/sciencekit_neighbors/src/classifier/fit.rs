@@ -31,9 +31,7 @@ impl<F: SKFloat> SKSupervisedFit<F> for SKKNeighborsClassifier<F> {
             execution_mode: self.configuration.execution_mode,
             backend: self.configuration.backend,
         };
-        sk_run_operation(attributes, || {
-            sk_fit_classifier(self, features, &targets)
-        })
+        sk_run_operation(attributes, || sk_fit_classifier(self, features, &targets))
     }
 }
 

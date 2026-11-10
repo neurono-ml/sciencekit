@@ -3,13 +3,13 @@
 
 use sciencekit_common::{SKDataView, SKError, SKFloat};
 
-use super::{
-    SKFeatureRepresentation, SKNeighborsConfiguration, SKNeighborsMetric, SKSearchStrategy,
-    SKTrainingData, sk_brute_force_k_nearest, sk_resolve_search_strategy,
-};
 use super::index::SKNeighborIndex;
 use super::validation::{
     sk_validate_neighbors_count, sk_validate_training_features, sk_view_dimensions,
+};
+use super::{
+    SKFeatureRepresentation, SKNeighborsConfiguration, SKNeighborsMetric, SKSearchStrategy,
+    SKTrainingData, sk_brute_force_k_nearest, sk_resolve_search_strategy,
 };
 use crate::searcher::SKNeighborQuery;
 
@@ -46,12 +46,7 @@ impl<F: SKFloat> SKFittedSearch<F> {
     ) -> Result<SKNeighborQuery<F>, SKError> {
         match (&self.index, queries) {
             (Some(index), SKDataView::Dense(dense)) => index.k_nearest(dense, neighbors_count),
-            _ => sk_brute_force_k_nearest(
-                self.training.view(),
-                metric,
-                queries,
-                neighbors_count,
-            ),
+            _ => sk_brute_force_k_nearest(self.training.view(), metric, queries, neighbors_count),
         }
     }
 }
@@ -63,11 +58,7 @@ pub(crate) fn sk_prepare_search<F: SKFloat>(
 ) -> Result<SKFittedSearch<F>, SKError> {
     sk_validate_training_features(features, "fit")?;
     let (training_rows, training_columns) = sk_view_dimensions(&features);
-    sk_validate_neighbors_count(
-        configuration.nearest_neighbors_count,
-        training_rows,
-        "fit",
-    )?;
+    sk_validate_neighbors_count(configuration.nearest_neighbors_count, training_rows, "fit")?;
     let representation = match features {
         SKDataView::Dense(_) => SKFeatureRepresentation::Dense,
         SKDataView::Sparse(_) => SKFeatureRepresentation::Sparse,
@@ -87,12 +78,10 @@ pub(crate) fn sk_prepare_search<F: SKFloat>(
     )?;
     let training = SKTrainingData::from_view(features);
     let index = if strategy.is_tree() {
-        let dense = training
-            .dense()
-            .ok_or(SKError::UnsupportedRepresentation {
-                representation: "csr",
-                suggestion: "request SKNeighborsAlgorithm::BruteForce for sparse input",
-            })?;
+        let dense = training.dense().ok_or(SKError::UnsupportedRepresentation {
+            representation: "csr",
+            suggestion: "request SKNeighborsAlgorithm::BruteForce for sparse input",
+        })?;
         Some(SKNeighborIndex::build(
             strategy,
             dense,

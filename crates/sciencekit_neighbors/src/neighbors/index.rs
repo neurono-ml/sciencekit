@@ -28,10 +28,12 @@ impl<F: SKFloat> SKNeighborIndex<F> {
         backend: SKBackendKind,
         execution_mode: SKExecutionMode,
     ) -> Result<Self, SKError> {
-        let tree_metric = metric.tree_metric().ok_or(SKError::UnsupportedRepresentation {
-            representation: "cosine distance",
-            suggestion: "request SKNeighborsAlgorithm::BruteForce for the cosine metric",
-        })?;
+        let tree_metric = metric
+            .tree_metric()
+            .ok_or(SKError::UnsupportedRepresentation {
+                representation: "cosine distance",
+                suggestion: "request SKNeighborsAlgorithm::BruteForce for the cosine metric",
+            })?;
         match strategy {
             SKSearchStrategy::KdTree => {
                 let tree = SKKDTreeBuilder::new()

@@ -1,9 +1,7 @@
 //! Class-target canonicalization for the neighbor classifier
 //! (spec `nearest-neighbor-estimators`).
 
-use sciencekit_common::{
-    SKError, SKFloat, SKLabelTable, SKTargetView, sk_canonicalize_labels,
-};
+use sciencekit_common::{SKError, SKFloat, SKLabelTable, SKTargetView, sk_canonicalize_labels};
 
 /// Canonicalize integer or nominal class labels, rejecting continuous targets.
 ///

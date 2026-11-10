@@ -80,7 +80,10 @@ fn classifier_fit_carries_the_backend_and_execution_mode_into_the_model() {
         .unwrap();
 
     assert_eq!(model.backend(), SKBackendKind::MatrixMultiply);
-    assert_eq!(model.execution_mode(), SKExecutionMode::InProcessSynchronous);
+    assert_eq!(
+        model.execution_mode(),
+        SKExecutionMode::InProcessSynchronous
+    );
 }
 
 #[test]
