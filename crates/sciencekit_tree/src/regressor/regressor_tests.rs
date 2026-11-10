@@ -148,18 +148,3 @@ fn strided_continuous_targets_are_accepted() {
     let predictions = model.predict(features.view()).expect("predict succeeds");
     assert_eq!(predictions.len(), 4);
 }
-
-/// An explicit infinite class weight is rejected instead of producing NaNs.
-#[test]
-fn infinite_class_weights_are_rejected() {
-    use sciencekit_common::SKBuilder;
-
-    let error = crate::SKDecisionTreeClassifier::<f64>::build()
-        .class_weight(crate::SKClassWeight::Explicit(vec![f64::INFINITY, 1.0]))
-        .build()
-        .unwrap_err();
-    assert!(matches!(
-        error,
-        sciencekit_common::SKError::InvalidHyperparameter { .. }
-    ));
-}

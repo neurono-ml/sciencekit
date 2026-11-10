@@ -122,3 +122,18 @@ fn class_weights_accept_either_float() {
     assert!((probability(1.0_f32) - 1.0 / 3.0).abs() < 1e-6);
     assert!((probability(1.0_f64) - 1.0 / 3.0).abs() < 1e-12);
 }
+
+/// An explicit infinite class weight is rejected instead of producing NaNs.
+#[test]
+fn infinite_class_weights_are_rejected() {
+    use sciencekit_common::SKBuilder;
+
+    let error = crate::SKDecisionTreeClassifier::<f64>::build()
+        .class_weight(crate::SKClassWeight::Explicit(vec![f64::INFINITY, 1.0]))
+        .build()
+        .unwrap_err();
+    assert!(matches!(
+        error,
+        sciencekit_common::SKError::InvalidHyperparameter { .. }
+    ));
+}
