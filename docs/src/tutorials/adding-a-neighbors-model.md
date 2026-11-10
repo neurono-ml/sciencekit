@@ -25,7 +25,9 @@ let classifier = SKKNeighborsClassifier::<f64>::build()
     .weights(SKNeighborsWeights::Uniform) // or Distance
     .build()?;
 
-let model = classifier.fit(training_features.view(), &labels[..])?;
+// `labels` is an `Array1<i64>`; nominal labels can be a `Vec<&str>` / `&[&str]`.
+let labels = ndarray::Array1::from_vec(vec![0_i64, 1, 0, 1]);
+let model = classifier.fit(training_features.view(), labels.view())?;
 let labels_out = model.predict_labels(query_features.view())?;
 let probabilities = model.predict_probabilities(query_features.view())?;
 ```
