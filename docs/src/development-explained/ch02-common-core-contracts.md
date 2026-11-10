@@ -363,6 +363,8 @@ why the mathematics needs dense geometry and names that path.
 
 ```mermaid
 flowchart TD
+    accTitle: Representation parity dispatch
+    accDescr: An operation receives dense, sparse or mixed input and dispatches on the representation once. A tolerant algorithm takes the dense or sparse path and never densifies. An algorithm that needs dense geometry rejects sparse input with UnsupportedRepresentation before processing any element, and the estimator falls back to a documented alternative path such as brute force over the stored features. Every path ends in the same result within tolerance.
     A["Public operation receives<br/>dense, sparse or mixed input"] --> B{"representation()<br/>once per operation"}
     B -->|dense| C["Dense path<br/>(tree index, dense kernel)"]
     B -->|sparse| D{"Does the math<br/>require dense geometry?"}
@@ -372,6 +374,14 @@ flowchart TD
     C --> H["Same result within tolerance"]
     E --> H
     G --> H
+    classDef entry fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#1e3a8a
+    classDef tolerant fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#14532d
+    classDef reject fill:#fee2e2,stroke:#dc2626,stroke-width:2px,color:#7f1d1d
+    classDef result fill:#fef9c3,stroke:#ca8a04,stroke-width:2px,color:#713f12
+    class A,B entry
+    class C,E,G tolerant
+    class D,F reject
+    class H result
 ```
 
 The diagram reads as follows: whatever representation arrives, the operation dispatches
