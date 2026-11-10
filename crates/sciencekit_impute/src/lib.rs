@@ -10,7 +10,11 @@ pub mod missing_indicator;
 pub mod missingness;
 pub mod simple_imputer;
 
+mod pipeline_adapter;
+
 #[cfg(test)]
 mod acceptance_tests;
+#[cfg(test)]
+mod pipeline_adapter_tests;
 #[cfg(test)]
 mod sparse_streaming_test_datasets;
