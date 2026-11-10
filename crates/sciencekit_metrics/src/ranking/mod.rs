@@ -5,6 +5,7 @@
 //! This is a **pure dispatcher** module: `mod.rs` only declares and re-exports
 //! submodules; every implementation lives in its own file.
 
+mod accumulator;
 mod averaging;
 mod balanced_accuracy;
 mod inputs;
@@ -14,6 +15,7 @@ mod multiclass_roc;
 mod precision_recall;
 mod roc;
 
+pub use accumulator::SKAucAccumulator;
 pub use averaging::SKRankingAveraging;
 pub use balanced_accuracy::sk_balanced_accuracy_score;
 pub use log_loss::{sk_binary_log_loss, sk_log_loss};
@@ -24,6 +26,8 @@ pub use precision_recall::{
 };
 pub use roc::{SKRocCurve, sk_roc_auc_score, sk_roc_curve};
 
+#[cfg(test)]
+mod auc_accumulator_tests;
 #[cfg(test)]
 mod balanced_mcc_tests;
 #[cfg(test)]
