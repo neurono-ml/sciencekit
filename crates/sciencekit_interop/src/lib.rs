@@ -20,6 +20,7 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+pub mod batch;
 pub mod columns;
 pub mod missing;
 pub mod schema;
