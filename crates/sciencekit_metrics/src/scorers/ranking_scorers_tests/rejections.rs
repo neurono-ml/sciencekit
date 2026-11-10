@@ -37,3 +37,19 @@ fn ranking_scorers_auc_rejects_unknown_positive_label() {
         .expect_err("label 7 is not a class");
     assert!(matches!(error, SKError::UnknownLabel { label: 7 }));
 }
+
+/// Duplicate class labels would map two columns to one class.
+#[test]
+fn ranking_scorers_reject_duplicate_class_labels() {
+    let truth_labels = array![0_i64, 1];
+    let truth = SKTargetView::<f64>::Integer(truth_labels.view());
+    let probabilities = array![[0.6_f64, 0.4], [0.2, 0.8]];
+    let error =
+        <SKAucScorer as SKProbabilityScorer<f64, PanickingClassifier>>::score_from_probabilities(
+            &SKAucScorer::new(1).with_class_labels(&[1, 1]),
+            truth,
+            probabilities.view(),
+        )
+        .expect_err("a repeated class label is ambiguous");
+    assert!(matches!(error, SKError::Conversion(_)));
+}

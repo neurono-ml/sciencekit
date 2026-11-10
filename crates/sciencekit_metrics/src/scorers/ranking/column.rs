@@ -27,6 +27,11 @@ pub(super) fn sk_positive_score_column<F: SKFloat>(
             }
             let mut sorted = labels.to_vec();
             sorted.sort_unstable();
+            if sorted.windows(2).any(|pair| pair[0] == pair[1]) {
+                return Err(SKError::Conversion(
+                    "class labels contain a duplicate; each class must appear once".to_string(),
+                ));
+            }
             sorted
                 .binary_search(&positive_label)
                 .map_err(|_| SKError::UnknownLabel {
