@@ -219,4 +219,6 @@ bounds, deterministic tie ordering, and the dense-only exception applied to geom
 schema, explicit selection, one missing-value policy, typed batches, streaming sources and the
 async bridge. The [k-means chapter](./ch27-kmeans.html) adds the first unsupervised
 estimator: seeded k-means++, the Lloyd iteration, Elkan pruning, empty-cluster repair and
-the typed cluster assignments.
+the typed cluster assignments. The
+[decision tree chapter](./ch28-decision-trees.html) adds CART: impurity, dense and sparse
+split search, deterministic ties, feature subsampling, class weights and importances.

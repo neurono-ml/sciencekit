@@ -95,8 +95,8 @@ and receives a Python binding as soon as it is validated on CPU.
 
 | Estimator | Description | Status |
 |---|---|---|
-| `SKDecisionTreeClassifier` | Decision tree for classification | <span class="sk-pill sk-pill--neutral">Planned</span> |
-| `SKDecisionTreeRegressor` | Decision tree for regression | <span class="sk-pill sk-pill--neutral">Planned</span> |
+| `SKDecisionTreeClassifier` | CART for classification (dense and sparse, deterministic) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
+| `SKDecisionTreeRegressor` | CART for regression (dense and sparse, deterministic) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKRandomForest` | Random forest aggregated in parallel with rayon | <span class="sk-pill sk-pill--neutral">Planned</span> |
 | `SKBagging` | Parallel bootstrap aggregation | <span class="sk-pill sk-pill--neutral">Planned</span> |
 | `SKGradientBoosting` | Sequential gradient boosting | <span class="sk-pill sk-pill--neutral">Planned</span> |
