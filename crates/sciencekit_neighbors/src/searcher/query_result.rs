@@ -1,7 +1,7 @@
 //! Owned result types returned by every searcher (spec
 //! `nearest-neighbor-search`).
 
-use ndarray::{Array2, ArrayView2, ArrayViewMut2};
+use ndarray::{Array2, ArrayView2};
 
 /// The exact `k`-nearest-neighbor result of a query batch.
 ///
@@ -42,16 +42,6 @@ impl<F> SKNeighborQuery<F> {
     /// The training row indices, shape `(rows, neighbors_count)`.
     pub fn indices(&self) -> ArrayView2<'_, usize> {
         self.indices.view()
-    }
-
-    /// Mutable access used by the parallel batch assembler.
-    pub(crate) fn distances_mut(&mut self) -> ArrayViewMut2<'_, F> {
-        self.distances.view_mut()
-    }
-
-    /// Mutable access used by the parallel batch assembler.
-    pub(crate) fn indices_mut(&mut self) -> ArrayViewMut2<'_, usize> {
-        self.indices.view_mut()
     }
 }
 

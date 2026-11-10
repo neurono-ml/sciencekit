@@ -6,7 +6,7 @@ use sciencekit_common::{
 };
 
 use super::build::SKKDTree;
-use crate::metric::{SKNeighborMetric, SKRequestedNeighborMetric};
+use crate::metric::SKRequestedNeighborMetric;
 
 /// Builder for an immutable [`SKKDTree`].
 ///
