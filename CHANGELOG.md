@@ -36,6 +36,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   concurrency, inertia and classification metric production through
   `sciencekit_metrics`.
 
+- `sciencekit_tree` sub-crate (spec `decision-trees`): the CART estimators
+  `SKDecisionTreeClassifier<F>` and `SKDecisionTreeRegressor<F>`, each builder-only with
+  `criterion` (Gini default and Entropy for classification; SquaredError default and
+  AbsoluteError for regression), `maximum_depth` (default unlimited),
+  `minimum_samples_split` (default 2), `minimum_samples_leaf` (default 1),
+  `maximum_features` (`All` default, plus `Count`, `Fraction`, `Sqrt` and `Log2`),
+  `splitter` (`Best` default or seeded `Random`), `random_seed` (default 0), classifier
+  `class_weight` (`None` default, `Balanced` or explicit), `backend` (default `Faer`) and
+  `execution_mode` (default `Automatic`). Fitting grows a flat, cache-friendly binary tree
+  by recursive partitioning, maximizing the impurity decrease at every node; classification
+  leaves store the normalized class distribution and predict the majority class, while
+  regression leaves store the mean (squared error) or median (absolute error). The fitted
+  models expose node count, depth, feature count, normalized impurity-based feature
+  importances, the canonical class table, criterion, backend and execution intent, and
+  predict labels, probabilities or responses. Dense and borrowed CSR designs share the
+  same boundary and produce identical trees and predictions without densifying sparse
+  input; sparse split search re-indexes CSR to CSC once and merges stored entries with
+  implicit zeros. Validation rejects empty input, non-finite values, feature-count and
+  target-length mismatches, single-class classification targets, unsupported target
+  representations and invalid depth/split/leaf/feature-subsampling/class-weight
+  configurations with structured central errors. Fits are deterministic for a fixed seed,
+  including the random splitter and seeded feature subsampling, and fitted models are
+  `Send + Sync` and serve concurrent prediction.
+
 ## [0.3.0] — 2026-11-10
 
 The interop, pipeline, spatial-index and streaming-audit batch: format-agnostic model

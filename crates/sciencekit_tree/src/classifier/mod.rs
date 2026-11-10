@@ -1,11 +1,12 @@
 //! The CART classifier (spec `decision-trees`).
 
-pub(crate) mod builder;
+mod builder;
 mod core_implementation;
 mod criterion;
 mod fit;
 mod model;
 mod predict;
+pub(crate) mod validation;
 
 pub use builder::SKDecisionTreeClassifierBuilder;
 pub use core_implementation::SKDecisionTreeClassifier;

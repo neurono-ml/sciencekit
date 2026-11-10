@@ -114,7 +114,7 @@ impl<F: SKFloat> SKBuilder<SKDecisionTreeRegressor<F>> for SKDecisionTreeRegress
     }
 
     fn build(self) -> Result<SKDecisionTreeRegressor<F>, SKError> {
-        crate::classifier::builder::sk_validate_common_configuration(
+        crate::classifier::validation::sk_validate_common_configuration(
             self.criterion,
             self.minimum_samples_split,
             self.minimum_samples_leaf,

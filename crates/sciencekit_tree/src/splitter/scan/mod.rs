@@ -127,15 +127,6 @@ pub(crate) fn sk_better_candidate<F: SKFloat>(
     }
 }
 
-/// Keep the strongest of the collected candidates.
-pub(crate) fn sk_reduce_candidates<F: SKFloat>(
-    candidates: impl IntoIterator<Item = SKSplitCandidate<F>>,
-) -> Option<SKSplitCandidate<F>> {
-    candidates
-        .into_iter()
-        .reduce(|current, challenger| sk_better_candidate(current, Some(challenger)))
-}
-
 /// Choose a valid boundary index, or the best one, from the scanned candidates.
 pub(crate) fn sk_choose_boundary<F: SKFloat>(
     boundaries: &[(F, F)],

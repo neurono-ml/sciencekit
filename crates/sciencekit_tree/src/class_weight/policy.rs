@@ -11,6 +11,7 @@ pub enum SKClassWeight<F> {
     Explicit(Vec<F>),
 }
 
+#[allow(clippy::derivable_impls)]
 impl<F> Default for SKClassWeight<F> {
     fn default() -> Self {
         SKClassWeight::None
