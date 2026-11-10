@@ -32,6 +32,8 @@ mod fixtures;
 #[cfg(test)]
 mod manhattan_tests;
 #[cfg(test)]
+mod mixed_tests;
+#[cfg(test)]
 mod row_merge_tests;
 #[cfg(test)]
 mod squared_euclidean_tests;
