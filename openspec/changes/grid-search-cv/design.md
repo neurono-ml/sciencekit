@@ -74,27 +74,14 @@ and scorer/estimator family mismatches. Errors: `InvalidHyperparameter`, `ShapeM
 
 ```
 crates/sciencekit_model_selection/src/grid_search/
-  mod.rs, classifier.rs, regressor.rs, builder.rs, scoring.rs,
-  evaluation.rs, model.rs, *_tests.rs
+  mod.rs, configuration.rs, results.rs, error_score.rs, observation.rs, prediction.rs
+  builder/{mod.rs, classifier_builder.rs, regressor_builder.rs, state.rs, *_tests.rs}
+  scoring/{mod.rs, classifier.rs, regressor.rs, fold_scorer.rs, *_tests.rs}
+  evaluation/{mod.rs, candidate_evaluation.rs, fold_scorer.rs, *_tests.rs}
+  classifier/{mod.rs, fit.rs, model.rs, select.rs, *_tests.rs}
+  regressor/{mod.rs, fit.rs, model.rs, select.rs, *_tests.rs}
+  mock_estimators/
 ```
 
-`mod.rs` files are pure dispatchers; implementation files stay under 200 lines.
-
-## Risks / Trade-offs
-
-- **Candidate list is explicit, not a cartesian helper** → type-safe and simple; a grid
-  helper can be added later without changing the estimator.
-- **Parallel folds multiply memory** → the execution mode bounds the grain; document the
-  peak.
-- **Scoring enums are closed** → covers the standard metrics; custom scorers are a future
-  extension.
-- **Refit doubles the winner's fit cost** → standard and documented.
-- **Error score can hide failures** → default `Raise`, explicit numeric opt-in.
-
-## Migration Plan
-
-Additive: new estimators in `sciencekit_model_selection`. No existing API changes.
-
-## Open Questions
-
-None blocking. Custom scorer objects and randomized search are future changes.
+`mod.rs` files are pure dispatchers; companion `*_tests.rs` modules are declared at the
+end of their dispatcher.
