@@ -120,7 +120,9 @@ pub(crate) fn batch_extrema<F: SKFloat>(
 /// no explicit entry in some row; a column explicitly dense in every row keeps
 /// its true extrema, so a sparse matrix of strictly positive values is never
 /// lowered to zero artificially.
-fn sparse_batch_extrema<F: SKFloat>(features: &CsMatView<'_, F>) -> (Array1<F>, Array1<F>) {
+pub(crate) fn sparse_batch_extrema<F: SKFloat>(
+    features: &CsMatView<'_, F>,
+) -> (Array1<F>, Array1<F>) {
     let mut minimum = Array1::from_elem(features.cols(), F::infinity());
     let mut maximum = Array1::from_elem(features.cols(), F::neg_infinity());
     let mut explicit_counts = vec![0usize; features.cols()];

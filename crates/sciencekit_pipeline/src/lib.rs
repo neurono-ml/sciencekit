@@ -61,3 +61,6 @@ mod acceptance_tests;
 mod block_tests;
 #[cfg(test)]
 mod stage_tests;
+
+#[cfg(test)]
+mod streaming_coverage;

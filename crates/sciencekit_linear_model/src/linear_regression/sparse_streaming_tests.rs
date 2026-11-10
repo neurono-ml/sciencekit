@@ -86,3 +86,31 @@ fn sparse_stream_handles_a_shape_beyond_the_test_budget() {
     assert_eq!(streamed.row_count(), rows as u64);
     assert_eq!(streamed.coefficients().len(), 64);
 }
+
+/// A sparse incremental update accumulates the same Gram state as a dense one.
+#[test]
+fn sparse_streaming_partial_fit_matches_the_dense_fit() {
+    use sciencekit_common::SKRegressorPredictor;
+
+    let features = small_features();
+    let targets = small_targets(&features);
+    let reference = default_regressor()
+        .fit(&features, targets.view())
+        .expect("fit succeeds");
+    let chunks = chunk_pairs_csr(&features, &targets, &[1, 1, 2]);
+    let mut model = default_regressor()
+        .fit(&chunks[0].0.to_dense(), chunks[0].1.view())
+        .expect("dense fit succeeds");
+    for (batch, batch_targets) in &chunks[1..] {
+        model
+            .partial_fit(batch.view(), batch_targets.view())
+            .expect("sparse partial_fit succeeds");
+    }
+    let predicted = model.predict(features.view()).expect("predict succeeds");
+    let expected = reference
+        .predict(features.view())
+        .expect("predict succeeds");
+    for (actual, expected) in predicted.iter().zip(expected.iter()) {
+        assert_close_scalar(*actual, *expected, 1e-9);
+    }
+}

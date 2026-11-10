@@ -111,7 +111,9 @@ pub(crate) fn batch_moments<F: SKFloat>(
 ///
 /// Implicit zeros contribute nothing to `Σx` or `Σx²`, but they do count as
 /// rows in the moments identity, so every column's mean and M2 include them.
-fn sparse_batch_moments<F: SKFloat>(features: &CsMatView<'_, F>) -> (Array1<F>, Array1<F>) {
+pub(crate) fn sparse_batch_moments<F: SKFloat>(
+    features: &CsMatView<'_, F>,
+) -> (Array1<F>, Array1<F>) {
     let mut sums = Array1::zeros(features.cols());
     let mut sum_squares = Array1::zeros(features.cols());
     for sparse_row in features.outer_iterator() {
