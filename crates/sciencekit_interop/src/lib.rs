@@ -23,6 +23,8 @@
 #[cfg(test)]
 mod acceptance;
 
+#[cfg(feature = "arrow")]
+pub mod arrow;
 pub mod batch;
 pub mod bridge;
 pub mod columns;
