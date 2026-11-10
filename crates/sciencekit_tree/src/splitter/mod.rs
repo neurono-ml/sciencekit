@@ -1,8 +1,10 @@
 //! Split search (spec `decision-trees`).
 
 mod candidate;
+mod scan;
 
 pub use candidate::SKSplitCandidate;
+pub(crate) use scan::{SKScanContext, SKThresholdChoice, sk_scan_feature};
 
 /// The feature-subsampling policy.
 #[derive(Debug, Clone, PartialEq)]
@@ -27,3 +29,12 @@ pub enum SKSplitter {
     /// Draw one random candidate threshold per considered feature.
     Random,
 }
+
+#[cfg(test)]
+mod splitter_best_tests;
+#[cfg(test)]
+mod splitter_dense_tests;
+#[cfg(test)]
+mod splitter_random_tests;
+#[cfg(test)]
+mod splitter_sparse_tests;
