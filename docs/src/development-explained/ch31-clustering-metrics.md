@@ -8,7 +8,8 @@ therefore a family of proxies, each answering a different question:
 - **Davies-Bouldin** and **Calinski-Harabasz** — how compact and separated are the clusters,
   judged from centroids and dispersions?
 - **Adjusted Rand index**, **normalized mutual information**, **homogeneity/completeness/V-measure**
-  — when a reference labelling exists, how much do the two partitions agree, *above chance*?
+  — when a reference labelling exists, how much do the two partitions agree, with ARI
+  correcting for chance?
 
 This chapter builds all of them, with the dense/sparse parity, noise policy and degenerate-case
 handling the rest of the library follows.
@@ -97,8 +98,9 @@ flowchart TD
 Suppose both partitions have many small clusters. Even a random labelling will put some pairs
 together, so raw agreement is high. ARI subtracts the expected agreement and divides by the
 maximum possible, which is why it can be negative (worse than chance) and why it stays near zero
-for independent labellings regardless of cluster count. NMI does the same for mutual information,
-normalised so identical partitions score $1$.
+for independent labellings regardless of cluster count. NMI is a different correction: mutual
+information divided by the two label entropies, so identical partitions score $1$ and independent
+ones approach $0$ — it is normalised, not chance-adjusted.
 
 ### The centroid indices
 
