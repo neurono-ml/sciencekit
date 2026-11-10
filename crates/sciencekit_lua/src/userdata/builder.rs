@@ -83,9 +83,6 @@ impl UserData for SKLuaBuilder {
                 sk_lua_model_userdata(lua, model, this.family)
             },
         );
-        methods.add_method("family", |_, this, ()| Ok(this.family.name()));
-        methods.add_method("dtype", |_, _, ()| Ok("f64"));
-        methods.add_method("closed", |_, this, ()| Ok(this.handle.is_closed()));
         methods.add_method_mut("close", |_, this, ()| {
             this.handle.close();
             Ok(())

@@ -53,9 +53,6 @@ impl UserData for SKLuaModel {
             this.handle.save(&path)?;
             Ok(())
         });
-        methods.add_method("family", |_, this, ()| Ok(this.family.name()));
-        methods.add_method("dtype", |_, _, ()| Ok("f64"));
-        methods.add_method("closed", |_, this, ()| Ok(this.handle.is_closed()));
         methods.add_method_mut("close", |_, this, ()| {
             this.handle.close();
             Ok(())

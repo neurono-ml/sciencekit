@@ -45,7 +45,7 @@ impl SKLuaModelHandle {
 
     /// Load a fitted model from a path.
     pub(crate) fn load(path: &str) -> Result<SKLuaModelHandle, SKLuaError> {
-        let path = sk_lua_c_path(path)?;
+        let path = sk_lua_c_string_path(path)?;
         let mut pointer: *mut sciencekit_ffi::model::SKFfiModel = ptr::null_mut();
         let status = sciencekit_ffi::sk_ffi_model_load(path.as_ptr(), &mut pointer);
         if status != SKFfiStatus::Ok {
@@ -114,7 +114,7 @@ impl SKLuaModelHandle {
 
     /// Save the fitted model to a path.
     pub(crate) fn save(&self, path: &str) -> Result<(), SKLuaError> {
-        let path = sk_lua_c_path(path)?;
+        let path = sk_lua_c_string_path(path)?;
         let status = sciencekit_ffi::sk_ffi_model_save(self.require_pointer()?, path.as_ptr());
         crate::engine::builder::sk_lua_check(status)
     }
@@ -135,7 +135,7 @@ impl Drop for SKLuaModelHandle {
 }
 
 /// Convert a Rust path into a NUL-terminated C string.
-fn sk_lua_c_path(path: &str) -> Result<CString, SKLuaError> {
+fn sk_lua_c_string_path(path: &str) -> Result<CString, SKLuaError> {
     CString::new(path)
         .map_err(|_| SKLuaError::invalid_argument("the path contains an interior NUL byte"))
 }

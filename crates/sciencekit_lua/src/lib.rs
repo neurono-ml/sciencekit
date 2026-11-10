@@ -82,6 +82,8 @@ pub(crate) fn sk_lua_build_module(lua: &Lua) -> Result<Table> {
             sk_lua_builder_userdata(lua, SKLuaEstimatorFamily::StandardScaler)
         })?,
     )?;
+    // The ABI's persistence scope is fitted f64 linear regression, so a
+    // loaded model always reports the linear-regression family.
     exports.set(
         "load",
         lua.create_function(|lua, path: String| {
