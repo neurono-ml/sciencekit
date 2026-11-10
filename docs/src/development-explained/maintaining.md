@@ -229,4 +229,6 @@ opaque handles, borrowed and owned arrays, status codes, panic containment and p
 The [clustering metrics chapter](./ch31-clustering-metrics.html) adds silhouette, ARI, NMI,
 homogeneity/completeness/V-measure and the centroid indices. The
 [k-nearest neighbours chapter](./ch32-knn-estimators.html) adds the brute-force searcher, the
-runtime strategy dispatch, weighting and the estimator representation parity.
+runtime strategy dispatch, weighting and the estimator representation parity. The
+[k-NN imputer chapter](./ch33-knn-imputer.html) adds the NaN-aware donor search, chunked
+distance blocks, weighting with a column-mean fallback and the dense-only contract.
