@@ -9,7 +9,8 @@ pub enum SKFfiArrayError {
     NullData,
     /// The shape pointer is null.
     NullShape,
-    /// The data or shape pointer is not aligned for its element type.
+    /// A descriptor pointer is not aligned for its target type: `data` for the
+    /// declared element type, `shape` and `strides` for `int64_t`.
     MisalignedPointer {
         /// The field carrying the misaligned pointer.
         field: &'static str,

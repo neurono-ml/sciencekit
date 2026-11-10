@@ -128,3 +128,21 @@ fn boundary_rejects_a_misaligned_strides_pointer() {
     let error = unsafe { sk_ffi_validate_descriptor(&descriptor) }.unwrap_err();
     assert!(format!("{error}").contains("strides"));
 }
+
+/// A misaligned shape pointer is rejected before it is read as `i64` values.
+#[test]
+fn boundary_rejects_a_misaligned_shape_pointer() {
+    let values = [0.0_f64; 4];
+    let backing = [0_i64; 2];
+    let shape_pointer = unsafe { (backing.as_ptr() as *const u8).add(1) } as *const i64;
+    let descriptor = SKFfiArray {
+        dtype: SKFfiDataType::F64 as i32,
+        ndim: 2,
+        shape: shape_pointer,
+        strides: ptr::null(),
+        data: values.as_ptr() as *const std::ffi::c_void,
+        len: 4,
+    };
+    let error = unsafe { sk_ffi_validate_descriptor(&descriptor) }.unwrap_err();
+    assert!(format!("{error}").contains("shape"));
+}

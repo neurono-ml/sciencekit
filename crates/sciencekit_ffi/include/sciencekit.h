@@ -5,8 +5,10 @@
  *
  * # Ownership rules
  *
- * - `data` must be aligned for the declared dtype; `shape` and `strides` must
- *   be aligned for `int64_t`; `len` values must be readable. A misaligned
+ * - The descriptor struct pointer itself must be aligned for `SKFfiArray` and
+ *   point to a readable struct. `data` must be aligned for the declared dtype;
+ *   `shape` and `strides` must be aligned for `int64_t`; `len` values must be
+ *   readable. A misaligned
  *   pointer is rejected with SK_FFI_STATUS_INVALID_ARGUMENT before any element
  *   is read.
  * - An array descriptor passed TO the library is borrowed for the duration of
