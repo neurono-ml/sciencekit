@@ -60,8 +60,8 @@ unavoidable.
 ### Selection and roles are explicit, not inferred
 
 `SKColumnSelection` names features (ordered) and at most one target; every other column is ignored.
-Name resolution happens against the schema before reading rows. Duplicate names are rejected unless
-the selection is positional. Alternative: infer target as "last column" — rejected because it
+Name resolution happens against the schema before reading rows. Duplicate names are rejected when the schema is built, before any selection exists; a
+duplicate-named table is therefore corrected at the source. Alternative: infer target as "last column" — rejected because it
 silently mislabels data.
 
 ### Missing values are a policy, not a per-engine default
