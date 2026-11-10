@@ -111,8 +111,8 @@ every point within the radius into a per-row vector.
 
 ### Decision 8 — Deterministic ordering and parallel batches
 
-Final results are sorted by `(distance, training_index)`, using `total_cmp` after
-rejecting non-finite values. Query rows are independent, so the batch is evaluated with
+Final results are sorted by `(distance, training_index)`, using `partial_cmp` after rejecting
+non-finite values (which makes the comparison total), falling back to `Equal` defensively. Query rows are independent, so the batch is evaluated with
 `par_iter().map(...).collect()`, which preserves row order. The grain is a product of
 query rows and training rows; below it the path stays sequential.
 
