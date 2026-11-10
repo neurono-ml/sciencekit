@@ -36,3 +36,5 @@ mod acceptance_tests;
 mod builder_tests;
 #[cfg(test)]
 mod representation_tests;
+#[cfg(test)]
+mod validation_tests;
