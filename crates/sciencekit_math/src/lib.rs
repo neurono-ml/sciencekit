@@ -9,7 +9,9 @@
 //! - [`layout`] — memory-layout helpers (C/F-contiguity detection, forcing
 //!   contiguity before hot loops).
 //! - [`pairwise`] — zero-copy pairwise distance kernels (squared Euclidean,
-//!   Manhattan, Cosine) with a SIMD-friendly hot path.
+//!   Euclidean, Manhattan, Chebyshev, Cosine, NaN-aware Euclidean) with a
+//!   SIMD-friendly dense hot path and sparse kernels behind the
+//!   `sk_pairwise_distance_matrix` dispatcher.
 //! - [`sparse_ops`] — sparse (`sprs`) product kernels (sparse×dense,
 //!   sparse×sparse) over zero-copy views.
 //! - [`solvers`] — iterative linear solvers: the zero-copy

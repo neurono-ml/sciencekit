@@ -11,7 +11,7 @@ use crate::pairwise::simd_dot::row_norm;
 
 /// Cosine distance matrix (`1 − cos θ`) between the rows of two CSR matrices.
 ///
-/// The dot product merges the sorted stored coordinates and each norm sums the
+/// The dot_product product merges the sorted stored coordinates and each norm sums the
 /// stored squares. A zero-norm row keeps the dense policy: cosine `0`, distance
 /// `1`.
 pub fn sk_sparse_cosine_distance_matrix<F: SKFloat>(
@@ -37,13 +37,13 @@ pub fn sk_sparse_cosine_distance_matrix<F: SKFloat>(
     sk_fill_distance_matrix(left.rows(), right.rows(), |i, mut output_row| {
         let left_row = &left_rows[i];
         for (j, right_row) in right_rows.iter().enumerate() {
-            let dot = sk_sparse_dot_product(
+            let dot_product = sk_sparse_dot_product(
                 left_row.indices(),
                 left_row.data(),
                 right_row.indices(),
                 right_row.data(),
             );
-            output_row[j] = sk_cosine_distance(left_norms[i], right_norms[j], dot);
+            output_row[j] = sk_cosine_distance(left_norms[i], right_norms[j], dot_product);
         }
     })
 }
@@ -65,14 +65,14 @@ pub(crate) fn sk_sparse_dense_cosine_distance_matrix<F: SKFloat>(
         let left_row = &left_rows[i];
         let left_norm = sk_sparse_row_norm(left_row.data());
         for (j, right_row) in right_rows.iter().enumerate() {
-            let dot = left_row
+            let dot_product = left_row
                 .indices()
                 .iter()
                 .zip(left_row.data().iter())
                 .fold(F::zero(), |accumulator, (&column, &value)| {
                     accumulator + value * right_row[column]
                 });
-            output_row[j] = sk_cosine_distance(left_norm, right_norms[j], dot);
+            output_row[j] = sk_cosine_distance(left_norm, right_norms[j], dot_product);
         }
     })
 }
@@ -96,24 +96,24 @@ pub(crate) fn sk_dense_sparse_cosine_distance_matrix<F: SKFloat>(
         .collect();
     sk_fill_distance_matrix(left.nrows(), right.rows(), |i, mut output_row| {
         for (j, right_row) in right_rows.iter().enumerate() {
-            let dot = right_row
+            let dot_product = right_row
                 .indices()
                 .iter()
                 .zip(right_row.data().iter())
                 .fold(F::zero(), |accumulator, (&column, &value)| {
                     accumulator + value * left_rows[i][column]
                 });
-            output_row[j] = sk_cosine_distance(left_norms[i], right_norms[j], dot);
+            output_row[j] = sk_cosine_distance(left_norms[i], right_norms[j], dot_product);
         }
     })
 }
 
-/// `1 − dot / (‖a‖·‖b‖)`, keeping the dense zero-norm policy (distance `1`).
-fn sk_cosine_distance<F: SKFloat>(left_norm: F, right_norm: F, dot: F) -> F {
+/// `1 − dot_product / (‖a‖·‖b‖)`, keeping the dense zero-norm policy (distance `1`).
+fn sk_cosine_distance<F: SKFloat>(left_norm: F, right_norm: F, dot_product: F) -> F {
     let denominator = left_norm * right_norm;
     if denominator == F::zero() {
         F::one()
     } else {
-        F::one() - dot / denominator
+        F::one() - dot_product / denominator
     }
 }

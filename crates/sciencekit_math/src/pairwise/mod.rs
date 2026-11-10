@@ -5,8 +5,10 @@
 //! `‖a−b‖² = ‖a‖² − 2 a·b + ‖b‖²`. This avoids a per-pair subtract loop and
 //! lets the inner product run over contiguous row memory.
 //!
-//! All kernels take `&ArrayView2<F>` inputs and return owned `Array2<F>`
-//! outputs; they are pure and thread-safe.
+//! Dense kernels take `&ArrayView2<F>`, sparse kernels take borrowed `CsMatView`
+//! inputs, and [`SKPairwiseMetric`] / [`sk_pairwise_distance_matrix`] select the
+//! right kernel for any of the four dense/sparse combinations. Every kernel is
+//! pure and thread-safe; no sparse input is densified.
 //!
 //! This is a **pure dispatcher** module: `mod.rs` only declares and re-exports
 //! submodules; every implementation lives in its own file.

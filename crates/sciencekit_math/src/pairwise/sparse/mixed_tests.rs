@@ -107,22 +107,35 @@ fn sparse_cosine_mixed_paths_match_dense() {
 }
 
 /// A wide sparse matrix with few stored entries is computed from its stored
-/// values, without materializing a dense copy.
+/// values for every metric, through the public dispatcher, without
+/// materializing a dense copy (a dense copy of a hundred-million-column matrix
+/// would not fit in memory).
 #[test]
 fn sparse_pairwise_wide_matrix_is_not_densified() {
-    let width = 1_000_000;
+    let width = 100_000_000;
     let sparse = super::fixtures::csr_from_triplets(
         3,
         width,
         &[(0, 0, 2.0), (0, width - 1, 3.0), (1, 0, 2.0)],
     );
     assert_eq!(sparse.nnz(), 3);
-    let distance =
-        super::sk_sparse_squared_euclidean_distance_matrix(&sparse.view(), &sparse.view());
+    let view = sciencekit_common::SKDataView::Sparse(sparse.view());
+    for metric in [
+        crate::pairwise::SKPairwiseMetric::SquaredEuclidean,
+        crate::pairwise::SKPairwiseMetric::Euclidean,
+        crate::pairwise::SKPairwiseMetric::Manhattan,
+        crate::pairwise::SKPairwiseMetric::Chebyshev,
+        crate::pairwise::SKPairwiseMetric::Cosine,
+    ] {
+        let distance = crate::pairwise::sk_pairwise_distance_matrix(metric, view, view).unwrap();
+        assert_eq!(distance.dim(), (3, 3));
+    }
     assert_eq!(sparse.nnz(), 3);
-    assert!((distance[[0, 1]] - 9.0).abs() < 1e-12);
-    assert!((distance[[0, 2]] - 13.0).abs() < 1e-12);
-    assert!((distance[[1, 2]] - 4.0).abs() < 1e-12);
+    let squared =
+        super::sk_sparse_squared_euclidean_distance_matrix(&sparse.view(), &sparse.view());
+    assert!((squared[[0, 1]] - 9.0).abs() < 1e-12);
+    assert!((squared[[0, 2]] - 13.0).abs() < 1e-12);
+    assert!((squared[[1, 2]] - 4.0).abs() < 1e-12);
 }
 
 /// The Chebyshev maximum may sit at a dense coordinate the sparse row does not
