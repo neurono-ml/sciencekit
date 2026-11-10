@@ -2,11 +2,14 @@
 
 Every algorithm in this chapter's family — SGD, k-means++, MiniBatchKMeans, random
 forests, bagging, boosting, randomized SVD, isolation forests — needs randomness. Before
-this change, the only seeded generator in the repository was a `pub(crate)` SplitMix64
-buried inside `sciencekit_linear_model`. The next crate that needed a random number would
-either copy it or, worse, call the operating system's entropy source and make its tests
-flaky. This change promotes the generator to `sciencekit_common`, gives it a public
-contract, and writes down the reproducibility rule the whole library follows from now on.
+this change, the repository had one `pub(crate)` SplitMix64 inside
+`sciencekit_linear_model` that only SGD used, plus two private xorshift64* permutations
+with hard-coded seeds inside the logistic SAGA solver and the coordinate-descent random
+selection. None of them was reachable through a builder, and the next crate that needed a
+random number would either copy one of them or, worse, call the operating system's entropy
+source and make its tests flaky. This change promotes one generator to
+`sciencekit_common`, retires every private stream, gives the surface a public contract, and
+writes down the reproducibility rule the whole library follows from now on.
 
 The capability is `deterministic-randomness`; the code lives in
 `crates/sciencekit_common/src/random/`.
@@ -32,7 +35,9 @@ So the requirement is not "use a seed". It is:
 ## 2. The decisions, and the roads not taken
 
 1. **A shared generator, not one per crate.** One implementation means one golden-vector
-   test, one reproducibility promise and no drift.
+   test, one reproducibility promise and no drift. The SAGA permutations and the
+   coordinate-descent random sweep order are migrated onto it, so no estimator keeps a
+   private stream.
 2. **SplitMix64.** A 64-bit counter advanced by the golden-ratio increment and finished
    with an invertible bit mixer. It needs no entropy, no allocation and no platform state,
    so the raw stream is identical everywhere.
@@ -202,22 +207,24 @@ look-alike.
 
 ## 6. Look inside
 
-```
-crates/sciencekit_common/src/random/
-├── mod.rs              # pure dispatcher: declares + re-exports, no logic
-├── generator.rs        # SplitMix64 and the draw operations
-├── generator_tests.rs  # golden vectors, range, permutation, moments
-├── sub_seed.rs         # sk_derive_seed and the domain constants
-└── sub_seed_tests.rs   # distinctness, purity, order and thread invariance
-```
+| File | Responsibility |
+|---|---|
+| `random/mod.rs` | Pure dispatcher: declares and re-exports, no logic |
+| `random/generator.rs` | SplitMix64 and the draw operations |
+| `random/generator_tests.rs` | Golden vectors, range, permutation, moments |
+| `random/sub_seed.rs` | `sk_derive_seed` and the domain constants |
+| `random/sub_seed_tests.rs` | Distinctness, purity, order and thread invariance |
 
 The folder module follows the repository rule: `mod.rs` carries no implementation, and each
 companion `*_tests.rs` sits beside the file it tests.
 
 ## 7. What this unlocks
 
-Every stochastic change in the DAG now has one convention: a `random_seed(u64)` builder
-parameter defaulting to `0`, sub-seeds derived with `sk_derive_seed`, results collected in
-a stable order, and no ambient RNG. The randomized SVD kernel, k-means initialization,
-forests, bagging, boosting and cross-validation folds all plug into the same contract —
-and their reproducibility tests get to be *exact* instead of statistical.
+Every stochastic estimator now has one convention: a `random_seed(u64)` builder parameter
+defaulting to `0` — proven by `SKLogisticRegression` (SAGA), `SKLasso` and `SKElasticNet`
+(random selection) alongside `SKSGDClassifier`/`SKSGDRegressor` — sub-seeds derived with
+`sk_derive_seed`, results collected in a stable order (the tests fit the same model under
+one and four rayon threads and compare coefficient rows by index), and no ambient RNG. The
+randomized SVD kernel, k-means initialization, forests, bagging, boosting and
+cross-validation folds will plug into the same contract, and their reproducibility tests get
+to be *exact* instead of statistical.
