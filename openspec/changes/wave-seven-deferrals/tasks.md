@@ -2,24 +2,24 @@
 
 ## 1. PRD amendment
 
-- [ ] 1.1 Add the Phase 7 scope statement to `docs/PRD.md`: `memmap2`-backed indexes and
+- [x] 1.1 Add the Phase 7 scope statement to `docs/PRD.md`: `memmap2`-backed indexes and
   kernel caches, persistence and model export are delivered by the interop wave, not by
   the algorithm waves.
-- [ ] 1.2 Add the cross-reference note to the Phase 3 (neighbours/SVM) and Phase 4
+- [x] 1.2 Add the cross-reference note to the Phase 3 (neighbours/SVM) and Phase 4
   (trees/ensembles) sections where the catalogue mentions memory mapping or persistence.
-- [ ] 1.3 Verify the amended paragraphs are consistent with the wave-plan catalogue and
+- [x] 1.3 Verify the amended paragraphs are consistent with the wave-plan catalogue and
   with the non-goals of the neighbours and SVM proposals.
 
 ## 2. Changelog and verification
 
-- [ ] 2.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under `Unreleased →
+- [x] 2.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under `Unreleased →
   Changed` for the clarified Wave 7 scope.
-- [ ] 2.2 Run `mdbook build docs` and verify the PRD-derived documentation renders
+- [x] 2.2 Run `mdbook build docs` and verify the PRD-derived documentation renders
   without errors.
 
 ## 3. Review
 
-- [ ] 3.1 Independent review by a separate agent validating that the deferral is stated
+- [x] 3.1 Independent review by a separate agent validating that the deferral is stated
   once, referenced where relevant, and does not contradict any spec or in-flight proposal.
 
 ## Workflow follow-up
