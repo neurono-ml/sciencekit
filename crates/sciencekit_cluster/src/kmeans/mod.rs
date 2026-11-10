@@ -10,13 +10,18 @@ mod config;
 mod core_implementation;
 mod distance;
 mod elkan;
+mod fit;
 mod init;
 mod iteration;
 mod lloyd;
+mod model;
 mod result;
+mod validation;
 
+pub use builder::SKKMeansBuilder;
 pub use config::{SKKMeansAlgorithm, SKKMeansInitialization};
 pub use core_implementation::SKKMeans;
+pub use model::SKKMeansModel;
 
 pub(crate) use distance::{
     sk_dense_squared_distances_to_centers, sk_squared_distances_to_center,
@@ -35,6 +40,8 @@ mod kmeans_builder_tests;
 mod kmeans_distance_tests;
 #[cfg(test)]
 mod kmeans_elkan_tests;
+#[cfg(test)]
+mod kmeans_fit_tests;
 #[cfg(test)]
 mod kmeans_init_tests;
 #[cfg(test)]

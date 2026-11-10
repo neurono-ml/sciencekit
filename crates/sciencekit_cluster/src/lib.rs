@@ -13,3 +13,7 @@
 #![warn(missing_docs)]
 
 pub mod kmeans;
+
+pub use kmeans::{
+    SKKMeans, SKKMeansAlgorithm, SKKMeansBuilder, SKKMeansInitialization, SKKMeansModel,
+};
