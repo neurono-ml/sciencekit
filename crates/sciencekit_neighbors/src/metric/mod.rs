@@ -9,4 +9,6 @@ mod catalogue;
 pub use catalogue::SKNeighborMetric;
 
 #[cfg(test)]
+mod metric_bounds_tests;
+#[cfg(test)]
 mod metric_tests;
