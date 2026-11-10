@@ -26,4 +26,7 @@ mod builder_tests;
 mod fit_tests;
 
 #[cfg(test)]
+mod fit_span_tests;
+
+#[cfg(test)]
 mod marker_tests;
