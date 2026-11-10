@@ -4,6 +4,7 @@
 //! This is a **pure dispatcher** module: `mod.rs` only declares and re-exports
 //! submodules; every implementation lives in its own file.
 
+mod conversions;
 mod feature_layout;
 mod materialization;
 mod tabular_batch;
@@ -15,6 +16,8 @@ pub use tabular_batch::SKTabularBatch;
 pub use target_extraction::SKTargetExtraction;
 pub use validation::sk_validate_numeric_feature_columns;
 
+#[cfg(test)]
+mod conversions_tests;
 #[cfg(test)]
 mod materialization_tests;
 #[cfg(test)]
