@@ -9,6 +9,7 @@ mod ipc_reader;
 mod json_reader;
 mod options;
 mod parquet_reader;
+mod projected_reader;
 mod source;
 
 pub use format::SKArrowFileFormat;
@@ -19,6 +20,8 @@ pub use source::SKArrowFileSource;
 mod csv_tests;
 #[cfg(test)]
 mod file_tests;
+#[cfg(test)]
+mod ipc_tests;
 #[cfg(test)]
 mod parquet_tests;
 #[cfg(test)]
