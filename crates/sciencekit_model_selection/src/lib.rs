@@ -18,11 +18,16 @@ pub mod gather;
 pub mod index_split;
 pub mod shuffle;
 pub mod split;
+pub mod train_test_split;
 
 pub use gather::{SKTargetPartition, sk_gather_rows};
 pub use index_split::SKIndexSplit;
 pub use shuffle::sk_shuffle_indices;
 pub use split::SKSplitter;
+pub use train_test_split::{
+    SKPartitionSize, SKTrainTestSplit, SKTrainTestSplitBuilder, SKTrainTestSplitter,
+    sk_train_test_split,
+};
 pub use split::group::{SKGroupKFold, SKGroupKFoldBuilder};
 pub use split::kfold::{SKKFold, SKKFoldBuilder};
 pub use split::stratified::{SKStratifiedKFold, SKStratifiedKFoldBuilder};
