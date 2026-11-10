@@ -203,4 +203,7 @@ each estimator class follows. The
 streams without ever being densified, and implicit zeros shape every statistic. The
 [metrics foundation chapter](./ch20-metrics-foundation.html) then turns all of that work into
 numbers: a label space, a confusion matrix, per-class scores, regression errors and the
-mergeable accumulators that make evaluation streaming and parallel.
+mergeable accumulators that make evaluation streaming and parallel. The
+[deterministic randomness chapter](./ch21-deterministic-randomness.html) adds the seed
+convention every stochastic estimator shares: SplitMix64, pure sub-seed derivation and
+thread-count invariance.
