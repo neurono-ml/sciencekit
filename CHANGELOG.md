@@ -59,6 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Representation parity is now a normative rule (spec `data-view-boundary`, PRD §4.5.1): an algorithm that mathematically tolerates more than one feature representation accepts dense, sparse and mixed inputs on every public operation, dispatches once per operation and never densifies a sparse input. A dense-only exception (§4.5.2) is admissible only when the mathematics requires dense geometry, the kernel rejects a sparse view with `UnsupportedRepresentation`, and the estimator keeps sparse/mixed parity through a documented alternative path.
 - **BREAKING** `sciencekit_common` streaming batch accessors: `SKDataBatch::data()` and `SKSupervisedBatch::features()` are replaced by representation-aware accessors (`view()`, `number_of_rows()`, `number_of_columns()`, `is_sparse()`, `byte_size()`), and the supervised constructors become fallible (`Result<Self, SKError>`) to reject a target count that disagrees with the block's rows. The dense constructors keep their meaning; the compiler catches every old call site.
 - **BREAKING** `sciencekit_common` execution surface: `SKExecutionContext` gains `batch_byte_size_hint` and `SKExecutionPlan` gains `available_memory_bytes`, so external struct literals must set both fields. The provider entry points now enforce the double-buffer guard on every batch they read.
 - `SKOperationAttributes` shape fields renamed to `rows_count`/`columns_count` (they are counts); the tracing span field names stay `rows`/`columns`.

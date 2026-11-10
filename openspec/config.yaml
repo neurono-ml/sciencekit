@@ -21,7 +21,12 @@ context: |
   variables and public modules with sk_ + snake_case (sk_train_test_split);
   methods (functions inside impl blocks of structs or traits) get no prefix;
   zero-copy on public APIs
-  (ArrayView/CowArray/sprs views); a .rs file >200 lines becomes a standardized folder module
+  (ArrayView/CowArray/sprs views); representation parity (spec data-view-boundary,
+  normative): an algorithm that tolerates more than one representation accepts dense,
+  sparse and mixed inputs on every operation, dispatches once per operation and never
+  densifies a sparse input; a dense-only exception is allowed only when the mathematics
+  needs dense geometry, the kernel rejects sparse with UnsupportedRepresentation and the
+  estimator still serves sparse/mixed through a documented alternative path; a .rs file >200 lines becomes a standardized folder module
   (mod.rs, builder.rs, core_implementation.rs, *_tests.rs); tests in companion modules
   *_tests.rs beside the implementation (never inline nor global tests/).
   Tests sit at the end: any inline `#[cfg(test)]` block (implementation and tests
