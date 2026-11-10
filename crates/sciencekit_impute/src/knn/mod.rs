@@ -24,6 +24,9 @@ pub use weights::{SKImputationWeights, sk_weighted_average};
 mod builder_tests;
 
 #[cfg(test)]
+mod concurrency_tests;
+
+#[cfg(test)]
 mod distance_block_tests;
 
 #[cfg(test)]
