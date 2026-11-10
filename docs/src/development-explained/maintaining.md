@@ -226,3 +226,5 @@ split search, deterministic ties, feature subsampling, class weights and importa
 K-fold flavours, row gathering and cross-validation scoring. The
 [C ABI chapter](./ch30-c-abi.html) adds the stable boundary every non-Rust binding wraps:
 opaque handles, borrowed and owned arrays, status codes, panic containment and persistence.
+The [clustering metrics chapter](./ch31-clustering-metrics.html) adds silhouette, ARI, NMI,
+homogeneity/completeness/V-measure and the centroid indices.
