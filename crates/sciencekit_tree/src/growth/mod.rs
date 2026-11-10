@@ -14,4 +14,6 @@ pub(crate) use engine::sk_grow_tree;
 pub(crate) use feature_selection::sk_select_features;
 
 #[cfg(test)]
+mod feature_subsampling_tests;
+#[cfg(test)]
 mod growth_tests;
