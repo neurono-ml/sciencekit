@@ -1,10 +1,12 @@
 //! Squared-Euclidean assignment kernels (spec `k-means`, decision 2).
 //!
 //! Assignment uses `‖x − c‖² = ‖x‖² − 2·x·c + ‖c‖²`. The dense path reuses the
-//! SIMD-friendly pairwise kernel.
+//! SIMD-friendly pairwise kernel; the sparse path walks only the stored entries
+//! of each CSR row, so a sparse design is never densified.
 
 use ndarray::{Array1, Array2, ArrayView1, ArrayView2, Axis};
 use sciencekit_common::{SKDataView, SKError, SKFloat};
+use sprs::CsMatView;
 
 /// Squared distances from every dense row to every center.
 pub(crate) fn sk_dense_squared_distances_to_centers<F: SKFloat>(
@@ -12,6 +14,44 @@ pub(crate) fn sk_dense_squared_distances_to_centers<F: SKFloat>(
     centers: &ArrayView2<F>,
 ) -> Array2<F> {
     sciencekit_math::sk_squared_euclidean_distance_matrix(features, centers)
+}
+
+/// Squared distances from every CSR row to every dense center, by norm
+/// expansion over the stored entries.
+pub(crate) fn sk_sparse_squared_distances_to_centers<F: SKFloat>(
+    features: &CsMatView<F>,
+    centers: &ArrayView2<F>,
+) -> Array2<F> {
+    let number_of_rows = features.rows();
+    let number_of_centers = centers.nrows();
+    let center_norms: Vec<F> = centers
+        .rows()
+        .into_iter()
+        .map(|center| {
+            center
+                .iter()
+                .fold(F::zero(), |accumulator, value| accumulator + *value * *value)
+        })
+        .collect();
+    let mut distances = Array2::zeros((number_of_rows, number_of_centers));
+    for (row_index, row) in features.outer_iterator().enumerate() {
+        let row_norm = row
+            .data()
+            .iter()
+            .fold(F::zero(), |accumulator, value| accumulator + *value * *value);
+        for (center_index, center) in centers.rows().into_iter().enumerate() {
+            let dot_product = row
+                .indices()
+                .iter()
+                .zip(row.data().iter())
+                .fold(F::zero(), |accumulator, (&column, &value)| {
+                    accumulator + value * center[column]
+                });
+            distances[[row_index, center_index]] =
+                row_norm + center_norms[center_index] - dot_product - dot_product;
+        }
+    }
+    distances
 }
 
 /// Squared distances from every row of either representation to every dense
@@ -27,17 +67,16 @@ pub(crate) fn sk_squared_distances_to_centers<F: SKFloat>(
             found: vec![number_of_rows, number_of_features],
         });
     }
-    match features {
-        SKDataView::Dense(dense) => Ok(sk_dense_squared_distances_to_centers(&dense, centers)),
-        SKDataView::Sparse(_) => Err(SKError::UnsupportedRepresentation {
-            representation: "csr",
-            suggestion: "convert the sparse matrix to dense with to_dense",
-        }),
-        _ => Err(SKError::UnsupportedRepresentation {
-            representation: features.representation(),
-            suggestion: "convert the input to a supported dense or CSR view",
-        }),
-    }
+    Ok(match features {
+        SKDataView::Dense(dense) => sk_dense_squared_distances_to_centers(&dense, centers),
+        SKDataView::Sparse(sparse) => sk_sparse_squared_distances_to_centers(&sparse, centers),
+        _ => {
+            return Err(SKError::UnsupportedRepresentation {
+                representation: features.representation(),
+                suggestion: "convert the input to a supported dense or CSR view",
+            });
+        }
+    })
 }
 
 /// Squared distances from every row to a single center.
