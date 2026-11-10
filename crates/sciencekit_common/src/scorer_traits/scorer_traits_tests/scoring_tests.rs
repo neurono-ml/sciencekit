@@ -3,11 +3,13 @@ use ndarray::{Array2, array};
 
 use super::super::{SKLabelScorer, SKSupervisedScorer, SKUnsupervisedScorer};
 use crate::SKError;
-use crate::fit_traits::{SKClassifierPredictor, SKRegressorPredictor};
+use crate::fit_traits::{
+    SKClassifierPredictor, SKClusterLabel, SKClustererPredictor, SKRegressorPredictor,
+};
 
 use super::example_contracts::{
-    Accuracy, ConstantClassifier, ConstantRegressor, MajorityAgreement, MeanAbsoluteError,
-    ZeroClassifier,
+    Accuracy, ConstantClassifier, ConstantClusterer, ConstantRegressor, MajorityAgreement,
+    MeanAbsoluteError, ZeroClassifier,
 };
 use crate::{SKDataView, SKTargetView};
 
@@ -28,7 +30,7 @@ fn mean_absolute_error<F: crate::SKFloat, M: SKRegressorPredictor<F, Error = SKE
 
 /// A typed handle resolving the generic unsupervised scorer.
 #[allow(clippy::extra_unused_type_parameters)]
-fn majority<F: crate::SKFloat, M: SKRegressorPredictor<F, Error = SKError>>() -> MajorityAgreement {
+fn majority<F: crate::SKFloat, M: SKClustererPredictor<F, Error = SKError>>() -> MajorityAgreement {
     MajorityAgreement
 }
 
@@ -182,11 +184,16 @@ fn same_scorer_evaluates_distinct_families() {
 /// Unsupervised scorer: pure form over existing assignments.
 #[test]
 fn unsupervised_pure_form_over_assignments() {
-    let scorer = majority::<f64, ConstantRegressor>();
+    let scorer = majority::<f64, ConstantClusterer>();
     let features = Array2::from_shape_vec((4, 2), vec![0.0_f64; 8]).unwrap();
-    let assignments = array![1_usize, 1, 0, 1];
+    let assignments = array![
+        SKClusterLabel::cluster(1),
+        SKClusterLabel::cluster(1),
+        SKClusterLabel::cluster(0),
+        SKClusterLabel::cluster(1),
+    ];
     let score =
-        <MajorityAgreement as SKUnsupervisedScorer<f64, ConstantRegressor>>::score_from_assignments(
+        <MajorityAgreement as SKUnsupervisedScorer<f64, ConstantClusterer>>::score_from_assignments(
             &scorer, SKDataView::try_from(&features).unwrap(), assignments.view(),
         )
         .unwrap();
@@ -196,8 +203,8 @@ fn unsupervised_pure_form_over_assignments() {
 /// Unsupervised scorer: convenient form obtains model outputs then delegates.
 #[test]
 fn unsupervised_convenient_form_delegates() {
-    let scorer = majority::<f64, ConstantRegressor>();
-    let model = ConstantRegressor; // predicts all 1.0 → assignments all 1
+    let scorer = majority::<f64, ConstantClusterer>();
+    let model = ConstantClusterer; // assigns every row to cluster 1
     let features = Array2::from_shape_vec((4, 2), vec![0.0_f64; 8]).unwrap();
     let score = scorer
         .score(&model, SKDataView::try_from(&features).unwrap())

@@ -3,7 +3,9 @@ use ndarray::{Array1, Array2, ArrayView1};
 
 use super::super::{SKLabelScorer, SKSupervisedScorer, SKUnsupervisedScorer};
 use crate::SKError;
-use crate::fit_traits::{SKClassifierPredictor, SKRegressorPredictor};
+use crate::fit_traits::{
+    SKClassifierPredictor, SKClusterLabel, SKClustererPredictor, SKRegressorPredictor,
+};
 use crate::{SKDataView, SKTargetView};
 
 // ---- Example contracts ----------------------------------------------------
@@ -168,19 +170,39 @@ impl<F: crate::SKFloat, M: SKRegressorPredictor<F, Error = SKError>> SKSupervise
     }
 }
 
-/// An unsupervised "majority agreement" scorer over assignments.
+/// A minimal fitted clusterer: assigns every row to cluster `1`.
+pub struct ConstantClusterer;
+impl<F: crate::SKFloat> SKClustererPredictor<F> for ConstantClusterer {
+    type Error = SKError;
+    fn predict_clusters<'a, X>(&self, features: X) -> Result<Array1<SKClusterLabel>, Self::Error>
+    where
+        X: TryInto<SKDataView<'a, F>, Error = SKError>,
+    {
+        let view: SKDataView<'_, F> = features.try_into()?;
+        let rows = match &view {
+            SKDataView::Dense(dense) => dense.nrows(),
+            SKDataView::Sparse(sparse) => sparse.rows(),
+        };
+        Ok(Array1::from_elem(rows, SKClusterLabel::cluster(1)))
+    }
+}
+
+/// An unsupervised "majority agreement" scorer over typed assignments.
 pub struct MajorityAgreement;
-impl<F: crate::SKFloat, M: SKRegressorPredictor<F, Error = SKError>> SKUnsupervisedScorer<F, M>
+impl<F: crate::SKFloat, M: SKClustererPredictor<F, Error = SKError>> SKUnsupervisedScorer<F, M>
     for MajorityAgreement
 {
     type Error = SKError;
     fn score_from_assignments(
         &self,
         _features: SKDataView<'_, F>,
-        assignments: ArrayView1<'_, usize>,
+        assignments: ArrayView1<'_, SKClusterLabel>,
     ) -> Result<f64, Self::Error> {
         let total = assignments.len() as f64;
-        let ones = assignments.iter().filter(|&&a| a == 1).count() as f64;
+        let ones = assignments
+            .iter()
+            .filter(|label| label.cluster_index() == Some(1))
+            .count() as f64;
         Ok(ones / total)
     }
 }
