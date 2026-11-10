@@ -78,8 +78,8 @@ and receives a Python binding as soon as it is validated on CPU.
 
 | Structure/Estimator | Description | Status |
 |---|---|---|
-| `SKKNeighborsClassifier` | Classification by k nearest neighbors | <span class="sk-pill sk-pill--neutral">Planned</span> |
-| `SKKNeighborsRegressor` | Regression by k nearest neighbors | <span class="sk-pill sk-pill--neutral">Planned</span> |
+| `SKKNeighborsClassifier` | k-NN classification (dense trees · sparse brute force) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
+| `SKKNeighborsRegressor` | k-NN regression (dense trees · sparse brute force) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKKDTree` | kd-tree for fast spatial search | <span class="sk-pill sk-pill--neutral">Planned</span> |
 | `SKBallTree` | Ball tree for arbitrary metrics | <span class="sk-pill sk-pill--neutral">Planned</span> |
 

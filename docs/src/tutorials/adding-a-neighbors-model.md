@@ -1,289 +1,106 @@
 # Adding a Neighbors Model — `SKKNeighborsClassifier` and `SKKNeighborsRegressor`
 
-> Pre-read: [How to add an Algorithm](how-to-add-an-algorithm.md) (§5 access patterns, §8 `SKMappableSource`)
+> Pre-read: [How to add an Algorithm](how-to-add-an-algorithm.md) and the
+> [k-nearest neighbours chapter](../development-explained/ch32-knn-estimators.html).
 
-This is the chapter that keeps the book honest. Every algorithm so far followed one shape:
-*fit computes, predict applies*. k-NN breaks the shape — and understanding **why it cannot
-be repaired** is the lesson of the chapter. In `sciencekit` terms:
+This tutorial walks through the neighbours estimators as they are **shipped**: what `fit`
+stores, how `predict` searches, why the representation chooses the strategy, and the exact
+public surface you compose in a pipeline or a grid search.
 
-- `fit` does almost nothing: it stores a view of the training base (or the path/`SKMappableSource` handle for the memory-mapped case).
-- `predict` does everything: it needs, for a query row, *the k nearest rows of the base* — which is random access to any stored row at any time.
+Two rules shape everything below:
 
-A sequential streaming path (`OutOfCoreStreaming`) therefore does not fit this family, no
-matter how it is dressed up. The formulation that fits k-NN's pattern is
-`SKAccessPattern::RandomAccess` with an `SKMappableSource` base: the *out-of-core* version is
-the memory-mapped base, not a streaming combiner.
+- `fit` stores the training design and the label table; it does not compress or discard rows.
+- `predict` needs **the nearest stored rows to each query**, so the estimator chooses a search
+  strategy at run time: a spatial index for dense low-dimensional data, brute force for sparse,
+  mixed or cosine data.
 
-## 1. Story & decisions
+## 1. The public surface
 
-| Decision | Chosen | Roads not taken — and why they are wrong *for this family* |
+```rust
+use sciencekit_neighbors::{SKKNeighborsClassifier, SKNeighborsWeights};
+use sciencekit_common::{SKBuilder, SKClassifierPredictor, SKSupervisedFit};
+
+let classifier = SKKNeighborsClassifier::<f64>::build()
+    .nearest_neighbors_count(5)
+    .weights(SKNeighborsWeights::Uniform) // or Distance
+    .build()?;
+
+// `labels` is an `Array1<i64>`; nominal labels can be a `Vec<&str>` / `&[&str]`.
+let labels = ndarray::Array1::from_vec(vec![0_i64, 1, 0, 1]);
+let model = classifier.fit(training_features.view(), labels.view())?;
+let labels_out = model.predict_labels(query_features.view())?;
+let probabilities = model.predict_probabilities(query_features.view())?;
+```
+
+The builder is the only constructor. It exposes:
+
+| Setter | Default | Meaning |
 |---|---|---|
-| Streaming regime | **None** — `RandomAccess` only | A "streaming kNN" that combiner-accumulates neighbors would have to forever revisit "which k rows are currently the nearest" — the stored state is *the base itself*. Sequential batching cannot answer, in order, a question whose answer set is unordered. This is the chapter's central lesson. |
-| Distance kernel | `sk_squared_euclidean_distance_matrix` (squared, not sqrt-ed) | The root is a *monotone* transform: ranking does not change under it, so per-distance `sqrt` is wasted work. (For the *weighted* paths that do need a real distance, `sk_euclidean_distance_matrix` exists on the same module.) |
-| Candidate selection | **`argpartition`-shaped top-k** (select the k smallest, not full sort) | Full sort is `O(n log n)` per query row; selection-to-k is `O(n)` expected. At a base of millions and q queries, this single decision is the model's latency. |
-| Out-of-core form | `SKMappableSource`/memory-mapped base rows, and *it is enough* — the distance matrix is computed **per query row** over an iterator of base rows, chunked to cache grain | Bulk distance matrix over the whole base at once would demand RAM for q×n — precisely the "does not fit" scenario the third regime exists for. |
-| kd-tree | **Analyzed, not shipped here** | Explained honestly in §2.2 — below roughly ~10–15 dimensions brute force wins on modern CPUs, which is the *common modest dimension of real features*, and the tree's post-1980 cache behavior is hostile to the library's layout-carriage. The extension path is documented, not hidden. |
-| Label rules (classifier) | Majority vote over the k canonical indices via `SKLabelTable`; regressor averages with optional inverse-distance weights | Softmax-style weighting hides the vote; inverse-distance weighting's `1/0` knee at exact matches gets special-cased and *tested* rather than left to folklore. |
+| `nearest_neighbors_count` | 5 | how many neighbours vote |
+| `weights` | `Uniform` | `Distance` uses inverse-distance weighting |
+| `algorithm` | `Auto` | `KdTree`, `BallTree`, `BruteForce` or automatic |
+| `metric` | Euclidean | Euclidean, Manhattan, Chebyshev, Cosine |
+| `leaf_size` | 40 | tree leaf bound (dense tree paths) |
+| `backend` | `Faer` | carried into the model and its spans |
+| `execution_mode` | `Automatic` | recorded configuration |
 
-```mermaid
-flowchart TB
-    classDef fitNode fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e,stroke-width:2px
-    classDef predictNode fill:#f0fdf4,stroke:#16a34a,color:#14532d,stroke-width:2px
-    classDef coreNode fill:#ede9fe,stroke:#7c3aed,color:#3b0764,stroke-width:2px
+The regressor (`SKKNeighborsRegressor`) has the same surface and returns responses.
 
-    F["SKKNeighborsClassifierBuilder<br>.nearest_neighbors_count(5)<br>.weights(Uniform | Distance)<br>.execution_mode(Automatic)"]:::fitNode
-    F --> Fit["fit(X, y)<br>· stores base rows as SKMappableSource<br>(in RAM or memory-mapped)<br>· freezes SKLabelTable (grow-only)"]:::fitNode
-    Fit --> Q["predict(X_query)"]:::predictNode
-    Q --> D["for each query row:<br>sk_squared_euclidean_distance_matrix<br>chunked over base rows (cache grain)"]:::predictNode
-    D --> T["top-k via argpartition over per-base chunks<br>— O(n) expected, not O(n log n) sort"]:::predictNode
-    T --> W["uniform vote | inverse-distance weights"]:::predictNode
-    W --> O["majority via SKLabelTable<br>(classifier) | mean of neighbors (regressor)"]:::coreNode
-```
+## 2. What `fit` stores
 
-*(the diagram is `fit` heavy: the *predict* spine is where all compute lives — the shape that distinguishes this family).*
+`fit` keeps:
 
----
+- the **training design** as an owned dense block or a CSR matrix — never a copy per query;
+- the **label table** for classification (`SKLabelTable`), built in first-occurrence order, the
+  library-wide convention;
+- the configuration, including the resolved search strategy.
 
-## 2. Theory from zero — neighbor search
+A fitted classifier exposes `classes()` (the label table), the resolved strategy and the stored
+representation; the regressor exposes the same minus the table.
 
-**The problem.** Given a *base* of named rows (with labels or target values) and a query
-row `x`, return the k stored rows with the smallest distance to `x`, then reduce those k
-into one answer (majority label for a classifier; mean for a regressor).
+## 3. How `predict` searches
 
-To build the distance: for base row `b` and query row `x`,
-`‖x − b‖₂² = x·x + b·b − 2·x·b`, with two squared norms precomputable *per row* — so the
-cost of a row pair reduces to the dot product `x·b`, which is exactly what a GEMM-shaped
-operation summation can take down to the library's grain. That is to say: **the whole
-distance structuring of brute-force k-NN is a matrix-multiplication-shaped question**, and
-this is the reason the library's pairwise kernels (`sk_squared_euclidean_distance_matrix`,
-`sk_euclidean_distance_matrix`, `sk_manhattan_distance_matrix`,
-`sk_cosine_distance_matrix`) live in `sciencekit_math::pairwise` with that shape already.
+`Auto` resolves once, when the model is fitted:
 
-### 2.1 The puzzle of finding "the nearest few"
+| Data | Metric | Strategy |
+|---|---|---|
+| dense, **≥ 64 training rows**, ≤ 20 features | Euclidean/Manhattan/Chebyshev | k-d tree |
+| dense, ≥ 64 rows, > 20 features | Euclidean/Manhattan/Chebyshev | ball tree |
+| dense, < 64 rows | any | brute force (a tree costs more than it saves) |
+| sparse or mixed | any | brute force over stored entries |
+| any | Cosine | brute force (cosine has no tree-pruning form) |
 
-Naively: compute all base distances for the query, sort them, take the first k — `O(n log n)`.
-Selection theory rides in and pays rent immediately: you do not need a *sorted order*, you
-need the *k smallest* — the answer to "subset selection under an order" is
-`argpartition`-structured quickselect at `O(n)` *expected* cost (with a small constant in
-practice). And at a base of 10⁷ rows and 10⁵ queries, the "sort everything once upfront"
-precomputation path buys the code *nothing* but memory pressure, because the query side is
-unknown at fit time.
+An **explicit** `KdTree` or `BallTree` request on a representation the index cannot serve returns
+`UnsupportedRepresentation` with a suggestion to use `Auto` or `BruteForce`. Sparse input is
+never densified.
 
-### 2.2 The curse of dimensionality — your honest adversary
+The brute-force searcher and the trees share one contract, so the neighbour list is always
+ordered by **distance, then the smallest training index** — the determinism guarantee that the
+vote and the probabilities rely on.
 
-Every neighbor-model chapter carries two classic facts and one modern nuance. Classic:
+## 4. Voting and probabilities
 
-- **The curse**: in a `d`-dimensional unit cube, the volume the shell of width `ε`
-  concentrates *almost all* the mass for large *d*; equivalently, the distance between two
-  random points becomes concentrated — so "the nearest" and "any random point" go
-  asymptotically indistinguishable as `d` grows.
-- **The kd-tree's territory**: binary space partitioning makes queries
-  `O(log n)` **when log-dim branch-cutting actually prunes candidates**, which degrades to
-  near-brute-force in high dimensions. The practical crossover sits low: past roughly ~10–15
-  dimensions, trees lose to brute force on most realistic data.
+Classification takes the majority of the $k$ neighbours. With `Distance` weighting each neighbour
+contributes $1/d$ (a zero-distance neighbour uses the documented convention, so weights stay
+finite). Probabilities are the weighted neighbour fractions and sum to one; the columns follow
+the class table. A vote tie goes to the **smallest canonical class index**.
 
-The *modern nuance* this chapter also hands you (the one that makes the decision table
-non-trivial): metrics this library knows — `cosine`, `manhattan` — are *metric-dependent*
-in their search-structure costs, and the index raises and falls on that. The distance is
-not a "toggle" in the estimator; it is a design choice with structure-level consequences.
-This is exactly the kind of non-obvious decision this chapter exists to flag, and carries
-citations to read the source before choosing:
+Regression returns the mean of the neighbour responses (uniform) or their inverse-distance
+weighted mean. Integer targets are promoted to the model scalar.
 
-**Sources:**
+## 5. What to test when you add a neighbour variant
 
-* Bentley, "Multidimensional binary search trees used for associative searching" (1975) — the kd-tree paper
-* Cover & Hart, "Nearest neighbor pattern classification" (1967) — the 1-NN ≤ 2×Bayes bound;
-  note the k→∞, k/n→0 consistency result is **Stone (1977)** — often misattributed, cite Stone
-* Friedman, "An improved algorithm finding nearest neighbors" — improved kd-tree search
-  ordering; the separate *best-bin-first* variant is Beis & Lowe (1997) — cite both
-* Muja & Lowe, "Fast approximate nearest neighbors with automatic algorithm configuration" (FLANN) — the practical decision territory of modern neighbor search
-* Wikipedia: `k-d tree` and `Nearest neighbor search` — the map of exact vs approximate avenues
-* scikit-learn `sklearn.neighbors` — `KNeighborsClassifier`/`KNeighborsRegressor` semantics
-  (weights, `algorithm` 'auto' — brute/kd/ball — and the exact behavior of `distance` weights)
+Follow the companion-module rule: put the tests beside the implementation.
 
----
+1. **Dense/sparse parity** — the same logical design gives the same predictions.
+2. **Brute-force agreement** — the new path returns exactly what the trees return.
+3. **Ties** — equidistant neighbours and tied votes resolve deterministically.
+4. **Representation rejection** — an explicit unsupported tree request is a structured error.
+5. **Concurrency** — a fitted model is `Send + Sync` and parallel prediction equals sequential.
 
-## 3. The model's shape
+## 6. Out-of-core today
 
-```rust
-// crates/sciencekit_neighbors/src/k_neighbors/core_implementation.rs
-pub enum SKNeighborWeights { Uniform, Distance }
-
-pub struct SKKNeighborsModel<F: SKFloat, S: SKMappableSource<F>> {
-    base: S,                        // the training rows — the whole storage question
-    targets: ndarray::Array1<F>,  // owned continuous targets (regressor only)
-    labels: Option<SKLabelTable>,   // classifier only — frozen, grow-only
-    nearest_neighbors_count: usize,
-    weights: SKNeighborWeights,
-    /// the intent recorded from the builder at fit time — the model's invoke of
-    /// execution_intent() reads it, while *resolution* still happens per operation
-    /// against a fresh SKExecutionContext (anchor §4.1)
-    execution_intent: SKExecutionMode,
-}
-
-impl<F: SKFloat, S: SKMappableSource<F>> SKKNeighborsModel<F, S> {
-    pub fn execution_intent(&self) -> SKExecutionMode { self.execution_intent }
-}
-```
-
-Two notes before the code:
-
-1. **The model owns an `SKMappableSource`** for the base. In memory this is a borrowed
-   `SKDataView` asserting row-major contiguous layout (via the zero-copy conversions
-   chapter's rule: the view is *not* copied); for the memory-mapped regime, a memmap-backed
-   implementation hands `row(index)` out from the file — same trait, same algorithm code.
-2. `predict` runs per query row, and the **base row iteration is chunked over the cache grain**
-   — which is exactly the grain discipline from the anchor chapter (§6): the chunk size, not
-   the rows' total, is what carries the parallelism.
-
----
-
-## 4. The crown code
-
-```rust
-// Regressor: responses preserve the model scalar. The classifier sibling
-// implements SKClassifierPredictor<F> instead, returning Array1<i64> labels.
-impl<F, S> SKRegressorPredictor<F> for SKKNeighborsModel<F, S>
-where
-    F: SKFloat,
-    S: SKMappableSource<F> + Sync,
-{
-    type Error = SKError;
-    fn predict<'a, X>(&self, queries: X) -> Result<ndarray::Array1<F>, Self::Error>
-    where X: TryInto<SKDataView<'a, F>, Error = SKError> {
-        let queries = queries.try_into()?.as_dense()?;
-        sk_run_operation(
-            SKOperationAttributes {
-                operation: SKOperationKind::Predict,
-                rows: queries.nrows(), columns: queries.ncols(),
-                execution_mode: self.execution_intent(), backend: SKBackendKind::Faer,
-            },
-            || {
-                let mut context = SKExecutionContext::real();
-                // the plan rides from the estimator's SKBuilderState (the model owns no
-                // plan — anchor §4.1); resolution happens per predict
-                context.dataset_size_bytes = queries.len() as u64 * size_of::<F>() as u64;
-                context.dataset_elements = Some(queries.len() as u64);
-                context.access_pattern = SKAccessPattern::RandomAccess;   // the family's pattern
-                context.grain = SK_BINARY_COMBINE_GRAIN; // pairwise/candidate kernels;
-                // (a dedicated GEMM grain is not yet measured — revisit once one is measured)
-                let plan = sk_resolve_execution_plan(self.execution_intent(), &context)?;
-
-                let rows = queries.nrows();
-                let mut out = ndarray::Array1::<F>::zeros(rows);
-
-                // A per-query answer: every query row depends only on the base,
-                // so there is no reduction and no shared accumulator — par_azip! is safe.
-                if plan.parallelism > 1 {
-                    par_azip!((query in queries.rows(), out in &mut out)) {
-                        *out = self.answer_for_query(&query, plan.parallelism);
-                    }
-                } else {
-                    azip!((query in queries.rows(), out in &mut out)) {
-                        *out = self.answer_for_query(&query, 1);
-                    }
-                }
-                Ok(out)
-            },
-        )
-    }
-}
-
-// One query row: distance to every base row, then top-k selection, then reduce.
-impl<F: SKFloat, S: SKMappableSource<F>> SKKNeighborsModel<F, S> {
-    fn answer_for_query(
-        &self,
-        query: &ndarray::ArrayView1<F>,
-        parallelism: usize,
-    ) -> F {
-        // squared distances: x·x + b·b − 2·x·b, per-chunk over the mappable base
-        let distances = sciencekit_math::pairwise::sk_squared_euclidean_distance_matrix(
-            query.insert_axis(ndarray::Axis(0)),   // 1 × p
-            self.base_matrix_view(),               // base rows, chunked from the source
-            parallelism,
-        );
-        // top-k: partition-select the k smallest — O(n) expected, not O(n log n) sort
-        let candidates = top_k_selection(&distances.row(0), self.nearest_neighbors_count);
-        self.answer_for(&candidates, &self.weights)
-    }
-}
-```
-
-*(prose: `top_k_selection`-shaped partitioning carries through ndarray partitioning; the test in §5
-walks the exact selection kernel naming — `argpartition` shape as the *library's* helper
-name once it lands in `sciencekit_math::pairwise` — and the crown code uses the same
-`SKStreamDecision`-free, pure-kernel shape as every other regime; the chapter's code here is
-the walk-through of the *dual-form* principle applied to the *random-access* family.)*
-
-The two answer rules:
-
-```text
-# uniform:  classifier — the mode of the k neighbors' labels (ties → the label with
-#           the smallest canonical index; deterministic even when tied)
-#           regressor  — the mean of the k neighbors' targets
-
-# distance: both families weight each neighbor by 1 / dist, then normalize. The reviewed
-#           edge is the zero-distance neighbor (dist = 0): scikit-learn assigns it weight
-#           1.0 and then normalizes — that is the rule implemented here; the ε-clamp is a
-#           *separate* documented safety choice, not "the same decision" as scikit-learn
-```
-
----
-
-## 5. Tests — what can honestly be asserted here
-
-```rust
-// k_neighbors_tests.rs
-#[test]
-fn count_of_neighbors_respects_base_size_at_construction_time() {
-    // builder validation: nearest_neighbors_count ≤ base rows is evaluated at fit,
-    // because the base's shape is data, not configuration — the error taxonomy's
-    // InvalidHyperparameter is surfaced AT fit instead of double-checking downstream
-}
-
-#[test]
-fn classifier_majority_ties_deterministic() {
-    // k=4, base labels [cat, dog, cat, dog] — tie → first-occurrence label wins:
-    // SKLabelTable's determinism is THE answer, not a coin toss
-}
-
-#[test]
-fn regressor_row_lies_along_neighbors() {
-    // squared-distance reduction: best-k rows hold the winner; "distance" weights
-    // and the ε guard are asserted with a duplicate base row (dist = 0) — the §NN
-    // guard question shipped as tests.
-}
-
-#[test]
-fn memory_mapped_base_matches_in_memory_base() {
-    // same base data, one via RAM view, one via memmap-backed SKMappableSource —
-    // predictions are exact-equal; the third circuit rides through the trait seam
-}
-```
-
----
-
-## 6. Acceptance & sources
-
-| Acceptance criterion (PRD §8.7) | Realized |
-|---|---|
-| Lots and little data | the memory-mapped regime *is* the "lots" story (§5 test 4) |
-| Under concurrency | chunked distance rows + per-query partitioning, `plan.parallelism` from the plan |
-| Model export | base path + label table + hyper-settings (see anchor §10; memmap is exactly what the PRD §4.4 asks for mmappable bases) |
-| Metrics | classifier accuracy through `SKLabelScorer` / regressor R² through `SKSupervisedScorer` (free, no new scorer) |
-
-**Chapter sources** (see §2.1's citations): Bentley, Cover & Hart, Muja & Lowe, the
-`sklearn.neighbors` docs and its `npy`-neighbour algorithm notes on the
-`algorithm = "auto"` contract.
-
----
-
-## 7. What the four chapters added up to
-
-You have now written four families: two state-based transformers with streaming, a dense
-linear model with solver strategy, an SGD-family with an accumulator, and this chapter's
-random-access exception. Look back: every one of them had *identical* skeleton files
-(builder, estimator, model, traits, plan wiring, observability, tests) and
-*different* numeric cores. That articulation — shell the same, math the different — **is
-`sciencekit`'s thesis**, and it is your job as a contributor to hold the shell invariant
-*while* freely inventing the math inside.
+The memory-mapped base (`SKMappableSource`, `memmap2`) and model persistence/export are
+**Phase 7 (interop)** work, not part of the neighbours change. Streaming `fit_streaming` and
+radius-based estimators are explicit non-goals of this change; the estimators hold the training
+design in memory. The PRD records both deferrals in the Phase 3 section.
