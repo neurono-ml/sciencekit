@@ -12,3 +12,5 @@ pub(crate) use fold_scorer::SKFoldScorer;
 
 #[cfg(test)]
 mod evaluation_tests;
+#[cfg(test)]
+mod selection_tests;
