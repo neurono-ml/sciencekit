@@ -25,6 +25,7 @@ pub mod kd_tree;
 pub mod metric;
 pub mod searcher;
 
+pub use ball_tree::{SKBallTree, SKBallTreeBuilder};
 pub use kd_tree::{SKKDTree, SKKDTreeBuilder};
 pub use metric::{SKNeighborMetric, SKRequestedNeighborMetric};
 pub use searcher::{SKNeighborQuery, SKRadiusNeighbors};
