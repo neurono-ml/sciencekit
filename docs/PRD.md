@@ -266,7 +266,10 @@ exception is admissible only when:
   the alternative path.
 
 The normative source is the `data-view-boundary` capability
-(`openspec/specs/data-view-boundary/spec.md`).
+(`openspec/specs/data-view-boundary/spec.md`). Rejecting a representation whose mathematics
+is **semantically undefined** (for example, a NaN-aware distance over implicit CSR zeros,
+where "present" has no meaning) is governed by the existing precise-rejection requirement
+and does **not** require an alternative path.
 
 ---
 
@@ -547,7 +550,7 @@ Order faithful to the scikit-learn mapping (from the handoff), respecting depend
 
 ### Phase 4 — Trees and ensembles
 10. `sciencekit_tree`: SKDecisionTreeClassifier/SKDecisionTreeRegressor.
-    - The single-tree splitters invoke the **dense-only exception** (§4.5.2) because split search needs dense feature scans; the tree estimators keep representation parity by materializing each sparse training block once into a documented internal dense layout, never densifying at predict time when a sparse-aware path exists.
+    - Representation parity (§4.5.1): the tree estimators accept dense, sparse and mixed inputs without densifying a sparse design. Split search over a borrowed CSR design scans the stored entries column-wise, so this algorithm needs **no** dense-only exception.
 11. `sciencekit_ensemble`: parallel aggregation with rayon (SKRandomForest, SKBagging, SKGradientBoosting).
 
 ### Phase 5 — Unsupervised
