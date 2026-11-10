@@ -18,4 +18,6 @@ pub use source::SKArrowFileSource;
 #[cfg(test)]
 mod file_tests;
 #[cfg(test)]
+mod parquet_tests;
+#[cfg(test)]
 mod projection_tests;
