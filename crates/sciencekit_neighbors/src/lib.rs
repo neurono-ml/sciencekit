@@ -39,7 +39,9 @@ pub use neighbors::{
     SKNeighborsWeights, SKSearchStrategy, SKTrainingData, sk_resolve_search_strategy,
     sk_weighted_average,
 };
-pub use regressor::{SKKNeighborsRegressor, SKKNeighborsRegressorBuilder};
+pub use regressor::{
+    SKKNeighborsRegressor, SKKNeighborsRegressorBuilder, SKKNeighborsRegressorModel,
+};
 pub use searcher::{SKNearestNeighborsSearcher, SKNeighborQuery, SKRadiusNeighbors};
 
 #[cfg(test)]

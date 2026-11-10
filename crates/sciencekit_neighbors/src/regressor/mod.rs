@@ -5,9 +5,15 @@
 
 mod builder;
 mod core_implementation;
+mod fit;
+mod model;
+mod predict;
 
 pub use builder::SKKNeighborsRegressorBuilder;
 pub use core_implementation::SKKNeighborsRegressor;
+pub use model::SKKNeighborsRegressorModel;
 
 #[cfg(test)]
 mod regressor_builder_tests;
+#[cfg(test)]
+mod regressor_tests;
