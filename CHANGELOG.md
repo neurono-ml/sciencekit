@@ -58,6 +58,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   builder rejects empty candidates, a missing splitter and an incompatible
   scoring family, and a sparse-only candidate proves no fold is ever densified.
 
+- `sciencekit_lua` (spec `lua-bindings`): a native Lua 5.4 module loaded with
+  `require("sciencekit")`, built on the stable `sciencekit_ffi` entry points so
+  the Lua surface exercises exactly the C ABI. Lua 5.4 is embedded through
+  `mlua` with `lua54` + `vendored`, so neither a system `liblua` nor
+  `pkg-config` is required to build or to run the tests (the crate's Rust tests
+  drive an embedded VM; a plain `tests/run.lua` suite covers the
+  system-interpreter path). It exposes chainable builder userdata for linear
+  regression (`include_intercept`, `backend`) and the standard scaler
+  (`with_mean`, `with_std`) with `fit`, `predict`, `transform`, `score`, `save`,
+  module-level `load`, `close` and the Lua 5.4 `__close` metamethod; handles
+  are released exactly once by close, `__close` or the garbage collector, with
+  `live_handles()` confirming nothing leaked. Numeric tables convert to/from
+  row-major `f64` buffers with rectangularity, emptiness, cell-type and target
+  length checks before any ABI call — every value is copied by design, and no
+  zero-copy path across Lua values is promised. Failures become Lua runtime
+  errors headed by the stable status name and code
+  (`sciencekit shape (2): ...`). Includes a LuaRocks 3.0 rockspec and a Lua
+  suite covering every ABI family, large fixtures and concurrent use.
+  `sciencekit_ffi` now also builds as an `rlib` for in-process bindings.
+
 ## [0.5.0] — 2026-11-10
 
 Clustering metrics and the k-nearest-neighbour estimators.
