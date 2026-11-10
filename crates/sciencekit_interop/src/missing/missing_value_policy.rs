@@ -9,10 +9,11 @@ use sciencekit_common::SKError;
 /// Every conversion applies exactly one declared policy. The default is
 /// [`SKMissingValuePolicy::Reject`], so a caller must acknowledge nullability
 /// explicitly rather than inheriting an engine-specific behavior.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 #[non_exhaustive]
 pub enum SKMissingValuePolicy {
     /// Reject the conversion on the first null encountered.
+    #[default]
     Reject,
     /// Map numeric nulls to the floating-point not-a-number sentinel.
     ///
@@ -24,12 +25,6 @@ pub enum SKMissingValuePolicy {
     CategoricalMissingCode,
     /// Replace numeric nulls with a caller-provided constant.
     ConstantFill(f64),
-}
-
-impl Default for SKMissingValuePolicy {
-    fn default() -> Self {
-        SKMissingValuePolicy::Reject
-    }
 }
 
 impl SKMissingValuePolicy {

@@ -1,7 +1,7 @@
 //! Tests for categorical extraction through the library's categorical view
 //! (spec `dataset-interop-core`).
 
-use sciencekit_common::{SKCategoricalView, SKError, SK_CATEGORICAL_MISSING_CODE};
+use sciencekit_common::{SK_CATEGORICAL_MISSING_CODE, SKCategoricalView, SKError};
 
 use super::SKTabularBatch;
 use crate::columns::SKColumnData;
@@ -47,7 +47,10 @@ fn nominal_columns_surface_as_a_nominal_view() {
         ),
     ]);
     let extraction = batch
-        .extract_categorical(&selection(&["species", "color"]), SKMissingValuePolicy::Reject)
+        .extract_categorical(
+            &selection(&["species", "color"]),
+            SKMissingValuePolicy::Reject,
+        )
         .unwrap();
     assert_eq!(extraction.shape(), (2, 2));
     assert!(extraction.codes().is_none());
@@ -71,11 +74,7 @@ fn category_codes_keep_codes_and_sentinel() {
     let batch = batch(vec![(
         "species_code",
         SKLogicalType::CategoryCode,
-        SKColumnData::CategoryCode(vec![
-            Some(0),
-            None,
-            Some(SK_CATEGORICAL_MISSING_CODE),
-        ]),
+        SKColumnData::CategoryCode(vec![Some(0), None, Some(SK_CATEGORICAL_MISSING_CODE)]),
     )]);
     let extraction = batch
         .extract_categorical(
@@ -169,7 +168,10 @@ fn mixed_categorical_columns_share_the_integer_view() {
         ),
     ]);
     let extraction = batch
-        .extract_categorical(&selection(&["species", "region"]), SKMissingValuePolicy::Reject)
+        .extract_categorical(
+            &selection(&["species", "region"]),
+            SKMissingValuePolicy::Reject,
+        )
         .unwrap();
     let codes = extraction.codes().unwrap();
     assert_eq!(codes.iter().copied().collect::<Vec<_>>(), vec![0, 7, 1, 8]);

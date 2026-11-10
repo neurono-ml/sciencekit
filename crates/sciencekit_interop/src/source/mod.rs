@@ -15,8 +15,8 @@ pub use provider::SKTabularSourceProvider;
 pub use tabular_source::SKTabularSource;
 
 #[cfg(test)]
-pub(crate) mod test_fixtures;
-#[cfg(test)]
 mod provider_tests;
 #[cfg(test)]
 mod source_tests;
+#[cfg(test)]
+pub(crate) mod test_fixtures;

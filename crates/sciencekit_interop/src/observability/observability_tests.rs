@@ -13,9 +13,7 @@ use tracing_subscriber::layer::{Context, Layer};
 use tracing_subscriber::prelude::*;
 use tracing_subscriber::registry::LookupSpan;
 
-use super::{
-    SKInteropConversionAttributes, SKInteropSourceKind, sk_run_interop_conversion,
-};
+use super::{SKInteropConversionAttributes, SKInteropSourceKind, sk_run_interop_conversion};
 use crate::missing::SKMissingValuePolicy;
 
 type RecordedSpans = Arc<Mutex<HashMap<Id, (String, Vec<(String, String)>)>>>;

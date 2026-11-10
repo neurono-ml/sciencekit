@@ -11,7 +11,10 @@ use crate::source::test_fixtures::{fixture_batch, fixture_batches};
 #[test]
 fn reopenable_source_replays_each_pass() {
     let mut source = SKInMemoryTabularSource::new(fixture_batches(3));
-    assert!(SKInMemoryTabularSource::IS_REOPENABLE);
+    fn is_reopenable<S: SKTabularSource>(_: &S) -> bool {
+        S::IS_REOPENABLE
+    }
+    assert!(is_reopenable(&source));
     assert_eq!(source.len(), 3);
 
     for _pass in 0..2 {
@@ -53,7 +56,14 @@ fn one_shot_source_rejects_reopening() {
         batch: Some(fixture_batch(0, true)),
         opened: false,
     };
-    assert!(!OneShotSource::IS_REOPENABLE);
+    fn is_reopenable<S: SKTabularSource>(_: &S) -> bool {
+        S::IS_REOPENABLE
+    }
+    let source_configuration = OneShotSource {
+        batch: None,
+        opened: false,
+    };
+    assert!(!is_reopenable(&source_configuration));
     source.open().unwrap();
     assert!(source.next_batch().unwrap().is_some());
     assert!(source.next_batch().unwrap().is_none());
@@ -64,7 +74,6 @@ fn one_shot_source_rejects_reopening() {
 #[test]
 fn read_failure_propagates_as_the_central_error() {
     struct FailingSource {
-        batches: Vec<SKTabularBatch>,
         cursor: usize,
     }
 
@@ -89,10 +98,7 @@ fn read_failure_propagates_as_the_central_error() {
         }
     }
 
-    let mut source = FailingSource {
-        batches: Vec::new(),
-        cursor: 0,
-    };
+    let mut source = FailingSource { cursor: 0 };
     source.open().unwrap();
     assert!(source.next_batch().unwrap().is_some());
     let error = source.next_batch().unwrap_err();

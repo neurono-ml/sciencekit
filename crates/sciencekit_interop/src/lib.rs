@@ -20,6 +20,9 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+#[cfg(test)]
+mod acceptance;
+
 pub mod batch;
 pub mod bridge;
 pub mod columns;

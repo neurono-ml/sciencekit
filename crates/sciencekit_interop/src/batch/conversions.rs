@@ -1,9 +1,7 @@
 //! Conversion of a tabular batch into the library's owned streaming blocks
 //! (spec `dataset-interop-core`).
 
-use sciencekit_common::{
-    SKDataBatch, SKError, SKFeatureBlock, SKFloat, SKSupervisedBatch,
-};
+use sciencekit_common::{SKDataBatch, SKError, SKFeatureBlock, SKFloat, SKSupervisedBatch};
 
 use super::{SKFeatureLayout, SKTabularBatch};
 use crate::missing::SKMissingValuePolicy;
@@ -61,7 +59,9 @@ impl SKTabularBatch {
                 reason: "the selection does not declare a target column".to_string(),
             });
         }
-        let targets = self.extract_target::<F>(selection, policy)?.to_scalar_values()?;
+        let targets = self
+            .extract_target::<F>(selection, policy)?
+            .to_scalar_values()?;
         let block = self.to_feature_block(selection, policy, layout)?;
         match block {
             SKFeatureBlock::Dense(matrix) => {

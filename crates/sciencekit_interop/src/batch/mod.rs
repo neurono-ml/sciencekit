@@ -4,11 +4,13 @@
 //! This is a **pure dispatcher** module: `mod.rs` only declares and re-exports
 //! submodules; every implementation lives in its own file.
 
+mod categorical_conversion;
 mod categorical_extraction;
 mod conversions;
 mod feature_layout;
 mod materialization;
 mod tabular_batch;
+mod target_conversion;
 mod target_extraction;
 mod validation;
 

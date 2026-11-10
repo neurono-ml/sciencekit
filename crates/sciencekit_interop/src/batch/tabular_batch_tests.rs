@@ -38,7 +38,10 @@ fn batch_reports_shape_and_metadata() {
     assert!(!batch.is_empty());
     assert_eq!(batch.position(), 3);
     assert!(batch.is_final());
-    assert_eq!(batch.column(0), Some(&SKColumnData::Float64(vec![Some(1.0), Some(2.0)])));
+    assert_eq!(
+        batch.column(0),
+        Some(&SKColumnData::Float64(vec![Some(1.0), Some(2.0)]))
+    );
     assert_eq!(
         batch.column_named("y").unwrap().logical_type(),
         SKLogicalType::Integer64

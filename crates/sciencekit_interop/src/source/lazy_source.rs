@@ -2,8 +2,9 @@
 
 use std::marker::PhantomData;
 
-use sciencekit_common::{SKDataBatch, SKError, SKFloat, SKLazySource, SKSupervisedBatch,
-    SKSupervisedLazySource};
+use sciencekit_common::{
+    SKDataBatch, SKError, SKFloat, SKLazySource, SKSupervisedBatch, SKSupervisedLazySource,
+};
 
 use super::SKTabularSource;
 use crate::batch::SKFeatureLayout;

@@ -13,7 +13,11 @@ fn example_schema() -> SKTabularSchema {
         column("b", SKLogicalType::Float64, SKColumnRole::Feature),
         column("a", SKLogicalType::Float64, SKColumnRole::Feature),
         column("label", SKLogicalType::Nominal, SKColumnRole::Target),
-        column("ignored_id", SKLogicalType::Integer64, SKColumnRole::Ignored),
+        column(
+            "ignored_id",
+            SKLogicalType::Integer64,
+            SKColumnRole::Ignored,
+        ),
     ])
     .unwrap()
 }
@@ -64,8 +68,14 @@ fn empty_schema_is_rejected() {
 #[test]
 fn roles_partition_the_columns() {
     let schema = example_schema();
-    assert_eq!(schema.column_indices_with_role(SKColumnRole::Feature), vec![0, 1]);
-    assert_eq!(schema.column_indices_with_role(SKColumnRole::Target), vec![2]);
+    assert_eq!(
+        schema.column_indices_with_role(SKColumnRole::Feature),
+        vec![0, 1]
+    );
+    assert_eq!(
+        schema.column_indices_with_role(SKColumnRole::Target),
+        vec![2]
+    );
     assert_eq!(
         schema.column_indices_with_role(SKColumnRole::Ignored),
         vec![3]

@@ -70,10 +70,7 @@ fn unknown_feature_column_is_rejected() {
 /// An out-of-range position is rejected and named by position.
 #[test]
 fn out_of_range_position_is_rejected() {
-    let selection = SKColumnSelection::builder()
-        .feature_at(42)
-        .build()
-        .unwrap();
+    let selection = SKColumnSelection::builder().feature_at(42).build().unwrap();
     let error = selection.resolve(&schema()).unwrap_err();
     assert!(error.to_string().contains("position 42"));
 }

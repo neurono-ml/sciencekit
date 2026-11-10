@@ -96,8 +96,7 @@ pub struct SKColumnSelectionBuilder {
 impl SKColumnSelectionBuilder {
     /// Append a feature column by name; order is preserved.
     pub fn feature(mut self, name: impl Into<String>) -> Self {
-        self.feature_columns
-            .push(SKColumnReference::name(name));
+        self.feature_columns.push(SKColumnReference::name(name));
         self
     }
 

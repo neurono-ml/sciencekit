@@ -11,11 +11,7 @@ fn every_variant_reports_length_and_nulls() {
         SKColumnData::Float64(vec![Some(1.0), None, Some(3.0)]),
         SKColumnData::Integer64(vec![Some(1), None, Some(3)]),
         SKColumnData::Boolean(vec![Some(true), None, Some(false)]),
-        SKColumnData::Nominal(vec![
-            Some("cat".to_string()),
-            None,
-            Some("dog".to_string()),
-        ]),
+        SKColumnData::Nominal(vec![Some("cat".to_string()), None, Some("dog".to_string())]),
         SKColumnData::CategoryCode(vec![Some(0), None, Some(2)]),
     ];
 

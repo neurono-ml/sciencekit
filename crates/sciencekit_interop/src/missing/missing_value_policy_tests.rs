@@ -1,7 +1,7 @@
 //! Tests for the documented missing-value policy (spec
 //! `dataset-interop-core`).
 
-use sciencekit_common::{SKError, SK_CATEGORICAL_MISSING_CODE};
+use sciencekit_common::{SK_CATEGORICAL_MISSING_CODE, SKError};
 
 use super::SKMissingValuePolicy;
 

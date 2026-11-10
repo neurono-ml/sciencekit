@@ -5,8 +5,8 @@ use std::marker::PhantomData;
 
 use sciencekit_common::{SKError, SKFloat, SKSourceProvider, SKSupervisedSourceProvider};
 
-use super::lazy_source::{SKSupervisedTabularLazySource, SKTabularLazySource};
 use super::SKTabularSource;
+use super::lazy_source::{SKSupervisedTabularLazySource, SKTabularLazySource};
 use crate::batch::SKFeatureLayout;
 use crate::missing::SKMissingValuePolicy;
 use crate::selection::SKColumnSelection;

@@ -36,9 +36,8 @@ impl SKTabularSchema {
             if !seen_names.insert(column.name()) {
                 return Err(SKError::DuplicateColumn {
                     column: column.name().to_string(),
-                    suggestion:
-                        "rename one of the duplicate columns or select columns by position"
-                            .to_string(),
+                    suggestion: "rename one of the duplicate columns or select columns by position"
+                        .to_string(),
                 });
             }
         }

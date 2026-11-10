@@ -49,7 +49,11 @@ fn data_batch_owns_values_and_metadata() {
     let data_batch = {
         let batch = batch();
         batch
-            .to_data_batch::<f64>(&selection, SKMissingValuePolicy::Reject, SKFeatureLayout::Dense)
+            .to_data_batch::<f64>(
+                &selection,
+                SKMissingValuePolicy::Reject,
+                SKFeatureLayout::Dense,
+            )
             .unwrap()
     };
     assert_eq!(data_batch.position(), 4);

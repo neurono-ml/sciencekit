@@ -87,16 +87,16 @@ fn nominal_target_is_canonicalized_deterministically() {
         .unwrap();
 
     assert_eq!(first, second, "the same input must produce the same table");
-    assert_eq!(
-        first.label_table().unwrap(),
-        second.label_table().unwrap()
-    );
+    assert_eq!(first.label_table().unwrap(), second.label_table().unwrap());
     assert_eq!(
         first.canonical_indices().unwrap().to_vec(),
         vec![0, 1, 0, 2]
     );
     let table = first.label_table().unwrap();
-    assert_eq!(table.labels().collect::<Vec<_>>(), vec!["cat", "dog", "bird"]);
+    assert_eq!(
+        table.labels().collect::<Vec<_>>(),
+        vec!["cat", "dog", "bird"]
+    );
     first.with_view(|view| match view {
         SKTargetView::Nominal(text) => assert_eq!(text, &["cat", "dog", "cat", "bird"]),
         other => panic!("expected a nominal view, got {other:?}"),

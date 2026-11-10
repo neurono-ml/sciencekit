@@ -56,8 +56,7 @@ fn unsupported_type_is_named_with_a_suggestion() {
 #[test]
 fn type_rejection_precedes_element_processing() {
     let batch = mixed_batch();
-    let error =
-        sk_validate_numeric_feature_columns(&batch, &[1, 2]).unwrap_err();
+    let error = sk_validate_numeric_feature_columns(&batch, &[1, 2]).unwrap_err();
     assert!(matches!(error, SKError::UnsupportedColumnType { .. }));
 }
 

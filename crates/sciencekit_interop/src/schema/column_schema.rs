@@ -15,11 +15,7 @@ pub struct SKColumnSchema {
 
 impl SKColumnSchema {
     /// Describe a column with the given name, logical type and role.
-    pub fn new(
-        name: impl Into<String>,
-        logical_type: SKLogicalType,
-        role: SKColumnRole,
-    ) -> Self {
+    pub fn new(name: impl Into<String>, logical_type: SKLogicalType, role: SKColumnRole) -> Self {
         SKColumnSchema {
             name: name.into(),
             logical_type,

@@ -12,8 +12,8 @@ pub use async_stream::SKAsyncTabularStream;
 #[cfg(test)]
 mod bridge_tests;
 #[cfg(test)]
-mod error_tests;
-#[cfg(test)]
 mod cancellation_tests;
+#[cfg(test)]
+mod error_tests;
 #[cfg(test)]
 mod test_streams;

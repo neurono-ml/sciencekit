@@ -27,7 +27,7 @@ fn supervised_selection() -> SKColumnSelection {
         .unwrap()
 }
 
-fn feature_provider_is_reopenable<P: SKSourceProvider<f64>>(provider: &P) -> bool {
+fn feature_provider_is_reopenable<P: SKSourceProvider<f64>>(_provider: &P) -> bool {
     P::IS_REOPENABLE
 }
 

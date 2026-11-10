@@ -15,9 +15,7 @@ use crate::missing::SKMissingValuePolicy;
 /// carries nulls must not silently truncate values above that bound.
 pub fn sk_integer_is_representable<F: SKFloat>(value: i64) -> bool {
     match cast::<i64, F>(value) {
-        Some(converted) => {
-            converted.is_finite() && cast::<F, i64>(converted) == Some(value)
-        }
+        Some(converted) => converted.is_finite() && cast::<F, i64>(converted) == Some(value),
         None => false,
     }
 }

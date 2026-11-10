@@ -36,10 +36,12 @@ impl SKColumnReference {
     pub fn resolve(&self, schema: &SKTabularSchema) -> Result<usize, SKError> {
         match self {
             SKColumnReference::Name(name) => {
-                schema.column_index(name).ok_or_else(|| SKError::UnknownColumn {
-                    column: name.clone(),
-                    suggestion: "check the schema for the exact column name".to_string(),
-                })
+                schema
+                    .column_index(name)
+                    .ok_or_else(|| SKError::UnknownColumn {
+                        column: name.clone(),
+                        suggestion: "check the schema for the exact column name".to_string(),
+                    })
             }
             SKColumnReference::Position(position) => {
                 if *position < schema.len() {
