@@ -1,0 +1,20 @@
+[package]
+name = "sciencekit_model_selection"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+rust-version = "1.85"
+description = "Reproducible data partitioning for sciencekit: train/test splits, K-fold, stratified and grouped cross-validation."
+repository = "https://github.com/neurono-ml/sciencekit"
+
+[dependencies]
+sciencekit_common = { path = "../sciencekit_common" }
+sciencekit_math = { path = "../sciencekit_math" }
+ndarray = { workspace = true }
+rayon = { workspace = true }
+sprs = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+sciencekit_metrics = { path = "../sciencekit_metrics" }
+tracing-subscriber = { workspace = true }
