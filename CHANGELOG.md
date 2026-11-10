@@ -75,7 +75,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   zero-copy path across Lua values is promised. Failures become Lua runtime
   errors headed by the stable status name and code
   (`sciencekit shape (2): ...`). Includes a LuaRocks 3.0 rockspec and a Lua
-  suite covering every ABI family, large fixtures and concurrent use.
+  suite covering every ABI family, errors and the lifecycle, plus large-fixture
+  and concurrent-use Rust tests.
   `sciencekit_ffi` now also builds as an `rlib` for in-process bindings.
 
 ## [0.5.0] — 2026-11-10
