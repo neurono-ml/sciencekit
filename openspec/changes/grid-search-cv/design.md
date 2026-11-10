@@ -76,11 +76,12 @@ and scorer/estimator family mismatches. Errors: `InvalidHyperparameter`, `ShapeM
 crates/sciencekit_model_selection/src/grid_search/
   mod.rs, configuration.rs, results.rs, error_score.rs, observation.rs, prediction.rs
   builder/{mod.rs, classifier_builder.rs, regressor_builder.rs, state.rs, *_tests.rs}
-  scoring/{mod.rs, classifier.rs, regressor.rs, fold_scorer.rs, *_tests.rs}
+  scoring/{mod.rs, classifier.rs, regressor.rs, *_tests.rs}
   evaluation/{mod.rs, candidate_evaluation.rs, fold_scorer.rs, *_tests.rs}
-  classifier/{mod.rs, fit.rs, model.rs, select.rs, *_tests.rs}
-  regressor/{mod.rs, fit.rs, model.rs, select.rs, *_tests.rs}
+  classifier/{mod.rs, estimator.rs, fit.rs, model.rs, predict.rs, *_tests.rs}
+  regressor/{mod.rs, estimator.rs, fit.rs, model.rs, predict.rs, *_tests.rs}
   mock_estimators/
+  concurrency_tests.rs, representation_tests.rs
 ```
 
 `mod.rs` files are pure dispatchers; companion `*_tests.rs` modules are declared at the
