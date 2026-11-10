@@ -2,7 +2,7 @@
 
 use std::marker::PhantomData;
 
-use sciencekit_common::{SKBackendKind, SKError, SKExecutionMode, SKSupervisedFit, SKFloat};
+use sciencekit_common::{SKBackendKind, SKError, SKExecutionMode, SKFloat, SKSupervisedFit};
 
 use super::{SKPipelineClassifierBuilder, SKPipelineRegressorBuilder};
 use crate::{SKPipelineTransformer, stages::SKConfiguredStages};

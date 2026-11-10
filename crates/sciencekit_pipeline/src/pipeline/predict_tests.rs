@@ -1,9 +1,7 @@
 //! Tests for prediction delegation (spec `typed-pipeline`).
 
 use ndarray::{Array1, Array2};
-use sciencekit_common::{
-    SKBuilder, SKClassifierPredictor, SKFeatureBlock, SKRegressorPredictor,
-};
+use sciencekit_common::{SKBuilder, SKClassifierPredictor, SKFeatureBlock, SKRegressorPredictor};
 use sciencekit_impute::simple_imputer::SKSimpleImputer;
 use sciencekit_linear_model::linear_regression::core_implementation::SKLinearRegression;
 use sciencekit_linear_model::logistic_regression::SKLogisticRegression;
@@ -27,11 +25,14 @@ fn new_block() -> SKFeatureBlock<f64> {
     SKFeatureBlock::from(new_features())
 }
 
-fn classifier_pipeline() -> crate::SKPipelineClassifier<
+type FittedChain = (((), SKStandardScaler), SKSimpleImputer<f64>);
+type FittedPipeline = crate::SKPipelineClassifier<
     f64,
-    (((), SKStandardScaler), SKSimpleImputer<f64>),
+    FittedChain,
     sciencekit_linear_model::logistic_regression::model::SKLogisticRegressionModel<f64>,
-> {
+>;
+
+fn classifier_pipeline() -> FittedPipeline {
     let labels = Array1::from_vec(vec![0_i64, 0, 0, 1, 1, 1]);
     SKPipeline::start::<f64>()
         .then(SKStandardScaler::build().build().unwrap())
@@ -50,10 +51,7 @@ fn classifier_labels_equal_transform_then_final_model() {
         .predict_labels(
             &fitted
                 .stages()
-                .transform_stages(
-                    fitted.fitted_stages(),
-                    &new_block(),
-                )
+                .transform_stages(fitted.fitted_stages(), &new_block())
                 .unwrap(),
         )
         .unwrap();
@@ -69,10 +67,7 @@ fn classifier_probabilities_equal_transform_then_final_model() {
         .predict_probabilities(
             &fitted
                 .stages()
-                .transform_stages(
-                    fitted.fitted_stages(),
-                    &new_block(),
-                )
+                .transform_stages(fitted.fitted_stages(), &new_block())
                 .unwrap(),
         )
         .unwrap();
@@ -94,10 +89,7 @@ fn regressor_responses_equal_transform_then_final_model() {
         .predict(
             &fitted
                 .stages()
-                .transform_stages(
-                    fitted.fitted_stages(),
-                    &new_block(),
-                )
+                .transform_stages(fitted.fitted_stages(), &new_block())
                 .unwrap(),
         )
         .unwrap();

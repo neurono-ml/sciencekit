@@ -8,16 +8,17 @@ use sciencekit_linear_model::logistic_regression::SKLogisticRegression;
 use sciencekit_metrics::classification::sk_accuracy_score;
 use sciencekit_preprocessing::standard_scaler::core_implementation::SKStandardScaler;
 
-use super::fixtures::{
-    tiny_features, tiny_labels, tiny_regression_targets, tiny_sparse_features,
-};
+use super::fixtures::{tiny_features, tiny_labels, tiny_regression_targets, tiny_sparse_features};
 use crate::SKPipeline;
 
-fn classifier_pipeline() -> crate::SKPipelineClassifier<
+type FittedChain = (((), SKStandardScaler), SKSimpleImputer<f64>);
+type FittedPipeline = crate::SKPipelineClassifier<
     f64,
-    (((), SKStandardScaler), SKSimpleImputer<f64>),
+    FittedChain,
     sciencekit_linear_model::logistic_regression::model::SKLogisticRegressionModel<f64>,
-> {
+>;
+
+fn classifier_pipeline() -> FittedPipeline {
     SKPipeline::start::<f64>()
         .then(SKStandardScaler::build().build().unwrap())
         .then(SKSimpleImputer::build().build().unwrap())

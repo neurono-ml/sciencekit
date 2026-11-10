@@ -102,8 +102,5 @@ fn the_missing_indicator_composes_with_the_imputer() {
         .fit(&missing_features(), labels.view())
         .unwrap();
     assert_eq!(fitted.number_of_stages(), 2);
-    assert_eq!(
-        fitted.predict_labels(&missing_features()).unwrap().len(),
-        8
-    );
+    assert_eq!(fitted.predict_labels(&missing_features()).unwrap().len(), 8);
 }

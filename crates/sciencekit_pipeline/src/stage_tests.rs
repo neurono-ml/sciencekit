@@ -10,9 +10,8 @@ use crate::SKPipelineTransformer;
 /// `[2, 3]` and unit scale, so `[[1, 2]]` maps to `[[-1, -1]]`.
 fn fitted_scaler_stage() -> (SKStandardScaler, SKFeatureBlock<f64>) {
     let scaler = SKStandardScaler::build().build().unwrap();
-    let block = SKFeatureBlock::from(
-        Array2::from_shape_vec((2, 2), vec![1.0_f64, 2.0, 3.0, 4.0]).unwrap(),
-    );
+    let block =
+        SKFeatureBlock::from(Array2::from_shape_vec((2, 2), vec![1.0_f64, 2.0, 3.0, 4.0]).unwrap());
     (scaler, block)
 }
 
@@ -39,9 +38,7 @@ fn scaler_stage_fits_and_transforms_a_dense_block() {
 #[test]
 fn scaler_stage_is_generic_over_the_scalar() {
     let scaler = SKStandardScaler::build().build().unwrap();
-    let block = SKFeatureBlock::from(
-        Array2::from_shape_vec((2, 1), vec![1.0_f32, 3.0]).unwrap(),
-    );
+    let block = SKFeatureBlock::from(Array2::from_shape_vec((2, 1), vec![1.0_f32, 3.0]).unwrap());
     let fitted = scaler.fit_stage(&block).unwrap();
     let transformed = scaler.transform_stage(&fitted, &block).unwrap();
     assert_eq!(transformed.number_of_columns(), 1);
@@ -52,9 +49,8 @@ fn scaler_stage_is_generic_over_the_scalar() {
 fn a_shape_mismatch_at_transform_is_surfaced() {
     let (scaler, training) = fitted_scaler_stage();
     let fitted = scaler.fit_stage(&training).unwrap();
-    let wrong = SKFeatureBlock::from(
-        Array2::from_shape_vec((1, 3), vec![1.0_f64, 2.0, 3.0]).unwrap(),
-    );
+    let wrong =
+        SKFeatureBlock::from(Array2::from_shape_vec((1, 3), vec![1.0_f64, 2.0, 3.0]).unwrap());
     let error = scaler.transform_stage(&fitted, &wrong).unwrap_err();
     assert!(matches!(error, SKError::ShapeMismatch { .. }));
 }
@@ -63,15 +59,8 @@ fn a_shape_mismatch_at_transform_is_surfaced() {
 fn a_sparse_input_rejection_keeps_its_structured_error() {
     let (scaler, training) = fitted_scaler_stage();
     let fitted = scaler.fit_stage(&training).unwrap();
-    let sparse = SKFeatureBlock::Sparse(sprs::CsMat::new(
-        (1, 2),
-        vec![0, 1],
-        vec![0],
-        vec![1.0_f64],
-    ));
+    let sparse =
+        SKFeatureBlock::Sparse(sprs::CsMat::new((1, 2), vec![0, 1], vec![0], vec![1.0_f64]));
     let error = scaler.transform_stage(&fitted, &sparse).unwrap_err();
-    assert!(matches!(
-        error,
-        SKError::UnsupportedRepresentation { .. }
-    ));
+    assert!(matches!(error, SKError::UnsupportedRepresentation { .. }));
 }

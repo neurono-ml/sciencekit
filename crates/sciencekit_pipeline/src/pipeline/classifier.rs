@@ -3,11 +3,11 @@
 
 use std::marker::PhantomData;
 
+use crate::stages::SKConfiguredStages;
 use sciencekit_common::{
     SKBackendKind, SKClassifierPredictor, SKDataView, SKError, SKExecutionMode, SKFeatureBlock,
     SKFloat, SKOperationKind, SKSupervisedFit, SKTargetView, sk_run_operation,
 };
-use crate::stages::SKConfiguredStages;
 
 use super::fit::sk_fit_final;
 use super::model::SKPipelineClassifier;
@@ -49,12 +49,8 @@ where
         let targets = targets.try_into()?;
         let backend = self.backend;
         let execution_intent = self.execution_intent;
-        let attributes = sk_pipeline_attributes(
-            SKOperationKind::Fit,
-            &view,
-            execution_intent,
-            backend,
-        );
+        let attributes =
+            sk_pipeline_attributes(SKOperationKind::Fit, &view, execution_intent, backend);
         let stages = self.stages;
         let estimator = self.estimator;
         sk_run_operation(attributes, move || {

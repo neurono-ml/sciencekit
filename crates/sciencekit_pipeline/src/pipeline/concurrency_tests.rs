@@ -2,9 +2,7 @@
 //! `typed-pipeline`).
 
 use ndarray::{Array1, Array2};
-use sciencekit_common::{
-    SKBuilder, SKClassifierPredictor, SKRegressorPredictor,
-};
+use sciencekit_common::{SKBuilder, SKClassifierPredictor, SKRegressorPredictor};
 use sciencekit_impute::simple_imputer::SKSimpleImputer;
 use sciencekit_linear_model::linear_regression::core_implementation::SKLinearRegression;
 use sciencekit_linear_model::logistic_regression::SKLogisticRegression;
@@ -71,11 +69,13 @@ fn the_fitted_pipeline_is_send_and_sync() {
         .unwrap()
         .fit(&features(), targets.view())
         .unwrap();
-    assert_send_sync::<crate::SKPipelineRegressor<
-        f64,
-        ((), SKStandardScaler),
-        sciencekit_linear_model::linear_regression::model::SKLinearRegressionModel<f64>,
-    >>();
+    assert_send_sync::<
+        crate::SKPipelineRegressor<
+            f64,
+            ((), SKStandardScaler),
+            sciencekit_linear_model::linear_regression::model::SKLinearRegressionModel<f64>,
+        >,
+    >();
     assert_eq!(regressor.predict(&new_features()).unwrap().len(), 4);
 }
 

@@ -32,7 +32,9 @@ where
         SKTargetView::Nominal(text) => {
             let owned: Vec<String> = text.iter().map(|label| label.to_string()).collect();
             let borrowed: Vec<&str> = owned.iter().map(String::as_str).collect();
-            estimator.fit(block, borrowed.as_slice()).map_err(Into::into)
+            estimator
+                .fit(block, borrowed.as_slice())
+                .map_err(Into::into)
         }
         _ => Err(SKError::UnsupportedRepresentation {
             representation: "unknown",

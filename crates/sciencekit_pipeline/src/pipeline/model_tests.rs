@@ -8,14 +8,14 @@ use sciencekit_preprocessing::standard_scaler::core_implementation::SKStandardSc
 
 use crate::SKPipeline;
 
-fn fitted_pipeline() -> crate::SKPipelineClassifier<
+type FittedChain = (((), SKStandardScaler), SKSimpleImputer<f64>);
+type FittedPipeline = crate::SKPipelineClassifier<
     f64,
-    (
-        ((), SKStandardScaler),
-        SKSimpleImputer<f64>,
-    ),
+    FittedChain,
     sciencekit_linear_model::logistic_regression::model::SKLogisticRegressionModel<f64>,
-> {
+>;
+
+fn fitted_pipeline() -> FittedPipeline {
     let features = Array2::from_shape_vec(
         (6, 2),
         vec![0.0, 1.0, 1.0, 2.0, 2.0, 3.0, 3.0, 4.0, 4.0, 5.0, 5.0, 6.0],

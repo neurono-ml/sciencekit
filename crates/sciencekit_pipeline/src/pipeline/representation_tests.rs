@@ -5,8 +5,8 @@
 
 use ndarray::{Array1, Array2};
 use sciencekit_common::{
-    SKBuilder, SKClassifierPredictor, SKDataView, SKError, SKFeatureBlock,
-    SKFeatureTransformer, SKUnsupervisedFit,
+    SKBuilder, SKClassifierPredictor, SKDataView, SKError, SKFeatureBlock, SKFeatureTransformer,
+    SKUnsupervisedFit,
 };
 use sciencekit_impute::simple_imputer::SKSimpleImputer;
 use sciencekit_linear_model::logistic_regression::SKLogisticRegression;
@@ -49,11 +49,14 @@ fn classifier() -> SKLogisticRegression<f64> {
     SKLogisticRegression::build().build().unwrap()
 }
 
-fn imputer_chain() -> crate::SKPipelineClassifier<
+type FittedChain = (((), SKSimpleImputer<f64>), SKSimpleImputer<f64>);
+type FittedPipeline = crate::SKPipelineClassifier<
     f64,
-    (((), SKSimpleImputer<f64>), SKSimpleImputer<f64>),
+    FittedChain,
     sciencekit_linear_model::logistic_regression::model::SKLogisticRegressionModel<f64>,
-> {
+>;
+
+fn imputer_chain() -> FittedPipeline {
     SKPipeline::start::<f64>()
         .then(imputer())
         .then(imputer())
@@ -100,7 +103,9 @@ fn sparse_and_dense_inputs_predict_the_same_labels() {
         .unwrap()
         .fit(&dense_features(), labels().view())
         .unwrap();
-    let sparse_labels = sparse_pipeline.predict_labels(sparse_features().view()).unwrap();
+    let sparse_labels = sparse_pipeline
+        .predict_labels(sparse_features().view())
+        .unwrap();
     let dense_labels = dense_pipeline.predict_labels(&dense_features()).unwrap();
     assert_eq!(sparse_labels, dense_labels);
 

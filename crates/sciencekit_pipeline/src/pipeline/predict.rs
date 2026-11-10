@@ -1,11 +1,11 @@
 //! Prediction: transform the incoming block through the fitted stages and
 //! delegate to the final model.
 
+use ndarray::{Array1, Array2};
 use sciencekit_common::{
     SKClassifierPredictor, SKDataView, SKError, SKExecutionMode, SKFeatureBlock, SKFloat,
     SKOperationAttributes, SKOperationKind, SKRegressorPredictor, sk_run_operation,
 };
-use ndarray::{Array1, Array2};
 
 use crate::stages::SKConfiguredStages;
 
@@ -51,8 +51,7 @@ where
     stages.transform_stages(fitted_stages, &block)
 }
 
-impl<F, Stages, FinalModel> SKClassifierPredictor<F>
-    for SKPipelineClassifier<F, Stages, FinalModel>
+impl<F, Stages, FinalModel> SKClassifierPredictor<F> for SKPipelineClassifier<F, Stages, FinalModel>
 where
     F: SKFloat,
     Stages: SKConfiguredStages<F>,
