@@ -105,3 +105,54 @@ fn knn_transform_does_not_impute_observed_rows() {
     let output = dense(model.transform(&probe).unwrap());
     assert_eq!(output, probe);
 }
+
+#[test]
+fn knn_transform_parallel_equals_sequential() {
+    let training = Array2::from_shape_fn((1_500, 4), |(row, column)| {
+        ((row * 7 + column * 13) % 31) as f64 / 4.0
+    });
+    let model = SKKNNImputer::<f64>::build()
+        .nearest_neighbors_count(3)
+        .build()
+        .unwrap()
+        .fit(training.view())
+        .unwrap();
+    let probe = Array2::from_shape_fn((1_200, 4), |(row, column)| {
+        if (row * 5 + column * 3) % 17 == 0 {
+            f64::NAN
+        } else {
+            ((row * 11 + column * 2) % 29) as f64 / 5.0
+        }
+    });
+
+    assert!(
+        model.distance_block_rows() * training.nrows() * size_of::<f64>()
+            <= crate::knn::distance_block::SK_DISTANCE_BLOCK_BYTES,
+        "the block must respect the byte budget"
+    );
+    assert!(
+        model.distance_block_rows() < probe.nrows(),
+        "the plan must split a large receiver set into several blocks"
+    );
+
+    let parallel = model
+        .transform_dense_with_parallelism(&probe.view(), true)
+        .unwrap();
+    let sequential = model
+        .transform_dense_with_parallelism(&probe.view(), false)
+        .unwrap();
+    assert_eq!(parallel, sequential);
+
+    for row in 0..probe.nrows() {
+        let single = probe.slice(ndarray::s![row..row + 1, ..]);
+        let expected = model
+            .transform_dense_with_parallelism(&single, false)
+            .unwrap();
+        for (found, wanted) in parallel.row(row).iter().zip(expected.row(0)) {
+            assert!(
+                (found - wanted).abs() < 1e-12 || (found.is_nan() && wanted.is_nan()),
+                "row {row} differs from the row-by-row result"
+            );
+        }
+    }
+}
