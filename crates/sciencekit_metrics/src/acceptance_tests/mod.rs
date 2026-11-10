@@ -8,4 +8,5 @@ mod concurrency_tests;
 mod distance_tests;
 mod f32_precision_tests;
 mod large_data_tests;
+mod ranking_acceptance_tests;
 mod small_data_tests;

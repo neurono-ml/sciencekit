@@ -12,6 +12,7 @@
 
 pub mod accumulators;
 pub mod classification;
+pub mod ranking;
 pub mod regression;
 pub mod scorers;
 

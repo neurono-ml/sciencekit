@@ -144,6 +144,17 @@ fn non_finite_value_carries_its_position() {
     assert!(format!("{err}").contains('3'));
 }
 
+/// A probability outside the unit interval carries its position.
+#[test]
+fn probability_out_of_range_carries_the_position() {
+    let err = SKError::ProbabilityOutOfRange { position: 4 };
+    match &err {
+        SKError::ProbabilityOutOfRange { position } => assert_eq!(*position, 4),
+        other => panic!("expected probability-out-of-range variant, got {other:?}"),
+    }
+    assert!(format!("{err}").contains('4'));
+}
+
 /// A label outside the resolved space carries the offending value.
 #[test]
 fn unknown_label_carries_the_label() {

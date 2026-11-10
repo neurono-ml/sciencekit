@@ -115,6 +115,13 @@ pub enum SKError {
         position: usize,
     },
 
+    /// A probability outside the closed unit interval.
+    #[error("probability at position {position} is outside [0, 1]")]
+    ProbabilityOutOfRange {
+        /// The zero-based position of the offending probability.
+        position: usize,
+    },
+
     /// A label observed outside an explicitly supplied label space.
     #[error("label {label} is outside the resolved label space")]
     UnknownLabel {
