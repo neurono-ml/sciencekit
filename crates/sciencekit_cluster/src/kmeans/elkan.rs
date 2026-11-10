@@ -152,7 +152,7 @@ pub(crate) fn sk_elkan_assign<F: SKFloat>(
             if best_upper <= lower[[row, center]] {
                 continue;
             }
-            if best_upper <= half * center_distances[[assigned_center, center]] {
+            if best_upper <= half * center_distances[[best_center, center]] {
                 continue;
             }
             let distance = sk_distance_rows(features.row(row), centers.row(center));

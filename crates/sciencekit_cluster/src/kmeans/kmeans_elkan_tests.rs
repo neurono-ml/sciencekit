@@ -134,7 +134,7 @@ impl FixtureGenerator {
 fn kmeans_elkan_matches_lloyd_on_overlapping_data() {
     use sciencekit_common::SKBuilder;
 
-    for seed in [0_u64, 1, 7, 42, 1234] {
+    for seed in [0_u64, 1, 2, 3, 5, 7, 11, 42, 99, 256, 777, 1234] {
         let mut generator = FixtureGenerator(seed.wrapping_add(17));
         let mut values = Vec::with_capacity(120 * 3);
         for _ in 0..120 * 3 {
@@ -168,4 +168,39 @@ fn kmeans_elkan_matches_lloyd_on_overlapping_data() {
             "seed {seed}: inertia gap {relative_gap}"
         );
     }
+}
+
+/// A moving best must be used in the half-centre-distance test: with the stale
+/// assigned centre the scan would skip a centre that is genuinely closer.
+#[test]
+fn kmeans_elkan_uses_the_moving_best_in_the_half_distance_test() {
+    // 1-D: centres at 0, 1 and 10; the row sits at 6. Centre 2 is closer (4)
+    // than centre 1 (5), but the separation from the *stale* assigned centre 0
+    // is 5, exactly half of the current best, so a stale test would skip it.
+    let features = Array2::from_shape_vec((1, 1), vec![6.0_f64]).unwrap();
+    let centers = Array2::from_shape_vec((3, 1), vec![0.0_f64, 1.0, 10.0]).unwrap();
+    let mut labels = Array1::from_vec(vec![0_usize]);
+    let mut lower = Array2::from_shape_vec((1, 3), vec![6.0_f64, 1.0, 0.0]).unwrap();
+    let mut upper = Array1::from_vec(vec![6.0_f64]);
+    let center_distances = Array2::from_shape_vec(
+        (3, 3),
+        vec![
+            0.0, 1.0, 10.0, //
+            1.0, 2.0, 9.0, //
+            10.0, 9.0, 18.0,
+        ],
+    )
+    .unwrap();
+    let mut evaluations = 0;
+    let assigned = sk_elkan_assign(
+        &features.view(),
+        &centers.view(),
+        &mut labels,
+        &mut lower,
+        &mut upper,
+        &center_distances,
+        &mut evaluations,
+    );
+    assert_eq!(labels[0], 2, "the closest centre must win");
+    assert!((assigned[0] - 16.0).abs() < 1e-12);
 }
