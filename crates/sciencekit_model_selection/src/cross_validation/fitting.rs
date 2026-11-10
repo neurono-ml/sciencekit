@@ -17,9 +17,7 @@ where
     E: SKSupervisedFit<F>,
     SKError: From<E::Error>,
 {
-    targets.with_view(|target_view| {
-        sk_fit_on_views(estimator, features.view(), target_view)
-    })
+    targets.with_view(|target_view| sk_fit_on_views(estimator, features.view(), target_view))
 }
 
 fn sk_fit_on_views<F, E>(

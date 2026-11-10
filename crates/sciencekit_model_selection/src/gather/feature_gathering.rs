@@ -1,6 +1,6 @@
 //! Dense and sparse feature row gathering.
 
-use ndarray::{Array2, Axis, ArrayView2};
+use ndarray::{Array2, ArrayView2, Axis};
 use sciencekit_common::{SKDataView, SKError, SKFeatureBlock, SKFloat};
 use sprs::{CsMat, CsMatView};
 
@@ -10,14 +10,10 @@ pub(crate) fn sk_gather_feature_rows<F: SKFloat>(
     row_indices: &[usize],
 ) -> Result<SKFeatureBlock<F>, SKError> {
     match features {
-        SKDataView::Dense(view) => Ok(SKFeatureBlock::Dense(sk_gather_dense(
-            view,
-            row_indices,
-        )?)),
-        SKDataView::Sparse(view) => Ok(SKFeatureBlock::Sparse(sk_gather_sparse(
-            view,
-            row_indices,
-        )?)),
+        SKDataView::Dense(view) => Ok(SKFeatureBlock::Dense(sk_gather_dense(view, row_indices)?)),
+        SKDataView::Sparse(view) => {
+            Ok(SKFeatureBlock::Sparse(sk_gather_sparse(view, row_indices)?))
+        }
         _ => Err(SKError::UnsupportedRepresentation {
             representation: "unknown",
             suggestion: "convert the matrix to dense or CSR",
@@ -33,7 +29,10 @@ fn sk_gather_dense<F: SKFloat>(
         if row >= view.nrows() {
             return Err(SKError::InvalidHyperparameter {
                 name: "row_indices",
-                reason: format!("row index {row} is outside the {} rows of the input", view.nrows()),
+                reason: format!(
+                    "row index {row} is outside the {} rows of the input",
+                    view.nrows()
+                ),
             });
         }
     }
@@ -53,7 +52,10 @@ fn sk_gather_sparse<F: SKFloat>(
         if row >= view.rows() {
             return Err(SKError::InvalidHyperparameter {
                 name: "row_indices",
-                reason: format!("row index {row} is outside the {} rows of the input", view.rows()),
+                reason: format!(
+                    "row index {row} is outside the {} rows of the input",
+                    view.rows()
+                ),
             });
         }
         let outer = view

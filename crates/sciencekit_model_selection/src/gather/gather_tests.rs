@@ -20,9 +20,8 @@ fn sk_sparse_fixture() -> CsMat<f64> {
 fn gather_dense_features_returns_selected_rows_in_index_order() {
     let features = array![[0.0_f64, 1.0], [2.0, 3.0], [4.0, 5.0], [6.0, 7.0]];
 
-    let (gathered, targets) =
-        sk_gather_rows(SKDataView::Dense(features.view()), None, &[3, 0, 2])
-            .expect("the dense gather succeeds");
+    let (gathered, targets) = sk_gather_rows(SKDataView::Dense(features.view()), None, &[3, 0, 2])
+        .expect("the dense gather succeeds");
 
     let SKFeatureBlock::Dense(matrix) = gathered else {
         panic!("a dense input must yield a dense block");

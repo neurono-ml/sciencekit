@@ -2,8 +2,8 @@
 
 use ndarray::ArrayView1;
 use sciencekit_common::{
-    SKDataView, SKError, SKExecutionMode, SKFloat, SKRandomGenerator, SKTargetView,
-    SK_RANDOM_DOMAIN_FOLD, sk_derive_seed,
+    SK_RANDOM_DOMAIN_FOLD, SKDataView, SKError, SKExecutionMode, SKFloat, SKRandomGenerator,
+    SKTargetView, sk_derive_seed,
 };
 
 use super::builder::SKStratifiedKFoldBuilder;

@@ -174,9 +174,7 @@ fn stratified_rejects_missing_targets() {
 #[test]
 fn stratified_supports_nominal_targets() {
     let data = Array2::<f64>::zeros((10, 2));
-    let labels = [
-        "a", "a", "a", "a", "a", "b", "b", "b", "b", "b",
-    ];
+    let labels = ["a", "a", "a", "a", "a", "b", "b", "b", "b", "b"];
     let splitter = SKStratifiedKFold::build()
         .number_of_splits(2)
         .build()

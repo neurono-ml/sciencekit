@@ -2,10 +2,10 @@
 //! shared contracts.
 
 use ndarray::{Array1, Array2};
-use sciencekit_common::{
-    SKBuilder, SKDataView, SKFloat, SKSupervisedFit, SKTargetView,
+use sciencekit_common::{SKBuilder, SKDataView, SKFloat, SKSupervisedFit, SKTargetView};
+use sciencekit_metrics::scorers::{
+    SKAccuracyScorer, SKMeanAbsoluteErrorScorer, SKMeanSquaredErrorScorer,
 };
-use sciencekit_metrics::scorers::{SKAccuracyScorer, SKMeanAbsoluteErrorScorer, SKMeanSquaredErrorScorer};
 
 use super::fixtures::{cyclic_labels, dense_design};
 use crate::SKSplitter;
@@ -72,8 +72,16 @@ fn acceptance_metric_regression_cross_validation_produces_finite_scores() {
 
     assert_eq!(mean_squared.len(), 5);
     assert_eq!(mean_absolute.len(), 5);
-    assert!(mean_squared.iter().all(|score| score.is_finite() && *score >= 0.0));
-    assert!(mean_absolute.iter().all(|score| score.is_finite() && *score >= 0.0));
+    assert!(
+        mean_squared
+            .iter()
+            .all(|score| score.is_finite() && *score >= 0.0)
+    );
+    assert!(
+        mean_absolute
+            .iter()
+            .all(|score| score.is_finite() && *score >= 0.0)
+    );
 }
 
 #[test]

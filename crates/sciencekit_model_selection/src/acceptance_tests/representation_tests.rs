@@ -128,10 +128,7 @@ fn acceptance_representation_targets_keep_their_representation() {
     let dense = dense_design(30, 3);
     let sparse = sparse_design(&dense);
     let labels = Array1::from_shape_fn(30, |row| (row % 2) as i64);
-    let splitter = SKTrainTestSplitter::build()
-        .test_count(6)
-        .build()
-        .unwrap();
+    let splitter = SKTrainTestSplitter::build().test_count(6).build().unwrap();
 
     let split = sk_train_test_split(
         &splitter,

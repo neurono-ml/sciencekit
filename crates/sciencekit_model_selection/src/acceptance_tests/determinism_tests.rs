@@ -90,10 +90,18 @@ fn acceptance_determinism_stratified_group_and_train_test_repeat_identically() {
         .build()
         .unwrap();
     let first = group
-        .split(SKDataView::Dense(features.view()), None, Some(groups.view()))
+        .split(
+            SKDataView::Dense(features.view()),
+            None,
+            Some(groups.view()),
+        )
         .unwrap();
     let second = group
-        .split(SKDataView::Dense(features.view()), None, Some(groups.view()))
+        .split(
+            SKDataView::Dense(features.view()),
+            None,
+            Some(groups.view()),
+        )
         .unwrap();
     assert_eq!(first, second);
 

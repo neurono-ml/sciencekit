@@ -27,9 +27,7 @@ where
     E: SKSupervisedFit<F> + Sync,
     E::Model: SKRegressorPredictor<F>,
     S: SKSupervisedScorer<F, E::Model> + Sync,
-    SKError: From<E::Error>
-        + From<<E::Model as SKRegressorPredictor<F>>::Error>
-        + From<S::Error>,
+    SKError: From<E::Error> + From<<E::Model as SKRegressorPredictor<F>>::Error> + From<S::Error>,
 {
     let splits = splitter.split(features, Some(targets), None)?;
     if splits.is_empty() {

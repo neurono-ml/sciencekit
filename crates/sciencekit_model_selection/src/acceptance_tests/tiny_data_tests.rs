@@ -21,7 +21,11 @@ fn acceptance_tiny_kfold_partitions_six_rows_into_three_folds() {
         .unwrap();
 
     assert_eq!(splits.len(), 3);
-    let tested: HashSet<usize> = splits.iter().flat_map(|split| split.test()).copied().collect();
+    let tested: HashSet<usize> = splits
+        .iter()
+        .flat_map(|split| split.test())
+        .copied()
+        .collect();
     assert_eq!(tested, (0..6).collect());
 }
 
@@ -57,7 +61,11 @@ fn acceptance_tiny_group_kfold_keeps_each_group_together() {
     let splitter = SKGroupKFold::build().build().unwrap();
 
     let splits = splitter
-        .split(SKDataView::Dense(features.view()), None, Some(groups.view()))
+        .split(
+            SKDataView::Dense(features.view()),
+            None,
+            Some(groups.view()),
+        )
         .unwrap();
 
     assert_eq!(splits.len(), 3);

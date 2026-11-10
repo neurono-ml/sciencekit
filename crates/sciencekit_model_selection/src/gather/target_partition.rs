@@ -34,9 +34,7 @@ impl<F: SKFloat> SKTargetPartition<F> {
     /// view never outlives the call.
     pub fn with_view<R>(&self, visit: impl FnOnce(SKTargetView<'_, F>) -> R) -> R {
         match self {
-            SKTargetPartition::Continuous(values) => {
-                visit(SKTargetView::Continuous(values.view()))
-            }
+            SKTargetPartition::Continuous(values) => visit(SKTargetView::Continuous(values.view())),
             SKTargetPartition::Integer(values) => visit(SKTargetView::Integer(values.view())),
             SKTargetPartition::Nominal(values) => {
                 let references: Vec<&str> = values.iter().map(String::as_str).collect();

@@ -29,7 +29,10 @@ fn group_never_splits_a_group_across_train_and_test() {
             assert_eq!(groups[row], test_group);
         }
         for &row in split.train() {
-            assert_ne!(groups[row], test_group, "group {test_group} leaked to train");
+            assert_ne!(
+                groups[row], test_group,
+                "group {test_group} leaked to train"
+            );
         }
     }
 }

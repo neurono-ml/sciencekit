@@ -12,9 +12,8 @@ use super::{sk_cross_val_score_classifier, sk_cross_val_score_regressor};
 use crate::split::kfold::SKKFold;
 
 fn regression_data(number_of_rows: usize) -> (Array2<f64>, Array1<f64>) {
-    let features = Array2::from_shape_fn((number_of_rows, 2), |(row, column)| {
-        (row + column) as f64
-    });
+    let features =
+        Array2::from_shape_fn((number_of_rows, 2), |(row, column)| (row + column) as f64);
     let targets = Array1::from_shape_fn(number_of_rows, |row| row as f64);
     (features, targets)
 }
@@ -34,7 +33,11 @@ fn cross_validation_regressor_returns_one_finite_score_per_fold() {
     .unwrap();
 
     assert_eq!(scores.len(), 4);
-    assert!(scores.iter().all(|score| score.is_finite() && *score >= 0.0));
+    assert!(
+        scores
+            .iter()
+            .all(|score| score.is_finite() && *score >= 0.0)
+    );
 }
 
 #[test]
@@ -53,11 +56,7 @@ fn cross_validation_classifier_returns_one_score_per_fold() {
     .unwrap();
 
     assert_eq!(scores.len(), 5);
-    assert!(
-        scores
-            .iter()
-            .all(|score| *score >= 0.0 && *score <= 1.0)
-    );
+    assert!(scores.iter().all(|score| *score >= 0.0 && *score <= 1.0));
 }
 
 #[test]
@@ -137,5 +136,8 @@ fn cross_validation_zero_folds_is_rejected_by_the_splitter() {
     )
     .expect_err("an empty input has no folds");
 
-    assert!(matches!(error, sciencekit_common::SKError::EmptyInput { .. }));
+    assert!(matches!(
+        error,
+        sciencekit_common::SKError::EmptyInput { .. }
+    ));
 }

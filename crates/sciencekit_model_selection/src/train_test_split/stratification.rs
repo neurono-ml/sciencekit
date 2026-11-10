@@ -15,10 +15,7 @@ pub(crate) fn sk_allocate_class_counts(
         return vec![0; class_sizes.len()];
     }
 
-    let dividends: Vec<usize> = class_sizes
-        .iter()
-        .map(|size| size * target_total)
-        .collect();
+    let dividends: Vec<usize> = class_sizes.iter().map(|size| size * target_total).collect();
     let mut counts: Vec<usize> = dividends.iter().map(|value| value / total_rows).collect();
     let mut order: Vec<usize> = (0..class_sizes.len()).collect();
     order.sort_by_key(|&index| std::cmp::Reverse(dividends[index] % total_rows));

@@ -8,9 +8,8 @@ use super::configuration::SKKFoldConfiguration;
 use crate::{SKIndexSplit, SKSplitter, sk_shuffle_indices};
 
 use crate::split::validation::{
-    sk_number_of_rows, sk_partition_into_chunks, sk_split_from_test,
-    sk_validate_finite_features, sk_validate_finite_targets, sk_validate_non_empty,
-    sk_validate_number_of_splits,
+    sk_number_of_rows, sk_partition_into_chunks, sk_split_from_test, sk_validate_finite_features,
+    sk_validate_finite_targets, sk_validate_non_empty, sk_validate_number_of_splits,
 };
 
 /// Plain K-fold, constructed only through [`SKKFoldBuilder`].

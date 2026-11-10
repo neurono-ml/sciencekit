@@ -31,7 +31,10 @@ fn acceptance_large_kfold_covers_ten_thousand_rows_exactly_once() {
         }
     }
     assert!(tested.iter().all(|&count| count == 1));
-    let sizes: Vec<usize> = splits.iter().map(|split| split.number_of_test_rows()).collect();
+    let sizes: Vec<usize> = splits
+        .iter()
+        .map(|split| split.number_of_test_rows())
+        .collect();
     assert!(sizes.iter().all(|&size| size == 2_000));
 }
 
@@ -46,7 +49,11 @@ fn acceptance_large_group_kfold_never_leaks_a_group() {
         .unwrap();
 
     let splits = splitter
-        .split(SKDataView::Dense(features.view()), None, Some(groups.view()))
+        .split(
+            SKDataView::Dense(features.view()),
+            None,
+            Some(groups.view()),
+        )
         .unwrap();
 
     assert_eq!(splits.len(), 10);
@@ -80,8 +87,15 @@ fn acceptance_large_stratified_kfold_preserves_proportions() {
 
     for split in &splits {
         for class in 0_i64..3 {
-            let count = split.test().iter().filter(|&&row| labels[row] == class).count();
-            assert!((599..=601).contains(&count), "class {class} saw {count} rows");
+            let count = split
+                .test()
+                .iter()
+                .filter(|&&row| labels[row] == class)
+                .count();
+            assert!(
+                (599..=601).contains(&count),
+                "class {class} saw {count} rows"
+            );
         }
     }
 }

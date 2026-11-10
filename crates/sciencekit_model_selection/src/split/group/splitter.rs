@@ -12,9 +12,8 @@ use super::configuration::SKGroupKFoldConfiguration;
 use crate::{SKIndexSplit, SKSplitter};
 
 use crate::split::validation::{
-    sk_number_of_rows, sk_split_from_test, sk_validate_cardinality,
-    sk_validate_finite_features, sk_validate_finite_targets, sk_validate_non_empty,
-    sk_validate_number_of_splits,
+    sk_number_of_rows, sk_split_from_test, sk_validate_cardinality, sk_validate_finite_features,
+    sk_validate_finite_targets, sk_validate_non_empty, sk_validate_number_of_splits,
 };
 
 /// Group K-fold, constructed only through [`SKGroupKFoldBuilder`].

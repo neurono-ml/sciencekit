@@ -107,10 +107,7 @@ fn stratified_split_is_deterministic_for_a_seed() {
 fn stratified_split_rejects_continuous_targets() {
     let features = Array2::<f64>::zeros((20, 2));
     let targets = Array1::from_vec((0..20).map(f64::from).collect());
-    let splitter = SKTrainTestSplitter::build()
-        .stratify(true)
-        .build()
-        .unwrap();
+    let splitter = SKTrainTestSplitter::build().stratify(true).build().unwrap();
 
     let error = sk_train_test_split(
         &splitter,
@@ -125,17 +122,17 @@ fn stratified_split_rejects_continuous_targets() {
 #[test]
 fn stratified_split_rejects_missing_targets() {
     let features = Array2::<f64>::zeros((20, 2));
-    let splitter = SKTrainTestSplitter::build()
-        .stratify(true)
-        .build()
-        .unwrap();
+    let splitter = SKTrainTestSplitter::build().stratify(true).build().unwrap();
 
     let error = sk_train_test_split(&splitter, SKDataView::Dense(features.view()), None)
         .expect_err("stratification needs targets");
 
     assert!(matches!(
         error,
-        SKError::InvalidHyperparameter { name: "targets", .. }
+        SKError::InvalidHyperparameter {
+            name: "targets",
+            ..
+        }
     ));
 }
 
@@ -160,8 +157,14 @@ fn stratified_split_supports_nominal_targets() {
     let Some(SKTargetPartition::Nominal(test_labels)) = split.test_targets() else {
         panic!("nominal targets must stay nominal");
     };
-    let red = test_labels.iter().filter(|label| label.as_str() == "red").count();
-    let blue = test_labels.iter().filter(|label| label.as_str() == "blue").count();
+    let red = test_labels
+        .iter()
+        .filter(|label| label.as_str() == "red")
+        .count();
+    let blue = test_labels
+        .iter()
+        .filter(|label| label.as_str() == "blue")
+        .count();
     assert_eq!(red, 3);
     assert_eq!(blue, 3);
 }

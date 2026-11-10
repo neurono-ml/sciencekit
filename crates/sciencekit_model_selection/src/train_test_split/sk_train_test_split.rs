@@ -20,8 +20,7 @@ pub fn sk_train_test_split<F: SKFloat>(
         operation: "sk_train_test_split",
     })?;
 
-    let (train_features, train_targets) =
-        sk_gather_rows(features, targets, index_split.train())?;
+    let (train_features, train_targets) = sk_gather_rows(features, targets, index_split.train())?;
     let (test_features, test_targets) = sk_gather_rows(features, targets, index_split.test())?;
 
     Ok(SKTrainTestSplit::new(

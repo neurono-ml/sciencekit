@@ -54,11 +54,12 @@ impl<F: SKFloat> SKSupervisedFit<F> for SKMockMeanRegressor<F> {
             });
         }
         let values = targets.as_continuous()?;
-        let sum = values.iter().copied().fold(F::zero(), |left, right| left + right);
+        let sum = values
+            .iter()
+            .copied()
+            .fold(F::zero(), |left, right| left + right);
         let count = F::from(values.len()).expect("the row count fits the scalar");
-        Ok(SKMockMeanRegressorModel {
-            mean: sum / count,
-        })
+        Ok(SKMockMeanRegressorModel { mean: sum / count })
     }
 }
 
