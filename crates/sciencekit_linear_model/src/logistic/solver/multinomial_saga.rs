@@ -2,14 +2,12 @@
 //! `logistic-solver`, Decision 3).
 
 use ndarray::{Array1, s};
-use sciencekit_common::{SKError, SKFloat};
+use sciencekit_common::{SK_RANDOM_DOMAIN_STAGE, SKError, SKFloat, sk_derive_seed};
 
 use super::saga::{SKSagaConfig, sk_saga_minimize};
 use crate::logistic::config::SKLogisticConfig;
 use crate::logistic::design::SKLogisticDesign;
 use crate::logistic::objective::sk_softmax;
-
-const SAGA_SEED: u64 = 0x1319_8A2E_0370_7344;
 
 /// Minimize the multinomial logistic objective with SAGA, returning the
 /// per-class weights, the per-class intercepts and the epochs spent.
@@ -42,7 +40,7 @@ where
         tolerance: config.tolerance,
         maximum_number_of_epochs: config.maximum_number_of_iterations,
         step,
-        seed: SAGA_SEED,
+        seed: sk_derive_seed(config.random_seed, SK_RANDOM_DOMAIN_STAGE, 0),
     };
 
     let accumulate =
