@@ -93,12 +93,12 @@
 
 - [x] 9.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under `Unreleased →
   Added` for the tree crate, both estimators, the splitter and feature importances.
-- [ ] 9.2 Companion documentation change on its own `docs/*` branch (merged into
+- [x] 9.2 Companion documentation change on its own `docs/*` branch (merged into
   `docs/documentations`): add the decision-tree chapter, register it in `SUMMARY.md`, add
   a `Development Explained` chapter covering CART, impurity, sorted split scans,
   constraints and importances, update `maintaining.md`, and verify with `mdbook build
   docs`.
-- [ ] 9.3 Record the deferred missing-value routing, pruning, `memmap2` backing and
+- [x] 9.3 Record the deferred missing-value routing, pruning, `memmap2` backing and
   persistence/export in `docs/PRD.md`; verify the amended paragraphs render.
 - [ ] 9.4 Independent review by a separate agent validating every scenario in
   `decision-trees` against the code and tests; address every finding and re-run the
