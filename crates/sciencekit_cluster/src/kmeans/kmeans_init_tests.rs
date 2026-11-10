@@ -4,7 +4,7 @@ use ndarray::{Array2, array};
 use sciencekit_common::SKDataView;
 use sprs::{CsMat, TriMat};
 
-use super::sk_initialize_centers;
+use super::{sk_initialization_seed, sk_initialize_centers, sk_run_initializations};
 use crate::kmeans::SKKMeansInitialization;
 
 fn blobs() -> Array2<f64> {
@@ -110,4 +110,59 @@ fn kmeans_init_sparse_matches_dense() {
             assert!((dense_value - sparse_value).abs() < 1e-12);
         }
     }
+}
+
+#[test]
+fn kmeans_init_lowest_inertia_wins() {
+    let (model, index) = sk_run_initializations(3, 9, |initialization, _| {
+        let inertia = match initialization {
+            0 => 3.0,
+            1 => 1.0,
+            _ => 2.0,
+        };
+        Ok::<_, std::convert::Infallible>((initialization, inertia))
+    })
+    .unwrap();
+
+    assert_eq!(index, 1);
+    assert_eq!(model, 1);
+}
+
+#[test]
+fn kmeans_init_tie_selects_the_earliest_initialization() {
+    let (model, index) = sk_run_initializations(3, 9, |initialization, _| {
+        let inertia = match initialization {
+            0 => 2.0,
+            1 => 2.0,
+            _ => 3.0,
+        };
+        Ok::<_, std::convert::Infallible>((initialization, inertia))
+    })
+    .unwrap();
+
+    assert_eq!(index, 0);
+    assert_eq!(model, 0);
+}
+
+#[test]
+fn kmeans_init_derives_one_reproducible_seed_per_initialization() {
+    let first: Vec<u64> = (0..4)
+        .map(|index| sk_initialization_seed(21, index))
+        .collect();
+    let second: Vec<u64> = (0..4)
+        .map(|index| sk_initialization_seed(21, index))
+        .collect();
+    assert_eq!(first, second);
+
+    let mut sorted = first.clone();
+    sorted.sort_unstable();
+    sorted.dedup();
+    assert_eq!(sorted.len(), first.len());
+
+    let (seed, index) = sk_run_initializations(4, 21, |initialization, derived| {
+        Ok::<_, std::convert::Infallible>((derived, initialization as f64))
+    })
+    .unwrap();
+    assert_eq!(index, 0);
+    assert_eq!(seed, first[0]);
 }
