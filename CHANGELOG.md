@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Go bindings (spec `go-bindings`): a `sciencekit-go` module under `go/` that
+  loads `sciencekit_ffi` through cgo and exposes typed builders and models for
+  linear regression and the standard scaler (`Fit`, `Predict`, `Transform`,
+  `Score`, `Save`, `LoadLinearRegression`). Dense `Matrix[float32|float64]`
+  values convert with Go-side shape validation and copied outputs; native
+  status codes map to `ScienceKitError` values carrying the code, operation and
+  message; builders and models close explicitly (`Close`) or through
+  `runtime.SetFinalizer`, safely and exactly once; models are safe for
+  concurrent use. Includes examples, a build/link README, a
+  `scripts/build-go-library.sh` helper, a `go test`/`go vet` CI workflow and a
+  test suite covering every family, persistence, errors, lifecycle,
+  concurrency and large arrays.
+
 ## [0.6.0] — 2026-11-10
 
 The k-NN imputer, grid search and the embedded Lua bindings.
