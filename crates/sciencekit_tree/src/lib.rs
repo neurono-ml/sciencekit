@@ -49,3 +49,5 @@ mod determinism_tests;
 mod importances_tests;
 #[cfg(test)]
 mod representation_tests;
+#[cfg(test)]
+mod validation_tests;
