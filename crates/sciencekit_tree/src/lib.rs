@@ -34,6 +34,9 @@ pub use class_weight::SKClassWeight;
 pub mod classifier;
 pub mod regressor;
 
+pub use classifier::{
+    SKDecisionTreeClassifier, SKDecisionTreeClassifierBuilder, SKDecisionTreeClassifierModel,
+};
 pub use criterion::SKTreeCriterion;
 pub use node::{SKTree, SKTreeNode};
 pub use regressor::{
