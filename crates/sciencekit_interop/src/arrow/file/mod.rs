@@ -25,6 +25,8 @@ mod ipc_tests;
 #[cfg(test)]
 mod json_tests;
 #[cfg(test)]
+mod large_file_tests;
+#[cfg(test)]
 mod parquet_tests;
 #[cfg(test)]
 mod projection_tests;
