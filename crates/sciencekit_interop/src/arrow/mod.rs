@@ -16,8 +16,9 @@ mod zero_copy;
 
 pub use data_type_mapping::sk_logical_type_from_arrow_data_type;
 pub use import::{
-    sk_column_data_from_arrow_array, sk_dictionary_label_table, sk_label_tables_from_record_batch,
-    sk_tabular_batch_from_column_chunks, sk_tabular_batch_from_record_batch,
+    sk_boolean_category_codes, sk_column_data_from_arrow_array, sk_dictionary_label_table,
+    sk_label_tables_from_record_batch, sk_tabular_batch_from_column_chunks,
+    sk_tabular_batch_from_record_batch,
 };
 pub use schema_mapping::{
     SK_ARROW_LOGICAL_TYPE_METADATA_KEY, SK_ARROW_ROLE_METADATA_KEY, SKArrowColumnRoles,
@@ -29,6 +30,8 @@ pub use zero_copy::{
     sk_arrow_conversion_report,
 };
 
+#[cfg(test)]
+mod boolean_import_tests;
 #[cfg(test)]
 mod chunked_import_tests;
 #[cfg(test)]

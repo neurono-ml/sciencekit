@@ -7,8 +7,9 @@ use sciencekit_common::SKError;
 use super::super::schema_mapping::{SKArrowColumnRoles, sk_tabular_schema_from_arrow_schema};
 use super::column_conversion::sk_column_data_from_arrow_array;
 use crate::batch::SKTabularBatch;
+use crate::columns::SKColumnData;
 use crate::missing::SKMissingValuePolicy;
-use crate::schema::{SKColumnSchema, SKTabularSchema};
+use crate::schema::{SKColumnSchema, SKLogicalType, SKTabularSchema};
 
 /// Convert a record batch into a tabular batch, preserving column names, order
 /// and row count.
@@ -34,7 +35,16 @@ pub fn sk_tabular_batch_from_record_batch(
         .iter()
         .zip(record_batch.columns())
         .map(|(column_schema, array)| {
-            sk_column_data_from_arrow_array(column_schema.name(), array.as_ref(), policy)
+            let column =
+                sk_column_data_from_arrow_array(column_schema.name(), array.as_ref(), policy)?;
+            // An exported category column travels as a plain Int64 with a
+            // logical-type metadata declaration; restore its neutral type.
+            Ok(match (column_schema.logical_type(), column) {
+                (SKLogicalType::CategoryCode, SKColumnData::Integer64(values)) => {
+                    SKColumnData::CategoryCode(values)
+                }
+                (_, column) => column,
+            })
         })
         .collect::<Result<Vec<_>, SKError>>()?;
     // A nullable integer column promoted to float64 by the missing-value policy
@@ -44,11 +54,16 @@ pub fn sk_tabular_batch_from_record_batch(
         .iter()
         .zip(&columns)
         .map(|(column_schema, column)| {
-            SKColumnSchema::new(
-                column_schema.name(),
-                column.logical_type(),
-                column_schema.role(),
-            )
+            let declared = column_schema.logical_type();
+            let logical_type = if declared.is_numeric()
+                && column.logical_type().is_numeric()
+                && declared != column.logical_type()
+            {
+                column.logical_type()
+            } else {
+                declared
+            };
+            SKColumnSchema::new(column_schema.name(), logical_type, column_schema.role())
         })
         .collect::<Vec<_>>();
     let schema = SKTabularSchema::new(promoted_columns)?;
