@@ -133,3 +133,52 @@ impl SKNeighborMetric {
         }
     }
 }
+
+/// The metric a caller can request from a builder.
+///
+/// It mirrors the supported catalogue and also carries the two distances the
+/// library rejects on purpose: cosine distance violates the triangle inequality
+/// tree pruning relies on, and sparse NaN-aware Euclidean distance has no
+/// missing indicator in the CSR representation. Builders reject both with
+/// [`sciencekit_common::SKError::InvalidHyperparameter`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum SKRequestedNeighborMetric {
+    /// The Euclidean (`L2`) distance.
+    Euclidean,
+    /// The squared Euclidean distance.
+    SquaredEuclidean,
+    /// The Manhattan (`L1`) distance.
+    Manhattan,
+    /// The Chebyshev (`L∞`) distance.
+    Chebyshev,
+    /// Cosine distance — rejected because it is not a metric.
+    Cosine,
+    /// NaN-aware Euclidean distance — rejected for lack of a sparse marker.
+    NanEuclidean,
+}
+
+impl SKRequestedNeighborMetric {
+    /// Resolve to a supported metric, or `None` for a rejected distance.
+    pub fn supported(self) -> Option<SKNeighborMetric> {
+        match self {
+            SKRequestedNeighborMetric::Euclidean => Some(SKNeighborMetric::Euclidean),
+            SKRequestedNeighborMetric::SquaredEuclidean => {
+                Some(SKNeighborMetric::SquaredEuclidean)
+            }
+            SKRequestedNeighborMetric::Manhattan => Some(SKNeighborMetric::Manhattan),
+            SKRequestedNeighborMetric::Chebyshev => Some(SKNeighborMetric::Chebyshev),
+            SKRequestedNeighborMetric::Cosine | SKRequestedNeighborMetric::NanEuclidean => None,
+        }
+    }
+}
+
+impl From<SKNeighborMetric> for SKRequestedNeighborMetric {
+    fn from(metric: SKNeighborMetric) -> Self {
+        match metric {
+            SKNeighborMetric::Euclidean => SKRequestedNeighborMetric::Euclidean,
+            SKNeighborMetric::SquaredEuclidean => SKRequestedNeighborMetric::SquaredEuclidean,
+            SKNeighborMetric::Manhattan => SKRequestedNeighborMetric::Manhattan,
+            SKNeighborMetric::Chebyshev => SKRequestedNeighborMetric::Chebyshev,
+        }
+    }
+}

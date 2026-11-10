@@ -6,7 +6,7 @@
 
 mod catalogue;
 
-pub use catalogue::SKNeighborMetric;
+pub use catalogue::{SKNeighborMetric, SKRequestedNeighborMetric};
 
 #[cfg(test)]
 mod metric_bounds_tests;
