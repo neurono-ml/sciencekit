@@ -19,7 +19,6 @@ pub(crate) struct SKLuaError {
     message: String,
 }
 
-#[allow(dead_code)]
 impl SKLuaError {
     /// Build an error with an explicit status and message.
     pub(crate) fn new(status: SKFfiStatus, message: impl Into<String>) -> SKLuaError {
@@ -61,12 +60,8 @@ impl SKLuaError {
         SKLuaError::new(SKFfiStatus::Unsupported, message)
     }
 
-    /// The stable status code.
-    pub(crate) fn status(&self) -> SKFfiStatus {
-        self.status
-    }
-
-    /// The stable lowercase status name.
+    /// The stable status name, for assertions in tests.
+    #[cfg(test)]
     pub(crate) fn status_name(&self) -> &'static str {
         self.status.name()
     }
@@ -77,6 +72,7 @@ impl SKLuaError {
     }
 
     /// The human-readable message without the status prefix.
+    #[cfg(test)]
     pub(crate) fn message(&self) -> &str {
         &self.message
     }

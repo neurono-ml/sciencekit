@@ -71,7 +71,6 @@ impl SKLuaBuilderHandle {
     }
 
     /// Fit the configured estimator, returning a model handle.
-    #[allow(dead_code)]
     pub(crate) fn fit(
         &self,
         features: &SKLuaMatrix,

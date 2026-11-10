@@ -6,8 +6,6 @@
 //! table is copied into a contiguous `f64` buffer. Validation happens before
 //! any ABI call, so a ragged table never reaches the library.
 
-#![allow(dead_code)]
-
 use mlua::{Table, Value};
 
 use crate::error::SKLuaError;

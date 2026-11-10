@@ -46,7 +46,6 @@ pub(crate) struct SKLuaVector {
     values: Vec<f64>,
 }
 
-#[allow(dead_code)]
 impl SKLuaVector {
     /// Wrap a vector of values.
     pub(crate) fn new(values: Vec<f64>) -> SKLuaVector {

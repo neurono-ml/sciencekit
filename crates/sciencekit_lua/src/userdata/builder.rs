@@ -5,10 +5,13 @@
 //! garbage collector invokes when the userdata becomes unreachable. All three
 //! paths are idempotent, so a handle is released exactly once.
 
-use mlua::{AnyUserData, Lua, MetaMethod, UserData, UserDataFields, UserDataMethods, Value};
+use mlua::{AnyUserData, Lua, MetaMethod, Table, UserData, UserDataFields, UserDataMethods, Value};
 
+use crate::array::{sk_lua_matrix_from_table, sk_lua_vector_from_table};
 use crate::engine::SKLuaBuilderHandle;
 use crate::engine::{SKLuaEstimatorFamily, sk_lua_backend_code};
+use crate::error::SKLuaError;
+use crate::userdata::sk_lua_model_userdata;
 
 /// A configured-but-not-fitted estimator exposed to Lua.
 #[derive(Debug)]
@@ -62,6 +65,24 @@ impl UserData for SKLuaBuilder {
                 .set_backend(code)?;
             Ok(this)
         });
+        methods.add_method(
+            "fit",
+            |lua, this, (features, targets): (Table, Option<Table>)| {
+                let features = sk_lua_matrix_from_table(&features)?;
+                let targets = match targets {
+                    Some(targets) => Some(sk_lua_vector_from_table(&targets, features.rows())?),
+                    None if this.family == SKLuaEstimatorFamily::LinearRegression => {
+                        return Err(SKLuaError::invalid_argument(
+                            "linear regression requires targets",
+                        )
+                        .into());
+                    }
+                    None => None,
+                };
+                let model = this.handle.fit(&features, targets.as_ref())?;
+                sk_lua_model_userdata(lua, model, this.family)
+            },
+        );
         methods.add_method("family", |_, this, ()| Ok(this.family.name()));
         methods.add_method("dtype", |_, _, ()| Ok("f64"));
         methods.add_method("closed", |_, this, ()| Ok(this.handle.is_closed()));

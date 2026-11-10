@@ -4,8 +4,9 @@
 //! the `__close` metamethod and the engine wrapper's `Drop` — the hook Lua's
 //! garbage collector triggers. The three paths are idempotent.
 
-use mlua::{AnyUserData, Lua, MetaMethod, UserData, UserDataFields, UserDataMethods, Value};
+use mlua::{AnyUserData, Lua, MetaMethod, Table, UserData, UserDataFields, UserDataMethods, Value};
 
+use crate::array::{sk_lua_matrix_from_table, sk_lua_table_from_matrix, sk_lua_vector_from_table};
 use crate::engine::SKLuaEstimatorFamily;
 use crate::engine::SKLuaModelHandle;
 
@@ -33,6 +34,25 @@ impl UserData for SKLuaModel {
     }
 
     fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
+        methods.add_method("predict", |lua, this, features: Table| {
+            let features = sk_lua_matrix_from_table(&features)?;
+            let predictions = this.handle.predict(&features)?;
+            Ok(sk_lua_table_from_matrix(lua, &predictions)?)
+        });
+        methods.add_method("transform", |lua, this, features: Table| {
+            let features = sk_lua_matrix_from_table(&features)?;
+            let transformed = this.handle.transform(&features)?;
+            Ok(sk_lua_table_from_matrix(lua, &transformed)?)
+        });
+        methods.add_method("score", |_, this, (features, targets): (Table, Table)| {
+            let features = sk_lua_matrix_from_table(&features)?;
+            let targets = sk_lua_vector_from_table(&targets, features.rows())?;
+            Ok(this.handle.score(&features, &targets)?)
+        });
+        methods.add_method("save", |_, this, path: String| {
+            this.handle.save(&path)?;
+            Ok(())
+        });
         methods.add_method("family", |_, this, ()| Ok(this.family.name()));
         methods.add_method("dtype", |_, _, ()| Ok("f64"));
         methods.add_method("closed", |_, this, ()| Ok(this.handle.is_closed()));
