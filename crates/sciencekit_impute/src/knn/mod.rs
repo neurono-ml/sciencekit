@@ -11,6 +11,7 @@ mod donors;
 mod fit;
 mod marker;
 mod model;
+mod transform;
 mod validation;
 mod weights;
 
@@ -36,6 +37,9 @@ mod fit_span_tests;
 
 #[cfg(test)]
 mod marker_tests;
+
+#[cfg(test)]
+mod transform_tests;
 
 #[cfg(test)]
 mod weights_tests;
