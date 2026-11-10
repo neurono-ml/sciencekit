@@ -16,6 +16,7 @@
 
 pub mod cross_validation;
 pub mod gather;
+pub mod grid_search;
 pub mod index_split;
 pub mod shuffle;
 pub mod split;
