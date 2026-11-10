@@ -7,8 +7,9 @@
 //! (`label_table`), fit/transformation contracts (`fit_traits`), scoring
 //! contracts (`scorer_traits`), execution planning (`execution`), streaming
 //! batches (`batching`), the mandatory builder foundation (`builders`), the
-//! automatic execution decision + observability (`observability`) and the
-//! optional global-allocator selection (`allocator`).
+//! automatic execution decision + observability (`observability`), the
+//! format-agnostic model export/import contracts (`interop`) and the optional
+//! global-allocator selection (`allocator`).
 
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
@@ -20,6 +21,7 @@ pub mod data_view;
 pub mod errors;
 pub mod execution;
 pub mod fit_traits;
+pub mod interop;
 pub mod label_table;
 pub mod observability;
 pub mod random;
@@ -42,6 +44,7 @@ pub use fit_traits::{
     SKFeatureTransformer, SKRegressorPredictor, SKSupervisedFit, SKUnsupervisedFit,
     sk_validate_cluster_assignments,
 };
+pub use interop::{SKTensor, SKTensorDType, SKTensorValues};
 pub use label_table::{SKLabelTable, sk_canonicalize_labels};
 pub use observability::{
     SKBackendKind, SKOperationAttributes, SKOperationKind, SKOperationObservation, sk_run_operation,
