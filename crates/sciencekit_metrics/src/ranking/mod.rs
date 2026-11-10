@@ -37,4 +37,6 @@ mod multiclass_roc_tests;
 #[cfg(test)]
 mod precision_recall_tests;
 #[cfg(test)]
+mod ranking_validation_tests;
+#[cfg(test)]
 mod roc_tests;
