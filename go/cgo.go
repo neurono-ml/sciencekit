@@ -66,8 +66,11 @@ type descriptor struct {
 
 // newDescriptor allocates the descriptor struct in C memory so no Go pointer
 // travels inside Go-allocated memory.
-func newDescriptor(dtype int32, shape []int64, data unsafe.Pointer, keep any) *descriptor {
+func newDescriptor(dtype int32, shape []int64, data unsafe.Pointer, keep any) (*descriptor, error) {
 	raw := (*C.SKFfiArray)(C.calloc(1, C.size_t(C.sizeof_SKFfiArray)))
+	if raw == nil {
+		return nil, errOutOfMemory
+	}
 	raw.dtype = C.int32_t(dtype)
 	raw.ndim = C.int32_t(len(shape))
 	raw.shape = (*C.int64_t)(unsafe.Pointer(&shape[0]))
@@ -78,7 +81,7 @@ func newDescriptor(dtype int32, shape []int64, data unsafe.Pointer, keep any) *d
 		product *= dimension
 	}
 	raw.len = C.int64_t(product)
-	return &descriptor{raw: raw, shape: shape, data: keep}
+	return &descriptor{raw: raw, shape: shape, data: keep}, nil
 }
 
 // free releases the descriptor struct. Native-owned output buffers are freed

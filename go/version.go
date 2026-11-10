@@ -16,13 +16,24 @@ const (
 	FeatureF64              uint64 = 1 << 4
 )
 
-// Version reads the ABI version of the loaded library.
-func Version() (VersionInfo, error) {
+// cachedVersion is captured at package initialization so an incompatible
+// library surfaces when the program starts, not on first use (design decision
+// 4: version query at init).
+var (
+	cachedVersion VersionInfo
+	cachedError   error
+)
+
+func init() {
 	major, minor, patch, err := nativeVersion()
-	if err != nil {
-		return VersionInfo{}, err
-	}
-	return VersionInfo{Major: major, Minor: minor, Patch: patch}, nil
+	cachedVersion = VersionInfo{Major: major, Minor: minor, Patch: patch}
+	cachedError = err
+}
+
+// Version reads the ABI version of the loaded library, captured at package
+// initialization.
+func Version() (VersionInfo, error) {
+	return cachedVersion, cachedError
 }
 
 // Features reads the capability bitmask of the loaded library.

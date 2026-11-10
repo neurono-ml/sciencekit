@@ -12,7 +12,7 @@ func descriptorFromMatrix[T Float](matrix Matrix[T]) (*descriptor, error) {
 		return nil, err
 	}
 	shape := []int64{int64(matrix.Rows), int64(matrix.Columns)}
-	return newDescriptor(dtypeOf[T](), shape, unsafe.Pointer(&matrix.Data[0]), matrix.Data), nil
+	return newDescriptor(dtypeOf[T](), shape, unsafe.Pointer(&matrix.Data[0]), matrix.Data)
 }
 
 // descriptorFromVector validates a target vector and builds a one-dimensional
@@ -22,7 +22,7 @@ func descriptorFromVector[T Float](values []T) (*descriptor, error) {
 		return nil, validationError("array", "the vector is empty")
 	}
 	shape := []int64{int64(len(values))}
-	return newDescriptor(dtypeOf[T](), shape, unsafe.Pointer(&values[0]), values), nil
+	return newDescriptor(dtypeOf[T](), shape, unsafe.Pointer(&values[0]), values)
 }
 
 // matrixFromValues copies a native row-major payload back into a Go matrix.
