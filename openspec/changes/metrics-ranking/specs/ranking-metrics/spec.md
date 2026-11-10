@@ -26,7 +26,7 @@ probabilities and a convenient form that obtains probabilities from the model.
 ### Requirement: ROC curve and AUC
 
 The library SHALL compute binary ROC curves and AUC from scores and labels, and multiclass
-ROC/AUC with one-vs-rest and one-vs-one strategies.
+ROC/AUC with the one-vs-rest strategy; one-vs-one curves are a documented non-goal.
 
 #### Scenario: Perfect ranking has unit AUC
 

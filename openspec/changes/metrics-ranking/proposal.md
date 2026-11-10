@@ -14,7 +14,7 @@ contract.
 - Add a `SKProbabilityScorer<F, M: SKClassifierPredictor<F>>` contract to
   `scoring-contracts`: a pure form over stored probabilities and a convenient form that
   calls `predict_probabilities`.
-- Add binary and multiclass (one-vs-rest/one-vs-one) ROC curve and ROC-AUC, with macro,
+- Add binary and multiclass (one-vs-rest) ROC curve and ROC-AUC, with macro,
   micro and weighted averaging.
 - Add precision-recall curve and average precision.
 - Add binary/multiclass log loss, balanced accuracy and Matthews correlation coefficient.
