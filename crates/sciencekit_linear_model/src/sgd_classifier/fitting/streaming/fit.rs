@@ -3,7 +3,7 @@
 
 use sciencekit_common::{
     SKBackendKind, SKError, SKExecutionContext, SKExecutionMode, SKExecutionPlan, SKFloat,
-    SKOperationAttributes, SKOperationKind, SKSupervisedSourceProvider,
+    SKOperationAttributes, SKOperationKind, SKRandomGenerator, SKSupervisedSourceProvider,
     execution::{
         SKAccessPattern, SKStreamingPassPolicy, sk_resolve_execution_plan,
         sk_run_supervised_streaming_provider,
@@ -20,8 +20,8 @@ use crate::class_weight::SKClassWeight;
 use crate::sgd::config::SKSGDConfig;
 use crate::sgd::objective::SKEpochObjective;
 use crate::sgd::{
-    SKConvergenceTracker, SKLearningState, SKRandomGenerator, SKSGDClassifierLoss,
-    sk_finish_epochs, sk_objective_improved,
+    SKConvergenceTracker, SKLearningState, SKSGDClassifierLoss, sk_finish_epochs,
+    sk_objective_improved,
 };
 
 /// Fit on a source provider, running one epoch per pass.

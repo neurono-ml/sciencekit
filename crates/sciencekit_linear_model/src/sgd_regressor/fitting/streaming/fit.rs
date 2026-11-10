@@ -3,7 +3,7 @@
 
 use sciencekit_common::{
     SKBackendKind, SKError, SKExecutionContext, SKExecutionMode, SKExecutionPlan, SKFloat,
-    SKOperationAttributes, SKOperationKind, SKSupervisedSourceProvider,
+    SKOperationAttributes, SKOperationKind, SKRandomGenerator, SKSupervisedSourceProvider,
     execution::{
         SKAccessPattern, SKStreamingPassPolicy, sk_resolve_execution_plan,
         sk_run_supervised_streaming_provider,
@@ -19,8 +19,8 @@ use super::state::SKRegressorStreamState;
 use crate::sgd::config::SKSGDConfig;
 use crate::sgd::objective::SKEpochObjective;
 use crate::sgd::{
-    SKConvergenceTracker, SKRandomGenerator, SKSGDRegressorLoss, sk_finish_epochs,
-    sk_objective_improved, sk_regressor_loss_adapter,
+    SKConvergenceTracker, SKSGDRegressorLoss, sk_finish_epochs, sk_objective_improved,
+    sk_regressor_loss_adapter,
 };
 
 /// Fit on a source provider, running one epoch per pass.
