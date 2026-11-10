@@ -4,7 +4,8 @@ use ndarray::{Array1, Array2, array};
 use sciencekit_common::{SKClusterLabel, SKDataView};
 use sprs::CsMat;
 
-use super::sk_silhouette_samples;
+use super::{sk_silhouette_samples, sk_silhouette_score};
+use sciencekit_common::SKError;
 
 /// Two compact, well-separated clusters of three rows each.
 fn two_compact_clusters() -> Array2<f64> {
@@ -101,4 +102,41 @@ fn silhouette_samples_are_ordered_by_non_noise_row() {
     for value in samples.iter() {
         assert!(*value > 0.9);
     }
+}
+
+#[test]
+fn silhouette_score_is_the_mean_of_the_samples() {
+    let features = two_compact_clusters();
+    let assignments = two_cluster_assignments();
+    let samples =
+        sk_silhouette_samples(SKDataView::Dense(features.view()), assignments.view()).unwrap();
+    let expected = samples.iter().sum::<f64>() / samples.len() as f64;
+    let score =
+        sk_silhouette_score(SKDataView::Dense(features.view()), assignments.view()).unwrap();
+    assert!((score - expected).abs() < 1e-12);
+    assert!(score > 0.9, "expected a near-one score, got {score}");
+}
+
+#[test]
+fn silhouette_score_rejects_fewer_than_two_clusters() {
+    let features = two_compact_clusters();
+    let assignments = Array1::from_vec(vec![SKClusterLabel::cluster(3); 6]);
+    let error =
+        sk_silhouette_score(SKDataView::Dense(features.view()), assignments.view()).unwrap_err();
+    assert!(matches!(
+        error,
+        SKError::InvalidHyperparameter {
+            name: "assignments",
+            ..
+        }
+    ));
+}
+
+#[test]
+fn silhouette_score_rejects_all_noise_assignments() {
+    let features = two_compact_clusters();
+    let assignments = Array1::from_vec(vec![SKClusterLabel::NOISE; 6]);
+    let error =
+        sk_silhouette_score(SKDataView::Dense(features.view()), assignments.view()).unwrap_err();
+    assert!(matches!(error, SKError::EmptyInput { .. }));
 }
