@@ -1,0 +1,16 @@
+[package]
+name = "sciencekit_neighbors"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+rust-version = "1.85"
+description = "Exact spatial indexes and nearest-neighbor search for sciencekit: KD-tree and ball tree with a shared searcher contract."
+repository = "https://github.com/neurono-ml/sciencekit"
+
+[dependencies]
+sciencekit_common = { path = "../sciencekit_common" }
+sciencekit_math = { path = "../sciencekit_math" }
+ndarray = { workspace = true }
+rayon = { workspace = true }
+sprs = { workspace = true }
+tracing = { workspace = true }

@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `sciencekit_neighbors` sub-crate (spec `nearest-neighbor-search`): the exact dense
+  spatial indexes `SKKDTree` (median split over the widest-spread feature) and
+  `SKBallTree` (farthest-pivot split over the node centroid), each builder-only through
+  `SKKDTreeBuilder`/`SKBallTreeBuilder` with `leaf_size` (default 40), `metric` (default
+  Euclidean), `backend` (default `Faer`) and `execution_mode` (default `Automatic`), plus
+  shape and configuration accessors (`training_rows`, `training_features`, `node_count`,
+  `depth`, `backend`, `metric`, `execution_mode`). The shared
+  `SKNearestNeighborsSearcher<F>` contract exposes exact `k_nearest` and inclusive
+  `radius_neighbors` returning the owned `SKNeighborQuery<F>` (row-major distances and
+  indices) and `SKRadiusNeighbors<F>` result types; results are ordered by distance
+  ascending with ties broken by the smallest training row index, and large batches are
+  evaluated row-parallel with rayon while producing the same output as the sequential
+  path. The closed `SKNeighborMetric` catalogue covers Euclidean, squared Euclidean,
+  Manhattan and Chebyshev distances with metric-specific KD box and ball bounds, while
+  `SKRequestedNeighborMetric` registers cosine and NaN-aware Euclidean as rejected at
+  build time. The index is the documented dense-only exception: sparse training or query
+  views return `UnsupportedRepresentation` with a brute-force suggestion and are never
+  densified; empty training sets, zero `leaf_size`, zero or oversized `neighbors_count`,
+  feature-count mismatches, non-finite values and unsupported metrics return structured
+  errors. Both indexes are `Send + Sync` and serve concurrent query batches.
+
 - `sciencekit_common` model export/import contracts (spec `model-export-contracts`): the format-agnostic `SKModelState<F>` (estimator metadata, a deterministically ordered map of named tensors and typed hyperparameters), `SKModelMetadata` (estimator name, format version, scalar dtype, feature count, canonical class labels and a `SKParameterValue` map), `SKTensor<F>` with `SKTensorDType` (`F32`/`F64`/`I64`/`Bool`) and shape/dtype/name validation, and the `SKExportable<F>`/`SKImportable<F>` trait pair with the shared `sk_validate_import_metadata` check — no file format and no `serde` dependency.
 
 - `sciencekit_pipeline` sub-crate (spec `typed-pipeline`): the compile-time typed linear
