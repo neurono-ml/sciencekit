@@ -223,4 +223,6 @@ the typed cluster assignments. The
 [decision tree chapter](./ch28-decision-trees.html) adds CART: impurity, dense and sparse
 split search, deterministic ties, feature subsampling, class weights and importances. The
 [model selection chapter](./ch29-model-selection.html) adds train/test split, the three
-K-fold flavours, row gathering and cross-validation scoring.
+K-fold flavours, row gathering and cross-validation scoring. The
+[C ABI chapter](./ch30-c-abi.html) adds the stable boundary every non-Rust binding wraps:
+opaque handles, borrowed and owned arrays, status codes, panic containment and persistence.
