@@ -107,3 +107,24 @@ fn boundary_rejects_a_misaligned_data_pointer() {
     let error = unsafe { sk_ffi_validate_descriptor(&descriptor) }.unwrap_err();
     assert!(format!("{error}").contains("not aligned"));
 }
+
+/// A misaligned strides pointer is rejected before the slice is built.
+#[test]
+fn boundary_rejects_a_misaligned_strides_pointer() {
+    let values = [0_u8; 64];
+    let data = values.as_ptr() as *const f64;
+    let shape = [2_i64, 2];
+    let strides = [2_i64, 1];
+    // Keep the i64 strides buffer 8-byte aligned, then offset by one byte.
+    let strides_pointer = unsafe { (strides.as_ptr() as *const u8).add(1) } as *const i64;
+    let descriptor = SKFfiArray {
+        dtype: SKFfiDataType::F64 as i32,
+        ndim: 2,
+        shape: shape.as_ptr(),
+        strides: strides_pointer,
+        data: data as *const std::ffi::c_void,
+        len: 4,
+    };
+    let error = unsafe { sk_ffi_validate_descriptor(&descriptor) }.unwrap_err();
+    assert!(format!("{error}").contains("strides"));
+}

@@ -120,19 +120,20 @@ pub(crate) unsafe fn sk_ffi_validate_descriptor<'a>(
     let dimensions = unsafe { slice::from_raw_parts(descriptor.shape, descriptor.ndim as usize) };
     let shape = SKFfiArrayShape::new(dimensions)?;
     let length = sk_ffi_validate_length(&shape, descriptor.len)?;
+    if !descriptor.strides.is_null() && (descriptor.strides as usize) % shape_alignment != 0 {
+        return Err(SKFfiArrayError::MisalignedPointer { field: "strides" }.into());
+    }
     let strides = if descriptor.strides.is_null() {
         None
     } else {
-        // SAFETY: the caller guarantees `ndim` readable strides.
+        // SAFETY: the pointer is non-null, checked for alignment, and the caller
+        // guarantees `ndim` readable strides.
         Some(unsafe { slice::from_raw_parts(descriptor.strides, descriptor.ndim as usize) })
     };
     sk_ffi_validate_contiguous_strides(strides, &shape)?;
     let dtype = descriptor.data_type()?;
     if (descriptor.data as usize) % dtype.element_size() != 0 {
         return Err(SKFfiArrayError::MisalignedPointer { field: "data" }.into());
-    }
-    if !descriptor.strides.is_null() && (descriptor.strides as usize) % shape_alignment != 0 {
-        return Err(SKFfiArrayError::MisalignedPointer { field: "strides" }.into());
     }
     let byte_length = length
         .checked_mul(dtype.element_size())

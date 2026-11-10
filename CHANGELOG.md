@@ -20,14 +20,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   descriptors (`dtype`, `ndim`, `shape`, `strides`, `data`, `len`) are validated
   (null pointers, dimensions, length-versus-shape, dtype, row-major strides)
   before any element is read; inputs are borrowed without copying and outputs are
-  library-owned buffers released by `sk_ffi_array_free`. The ABI exposes builder
-  setters and `fit`, `predict`, `transform`, `score`, `save`/`load` for
-  `SKLinearRegression` (f32/f64, R² scoring) and `SKStandardScaler` (f32/f64),
-  model persistence through the format-agnostic `SKModelState` contract with a
-  documented little-endian file layout, `catch_unwind` on every entry point, an
-  ABI version/feature query, a hand-maintained `include/sciencekit.h`, and a
-  compiled `tests/c_smoke.c` that fits, predicts, scores, saves, loads and
-  transforms. `SKLinearRegressionModel` now implements `SKExportable` and
+  library-owned buffers released by `sk_ffi_array_free`. Descriptors whose data
+  pointer is misaligned for its dtype, or whose `shape`/`strides` are misaligned,
+  are rejected before any typed view is built. The ABI exposes builder setters,
+  `fit`, `predict`, `transform` and `score` for `SKLinearRegression` (f32/f64, R²
+  scoring) and `SKStandardScaler` (f32/f64); `save`/`load` currently cover fitted
+  linear regression in f64 only (an f32 model or a scaler returns
+  `SK_FFI_STATUS_UNSUPPORTED`) through the format-agnostic `SKModelState`
+  contract with a documented little-endian file layout. Also `catch_unwind` on
+  every entry point, an ABI version/feature query, a hand-maintained
+  `include/sciencekit.h`, and a compiled `tests/c_smoke.c` that fits, predicts,
+  scores, saves, loads and transforms. `SKLinearRegressionModel` now implements `SKExportable` and
   `SKImportable`, and the companion tests cover invalid descriptors, use after
   free, dtype mismatches, concurrent predictions, panic containment and
   persistence round-trips.
