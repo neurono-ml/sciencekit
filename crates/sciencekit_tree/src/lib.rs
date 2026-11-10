@@ -45,3 +45,5 @@ pub use splitter::{SKMaximumFeatures, SKSplitCandidate, SKSplitter};
 mod acceptance_tests;
 #[cfg(test)]
 mod importances_tests;
+#[cfg(test)]
+mod representation_tests;
