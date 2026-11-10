@@ -139,3 +139,37 @@ fn kd_build_is_deterministic_for_duplicated_feature_values() {
         assert_eq!(left.maximum(), right.maximum());
     }
 }
+
+#[test]
+fn kd_build_exposes_the_configuration_and_shape_accessors() {
+    let data = grid(30);
+    let tree = SKKDTreeBuilder::<f64>::new()
+        .leaf_size(3)
+        .metric(SKNeighborMetric::Manhattan)
+        .backend(SKBackendKind::NdArrayLinalg)
+        .execution_mode(SKExecutionMode::InProcessSynchronous)
+        .build(SKDataView::Dense(data.view()))
+        .unwrap();
+
+    assert_eq!(tree.leaf_size(), 3);
+    assert_eq!(tree.metric(), SKNeighborMetric::Manhattan);
+    assert_eq!(tree.backend(), SKBackendKind::NdArrayLinalg);
+    assert_eq!(tree.execution_mode(), SKExecutionMode::InProcessSynchronous);
+    assert_eq!(tree.training_rows(), 30);
+    assert_eq!(tree.training_features(), 2);
+    assert!(tree.node_count() > 1);
+    assert!(tree.depth() > 1);
+}
+
+#[test]
+fn kd_build_defaults_match_the_documented_builder_defaults() {
+    let data = grid(10);
+    let tree = SKKDTreeBuilder::<f64>::new()
+        .build(SKDataView::Dense(data.view()))
+        .unwrap();
+
+    assert_eq!(tree.leaf_size(), 40);
+    assert_eq!(tree.metric(), SKNeighborMetric::Euclidean);
+    assert_eq!(tree.backend(), SKBackendKind::Faer);
+    assert_eq!(tree.execution_mode(), SKExecutionMode::Automatic);
+}
