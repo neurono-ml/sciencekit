@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `sciencekit_common` typed cluster assignments (spec `clustering-contracts`): `SKClusterLabel` (a cluster identifier or the explicit `SKClusterLabel::NOISE`, four bytes per element through a `NonZeroU32` niche), `SKClusterIdentifier`, `SKClustererPredictor<F>` returning one label per row through the shared `SKDataView` seam, the `to_i64`/`from_i64` interop conversions (`Noise ↔ -1`, values below `-1` rejected with a structured error), and `sk_validate_cluster_assignments`, the shared assignment-shape check.
+- `sciencekit_common` typed cluster assignments (spec `clustering-contracts`): `SKClusterLabel` (a cluster identifier or the explicit `SKClusterLabel::NOISE`, four bytes per element through a `NonZeroU32` niche), `SKClusterIdentifier`, `SKClustererPredictor<F>` returning one label per row through the shared `SKDataView` seam, the `to_i64`/`from_i64` interop conversions (`Noise ↔ -1`, values below `-1` or above the maximum cluster index rejected with a structured error, never a panic), and `sk_validate_cluster_assignments`, the shared assignment-shape check.
 - `README.md` with project overview, status badges and a validated architecture diagram.
 - Repository workflow rules: keep-a-changelog policy, English-first durable artifacts, ADR issue per branch, Mermaid/SVG documentation standards.
 - `CHANGELOG.md` seeded following Keep a Changelog 1.1.0.
