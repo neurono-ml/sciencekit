@@ -32,6 +32,8 @@ pub use zero_copy::{
 #[cfg(test)]
 mod chunked_import_tests;
 #[cfg(test)]
+mod null_policy_tests;
+#[cfg(test)]
 mod record_batch_import_tests;
 #[cfg(test)]
 mod schema_mapping_tests;

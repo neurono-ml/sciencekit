@@ -8,6 +8,7 @@ use super::super::schema_mapping::{SKArrowColumnRoles, sk_tabular_schema_from_ar
 use super::column_conversion::sk_column_data_from_arrow_array;
 use crate::batch::SKTabularBatch;
 use crate::missing::SKMissingValuePolicy;
+use crate::schema::{SKColumnSchema, SKTabularSchema};
 
 /// Convert a record batch into a tabular batch, preserving column names, order
 /// and row count.
@@ -26,9 +27,9 @@ pub fn sk_tabular_batch_from_record_batch(
     position: usize,
     is_final: bool,
 ) -> Result<SKTabularBatch, SKError> {
-    let schema =
+    let base_schema =
         sk_tabular_schema_from_arrow_schema(record_batch.schema_ref(), &SKArrowColumnRoles::new())?;
-    let columns = schema
+    let columns = base_schema
         .columns()
         .iter()
         .zip(record_batch.columns())
@@ -36,5 +37,20 @@ pub fn sk_tabular_batch_from_record_batch(
             sk_column_data_from_arrow_array(column_schema.name(), array.as_ref(), policy)
         })
         .collect::<Result<Vec<_>, SKError>>()?;
+    // A nullable integer column promoted to float64 by the missing-value policy
+    // changes its logical type; the schema must describe the data it carries.
+    let promoted_columns = base_schema
+        .columns()
+        .iter()
+        .zip(&columns)
+        .map(|(column_schema, column)| {
+            SKColumnSchema::new(
+                column_schema.name(),
+                column.logical_type(),
+                column_schema.role(),
+            )
+        })
+        .collect::<Vec<_>>();
+    let schema = SKTabularSchema::new(promoted_columns)?;
     SKTabularBatch::new(schema, columns, position, is_final)
 }
