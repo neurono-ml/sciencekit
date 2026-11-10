@@ -11,6 +11,7 @@ mod projection;
 
 pub use batch_source::SKArrowRecordBatchSource;
 pub use one_shot_source::SKArrowOneShotTabularSource;
+pub(crate) use projection::sk_projection_indices;
 
 #[cfg(test)]
 mod source_tests;

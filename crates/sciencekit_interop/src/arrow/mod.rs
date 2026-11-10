@@ -10,12 +10,14 @@
 //! submodules; every implementation lives in its own file.
 
 mod data_type_mapping;
+mod file;
 mod import;
 mod schema_mapping;
 mod source;
 mod zero_copy;
 
 pub use data_type_mapping::sk_logical_type_from_arrow_data_type;
+pub use file::{SKArrowFileFormat, SKArrowFileOptions, SKArrowFileSource};
 pub use import::{
     SKArrowTextBorrowedView, sk_boolean_category_codes, sk_column_data_from_arrow_array,
     sk_dictionary_label_table, sk_label_tables_from_record_batch,
