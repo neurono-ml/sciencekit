@@ -14,12 +14,14 @@ mod configuration;
 mod error_score;
 mod evaluation;
 mod regressor;
+mod results;
 mod scoring;
 
 pub use builder::{SKGridSearchCVClassifierBuilder, SKGridSearchCVRegressorBuilder};
 pub use classifier::SKGridSearchCVClassifier;
 pub use error_score::SKErrorScore;
 pub use regressor::SKGridSearchCVRegressor;
+pub use results::SKGridSearchResults;
 pub use sciencekit_metrics::classification::SKAveraging;
 pub use scoring::{SKClassifierScoring, SKRegressorScoring, SKScoringFamily};
 
