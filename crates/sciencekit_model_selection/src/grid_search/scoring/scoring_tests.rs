@@ -26,7 +26,7 @@ fn score_classifier(policy: SKClassifierScoring) -> f64 {
     let features = sk_features(4);
     let truth = Array1::from_vec(vec![0_i64, 1, 1, 0]);
     policy
-        .sk_score(
+        .score(
             &classifier_model(),
             SKDataView::Dense(features.view()),
             SKTargetView::Integer(truth.view()),
@@ -67,14 +67,15 @@ fn grid_scoring_log_loss_matches_the_hand_computed_value() {
     let truth = Array1::from_vec(vec![0_i64, 1]);
     let model = SKMockFixedClassifierModel::new(vec![0, 1], vec![[0.8, 0.2], [0.1, 0.9]]);
     let score = SKClassifierScoring::LogLoss
-        .sk_score(
+        .score(
             &model,
             SKDataView::Dense(features.view()),
             SKTargetView::Integer(truth.view()),
         )
         .unwrap();
-    let expected = -((0.8_f64).ln() + (0.9_f64).ln()) / 2.0;
-    assert!((score - expected).abs() < TOLERANCE);
+    // Selection maximises, so the scorer returns the negated log loss.
+    let loss = -((0.8_f64).ln() + (0.9_f64).ln()) / 2.0;
+    assert!((score + loss).abs() < TOLERANCE);
 }
 
 fn score_regressor(policy: SKRegressorScoring) -> f64 {
@@ -82,7 +83,7 @@ fn score_regressor(policy: SKRegressorScoring) -> f64 {
     let truth = array![1.0, 2.0, 3.0];
     let model = SKMockFixedRegressorModel::new(vec![1.0, 2.0, 4.0]);
     policy
-        .sk_score(
+        .score(
             &model,
             SKDataView::Dense(features.view()),
             SKTargetView::Continuous(truth.view()),

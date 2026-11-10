@@ -120,3 +120,33 @@ fn grid_acceptance_classifier_and_regressor_produce_metrics() {
     assert!(regressor.best_score() <= 0.0);
     assert_eq!(array![regressor.best_candidate_index()].len(), 1);
 }
+
+/// Under `LogLoss` the lower-loss candidate must win: selection maximises, so
+/// the scorer returns the negated loss.
+#[test]
+fn grid_acceptance_log_loss_selects_the_lower_loss_candidate() {
+    let features = Array1::from_iter((0..40).map(|row| row as f64))
+        .to_shape((40, 1))
+        .unwrap()
+        .to_owned();
+    let labels = Array1::from_iter((0..40).map(|row| i64::from(row >= 20)));
+    let estimator = SKGridSearchCVClassifier::build()
+        .candidates(vec![
+            SKMockThresholdClassifier::new(20.0),
+            SKMockThresholdClassifier::new(0.0),
+        ])
+        .splitter(
+            SKKFold::build()
+                .number_of_splits(4)
+                .shuffle(true)
+                .random_seed(3)
+                .build()
+                .unwrap(),
+        )
+        .scoring(crate::grid_search::SKClassifierScoring::LogLoss)
+        .build()
+        .unwrap();
+    let model = estimator.fit(features.view(), labels.view()).unwrap();
+    assert_eq!(model.best_candidate_index(), 0);
+    assert!(model.results().mean_scores()[0] > model.results().mean_scores()[1]);
+}

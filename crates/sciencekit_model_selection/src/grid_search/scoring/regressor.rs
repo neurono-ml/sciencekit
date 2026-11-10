@@ -32,7 +32,7 @@ impl SKRegressorScoring {
         SKScoringFamily::Regressor
     }
 
-    fn sk_score_model<F, M>(
+    fn score_model<F, M>(
         &self,
         model: &M,
         features: SKDataView<'_, F>,
@@ -66,12 +66,12 @@ where
     M: SKRegressorPredictor<F>,
     SKError: From<M::Error>,
 {
-    fn sk_score(
+    fn score(
         &self,
         model: &M,
         features: SKDataView<'_, F>,
         targets: SKTargetView<'_, F>,
     ) -> Result<F, SKError> {
-        self.sk_score_model(model, features, targets)
+        self.score_model(model, features, targets)
     }
 }

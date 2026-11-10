@@ -54,7 +54,7 @@ impl SKClassifierScoring {
         )
     }
 
-    fn sk_score_model<F, M>(
+    fn score_model<F, M>(
         &self,
         model: &M,
         features: SKDataView<'_, F>,
@@ -82,7 +82,12 @@ impl SKClassifierScoring {
             SKClassifierScoring::Auc { positive_label } => {
                 SKAucScorer::new(*positive_label).score(model, features, targets)
             }
-            SKClassifierScoring::LogLoss => SKLogLossScorer::new().score(model, features, targets),
+            SKClassifierScoring::LogLoss => {
+                // Selection maximises, so the loss is negated: the candidate
+                // with the lower loss must win.
+                let loss = SKLogLossScorer::new().score(model, features, targets)?;
+                Ok(F::zero() - loss)
+            }
         }
     }
 }
@@ -93,12 +98,12 @@ where
     M: SKClassifierPredictor<F>,
     SKError: From<M::Error>,
 {
-    fn sk_score(
+    fn score(
         &self,
         model: &M,
         features: SKDataView<'_, F>,
         targets: SKTargetView<'_, F>,
     ) -> Result<F, SKError> {
-        self.sk_score_model(model, features, targets)
+        self.score_model(model, features, targets)
     }
 }

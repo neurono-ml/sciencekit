@@ -9,7 +9,7 @@ use sciencekit_common::{SKDataView, SKError, SKFloat, SKTargetView};
 /// searches.
 pub(crate) trait SKFoldScorer<F: SKFloat, M> {
     /// Scores `model` on `features` against `targets`.
-    fn sk_score(
+    fn score(
         &self,
         model: &M,
         features: SKDataView<'_, F>,

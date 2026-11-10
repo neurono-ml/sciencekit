@@ -104,5 +104,5 @@ where
     let test_partition = test_targets.expect("targets were requested");
 
     let model = sk_fit_on_partition(&candidates[candidate], &train_features, &train_partition)?;
-    test_partition.with_view(|test_view| scoring.sk_score(&model, test_features.view(), test_view))
+    test_partition.with_view(|test_view| scoring.score(&model, test_features.view(), test_view))
 }
