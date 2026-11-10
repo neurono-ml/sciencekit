@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `sciencekit_gpu` — the device-compute contracts shared by the OpenCL, CUDA
+  and ROCm backends (spec `gpu-compute-contracts`). `SKDeviceInfo` and
+  `SKDeviceCapabilities` describe an enumerated device, its memory, scalar
+  types and supported kernels; `SKDeviceDiscovery` is the availability-detection
+  abstraction; `SKComputeBackend<F>` adds the explicit `upload`, `download` and
+  `dispatch` surface over `SKDeviceBuffer<F>`, whose builder validates shape,
+  capacity and payload. The closed `SKGpuKernel` catalogue names pairwise
+  distance, GEMM, elementwise and tree prediction, and an unsupported kernel
+  reports `UnsupportedOperation` naming it. `gpu-opencl`, `gpu-cuda` and
+  `gpu-rocm` are off by default and the foundation crate pulls in no GPU
+  runtime; tests drive a mock backend, so no device is required to build or
+  test.
+- `SKBackendKind` gains the `OpenCl`, `Cuda` and `Rocm` kinds alongside the CPU
+  kinds, with documented display names, `FromStr` parsing, `Default` and
+  host/device predicates. Every workspace match is updated; the host math
+  dispatch keeps device kinds on the pure-Rust backend until a GPU kernel
+  backend owns them.
+- Deterministic device selection: `sk_select_device` filters by the configured
+  kind and the required kernel, then orders by `(kind priority, device index)`;
+  when nothing matches it returns the `SKFallbackReason` the plan records.
+  `SKExecutionContext` carries an optional `SKDeviceContext` (configured
+  backend, required kernel, device inventory) and `SKExecutionPlan` exposes the
+  selected `backend` and `fallback_reason`. Automatic planning selects a device
+  only when the inventory carries one implementing the required kernel; every
+  other case falls back to the host backend, and explicit execution modes never
+  select a device. Operation spans record the selected kind and, when present,
+  the fallback reason.
+- New structured errors for device work: `DeviceUnavailable`,
+  `UnsupportedScalarType` and `DeviceTransferFailure`.
+
 ## [0.6.0] — 2026-11-10
 
 The k-NN imputer, grid search and the embedded Lua bindings.
