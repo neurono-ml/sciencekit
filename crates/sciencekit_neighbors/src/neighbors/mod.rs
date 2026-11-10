@@ -6,6 +6,7 @@
 
 mod algorithm;
 mod metric;
+mod weights;
 
 pub use algorithm::{
     SK_AUTO_BALL_TREE_MINIMUM_FEATURES, SK_AUTO_TREE_MINIMUM_TRAINING_ROWS,
@@ -13,6 +14,9 @@ pub use algorithm::{
     sk_resolve_search_strategy,
 };
 pub use metric::SKNeighborsMetric;
+pub use weights::SKNeighborsWeights;
 
 #[cfg(test)]
 mod algorithm_tests;
+#[cfg(test)]
+mod weights_tests;
