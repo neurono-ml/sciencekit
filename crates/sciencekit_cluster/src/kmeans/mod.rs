@@ -49,3 +49,5 @@ mod kmeans_init_tests;
 mod kmeans_lloyd_tests;
 #[cfg(test)]
 mod kmeans_predict_tests;
+#[cfg(test)]
+mod kmeans_validation_tests;
