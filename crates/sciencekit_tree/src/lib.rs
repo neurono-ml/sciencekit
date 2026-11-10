@@ -29,6 +29,8 @@ mod splitter;
 pub mod impurity;
 pub mod node;
 
+pub use class_weight::SKClassWeight;
+
 pub mod classifier;
 pub mod regressor;
 

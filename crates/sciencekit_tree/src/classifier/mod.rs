@@ -6,6 +6,10 @@ mod fit;
 mod model;
 mod predict;
 
+pub use builder::SKDecisionTreeClassifierBuilder;
+pub use core_implementation::SKDecisionTreeClassifier;
+pub use model::SKDecisionTreeClassifierModel;
+
 #[cfg(test)]
 mod classifier_builder_tests;
 #[cfg(test)]
