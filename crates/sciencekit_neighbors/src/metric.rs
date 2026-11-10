@@ -1,0 +1,5 @@
+//! The metric catalogue and its geometry bounds (spec
+//! `nearest-neighbor-search`).
+//!
+//! This is a pure dispatcher module: implementation and companion tests live in
+//! their own files.
