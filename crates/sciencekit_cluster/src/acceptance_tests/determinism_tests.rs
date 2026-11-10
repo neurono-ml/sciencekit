@@ -58,3 +58,24 @@ fn acceptance_determinism_multiple_initializations_are_stable() {
     assert_eq!(first.labels(), second.labels());
     assert_eq!(first.inertia(), second.inertia());
 }
+
+#[test]
+fn acceptance_determinism_parallel_initializations_are_thread_count_invariant() {
+    let (data, _) = planted_design(1_500, 3);
+    let build = || {
+        SKKMeans::<f64>::build()
+            .number_of_clusters(3)
+            .initialization(crate::SKKMeansInitialization::Random)
+            .number_of_initializations(6)
+            .random_seed(19)
+            .build()
+            .unwrap()
+    };
+    let single_thread = ThreadPoolBuilder::new().num_threads(1).build().unwrap();
+    let four_threads = ThreadPoolBuilder::new().num_threads(4).build().unwrap();
+    let single = single_thread.install(|| build().fit(&data)).unwrap();
+    let parallel = four_threads.install(|| build().fit(&data)).unwrap();
+    assert_eq!(single.cluster_centers(), parallel.cluster_centers());
+    assert_eq!(single.labels(), parallel.labels());
+    assert_eq!(single.inertia(), parallel.inertia());
+}

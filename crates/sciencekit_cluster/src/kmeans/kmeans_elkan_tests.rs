@@ -8,6 +8,8 @@ use super::elkan::{sk_elkan_assign, sk_elkan_fit};
 use super::iteration::sk_nearest_labels;
 use super::iteration::sk_update_centers;
 use super::lloyd::sk_lloyd_fit;
+use crate::{SKKMeans, SKKMeansAlgorithm};
+use sciencekit_common::SKUnsupervisedFit;
 
 fn separated_blobs() -> Array2<f64> {
     array![
@@ -109,4 +111,61 @@ fn kmeans_elkan_empty_cluster_update_uses_exact_distances() {
         3,
     );
     assert_eq!(centers.nrows(), 3);
+}
+
+/// A small deterministic pseudo-random source, so the overlap test needs no
+/// external crate.
+struct FixtureGenerator(u64);
+
+impl FixtureGenerator {
+    fn next_unit(&mut self) -> f64 {
+        self.0 = self
+            .0
+            .wrapping_mul(6_364_136_223_846_793_005)
+            .wrapping_add(1_442_695_040_888_963_407);
+        ((self.0 >> 11) as f64) / ((1_u64 << 53) as f64)
+    }
+}
+
+/// Overlapping, non-separable data: the acceleration must still match Lloyd
+/// exactly. Well-separated blobs hide stale-bound bugs, so this fixture draws
+/// every coordinate from one wide distribution with no planted clusters.
+#[test]
+fn kmeans_elkan_matches_lloyd_on_overlapping_data() {
+    use sciencekit_common::SKBuilder;
+
+    for seed in [0_u64, 1, 7, 42, 1234] {
+        let mut generator = FixtureGenerator(seed.wrapping_add(17));
+        let mut values = Vec::with_capacity(120 * 3);
+        for _ in 0..120 * 3 {
+            values.push(generator.next_unit() * 4.0 - 2.0);
+        }
+        let features = Array2::from_shape_vec((120, 3), values).expect("shape");
+        let lloyd = SKKMeans::build()
+            .number_of_clusters(4)
+            .algorithm(SKKMeansAlgorithm::Lloyd)
+            .random_seed(seed)
+            .build()
+            .expect("build")
+            .fit(&features)
+            .expect("fit");
+        let elkan = SKKMeans::build()
+            .number_of_clusters(4)
+            .algorithm(SKKMeansAlgorithm::Elkan)
+            .random_seed(seed)
+            .build()
+            .expect("build")
+            .fit(&features)
+            .expect("fit");
+        assert_eq!(
+            lloyd.labels(),
+            elkan.labels(),
+            "seed {seed}: Elkan must return Lloyd's assignment"
+        );
+        let relative_gap = (lloyd.inertia() - elkan.inertia()).abs() / lloyd.inertia().max(1.0);
+        assert!(
+            relative_gap < 1e-9,
+            "seed {seed}: inertia gap {relative_gap}"
+        );
+    }
 }
