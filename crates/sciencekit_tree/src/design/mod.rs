@@ -5,7 +5,7 @@
 
 mod design_view;
 
-pub(crate) use design_view::{SKDesign, sk_to_csc};
+pub(crate) use design_view::{SKDesign, sk_sparse_row_value, sk_to_csc};
 
 #[cfg(test)]
 mod design_tests;
