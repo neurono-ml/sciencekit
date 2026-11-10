@@ -400,6 +400,62 @@ promise on wide sparse matrices) and "dense-only everywhere" (throws away the sp
 support that lasso, linear SVMs and text classification depend on).
 
 
+### `SKClusterLabel` (typed cluster assignments: a label that knows what noise is)
+
+Clustering has a problem the other predictors do not: a clusterer's output is not a
+number you can round into an index. KMeans returns cluster `0`, `1`, `2`…, but DBSCAN can
+declare a point **noise** — it belongs to no cluster at all. Storing noise as `-1` inside
+a `usize` is impossible; storing it as a sentinel inside an `i64` works until someone
+genuinely needs cluster `-1` or forgets to check the sentinel. The contract therefore
+makes the distinction part of the type:
+
+```rust
+pub enum SKClusterLabel {
+    Cluster(SKClusterIdentifier),
+    Noise,
+}
+```
+
+`SKClusterIdentifier` stores `index + 1` in a `NonZeroU32`. That single decision buys two
+properties. First, cluster `0` is representable (the stored value is `1`), so the common
+case does not need a special value. Second, the zero bit pattern inside `NonZeroU32` is a
+**niche**: the compiler reuses it to encode the `Noise` variant, so the whole enum is four
+bytes — the same size as a bare `u32` — with no sentinel and no possibility of collision.
+
+```mermaid
+flowchart LR
+    accTitle: Cluster index stored through a NonZeroU32 niche
+    accDescr: A public cluster index is shifted by one and stored in a NonZeroU32. Cluster 0 stores 1, cluster 7 stores 8. The unused zero pattern is the niche that encodes the Noise variant, so the label is four bytes and a cluster can never collide with noise.
+    A["Public index<br/>0, 1, 7, …"] -->|"+ 1"| B["NonZeroU32<br/>1, 2, 8, …"]
+    B --> C["Cluster(index) variant"]
+    Z["Zero bit pattern<br/>(a niche)"] --> N["Noise variant"]
+    C --> S["SKClusterLabel<br/>4 bytes total"]
+    N --> S
+    classDef public fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#1e3a8a
+    classDef stored fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#14532d
+    classDef niche fill:#fee2e2,stroke:#dc2626,stroke-width:2px,color:#7f1d1d
+    classDef result fill:#fef9c3,stroke:#ca8a04,stroke-width:2px,color:#713f12
+    class A public
+    class B,C stored
+    class Z,N niche
+    class S result
+```
+
+The external world, however, uses the `i64` convention: scikit-learn and most file
+formats write noise as `-1` and a cluster as its non-negative index. `to_i64` and
+`from_i64` translate at the **boundary only**, which is why the type is called typed
+*rather than* plain: `-1` becomes `Noise`, non-negative values become clusters, and
+anything below `-1` is rejected with a structured error instead of inventing a cluster
+that no model produced.
+
+Two more pieces complete the contract. `SKClustererPredictor<F>` is the model-side trait —
+the same `TryInto<SKDataView>` seam as the other predictors, so dense and CSR batches
+share one entry point — and `sk_validate_cluster_assignments` is the single shape check
+that the unsupervised scorer uses, so "one label per row" is defined once. Unlike a
+regressor, the scorer bound is now `M: SKClustererPredictor<F>`: it obtains typed
+assignments and never rounds a continuous response. A scorer that meets noise documents
+whether it excludes or rejects those rows, and never treats noise as a cluster.
+
 ### `SKTargetView` (the zero-copy target view)
 
 *What it is:* A `#[non_exhaustive]` enum over three target representations:
