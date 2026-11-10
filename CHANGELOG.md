@@ -9,6 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `sciencekit_ffi` sub-crate (spec `ffi-abi`): the stable C ABI for the core data
+  types and the first end-to-end path. Opaque builder/model handles are integer
+  tokens resolved through a registry, so null, unknown, wrong-kind and freed
+  handles return `SK_FFI_STATUS_INVALID_HANDLE` without dereferencing memory, and
+  in-flight predictions survive a concurrent free. Every entry point maps the
+  central error taxonomy onto the stable status codes (`OK`, `INVALID_HANDLE`,
+  `SHAPE`, `INVALID_ARGUMENT`, `UNSUPPORTED`, `NOT_FITTED`, `IO`, `INTERNAL`) and
+  exposes a thread-local last-error message that a successful call clears. Array
+  descriptors (`dtype`, `ndim`, `shape`, `strides`, `data`, `len`) are validated
+  (null pointers, dimensions, length-versus-shape, dtype, row-major strides)
+  before any element is read; inputs are borrowed without copying and outputs are
+  library-owned buffers released by `sk_ffi_array_free`. The ABI exposes builder
+  setters and `fit`, `predict`, `transform`, `score`, `save`/`load` for
+  `SKLinearRegression` (f32/f64, R² scoring) and `SKStandardScaler` (f32/f64),
+  model persistence through the format-agnostic `SKModelState` contract with a
+  documented little-endian file layout, `catch_unwind` on every entry point, an
+  ABI version/feature query, a hand-maintained `include/sciencekit.h`, and a
+  compiled `tests/c_smoke.c` that fits, predicts, scores, saves, loads and
+  transforms. `SKLinearRegressionModel` now implements `SKExportable` and
+  `SKImportable`, and the companion tests cover invalid descriptors, use after
+  free, dtype mismatches, concurrent predictions, panic containment and
+  persistence round-trips.
+
 - `sciencekit_cluster` sub-crate (spec `k-means`): `SKKMeans<F>`, a builder-only
   Lloyd/Elkan k-means estimator with `number_of_clusters` (default 8),
   `initialization` (`KMeansPlusPlus` default, `Random`), `number_of_initializations`
