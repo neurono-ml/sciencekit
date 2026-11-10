@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-11-10
+
+The interop, pipeline, spatial-index and streaming-audit batch: format-agnostic model
+export/import contracts, compile-time typed pipelines, exact k-d/ball trees, the
+engine-neutral dataset interop foundation and the workspace streaming coverage audit.
+
+[0.2.0]: https://github.com/neurono-ml/sciencekit/compare/v0.1.0...v0.2.0
+[0.3.0]: https://github.com/neurono-ml/sciencekit/compare/v0.2.0...v0.3.0
+
 ### Added
 
 - `sciencekit_neighbors` sub-crate (spec `nearest-neighbor-search`): the exact dense
