@@ -26,6 +26,7 @@ pub struct SKLasso<F> {
     pub(super) screening: bool,
     pub(super) tolerance: F,
     pub(super) maximum_number_of_iterations: usize,
+    pub(super) random_seed: u64,
     pub(super) backend: SKBackendKind,
 }
 
@@ -85,6 +86,11 @@ impl<F: SKFloat> SKLasso<F> {
         self.maximum_number_of_iterations
     }
 
+    /// The seed of every stochastic choice in the fit.
+    pub fn random_seed(&self) -> u64 {
+        self.random_seed
+    }
+
     /// The coordinate-descent configuration this estimator resolves to.
     pub(crate) fn coordinate_descent_config(&self) -> SKCoordinateDescentConfig<F> {
         coordinate_descent_config(
@@ -93,6 +99,7 @@ impl<F: SKFloat> SKLasso<F> {
             self.positive,
             self.selection,
             self.screening,
+            self.random_seed,
         )
     }
 

@@ -17,6 +17,7 @@ fn config(screening: bool) -> SKCoordinateDescentConfig<f64> {
         positive: false,
         selection: SKSelection::Cyclic,
         screening,
+        random_seed: 0,
     }
 }
 
@@ -52,6 +53,7 @@ fn kkt_reactivation_recovers_a_screened_coordinate() {
         0.5,
         1.0,
         true,
+        0,
         &config(true),
         vec![true, false, false],
     )

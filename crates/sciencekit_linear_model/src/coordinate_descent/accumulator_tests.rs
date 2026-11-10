@@ -16,6 +16,7 @@ fn config() -> SKCoordinateDescentConfig<f64> {
         positive: false,
         selection: SKSelection::Cyclic,
         screening: false,
+        random_seed: 0,
     }
 }
 

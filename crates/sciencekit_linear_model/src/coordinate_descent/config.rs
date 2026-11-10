@@ -76,6 +76,12 @@ pub(crate) struct SKCoordinateDescentConfig<F> {
     pub(crate) selection: SKSelection,
     /// Whether gap-safe screening is enabled.
     pub(crate) screening: bool,
+    /// The seed of every stochastic choice in the fit (default `0`).
+    ///
+    /// Only `SKSelection::Random` draws randomness; every `alpha` derives its
+    /// own stream from this seed, so the result never depends on the thread
+    /// count or on the completion order.
+    pub(crate) random_seed: u64,
 }
 
 impl<F: SKFloat> Default for SKCoordinateDescentConfig<F> {
@@ -86,6 +92,7 @@ impl<F: SKFloat> Default for SKCoordinateDescentConfig<F> {
             positive: false,
             selection: SKSelection::Cyclic,
             screening: true,
+            random_seed: 0,
         }
     }
 }
