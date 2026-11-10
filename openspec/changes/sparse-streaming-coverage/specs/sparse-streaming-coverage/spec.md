@@ -77,3 +77,7 @@ streams SHALL not interfere.
 
 - **WHEN** several streams run concurrently
 - **THEN** each produces its own model without shared mutable state
+
+The completeness guarantee is enforced by a source scan that walks the sibling crates at
+test time and counts the `fit_streaming` and `partial_fit` definitions, not by comparing the
+matrix with another hand-written list.
