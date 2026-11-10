@@ -5,7 +5,12 @@
 //! vocabulary is defined in `sciencekit_common` — where execution planning
 //! consumes it — and re-exported here as this crate's public contract.
 
+pub use sciencekit_common::device::{
+    SK_HOST_FALLBACK_BACKEND, SKDevicePreference, SKFallbackReason, sk_select_device,
+};
 pub use sciencekit_common::device::{SKDeviceCapabilities, SKDeviceInfo};
 
 #[cfg(test)]
 mod device_tests;
+#[cfg(test)]
+mod selection_tests;

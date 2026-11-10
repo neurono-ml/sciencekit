@@ -39,6 +39,9 @@ pub use builders::{SKBuilder, SKBuilderState, sk_validate_hyperparameter};
 pub use data_view::{
     SK_CATEGORICAL_MISSING_CODE, SKCategoricalView, SKDataView, SKNominalMatrixView,
 };
+pub use device::{
+    SK_HOST_FALLBACK_BACKEND, SKDevicePreference, SKFallbackReason, sk_select_device,
+};
 pub use device::{SKDeviceCapabilities, SKDeviceInfo};
 pub use errors::SKError;
 pub use execution::{SKExecutionContext, SKExecutionMode, SKExecutionPlan};
