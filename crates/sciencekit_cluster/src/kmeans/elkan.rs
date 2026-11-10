@@ -38,7 +38,7 @@ pub(crate) fn sk_elkan_fit_with_evaluations<F: SKFloat>(
     let number_of_rows = features.nrows();
     let number_of_clusters = initial_centers.nrows();
     let mut centers = initial_centers;
-    let mut distances = sk_dense_squared_distances_to_centers(&features, &centers.view());
+    let distances = sk_dense_squared_distances_to_centers(&features, &centers.view());
     let mut labels = sk_nearest_labels(&distances);
     let mut lower = distances.clone();
     let mut upper = Array1::from_iter((0..number_of_rows).map(|row| distances[[row, labels[row]]]));

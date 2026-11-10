@@ -4,6 +4,7 @@
 //! This is a **pure dispatcher** module: it only declares and re-exports its
 //! submodules; every implementation lives in its own file.
 
+mod algorithm;
 mod config;
 mod distance;
 mod elkan;
@@ -23,6 +24,8 @@ pub(crate) use init::{
     sk_run_initializations,
 };
 
+#[cfg(test)]
+mod kmeans_algorithm_tests;
 #[cfg(test)]
 mod kmeans_distance_tests;
 #[cfg(test)]
