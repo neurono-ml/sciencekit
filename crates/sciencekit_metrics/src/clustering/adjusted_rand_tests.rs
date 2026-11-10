@@ -55,3 +55,11 @@ fn adjusted_rand_is_zero_at_the_chance_level() {
     let score = sk_adjusted_rand_score(truth.view(), predicted.view()).unwrap();
     assert!(score.abs() < 1e-12, "expected zero, got {score}");
 }
+
+/// Two trivial labelings (one cluster each) are identical partitions.
+#[test]
+fn adjusted_rand_is_one_when_both_labelings_are_trivial() {
+    let first = ndarray::array![0_i64, 0, 0, 0];
+    let second = ndarray::array![5_i64, 5, 5, 5];
+    assert!((sk_adjusted_rand_score(first.view(), second.view()).unwrap() - 1.0).abs() < 1e-12);
+}

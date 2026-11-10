@@ -130,7 +130,7 @@ fn clustering_validation_rejects_no_rows_beyond_the_clusters() {
 }
 
 #[test]
-fn clustering_validation_rejects_empty_pairwise_labels() {
+fn clustering_validation_rejects_a_pairwise_label_length_mismatch() {
     let labels = array![0_i64, 1, 0, 1];
     assert!(matches!(
         sk_normalized_mutual_information_score(

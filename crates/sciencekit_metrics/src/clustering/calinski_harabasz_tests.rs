@@ -71,3 +71,19 @@ fn calinski_harabasz_excludes_noise_rows() {
         sk_calinski_harabasz_score(SKDataView::Dense(features.view()), with_noise.view()).unwrap();
     assert!((clean - noisy).abs() < 1e-12);
 }
+
+/// Coincident centroids leave no between-cluster dispersion: the ratio is
+/// infinite as documented.
+#[test]
+fn calinski_harabasz_reports_infinity_for_coincident_centroids() {
+    let features = ndarray::array![[0.0_f64], [0.0], [0.0], [0.0]];
+    let assignments = ndarray::array![
+        SKClusterLabel::cluster(0),
+        SKClusterLabel::cluster(0),
+        SKClusterLabel::cluster(1),
+        SKClusterLabel::cluster(1),
+    ];
+    let score =
+        sk_calinski_harabasz_score(SKDataView::Dense(features.view()), assignments.view()).unwrap();
+    assert!(score.is_infinite() && score > 0.0);
+}

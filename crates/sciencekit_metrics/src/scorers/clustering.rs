@@ -9,8 +9,8 @@ use crate::clustering::sk_silhouette_score;
 
 /// The silhouette score over a clusterer's typed assignments.
 ///
-/// **Noise policy:** noise rows are excluded before the free function runs;
-/// noise is never treated as a cluster. Fewer than two non-noise clusters are
+/// **Noise policy:** delegates to [`sk_silhouette_score`], which excludes noise
+/// rows; noise is never treated as a cluster. Fewer than two non-noise clusters are
 /// rejected with [`SKError::InvalidHyperparameter`].
 #[derive(Debug, Clone, Copy, Default)]
 pub struct SKSilhouetteScorer;

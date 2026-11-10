@@ -140,3 +140,41 @@ fn silhouette_score_rejects_all_noise_assignments() {
         sk_silhouette_score(SKDataView::Dense(features.view()), assignments.view()).unwrap_err();
     assert!(matches!(error, SKError::EmptyInput { .. }));
 }
+
+/// A hand-computed fixture pins the exact formula, including that `a(i)`
+/// excludes the point itself.
+#[test]
+fn silhouette_samples_match_a_hand_computed_fixture() {
+    // Four points on a line: cluster 0 is {0, 2}, cluster 1 is {10, 12}.
+    let features = ndarray::array![[0.0_f64], [2.0], [10.0], [12.0]];
+    let assignments = ndarray::array![
+        SKClusterLabel::cluster(0),
+        SKClusterLabel::cluster(0),
+        SKClusterLabel::cluster(1),
+        SKClusterLabel::cluster(1)
+    ];
+    let samples =
+        sk_silhouette_samples(SKDataView::Dense(features.view()), assignments.view()).unwrap();
+    // Point 0: a = d(0,2) = 2, b = mean(d(0,10), d(0,12)) = 11, s = 9/11.
+    assert!((samples[0] - 9.0 / 11.0).abs() < 1e-12);
+    // Point 2: a = 2, b = mean(d(2,10), d(2,12)) = 9, s = 7/9.
+    assert!((samples[1] - 7.0 / 9.0).abs() < 1e-12);
+    // Point 10: a = 2, b = mean(d(10,0), d(10,2)) = 9, s = 7/9.
+    assert!((samples[2] - 7.0 / 9.0).abs() < 1e-12);
+    // Point 12: a = 2, b = mean(d(12,0), d(12,2)) = 11, s = 9/11.
+    assert!((samples[3] - 9.0 / 11.0).abs() < 1e-12);
+}
+
+/// A singleton cluster scores exactly zero by the documented convention.
+#[test]
+fn silhouette_samples_score_a_singleton_cluster_as_zero() {
+    let features = ndarray::array![[0.0_f64], [10.0], [12.0]];
+    let assignments = ndarray::array![
+        SKClusterLabel::cluster(0),
+        SKClusterLabel::cluster(1),
+        SKClusterLabel::cluster(1),
+    ];
+    let samples =
+        sk_silhouette_samples(SKDataView::Dense(features.view()), assignments.view()).unwrap();
+    assert_eq!(samples[0], 0.0);
+}
