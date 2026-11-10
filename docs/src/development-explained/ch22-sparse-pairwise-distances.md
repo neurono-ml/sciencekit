@@ -54,17 +54,20 @@ three cases. Everything else is arithmetic on those three cases.
 2. **Dense formulas, sparse contributions.** Each sparse metric is derived from the same
    definition the dense kernel uses — norms plus shared dot product for Euclidean, a merged
    sum for Manhattan and Chebyshev, stored dot and norms for cosine — never by densifying.
-3. **Row-parallel fill.** The output is filled row by row with rayon, using the same grain as
-   the dense kernels, so parallel and sequential runs are bit-identical.
+3. **Row-parallel fill.** The output is filled row by row with rayon at grain `1024` — the
+   same grain the dense Chebyshev and NaN-aware kernels use — so parallel and sequential runs
+   are bit-identical.
 4. **NaN-aware Euclidean is dense-only.** In CSR an implicit zero is an observed value, so
    "what is the distance ignoring missing coordinates?" has no sparse meaning. The dispatcher
    rejects it up front with `UnsupportedRepresentation`.
 
 *Roads not taken.* A `is_sparse` boolean threaded through every kernel (branching in the hot
 loop and easy to get wrong); densifying a sparse input when it is "small enough" (a silent
-memory cliff); computing Euclidean as the square root of the algebraic expansion on sparse
-data (subtractive cancellation between large norms); and a separate public function per
-representation (four times the surface, and callers must choose).
+memory cliff); and a separate public function per representation (four times the surface, and
+callers must choose). The norm-expansion form *is* used, because for sparse rows it needs only
+the stored values; the dense kernels keep the same form, so the two paths stay comparable —
+with the caveat that near-identical rows can lose precision in the dense expansion, which is
+why equivalence tests compare values that are not catastrophically close.
 
 ## 3. The concepts, taught from zero
 
@@ -149,16 +152,18 @@ a whole class of merge bugs (double counting, dropped one-sided coordinates).
 
 ### `sparse_pairwise_wide_matrix_is_not_densified`
 
-A matrix with **one million features** and a handful of stored entries per row is passed
-through the dispatcher. The test succeeds and keeps the stored-entry count unchanged. If any
-kernel had called `to_dense`, this test would either allocate gigabytes or time out — the
-memory promise is a test, not a comment.
+A matrix with **one hundred million columns** and three stored entries is passed through the
+dispatcher for all five sparse metrics. A densified copy would need about 2.4 GB and fail, so
+the test only passes because every kernel reads stored values. The test also keeps the
+stored-entry count unchanged — the memory promise is a test, not a comment.
 
-### `sparse_pairwise_rejects_sparse_nan_euclidean`
+### `sparse_pairwise_rejects_sparse_nan_euclidean` and `sparse_pairwise_dense_nan_euclidean_keeps_the_dense_kernel`
 
-The dense-only exception is exercised: a sparse request for the NaN-aware metric returns
-`UnsupportedRepresentation`, and the test also proves the dense request still works. This is
-the `data-view-boundary` rule applied to a *semantically undefined* representation.
+The dense-only exception is exercised in two halves: a sparse request for the NaN-aware metric
+returns `UnsupportedRepresentation`, and a separate test proves the dense request still
+produces the dense NaN-aware matrix. This is the `data-view-boundary` rule applied to a
+*semantically undefined* representation: rejection is the whole answer because no sparse
+alternative path can exist.
 
 ### `sparse_pairwise_parallel_equals_sequential` and `sparse_pairwise_concurrent_calls_are_deterministic`
 
