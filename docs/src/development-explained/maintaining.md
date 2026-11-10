@@ -227,4 +227,6 @@ K-fold flavours, row gathering and cross-validation scoring. The
 [C ABI chapter](./ch30-c-abi.html) adds the stable boundary every non-Rust binding wraps:
 opaque handles, borrowed and owned arrays, status codes, panic containment and persistence.
 The [clustering metrics chapter](./ch31-clustering-metrics.html) adds silhouette, ARI, NMI,
-homogeneity/completeness/V-measure and the centroid indices.
+homogeneity/completeness/V-measure and the centroid indices. The
+[k-nearest neighbours chapter](./ch32-knn-estimators.html) adds the brute-force searcher, the
+runtime strategy dispatch, weighting and the estimator representation parity.
