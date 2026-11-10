@@ -43,6 +43,8 @@ mod dictionary_import_tests;
 #[cfg(test)]
 mod null_policy_tests;
 #[cfg(test)]
+mod provider_bridge_tests;
+#[cfg(test)]
 mod record_batch_import_tests;
 #[cfg(test)]
 mod schema_mapping_tests;
