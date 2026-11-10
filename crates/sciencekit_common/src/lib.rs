@@ -37,8 +37,9 @@ pub use data_view::{
 pub use errors::SKError;
 pub use execution::{SKExecutionContext, SKExecutionMode, SKExecutionPlan};
 pub use fit_traits::{
-    SKClassifierPredictor, SKFeatureTransformer, SKRegressorPredictor, SKSupervisedFit,
-    SKUnsupervisedFit,
+    SKClassifierPredictor, SKClusterIdentifier, SKClusterLabel, SKClustererPredictor,
+    SKFeatureTransformer, SKRegressorPredictor, SKSupervisedFit, SKUnsupervisedFit,
+    sk_validate_cluster_assignments,
 };
 pub use label_table::{SKLabelTable, sk_canonicalize_labels};
 pub use observability::{
