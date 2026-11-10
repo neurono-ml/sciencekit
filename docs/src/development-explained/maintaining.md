@@ -214,4 +214,7 @@ evaluation story with ROC/AUC, precision-recall, log loss, balanced accuracy and
 [type-safe pipeline chapter](./ch24-type-safe-pipeline.html) then composes transformers and
 a final estimator into a chain whose validity is checked by the compiler, not at fit time.
 The [spatial index chapter](./ch25-spatial-indexes.html) adds exact k-d and ball trees: lower
-bounds, deterministic tie ordering, and the dense-only exception applied to geometry.
+bounds, deterministic tie ordering, and the dense-only exception applied to geometry. The
+[dataset interop chapter](./ch26-dataset-interop.html) adds the engine-neutral seam: ordered
+schema, explicit selection, one missing-value policy, typed batches, streaming sources and the
+async bridge.
