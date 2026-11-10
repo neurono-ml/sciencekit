@@ -410,14 +410,17 @@ plus a deterministic `BTreeMap<String, SKTensor<F>>` of **named tensors** — th
 If each format crate invented its own container, every estimator would need one export method
 per format. Instead the model describes its state **once**, and each format crate serializes
 that state. `SKExportable` produces it, `SKImportable` consumes it, and
-`sk_validate_import_metadata` checks the identity triple before any tensor is trusted.
+`sk_validate_import_metadata` checks the identity triple before any tensor is trusted: an
+importer validates estimator and version first, reads the tensors, then confirms the feature
+count against the metadata.
 
 The two design rules that matter:
 
-1. **Names are stable and unique.** A tensor is addressed by a name such as `coefficients`, not
+1. **Names are stable and unique.** A tensor is addressed by a stable dotted name such as `linear.coefficients`, not
    by array position. Reordering an internal struct must not silently change the file format.
    Construction rejects duplicate names; `BTreeMap` gives a deterministic order, so the same
-   model always serializes to the same byte layout.
+   model always yields the same tensor order, so two adapters written against the same release
+   see the same layout.
 2. **No `serde` in the contract.** The contract is plain Rust values. `serde` would couple the
    core crate to one serialization model and make the state of a model depend on a derive; the
    format crates own their encodings. This keeps `sciencekit_common` dependency-light and lets
@@ -445,6 +448,16 @@ flowchart TD
     class A,O,J,I format
     class R result
 ```
+
+### Test walk-through: `interop_traits_round_trip_preserves_predictions`
+
+The reference model in `interop/mock_model.rs` is a tiny linear scorer (`x·coefficients +
+intercept`). The test fits nothing: it builds the model directly, exports its state, imports it
+back and asserts that **both score the same rows identically**. That is the whole point of the
+contract — the state must carry *all* learned information, not just the arrays that happened to
+be convenient. A companion test, `interop_traits_export_preserves_class_labels`, proves the
+class table survives the round trip, and the validation tests prove a foreign state is rejected
+before it can be mistaken for this model.
 
 Validation is deliberately split: a wrong estimator or format version is an
 `UnsupportedRepresentation` (this state describes something else), a feature-count
