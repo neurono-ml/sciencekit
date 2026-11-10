@@ -8,13 +8,14 @@ use sciencekit_common::{
     SKBuilder, SKClassifierPredictor, SKError, SKRegressorPredictor, SKSupervisedFit,
 };
 
-use crate::grid_search::mock_estimators::{
-    SKMockConstantRegressor, SKMockThresholdClassifier,
-};
+use crate::grid_search::mock_estimators::{SKMockConstantRegressor, SKMockThresholdClassifier};
 use crate::grid_search::{SKGridSearchCVClassifier, SKGridSearchCVRegressor};
 use crate::split::kfold::SKKFold;
 
-fn regression_model() -> (crate::grid_search::SKGridSearchCVRegressorModel<f64, SKMockConstantRegressor>, Array2<f64>) {
+fn regression_model() -> (
+    crate::grid_search::SKGridSearchCVRegressorModel<f64, SKMockConstantRegressor>,
+    Array2<f64>,
+) {
     let features = Array2::from_shape_fn((10, 2), |(row, column)| (row + column) as f64);
     let targets = Array1::from_iter((0..10).map(|row| (row % 3) as f64));
     let estimator = SKGridSearchCVRegressor::build()
@@ -41,7 +42,10 @@ fn grid_concurrency_prediction_without_refit_returns_unsupported_operation() {
         .unwrap();
     let model = estimator.fit(features.view(), targets.view()).unwrap();
 
-    let error = model.predict(features.view()).err().expect("prediction is blocked");
+    let error = model
+        .predict(features.view())
+        .err()
+        .expect("prediction is blocked");
     assert!(matches!(
         error,
         SKError::UnsupportedOperation {

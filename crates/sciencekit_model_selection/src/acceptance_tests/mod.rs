@@ -6,6 +6,7 @@
 mod concurrency_tests;
 mod determinism_tests;
 mod fixtures;
+mod grid_search;
 mod large_data_tests;
 mod metric_tests;
 mod representation_tests;

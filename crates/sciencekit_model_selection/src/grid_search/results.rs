@@ -85,7 +85,12 @@ impl<F: SKFloat> SKGridSearchResults<F> {
 }
 
 fn sk_compare_scores<F: SKFloat>(left: F, right: F) -> Ordering {
-    left.partial_cmp(&right).unwrap_or(Ordering::Equal)
+    match (left.is_nan(), right.is_nan()) {
+        (true, true) => Ordering::Equal,
+        (true, false) => Ordering::Less,
+        (false, true) => Ordering::Greater,
+        (false, false) => left.partial_cmp(&right).unwrap_or(Ordering::Equal),
+    }
 }
 
 fn sk_aggregate_rows<F: SKFloat>(scores: ArrayView2<'_, F>) -> (Array1<F>, Array1<F>) {

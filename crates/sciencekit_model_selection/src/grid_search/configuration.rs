@@ -13,7 +13,7 @@ use crate::SKSplitter;
 /// parameter in the public estimator surface.
 pub(crate) struct SKGridSearchConfiguration<F: SKFloat, E> {
     pub(crate) candidates: Vec<E>,
-    pub(crate) splitter: Box<dyn SKSplitter<F>>,
+    pub(crate) splitter: Box<dyn SKSplitter<F> + Send + Sync>,
     pub(crate) refit: bool,
     pub(crate) error_score: SKErrorScore<F>,
     pub(crate) groups: Option<Array1<i64>>,

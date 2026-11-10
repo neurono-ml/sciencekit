@@ -14,7 +14,7 @@ use crate::SKSplitter;
 pub(crate) struct SKGridSearchBuildState<F: SKFloat, E> {
     pub(crate) builder_state: SKBuilderState,
     pub(crate) candidates: Vec<E>,
-    pub(crate) splitter: Option<Box<dyn SKSplitter<F>>>,
+    pub(crate) splitter: Option<Box<dyn SKSplitter<F> + Send + Sync>>,
     pub(crate) refit: bool,
     pub(crate) error_score: SKErrorScore<F>,
     pub(crate) groups: Option<Array1<i64>>,
@@ -43,7 +43,7 @@ impl<F: SKFloat, E> SKGridSearchBuildState<F, E> {
 
     pub(crate) fn splitter<S>(mut self, splitter: S) -> Self
     where
-        S: SKSplitter<F> + 'static,
+        S: SKSplitter<F> + Send + Sync + 'static,
     {
         self.splitter = Some(Box::new(splitter));
         self

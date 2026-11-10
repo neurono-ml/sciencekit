@@ -38,7 +38,7 @@ impl<F: SKFloat, E> SKGridSearchCVRegressorBuilder<F, E> {
     /// Sets the splitter producing the cross-validation folds.
     pub fn splitter<S>(mut self, splitter: S) -> Self
     where
-        S: SKSplitter<F> + 'static,
+        S: SKSplitter<F> + Send + Sync + 'static,
     {
         self.state = self.state.splitter(splitter);
         self
