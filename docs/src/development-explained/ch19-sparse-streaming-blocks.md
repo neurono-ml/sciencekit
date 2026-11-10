@@ -171,8 +171,10 @@ flowchart LR
 
 Three properties come out of it:
 
-1. **Completeness.** The matrix pins the count (thirteen implementations) and every name, so
-   adding a streaming estimator without auditing it fails the test.
+1. **Completeness.** The matrix pins the count (thirteen estimators) and every name, and a
+   source scan walks the sibling crates at test time counting `fn fit_streaming` and
+   `pub fn partial_fit` definitions — so adding a streaming estimator without an audit row
+   fails the suite.
 2. **The exception is explicit.** Exactly one row has `sparse_streaming: false`:
    `SKOneHotEncoder`. Its streaming input is not a numeric block at all — it is an iterator
    of categorical views — so numeric CSR support is meaningless there. Writing the exception
@@ -180,11 +182,33 @@ Three properties come out of it:
 3. **The guard has a shape.** A deliberately dense-only streaming estimator must match the
    representation once, before touching an element, and return
    `UnsupportedRepresentation` with a conversion suggestion. A local fixture in the audit
-   module demonstrates that contract; no shipped estimator is dense-only today.
+   module demonstrates that contract; no shipped **numeric** estimator is dense-only — the
+   one-hot encoder's seam is categorical, not numeric.
 
 The no-densification rule is the thread running through both layers: the per-estimator suites
-compare a sparse stream against a dense stream and a dense `fit`, and the memory-guard test
-proves a batch's *stored* size drives the budget — a densified block would fail it.
+compare a sparse stream against a dense stream and a dense `fit`, so a densified block would
+have to produce the same numbers while never being observed; the memory guard additionally
+bounds a batch by its *stored* byte size. These are strong signals, not an allocation proof:
+the guarded shape tests prove a stream completes where its dense twin is impractical for the
+test budget.
+
+### The audited surface
+
+| Estimator | `partial_fit` | Numeric streaming | CSR |
+|---|---|---|---|
+| `SKStandardScaler` | yes | yes | yes |
+| `SKMinMaxScaler` | yes | yes | yes |
+| `SKRobustScaler` | yes | yes | yes |
+| `SKPolynomialFeatures` | no | yes | yes |
+| `SKOneHotEncoder` | no | categorical seam | not applicable |
+| `SKSimpleImputer` | yes | yes | yes |
+| `SKLinearRegression` | yes | yes | yes |
+| `SKRidge` | yes | yes | yes |
+| `SKLasso` | yes | yes | yes |
+| `SKElasticNet` | yes | yes | yes |
+| `SKLogisticRegression` | yes | yes | yes |
+| `SKSGDClassifier` | yes | yes | yes |
+| `SKSGDRegressor` | yes | yes | yes |
 
 ## 7. Walking the real tests
 
