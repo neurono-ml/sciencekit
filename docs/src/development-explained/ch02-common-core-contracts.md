@@ -441,8 +441,6 @@ flowchart LR
     class S result
 ```
 
-`SKClustererPredictor<F>` is the model-side sibling of the other predictors.
-
 The external world, however, uses the `i64` convention: scikit-learn and most file
 formats write noise as `-1` and a cluster as its non-negative index. `to_i64` and
 `from_i64` translate at the **boundary only**, which is why the type is called typed
