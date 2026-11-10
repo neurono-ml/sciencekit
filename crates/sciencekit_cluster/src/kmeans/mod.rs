@@ -7,6 +7,9 @@
 mod config;
 mod distance;
 mod init;
+mod iteration;
+mod lloyd;
+mod result;
 
 pub use config::{SKKMeansAlgorithm, SKKMeansInitialization};
 
@@ -23,3 +26,5 @@ pub(crate) use init::{
 mod kmeans_distance_tests;
 #[cfg(test)]
 mod kmeans_init_tests;
+#[cfg(test)]
+mod kmeans_lloyd_tests;
