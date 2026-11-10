@@ -56,6 +56,42 @@ func cString(value string) (*C.char, func()) {
 	return pointer, func() { C.free(unsafe.Pointer(pointer)) }
 }
 
+// descriptor is a C-layout array descriptor plus the Go memory that must stay
+// alive for the duration of one native call.
+type descriptor struct {
+	raw   *C.SKFfiArray
+	shape []int64
+	data  any
+}
+
+// newDescriptor allocates the descriptor struct in C memory so no Go pointer
+// travels inside Go-allocated memory.
+func newDescriptor(dtype int32, shape []int64, data unsafe.Pointer, keep any) *descriptor {
+	raw := (*C.SKFfiArray)(C.calloc(1, C.size_t(C.sizeof_SKFfiArray)))
+	raw.dtype = C.int32_t(dtype)
+	raw.ndim = C.int32_t(len(shape))
+	raw.shape = (*C.int64_t)(unsafe.Pointer(&shape[0]))
+	raw.strides = nil
+	raw.data = data
+	product := int64(1)
+	for _, dimension := range shape {
+		product *= dimension
+	}
+	raw.len = C.int64_t(product)
+	return &descriptor{raw: raw, shape: shape, data: keep}
+}
+
+// free releases the descriptor struct. Native-owned output buffers are freed
+// through sk_ffi_array_free instead.
+func (descriptor *descriptor) free() {
+	if descriptor.raw == nil {
+		return
+	}
+	C.free(unsafe.Pointer(descriptor.raw))
+	descriptor.raw = nil
+	descriptor.data = nil
+}
+
 // nativeBuilder wraps one opaque SKFfiBuilder handle.
 type nativeBuilder struct {
 	pointer *C.SKFfiBuilder
