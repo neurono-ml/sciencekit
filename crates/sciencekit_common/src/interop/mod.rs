@@ -30,6 +30,8 @@ mod state_tests;
 mod tensor_tests;
 #[cfg(test)]
 mod traits_tests;
+#[cfg(test)]
+mod validation_tests;
 
 #[cfg(test)]
 pub(crate) mod mock_model;
