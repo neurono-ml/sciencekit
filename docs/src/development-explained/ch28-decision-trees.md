@@ -45,7 +45,7 @@ $$
 3. **Two splitters.** `Best` evaluates every candidate (deterministic, the default) and
    `Random` draws a seeded threshold per feature, which the ensembles need.
 4. **Deterministic ties.** Equal impurity decreases go to the **smaller feature index**, then
-   to the lower threshold. Growth is deterministic for the same data, seed and thread count.
+   to the lower threshold. Growth is deterministic for the same data and seed, independent of thread count.
 5. **Feature subsampling is seeded.** `maximum_features` (`All`, `Sqrt`, `Log2`, `Fraction`, `Count`)
    draws its subset through `sk_derive_seed` per node, so thread count never changes it.
 6. **Class weights change the impurity, not the vote.** Balanced or explicit weights enter the
