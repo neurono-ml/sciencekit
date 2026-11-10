@@ -2,10 +2,11 @@
 
 ## Why
 
-There are 55 active OpenSpec changes across Waves 3–7 and cross-cutting work. Agents need
-one authoritative dependency graph, with completion checks, so they can start independent
-changes in parallel, block on real dependencies, and avoid merge conflicts in shared
-crates. Today the ordering is spread across wave-plan prose and per-change designs.
+There are 60 active OpenSpec changes across Waves 3–7, cross-cutting work and the newly
+added dataset interop changes. Agents need one authoritative dependency graph, with
+completion checks, so they can start independent changes in parallel, block on real
+dependencies, and avoid merge conflicts in shared crates. Today the ordering is spread
+across wave-plan prose and per-change designs.
 
 ## What Changes
 
@@ -20,6 +21,11 @@ crates. Today the ordering is spread across wave-plan prose and per-change desig
 - Document join nodes (`model-export-retrofit`, `umbrella-crate`,
   `python-bindings-complete`, `workflows-cli`) and how they can be split into family-level
   work.
+- Dataset interop nodes included: `interop-foundation`, `arrow-interop`,
+  `polars-interop`, `datafusion-interop`, `memory-mapped-interop`,
+  `python-dataset-interop`, `julia-dataset-interop`, `jvm-dataset-interop`.
+- Superseded nodes retained for traceability: `polars-datafusion-sources`,
+  `julia-bindings`, `jvm-bindings`.
 - No application code and no runtime behavior change; `.openspec.yaml` sets
   `skip_specs: true`.
 

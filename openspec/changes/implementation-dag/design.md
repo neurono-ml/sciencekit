@@ -23,17 +23,20 @@ Computed from `depends_on` only (soft dependencies do not block start):
 
 | Layer | Changes ready at this layer |
 |---|---|
-| L0 | representation-parity, wave-seven-deferrals, deterministic-randomness, clustering-contracts, interop-contracts, gpu-compute-contracts, telemetry-export, ffi-core, sparse-pairwise-distances, kd-tree-and-ball-tree, knn-imputer, metrics-ranking, type-safe-pipeline, sparse-streaming-coverage |
-| L1 | randomized-svd-kernel, model-selection-core, metrics-clustering, decision-tree-cart, dbscan, kmeans-lloyd-elkan, knn-classifier-regressor, svm-svc-svr, gpu-opencl-backend, gpu-cuda-backend, gpu-rocm-backend, lua-bindings, julia-bindings, go-bindings, jvm-bindings, safetensors-internal-format, json-debug-format, polars-datafusion-sources, feature-union, pipeline-dag, streaming-pipeline |
-| L2 | pca, random-forest, gradient-boosting, minibatch-kmeans-streaming, svm-linear-svc, grid-search-cv, outlier-detection |
+| L0 | representation-parity, wave-seven-deferrals, deterministic-randomness, clustering-contracts, interop-contracts, interop-foundation, gpu-compute-contracts, telemetry-export, ffi-core, sparse-pairwise-distances, kd-tree-and-ball-tree, knn-imputer, metrics-ranking, type-safe-pipeline, sparse-streaming-coverage |
+| L1 | randomized-svd-kernel, model-selection-core, metrics-clustering, decision-tree-cart, dbscan, kmeans-lloyd-elkan, knn-classifier-regressor, svm-svc-svr, gpu-opencl-backend, gpu-cuda-backend, gpu-rocm-backend, lua-bindings, go-bindings, arrow-interop, safetensors-internal-format, json-debug-format, feature-union, pipeline-dag, streaming-pipeline |
+| L2 | pca, random-forest, gradient-boosting, minibatch-kmeans-streaming, svm-linear-svc, grid-search-cv, outlier-detection, polars-interop, datafusion-interop, memory-mapped-interop, julia-dataset-interop, jvm-dataset-interop |
 | L3 | truncated-svd, incremental-pca, bagging, histogram-gradient-boosting, halving-grid-search |
 | L4 | model-export-retrofit (join over all model families) |
 | L5 | onnx-export |
 | L6 | onnx-import |
 | L7 | native-model-import, python-bindings-complete |
-| L8 | lora-adapters |
+| L8 | lora-adapters, python-dataset-interop |
 | L9 | umbrella-crate |
 | L10 | workflows-cli |
+
+`polars-datafusion-sources`, `julia-bindings` and `jvm-bindings` are marked
+`superseded_by` in `dag.yaml` and are skipped by the scheduler.
 
 The full edge list lives in `dag.yaml`; the layers are a cache, not a second source of truth.
 
@@ -44,7 +47,7 @@ one change is `in_progress` at a time (merge-order hazard). `∥` means parallel
 
 | Lane | Order and parallelism |
 |---|---|
-| common | representation-parity → wave-seven-deferrals → deterministic-randomness → clustering-contracts → interop-contracts → gpu-compute-contracts → telemetry-export |
+| common | representation-parity → wave-seven-deferrals → deterministic-randomness → clustering-contracts → interop-contracts → interop-foundation → gpu-compute-contracts → telemetry-export |
 | math | sparse-pairwise-distances ∥ randomized-svd-kernel |
 | metrics | metrics-ranking ∥ metrics-clustering |
 | neighbors | kd-tree-and-ball-tree ∥ knn-imputer ∥ svm-svc-svr → knn-classifier-regressor → svm-linear-svc |
@@ -53,11 +56,11 @@ one change is `in_progress` at a time (merge-order hazard). `∥` means parallel
 | decomposition | randomized-svd-kernel → pca → {truncated-svd; incremental-pca} |
 | model-selection | model-selection-core → grid-search-cv → halving-grid-search |
 | pipeline | type-safe-pipeline → {feature-union; pipeline-dag; streaming-pipeline} |
-| interop | interop-contracts → {safetensors-internal-format; json-debug-format; polars-datafusion-sources} → model-export-retrofit → onnx-export → onnx-import → native-model-import → lora-adapters |
+| interop | interop-foundation → arrow-interop → {polars-interop; datafusion-interop; memory-mapped-interop} → {safetensors-internal-format; json-debug-format} → model-export-retrofit → onnx-export → onnx-import → native-model-import → lora-adapters |
 | gpu | gpu-compute-contracts → {gpu-opencl-backend; gpu-cuda-backend; gpu-rocm-backend} |
-| bindings | ffi-core → {lua-bindings; julia-bindings; go-bindings; jvm-bindings} |
+| bindings | ffi-core → {lua-bindings; go-bindings} → {julia-dataset-interop; jvm-dataset-interop} |
 | streaming | sparse-streaming-coverage |
-| product | umbrella-crate → {python-bindings-complete; workflows-cli} |
+| product | umbrella-crate → python-bindings-complete → python-dataset-interop; workflows-cli |
 
 ## Joins and splits
 
@@ -65,6 +68,16 @@ one change is `in_progress` at a time (merge-order hazard). `∥` means parallel
   its task groups can be split into per-family sub-branches (preprocessing, linear,
   neighbors/SVM, tree/ensemble, unsupervised, pipeline) that start as each family lands;
   the change completes only when all sub-branches merge.
+- `interop-foundation` creates the `sciencekit_interop` crate; `arrow-interop` is the
+  first concrete adapter and unblocks `polars-interop`, `datafusion-interop`,
+  `memory-mapped-interop` and the Python/Julia/JVM dataset changes.
+- `python-dataset-interop` extends `python-bindings-complete`; it is a join over the
+  Arrow/host-language dataset paths but can start once its hard dependencies merge.
+- `julia-dataset-interop` and `jvm-dataset-interop` supersede the earlier
+  `julia-bindings` and `jvm-bindings`; the older nodes stay in the graph as
+  `status: superseded` and are never scheduled.
+- `polars-datafusion-sources` is superseded by `arrow-interop`, `polars-interop`,
+  `datafusion-interop` and `memory-mapped-interop`; it is not scheduled.
 - `umbrella-crate`, `python-bindings-complete` and `workflows-cli` are joins and should
   start only after their dependency sets are merged.
 - `safetensors-internal-format` and `json-debug-format` have a **soft** dependency on
