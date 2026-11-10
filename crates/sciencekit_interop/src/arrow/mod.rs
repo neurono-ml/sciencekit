@@ -10,15 +10,22 @@
 //! submodules; every implementation lives in its own file.
 
 mod data_type_mapping;
+mod import;
 mod schema_mapping;
 
 pub use data_type_mapping::sk_logical_type_from_arrow_data_type;
+pub use import::{
+    sk_column_data_from_arrow_array, sk_dictionary_label_table, sk_label_tables_from_record_batch,
+    sk_tabular_batch_from_record_batch,
+};
 pub use schema_mapping::{
     SK_ARROW_LOGICAL_TYPE_METADATA_KEY, SK_ARROW_ROLE_METADATA_KEY, SKArrowColumnRoles,
     sk_arrow_data_type_from_logical_type, sk_arrow_schema_from_tabular_schema,
     sk_tabular_schema_from_arrow_schema,
 };
 
+#[cfg(test)]
+mod record_batch_import_tests;
 #[cfg(test)]
 mod schema_mapping_tests;
 #[cfg(test)]
