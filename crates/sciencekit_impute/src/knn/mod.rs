@@ -36,3 +36,6 @@ mod fit_span_tests;
 
 #[cfg(test)]
 mod marker_tests;
+
+#[cfg(test)]
+mod weights_tests;

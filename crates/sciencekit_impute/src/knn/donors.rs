@@ -6,6 +6,8 @@ use std::cmp::Ordering;
 use ndarray::ArrayView1;
 use sciencekit_common::SKFloat;
 
+use crate::knn::weights::{SKImputationWeights, sk_weighted_average};
+
 /// The training rows that observed each column, in ascending row order.
 ///
 /// A row that is missing the column is never a donor for it. An all-missing
@@ -56,4 +58,35 @@ pub(super) fn sk_select_nearest_donors<F: SKFloat>(
     }
     candidates.sort_unstable_by(compare);
     candidates.into_iter().map(|(_, donor)| donor).collect()
+}
+
+/// The value that fills a missing cell from its column donors.
+///
+/// `distances` holds the receiver row's distance to every training row and
+/// `training_column` the observed values of the column being filled. When the
+/// column observed nothing the cell fills with `0.0` (a retained empty
+/// column), when no donor distance is finite it falls back to the observed
+/// column mean, and otherwise it averages the selected donors.
+pub(super) fn sk_impute_cell<F: SKFloat>(
+    distances: &ArrayView1<'_, F>,
+    donors: &[usize],
+    training_column: &ArrayView1<'_, F>,
+    column_mean: F,
+    nearest_neighbors_count: usize,
+    weights: SKImputationWeights,
+) -> F {
+    if donors.is_empty() {
+        return F::zero();
+    }
+    let selected = sk_select_nearest_donors(distances, donors, nearest_neighbors_count);
+    if selected.is_empty() {
+        return column_mean;
+    }
+    let selected_distances: Vec<F> = selected.iter().map(|donor| distances[*donor]).collect();
+    let selected_values: Vec<F> = selected
+        .iter()
+        .map(|donor| training_column[*donor])
+        .collect();
+    let donor_weights = weights.weights(&selected_distances);
+    sk_weighted_average(&donor_weights, &selected_values)
 }
