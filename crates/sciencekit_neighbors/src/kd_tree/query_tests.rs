@@ -29,10 +29,15 @@ fn kd_query_returns_the_known_two_dimensional_neighbors() {
         .unwrap();
 
     assert_eq!(result.indices(), array![[0_usize, 1]].view());
-    assert_close(result.distances()[[0, 0]], (0.1_f64 * 0.1 + 0.05 * 0.05).sqrt());
-    assert_close(result.distances()[[0, 1]], (0.9_f64 * 0.9 + 0.05 * 0.05).sqrt());
+    assert_close(
+        result.distances()[[0, 0]],
+        (0.1_f64 * 0.1 + 0.05 * 0.05).sqrt(),
+    );
+    assert_close(
+        result.distances()[[0, 1]],
+        (0.9_f64 * 0.9 + 0.05 * 0.05).sqrt(),
+    );
 }
-
 
 #[test]
 fn kd_query_finds_a_training_row_at_distance_zero_from_itself() {
@@ -48,7 +53,6 @@ fn kd_query_finds_a_training_row_at_distance_zero_from_itself() {
     assert_eq!(result.distances()[[0, 0]], 0.0);
 }
 
-
 #[test]
 fn kd_query_supports_k_equal_to_one() {
     let data = array![[0.0_f64, 0.0], [1.0, 0.0], [5.0, 5.0]];
@@ -61,7 +65,6 @@ fn kd_query_supports_k_equal_to_one() {
 
     assert_eq!(result.indices()[[0, 0]], 2);
 }
-
 
 #[test]
 fn kd_query_supports_k_equal_to_the_training_row_count() {
@@ -80,7 +83,6 @@ fn kd_query_supports_k_equal_to_the_training_row_count() {
         assert!(result.distances()[[0, column - 1]] <= result.distances()[[0, column]]);
     }
 }
-
 
 #[test]
 fn kd_query_returns_one_sorted_row_per_query_row() {

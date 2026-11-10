@@ -125,7 +125,8 @@ fn build_node<F: SKFloat>(
         return (node_index, 1);
     }
 
-    let split_feature = widest_spread_feature(nodes[node_index].minimum(), nodes[node_index].maximum());
+    let split_feature =
+        widest_spread_feature(nodes[node_index].minimum(), nodes[node_index].maximum());
     let middle = start + (end - start) / 2;
     permutation[start..end].select_nth_unstable_by(middle - start, |&left, &right| {
         compare_rows(features, left, right, split_feature)

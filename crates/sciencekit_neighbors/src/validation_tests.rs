@@ -81,7 +81,10 @@ fn validation_rejects_non_finite_query_values_at_their_flat_position() {
         .unwrap();
     let queries = array![[0.0_f64, 1.0], [2.0, f64::NEG_INFINITY]];
 
-    match kd.k_nearest(SKDataView::Dense(queries.view()), 1).unwrap_err() {
+    match kd
+        .k_nearest(SKDataView::Dense(queries.view()), 1)
+        .unwrap_err()
+    {
         SKError::NonFiniteValue { position } => assert_eq!(position, 3),
         other => panic!("expected NonFiniteValue, found {other:?}"),
     }
@@ -95,7 +98,10 @@ fn validation_rejects_a_query_with_the_wrong_feature_count() {
         .unwrap();
     let queries = array![[0.0_f64, 1.0, 2.0]];
 
-    match kd.k_nearest(SKDataView::Dense(queries.view()), 1).unwrap_err() {
+    match kd
+        .k_nearest(SKDataView::Dense(queries.view()), 1)
+        .unwrap_err()
+    {
         SKError::ShapeMismatch { expected, found } => {
             assert_eq!(expected, vec![1, 2]);
             assert_eq!(found, vec![1, 3]);

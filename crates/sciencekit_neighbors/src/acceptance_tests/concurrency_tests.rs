@@ -33,9 +33,7 @@ fn acceptance_one_shared_index_serves_concurrent_batches() {
         .build(SKDataView::Dense(data.view()))
         .unwrap();
 
-    let expected_kd = kd
-        .k_nearest(SKDataView::Dense(queries.view()), 4)
-        .unwrap();
+    let expected_kd = kd.k_nearest(SKDataView::Dense(queries.view()), 4).unwrap();
     let expected_ball = ball
         .k_nearest(SKDataView::Dense(queries.view()), 4)
         .unwrap();
@@ -49,12 +47,8 @@ fn acceptance_one_shared_index_serves_concurrent_batches() {
             let kd = &kd;
             let ball = &ball;
             handles.push(scope.spawn(move || {
-                let kd_result = kd
-                    .k_nearest(SKDataView::Dense(batch.view()), 4)
-                    .unwrap();
-                let ball_result = ball
-                    .k_nearest(SKDataView::Dense(batch.view()), 4)
-                    .unwrap();
+                let kd_result = kd.k_nearest(SKDataView::Dense(batch.view()), 4).unwrap();
+                let ball_result = ball.k_nearest(SKDataView::Dense(batch.view()), 4).unwrap();
                 (chunk, kd_result, ball_result)
             }));
         }

@@ -65,7 +65,11 @@ impl<F: SKFloat> SKKDTree<F> {
         SKRadiusNeighbors::new(distances, indices)
     }
 
-    fn k_nearest_row(&self, query: ArrayView1<'_, F>, neighbors_count: usize) -> Vec<SKCandidate<F>> {
+    fn k_nearest_row(
+        &self,
+        query: ArrayView1<'_, F>,
+        neighbors_count: usize,
+    ) -> Vec<SKCandidate<F>> {
         let mut best: Vec<SKCandidate<F>> = Vec::with_capacity(neighbors_count);
         let mut stack: Vec<(usize, F)> = Vec::new();
         self.push_root(&mut stack, query);
@@ -122,11 +126,9 @@ impl<F: SKFloat> SKKDTree<F> {
 
     fn push_root(&self, stack: &mut Vec<(usize, F)>, query: ArrayView1<'_, F>) {
         let root = &self.nodes()[0];
-        let bound = self.metric.axis_aligned_lower_bound(
-            query,
-            root.minimum(),
-            root.maximum(),
-        );
+        let bound = self
+            .metric
+            .axis_aligned_lower_bound(query, root.minimum(), root.maximum());
         stack.push((0, bound));
     }
 
@@ -137,7 +139,10 @@ impl<F: SKFloat> SKKDTree<F> {
         query: ArrayView1<'_, F>,
     ) {
         let node = &self.nodes()[node_index];
-        let (left, right) = (node.left().expect("internal node"), node.right().expect("internal node"));
+        let (left, right) = (
+            node.left().expect("internal node"),
+            node.right().expect("internal node"),
+        );
         let left_node = &self.nodes()[left];
         let right_node = &self.nodes()[right];
         let left_bound =

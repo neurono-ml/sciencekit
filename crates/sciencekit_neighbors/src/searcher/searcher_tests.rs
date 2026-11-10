@@ -29,7 +29,10 @@ impl SKNearestNeighborsSearcher<f64> for SKMockSearcher {
         _radius: f64,
     ) -> Result<SKRadiusNeighbors<f64>, SKError> {
         let rows = queries.as_dense()?.nrows();
-        Ok(SKRadiusNeighbors::new(vec![vec![]; rows], vec![vec![]; rows]))
+        Ok(SKRadiusNeighbors::new(
+            vec![vec![]; rows],
+            vec![vec![]; rows],
+        ))
     }
 }
 

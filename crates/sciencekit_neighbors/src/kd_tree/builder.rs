@@ -77,9 +77,7 @@ impl<F: SKFloat> SKKDTreeBuilder<F> {
         };
 
         if dense.nrows() == 0 {
-            return Err(SKError::EmptyInput {
-                operation: "build",
-            });
+            return Err(SKError::EmptyInput { operation: "build" });
         }
         sk_validate_hyperparameter(
             "leaf_size",

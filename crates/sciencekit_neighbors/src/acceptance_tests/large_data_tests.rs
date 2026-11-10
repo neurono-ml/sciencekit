@@ -33,9 +33,7 @@ fn acceptance_large_batches_agree_between_both_trees() {
         .build(SKDataView::Dense(data.view()))
         .unwrap();
 
-    let kd_result = kd
-        .k_nearest(SKDataView::Dense(queries.view()), 5)
-        .unwrap();
+    let kd_result = kd.k_nearest(SKDataView::Dense(queries.view()), 5).unwrap();
     let ball_result = ball
         .k_nearest(SKDataView::Dense(queries.view()), 5)
         .unwrap();

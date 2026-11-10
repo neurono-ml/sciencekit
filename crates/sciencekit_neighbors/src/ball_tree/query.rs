@@ -65,7 +65,11 @@ impl<F: SKFloat> SKBallTree<F> {
         SKRadiusNeighbors::new(distances, indices)
     }
 
-    fn k_nearest_row(&self, query: ArrayView1<'_, F>, neighbors_count: usize) -> Vec<SKCandidate<F>> {
+    fn k_nearest_row(
+        &self,
+        query: ArrayView1<'_, F>,
+        neighbors_count: usize,
+    ) -> Vec<SKCandidate<F>> {
         let mut best: Vec<SKCandidate<F>> = Vec::with_capacity(neighbors_count);
         let mut stack: Vec<(usize, F)> = Vec::new();
         self.push_root(&mut stack, query);
@@ -135,19 +139,18 @@ impl<F: SKFloat> SKBallTree<F> {
         query: ArrayView1<'_, F>,
     ) {
         let node = &self.nodes()[node_index];
-        let (left, right) = (node.left().expect("internal node"), node.right().expect("internal node"));
+        let (left, right) = (
+            node.left().expect("internal node"),
+            node.right().expect("internal node"),
+        );
         let left_node = &self.nodes()[left];
         let right_node = &self.nodes()[right];
-        let left_bound = self.metric.ball_lower_bound(
-            query,
-            left_node.centroid(),
-            left_node.radius(),
-        );
-        let right_bound = self.metric.ball_lower_bound(
-            query,
-            right_node.centroid(),
-            right_node.radius(),
-        );
+        let left_bound =
+            self.metric
+                .ball_lower_bound(query, left_node.centroid(), left_node.radius());
+        let right_bound =
+            self.metric
+                .ball_lower_bound(query, right_node.centroid(), right_node.radius());
         if left_bound <= right_bound {
             stack.push((right, right_bound));
             stack.push((left, left_bound));

@@ -38,15 +38,14 @@ pub(crate) fn sk_offer_candidate<F: SKFloat>(
 ) {
     if best.len() == neighbors_count {
         let worst = best[neighbors_count - 1];
-        let better = distance < worst.distance
-            || (distance == worst.distance && index < worst.index);
+        let better =
+            distance < worst.distance || (distance == worst.distance && index < worst.index);
         if !better {
             return;
         }
     }
     let position = best.partition_point(|candidate| {
-        candidate.distance < distance
-            || (candidate.distance == distance && candidate.index < index)
+        candidate.distance < distance || (candidate.distance == distance && candidate.index < index)
     });
     best.insert(position, SKCandidate { distance, index });
     if best.len() > neighbors_count {

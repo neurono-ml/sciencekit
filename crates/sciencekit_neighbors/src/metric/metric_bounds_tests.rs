@@ -31,8 +31,11 @@ fn kd_axis_aligned_bound_matches_each_metric_outside_the_box() {
         2.0
     );
     assert_eq!(
-        SKNeighborMetric::SquaredEuclidean
-            .axis_aligned_lower_bound(query().view(), &minimum, &maximum),
+        SKNeighborMetric::SquaredEuclidean.axis_aligned_lower_bound(
+            query().view(),
+            &minimum,
+            &maximum
+        ),
         4.0
     );
     assert_eq!(
@@ -52,15 +55,17 @@ fn kd_axis_aligned_bound_handles_mixed_inside_and_outside_axes() {
 
     let expected_squared: f64 = 0.25 + 9.0;
     assert!(
-        (SKNeighborMetric::Euclidean
-            .axis_aligned_lower_bound(query().view(), &minimum, &maximum)
+        (SKNeighborMetric::Euclidean.axis_aligned_lower_bound(query().view(), &minimum, &maximum)
             - expected_squared.sqrt())
         .abs()
             < 1e-12
     );
     assert_eq!(
-        SKNeighborMetric::SquaredEuclidean
-            .axis_aligned_lower_bound(query().view(), &minimum, &maximum),
+        SKNeighborMetric::SquaredEuclidean.axis_aligned_lower_bound(
+            query().view(),
+            &minimum,
+            &maximum
+        ),
         expected_squared
     );
 }

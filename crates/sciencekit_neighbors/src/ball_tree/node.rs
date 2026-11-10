@@ -18,12 +18,7 @@ pub struct SKBallTreeNode<F> {
 
 impl<F> SKBallTreeNode<F> {
     /// A node without children covering `[start, end)`.
-    pub(crate) fn new(
-        start: usize,
-        end: usize,
-        centroid: Vec<F>,
-        radius: F,
-    ) -> SKBallTreeNode<F> {
+    pub(crate) fn new(start: usize, end: usize, centroid: Vec<F>, radius: F) -> SKBallTreeNode<F> {
         SKBallTreeNode {
             start,
             end,

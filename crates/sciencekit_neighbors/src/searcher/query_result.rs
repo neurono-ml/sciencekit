@@ -18,10 +18,7 @@ impl<F> SKNeighborQuery<F> {
     /// Wrap an already ordered distance/index pair.
     pub(crate) fn new(distances: Array2<F>, indices: Array2<usize>) -> Self {
         debug_assert_eq!(distances.shape(), indices.shape());
-        SKNeighborQuery {
-            distances,
-            indices,
-        }
+        SKNeighborQuery { distances, indices }
     }
 
     /// The number of query rows in the batch.
@@ -60,10 +57,7 @@ impl<F> SKRadiusNeighbors<F> {
     /// Wrap per-row ordered distance/index lists.
     pub(crate) fn new(distances: Vec<Vec<F>>, indices: Vec<Vec<usize>>) -> Self {
         debug_assert_eq!(distances.len(), indices.len());
-        SKRadiusNeighbors {
-            distances,
-            indices,
-        }
+        SKRadiusNeighbors { distances, indices }
     }
 
     /// The number of query rows in the batch.

@@ -29,7 +29,6 @@ fn kd_build_rejects_an_empty_training_set() {
     }
 }
 
-
 #[test]
 fn kd_build_rejects_zero_leaf_size() {
     let data = grid(10);
@@ -44,7 +43,6 @@ fn kd_build_rejects_zero_leaf_size() {
     }
 }
 
-
 #[test]
 fn kd_build_handles_a_single_row() {
     let data = array![[1.0_f64, 2.0]];
@@ -57,7 +55,6 @@ fn kd_build_handles_a_single_row() {
     assert_eq!(tree.depth(), 1);
     assert!(tree.nodes()[0].is_leaf());
 }
-
 
 #[test]
 fn kd_build_produces_a_permutation_and_leaf_size_bounded_contiguous_leaves() {
@@ -88,7 +85,6 @@ fn kd_build_produces_a_permutation_and_leaf_size_bounded_contiguous_leaves() {
         assert!(end - start <= 8);
     }
 }
-
 
 #[test]
 fn kd_build_encloses_every_member_inside_the_node_box() {

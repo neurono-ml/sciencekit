@@ -10,7 +10,15 @@ fn point(a: [f64; 3], b: [f64; 3], metric: SKNeighborMetric) -> f64 {
 
 #[test]
 fn euclidean_metric_returns_the_geometric_distance() {
-    assert!((point([0.0, 0.0, 0.0], [3.0, 4.0, 0.0], SKNeighborMetric::Euclidean) - 5.0).abs() < 1e-12);
+    assert!(
+        (point(
+            [0.0, 0.0, 0.0],
+            [3.0, 4.0, 0.0],
+            SKNeighborMetric::Euclidean
+        ) - 5.0)
+            .abs()
+            < 1e-12
+    );
 }
 
 #[test]

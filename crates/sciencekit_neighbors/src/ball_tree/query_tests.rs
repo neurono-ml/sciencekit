@@ -27,7 +27,6 @@ fn ball_query_returns_the_known_neighbors() {
     assert!((result.distances()[[0, 0]] - 0.11180339887498948).abs() < 1e-12);
 }
 
-
 #[test]
 fn ball_query_supports_k_equal_to_the_training_row_count() {
     let data = array![[0.0_f64, 0.0], [1.0, 0.0], [0.0, 1.0], [5.0, 5.0]];
@@ -45,7 +44,6 @@ fn ball_query_supports_k_equal_to_the_training_row_count() {
         assert!(result.distances()[[0, column - 1]] <= result.distances()[[0, column]]);
     }
 }
-
 
 #[test]
 fn ball_query_returns_one_sorted_row_per_query_row() {
@@ -66,7 +64,6 @@ fn ball_query_returns_one_sorted_row_per_query_row() {
     }
 }
 
-
 #[test]
 fn ball_query_breaks_distance_ties_by_the_smallest_training_index() {
     let data = array![[1.0_f64, 0.0], [-1.0, 0.0], [0.0, 1.0], [0.0, -1.0]];
@@ -79,7 +76,6 @@ fn ball_query_breaks_distance_ties_by_the_smallest_training_index() {
 
     assert_eq!(result.indices(), array![[0_usize, 1]].view());
 }
-
 
 #[test]
 fn ball_radius_query_includes_the_boundary() {
@@ -98,7 +94,6 @@ fn ball_radius_query_includes_the_boundary() {
         .unwrap();
     assert_eq!(both.indices(0), &[0, 1]);
 }
-
 
 #[test]
 fn ball_radius_query_sorts_and_represents_empty_neighborhoods() {

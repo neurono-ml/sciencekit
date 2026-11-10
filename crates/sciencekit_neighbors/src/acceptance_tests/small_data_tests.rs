@@ -52,7 +52,8 @@ fn acceptance_tiny_one_row_one_query_on_both_trees() {
 
     for result in [
         kd.k_nearest(SKDataView::Dense(queries.view()), 1).unwrap(),
-        ball.k_nearest(SKDataView::Dense(queries.view()), 1).unwrap(),
+        ball.k_nearest(SKDataView::Dense(queries.view()), 1)
+            .unwrap(),
     ] {
         assert_eq!(result.indices()[[0, 0]], 0);
         assert_eq!(result.distances()[[0, 0]], 0.0);
@@ -76,9 +77,7 @@ fn acceptance_every_metric_matches_brute_force_on_both_trees() {
             .build(SKDataView::Dense(data.view()))
             .unwrap();
 
-        let kd_result = kd
-            .k_nearest(SKDataView::Dense(queries.view()), 3)
-            .unwrap();
+        let kd_result = kd.k_nearest(SKDataView::Dense(queries.view()), 3).unwrap();
         let ball_result = ball
             .k_nearest(SKDataView::Dense(queries.view()), 3)
             .unwrap();
@@ -112,9 +111,7 @@ fn acceptance_radius_queries_match_brute_force_on_both_trees() {
 
         for (row, query) in queries.rows().into_iter().enumerate() {
             let expected: Vec<usize> = (0..data.nrows())
-                .filter(|&index| {
-                    metric.point_distance(query, data.row(index)) <= 2.5
-                })
+                .filter(|&index| metric.point_distance(query, data.row(index)) <= 2.5)
                 .collect();
             let kd_result = kd
                 .radius_neighbors(SKDataView::Dense(queries.view()), 2.5)
@@ -150,7 +147,8 @@ fn acceptance_deterministic_ties_hold_on_both_trees() {
 
     for result in [
         kd.k_nearest(SKDataView::Dense(queries.view()), 3).unwrap(),
-        ball.k_nearest(SKDataView::Dense(queries.view()), 3).unwrap(),
+        ball.k_nearest(SKDataView::Dense(queries.view()), 3)
+            .unwrap(),
     ] {
         assert_eq!(result.indices(), array![[0_usize, 1, 2]].view());
     }

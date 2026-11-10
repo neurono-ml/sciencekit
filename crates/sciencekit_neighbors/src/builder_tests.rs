@@ -31,7 +31,10 @@ fn builder_kd_defaults_and_overrides_are_exposed_on_the_index() {
     assert_eq!(custom.leaf_size(), 2);
     assert_eq!(custom.metric(), SKNeighborMetric::SquaredEuclidean);
     assert_eq!(custom.backend(), SKBackendKind::MatrixMultiply);
-    assert_eq!(custom.execution_mode(), SKExecutionMode::InProcessSynchronous);
+    assert_eq!(
+        custom.execution_mode(),
+        SKExecutionMode::InProcessSynchronous
+    );
 }
 
 #[test]
@@ -54,7 +57,10 @@ fn builder_ball_defaults_and_overrides_are_exposed_on_the_index() {
     assert_eq!(custom.leaf_size(), 3);
     assert_eq!(custom.metric(), SKNeighborMetric::Chebyshev);
     assert_eq!(custom.backend(), SKBackendKind::NdArrayLinalg);
-    assert_eq!(custom.execution_mode(), SKExecutionMode::InProcessAsynchronous);
+    assert_eq!(
+        custom.execution_mode(),
+        SKExecutionMode::InProcessAsynchronous
+    );
 }
 
 #[test]

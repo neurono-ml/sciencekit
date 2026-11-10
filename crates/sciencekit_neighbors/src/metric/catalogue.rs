@@ -162,9 +162,7 @@ impl SKRequestedNeighborMetric {
     pub fn supported(self) -> Option<SKNeighborMetric> {
         match self {
             SKRequestedNeighborMetric::Euclidean => Some(SKNeighborMetric::Euclidean),
-            SKRequestedNeighborMetric::SquaredEuclidean => {
-                Some(SKNeighborMetric::SquaredEuclidean)
-            }
+            SKRequestedNeighborMetric::SquaredEuclidean => Some(SKNeighborMetric::SquaredEuclidean),
             SKRequestedNeighborMetric::Manhattan => Some(SKNeighborMetric::Manhattan),
             SKRequestedNeighborMetric::Chebyshev => Some(SKNeighborMetric::Chebyshev),
             SKRequestedNeighborMetric::Cosine | SKRequestedNeighborMetric::NanEuclidean => None,
