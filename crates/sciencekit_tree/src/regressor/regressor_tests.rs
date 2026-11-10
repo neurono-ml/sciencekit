@@ -1,4 +1,4 @@
-//! Squared-error fit and prediction tests (task 5.2).
+//! Regressor fit and prediction tests (tasks 5.2 and 5.3).
 
 use ndarray::array;
 use sciencekit_common::{SKBuilder, SKRegressorPredictor, SKSupervisedFit};
@@ -22,6 +22,24 @@ fn squared_error_predicts_the_leaf_mean() {
     assert_eq!(
         model.predict(features.view()).expect("predict"),
         array![3.0, 3.0, 3.0]
+    );
+}
+
+/// With absolute error, a single leaf predicts the median of its responses.
+#[test]
+fn absolute_error_predicts_the_leaf_median() {
+    let features = array![[0.0], [1.0], [2.0]];
+    let responses = array![1.0, 2.0, 6.0];
+    let model = SKDecisionTreeRegressor::<f64>::build()
+        .maximum_depth(0)
+        .criterion(SKTreeCriterion::AbsoluteError)
+        .build()
+        .expect("builds")
+        .fit(&features, responses.view())
+        .expect("fit succeeds");
+    assert_eq!(
+        model.predict(features.view()).expect("predict"),
+        array![2.0, 2.0, 2.0]
     );
 }
 
