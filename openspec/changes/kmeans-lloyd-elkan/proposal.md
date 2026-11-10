@@ -19,8 +19,9 @@ streaming MiniBatch variant.
 - Fit supports dense and sparse features, k-means++ and random initialization, Lloyd and
   Elkan assignment, deterministic empty-cluster repair and the best-of-`n_init` inertia
   selection.
-- The fitted model exposes cluster centers, labels, inertia, the number of iterations and
-  the convergence flag, and implements `SKUnsupervisedFit` plus `SKClustererPredictor`.
+- The estimator implements `SKUnsupervisedFit`; the fitted model exposes cluster centers,
+  labels, inertia, the number of iterations and the convergence flag, and implements
+  `SKClustererPredictor`.
 - `predict`, `fit_predict` and `transform` (distances to centers) are available; labels are
   typed `SKClusterLabel::Cluster` variants in `0..number_of_clusters`; KMeans never emits
   `Noise`.
