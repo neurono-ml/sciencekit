@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   maximum forms; homogeneity, completeness and V-measure; and the
   Davies-Bouldin (lower is better) and Calinski-Harabasz (higher is better)
   centroid scores. `SKSilhouetteScorer` is the first concrete
-  `SKUnsupervisedScorer`, delegating to the free function after filtering the
+  `SKUnsupervisedScorer`, delegating to the free function, which excludes the
   typed `Noise` variant. Dense and CSR features share the pairwise/centroid
   paths: the representation is dispatched once and a sparse design is never
   densified. Pairwise labeling metrics treat noise as an ordinary label by
