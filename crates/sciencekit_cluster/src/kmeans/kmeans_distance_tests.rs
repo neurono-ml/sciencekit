@@ -4,7 +4,7 @@ use ndarray::{Array2, array};
 use sciencekit_common::{SKDataView, SKError};
 use sprs::{CsMat, TriMat};
 
-use super::sk_squared_distances_to_centers;
+use super::distance::sk_squared_distances_to_centers;
 
 fn dense_fixture() -> Array2<f64> {
     array![[0.0_f64, 0.0], [1.0, 0.0], [0.0, 2.0]]
@@ -45,7 +45,8 @@ fn kmeans_distance_sparse_matches_dense() {
     let dense_distances =
         sk_squared_distances_to_centers(SKDataView::Dense(dense.view()), &centers.view()).unwrap();
     let sparse_distances =
-        sk_squared_distances_to_centers(SKDataView::Sparse(sparse.view()), &centers.view()).unwrap();
+        sk_squared_distances_to_centers(SKDataView::Sparse(sparse.view()), &centers.view())
+            .unwrap();
 
     for (dense_value, sparse_value) in dense_distances.iter().zip(sparse_distances.iter()) {
         assert!((dense_value - sparse_value).abs() < 1e-12);
@@ -66,7 +67,8 @@ fn kmeans_distance_sparse_wide_design_is_not_densified() {
     centers[[0, width - 1]] = 3.0;
 
     let distances =
-        sk_squared_distances_to_centers(SKDataView::Sparse(sparse.view()), &centers.view()).unwrap();
+        sk_squared_distances_to_centers(SKDataView::Sparse(sparse.view()), &centers.view())
+            .unwrap();
     assert!(distances[[0, 0]].abs() < 1e-12);
     assert_eq!(sparse.nnz(), nnz_before);
 }
@@ -74,11 +76,9 @@ fn kmeans_distance_sparse_wide_design_is_not_densified() {
 #[test]
 fn kmeans_distance_rejects_feature_count_mismatch() {
     let centers = array![[0.0_f64, 0.0, 0.0]];
-    let error = sk_squared_distances_to_centers(
-        SKDataView::Dense(dense_fixture().view()),
-        &centers.view(),
-    )
-    .unwrap_err();
+    let error =
+        sk_squared_distances_to_centers(SKDataView::Dense(dense_fixture().view()), &centers.view())
+            .unwrap_err();
 
     match error {
         SKError::ShapeMismatch { expected, found } => {

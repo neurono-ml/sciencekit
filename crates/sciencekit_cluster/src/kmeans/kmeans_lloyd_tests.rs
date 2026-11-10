@@ -32,13 +32,7 @@ fn csr_from_dense(dense: &Array2<f64>) -> CsMat<f64> {
 fn kmeans_lloyd_two_well_separated_clusters_converge() {
     let data = separated_blobs();
     let initial_centers = array![[0.0_f64, 0.0], [10.0, 10.0]];
-    let result = sk_lloyd_fit(
-        SKDataView::Dense(data.view()),
-        initial_centers,
-        100,
-        1e-8,
-    )
-    .unwrap();
+    let result = sk_lloyd_fit(SKDataView::Dense(data.view()), initial_centers, 100, 1e-8).unwrap();
 
     assert!(result.converged);
     assert!(result.iterations >= 1);
@@ -56,13 +50,7 @@ fn kmeans_lloyd_two_well_separated_clusters_converge() {
 fn kmeans_lloyd_exhausted_budget_returns_an_unconverged_model() {
     let data = array![[0.0_f64], [1.0], [10.0], [11.0]];
     let initial_centers = array![[0.0_f64], [11.0]];
-    let result = sk_lloyd_fit(
-        SKDataView::Dense(data.view()),
-        initial_centers,
-        1,
-        1e-4,
-    )
-    .unwrap();
+    let result = sk_lloyd_fit(SKDataView::Dense(data.view()), initial_centers, 1, 1e-4).unwrap();
 
     assert!(!result.converged);
     assert_eq!(result.iterations, 1);
@@ -131,7 +119,10 @@ fn kmeans_lloyd_sparse_matches_dense() {
     .unwrap();
 
     assert_eq!(dense_result.labels, sparse_result.labels);
-    for (dense_value, sparse_value) in dense_result.centers.iter().zip(sparse_result.centers.iter())
+    for (dense_value, sparse_value) in dense_result
+        .centers
+        .iter()
+        .zip(sparse_result.centers.iter())
     {
         assert!((dense_value - sparse_value).abs() < 1e-12);
     }

@@ -2,7 +2,6 @@
 //! (spec `k-means`, decisions 3 and 5).
 
 use ndarray::{Array1, Array2};
-use rayon::prelude::*;
 use sciencekit_common::{
     SK_RANDOM_DOMAIN_INITIALIZATION, SKDataView, SKError, SKFloat, SKRandomGenerator,
     sk_derive_seed,
@@ -56,7 +55,8 @@ fn sk_kmeans_plus_plus_indices<F: SKFloat>(
         _ => 0,
     };
     let mut selected = vec![generator.next_index(number_of_rows)];
-    let mut nearest = sk_squared_distances_to_center(features, sk_row_as_vector(features, selected[0]).view())?;
+    let mut nearest =
+        sk_squared_distances_to_center(features, sk_row_as_vector(features, selected[0]).view())?;
 
     while selected.len() < number_of_clusters {
         let total = nearest
@@ -112,10 +112,7 @@ fn sk_sample_weighted_index<F: SKFloat>(
 }
 
 /// Copies the selected training rows into a dense center matrix.
-fn sk_materialize_centers<F: SKFloat>(
-    features: SKDataView<'_, F>,
-    indices: &[usize],
-) -> Array2<F> {
+fn sk_materialize_centers<F: SKFloat>(features: SKDataView<'_, F>, indices: &[usize]) -> Array2<F> {
     let number_of_features = match features {
         SKDataView::Dense(dense) => dense.ncols(),
         SKDataView::Sparse(sparse) => sparse.cols(),
@@ -158,47 +155,4 @@ fn sk_row_as_vector<F: SKFloat>(features: SKDataView<'_, F>, row_index: usize) -
         }
         _ => Array1::zeros(0),
     }
-}
-
-/// Runs every initialization in parallel and returns the lowest-inertia model,
-/// breaking exact ties by the earliest initialization index.
-pub(crate) fn sk_run_initializations<T, E>(
-    number_of_initializations: usize,
-    random_seed: u64,
-    fit_initialization: impl Fn(usize, u64) -> Result<(T, f64), E> + Sync,
-) -> Result<(T, usize), E>
-where
-    T: Send,
-    E: Send,
-{
-    let results: Result<Vec<(T, f64)>, E> = (0..number_of_initializations)
-        .into_par_iter()
-        .map(|index| fit_initialization(index, sk_initialization_seed(random_seed, index)))
-        .collect();
-    let results = results?;
-    let best_index = sk_choose_lowest_inertia_index(
-        results
-            .iter()
-            .map(|(_, inertia)| *inertia)
-            .collect::<Vec<_>>()
-            .as_slice(),
-    );
-    let (best_model, _) = results
-        .into_iter()
-        .nth(best_index)
-        .expect("a validated initialization count is non-empty");
-    Ok((best_model, best_index))
-}
-
-/// Index of the smallest inertia; exact ties keep the earliest index.
-pub(crate) fn sk_choose_lowest_inertia_index(inertias: &[f64]) -> usize {
-    let mut best_index = 0;
-    let mut best_inertia = inertias[0];
-    for (index, inertia) in inertias.iter().enumerate().skip(1) {
-        if *inertia < best_inertia {
-            best_index = index;
-            best_inertia = *inertia;
-        }
-    }
-    best_index
 }

@@ -1,9 +1,7 @@
 //! Companion tests for assignment prediction, fit_predict and transform.
 
 use ndarray::{Array1, Array2, array};
-use sciencekit_common::{
-    SKBuilder, SKClustererPredictor, SKError, SKUnsupervisedFit,
-};
+use sciencekit_common::{SKBuilder, SKClustererPredictor, SKError, SKUnsupervisedFit};
 use sprs::{CsMat, TriMat};
 
 use super::{SKKMeans, SKKMeansModel};
@@ -164,7 +162,10 @@ fn kmeans_fit_predict_returns_the_training_assignments() {
     assert_eq!(assignments, model.labels());
 }
 
-fn squared_distance(left: ndarray::ArrayView1<'_, f64>, right: ndarray::ArrayView1<'_, f64>) -> f64 {
+fn squared_distance(
+    left: ndarray::ArrayView1<'_, f64>,
+    right: ndarray::ArrayView1<'_, f64>,
+) -> f64 {
     left.iter()
         .zip(right.iter())
         .map(|(left_value, right_value)| {

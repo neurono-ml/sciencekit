@@ -28,17 +28,16 @@ pub(crate) fn sk_sparse_squared_distances_to_centers<F: SKFloat>(
         .rows()
         .into_iter()
         .map(|center| {
-            center
-                .iter()
-                .fold(F::zero(), |accumulator, value| accumulator + *value * *value)
+            center.iter().fold(F::zero(), |accumulator, value| {
+                accumulator + *value * *value
+            })
         })
         .collect();
     let mut distances = Array2::zeros((number_of_rows, number_of_centers));
     for (row_index, row) in features.outer_iterator().enumerate() {
-        let row_norm = row
-            .data()
-            .iter()
-            .fold(F::zero(), |accumulator, value| accumulator + *value * *value);
+        let row_norm = row.data().iter().fold(F::zero(), |accumulator, value| {
+            accumulator + *value * *value
+        });
         for (center_index, center) in centers.rows().into_iter().enumerate() {
             let dot_product = row
                 .indices()

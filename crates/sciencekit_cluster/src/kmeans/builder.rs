@@ -1,8 +1,8 @@
 //! The mandatory KMeans builder (spec `k-means`, decision 1).
 
 use sciencekit_common::{
-    SKBackendKind, SKError, SKExecutionMode, SKFloat, SKBuilderState,
-    builders::SKBuilder, sk_validate_hyperparameter,
+    SKBackendKind, SKBuilderState, SKError, SKExecutionMode, SKFloat, builders::SKBuilder,
+    sk_validate_hyperparameter,
 };
 
 use super::SKKMeansAlgorithm;

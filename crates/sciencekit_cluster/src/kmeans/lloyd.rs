@@ -38,9 +38,12 @@ pub(crate) fn sk_lloyd_fit<F: SKFloat>(
 
     let distances = sk_squared_distances_to_centers(features, &centers.view())?;
     let labels = sk_nearest_labels(&distances);
-    let inertia = labels.iter().enumerate().fold(F::zero(), |accumulator, (row, cluster)| {
-        accumulator + distances[[row, *cluster]]
-    });
+    let inertia = labels
+        .iter()
+        .enumerate()
+        .fold(F::zero(), |accumulator, (row, cluster)| {
+            accumulator + distances[[row, *cluster]]
+        });
     Ok(SKKMeansFitResult {
         centers,
         labels,

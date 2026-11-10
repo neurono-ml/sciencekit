@@ -33,9 +33,7 @@ fn acceptance_concurrency_shared_model_serves_parallel_assignments() {
                 .slice_axis(Axis(0), Slice::from(chunk * 1_000..(chunk + 1) * 1_000))
                 .to_owned();
             let model = &model;
-            handles.push(scope.spawn(move || {
-                (chunk, model.predict_clusters(&batch).unwrap())
-            }));
+            handles.push(scope.spawn(move || (chunk, model.predict_clusters(&batch).unwrap())));
         }
         for handle in handles {
             let (chunk, labels) = handle.join().expect("thread joins");

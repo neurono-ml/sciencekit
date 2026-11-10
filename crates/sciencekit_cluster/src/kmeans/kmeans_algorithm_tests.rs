@@ -5,7 +5,8 @@ use sciencekit_common::SKDataView;
 use sprs::{CsMat, TriMat};
 
 use super::algorithm::{sk_fit_with_algorithm, sk_resolve_algorithm};
-use super::{SKKMeansAlgorithm, SKKMeansInitialization, sk_initialize_centers};
+use super::init::sk_initialize_centers;
+use super::{SKKMeansAlgorithm, SKKMeansInitialization};
 
 fn separated_blobs() -> Array2<f64> {
     array![

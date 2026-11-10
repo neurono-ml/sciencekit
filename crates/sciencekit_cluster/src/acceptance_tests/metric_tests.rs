@@ -16,7 +16,10 @@ fn acceptance_metrics_cluster_labels_recover_the_planted_groups() {
         .fit(&data)
         .unwrap();
 
-    assert_eq!(majority_accuracy(&truth, &model.labels().to_owned(), 3), 1.0);
+    assert_eq!(
+        majority_accuracy(&truth, &model.labels().to_owned(), 3),
+        1.0
+    );
 }
 
 #[test]

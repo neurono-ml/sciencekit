@@ -5,9 +5,7 @@ use sciencekit_common::{SKDataView, SKError, SKFloat};
 
 use super::distance::sk_dense_squared_distances_to_centers;
 use super::iteration::sk_nearest_labels;
-use super::iteration::{
-    sk_euclidean_center_shifts, sk_has_converged, sk_update_centers,
-};
+use super::iteration::{sk_euclidean_center_shifts, sk_has_converged, sk_update_centers};
 use super::result::SKKMeansFitResult;
 
 /// Elkan fit on dense data, returning the model state and the number of exact
@@ -150,10 +148,7 @@ pub(crate) fn sk_elkan_assign<F: SKFloat>(
 }
 
 /// Squared Euclidean distance between two dense rows.
-fn sk_squared_distance_rows<F: SKFloat>(
-    left: ArrayView1<'_, F>,
-    right: ArrayView1<'_, F>,
-) -> F {
+fn sk_squared_distance_rows<F: SKFloat>(left: ArrayView1<'_, F>, right: ArrayView1<'_, F>) -> F {
     left.iter()
         .zip(right.iter())
         .fold(F::zero(), |accumulator, (left_value, right_value)| {

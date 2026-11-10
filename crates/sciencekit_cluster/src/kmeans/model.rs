@@ -4,6 +4,7 @@ use ndarray::{Array1, Array2, ArrayView1, ArrayView2};
 use sciencekit_common::{SKBackendKind, SKClusterLabel, SKExecutionMode, SKFloat};
 
 use super::SKKMeansAlgorithm;
+use super::result::SKKMeansFitResult;
 
 /// Fitted KMeans state: dense centers, typed training assignments, inertia,
 /// iteration count, convergence flag and the metadata of the producing run.
@@ -22,21 +23,18 @@ pub struct SKKMeansModel<F: SKFloat> {
 impl<F: SKFloat> SKKMeansModel<F> {
     /// Builds the public model from a finished initialization.
     pub(super) fn from_fit(
-        centers: Array2<F>,
+        result: SKKMeansFitResult<F>,
         labels: Array1<SKClusterLabel>,
-        inertia: F,
-        iterations: usize,
-        converged: bool,
         algorithm: SKKMeansAlgorithm,
         backend: SKBackendKind,
         execution_mode: SKExecutionMode,
     ) -> Self {
         Self {
-            centers,
+            centers: result.centers,
             labels,
-            inertia,
-            iterations,
-            converged,
+            inertia: result.inertia,
+            iterations: result.iterations,
+            converged: result.converged,
             algorithm,
             backend,
             execution_mode,

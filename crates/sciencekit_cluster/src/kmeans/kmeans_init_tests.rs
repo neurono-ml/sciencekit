@@ -4,7 +4,8 @@ use ndarray::{Array2, array};
 use sciencekit_common::SKDataView;
 use sprs::{CsMat, TriMat};
 
-use super::{sk_initialization_seed, sk_initialize_centers, sk_run_initializations};
+use super::init::sk_initialize_centers;
+use super::selection::{sk_initialization_seed, sk_run_initializations};
 use crate::kmeans::SKKMeansInitialization;
 
 fn blobs() -> Array2<f64> {

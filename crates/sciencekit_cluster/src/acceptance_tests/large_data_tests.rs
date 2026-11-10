@@ -24,7 +24,10 @@ fn acceptance_large_dense_fit_recovers_planted_clusters() {
     assert!(model.inertia() > 0.0);
     assert!(model.converged());
     assert_eq!(model.algorithm(), SKKMeansAlgorithm::Elkan);
-    assert_eq!(majority_accuracy(&truth, &model.labels().to_owned(), 4), 1.0);
+    assert_eq!(
+        majority_accuracy(&truth, &model.labels().to_owned(), 4),
+        1.0
+    );
 }
 
 #[test]

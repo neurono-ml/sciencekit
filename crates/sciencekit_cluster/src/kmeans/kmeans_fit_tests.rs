@@ -88,7 +88,12 @@ fn kmeans_fit_labels_are_cluster_variants_never_noise() {
         let index = label.cluster_index().expect("KMeans emits only clusters");
         assert!((index as f64) < 2.0);
     }
-    assert!(model.labels().iter().all(|label| *label != SKClusterLabel::NOISE));
+    assert!(
+        model
+            .labels()
+            .iter()
+            .all(|label| *label != SKClusterLabel::NOISE)
+    );
 }
 
 #[test]

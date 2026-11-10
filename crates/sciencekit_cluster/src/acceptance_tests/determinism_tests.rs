@@ -30,14 +30,8 @@ fn acceptance_determinism_repeated_fits_are_identical() {
 #[test]
 fn acceptance_determinism_is_independent_of_the_thread_count() {
     let (data, _) = planted_design(2_000, 3);
-    let single_thread = ThreadPoolBuilder::new()
-        .num_threads(1)
-        .build()
-        .unwrap();
-    let four_threads = ThreadPoolBuilder::new()
-        .num_threads(4)
-        .build()
-        .unwrap();
+    let single_thread = ThreadPoolBuilder::new().num_threads(1).build().unwrap();
+    let four_threads = ThreadPoolBuilder::new().num_threads(4).build().unwrap();
 
     let single = single_thread.install(|| estimator().fit(&data)).unwrap();
     let parallel = four_threads.install(|| estimator().fit(&data)).unwrap();

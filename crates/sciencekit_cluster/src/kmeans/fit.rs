@@ -9,8 +9,9 @@ use sciencekit_common::{
 use super::algorithm::sk_fit_with_algorithm;
 use super::core_implementation::SKKMeans;
 use super::distance::sk_view_dimensions;
-use super::init::{sk_initialize_centers, sk_run_initializations};
+use super::init::sk_initialize_centers;
 use super::model::SKKMeansModel;
+use super::selection::sk_run_initializations;
 use super::validation::sk_validate_fit_features;
 
 impl<F: SKFloat> SKUnsupervisedFit<F> for SKKMeans<F> {
@@ -55,7 +56,10 @@ fn sk_fit_estimator<F: SKFloat>(
     let configuration = estimator.configuration;
     sk_validate_fit_features(features, configuration.number_of_clusters)?;
 
-    type InitializationResult<F> = (super::result::SKKMeansFitResult<F>, super::SKKMeansAlgorithm);
+    type InitializationResult<F> = (
+        super::result::SKKMeansFitResult<F>,
+        super::SKKMeansAlgorithm,
+    );
     let (best, _) = sk_run_initializations::<InitializationResult<F>, SKError>(
         configuration.number_of_initializations,
         configuration.random_seed,
@@ -86,11 +90,8 @@ fn sk_fit_estimator<F: SKFloat>(
             .map(|cluster| SKClusterLabel::cluster(*cluster as u32)),
     );
     Ok(SKKMeansModel::from_fit(
-        result.centers,
+        result,
         labels,
-        result.inertia,
-        result.iterations,
-        result.converged,
         algorithm,
         configuration.backend,
         configuration.execution_mode,

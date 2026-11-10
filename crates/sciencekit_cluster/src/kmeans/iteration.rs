@@ -33,7 +33,8 @@ pub(crate) fn sk_update_centers<F: SKFloat>(
     number_of_clusters: usize,
 ) -> Array2<F> {
     let number_of_features = sk_view_dimensions(&features).1;
-    let (effective_labels, counts) = repaired_labels(labels, assigned_distances, number_of_clusters);
+    let (effective_labels, counts) =
+        repaired_labels(labels, assigned_distances, number_of_clusters);
     let mut sums = Array2::<F>::zeros((number_of_clusters, number_of_features));
     match features {
         SKDataView::Dense(dense) => {
@@ -160,12 +161,15 @@ pub(crate) fn sk_euclidean_center_shifts<F: SKFloat>(
 
 /// Mean squared norm of the center rows.
 pub(crate) fn sk_mean_squared_norm<F: SKFloat>(centers: &ArrayView2<'_, F>) -> F {
-    let total = centers.rows().into_iter().fold(F::zero(), |accumulator, row| {
-        accumulator
-            + row
-                .iter()
-                .fold(F::zero(), |norm, value| norm + *value * *value)
-    });
+    let total = centers
+        .rows()
+        .into_iter()
+        .fold(F::zero(), |accumulator, row| {
+            accumulator
+                + row
+                    .iter()
+                    .fold(F::zero(), |norm, value| norm + *value * *value)
+        });
     total / F::from(centers.nrows()).expect("a cluster count fits the scalar")
 }
 

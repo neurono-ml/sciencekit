@@ -9,7 +9,10 @@ fn kmeans_builder_defaults_match_the_documented_configuration() {
     let estimator = SKKMeans::<f64>::build().build().unwrap();
 
     assert_eq!(estimator.number_of_clusters(), 8);
-    assert_eq!(estimator.initialization(), SKKMeansInitialization::KMeansPlusPlus);
+    assert_eq!(
+        estimator.initialization(),
+        SKKMeansInitialization::KMeansPlusPlus
+    );
     assert_eq!(estimator.number_of_initializations(), 1);
     assert_eq!(estimator.maximum_number_of_iterations(), 300);
     assert_eq!(estimator.tolerance(), 1e-4);

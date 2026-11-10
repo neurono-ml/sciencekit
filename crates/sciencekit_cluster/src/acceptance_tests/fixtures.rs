@@ -38,14 +38,14 @@ pub(crate) fn majority_accuracy(
     number_of_clusters: usize,
 ) -> f64 {
     let mut mapping = vec![0_i64; number_of_clusters];
-    for cluster in 0..number_of_clusters {
+    for (cluster, slot) in mapping.iter_mut().enumerate() {
         let mut counts = std::collections::BTreeMap::<i64, usize>::new();
         for (row, label) in labels.iter().enumerate() {
             if label.cluster_index() == Some(cluster as u32) {
                 *counts.entry(truth[row]).or_default() += 1;
             }
         }
-        mapping[cluster] = counts
+        *slot = counts
             .into_iter()
             .max_by_key(|(group, count)| (*count, std::cmp::Reverse(*group)))
             .map(|(group, _)| group)

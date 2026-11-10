@@ -1,9 +1,7 @@
 //! Companion tests for fit/assignment validation (spec `k-means`, decision 9).
 
 use ndarray::{Array2, array};
-use sciencekit_common::{
-    SKBuilder, SKClustererPredictor, SKError, SKUnsupervisedFit,
-};
+use sciencekit_common::{SKBuilder, SKClustererPredictor, SKError, SKUnsupervisedFit};
 use sprs::{CsMat, TriMat};
 
 use super::SKKMeans;

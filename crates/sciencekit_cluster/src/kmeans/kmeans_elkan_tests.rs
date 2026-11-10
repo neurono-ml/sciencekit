@@ -4,8 +4,8 @@ use ndarray::{Array1, Array2, array};
 use sciencekit_common::SKDataView;
 
 use super::distance::sk_dense_squared_distances_to_centers;
-use super::iteration::sk_nearest_labels;
 use super::elkan::{sk_elkan_assign, sk_elkan_fit};
+use super::iteration::sk_nearest_labels;
 use super::iteration::sk_update_centers;
 use super::lloyd::sk_lloyd_fit;
 
@@ -27,13 +27,7 @@ fn initial_centers() -> Array2<f64> {
 #[test]
 fn kmeans_elkan_equals_lloyd_on_dense_data() {
     let data = separated_blobs();
-    let lloyd = sk_lloyd_fit(
-        SKDataView::Dense(data.view()),
-        initial_centers(),
-        100,
-        1e-9,
-    )
-    .unwrap();
+    let lloyd = sk_lloyd_fit(SKDataView::Dense(data.view()), initial_centers(), 100, 1e-9).unwrap();
     let elkan = sk_elkan_fit(data.view(), initial_centers(), 100, 1e-9).unwrap();
 
     assert_eq!(elkan.labels, lloyd.labels);
@@ -49,16 +43,14 @@ fn kmeans_elkan_equals_lloyd_on_dense_data() {
 #[test]
 fn kmeans_elkan_equals_lloyd_from_a_seeded_initialization() {
     let data = separated_blobs();
-    let centers =
-        super::sk_initialize_centers(SKDataView::Dense(data.view()), 2, Default::default(), 4)
-            .unwrap();
-    let lloyd = sk_lloyd_fit(
+    let centers = super::init::sk_initialize_centers(
         SKDataView::Dense(data.view()),
-        centers.clone(),
-        100,
-        1e-9,
+        2,
+        Default::default(),
+        4,
     )
     .unwrap();
+    let lloyd = sk_lloyd_fit(SKDataView::Dense(data.view()), centers.clone(), 100, 1e-9).unwrap();
     let elkan = sk_elkan_fit(data.view(), centers, 100, 1e-9).unwrap();
 
     assert_eq!(elkan.labels, lloyd.labels);
@@ -72,8 +64,7 @@ fn kmeans_elkan_prunes_impossible_distances() {
     let distances = sk_dense_squared_distances_to_centers(&data.view(), &centers.view());
     let mut labels = sk_nearest_labels(&distances);
     let mut lower = distances.clone();
-    let mut upper =
-        Array1::from_iter((0..data.nrows()).map(|row| distances[[row, labels[row]]]));
+    let mut upper = Array1::from_iter((0..data.nrows()).map(|row| distances[[row, labels[row]]]));
     let center_center_squared =
         sk_dense_squared_distances_to_centers(&centers.view(), &centers.view());
     let mut evaluations = 0;
