@@ -48,6 +48,14 @@ func TestBuilderFinalizerReleasesHandle(t *testing.T) {
 	waitForHandleCounts(t, baselineBuilders, baselineModels)
 }
 
+// TestModelFinalizerReleasesHandle proves the finalizer frees fitted models
+// the caller forgot to close.
+func TestModelFinalizerReleasesHandle(t *testing.T) {
+	baselineBuilders, baselineModels := openHandleCounts()
+	createAndForgetModel(t)
+	waitForHandleCounts(t, baselineBuilders, baselineModels)
+}
+
 // createAndForgetBuilder builds a wrapper that becomes unreachable.
 func createAndForgetBuilder(t *testing.T) {
 	t.Helper()
@@ -56,6 +64,25 @@ func createAndForgetBuilder(t *testing.T) {
 		t.Fatalf("NewStandardScalerBuilder: %v", err)
 	}
 	runtime.KeepAlive(builder)
+}
+
+// createAndForgetModel fits a wrapper that becomes unreachable.
+func createAndForgetModel(t *testing.T) {
+	t.Helper()
+	features, err := NewMatrix(4, 1, []float64{0, 1, 2, 3})
+	if err != nil {
+		t.Fatalf("NewMatrix: %v", err)
+	}
+	builder, err := NewLinearRegressionBuilder[float64]()
+	if err != nil {
+		t.Fatalf("NewLinearRegressionBuilder: %v", err)
+	}
+	model, err := builder.Fit(features, []float64{1, 3, 5, 7})
+	if err != nil {
+		t.Fatalf("Fit: %v", err)
+	}
+	_ = builder.Close()
+	runtime.KeepAlive(model)
 }
 
 // waitForHandleCounts waits for the finalizers to drain every handle.

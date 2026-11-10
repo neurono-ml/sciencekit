@@ -56,6 +56,17 @@ func NewMatrix[T Float](rows, columns int, data []T) (Matrix[T], error) {
 	return Matrix[T]{Rows: rows, Columns: columns, Data: data}, nil
 }
 
+// validateTargets proves the target vector has one value per feature row.
+func validateTargets[T Float](targets []T, rows int, operation string) error {
+	if len(targets) != rows {
+		return validationError(
+			operation,
+			fmt.Sprintf("the target vector has %d values, but the feature matrix has %d rows", len(targets), rows),
+		)
+	}
+	return nil
+}
+
 // validate checks an already constructed matrix.
 func (matrix Matrix[T]) validate() error {
 	if matrix.Rows <= 0 || matrix.Columns <= 0 {

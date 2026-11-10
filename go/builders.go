@@ -69,6 +69,39 @@ func (builder *LinearRegressionBuilder[T]) Backend(kind BackendKind) error {
 	})
 }
 
+// Fit trains an ordinary-least-squares model on dense features and targets.
+func (builder *LinearRegressionBuilder[T]) Fit(features Matrix[T], targets []T) (*LinearRegressionModel[T], error) {
+	if err := features.validate(); err != nil {
+		return nil, err
+	}
+	if err := validateTargets(targets, features.Rows, "fit"); err != nil {
+		return nil, err
+	}
+
+	var trained *nativeModel
+	err := builder.handle.run("fit", func(native *nativeBuilder) error {
+		featureDescriptor, err := descriptorFromMatrix(features)
+		if err != nil {
+			return err
+		}
+		defer featureDescriptor.free()
+		targetDescriptor, err := descriptorFromVector(targets)
+		if err != nil {
+			return err
+		}
+		defer targetDescriptor.free()
+
+		trained, err = native.fit(featureDescriptor, targetDescriptor)
+		runtime.KeepAlive(featureDescriptor)
+		runtime.KeepAlive(targetDescriptor)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	return newLinearRegressionModel[T](trained), nil
+}
+
 // Close releases the native builder. It is safe to call more than once.
 func (builder *LinearRegressionBuilder[T]) Close() error {
 	return builder.handle.close()
@@ -116,6 +149,30 @@ func (builder *StandardScalerBuilder[T]) Backend(kind BackendKind) error {
 	return builder.handle.run("backend", func(native *nativeBuilder) error {
 		return native.setBackend(kind)
 	})
+}
+
+// Fit trains a standard scaler on dense features.
+func (builder *StandardScalerBuilder[T]) Fit(features Matrix[T]) (*StandardScalerModel[T], error) {
+	if err := features.validate(); err != nil {
+		return nil, err
+	}
+
+	var trained *nativeModel
+	err := builder.handle.run("fit", func(native *nativeBuilder) error {
+		featureDescriptor, err := descriptorFromMatrix(features)
+		if err != nil {
+			return err
+		}
+		defer featureDescriptor.free()
+
+		trained, err = native.fit(featureDescriptor, nil)
+		runtime.KeepAlive(featureDescriptor)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	return newStandardScalerModel[T](trained), nil
 }
 
 // Close releases the native builder. It is safe to call more than once.
