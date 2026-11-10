@@ -5,11 +5,15 @@
 
 mod contract;
 mod query_result;
+mod validation;
 
 pub use contract::SKNearestNeighborsSearcher;
 pub use query_result::{SKNeighborQuery, SKRadiusNeighbors};
+pub use validation::sk_validate_query;
 
 #[cfg(test)]
 mod query_result_tests;
 #[cfg(test)]
 mod searcher_tests;
+#[cfg(test)]
+mod validation_tests;
