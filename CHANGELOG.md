@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `sciencekit_metrics` clustering evaluation (spec `clustering-metrics`):
+  per-sample and mean silhouette over chunked Euclidean pairwise distances,
+  with noise rows excluded and fewer than two clusters rejected; the adjusted
+  Rand index; normalized mutual information in arithmetic, geometric and
+  maximum forms; homogeneity, completeness and V-measure; and the
+  Davies-Bouldin (lower is better) and Calinski-Harabasz (higher is better)
+  centroid scores. `SKSilhouetteScorer` is the first concrete
+  `SKUnsupervisedScorer`, delegating to the free function after filtering the
+  typed `Noise` variant. Dense and CSR features share the pairwise/centroid
+  paths: the representation is dispatched once and a sparse design is never
+  densified. Pairwise labeling metrics treat noise as an ordinary label by
+  design, while silhouette and the centroid scores exclude it. Empty input,
+  length mismatch, single-cluster and noise-only assignments, non-finite
+  values and insufficient degrees of freedom report structured errors, and
+  every score is deterministic under concurrent calls.
+
 ## [0.4.0] — 2026-11-10
 
 Model selection and the C ABI: reproducible splits, folds and cross-validation scoring, plus
