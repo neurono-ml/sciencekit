@@ -76,7 +76,7 @@ into the builder by `then`, and `fit` turns them into fitted stage models. This 
 flowchart LR
     accTitle: The builder type grows with every composed stage
     accDescr: A pipeline builder's second type parameter is a tuple of the stages composed so far. Starting with an empty tuple, each then call returns a builder whose tuple has one more stage. The classifier finalizer only accepts a builder whose final stage feeds a supervised estimator, so an invalid chain fails to compile instead of failing at fit time.
-    A["SKPipeline::start::<f64>()<br/>builder&lt;( )&gt;"] -->|".then(scaler)"| B["builder&lt;(( ), Scaler)&gt;"]
+    A["SKPipeline::start::&lt;f64&gt;()<br/>builder&lt;( )&gt;"] -->|".then(scaler)"| B["builder&lt;(( ), Scaler)&gt;"]
     B -->|".then(imputer)"| C["builder&lt;((( ), Scaler), Imputer)&gt;"]
     C -->|"finalize_classifier"| D["SKPipelineClassifierBuilder"]
     C -->|"finalize_classifier(regressor)<br/>rejected: not a classifier"| E["compile error"]
