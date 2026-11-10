@@ -3,15 +3,16 @@
 
 use ndarray::{Array1, ArrayView2};
 use sciencekit_common::{
-    SKDataView, SKError, SKFloat, SKOperationAttributes, SKOperationKind, SKUnsupervisedFit,
-    sk_run_operation,
+    SKBuilder, SKDataView, SKError, SKFloat, SKOperationAttributes, SKOperationKind,
+    SKUnsupervisedFit, sk_run_operation,
 };
 
 use crate::knn::core_implementation::SKKNNImputer;
 use crate::knn::donors::sk_column_donors;
 use crate::knn::marker::{sk_canonicalize_missing, sk_dense_missing_mask};
 use crate::knn::model::SKKNNImputerModel;
-use crate::knn::validation::{sk_validated_shape, sk_validate_finite, sk_validate_neighbor_count};
+use crate::knn::validation::{sk_validate_finite, sk_validated_shape, sk_validate_neighbor_count};
+use crate::missing_indicator::{SKMissingIndicator, SKMissingIndicatorModel};
 
 impl<F: SKFloat> SKKNNImputer<F> {
     /// Fit the dense representation; sparse input has no missing marker and
@@ -33,6 +34,7 @@ impl<F: SKFloat> SKKNNImputer<F> {
             .filter(|column| !kept_columns.contains(column))
             .collect();
         let training = sk_canonicalize_missing(features, self.missing_values);
+        let indicator = self.fitted_indicator(&missing_mask)?;
         Ok(SKKNNImputerModel {
             training,
             column_donors: sk_column_donors(&missing_mask.view()),
@@ -44,10 +46,36 @@ impl<F: SKFloat> SKKNNImputer<F> {
             missing_values: self.missing_values,
             nearest_neighbors_count: self.nearest_neighbors_count,
             weights: self.weights,
-            indicator: None,
+            indicator,
             backend: self.backend,
             execution_intent: self.execution_intent(),
         })
+    }
+
+    /// The missingness indicator composed by `add_indicator`: the same marker
+    /// and backend kind, tolerating missingness unseen at fit so it never
+    /// fails a transform the imputer can handle.
+    fn fitted_indicator(
+        &self,
+        missing_mask: &ndarray::Array2<bool>,
+    ) -> Result<Option<SKMissingIndicatorModel<F>>, SKError> {
+        if !self.add_indicator {
+            return Ok(None);
+        }
+        let scope: Vec<usize> = (0..missing_mask.ncols())
+            .filter(|column| missing_mask.column(*column).iter().any(|missing| *missing))
+            .collect();
+        let estimator = SKMissingIndicator::build()
+            .missing_values(self.missing_values)
+            .error_on_new(false)
+            .backend(self.backend)
+            .execution_mode(self.execution_intent())
+            .build()?;
+        Ok(Some(SKMissingIndicatorModel::from_scope(
+            scope,
+            missing_mask.ncols(),
+            &estimator,
+        )))
     }
 
     /// The span attributes of a fit, carrying the execution mode and the

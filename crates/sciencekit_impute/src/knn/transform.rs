@@ -1,7 +1,7 @@
 //! The dense transform of the nearest-neighbor imputer
 //! (spec `nearest-neighbor-imputation`).
 
-use ndarray::{Array2, ArrayView2};
+use ndarray::{Array2, ArrayView2, Axis};
 use sciencekit_common::{
     SKDataView, SKError, SKFeatureTransformer, SKFloat, SKOperationAttributes, SKOperationKind,
     sk_run_operation,
@@ -11,7 +11,8 @@ use crate::knn::distance_block::sk_distance_block;
 use crate::knn::donors::sk_impute_cell;
 use crate::knn::marker::{sk_canonicalize_missing, sk_dense_missing_mask};
 use crate::knn::model::SKKNNImputerModel;
-use crate::knn::validation::{sk_validate_finite, sk_validated_shape};
+use crate::knn::validation::{sk_validated_shape, sk_validate_finite};
+use crate::missing_indicator::SKIndicatorOutput;
 use crate::simple_imputer::SKImputedOutput;
 
 impl<F: SKFloat> SKFeatureTransformer<F> for SKKNNImputerModel<F> {
@@ -102,6 +103,18 @@ impl<F: SKFloat> SKKNNImputerModel<F> {
                 };
             }
         }
-        Ok(output)
+        let Some(indicator) = self.indicator.as_ref() else {
+            return Ok(output);
+        };
+        let mask = match indicator.transform(*features)? {
+            SKIndicatorOutput::Dense(mask) => mask,
+            SKIndicatorOutput::Sparse(mask) => mask.to_dense(),
+        };
+        ndarray::concatenate(Axis(1), &[output.view(), mask.view()]).map_err(|_| {
+            SKError::Conversion(
+                "the imputed features and the missingness mask must share their row count"
+                    .to_owned(),
+            )
+        })
     }
 }

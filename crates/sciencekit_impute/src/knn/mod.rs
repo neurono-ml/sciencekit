@@ -36,6 +36,9 @@ mod fit_tests;
 mod fit_span_tests;
 
 #[cfg(test)]
+mod indicator_tests;
+
+#[cfg(test)]
 mod marker_tests;
 
 #[cfg(test)]
