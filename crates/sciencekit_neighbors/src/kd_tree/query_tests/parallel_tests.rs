@@ -1,7 +1,6 @@
 //! KD-tree row-parallel query tests.
 
-use ndarray::{Array2, array};
-use sciencekit_common::SKDataView;
+use ndarray::Array2;
 
 use super::fixtures::build;
 use crate::searcher::candidates::{SK_QUERY_PARALLEL_GRAIN, sk_should_run_parallel};
