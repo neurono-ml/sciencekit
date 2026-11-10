@@ -2,7 +2,7 @@
 //! (spec `nearest-neighbor-estimators`).
 
 use ndarray::{Array2, array};
-use sciencekit_common::{SKDataView, SKError};
+use sciencekit_common::SKDataView;
 use sprs::{CsMat, TriMat};
 
 use super::super::{SKBruteForceSearcher, SKNeighborsMetric, SKTrainingData};
@@ -24,14 +24,6 @@ fn sparse_example() -> CsMat<f64> {
     triplet.add_triplet(1, 1, 2.0);
     triplet.add_triplet(2, 0, 3.0);
     triplet.to_csr()
-}
-
-fn dense_searcher() -> SKBruteForceSearcher<f64> {
-    SKBruteForceSearcher::build(
-        SKTrainingData::Dense(dense_training()),
-        SKNeighborsMetric::Euclidean,
-    )
-    .expect("the dense fixture is valid")
 }
 
 #[test]
