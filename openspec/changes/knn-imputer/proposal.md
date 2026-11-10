@@ -26,7 +26,7 @@ built on the exact algorithm scikit-learn uses instead of waiting for a sparse i
 - Dense input only: the NaN-aware distance has no sparse missing marker (an implicit CSR
   zero is an observed zero), so a sparse input is rejected with
   `UnsupportedRepresentation` and a suggestion to use `SKSimpleImputer`. This is a
-  documented dense-only exception; the imputer's public surface does not claim sparse
+  §4.5.2 semantically-undefined rejection; the imputer's public surface does not claim sparse
   parity.
 - Bounded memory: distances are computed in fixed-size chunks, and rows that need
   imputation are processed independently and in parallel.

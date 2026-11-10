@@ -158,8 +158,9 @@ structured central errors.
 
 #### Scenario: Excessive neighbour count is rejected
 
-- **WHEN** `nearest_neighbors_count` exceeds the number of potential donors
-- **THEN** the operation returns a structured error instead of silently reducing `k`
+- **WHEN** `nearest_neighbors_count` exceeds the number of **training rows**
+- **THEN** the operation returns a structured error; a column with fewer donors than `k`
+  simply contributes every donor it has (documented reduction, not an error)
 
 ### Requirement: Concurrent transform
 

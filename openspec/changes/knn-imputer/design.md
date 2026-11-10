@@ -80,7 +80,7 @@ features, and tolerates missingness unseen at fit without expanding the mask.
 A CSR implicit zero is an observed zero, so there is no missing marker in the sparse
 representation. The imputer therefore rejects sparse input with
 `UnsupportedRepresentation` and points at `SKSimpleImputer` for sparse data. This is the
-documented dense-only exception in `representation-parity`: the imputer's mathematics
+semantically-undefined rejection of PRD §4.5.2 (no dense-geometry exception, no alternative path required): the imputer's mathematics
 (and the marker contract) does not tolerate a sparse missing representation.
 
 ### Decision 7 — Validation and observability
@@ -115,7 +115,7 @@ crates/sciencekit_impute/src/knn/
 - **All-NaN distances** → explicit column-mean fallback, tested on sparse observation
   patterns.
 - **Zero-distance duplicates** → zero-distance weight convention, tested.
-- **No sparse support** → documented dense-only exception; `SKSimpleImputer` remains the
+- **No sparse support** → §4.5.2 semantically-undefined rejection; `SKSimpleImputer` remains the
   sparse-capable option.
 - **Chunk heuristic can be conservative** → exposed as a batch/memory budget and tested
   on large input.
