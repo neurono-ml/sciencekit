@@ -9,16 +9,20 @@
 //! This is a **pure dispatcher** module: `mod.rs` only declares and re-exports
 //! submodules; every implementation lives in its own file.
 
+mod chebyshev;
 mod manhattan;
 mod row_merge;
 mod row_statistics;
 mod squared_euclidean;
 
+pub use chebyshev::sk_sparse_chebyshev_distance_matrix;
 pub use manhattan::sk_sparse_manhattan_distance_matrix;
 pub use squared_euclidean::{
     sk_sparse_euclidean_distance_matrix, sk_sparse_squared_euclidean_distance_matrix,
 };
 
+#[cfg(test)]
+mod chebyshev_tests;
 #[cfg(test)]
 mod fixtures;
 #[cfg(test)]

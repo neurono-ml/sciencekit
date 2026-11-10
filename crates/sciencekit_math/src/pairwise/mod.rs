@@ -26,8 +26,8 @@ pub use dispatcher::{SKPairwiseMetric, sk_pairwise_distance_matrix};
 pub use manhattan::sk_manhattan_distance_matrix;
 pub use nan_euclidean::sk_nan_euclidean_distance_matrix;
 pub use sparse::{
-    sk_sparse_euclidean_distance_matrix, sk_sparse_manhattan_distance_matrix,
-    sk_sparse_squared_euclidean_distance_matrix,
+    sk_sparse_chebyshev_distance_matrix, sk_sparse_euclidean_distance_matrix,
+    sk_sparse_manhattan_distance_matrix, sk_sparse_squared_euclidean_distance_matrix,
 };
 pub use squared_euclidean::{sk_euclidean_distance_matrix, sk_squared_euclidean_distance_matrix};
 
