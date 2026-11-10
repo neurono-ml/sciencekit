@@ -24,6 +24,20 @@ pub use squared_euclidean::{
     sk_sparse_euclidean_distance_matrix, sk_sparse_squared_euclidean_distance_matrix,
 };
 
+pub(crate) use chebyshev::{
+    sk_dense_sparse_chebyshev_distance_matrix, sk_sparse_dense_chebyshev_distance_matrix,
+};
+pub(crate) use cosine::{
+    sk_dense_sparse_cosine_distance_matrix, sk_sparse_dense_cosine_distance_matrix,
+};
+pub(crate) use manhattan::{
+    sk_dense_sparse_manhattan_distance_matrix, sk_sparse_dense_manhattan_distance_matrix,
+};
+pub(crate) use squared_euclidean::{
+    sk_dense_sparse_euclidean_distance_matrix, sk_dense_sparse_squared_euclidean_distance_matrix,
+    sk_sparse_dense_euclidean_distance_matrix, sk_sparse_dense_squared_euclidean_distance_matrix,
+};
+
 #[cfg(test)]
 mod chebyshev_tests;
 #[cfg(test)]
@@ -31,7 +45,7 @@ mod concurrency_tests;
 #[cfg(test)]
 mod cosine_tests;
 #[cfg(test)]
-mod fixtures;
+pub(crate) mod fixtures;
 #[cfg(test)]
 mod manhattan_tests;
 #[cfg(test)]

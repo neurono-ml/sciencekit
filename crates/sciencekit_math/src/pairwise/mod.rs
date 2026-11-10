@@ -35,6 +35,8 @@ pub use squared_euclidean::{sk_euclidean_distance_matrix, sk_squared_euclidean_d
 #[cfg(test)]
 mod chebyshev_tests;
 #[cfg(test)]
+mod dispatcher_representation_tests;
+#[cfg(test)]
 mod dispatcher_tests;
 #[cfg(test)]
 mod nan_euclidean_tests;

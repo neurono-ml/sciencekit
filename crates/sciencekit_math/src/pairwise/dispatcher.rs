@@ -4,7 +4,18 @@
 
 use ndarray::{Array2, ArrayView2};
 use sciencekit_common::{SKDataView, SKError, SKFloat};
+use sprs::CsMatView;
 
+use super::sparse::{
+    sk_dense_sparse_chebyshev_distance_matrix, sk_dense_sparse_cosine_distance_matrix,
+    sk_dense_sparse_euclidean_distance_matrix, sk_dense_sparse_manhattan_distance_matrix,
+    sk_dense_sparse_squared_euclidean_distance_matrix, sk_sparse_chebyshev_distance_matrix,
+    sk_sparse_cosine_distance_matrix, sk_sparse_dense_chebyshev_distance_matrix,
+    sk_sparse_dense_cosine_distance_matrix, sk_sparse_dense_euclidean_distance_matrix,
+    sk_sparse_dense_manhattan_distance_matrix, sk_sparse_dense_squared_euclidean_distance_matrix,
+    sk_sparse_euclidean_distance_matrix, sk_sparse_manhattan_distance_matrix,
+    sk_sparse_squared_euclidean_distance_matrix,
+};
 use super::{
     sk_chebyshev_distance_matrix, sk_cosine_distance_matrix, sk_euclidean_distance_matrix,
     sk_manhattan_distance_matrix, sk_nan_euclidean_distance_matrix,
@@ -56,17 +67,14 @@ pub fn sk_pairwise_distance_matrix<F: SKFloat>(
         ));
     }
     if metric == SKPairwiseMetric::NanEuclidean && sk_has_sparse_side(&left, &right) {
-        return Err(SKError::UnsupportedRepresentation {
-            representation: "csr",
-            suggestion: "convert the sparse matrix to dense with to_dense; CSR implicit zeros are observed values, so no missing marker exists",
-        });
+        return Err(sk_sparse_nan_unsupported());
     }
     match metric {
         SKPairwiseMetric::NanEuclidean => {
             let (left_dense, right_dense) = (left.as_dense()?, right.as_dense()?);
             Ok(sk_nan_euclidean_distance_matrix(&left_dense, &right_dense))
         }
-        _ => sk_dispatch_representation(metric, left, right),
+        _ => sk_dispatch_representation(metric, &left, &right),
     }
 }
 
@@ -87,6 +95,14 @@ fn sk_unsupported_representation<F>(view: &SKDataView<'_, F>) -> SKError {
     }
 }
 
+/// Rejection for the dense-only NaN-aware metric under a sparse input.
+fn sk_sparse_nan_unsupported() -> SKError {
+    SKError::UnsupportedRepresentation {
+        representation: "csr",
+        suggestion: "convert the sparse matrix to dense with to_dense; CSR implicit zeros are observed values, so no missing marker exists",
+    }
+}
+
 /// Whether either side is sparse.
 fn sk_has_sparse_side<F>(left: &SKDataView<'_, F>, right: &SKDataView<'_, F>) -> bool {
     matches!(left, SKDataView::Sparse(_)) || matches!(right, SKDataView::Sparse(_))
@@ -95,17 +111,23 @@ fn sk_has_sparse_side<F>(left: &SKDataView<'_, F>, right: &SKDataView<'_, F>) ->
 /// Route a non-NaN metric to the kernel matching the representation pair.
 fn sk_dispatch_representation<F: SKFloat>(
     metric: SKPairwiseMetric,
-    left: SKDataView<'_, F>,
-    right: SKDataView<'_, F>,
+    left: &SKDataView<'_, F>,
+    right: &SKDataView<'_, F>,
 ) -> Result<Array2<F>, SKError> {
     match (left, right) {
         (SKDataView::Dense(left_dense), SKDataView::Dense(right_dense)) => {
-            Ok(sk_dense_metric(metric, &left_dense, &right_dense))
+            Ok(sk_dense_metric(metric, left_dense, right_dense))
         }
-        _ => Err(SKError::UnsupportedOperation {
-            operation: "sk_pairwise_distance_matrix",
-            reason: "sparse kernels are not wired yet".to_string(),
-        }),
+        (SKDataView::Sparse(left_sparse), SKDataView::Sparse(right_sparse)) => {
+            sk_sparse_sparse_metric(metric, left_sparse, right_sparse)
+        }
+        (SKDataView::Sparse(left_sparse), SKDataView::Dense(right_dense)) => {
+            sk_sparse_dense_metric(metric, left_sparse, right_dense)
+        }
+        (SKDataView::Dense(left_dense), SKDataView::Sparse(right_sparse)) => {
+            sk_dense_sparse_metric(metric, left_dense, right_sparse)
+        }
+        _ => Err(sk_unsupported_representation(left)),
     }
 }
 
@@ -122,5 +144,63 @@ fn sk_dense_metric<F: SKFloat>(
         SKPairwiseMetric::Chebyshev => sk_chebyshev_distance_matrix(left, right),
         SKPairwiseMetric::Cosine => sk_cosine_distance_matrix(left, right),
         SKPairwiseMetric::NanEuclidean => sk_nan_euclidean_distance_matrix(left, right),
+    }
+}
+
+/// Route a metric to its sparse×sparse kernel.
+fn sk_sparse_sparse_metric<F: SKFloat>(
+    metric: SKPairwiseMetric,
+    left: &CsMatView<F>,
+    right: &CsMatView<F>,
+) -> Result<Array2<F>, SKError> {
+    match metric {
+        SKPairwiseMetric::SquaredEuclidean => {
+            Ok(sk_sparse_squared_euclidean_distance_matrix(left, right))
+        }
+        SKPairwiseMetric::Euclidean => Ok(sk_sparse_euclidean_distance_matrix(left, right)),
+        SKPairwiseMetric::Manhattan => Ok(sk_sparse_manhattan_distance_matrix(left, right)),
+        SKPairwiseMetric::Chebyshev => Ok(sk_sparse_chebyshev_distance_matrix(left, right)),
+        SKPairwiseMetric::Cosine => Ok(sk_sparse_cosine_distance_matrix(left, right)),
+        SKPairwiseMetric::NanEuclidean => Err(sk_sparse_nan_unsupported()),
+    }
+}
+
+/// Route a metric to its sparse×dense kernel.
+fn sk_sparse_dense_metric<F: SKFloat>(
+    metric: SKPairwiseMetric,
+    left: &CsMatView<F>,
+    right: &ArrayView2<F>,
+) -> Result<Array2<F>, SKError> {
+    match metric {
+        SKPairwiseMetric::SquaredEuclidean => {
+            Ok(sk_sparse_dense_squared_euclidean_distance_matrix(left, right))
+        }
+        SKPairwiseMetric::Euclidean => Ok(sk_sparse_dense_euclidean_distance_matrix(left, right)),
+        SKPairwiseMetric::Manhattan => Ok(sk_sparse_dense_manhattan_distance_matrix(left, right)),
+        SKPairwiseMetric::Chebyshev => {
+            Ok(sk_sparse_dense_chebyshev_distance_matrix(left, right))
+        }
+        SKPairwiseMetric::Cosine => Ok(sk_sparse_dense_cosine_distance_matrix(left, right)),
+        SKPairwiseMetric::NanEuclidean => Err(sk_sparse_nan_unsupported()),
+    }
+}
+
+/// Route a metric to its dense×sparse kernel.
+fn sk_dense_sparse_metric<F: SKFloat>(
+    metric: SKPairwiseMetric,
+    left: &ArrayView2<F>,
+    right: &CsMatView<F>,
+) -> Result<Array2<F>, SKError> {
+    match metric {
+        SKPairwiseMetric::SquaredEuclidean => {
+            Ok(sk_dense_sparse_squared_euclidean_distance_matrix(left, right))
+        }
+        SKPairwiseMetric::Euclidean => Ok(sk_dense_sparse_euclidean_distance_matrix(left, right)),
+        SKPairwiseMetric::Manhattan => Ok(sk_dense_sparse_manhattan_distance_matrix(left, right)),
+        SKPairwiseMetric::Chebyshev => {
+            Ok(sk_dense_sparse_chebyshev_distance_matrix(left, right))
+        }
+        SKPairwiseMetric::Cosine => Ok(sk_dense_sparse_cosine_distance_matrix(left, right)),
+        SKPairwiseMetric::NanEuclidean => Err(sk_sparse_nan_unsupported()),
     }
 }

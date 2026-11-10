@@ -30,7 +30,7 @@ fn sparse_chebyshev_one_sided_coordinates_contribute_absolute_values() {
 fn sparse_chebyshev_identical_rows_have_zero_distance() {
     let sparse = csr_from_triplets(2, 4, &[(0, 0, 1.0), (0, 2, -2.0), (1, 3, 5.0)]);
     let distance = sk_sparse_chebyshev_distance_matrix(&sparse.view(), &sparse.view());
-    assert_eq!(distance.diag(), ndarray::Array1::zeros(2).view());
+    assert_eq!(distance.diag(), ndarray::Array1::<f64>::zeros(2).view());
     assert!(distance.iter().all(|value| *value >= 0.0));
 }
 

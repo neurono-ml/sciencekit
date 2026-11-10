@@ -51,8 +51,12 @@ pub use kernels::{
 };
 pub use layout::{sk_force_contiguous, sk_is_c_contiguous, sk_is_f_contiguous, sk_memory_layout};
 pub use pairwise::{
-    sk_cosine_distance_matrix, sk_euclidean_distance_matrix, sk_manhattan_distance_matrix,
-    sk_squared_euclidean_distance_matrix,
+    SKPairwiseMetric, sk_chebyshev_distance_matrix, sk_cosine_distance_matrix,
+    sk_euclidean_distance_matrix, sk_manhattan_distance_matrix,
+    sk_nan_euclidean_distance_matrix, sk_pairwise_distance_matrix,
+    sk_sparse_chebyshev_distance_matrix, sk_sparse_cosine_distance_matrix,
+    sk_sparse_euclidean_distance_matrix, sk_sparse_manhattan_distance_matrix,
+    sk_sparse_squared_euclidean_distance_matrix, sk_squared_euclidean_distance_matrix,
 };
 pub use solvers::{SKCsrNormalEquationOperator, SKLinearOperator, sk_conjugate_gradient};
 pub use sparse_ops::{sk_csr_dense_product, sk_sparse_product};

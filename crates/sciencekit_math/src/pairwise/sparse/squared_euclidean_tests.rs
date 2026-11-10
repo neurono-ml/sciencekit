@@ -47,7 +47,7 @@ fn sparse_squared_euclidean_is_symmetric_with_zero_diagonal() {
         assert!(*value >= 0.0, "negative entry at {index:?}");
         assert_eq!(*value, squared[[index.1, index.0]]);
     }
-    assert_eq!(squared.diag(), ndarray::Array1::zeros(squared.nrows()).view());
+    assert_eq!(squared.diag(), ndarray::Array1::<f64>::zeros(squared.nrows()).view());
 }
 
 /// Euclidean is the element-wise square root of the squared form.
