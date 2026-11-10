@@ -98,16 +98,21 @@ pretending.
 
 Elkan maintains, for every row $x$ and centre $j$:
 
-- $d(x, c_j)$ — the exact distance to its assigned centre,
+- $d(x, c_j)$ — the exact distance to centre $j$ (needed only for the assigned one),
 - $\text{lower}(x, j)$ — a lower bound on the distance to centre $j$,
 - $\text{upper}(x)$ — an upper bound on the distance to its assigned centre.
 
-A centre $j$ can be skipped when
+A centre $j$ can be skipped when either bound test holds:
 
 $$
-\text{lower}(x, j) \ge \text{upper}(x) \quad\text{or}\quad
-\text{lower}(x, j) \ge \tfrac{1}{2}\,d(c_{a(x)}, c_j)
+\text{upper}(x) \le \text{lower}(x, j)
+\quad\text{or}\quad
+\text{upper}(x) \le \tfrac{1}{2}\,d(c_{a(x)}, c_j)
 $$
+
+The first says the stored lower bound already exceeds the best distance. The second follows
+from the triangle inequality: $d(x,c_j) \ge d(c_a,c_j) - d(x,c_a) \ge \tfrac{1}{2}d(c_a,c_j)$
+whenever $d(x,c_a) \le \tfrac{1}{2}d(c_a,c_j)$, so centre $j$ cannot be closer.
 
 Both conditions are *sufficient* to prove another centre is at least as close, so pruning
 never changes the assignment. That is why `kmeans_elkan_equals_lloyd_on_dense_data` can assert
@@ -128,8 +133,7 @@ a wide sparse matrix clusters in memory proportional to its stored values.
 ## 4. Each public object, explained
 
 - **`SKKMeans` / `SKKMeansBuilder`** — builder-only configuration: `number_of_clusters`,
-  `initialization` (`KMeansPlusPlus` default, `Random`), `number_of_initializations` (default
-  10), `maximum_number_of_iterations`, `tolerance`, `algorithm` (`Auto` default, `Lloyd`,
+  `initialization` (`KMeansPlusPlus` default, `Random`), `number_of_initializations` (default 1 for k-means++, 10 for random), `maximum_number_of_iterations`, `tolerance`, `algorithm` (`Auto` default, `Lloyd`,
   `Elkan`), `random_seed` (default 0), `backend` (default `Faer`) and `execution_mode`
   (default `Automatic`).
 - **`SKKMeansModel`** — the fitted state: centres, per-row assignments, inertia, the number of
@@ -149,11 +153,13 @@ A design with a very large number of columns and few stored entries is clustered
 sparse kernel. If any step called `to_dense`, this test would not complete — the no-densification
 promise is executable, not a comment.
 
-### `kmeans_elkan_equals_lloyd_on_dense_data` and `kmeans_elkan_prunes_impossible_distances`
+### `kmeans_elkan_matches_lloyd_on_overlapping_data`, `kmeans_elkan_equals_lloyd_on_dense_data` and `kmeans_elkan_prunes_impossible_distances`
 
-The first proves the acceleration is **answer-preserving**; the second proves it actually
-prunes (a test that only compared answers would pass even if Elkan silently ran Lloyd). Together
-they pin both the correctness and the point of the variant.
+The first draws five seeded, **overlapping** datasets (no planted clusters) and asserts Elkan
+returns Lloyd's exact assignments and inertia — well-separated blobs hide stale-bound bugs, so
+this fixture is the real guard. The second checks the simple separated case; the third proves
+the acceleration actually prunes (a test that only compared answers would pass even if Elkan
+silently ran Lloyd). Together they pin correctness and the point of the variant.
 
 ### `kmeans_init_plus_plus_is_reproducible` and `kmeans_init_tie_selects_the_earliest_initialization`
 
@@ -178,12 +184,12 @@ centre, with ties by row index.
 | File | Responsibility |
 |---|---|
 | `kmeans/builder.rs` | builder surface, defaults, validation |
-| `kmeans/kernel/` | dense and sparse squared-Euclidean assignment kernels |
-| `kmeans/init/` | seeded k-means++ and uniform initialisation, selection of the best run |
-| `kmeans/lloyd/` | Lloyd iterations, convergence, empty-cluster repair |
-| `kmeans/elkan/` | bounds, pruning and the accelerated update |
+| `kmeans/distance.rs` | dense and sparse squared-Euclidean assignment kernels |
+| `kmeans/init.rs`, `kmeans/selection.rs` | seeded k-means++/random initialisation and best-run selection |
+| `kmeans/iteration.rs`, `kmeans/lloyd.rs` | shared iteration step, convergence, empty-cluster repair, Lloyd loop |
+| `kmeans/elkan.rs` | bounds, pruning and the accelerated assignment |
 | `kmeans/fit.rs` | fit entry point and algorithm resolution |
-| `kmeans/model/` | fitted model, predictions, transform, accessors |
+| `kmeans/model.rs`, `kmeans/predict.rs` | fitted model, predictions, transform, accessors |
 | `acceptance_tests/` | tiny/large, representations, determinism, concurrency, metrics |
 
 ## 7. What this unlocks
