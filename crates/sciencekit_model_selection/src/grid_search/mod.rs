@@ -14,6 +14,7 @@ mod configuration;
 mod error_score;
 mod evaluation;
 mod observation;
+mod prediction;
 mod regressor;
 mod results;
 mod scoring;
