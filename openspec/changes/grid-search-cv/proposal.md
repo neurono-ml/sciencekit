@@ -17,7 +17,7 @@ is the standard hyperparameter search surface and the first meta-estimator in th
 - Fit evaluates every candidate on every fold in parallel, aggregates mean and standard
   deviation per candidate, selects the highest mean score (ties by candidate index) and,
   when `refit` is true, refits the winner on the full data.
-- The fitted model exposes `best_candidate_index`, `best_score`, `cv_results`, the best
+- The fitted model exposes `best_candidate_index`, `best_score`, `results()`, the best
   fitted model and the scoring policy; classifier/regressor wrappers implement the matching
   predictor and delegate to the best model.
 - Cross-validation uses the index splits and row-gathering helper from
