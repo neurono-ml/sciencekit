@@ -9,9 +9,7 @@ use sciencekit_common::SKFloat;
 pub(crate) fn sk_sparse_row_norm_squared<F: SKFloat>(row_values: &[F]) -> F {
     row_values
         .iter()
-        .fold(F::zero(), |accumulator, &value| {
-            accumulator + value * value
-        })
+        .fold(F::zero(), |accumulator, &value| accumulator + value * value)
 }
 
 /// Euclidean norm of a sparse row (`‖x‖`).

@@ -78,14 +78,13 @@ pub(crate) fn sk_sparse_dense_manhattan_distance_matrix<F: SKFloat>(
     sk_fill_distance_matrix(left.rows(), right.nrows(), |i, mut output_row| {
         let left_row = &left_rows[i];
         for (j, right_row) in right_rows.iter().enumerate() {
-            output_row[j] = left_row
-                .indices()
-                .iter()
-                .zip(left_row.data().iter())
-                .fold(right_norms[j], |accumulator, (&column, &value)| {
+            output_row[j] = left_row.indices().iter().zip(left_row.data().iter()).fold(
+                right_norms[j],
+                |accumulator, (&column, &value)| {
                     let dense_value = right_row[column];
                     accumulator - dense_value.abs() + (value - dense_value).abs()
-                });
+                },
+            );
         }
     })
 }

@@ -117,10 +117,8 @@ fn sparse_pairwise_wide_matrix_is_not_densified() {
         &[(0, 0, 2.0), (0, width - 1, 3.0), (1, 0, 2.0)],
     );
     assert_eq!(sparse.nnz(), 3);
-    let distance = super::sk_sparse_squared_euclidean_distance_matrix(
-        &sparse.view(),
-        &sparse.view(),
-    );
+    let distance =
+        super::sk_sparse_squared_euclidean_distance_matrix(&sparse.view(), &sparse.view());
     assert_eq!(sparse.nnz(), 3);
     assert!((distance[[0, 1]] - 9.0).abs() < 1e-12);
     assert!((distance[[0, 2]] - 13.0).abs() < 1e-12);
@@ -133,10 +131,8 @@ fn sparse_pairwise_wide_matrix_is_not_densified() {
 fn sparse_chebyshev_sees_one_sided_dense_maximum() {
     let sparse = super::fixtures::csr_from_triplets(1, 6, &[(0, 0, 1.0)]);
     let dense: Array2<f64> = ndarray::array![[1.0, 0.0, 0.0, 0.0, 0.0, 9.0]];
-    let sparse_dense =
-        sk_sparse_dense_chebyshev_distance_matrix(&sparse.view(), &dense.view());
+    let sparse_dense = sk_sparse_dense_chebyshev_distance_matrix(&sparse.view(), &dense.view());
     assert!((sparse_dense[[0, 0]] - 9.0).abs() < 1e-12);
-    let dense_sparse =
-        sk_dense_sparse_chebyshev_distance_matrix(&dense.view(), &sparse.view());
+    let dense_sparse = sk_dense_sparse_chebyshev_distance_matrix(&dense.view(), &sparse.view());
     assert!((dense_sparse[[0, 0]] - 9.0).abs() < 1e-12);
 }

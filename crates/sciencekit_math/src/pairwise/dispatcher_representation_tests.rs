@@ -53,8 +53,7 @@ fn assert_close(left: &Array2<f64>, right: &Array2<f64>, label: &str) {
 #[test]
 fn sparse_pairwise_dispatches_every_metric_representation_cell() {
     let left_dense = crate::pairwise::sparse::fixtures::dense_fixture();
-    let right_dense: Array2<f64> =
-        ndarray::array![[0.0, 2.0, 0.0, -1.0], [1.0, 0.0, 0.0, 0.0]];
+    let right_dense: Array2<f64> = ndarray::array![[0.0, 2.0, 0.0, -1.0], [1.0, 0.0, 0.0, 0.0]];
     let left_sparse = csr_from_dense(&left_dense);
     let right_sparse = csr_from_dense(&right_dense);
     let metrics = [
@@ -80,14 +79,10 @@ fn sparse_pairwise_dispatches_every_metric_representation_cell() {
         ),
     ];
     for (metric, expected) in metrics {
-        for (cell, (left, right)) in representation_pairs(
-            &left_dense,
-            &right_dense,
-            &left_sparse,
-            &right_sparse,
-        )
-        .into_iter()
-        .enumerate()
+        for (cell, (left, right)) in
+            representation_pairs(&left_dense, &right_dense, &left_sparse, &right_sparse)
+                .into_iter()
+                .enumerate()
         {
             let result = sk_pairwise_distance_matrix(metric, left, right)
                 .unwrap_or_else(|error| panic!("{metric:?} cell {cell} failed: {error:?}"));
@@ -104,17 +99,12 @@ fn sparse_pairwise_nan_euclidean_is_dense_only_in_every_cell() {
     let right_dense = left_dense.clone();
     let left_sparse = csr_from_dense(&left_dense);
     let right_sparse = csr_from_dense(&right_dense);
-    for (cell, (left, right)) in representation_pairs(
-        &left_dense,
-        &right_dense,
-        &left_sparse,
-        &right_sparse,
-    )
-    .into_iter()
-    .enumerate()
+    for (cell, (left, right)) in
+        representation_pairs(&left_dense, &right_dense, &left_sparse, &right_sparse)
+            .into_iter()
+            .enumerate()
     {
-        let outcome =
-            sk_pairwise_distance_matrix(SKPairwiseMetric::NanEuclidean, left, right);
+        let outcome = sk_pairwise_distance_matrix(SKPairwiseMetric::NanEuclidean, left, right);
         if cell == 0 {
             assert!(outcome.is_ok(), "dense NaN-aware cell must work");
             continue;

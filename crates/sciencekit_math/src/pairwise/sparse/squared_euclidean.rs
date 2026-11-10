@@ -72,7 +72,10 @@ pub(crate) fn sk_sparse_dense_squared_euclidean_distance_matrix<F: SKFloat>(
     );
     let left_rows: Vec<_> = left.outer_iterator().collect();
     let right_rows: Vec<_> = right.rows().into_iter().collect();
-    let right_norms: Vec<F> = right_rows.iter().map(|row| row_norm_squared(*row)).collect();
+    let right_norms: Vec<F> = right_rows
+        .iter()
+        .map(|row| row_norm_squared(*row))
+        .collect();
 
     sk_fill_distance_matrix(left.rows(), right.nrows(), |i, mut output_row| {
         let left_row = left_rows[i];

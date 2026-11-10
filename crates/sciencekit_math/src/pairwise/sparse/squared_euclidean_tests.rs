@@ -3,9 +3,7 @@
 use ndarray::{Array2, array};
 use sprs::TriMat;
 
-use super::super::{
-    sk_euclidean_distance_matrix, sk_squared_euclidean_distance_matrix,
-};
+use super::super::{sk_euclidean_distance_matrix, sk_squared_euclidean_distance_matrix};
 use super::fixtures::{assert_matrix_close, csr_from_dense, csr_from_triplets, dense_fixture};
 use super::{sk_sparse_euclidean_distance_matrix, sk_sparse_squared_euclidean_distance_matrix};
 
@@ -47,7 +45,10 @@ fn sparse_squared_euclidean_is_symmetric_with_zero_diagonal() {
         assert!(*value >= 0.0, "negative entry at {index:?}");
         assert_eq!(*value, squared[[index.1, index.0]]);
     }
-    assert_eq!(squared.diag(), ndarray::Array1::<f64>::zeros(squared.nrows()).view());
+    assert_eq!(
+        squared.diag(),
+        ndarray::Array1::<f64>::zeros(squared.nrows()).view()
+    );
 }
 
 /// Euclidean is the element-wise square root of the squared form.
@@ -81,7 +82,6 @@ fn sparse_squared_euclidean_matches_dense_on_rectangular_inputs() {
     let left = csr_from_dense(&left_dense);
     let right = csr_from_dense(&right_dense);
     let distance = sk_sparse_squared_euclidean_distance_matrix(&left.view(), &right.view());
-    let expected =
-        sk_squared_euclidean_distance_matrix(&left_dense.view(), &right_dense.view());
+    let expected = sk_squared_euclidean_distance_matrix(&left_dense.view(), &right_dense.view());
     assert_matrix_close(&distance, &expected, 1e-12);
 }

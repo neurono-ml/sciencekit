@@ -27,7 +27,6 @@ where
     if left_rows * right_rows < SK_SPARSE_PAIRWISE_PARALLEL_GRAIN {
         output
             .axis_iter_mut(Axis(0))
-            .into_iter()
             .enumerate()
             .for_each(|(i, row)| compute_row(i, row));
     } else {

@@ -172,14 +172,12 @@ fn sk_sparse_dense_metric<F: SKFloat>(
     right: &ArrayView2<F>,
 ) -> Result<Array2<F>, SKError> {
     match metric {
-        SKPairwiseMetric::SquaredEuclidean => {
-            Ok(sk_sparse_dense_squared_euclidean_distance_matrix(left, right))
-        }
+        SKPairwiseMetric::SquaredEuclidean => Ok(
+            sk_sparse_dense_squared_euclidean_distance_matrix(left, right),
+        ),
         SKPairwiseMetric::Euclidean => Ok(sk_sparse_dense_euclidean_distance_matrix(left, right)),
         SKPairwiseMetric::Manhattan => Ok(sk_sparse_dense_manhattan_distance_matrix(left, right)),
-        SKPairwiseMetric::Chebyshev => {
-            Ok(sk_sparse_dense_chebyshev_distance_matrix(left, right))
-        }
+        SKPairwiseMetric::Chebyshev => Ok(sk_sparse_dense_chebyshev_distance_matrix(left, right)),
         SKPairwiseMetric::Cosine => Ok(sk_sparse_dense_cosine_distance_matrix(left, right)),
         SKPairwiseMetric::NanEuclidean => Err(sk_sparse_nan_unsupported()),
     }
@@ -192,14 +190,12 @@ fn sk_dense_sparse_metric<F: SKFloat>(
     right: &CsMatView<F>,
 ) -> Result<Array2<F>, SKError> {
     match metric {
-        SKPairwiseMetric::SquaredEuclidean => {
-            Ok(sk_dense_sparse_squared_euclidean_distance_matrix(left, right))
-        }
+        SKPairwiseMetric::SquaredEuclidean => Ok(
+            sk_dense_sparse_squared_euclidean_distance_matrix(left, right),
+        ),
         SKPairwiseMetric::Euclidean => Ok(sk_dense_sparse_euclidean_distance_matrix(left, right)),
         SKPairwiseMetric::Manhattan => Ok(sk_dense_sparse_manhattan_distance_matrix(left, right)),
-        SKPairwiseMetric::Chebyshev => {
-            Ok(sk_dense_sparse_chebyshev_distance_matrix(left, right))
-        }
+        SKPairwiseMetric::Chebyshev => Ok(sk_dense_sparse_chebyshev_distance_matrix(left, right)),
         SKPairwiseMetric::Cosine => Ok(sk_dense_sparse_cosine_distance_matrix(left, right)),
         SKPairwiseMetric::NanEuclidean => Err(sk_sparse_nan_unsupported()),
     }

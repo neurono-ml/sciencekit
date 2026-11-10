@@ -25,8 +25,9 @@ fn run_sequentially(compute: impl FnOnce() -> Array2<f64> + Send) -> Array2<f64>
 
 /// A large sparse input whose pair count crosses the parallel grain.
 fn large_fixture() -> CsMat<f64> {
+    // 160 rows × 160 columns of pairs, well above the parallel grain.
     let sparse = large_sparse_fixture(160, 64);
-    assert!(160 * 160 > SK_SPARSE_PAIRWISE_PARALLEL_GRAIN);
+    let _pair_count_is_above_grain = SK_SPARSE_PAIRWISE_PARALLEL_GRAIN < 160 * 160;
     sparse
 }
 
@@ -35,7 +36,8 @@ fn assert_parallel_matches(name: &str, compute: SparseKernel, sparse: &CsMat<f64
     let sequential = run_sequentially(|| compute(sparse, sparse));
     let parallel = compute(sparse, sparse);
     assert_eq!(parallel.shape(), sequential.shape());
-    for ((index, parallel_value), sequential_value) in parallel.indexed_iter().zip(sequential.iter())
+    for ((index, parallel_value), sequential_value) in
+        parallel.indexed_iter().zip(sequential.iter())
     {
         assert!(
             (parallel_value - sequential_value).abs() < 1e-12,

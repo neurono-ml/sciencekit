@@ -5,6 +5,8 @@
 //! left-only or right-only, so a kernel visits exactly the stored entries and
 //! treats an implicit coordinate as the observed value zero.
 
+use std::cmp::Ordering;
+
 use sciencekit_common::SKFloat;
 
 /// One coordinate produced by merging two sorted sparse rows.
@@ -67,7 +69,8 @@ pub(crate) struct SKRowMerge<'a, F> {
     right_position: usize,
 }
 
-impl<F: SKFloat> Iterator for SKRowMerge<'_, F> {    type Item = SKMergedCoordinate<F>;
+impl<F: SKFloat> Iterator for SKRowMerge<'_, F> {
+    type Item = SKMergedCoordinate<F>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let left = self
@@ -82,10 +85,7 @@ impl<F: SKFloat> Iterator for SKRowMerge<'_, F> {    type Item = SKMergedCoordin
             (None, None) => None,
             (Some((column, left_value)), None) => {
                 self.left_position += 1;
-                Some(SKMergedCoordinate::LeftOnly {
-                    column,
-                    left_value,
-                })
+                Some(SKMergedCoordinate::LeftOnly { column, left_value })
             }
             (None, Some((column, right_value))) => {
                 self.right_position += 1;
@@ -95,26 +95,30 @@ impl<F: SKFloat> Iterator for SKRowMerge<'_, F> {    type Item = SKMergedCoordin
                 })
             }
             (Some((left_column, left_value)), Some((right_column, right_value))) => {
-                if left_column == right_column {
-                    self.left_position += 1;
-                    self.right_position += 1;
-                    Some(SKMergedCoordinate::Shared {
-                        column: left_column,
-                        left_value,
-                        right_value,
-                    })
-                } else if left_column < right_column {
-                    self.left_position += 1;
-                    Some(SKMergedCoordinate::LeftOnly {
-                        column: left_column,
-                        left_value,
-                    })
-                } else {
-                    self.right_position += 1;
-                    Some(SKMergedCoordinate::RightOnly {
-                        column: right_column,
-                        right_value,
-                    })
+                match left_column.cmp(&right_column) {
+                    Ordering::Equal => {
+                        self.left_position += 1;
+                        self.right_position += 1;
+                        Some(SKMergedCoordinate::Shared {
+                            column: left_column,
+                            left_value,
+                            right_value,
+                        })
+                    }
+                    Ordering::Less => {
+                        self.left_position += 1;
+                        Some(SKMergedCoordinate::LeftOnly {
+                            column: left_column,
+                            left_value,
+                        })
+                    }
+                    Ordering::Greater => {
+                        self.right_position += 1;
+                        Some(SKMergedCoordinate::RightOnly {
+                            column: right_column,
+                            right_value,
+                        })
+                    }
                 }
             }
         }

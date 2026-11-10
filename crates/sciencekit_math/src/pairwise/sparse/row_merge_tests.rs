@@ -21,12 +21,7 @@ fn merge_labels(
 /// Overlapping, left-only and right-only coordinates are classified correctly.
 #[test]
 fn sparse_row_merge_classifies_shared_and_one_sided_coordinates() {
-    let labels = merge_labels(
-        &[0, 2, 5],
-        &[1.0, 2.0, 3.0],
-        &[1, 2, 3],
-        &[4.0, 5.0, 6.0],
-    );
+    let labels = merge_labels(&[0, 2, 5], &[1.0, 2.0, 3.0], &[1, 2, 3], &[4.0, 5.0, 6.0]);
     assert_eq!(
         labels,
         vec![
@@ -42,8 +37,7 @@ fn sparse_row_merge_classifies_shared_and_one_sided_coordinates() {
 /// Shared coordinates carry both stored values unchanged.
 #[test]
 fn sparse_row_merge_pairs_shared_values() {
-    let mut merge =
-        sk_merge_sorted_rows(&[1, 4], &[1.5_f64, -2.0], &[1, 4, 7], &[0.5, 8.0, 3.0]);
+    let mut merge = sk_merge_sorted_rows(&[1, 4], &[1.5_f64, -2.0], &[1, 4, 7], &[0.5, 8.0, 3.0]);
     match merge.next().expect("first coordinate") {
         SKMergedCoordinate::Shared {
             column,
@@ -69,7 +63,10 @@ fn sparse_row_merge_pairs_shared_values() {
         other => panic!("expected a shared coordinate, got {other:?}"),
     }
     match merge.next().expect("third coordinate") {
-        SKMergedCoordinate::RightOnly { column, right_value } => {
+        SKMergedCoordinate::RightOnly {
+            column,
+            right_value,
+        } => {
             assert_eq!(column, 7);
             assert!((right_value - 3.0).abs() < 1e-12);
         }

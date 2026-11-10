@@ -6,9 +6,8 @@ use sprs::TriMat;
 
 use super::{
     SKPairwiseMetric, sk_chebyshev_distance_matrix, sk_cosine_distance_matrix,
-    sk_euclidean_distance_matrix, sk_manhattan_distance_matrix,
-    sk_nan_euclidean_distance_matrix, sk_pairwise_distance_matrix,
-    sk_squared_euclidean_distance_matrix,
+    sk_euclidean_distance_matrix, sk_manhattan_distance_matrix, sk_nan_euclidean_distance_matrix,
+    sk_pairwise_distance_matrix, sk_squared_euclidean_distance_matrix,
 };
 
 /// The dense fixture every metric-selection test compares against.
@@ -65,7 +64,8 @@ fn sparse_pairwise_dispatches_each_metric_to_its_dense_kernel() {
         ),
     ];
     for (metric, expected) in cases {
-        let result = sk_pairwise_distance_matrix(metric, left, right).expect("dense dispatch works");
+        let result =
+            sk_pairwise_distance_matrix(metric, left, right).expect("dense dispatch works");
         assert_matrix_close(&result, &expected);
     }
 }
@@ -132,10 +132,7 @@ fn sparse_pairwise_rejects_sparse_nan_euclidean() {
     let dense: Array2<f64> = array![[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]];
     let sparse_left = SKDataView::Sparse(sparse.view());
     let dense_right = SKDataView::Dense(dense.view());
-    for (left, right) in [
-        (sparse_left, dense_right),
-        (dense_right, sparse_left),
-    ] {
+    for (left, right) in [(sparse_left, dense_right), (dense_right, sparse_left)] {
         let error = sk_pairwise_distance_matrix(SKPairwiseMetric::NanEuclidean, left, right)
             .expect_err("sparse NaN-aware input must be rejected");
         match error {
