@@ -19,4 +19,6 @@ pub use regressor::SKPipelineRegressorBuilder;
 #[cfg(test)]
 mod builder_tests;
 #[cfg(test)]
+mod fit_tests;
+#[cfg(test)]
 mod model_tests;
