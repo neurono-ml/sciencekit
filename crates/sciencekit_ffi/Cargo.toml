@@ -1,0 +1,26 @@
+[package]
+name = "sciencekit_ffi"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+rust-version = "1.85"
+description = "Stable C ABI for the sciencekit machine-learning library."
+repository = "https://github.com/neurono-ml/sciencekit"
+
+[lib]
+name = "sciencekit_ffi"
+crate-type = ["cdylib", "staticlib"]
+
+[dependencies]
+sciencekit_common = { path = "../sciencekit_common" }
+sciencekit_linear_model = { path = "../sciencekit_linear_model" }
+sciencekit_math = { path = "../sciencekit_math" }
+sciencekit_metrics = { path = "../sciencekit_metrics" }
+sciencekit_preprocessing = { path = "../sciencekit_preprocessing" }
+
+ndarray = { workspace = true }
+
+[features]
+# Exposes the deliberately panicking test hook in the cdylib; tests use it via
+# `cfg(test)` instead.
+test-hook = []
