@@ -24,3 +24,5 @@ mod fit_tests;
 mod model_tests;
 #[cfg(test)]
 mod predict_tests;
+#[cfg(test)]
+mod representation_tests;
