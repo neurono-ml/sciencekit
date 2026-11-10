@@ -1,9 +1,10 @@
 //! Sparse Chebyshev (L∞) pairwise-distance kernel.
 
-use ndarray::{Array, Array2, ArrayView1, ArrayView2};
+use ndarray::{Array2, ArrayView1, ArrayView2};
 use sciencekit_common::SKFloat;
 use sprs::{CsMatView, CsVecView};
 
+use super::parallel::sk_fill_distance_matrix;
 use super::row_merge::{SKMergedCoordinate, sk_merge_sorted_rows};
 
 /// Chebyshev distance matrix between the rows of two CSR matrices.
@@ -21,19 +22,19 @@ pub fn sk_sparse_chebyshev_distance_matrix<F: SKFloat>(
         right.cols(),
         "pairwise distances require matching feature dimensions"
     );
-    let mut output = Array::zeros((left.rows(), right.rows()));
-    for (i, left_row) in left.outer_iterator().enumerate() {
-        for (j, right_row) in right.outer_iterator().enumerate() {
-            output[[i, j]] = sk_merge_maximum_difference(left_row, right_row);
+    let left_rows: Vec<_> = left.outer_iterator().collect();
+    let right_rows: Vec<_> = right.outer_iterator().collect();
+    sk_fill_distance_matrix(left.rows(), right.rows(), |i, mut output_row| {
+        for (j, right_row) in right_rows.iter().enumerate() {
+            output_row[j] = sk_merge_maximum_difference(&left_rows[i], right_row);
         }
-    }
-    output
+    })
 }
 
 /// The L∞ distance of two sorted sparse rows, from the stored entries only.
 fn sk_merge_maximum_difference<F: SKFloat>(
-    left_row: CsVecView<'_, F>,
-    right_row: CsVecView<'_, F>,
+    left_row: &CsVecView<'_, F>,
+    right_row: &CsVecView<'_, F>,
 ) -> F {
     sk_merge_sorted_rows(
         left_row.indices(),
@@ -69,13 +70,13 @@ pub(crate) fn sk_sparse_dense_chebyshev_distance_matrix<F: SKFloat>(
         right.ncols(),
         "pairwise distances require matching feature dimensions"
     );
-    let mut output = Array::zeros((left.rows(), right.nrows()));
-    for (i, left_row) in left.outer_iterator().enumerate() {
-        for (j, right_row) in right.rows().into_iter().enumerate() {
-            output[[i, j]] = sk_sparse_dense_row_distance(left_row, right_row);
+    let left_rows: Vec<_> = left.outer_iterator().collect();
+    let right_rows: Vec<_> = right.rows().into_iter().collect();
+    sk_fill_distance_matrix(left.rows(), right.nrows(), |i, mut output_row| {
+        for (j, right_row) in right_rows.iter().enumerate() {
+            output_row[j] = sk_sparse_dense_row_distance(&left_rows[i], *right_row);
         }
-    }
-    output
+    })
 }
 
 /// Chebyshev distances between dense left rows and sparse right rows.
@@ -88,19 +89,19 @@ pub(crate) fn sk_dense_sparse_chebyshev_distance_matrix<F: SKFloat>(
         right.cols(),
         "pairwise distances require matching feature dimensions"
     );
-    let mut output = Array::zeros((left.nrows(), right.rows()));
-    for (i, left_row) in left.rows().into_iter().enumerate() {
-        for (j, right_row) in right.outer_iterator().enumerate() {
-            output[[i, j]] = sk_sparse_dense_row_distance(right_row, left_row);
+    let left_rows: Vec<_> = left.rows().into_iter().collect();
+    let right_rows: Vec<_> = right.outer_iterator().collect();
+    sk_fill_distance_matrix(left.nrows(), right.rows(), |i, mut output_row| {
+        for (j, right_row) in right_rows.iter().enumerate() {
+            output_row[j] = sk_sparse_dense_row_distance(right_row, left_rows[i]);
         }
-    }
-    output
+    })
 }
 
 /// The L∞ distance of a sparse row and a dense row, treating implicit zeros as
 /// observed zeros and scanning the full dense row.
 fn sk_sparse_dense_row_distance<F: SKFloat>(
-    sparse_row: CsVecView<'_, F>,
+    sparse_row: &CsVecView<'_, F>,
     dense_row: ArrayView1<'_, F>,
 ) -> F {
     let mut stored = sparse_row

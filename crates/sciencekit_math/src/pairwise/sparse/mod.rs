@@ -12,6 +12,7 @@
 mod chebyshev;
 mod cosine;
 mod manhattan;
+mod parallel;
 mod row_merge;
 mod row_statistics;
 mod squared_euclidean;
@@ -33,6 +34,8 @@ mod fixtures;
 mod manhattan_tests;
 #[cfg(test)]
 mod mixed_tests;
+#[cfg(test)]
+mod parallel_tests;
 #[cfg(test)]
 mod row_merge_tests;
 #[cfg(test)]

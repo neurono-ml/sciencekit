@@ -48,3 +48,19 @@ pub(crate) fn assert_matrix_close(left: &Array2<f64>, right: &Array2<f64>, toler
         );
     }
 }
+
+/// A deterministic large sparse fixture: many rows, few stored entries per row.
+pub(crate) fn large_sparse_fixture(rows: usize, columns: usize) -> CsMat<f64> {
+    let mut matrix = TriMat::new((rows, columns));
+    for row in 0..rows {
+        let mut column = (row * 3) % 11;
+        while column < columns {
+            let value = ((row * 13 + column) % 17) as f64 - 8.0;
+            if value != 0.0 {
+                matrix.add_triplet(row, column, value);
+            }
+            column += 7;
+        }
+    }
+    matrix.to_csr()
+}

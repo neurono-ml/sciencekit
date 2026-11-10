@@ -1,9 +1,10 @@
 //! Sparse Manhattan (L1) pairwise-distance kernel.
 
-use ndarray::{Array, Array2, ArrayView2};
+use ndarray::{Array2, ArrayView2};
 use sciencekit_common::SKFloat;
-use sprs::CsMatView;
+use sprs::{CsMatView, CsVecView};
 
+use super::parallel::sk_fill_distance_matrix;
 use super::row_merge::{SKMergedCoordinate, sk_merge_sorted_rows};
 
 /// Manhattan distance matrix between the rows of two CSR matrices.
@@ -20,19 +21,19 @@ pub fn sk_sparse_manhattan_distance_matrix<F: SKFloat>(
         right.cols(),
         "pairwise distances require matching feature dimensions"
     );
-    let mut output = Array::zeros((left.rows(), right.rows()));
-    for (i, left_row) in left.outer_iterator().enumerate() {
-        for (j, right_row) in right.outer_iterator().enumerate() {
-            output[[i, j]] = sk_merge_absolute_differences(left_row, right_row);
+    let left_rows: Vec<_> = left.outer_iterator().collect();
+    let right_rows: Vec<_> = right.outer_iterator().collect();
+    sk_fill_distance_matrix(left.rows(), right.rows(), |i, mut output_row| {
+        for (j, right_row) in right_rows.iter().enumerate() {
+            output_row[j] = sk_merge_absolute_differences(&left_rows[i], right_row);
         }
-    }
-    output
+    })
 }
 
 /// The L1 distance of two sorted sparse rows, from the stored entries only.
 fn sk_merge_absolute_differences<F: SKFloat>(
-    left_row: sprs::CsVecView<'_, F>,
-    right_row: sprs::CsVecView<'_, F>,
+    left_row: &CsVecView<'_, F>,
+    right_row: &CsVecView<'_, F>,
 ) -> F {
     sk_merge_sorted_rows(
         left_row.indices(),
@@ -68,15 +69,16 @@ pub(crate) fn sk_sparse_dense_manhattan_distance_matrix<F: SKFloat>(
         right.ncols(),
         "pairwise distances require matching feature dimensions"
     );
-    let right_norms: Vec<F> = right
-        .rows()
-        .into_iter()
+    let left_rows: Vec<_> = left.outer_iterator().collect();
+    let right_rows: Vec<_> = right.rows().into_iter().collect();
+    let right_norms: Vec<F> = right_rows
+        .iter()
         .map(|row| row.iter().fold(F::zero(), |sum, value| sum + value.abs()))
         .collect();
-    let mut output = Array::zeros((left.rows(), right.nrows()));
-    for (i, left_row) in left.outer_iterator().enumerate() {
-        for (j, right_row) in right.rows().into_iter().enumerate() {
-            let sum = left_row
+    sk_fill_distance_matrix(left.rows(), right.nrows(), |i, mut output_row| {
+        let left_row = &left_rows[i];
+        for (j, right_row) in right_rows.iter().enumerate() {
+            output_row[j] = left_row
                 .indices()
                 .iter()
                 .zip(left_row.data().iter())
@@ -84,10 +86,8 @@ pub(crate) fn sk_sparse_dense_manhattan_distance_matrix<F: SKFloat>(
                     let dense_value = right_row[column];
                     accumulator - dense_value.abs() + (value - dense_value).abs()
                 });
-            output[[i, j]] = sum;
         }
-    }
-    output
+    })
 }
 
 /// Manhattan distances between dense left rows and sparse right rows.
@@ -100,24 +100,22 @@ pub(crate) fn sk_dense_sparse_manhattan_distance_matrix<F: SKFloat>(
         right.cols(),
         "pairwise distances require matching feature dimensions"
     );
-    let left_norms: Vec<F> = left
-        .rows()
-        .into_iter()
+    let left_rows: Vec<_> = left.rows().into_iter().collect();
+    let left_norms: Vec<F> = left_rows
+        .iter()
         .map(|row| row.iter().fold(F::zero(), |sum, value| sum + value.abs()))
         .collect();
-    let mut output = Array::zeros((left.nrows(), right.rows()));
-    for (i, left_row) in left.rows().into_iter().enumerate() {
-        for (j, right_row) in right.outer_iterator().enumerate() {
-            let sum = right_row
+    let right_rows: Vec<_> = right.outer_iterator().collect();
+    sk_fill_distance_matrix(left.nrows(), right.rows(), |i, mut output_row| {
+        for (j, right_row) in right_rows.iter().enumerate() {
+            output_row[j] = right_row
                 .indices()
                 .iter()
                 .zip(right_row.data().iter())
                 .fold(left_norms[i], |accumulator, (&column, &value)| {
-                    let dense_value = left_row[column];
+                    let dense_value = left_rows[i][column];
                     accumulator - dense_value.abs() + (value - dense_value).abs()
                 });
-            output[[i, j]] = sum;
         }
-    }
-    output
+    })
 }
