@@ -14,9 +14,11 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+pub mod gather;
 pub mod index_split;
 pub mod split;
 
+pub use gather::{SKTargetPartition, sk_gather_rows};
 pub use index_split::SKIndexSplit;
 pub use split::SKSplitter;
 
