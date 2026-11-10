@@ -33,13 +33,22 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 #![warn(missing_docs)]
 
+mod array;
+mod engine;
+mod error;
+mod lifecycle;
+mod userdata;
+
 use mlua::{Lua, Result, Table};
+
+use crate::engine::SKLuaEstimatorFamily;
+use crate::engine::SKLuaModelHandle;
+use crate::userdata::{sk_lua_builder_userdata, sk_lua_model_userdata};
 
 /// Build the `sciencekit` module table.
 ///
-/// Factored out of the `#[mlua::lua_module]` entry point so the crate's tests
-/// can register the very same table in an embedded VM without loading a shared
-/// object.
+/// Factored out of the native entry point so the crate's tests can register
+/// the very same table in an embedded VM without loading a shared object.
 pub(crate) fn sk_lua_build_module(lua: &Lua) -> Result<Table> {
     let exports = lua.create_table()?;
     exports.set("version", env!("CARGO_PKG_VERSION"))?;
@@ -56,6 +65,29 @@ pub(crate) fn sk_lua_build_module(lua: &Lua) -> Result<Table> {
     exports.set(
         "features",
         lua.create_function(|_, ()| Ok(sciencekit_ffi::sk_ffi_features() as i64))?,
+    )?;
+    exports.set(
+        "live_handles",
+        lua.create_function(|_, ()| Ok(lifecycle::sk_lua_live_handles()))?,
+    )?;
+    exports.set(
+        "linear_regression",
+        lua.create_function(|lua, ()| {
+            sk_lua_builder_userdata(lua, SKLuaEstimatorFamily::LinearRegression)
+        })?,
+    )?;
+    exports.set(
+        "standard_scaler",
+        lua.create_function(|lua, ()| {
+            sk_lua_builder_userdata(lua, SKLuaEstimatorFamily::StandardScaler)
+        })?,
+    )?;
+    exports.set(
+        "load",
+        lua.create_function(|lua, path: String| {
+            let handle = SKLuaModelHandle::load(&path)?;
+            sk_lua_model_userdata(lua, handle, SKLuaEstimatorFamily::LinearRegression)
+        })?,
     )?;
     Ok(exports)
 }
