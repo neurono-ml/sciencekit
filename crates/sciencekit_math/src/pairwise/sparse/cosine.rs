@@ -11,7 +11,7 @@ use crate::pairwise::simd_dot::row_norm;
 
 /// Cosine distance matrix (`1 − cos θ`) between the rows of two CSR matrices.
 ///
-/// The dot_product product merges the sorted stored coordinates and each norm sums the
+/// The dot product merges the sorted stored coordinates and each norm sums the
 /// stored squares. A zero-norm row keeps the dense policy: cosine `0`, distance
 /// `1`.
 pub fn sk_sparse_cosine_distance_matrix<F: SKFloat>(

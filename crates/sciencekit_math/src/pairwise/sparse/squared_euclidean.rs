@@ -1,7 +1,7 @@
 //! Sparse squared-Euclidean and Euclidean pairwise-distance kernels.
 //!
 //! The norm expansion `‖a − b‖² = ‖a‖² + ‖b‖² − 2·Σ_shared aᵢbᵢ` only needs the
-//! stored entries: the norms sum the stored squares and the dot_product product merges
+//! stored entries: the norms sum the stored squares and the dot product merges
 //! the two sorted rows, so the work is proportional to the stored entries.
 
 use ndarray::{Array2, ArrayView2};

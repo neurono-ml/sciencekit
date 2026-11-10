@@ -6,8 +6,8 @@
 //! sparse×dense Chebyshev scans the dense rows (documented as the one
 //! non-`O(nnz)` path).
 //!
-//! This is a **pure dispatcher** module: `mod.rs` only declares and re-exports
-//! submodules; every implementation lives in its own file.
+//! The `mod.rs` files in this folder only declare and re-export submodules;
+//! every implementation lives in its own file.
 
 mod chebyshev;
 mod cosine;
