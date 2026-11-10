@@ -13,3 +13,5 @@ pub use transfer::SKDeviceTransferPolicy;
 
 #[cfg(test)]
 mod buffer_tests;
+#[cfg(test)]
+mod buffer_validation_tests;

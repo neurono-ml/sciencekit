@@ -20,6 +20,8 @@ use crate::kernel::SKDeviceBufferRef;
 pub(crate) struct SKMockComputeBackend {
     devices: Vec<SKDeviceInfo>,
     discovery_failure: Option<&'static str>,
+    transfer_failure: Option<&'static str>,
+    capacity_elements: Option<usize>,
 }
 
 impl SKMockComputeBackend {
@@ -28,6 +30,8 @@ impl SKMockComputeBackend {
         SKMockComputeBackend {
             devices,
             discovery_failure: None,
+            transfer_failure: None,
+            capacity_elements: None,
         }
     }
 
@@ -41,7 +45,29 @@ impl SKMockComputeBackend {
         SKMockComputeBackend {
             devices: Vec::new(),
             discovery_failure: Some(reason),
+            transfer_failure: None,
+            capacity_elements: None,
         }
+    }
+
+    /// A backend whose uploads and downloads fail with `reason`.
+    pub(crate) fn failing_transfers(mut self, reason: &'static str) -> Self {
+        self.transfer_failure = Some(reason);
+        self
+    }
+
+    /// A backend whose device accepts at most `elements` elements per buffer.
+    pub(crate) fn limited_to_elements(mut self, elements: usize) -> Self {
+        self.capacity_elements = Some(elements);
+        self
+    }
+
+    /// The injected transfer failure, if any.
+    fn transfer_failure(&self) -> Option<SKError> {
+        self.transfer_failure
+            .map(|reason| SKError::DeviceTransferFailure {
+                reason: reason.to_string(),
+            })
     }
 
     /// Build one device description for an inventory.
@@ -89,6 +115,9 @@ impl<F: SKFloat> SKComputeBackend<F> for SKMockComputeBackend {
     }
 
     fn upload(&self, host: ArrayView2<'_, F>) -> Result<SKDeviceBuffer<F>, SKError> {
+        if let Some(failure) = self.transfer_failure() {
+            return Err(failure);
+        }
         let device = self.primary_device()?;
         let scalar_type = std::any::type_name::<F>();
         if !device.supports_scalar_type(scalar_type) {
@@ -97,6 +126,15 @@ impl<F: SKFloat> SKComputeBackend<F> for SKMockComputeBackend {
                 scalar_type,
             });
         }
+        let elements = host.nrows().saturating_mul(host.ncols());
+        if let Some(capacity) = self.capacity_elements {
+            if elements > capacity {
+                return Err(SKError::ShapeMismatch {
+                    expected: vec![capacity],
+                    found: vec![elements],
+                });
+            }
+        }
         SKDeviceBufferBuilder::new(device.kind, device.index)
             .shape(host.nrows(), host.ncols())
             .values(host.iter().copied().collect())
@@ -104,6 +142,9 @@ impl<F: SKFloat> SKComputeBackend<F> for SKMockComputeBackend {
     }
 
     fn download(&self, buffer: &SKDeviceBuffer<F>) -> Result<Array2<F>, SKError> {
+        if let Some(failure) = self.transfer_failure() {
+            return Err(failure);
+        }
         let own_kind = self
             .devices
             .first()
