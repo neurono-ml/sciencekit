@@ -1,9 +1,10 @@
 //! JSON and NDJSON sources (spec `arrow-columnar-interop`).
 //!
-//! JSON readers decode whole documents; projection is applied by the source
-//! cursor after decoding. An explicit schema is required unless inference is
-//! opted in, because guessing types from untyped JSON silently changes a
-//! column's meaning.
+//! Arrow's JSON decoder reads record-oriented JSON: one object per line or a
+//! concatenated sequence of objects, which covers NDJSON and JSON-lines
+//! exports. Projection is applied by the source cursor after decoding. An
+//! explicit schema is required unless inference is opted in, because guessing
+//! types from untyped JSON silently changes a column's meaning.
 
 use std::fs::File;
 use std::io::BufReader;

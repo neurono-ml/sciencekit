@@ -13,7 +13,7 @@ pub enum SKArrowFileFormat {
     IpcFile,
     /// Arrow IPC stream format.
     IpcStream,
-    /// A JSON array document.
+    /// Record-oriented JSON (a sequence of objects).
     Json,
     /// Newline-delimited JSON.
     NdJson,
