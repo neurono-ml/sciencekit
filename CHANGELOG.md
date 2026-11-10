@@ -60,6 +60,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   including the random splitter and seeded feature subsampling, and fitted models are
   `Send + Sync` and serve concurrent prediction.
 
+- `sciencekit_model_selection` sub-crate (spec `model-selection-splits`): reproducible
+  data partitioning through index splits. `sk_gather_rows` gathers dense rows into a dense
+  block and CSR rows into CSR (never densifying) while preserving the target
+  representation; `sk_shuffle_indices` is a seeded Fisher–Yates permutation from the shared
+  deterministic generator. `SKKFold` (builder-only, `number_of_splits` default 5, `shuffle`
+  default false, `random_seed` default 0) produces disjoint, exhaustive folds; the
+  default `shuffle` stays off while an explicit seed makes repeated runs identical.
+  `SKStratifiedKFold` deals each class round-robin so every fold sees every class in
+  proportion, rejecting a class smaller than the fold count; `SKGroupKFold` keeps every
+  group in one fold and defaults the split count to the distinct group count.
+  `sk_train_test_split` accepts test/train sizes as fractions or counts, seeded shuffling,
+  optional stratification and gathers both partitions (surplus rows stay unassigned when
+  both sizes are configured). `sk_cross_val_score_classifier` and
+  `sk_cross_val_score_regressor` fit one model per fold in parallel and return scores in
+  fold order through the shared scorer contracts. Validation rejects empty input, invalid
+  fractions, too many splits, class/group cardinality below the split count, length
+  mismatches and non-finite dense or sparse values with structured central errors.
+  Companion tests cover tiny and 10 000-row data, dense/sparse parity, all splitters,
+  stratification and group properties, determinism across threads, concurrency and metric
+  production through `sciencekit_metrics`.
+
 ## [0.3.0] — 2026-11-10
 
 The interop, pipeline, spatial-index and streaming-audit batch: format-agnostic model
