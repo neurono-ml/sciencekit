@@ -2,25 +2,25 @@
 
 ## 1. Module and cgo
 
-- [ ] 1.1 Create the Go module with a cgo preamble, version/status declarations and a
+- [x] 1.1 Create the Go module with a cgo preamble, version/status declarations and a
   build smoke test; verify with `go test ./...`.
-- [ ] 1.2 Implement builder/model wrappers, `Close` and finalizers; verify with
+- [x] 1.2 Implement builder/model wrappers, `Close` and finalizers; verify with
   `go test ./...`.
 
 ## 2. Arrays and operations
 
-- [ ] 2.1 Implement matrix conversion with shape validation, contiguous copies and
+- [x] 2.1 Implement matrix conversion with shape validation, contiguous copies and
   `runtime.KeepAlive`; verify with `go test ./...`.
-- [ ] 2.2 Implement fit/predict/transform/score/save/load; verify with `go test ./...`.
-- [ ] 2.3 Implement error mapping and closed-handle tests; verify with `go test ./...`.
+- [x] 2.2 Implement fit/predict/transform/score/save/load; verify with `go test ./...`.
+- [x] 2.3 Implement error mapping and closed-handle tests; verify with `go test ./...`.
 
 ## 3. Packaging and acceptance
 
-- [ ] 3.1 Add examples, every-family fixtures, concurrent-use and large-array tests; verify
+- [x] 3.1 Add examples, every-family fixtures, concurrent-use and large-array tests; verify
   with `go test ./...`.
-- [ ] 3.2 Document the native library build/link flags and add CI; verify in a clean
+- [x] 3.2 Document the native library build/link flags and add CI; verify in a clean
   environment.
-- [ ] 3.3 Update `CHANGELOG.md` and the companion mdBook chapter (including a
+- [x] 3.3 Update `CHANGELOG.md` and the companion mdBook chapter (including a
   `Development Explained` subsection on cgo arrays and finalizers); verify with
   `mdbook build docs`.
 - [ ] 3.4 Independent review by a separate agent validating every scenario in
