@@ -68,9 +68,9 @@ fn sk_consider(root: &Path, path: &Path, sources: &mut Vec<StreamingSource>) {
         .unwrap_or(path)
         .to_string_lossy()
         .replace('\\', "/");
-    if relative.starts_with("sciencekit_pipeline/") {
-        // The audit crate contains the scanner itself, whose source mentions the
-        // method names it searches for.
+    if relative.starts_with("sciencekit_pipeline/src/streaming_coverage/") {
+        // The audit module's own source mentions the method names it searches
+        // for; other files in the crate are still scanned.
         return;
     }
     sources.push(StreamingSource {
@@ -108,7 +108,7 @@ fn the_source_scan_reaches_every_streaming_crate() {
         assert!(
             sources
                 .iter()
-                .any(|source| format!("{crate_name}{}", source.path).contains(crate_name)),
+                .any(|source| source.path.starts_with(crate_name)),
             "the scan did not reach {crate_name}"
         );
     }

@@ -6,3 +6,6 @@
 mod guard;
 mod matrix;
 mod source_scan;
+
+#[cfg(test)]
+mod matrix_tests;
