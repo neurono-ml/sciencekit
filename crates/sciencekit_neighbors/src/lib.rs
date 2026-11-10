@@ -25,6 +25,7 @@ pub mod classifier;
 pub mod kd_tree;
 pub mod metric;
 pub mod neighbors;
+pub mod regressor;
 pub mod searcher;
 
 pub use ball_tree::{SKBallTree, SKBallTreeBuilder};
@@ -38,6 +39,7 @@ pub use neighbors::{
     SKNeighborsWeights, SKSearchStrategy, SKTrainingData, sk_resolve_search_strategy,
     sk_weighted_average,
 };
+pub use regressor::{SKKNeighborsRegressor, SKKNeighborsRegressorBuilder};
 pub use searcher::{SKNearestNeighborsSearcher, SKNeighborQuery, SKRadiusNeighbors};
 
 #[cfg(test)]
