@@ -1,19 +1,16 @@
-//! Exact best-first ball-tree queries (spec `nearest-neighbor-search`).
+//! Best-first traversal and per-row search for the KD tree.
 
 use ndarray::{Array2, ArrayView1, ArrayView2};
 use rayon::prelude::*;
-use sciencekit_common::{SKDataView, SKError, SKFloat};
+use sciencekit_common::SKFloat;
 
-use super::build::SKBallTree;
+use super::super::build::SKKDTree;
 use crate::searcher::candidates::{
-    SKCandidate, sk_current_worst, sk_offer_candidate, sk_should_run_parallel, sk_sort_candidates,
+    SKCandidate, sk_current_worst, sk_offer_candidate, sk_sort_candidates,
 };
-use crate::searcher::{
-    SKNearestNeighborsSearcher, SKNeighborQuery, SKRadiusNeighbors, sk_require_dense,
-    sk_validate_query, sk_validate_radius,
-};
+use crate::searcher::{SKNeighborQuery, SKRadiusNeighbors};
 
-impl<F: SKFloat> SKBallTree<F> {
+impl<F: SKFloat> SKKDTree<F> {
     /// Evaluate a query batch with an explicit parallel/sequential choice.
     pub(crate) fn k_nearest_with_mode(
         &self,
@@ -128,7 +125,7 @@ impl<F: SKFloat> SKBallTree<F> {
         let root = &self.nodes()[0];
         let bound = self
             .metric
-            .ball_lower_bound(query, root.centroid(), root.radius());
+            .axis_aligned_lower_bound(query, root.minimum(), root.maximum());
         stack.push((0, bound));
     }
 
@@ -147,10 +144,10 @@ impl<F: SKFloat> SKBallTree<F> {
         let right_node = &self.nodes()[right];
         let left_bound =
             self.metric
-                .ball_lower_bound(query, left_node.centroid(), left_node.radius());
+                .axis_aligned_lower_bound(query, left_node.minimum(), left_node.maximum());
         let right_bound =
             self.metric
-                .ball_lower_bound(query, right_node.centroid(), right_node.radius());
+                .axis_aligned_lower_bound(query, right_node.minimum(), right_node.maximum());
         if left_bound <= right_bound {
             stack.push((right, right_bound));
             stack.push((left, left_bound));
@@ -158,50 +155,5 @@ impl<F: SKFloat> SKBallTree<F> {
             stack.push((left, left_bound));
             stack.push((right, right_bound));
         }
-    }
-}
-
-impl<F: SKFloat> SKNearestNeighborsSearcher<F> for SKBallTree<F> {
-    fn k_nearest(
-        &self,
-        queries: SKDataView<'_, F>,
-        neighbors_count: usize,
-    ) -> Result<SKNeighborQuery<F>, SKError> {
-        let dense = sk_require_dense(queries)?;
-        sk_validate_query(
-            dense,
-            self.training_features(),
-            self.training_rows(),
-            neighbors_count,
-        )?;
-        let span = tracing::info_span!(
-            "sciencekit.neighbors.k_nearest",
-            operation = "k_nearest",
-            backend = %self.backend,
-            rows = dense.nrows(),
-            columns = dense.ncols(),
-        );
-        let _entered = span.enter();
-        let parallel = sk_should_run_parallel(dense.nrows(), self.training_rows());
-        Ok(self.k_nearest_with_mode(dense, neighbors_count, parallel))
-    }
-
-    fn radius_neighbors(
-        &self,
-        queries: SKDataView<'_, F>,
-        radius: F,
-    ) -> Result<SKRadiusNeighbors<F>, SKError> {
-        let dense = sk_require_dense(queries)?;
-        sk_validate_radius(dense, self.training_features(), radius)?;
-        let span = tracing::info_span!(
-            "sciencekit.neighbors.radius_neighbors",
-            operation = "radius_neighbors",
-            backend = %self.backend,
-            rows = dense.nrows(),
-            columns = dense.ncols(),
-        );
-        let _entered = span.enter();
-        let parallel = sk_should_run_parallel(dense.nrows(), self.training_rows());
-        Ok(self.radius_neighbors_with_mode(dense, radius, parallel))
     }
 }
