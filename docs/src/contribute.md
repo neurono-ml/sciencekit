@@ -56,3 +56,27 @@ Apache-2.0 — including patent protection. By contributing you agree your contr
   <a class="sk-btn sk-btn--primary" href="https://github.com/neurono-ml/sciencekit/issues/new">Open an issue →</a>
   <a class="sk-btn sk-btn--secondary" href="./roadmap.html">See the plan</a>
 </div>
+
+## Development container
+
+`.devcontainer/` builds one image with every toolchain the lanes need: Rust 1.85
+with `rustfmt`/`clippy`, Python 3 with `maturin`/`pytest`, Go, Julia, Lua 5.4,
+the OpenCL headers and the protobuf compiler.
+
+```sh
+# VS Code / any devcontainer client
+devcontainer up --workspace-folder .
+
+# or, without the devcontainer CLI
+docker build -t sciencekit-dev .devcontainer
+docker run --rm -it -v "$PWD":/workspace -w /workspace sciencekit-dev \
+  cargo test --workspace
+```
+
+The GPU lane runs on a ROCm host instead: the image ships no driver, so pass the
+device through (`--device=/dev/kfd --device=/dev/dri`) on a machine with ROCm
+installed, or use `rocm/dev-ubuntu-22.04` for the ROCm backend tests.
+
+The Lua binding embeds Lua through `mlua` with the `vendored` feature, so a
+system interpreter is not needed to build or use it; `lua5.4` in the image only
+exists for running `tests/run.lua` directly.
