@@ -175,7 +175,7 @@ results.
 
 | File | Responsibility |
 |---|---|
-| `pairwise/dispatcher.rs` | `SKPairwiseMetric`, `sk_pairwise_distance_matrix`, validation and dispatch |
+| `pairwise/dispatcher/` | `SKPairwiseMetric`, `sk_pairwise_distance_matrix`, validation (`metric.rs`) and the representation routing (`routing.rs`) |
 | `pairwise/sparse/row_merge.rs` | sorted-row merge classifying shared/one-sided coordinates |
 | `pairwise/sparse/squared_euclidean.rs` | sparse squared Euclidean and Euclidean |
 | `pairwise/sparse/manhattan.rs` | sparse Manhattan |
