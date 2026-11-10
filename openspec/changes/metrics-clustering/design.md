@@ -44,7 +44,7 @@ dense and sparse products avoid densifying the input. Noise rows are excluded.
 ### Decision 4 — Silhouette scorer
 
 `SKSilhouetteScorer` implements `SKUnsupervisedScorer<F, M>` for a model implementing
-`SKClustererPredictor<F>`; it filters `Noise` before delegating to the free function. The
+`SKClustererPredictor<F>`; it delegates to the free function, which excludes `Noise`. The
 scorer is the first concrete unsupervised scorer.
 
 ### Decision 5 — Validation and observability

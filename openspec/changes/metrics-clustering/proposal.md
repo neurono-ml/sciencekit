@@ -2,7 +2,7 @@
 
 ## Why
 
-Wave 5 has shipped `SKKMeans`, and `clustering-contracts` shipped the typed assignment surface and their typed assignments, but the
+Wave 5 has shipped `SKKMeans`, and `clustering-contracts` shipped the typed assignment surface, but the
 metrics crate has no way to judge a clustering. Silhouette, adjusted Rand index, normalized
 mutual information, homogeneity/completeness/V-measure, Davies-Bouldin and
 Calinski-Harabasz are the standard tools, and the existing `SKUnsupervisedScorer` contract
@@ -15,8 +15,8 @@ has no concrete implementation. This change closes that gap.
 - Add pairwise-labeling metrics: adjusted Rand index, normalized mutual information
   (arithmetic, geometric, max), homogeneity, completeness and V-measure.
 - Add centroid/distance-based clustering scores: Davies-Bouldin and Calinski-Harabasz.
-- Add `SKSilhouetteScorer` implementing `SKUnsupervisedScorer` and filtering the typed
-  `Noise` variant.
+- Add `SKSilhouetteScorer` implementing `SKUnsupervisedScorer` over the typed assignments,
+  delegating to the free function which excludes `Noise`.
 - Dense and sparse inputs through the pairwise-distance dispatcher; no densification.
 - Validation: empty input, assignment length mismatch, fewer than two clusters, a single
   cluster for silhouette, noise-only input and non-finite values.

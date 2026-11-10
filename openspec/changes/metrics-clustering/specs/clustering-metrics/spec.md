@@ -76,7 +76,7 @@ Calinski-Harabasz index (higher is better) from features and assignments.
 ### Requirement: Silhouette scorer
 
 `SKSilhouetteScorer` SHALL implement `SKUnsupervisedScorer`, consuming typed assignments,
-filtering noise and delegating to the free function.
+delegating to the free function, which excludes noise.
 
 #### Scenario: Scorer equals free function
 
@@ -95,7 +95,7 @@ through the pairwise-distance/centroid path, dispatching once and never densifyi
 
 ### Requirement: Validation and concurrency
 
-The metrics SHALL reject empty input, length mismatch, fewer than two clusters, noise-only
+The internal indices SHALL reject empty input, a length mismatch, fewer than two clusters, noise-only
 input and non-finite values, and SHALL be deterministic under concurrent calls.
 
 #### Scenario: Length mismatch is rejected
