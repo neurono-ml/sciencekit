@@ -31,6 +31,16 @@ impl SKTrainTestSplitter {
                 ),
             };
 
+        // Each side is checked on its own first, so a count near `usize::MAX`
+        // cannot overflow the sum below.
+        for (name, count) in [
+            ("test_size", number_of_test_rows),
+            ("train_size", number_of_train_rows),
+        ] {
+            if count > number_of_rows {
+                return Err(sk_count_exceeds_rows(name, count, number_of_rows));
+            }
+        }
         if number_of_test_rows + number_of_train_rows > number_of_rows {
             return Err(SKError::InvalidHyperparameter {
                 name: "test_size",

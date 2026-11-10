@@ -119,6 +119,16 @@ fn train_test_split_rejects_a_count_larger_than_the_input() {
             .train_size(SKPartitionSize::Count(15))
             .build()
             .unwrap(),
+        SKTrainTestSplitter::build()
+            .test_size(SKPartitionSize::Count(usize::MAX))
+            .train_size(SKPartitionSize::Count(1))
+            .build()
+            .unwrap(),
+        SKTrainTestSplitter::build()
+            .test_size(SKPartitionSize::Count(1))
+            .train_size(SKPartitionSize::Count(usize::MAX))
+            .build()
+            .unwrap(),
     ] {
         let error =
             sk_train_test_split(&splitter, SKDataView::Dense(features.view()), None).unwrap_err();
