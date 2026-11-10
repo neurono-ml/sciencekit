@@ -5,7 +5,9 @@
 //! submodules; every implementation lives in its own file.
 
 mod algorithm;
+mod builder;
 mod config;
+mod core_implementation;
 mod distance;
 mod elkan;
 mod init;
@@ -14,6 +16,7 @@ mod lloyd;
 mod result;
 
 pub use config::{SKKMeansAlgorithm, SKKMeansInitialization};
+pub use core_implementation::SKKMeans;
 
 pub(crate) use distance::{
     sk_dense_squared_distances_to_centers, sk_squared_distances_to_center,
@@ -26,6 +29,8 @@ pub(crate) use init::{
 
 #[cfg(test)]
 mod kmeans_algorithm_tests;
+#[cfg(test)]
+mod kmeans_builder_tests;
 #[cfg(test)]
 mod kmeans_distance_tests;
 #[cfg(test)]
