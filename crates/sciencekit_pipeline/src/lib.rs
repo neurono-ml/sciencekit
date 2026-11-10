@@ -12,6 +12,32 @@
 //! Dense and sparse data flow as [`SKFeatureBlock`] values: the representation a
 //! stage produces is the representation the next stage receives, and the
 //! pipeline itself never densifies a sparse block.
+//!
+//! # Example
+//!
+//! ```
+//! use ndarray::{Array1, Array2};
+//! use sciencekit_common::SKBuilder;
+//! use sciencekit_linear_model::logistic_regression::SKLogisticRegression;
+//! use sciencekit_pipeline::SKPipeline;
+//! use sciencekit_preprocessing::standard_scaler::core_implementation::SKStandardScaler;
+//!
+//! let features = Array2::from_shape_vec(
+//!     (4, 2),
+//!     vec![0.0, 1.0, 1.0, 2.0, 2.0, 3.0, 3.0, 4.0],
+//! )
+//! .unwrap();
+//! let labels = Array1::from_vec(vec![0_i64, 0, 1, 1]);
+//! let scaler = SKStandardScaler::build().build().unwrap();
+//! let classifier = SKLogisticRegression::build().build().unwrap();
+//! let pipeline = SKPipeline::start::<f64>()
+//!     .then(scaler)
+//!     .finalize_classifier(classifier)
+//!     .unwrap()
+//!     .fit(&features, labels.view())
+//!     .unwrap();
+//! assert_eq!(pipeline.number_of_stages(), 1);
+//! ```
 
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]

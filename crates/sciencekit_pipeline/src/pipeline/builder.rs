@@ -41,6 +41,32 @@ impl<F: SKFloat, Stages> SKPipelineBuilder<F, Stages> {
     /// The stage must implement [`SKPipelineTransformer`] in the pipeline
     /// scalar `F`; a stage that only exists for another scalar fails here, at
     /// compile time.
+    ///
+    /// ```compile_fail
+    /// use sciencekit_common::SKError;
+    /// use sciencekit_pipeline::{SKFeatureBlock, SKPipeline, SKPipelineTransformer};
+    ///
+    /// struct F64OnlyStage;
+    ///
+    /// impl SKPipelineTransformer<f64> for F64OnlyStage {
+    ///     type Fitted = ();
+    ///
+    ///     fn fit_stage(&self, _block: &SKFeatureBlock<f64>) -> Result<(), SKError> {
+    ///         Ok(())
+    ///     }
+    ///
+    ///     fn transform_stage(
+    ///         &self,
+    ///         _fitted: &(),
+    ///         block: &SKFeatureBlock<f64>,
+    ///     ) -> Result<SKFeatureBlock<f64>, SKError> {
+    ///         Ok(block.clone())
+    ///     }
+    /// }
+    ///
+    /// // `F64OnlyStage` is not a stage of an `f32` pipeline.
+    /// let _ = SKPipeline::start::<f32>().then(F64OnlyStage);
+    /// ```
     pub fn then<Stage>(self, stage: Stage) -> SKPipelineBuilder<F, (Stages, Stage)>
     where
         Stage: SKPipelineTransformer<F>,
@@ -84,6 +110,20 @@ where
     /// prediction contract, so a regressor used as a classifier finalizer fails
     /// to compile. An empty stage list is rejected with
     /// [`SKError::InvalidHyperparameter`].
+    ///
+    /// ```compile_fail
+    /// use sciencekit_common::SKBuilder;
+    /// use sciencekit_linear_model::linear_regression::core_implementation::SKLinearRegression;
+    /// use sciencekit_pipeline::SKPipeline;
+    /// use sciencekit_preprocessing::standard_scaler::core_implementation::SKStandardScaler;
+    ///
+    /// let scaler = SKStandardScaler::build().build().unwrap();
+    /// let regressor = SKLinearRegression::build().build().unwrap();
+    /// // A regressor is not a classifier final estimator.
+    /// let _ = SKPipeline::start::<f64>()
+    ///     .then(scaler)
+    ///     .finalize_classifier(regressor);
+    /// ```
     pub fn finalize_classifier<Estimator>(
         self,
         estimator: Estimator,
