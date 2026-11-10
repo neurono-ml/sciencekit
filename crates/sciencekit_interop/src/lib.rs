@@ -20,5 +20,6 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+pub mod missing;
 pub mod schema;
 pub mod selection;
