@@ -27,6 +27,7 @@ members = [
     "crates/sciencekit_metrics",
     "crates/sciencekit_neighbors",
     "crates/sciencekit_pipeline",
+    "crates/sciencekit_tree",
     "crates/sciencekit_preprocessing",
 ]
 
