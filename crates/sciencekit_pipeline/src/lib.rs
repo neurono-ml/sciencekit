@@ -56,6 +56,8 @@ pub use stage::SKPipelineTransformer;
 pub use stages::SKConfiguredStages;
 
 #[cfg(test)]
+mod acceptance_tests;
+#[cfg(test)]
 mod block_tests;
 #[cfg(test)]
 mod stage_tests;
