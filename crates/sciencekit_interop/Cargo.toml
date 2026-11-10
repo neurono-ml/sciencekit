@@ -8,7 +8,7 @@ description = "Engine-neutral interoperability layer for sciencekit: tabular sch
 repository = "https://github.com/neurono-ml/sciencekit"
 
 [dependencies]
-sciencekit_common = { path = "../sciencekit_common" }
+sciencekit_common = { path = "../sciencekit_common", version = "0.1.0" }
 
 ndarray = { workspace = true }
 sprs = { workspace = true }
