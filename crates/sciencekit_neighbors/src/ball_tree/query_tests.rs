@@ -4,6 +4,7 @@ use ndarray::{Array2, array};
 use sciencekit_common::SKDataView;
 
 use super::SKBallTreeBuilder;
+use crate::metric::SKRequestedNeighborMetric;
 use crate::searcher::SKNearestNeighborsSearcher;
 
 fn build(data: &Array2<f64>, leaf_size: usize) -> super::SKBallTree<f64> {
@@ -128,4 +129,88 @@ fn ball_query_parallel_path_equals_the_sequential_path_on_a_large_batch() {
     let sequential_radius = tree.radius_neighbors_with_mode(queries.view(), 1.5, false);
     let parallel_radius = tree.radius_neighbors_with_mode(queries.view(), 1.5, true);
     assert_eq!(sequential_radius, parallel_radius);
+}
+
+/// Exact-boundary radii must be inclusive for every metric, including when the
+/// whole index is one leaf.
+#[test]
+fn ball_radius_query_includes_the_exact_boundary_for_every_metric() {
+    let training =
+        ndarray::Array2::from_shape_vec((5, 1), vec![2.0_f64, 2.0, 0.0, 0.0, 0.0]).unwrap();
+    let query = ndarray::Array2::from_shape_vec((1, 1), vec![3.0_f64]).unwrap();
+    for metric in [
+        SKRequestedNeighborMetric::Euclidean,
+        SKRequestedNeighborMetric::SquaredEuclidean,
+        SKRequestedNeighborMetric::Manhattan,
+        SKRequestedNeighborMetric::Chebyshev,
+    ] {
+        let tree = SKBallTreeBuilder::<f64>::new()
+            .metric(metric)
+            .build(SKDataView::Dense(training.view()))
+            .unwrap();
+        let radius = match metric {
+            SKRequestedNeighborMetric::SquaredEuclidean => 1.0,
+            _ => 1.0,
+        };
+        let neighbors = tree
+            .radius_neighbors(
+                sciencekit_common::SKDataView::try_from(&query).unwrap(),
+                radius,
+            )
+            .unwrap();
+        assert_eq!(
+            neighbors.neighbors_count(0),
+            2,
+            "{metric:?} must include the rows exactly at the radius"
+        );
+    }
+}
+
+/// Equidistant candidates keep the smallest training index, including when the
+/// node holding the smaller index has a bound exactly equal to the worst.
+#[test]
+fn ball_query_keeps_deterministic_ties_at_the_pruning_boundary() {
+    let training =
+        ndarray::Array2::from_shape_vec((4, 2), vec![0.0_f64, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+            .unwrap();
+    let query = ndarray::Array2::from_shape_vec((1, 2), vec![1.0_f64, 1.0]).unwrap();
+    let tree = SKBallTreeBuilder::<f64>::new()
+        .metric(SKRequestedNeighborMetric::SquaredEuclidean)
+        .leaf_size(1)
+        .build(SKDataView::Dense(training.view()))
+        .unwrap();
+    let neighbors = tree
+        .k_nearest(sciencekit_common::SKDataView::try_from(&query).unwrap(), 2)
+        .unwrap();
+    assert_eq!(neighbors.indices()[[0, 0]], 0);
+    assert_eq!(neighbors.indices()[[0, 1]], 1);
+}
+
+/// The same logical data partitioned by a different leaf size answers
+/// identically, ties included.
+#[test]
+fn ball_partition_does_not_change_the_answer() {
+    let training = ndarray::Array2::from_shape_vec(
+        (8, 2),
+        vec![
+            0.0_f64, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 2.0, 0.0, 0.0, 2.0, 3.0, 0.0, 0.0, 3.0,
+        ],
+    )
+    .unwrap();
+    let query = ndarray::Array2::from_shape_vec((2, 2), vec![0.5_f64, 0.5, 2.0, 2.0]).unwrap();
+    let mut answers = Vec::new();
+    for leaf_size in [1_usize, 2, 40] {
+        let tree = SKBallTreeBuilder::<f64>::new()
+            .leaf_size(leaf_size)
+            .build(SKDataView::Dense(training.view()))
+            .unwrap();
+        answers.push(
+            tree.k_nearest(sciencekit_common::SKDataView::try_from(&query).unwrap(), 3)
+                .unwrap(),
+        );
+    }
+    for answer in &answers[1..] {
+        assert_eq!(answer.indices(), answers[0].indices());
+        assert_eq!(answer.distances(), answers[0].distances());
+    }
 }

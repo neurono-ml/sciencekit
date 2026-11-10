@@ -5,6 +5,7 @@ use rayon::prelude::*;
 use sciencekit_common::SKFloat;
 
 use super::super::build::SKBallTree;
+use crate::metric::sk_lower_bound_exceeds;
 use crate::searcher::candidates::{
     SKCandidate, sk_current_worst, sk_offer_candidate, sk_sort_candidates,
 };
@@ -73,7 +74,7 @@ impl<F: SKFloat> SKBallTree<F> {
 
         while let Some((node_index, lower_bound)) = stack.pop() {
             let worst = sk_current_worst(&best, neighbors_count);
-            if lower_bound > worst {
+            if sk_lower_bound_exceeds(lower_bound, worst) {
                 continue;
             }
             let node = &self.nodes()[node_index];
@@ -97,7 +98,7 @@ impl<F: SKFloat> SKBallTree<F> {
         self.push_root(&mut stack, query);
 
         while let Some((node_index, lower_bound)) = stack.pop() {
-            if lower_bound > radius {
+            if sk_lower_bound_exceeds(lower_bound, radius) {
                 continue;
             }
             let node = &self.nodes()[node_index];

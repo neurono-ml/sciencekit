@@ -76,7 +76,7 @@ impl<F: SKFloat> SKKDTreeBuilder<F> {
             }
         };
 
-        if dense.nrows() == 0 {
+        if dense.nrows() == 0 || dense.ncols() == 0 {
             return Err(SKError::EmptyInput { operation: "build" });
         }
         sk_validate_hyperparameter(

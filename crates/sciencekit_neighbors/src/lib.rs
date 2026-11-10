@@ -28,7 +28,7 @@ pub mod searcher;
 pub use ball_tree::{SKBallTree, SKBallTreeBuilder};
 pub use kd_tree::{SKKDTree, SKKDTreeBuilder};
 pub use metric::{SKNeighborMetric, SKRequestedNeighborMetric};
-pub use searcher::{SKNeighborQuery, SKRadiusNeighbors};
+pub use searcher::{SKNearestNeighborsSearcher, SKNeighborQuery, SKRadiusNeighbors};
 
 #[cfg(test)]
 mod acceptance_tests;

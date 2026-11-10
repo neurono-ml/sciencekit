@@ -109,3 +109,56 @@ fn validation_rejects_a_query_with_the_wrong_feature_count() {
         other => panic!("expected ShapeMismatch, found {other:?}"),
     }
 }
+
+/// A training table with no feature columns is rejected rather than panicking.
+#[test]
+fn validation_rejects_a_zero_feature_training_table() {
+    let empty_features = ndarray::Array2::<f64>::zeros((3, 0));
+    let view = sciencekit_common::SKDataView::Dense(empty_features.view());
+    let kd_error = crate::SKKDTreeBuilder::<f64>::new()
+        .build(view)
+        .unwrap_err();
+    let ball_error = crate::SKBallTreeBuilder::<f64>::new()
+        .build(view)
+        .unwrap_err();
+    assert!(matches!(
+        kd_error,
+        sciencekit_common::SKError::EmptyInput { .. }
+    ));
+    assert!(matches!(
+        ball_error,
+        sciencekit_common::SKError::EmptyInput { .. }
+    ));
+}
+
+/// Sparse queries are rejected by the radius path of both indexes too.
+#[test]
+fn validation_rejects_sparse_radius_queries_for_both_indexes() {
+    let training = ndarray::Array2::from_shape_vec((2, 2), vec![0.0_f64, 0.0, 1.0, 1.0]).unwrap();
+    let sparse = sprs::CsMat::new((1, 2), vec![0, 1], vec![0], vec![1.0_f64]);
+    let kd = crate::SKKDTreeBuilder::<f64>::new()
+        .build(sciencekit_common::SKDataView::Dense(training.view()))
+        .unwrap();
+    let ball = crate::SKBallTreeBuilder::<f64>::new()
+        .build(sciencekit_common::SKDataView::Dense(training.view()))
+        .unwrap();
+    for error in [
+        crate::searcher::SKNearestNeighborsSearcher::radius_neighbors(
+            &kd,
+            sciencekit_common::SKDataView::Sparse(sparse.view()),
+            1.0,
+        )
+        .unwrap_err(),
+        crate::searcher::SKNearestNeighborsSearcher::radius_neighbors(
+            &ball,
+            sciencekit_common::SKDataView::Sparse(sparse.view()),
+            1.0,
+        )
+        .unwrap_err(),
+    ] {
+        assert!(matches!(
+            error,
+            sciencekit_common::SKError::UnsupportedRepresentation { .. }
+        ));
+    }
+}

@@ -5,8 +5,10 @@
 //! their own files.
 
 mod catalogue;
+mod tolerance;
 
 pub use catalogue::{SKNeighborMetric, SKRequestedNeighborMetric};
+pub(crate) use tolerance::sk_lower_bound_exceeds;
 
 #[cfg(test)]
 mod metric_bounds_tests;
