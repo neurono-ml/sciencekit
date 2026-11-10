@@ -14,4 +14,8 @@ pub(crate) use k_nearest::sk_brute_force_k_nearest;
 pub(crate) use k_nearest::sk_brute_force_k_nearest_with_budget;
 
 #[cfg(test)]
-mod brute_force_tests;
+mod brute_force_k_nearest_tests;
+#[cfg(test)]
+mod brute_force_radius_tests;
+#[cfg(test)]
+mod brute_force_validation_tests;
