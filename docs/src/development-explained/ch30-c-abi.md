@@ -20,7 +20,9 @@ A C boundary has three hard rules that Rust does not enforce for you:
 2. **Ownership must be explicit.** Who frees an output buffer? When is a handle valid? Without a
    written rule, every binding leaks or double-frees.
 3. **Pointers may be wrong.** Null, misaligned, too short, freed — the library must validate
-   before dereferencing, because the caller's language cannot express Rust's guarantees.
+   before dereferencing, because the caller's language cannot express Rust's guarantees. A
+   misaligned pointer is rejected explicitly: building a typed slice from it is undefined
+   behaviour, and the resulting abort cannot even be caught by `catch_unwind`.
 
 The ABI also has to **erase generics**: Rust's estimators are generic over `f32`/`f64`, C has no
 generics. The answer is a runtime data-type code plus opaque handles.
@@ -34,7 +36,7 @@ generics. The answer is a runtime data-type code plus opaque handles.
    travels separately through a **thread-local** last-error string.
 3. **Borrowed inputs, owned outputs.** An array passed *to* the library is borrowed for the
    call; an array *returned* by it is owned and released with `sk_ffi_array_free` (idempotent).
-4. **A handle registry.** Freed handles are never dereferenced: a freetable lookup runs first,
+4. **A handle registry.** Freed handles are never dereferenced: a registry lookup runs first,
    so use-after-free returns `SK_FFI_STATUS_INVALID_HANDLE`.
 5. **`catch_unwind` at every entry point.** A panic becomes `SK_FFI_STATUS_INTERNAL` plus a
    message, and the process keeps running.
@@ -106,11 +108,12 @@ handle.
   and the owned output wrapper.
 - **`SKFfiBuilder` / `SKFfiModel`** — opaque handles; create, configure, fit, predict,
   transform, score, free.
-- **`sk_ffi_last_error` / `sk_ffi_clear_last_error`** — thread-local message access.
-- **`sk_ffi_version` / `sk_ffi_version_features`** — ABI version and capability query, so a
-  binding can refuse an incompatible library instead of crashing.
-- **Persistence** — `sk_ffi_save_model_file` / `sk_ffi_load_model_file` (plus the encode/decode
-  pair) over the shared `SKModelState` contract.
+- **`sk_ffi_last_error`** — the thread-local message; it is cleared by the next successful call.
+- **`sk_ffi_version` / `sk_ffi_features`** — ABI version and capability bitmask, so a binding
+  can refuse an incompatible library instead of crashing.
+- **Persistence** — `sk_ffi_model_save` / `sk_ffi_model_load` over the shared `SKModelState`
+  contract. Scope today: fitted linear regression in `f64`; an `f32` model or a scaler returns
+  `SK_FFI_STATUS_UNSUPPORTED`, as does a state exported by another estimator.
 
 ## 5. A real walk-through, using the tests
 
@@ -119,12 +122,13 @@ handle.
 A deliberately panicking entry point returns `SK_FFI_STATUS_INTERNAL`, sets a message and does
 not abort the process. This is the single most important property of the boundary.
 
-### `handle_use_after_free_is_rejected`
+### `predict_after_free_returns_invalid_handle` and `handle_use_after_free_is_rejected`
 
-Free a model, then predict: the registry answers `INVALID_HANDLE` without touching the freed
-memory. The test is safe by construction, which is the point.
+Predict through a freed model, or look up a freed builder token: the registry answers
+`INVALID_HANDLE` without touching the freed memory. Both tests are safe by construction, which
+is the point.
 
-### `array_rejects_length_mismatch` and `boundary_rejects_length_mismatch_before_reading`
+### `array_length_mismatch_is_rejected` and `boundary_rejects_length_mismatch_before_reading`
 
 Before any element is read, the number of elements is checked against the declared shape. A
 short buffer cannot cause an out-of-bounds read.
@@ -140,19 +144,20 @@ Compiled with `cc` and linked against the real cdylib, it creates a builder, fit
 scores, saves and loads, exercises the scaler and checks an invalid handle. A header that lies
 about a signature fails to compile; an ABI that lies about behaviour fails at run time.
 
-### `version_header_declares_every_entry_point`
+### `version_header_declares_every_entry_point` and `version_header_declares_no_symbol_outside_the_inventory`
 
-The header is checked against the exported symbol list, so adding an entry point without
-declaring it fails a test rather than a user.
+The check is bidirectional: every inventory entry appears in the header, and every `sk_ffi_*`
+the header declares is in the inventory. Adding an entry point without declaring it — or
+declaring one that is not implemented — fails a test rather than a user.
 
 ## 6. Look inside
 
 | File | Responsibility |
 |---|---|
-| `abi/` | entry points grouped by area (builder, fit, predict, persistence, version) |
+| `abi.rs` | the stable ABI constants and the entry-point inventory |
 | `handle/` | the registry and identifier allocation |
-| `array/` | descriptors, shape checks and owned buffers |
-| `boundary/` | the only module that dereferences raw pointers |
+| `array/`, `array/validation/` | descriptors, shape, length, stride and alignment checks, owned buffers |
+| `boundary/` | the only module that dereferences raw pointers, plus the entry points grouped by area |
 | `error/`, `error_kind/` | status codes and the thread-local message |
 | `model/` | the model handle and its operations |
 | `persistence/` | the `SKModelState` file encoding |
