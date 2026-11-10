@@ -31,8 +31,7 @@ Every stage receives and returns an owned `SKFeatureBlock<F>` (dense `Array2` or
 - `SKImputedOutput<F> → SKFeatureBlock` (implemented in the impute crate)
 - `SKIndicatorOutput<F> → SKFeatureBlock` (implemented in the impute crate)
 
-The first stage converts the caller's `SKDataView` into an owned `SKFeatureBlock` (one boundary copy, accepted in the ADR) and then borrows that block; subsequent stages use owned blocks. This
-avoids copying the input at the pipeline boundary.
+The pipeline converts the caller's `SKDataView` into an owned `SKFeatureBlock` once (one boundary copy, accepted in the ADR). The block then flows **by value** through the chain: each stage borrows the current block and returns the next one, so no stage clones it.
 
 ### Decision 2 — A stage adapter over the existing transformer contract
 
@@ -45,7 +44,7 @@ pub trait SKPipelineTransformer<F: SKFloat> {
 ```
 
 A blanket implementation covers any `T: SKUnsupervisedFit<F>` whose model implements
-`SKFeatureTransformer<F>` and whose `Output: Into<SKFeatureBlock<F>>`. This reuses every
+`SKFeatureTransformer<F>` and whose `Output: SKIntoFeatureBlock<F>`. This reuses every
 existing transformer without changing its trait.
 
 ### Decision 3 — Typed builder with nested tuples
@@ -103,8 +102,8 @@ tests live in `tests/` doctests or a `trybuild`-style harness, not in the librar
 
 - **Type-level tuple machinery is complex** → keep the arity bounded and test compile-fail
   cases; the runtime code stays simple.
-- **First stage borrows the input, later stages own blocks** → avoids copying the input;
-  the boundary is documented.
+- **One boundary copy, then move semantics** → the view becomes an owned block once; every
+  stage moves the block forward instead of cloning it.
 - **Existing transformer outputs need adapters** → four `From` impls; the impute crate owns
   its two.
 - **No FeatureUnion/DAG** → separate changes.
