@@ -27,4 +27,8 @@ pub use opentelemetry_layer::sk_opentelemetry_layer;
 #[cfg(test)]
 mod backend_kind_tests;
 #[cfg(test)]
+mod gpu_span_tests;
+#[cfg(test)]
 mod observability_tests;
+#[cfg(test)]
+mod recording_layer;

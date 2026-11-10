@@ -25,6 +25,7 @@ impl SKOperationObservation {
             columns = attributes.columns_count,
             mode = ?attributes.execution_mode,
             backend = %attributes.backend,
+            fallback_reason = tracing::field::Empty,
             duration_ms = tracing::field::Empty,
             error = tracing::field::Empty,
         );
@@ -50,6 +51,18 @@ impl SKOperationObservation {
     /// Record a failing operation's error on the span.
     pub fn record_error(&self, error: &dyn std::error::Error) {
         self.span.record("error", error.to_string());
+    }
+
+    /// Record why the operation ran on the host backend instead of a device.
+    ///
+    /// The reason is only recorded when a plan fell back; a successful device
+    /// plan leaves the field empty, so consumers can tell an honest fallback
+    /// from a device execution.
+    pub fn record_fallback_reason(&self, reason: crate::device::SKFallbackReason) {
+        self.span.record(
+            "fallback_reason",
+            tracing::field::display(reason.to_string()),
+        );
     }
 
     /// Record the elapsed duration and close the span.
