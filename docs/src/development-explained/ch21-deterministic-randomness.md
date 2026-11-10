@@ -5,9 +5,9 @@ forests, bagging, boosting, randomized SVD, isolation forests — needs randomne
 this change, the repository had one `pub(crate)` SplitMix64 inside
 `sciencekit_linear_model` that only SGD used, plus two private xorshift64* permutations
 with hard-coded seeds inside the logistic SAGA solver and the coordinate-descent random
-selection. None of them was reachable through a builder, and the next crate that needed a
-random number would either copy one of them or, worse, call the operating system's entropy
-source and make its tests flaky. This change promotes one generator to
+selection. The two xorshift streams were not reachable through any builder, and the next crate that
+needed a random number would either copy one of them or, worse, call the operating
+system's entropy source and make its tests flaky. This change promotes one generator to
 `sciencekit_common`, retires every private stream, gives the surface a public contract, and
 writes down the reproducibility rule the whole library follows from now on.
 
