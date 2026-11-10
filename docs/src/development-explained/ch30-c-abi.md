@@ -128,6 +128,12 @@ Predict through a freed model, or look up a freed builder token: the registry an
 `INVALID_HANDLE` without touching the freed memory. Both tests are safe by construction, which
 is the point.
 
+### `boundary_rejects_a_misaligned_data_pointer`, `…_a_misaligned_shape_pointer` and `…_a_misaligned_strides_pointer`
+
+Each field is checked before it is turned into a typed slice: a pointer offset by one byte is
+rejected with `INVALID_ARGUMENT` naming the field, instead of reaching the typed-slice
+precondition (which aborts rather than unwinds).
+
 ### `array_length_mismatch_is_rejected` and `boundary_rejects_length_mismatch_before_reading`
 
 Before any element is read, the number of elements is checked against the declared shape. A
