@@ -45,4 +45,7 @@ mod marker_tests;
 mod transform_tests;
 
 #[cfg(test)]
+mod validation_tests;
+
+#[cfg(test)]
 mod weights_tests;
