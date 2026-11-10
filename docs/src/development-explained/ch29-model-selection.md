@@ -64,8 +64,11 @@ flowchart TD
    non-finite values are all rejected with the central error taxonomy before any split is
    produced.
 6. **Cross-validation as a function, not a framework.** `sk_cross_val_score_classifier` and
-   `sk_cross_val_score_regressor` take a splitter, features, targets and a scorer, then fit and
-   score one model per fold, returning the per-fold scores.
+   `sk_cross_val_score_regressor` take a splitter, features, targets and a scorer, then fit a
+   **fresh** model per fold and score its test rows, returning the per-fold scores. The helper
+   takes no group labels: pre-split grouped data with `SKGroupKFold` and loop, or use the
+   splitter directly. The builders record `execution_mode` as configuration; the parallel fold
+   loop always uses rayon, and fold scores are collected in fold order.
 
 *Roads not taken.* A "shuffle everything at fit time" helper (irreproducible comparisons); a
 splitter that copies data eagerly (memory waste and a hidden densification risk); stratified
@@ -103,7 +106,9 @@ honest, and the API returns all of them.
 
 ## 4. Each public object, explained
 
-- **`SKIndexSplit`** — `train_indices()` and `test_indices()`, the universal output.
+- **`SKIndexSplit`** — `train()` and `test()` (plus `number_of_train_rows` and
+  `number_of_test_rows`), the universal output; `SKTrainTestSplit` adds
+  `train_indices()`/`test_indices()` because it also owns the gathered data.
 - **`SKSplitter`** — the contract every splitter implements: `split(features, targets,
   groups)` yields index splits.
 - **`SKKFold` / `SKKFoldBuilder`** — `number_of_splits`, `shuffle`, `random_seed`.
@@ -133,8 +138,9 @@ different order. This is what makes a cross-model comparison meaningful.
 
 ### `stratified_every_fold_sees_every_class_in_proportion`
 
-A 90/10 dataset must not produce a fold with zero minority examples. The test asserts every
-fold holds both classes and that the proportions track the whole dataset.
+A three-class dataset (30/20/10 examples over five folds) must not produce a fold with zero
+minority examples. The test asserts every fold holds all three classes in the expected
+proportions (`[6, 4, 2]`).
 
 ### `group_never_splits_a_group_across_train_and_test`
 
@@ -158,13 +164,13 @@ position before the split is produced.
 
 | File | Responsibility |
 |---|---|
-| `splitter/` | `SKIndexSplit`, the `SKSplitter` contract and the builders |
-| `gather/` | dense/CSR feature gathering and target gathering |
-| `shuffle.rs` | seeded Fisher–Yates |
-| `kfold/`, `stratified/`, `group/` | the three K-fold flavours |
-| `train_test/` | fractions, counts, stratification |
-| `cross_validation/` | fit-and-score per fold |
-| `validation/` | shared input checks |
+| `index_split.rs`, `split/splitter.rs` | `SKIndexSplit` and the `SKSplitter` contract |
+| `split/gather/`, `target_partition.rs` | dense/CSR feature gathering and target gathering |
+| `split/shuffle.rs` | seeded Fisher–Yates |
+| `split/kfold/`, `split/stratified/`, `split/group/` | the three K-fold flavours and their builders |
+| `train_test_split/` | fractions, counts, stratification |
+| `cross_validation/` | fit-and-score per fold (fresh model each fold) |
+| `split/validation/` | shared input checks |
 | `acceptance_tests/` | tiny/large, representations, determinism, concurrency, metrics |
 
 ## 7. What this unlocks
