@@ -29,3 +29,5 @@ pub use scoring::{SKClassifierScoring, SKRegressorScoring, SKScoringFamily};
 
 #[cfg(test)]
 pub(crate) mod mock_estimators;
+#[cfg(test)]
+mod representation_tests;

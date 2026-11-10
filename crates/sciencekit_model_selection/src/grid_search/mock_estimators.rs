@@ -161,6 +161,10 @@ impl SKMockSparseOnlyRegressorModel {
     pub(crate) fn training_rows(&self) -> usize {
         self.training_rows
     }
+
+    pub(crate) fn sparse_training(&self) -> bool {
+        true
+    }
 }
 
 impl SKRegressorPredictor<f64> for SKMockSparseOnlyRegressorModel {
