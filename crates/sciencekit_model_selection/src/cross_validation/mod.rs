@@ -1,0 +1,17 @@
+//! Cross-validation scoring (spec `model-selection-splits`, requirement
+//! `Cross-validation scoring`).
+//!
+//! This is a **pure dispatcher** module: `mod.rs` only declares and re-exports
+//! submodules; every implementation lives in its own file.
+
+mod classifier;
+mod fitting;
+mod regressor;
+
+pub use classifier::sk_cross_val_score_classifier;
+pub use regressor::sk_cross_val_score_regressor;
+
+#[cfg(test)]
+mod cross_validation_tests;
+#[cfg(test)]
+mod mock_estimators;

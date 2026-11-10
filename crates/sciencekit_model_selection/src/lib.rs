@@ -14,6 +14,7 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+pub mod cross_validation;
 pub mod gather;
 pub mod index_split;
 pub mod shuffle;
