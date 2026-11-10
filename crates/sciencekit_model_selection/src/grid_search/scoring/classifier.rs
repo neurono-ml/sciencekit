@@ -66,23 +66,23 @@ impl SKClassifierScoring {
         SKError: From<M::Error>,
     {
         match self {
-            SKClassifierScoring::Accuracy => {
-                SKAccuracyScorer.score(model, features, targets)
+            SKClassifierScoring::Accuracy => SKAccuracyScorer.score(model, features, targets),
+            SKClassifierScoring::BalancedAccuracy => {
+                SKBalancedAccuracyScorer.score(model, features, targets)
             }
-            SKClassifierScoring::BalancedAccuracy => SKBalancedAccuracyScorer
-                .score(model, features, targets),
-            SKClassifierScoring::F1(averaging) => SKF1Scorer::new(*averaging)
-                .score(model, features, targets),
-            SKClassifierScoring::Precision(averaging) => SKPrecisionScorer::new(*averaging)
-                .score(model, features, targets),
-            SKClassifierScoring::Recall(averaging) => SKRecallScorer::new(*averaging)
-                .score(model, features, targets),
+            SKClassifierScoring::F1(averaging) => {
+                SKF1Scorer::new(*averaging).score(model, features, targets)
+            }
+            SKClassifierScoring::Precision(averaging) => {
+                SKPrecisionScorer::new(*averaging).score(model, features, targets)
+            }
+            SKClassifierScoring::Recall(averaging) => {
+                SKRecallScorer::new(*averaging).score(model, features, targets)
+            }
             SKClassifierScoring::Auc { positive_label } => {
-                SKAucScorer::new(*positive_label)
-                    .score(model, features, targets)
+                SKAucScorer::new(*positive_label).score(model, features, targets)
             }
-            SKClassifierScoring::LogLoss => SKLogLossScorer::new()
-                .score(model, features, targets),
+            SKClassifierScoring::LogLoss => SKLogLossScorer::new().score(model, features, targets),
         }
     }
 }

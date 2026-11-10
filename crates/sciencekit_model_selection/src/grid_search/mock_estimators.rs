@@ -8,8 +8,7 @@
 
 use ndarray::{Array1, Array2};
 use sciencekit_common::{
-    SKClassifierPredictor, SKDataView, SKError, SKRegressorPredictor, SKSupervisedFit,
-    SKTargetView,
+    SKClassifierPredictor, SKDataView, SKError, SKRegressorPredictor, SKSupervisedFit, SKTargetView,
 };
 
 fn sk_number_of_rows(features: SKDataView<'_, f64>) -> usize {
@@ -245,9 +244,9 @@ impl SKClassifierPredictor<f64> for SKMockThresholdClassifierModel {
     {
         let features = features.try_into()?;
         let rows = sk_number_of_rows(features);
-        Ok(Array1::from_iter(
-            (0..rows).map(|row| i64::from(sk_first_column(features, row) >= self.threshold)),
-        ))
+        Ok(Array1::from_iter((0..rows).map(|row| {
+            i64::from(sk_first_column(features, row) >= self.threshold)
+        })))
     }
 
     fn predict_probabilities<'a, X>(&self, features: X) -> Result<Array2<f64>, Self::Error>

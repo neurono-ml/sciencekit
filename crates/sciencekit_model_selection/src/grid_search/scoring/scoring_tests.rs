@@ -7,9 +7,7 @@ use sciencekit_metrics::classification::SKAveraging;
 
 use super::{SKClassifierScoring, SKRegressorScoring};
 use crate::grid_search::evaluation::SKFoldScorer;
-use crate::grid_search::mock_estimators::{
-    SKMockFixedClassifierModel, SKMockFixedRegressorModel,
-};
+use crate::grid_search::mock_estimators::{SKMockFixedClassifierModel, SKMockFixedRegressorModel};
 
 const TOLERANCE: f64 = 1e-12;
 
@@ -113,7 +111,5 @@ fn grid_scoring_r2_matches_the_hand_computed_value() {
 fn grid_scoring_requires_probabilities_only_for_ranking_policies() {
     assert!(!SKClassifierScoring::Accuracy.requires_probabilities());
     assert!(SKClassifierScoring::LogLoss.requires_probabilities());
-    assert!(
-        SKClassifierScoring::Auc { positive_label: 1 }.requires_probabilities()
-    );
+    assert!(SKClassifierScoring::Auc { positive_label: 1 }.requires_probabilities());
 }
