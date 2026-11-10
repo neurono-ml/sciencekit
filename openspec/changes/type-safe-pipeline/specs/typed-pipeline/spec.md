@@ -34,7 +34,7 @@ scalar and a final estimator whose input cannot consume the last stage's output.
 - **WHEN** an `f32` pipeline is composed with an `f64` stage
 - **THEN** compilation fails
 
-#### Scenario: Incompatible final output does not compile
+#### Scenario: An estimator of the wrong supervision kind does not compile
 
 - **WHEN** a final estimator cannot consume the last transformer output
 - **THEN** compilation fails

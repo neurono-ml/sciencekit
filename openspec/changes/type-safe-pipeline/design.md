@@ -31,7 +31,7 @@ Every stage receives and returns an owned `SKFeatureBlock<F>` (dense `Array2` or
 - `SKImputedOutput<F> → SKFeatureBlock` (implemented in the impute crate)
 - `SKIndicatorOutput<F> → SKFeatureBlock` (implemented in the impute crate)
 
-The first stage borrows the caller's `SKDataView`; subsequent stages use owned blocks. This
+The first stage converts the caller's `SKDataView` into an owned `SKFeatureBlock` (one boundary copy, accepted in the ADR) and then borrows that block; subsequent stages use owned blocks. This
 avoids copying the input at the pipeline boundary.
 
 ### Decision 2 — A stage adapter over the existing transformer contract
