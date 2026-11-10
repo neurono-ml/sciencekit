@@ -226,8 +226,7 @@ fn ball_radius_query_keeps_a_row_exactly_at_the_radius_far_from_the_centroid() {
         533_990_166.7282869,
         612_015_909.525534,
     ];
-    let training =
-        Array2::from_shape_vec((4, 1), rows.iter().copied().collect::<Vec<f64>>()).unwrap();
+    let training = Array2::from_shape_vec((4, 1), rows.to_vec()).unwrap();
     let query = Array2::from_shape_vec((1, 1), vec![-0.118_451_843_924_760_82_f64]).unwrap();
     let radius = 0.868_963_051_657_253_3_f64;
     let tree = SKBallTreeBuilder::<f64>::new()
