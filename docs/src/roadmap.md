@@ -80,6 +80,7 @@ No stage may be skipped — each algorithm walks the full path:
 <div class="sk-timeline__card">
 <div class="sk-timeline__head"><span class="sk-timeline__title">Phase 3 — Neighbors &amp; SVM</span><span class="sk-pill sk-pill--neutral">Planned</span></div>
 <p style="margin:0.2rem 0 0;font-size:0.9rem;color:#52525c">k-NN classifier/regressor, KD-tree, Ball-tree; SVC, SVR, LinearSVC.</p>
+<p style="margin:0.35rem 0 0;font-size:0.82rem;color:#71717a">Memory-mapped indexes and kernel caches are Phase 7 deliverables.</p>
 </div>
 </div>
 
@@ -87,6 +88,7 @@ No stage may be skipped — each algorithm walks the full path:
 <div class="sk-timeline__card">
 <div class="sk-timeline__head"><span class="sk-timeline__title">Phase 4 — Trees &amp; ensembles</span><span class="sk-pill sk-pill--neutral">Planned</span></div>
 <p style="margin:0.2rem 0 0;font-size:0.9rem;color:#52525c">Decision trees; Random Forest, Bagging, Gradient Boosting aggregated in parallel with rayon.</p>
+<p style="margin:0.35rem 0 0;font-size:0.82rem;color:#71717a">Tree persistence and model export are Phase 7 deliverables.</p>
 </div>
 </div>
 
