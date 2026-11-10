@@ -44,6 +44,8 @@ pub use splitter::{SKMaximumFeatures, SKSplitCandidate, SKSplitter};
 #[cfg(test)]
 mod acceptance_tests;
 #[cfg(test)]
+mod determinism_tests;
+#[cfg(test)]
 mod importances_tests;
 #[cfg(test)]
 mod representation_tests;
