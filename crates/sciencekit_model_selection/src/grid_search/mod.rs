@@ -28,6 +28,8 @@ pub use sciencekit_metrics::classification::SKAveraging;
 pub use scoring::{SKClassifierScoring, SKRegressorScoring, SKScoringFamily};
 
 #[cfg(test)]
+mod concurrency_tests;
+#[cfg(test)]
 pub(crate) mod mock_estimators;
 #[cfg(test)]
 mod representation_tests;

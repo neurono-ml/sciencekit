@@ -2,7 +2,7 @@
 
 use ndarray::Array1;
 use sciencekit_common::{
-    SKBackendKind, SKBuilderState, SKError, SKExecutionMode, SKFloat, sk_validate_hyperparameter,
+    SKBackendKind, SKBuilderState, SKError, SKFloat, sk_validate_hyperparameter,
 };
 
 use super::super::configuration::SKGridSearchConfiguration;
