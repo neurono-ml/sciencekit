@@ -21,7 +21,7 @@ buffer, so conversion copies are explicit and documented.
 
 ### Decision 1 — `mlua` module
 
-The crate exposes `#[mlua::lua_module] fn sciencekit(lua)`. Builders/models are
+The crate exposes `a hand-written `luaopen_sciencekit` entry point (the `module` and `vendored` mlua features are mutually exclusive)`. Builders/models are
 `UserData` structs holding an `SKFfiHandle` pointer; setters return `&mut Self` for
 chaining. `__gc` calls `handle_free` exactly once.
 

@@ -15,7 +15,7 @@ usable than raw `ffi` calls. `mlua 0.10` (MSRV 1.79) provides safe Lua 5.4 integ
 - Numeric matrices as Lua tables of rows; explicit conversion to/from `SKFfiArray`/ndarray.
 - Error mapping to Lua errors with the original message and status code.
 - Lifecycle: userdata `__gc` frees handles; explicit `close` where supported.
-- Feature-gated build; a luarocks rockspec and a Lua 5.4 test suite.
+- A luarocks rockspec and a Lua 5.4 test suite (no feature gate: the module is the crate's only product).
 - Zero-copy is not promised across Lua tables; documented copy semantics.
 - Explicit non-goals: LuaJIT FFI, async, GPU-specific APIs, Lua 5.1–5.3 compatibility.
 
