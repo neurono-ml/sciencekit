@@ -7,12 +7,14 @@
 //! types as the public device contract its backends implement.
 
 mod capabilities;
+mod context;
 mod fallback;
 mod info;
 mod kernel;
 mod selection;
 
 pub use capabilities::SKDeviceCapabilities;
+pub use context::SKDeviceContext;
 pub use fallback::{SK_HOST_FALLBACK_BACKEND, SKFallbackReason};
 pub use info::SKDeviceInfo;
 pub use kernel::SKGpuKernel;

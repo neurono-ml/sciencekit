@@ -40,7 +40,8 @@ pub use data_view::{
     SK_CATEGORICAL_MISSING_CODE, SKCategoricalView, SKDataView, SKNominalMatrixView,
 };
 pub use device::{
-    SK_HOST_FALLBACK_BACKEND, SKDevicePreference, SKFallbackReason, SKGpuKernel, sk_select_device,
+    SK_HOST_FALLBACK_BACKEND, SKDeviceContext, SKDevicePreference, SKFallbackReason, SKGpuKernel,
+    sk_select_device,
 };
 pub use device::{SKDeviceCapabilities, SKDeviceInfo};
 pub use errors::SKError;
