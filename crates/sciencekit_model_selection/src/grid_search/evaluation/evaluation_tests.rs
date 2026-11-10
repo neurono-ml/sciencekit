@@ -71,3 +71,57 @@ fn grid_evaluation_fold_count_matches_the_splitter() {
     assert_eq!(results.fold_scores().nrows(), 1);
     assert_eq!(results.fold_scores().ncols(), 5);
 }
+
+/// The splitter runs exactly once, no matter how many candidates are scored:
+/// every candidate sees the same fold partition.
+#[test]
+fn grid_evaluation_splits_once_for_every_candidate() {
+    use std::sync::Arc;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    use ndarray::ArrayView1;
+
+    use crate::SKSplitter;
+    use crate::index_split::SKIndexSplit;
+    use sciencekit_common::{SKError, SKFloat};
+
+    struct CountingSplitter {
+        inner: SKKFold,
+        calls: Arc<AtomicUsize>,
+    }
+
+    impl<F: SKFloat> SKSplitter<F> for CountingSplitter {
+        fn split(
+            &self,
+            features: SKDataView<'_, F>,
+            targets: Option<SKTargetView<'_, F>>,
+            groups: Option<ArrayView1<'_, i64>>,
+        ) -> Result<Vec<SKIndexSplit>, SKError> {
+            self.calls.fetch_add(1, Ordering::SeqCst);
+            self.inner.split(features, targets, groups)
+        }
+    }
+
+    let (features, targets) = fixtures();
+    let calls = Arc::new(AtomicUsize::new(0));
+    let splitter = CountingSplitter {
+        inner: SKKFold::build().number_of_splits(5).build().unwrap(),
+        calls: Arc::clone(&calls),
+    };
+    let candidates = vec![
+        SKMockConstantRegressor::new(0.0),
+        SKMockConstantRegressor::new(4.0),
+        SKMockConstantRegressor::new(8.0),
+    ];
+    sk_evaluate_candidates(
+        &candidates,
+        &splitter,
+        SKDataView::Dense(features.view()),
+        SKTargetView::Continuous(targets.view()),
+        None,
+        SKErrorScore::Raise,
+        &SKRegressorScoring::R2,
+    )
+    .unwrap();
+    assert_eq!(calls.load(Ordering::SeqCst), 1);
+}
