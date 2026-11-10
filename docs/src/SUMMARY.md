@@ -53,4 +53,5 @@
   - [Sparse distance matrices](development-explained/ch22-sparse-pairwise-distances.md)
   - [Ranking metrics](development-explained/ch23-ranking-metrics.md)
   - [Type-safe pipelines](development-explained/ch24-type-safe-pipeline.md)
+  - [Spatial indexes: k-d trees and ball trees](development-explained/ch25-spatial-indexes.md)
   - [Maintaining this book](development-explained/maintaining.md)

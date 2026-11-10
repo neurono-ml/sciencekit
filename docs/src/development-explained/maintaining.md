@@ -213,3 +213,5 @@ sparse design. The [ranking metrics chapter](./ch23-ranking-metrics.html) closes
 evaluation story with ROC/AUC, precision-recall, log loss, balanced accuracy and MCC. The
 [type-safe pipeline chapter](./ch24-type-safe-pipeline.html) then composes transformers and
 a final estimator into a chain whose validity is checked by the compiler, not at fit time.
+The [spatial index chapter](./ch25-spatial-indexes.html) adds exact k-d and ball trees: lower
+bounds, deterministic tie ordering, and the dense-only exception applied to geometry.
