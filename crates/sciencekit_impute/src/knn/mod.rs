@@ -26,6 +26,9 @@ mod builder_tests;
 mod distance_block_tests;
 
 #[cfg(test)]
+mod donors_tests;
+
+#[cfg(test)]
 mod fit_tests;
 
 #[cfg(test)]
