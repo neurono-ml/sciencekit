@@ -113,7 +113,15 @@ $\varepsilon$ first — finite by construction, still enormous for a confident m
 **Balanced accuracy** is the mean of per-class recall: it refuses to reward a model that only
 learns the majority class. The **Matthews correlation coefficient** generalises beyond two classes (its binary form is
 the correlation on a $2\times2$ table) and ranges from $-1$ to $1$; it stays honest under
-strong class imbalance where accuracy flatters.
+strong class imbalance where accuracy flatters. In the general form, with $C$ the confusion
+matrix, $t_k = \sum_i C_{ik}$ the true count of class $k$, $p_k = \sum_i C_{ki}$ the predicted
+count, $c = \sum_k C_{kk}$ the correct count and $s = \sum_{ij} C_{ij}$ the total:
+
+$$
+\text{MCC} = \frac{c\,s - \sum_k t_k p_k}
+{\sqrt{\left(s^2 - \sum_k p_k^2\right)\left(s^2 - \sum_k t_k^2\right)}}
+$$
+
 
 ## 4. Each public object, explained
 
