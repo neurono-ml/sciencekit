@@ -108,3 +108,34 @@ fn kd_build_encloses_every_member_inside_the_node_box() {
     }
 }
 
+#[test]
+fn kd_build_is_deterministic_for_duplicated_feature_values() {
+    let data = array![
+        [1.0_f64, 1.0],
+        [1.0, 1.0],
+        [1.0, 0.0],
+        [1.0, 0.0],
+        [1.0, 1.0],
+        [0.0, 1.0],
+        [0.0, 1.0],
+        [1.0, 0.0]
+    ];
+
+    let first = SKKDTreeBuilder::<f64>::new()
+        .leaf_size(2)
+        .build(SKDataView::Dense(data.view()))
+        .unwrap();
+    let second = SKKDTreeBuilder::<f64>::new()
+        .leaf_size(2)
+        .build(SKDataView::Dense(data.view()))
+        .unwrap();
+
+    assert_eq!(first.permutation(), second.permutation());
+    assert_eq!(first.node_count(), second.node_count());
+    for (left, right) in first.nodes().iter().zip(second.nodes()) {
+        assert_eq!(left.start(), right.start());
+        assert_eq!(left.end(), right.end());
+        assert_eq!(left.minimum(), right.minimum());
+        assert_eq!(left.maximum(), right.maximum());
+    }
+}
