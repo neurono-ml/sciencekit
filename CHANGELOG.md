@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-11-10
+
+Clustering metrics and the k-nearest-neighbour estimators.
+
+[0.2.0]: https://github.com/neurono-ml/sciencekit/compare/v0.1.0...v0.2.0
+[0.3.0]: https://github.com/neurono-ml/sciencekit/compare/v0.2.0...v0.3.0
+[0.4.0]: https://github.com/neurono-ml/sciencekit/compare/v0.3.0...v0.4.0
+[0.5.0]: https://github.com/neurono-ml/sciencekit/compare/v0.4.0...v0.5.0
+
 ### Added
 
 - `sciencekit_metrics` clustering evaluation (spec `clustering-metrics`):
