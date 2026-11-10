@@ -87,7 +87,7 @@ conversion error).
 ### Decision 6 — Re-export and tests
 
 `SKClusterLabel` and `SKClustererPredictor` are re-exported from `sciencekit_common`. Tests
-cover: a constant clusterer with both variants, the four-byte size assertion, the
+cover: a `ConstantClusterer` (clusters only) and a `MixedClusterer` stand-in that emits noise, the four-byte size assertion, the
 conversion round-trip and invalid values, the convenient scorer form, and a length
 mismatch.
 

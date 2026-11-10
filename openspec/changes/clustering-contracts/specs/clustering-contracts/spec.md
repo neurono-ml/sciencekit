@@ -67,6 +67,11 @@ to its non-negative index.
 - **WHEN** an external `i64` below `-1` is converted into the typed assignment
 - **THEN** the conversion returns a structured error instead of inventing a cluster
 
+#### Scenario: Out-of-range external value is rejected
+
+- **WHEN** an external `i64` above the maximum representable cluster index is converted
+- **THEN** the conversion returns a structured error and never panics
+
 ### Requirement: Assignment input boundary
 
 The assignment method SHALL accept the same fallible `SKDataView` conversion seam as the
