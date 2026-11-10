@@ -100,7 +100,7 @@
   docs`.
 - [x] 9.3 Record the deferred missing-value routing, pruning, `memmap2` backing and
   persistence/export in `docs/PRD.md`; verify the amended paragraphs render.
-- [ ] 9.4 Independent review by a separate agent validating every scenario in
+- [x] 9.4 Independent review by a separate agent validating every scenario in
   `decision-trees` against the code and tests; address every finding and re-run the
   gates.
 
