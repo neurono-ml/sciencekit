@@ -131,10 +131,10 @@ taxonomy: `EmptyInput`, `InvalidHyperparameter`, `ShapeMismatch`, `NonFiniteValu
 ```
 crates/sciencekit_neighbors/src/
   lib.rs
-  metric.rs
-  searcher/{mod.rs, contract.rs, query_result.rs, *_tests.rs}
-  kd_tree/{mod.rs, builder.rs, node.rs, build.rs, query.rs, *_tests.rs}
-  ball_tree/{mod.rs, builder.rs, node.rs, build.rs, query.rs, *_tests.rs}
+  metric/{mod.rs, catalogue.rs, tolerance.rs, *_tests.rs}
+  searcher/{mod.rs, contract.rs, query_result.rs, candidates.rs, validation.rs, *_tests.rs}
+  kd_tree/{mod.rs, builder.rs, node.rs, build.rs, query/, *_tests.rs}
+  ball_tree/{mod.rs, builder.rs, node.rs, build/, query/, *_tests.rs}
   acceptance_tests/mod.rs
 ```
 
