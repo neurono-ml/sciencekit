@@ -192,6 +192,16 @@ bounds a batch by its *stored* byte size. These are strong signals, not an alloc
 the guarded shape tests prove a stream completes where its dense twin is impractical for the
 test budget.
 
+### Sparse `partial_fit`: the gap the audit closed
+
+Three scalers and OLS used to accept CSR only through `fit_streaming`; their `partial_fit`
+still called `as_dense()` and rejected a sparse batch. The audit made that visible, and the
+fix routes `partial_fit` through the **same** sparse accumulators the streaming driver uses:
+`sparse_batch_moments` (standard scaler), `sparse_batch_extrema` (min/max),
+`extend_sparse_sketches` (robust) and `GramState::accumulate_sparse` (OLS). One batch, two
+entry points, one code path — so an incremental sparse update learns exactly what a sparse
+stream would.
+
 ### The audited surface
 
 | Estimator | `partial_fit` | Numeric streaming | CSR |
@@ -226,6 +236,14 @@ test budget.
   shape whose dense twin is impractical for the test budget, not that no copy was ever made.
 - The scaler tests assert the **sample count**, not just the mean: a mean is invariant under
   duplication, so it cannot prove that the data was read once.
+- `sparse_streaming_partial_fit_matches_dense` (three scalers) and
+  `sparse_streaming_partial_fit_matches_the_dense_fit` (OLS) prove an incremental sparse
+  update reaches the same result as a dense fit.
+- `sparse_reopenable_provider_runs_multiple_epochs` proves a reopenable sparse provider feeds
+  several epochs and the model reports them.
+- `the_source_scan_matches_the_audited_streaming_surface` and
+  `the_source_scan_reaches_every_streaming_crate` run the completeness scan over the sibling
+  crates.
 
 ## 8. Recap
 
