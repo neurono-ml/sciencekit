@@ -34,4 +34,7 @@ mod traits_tests;
 mod validation_tests;
 
 #[cfg(test)]
+mod concurrency_tests;
+
+#[cfg(test)]
 pub(crate) mod mock_model;
