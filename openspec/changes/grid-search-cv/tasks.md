@@ -2,42 +2,42 @@
 
 ## 1. Scoring and configuration
 
-- [ ] 1.1 Implement `SKClassifierScoring` and `SKRegressorScoring` enums dispatching to the
+- [x] 1.1 Implement `SKClassifierScoring` and `SKRegressorScoring` enums dispatching to the
   metrics crate, with hand-computed values and pair/partition tests; verify with
   `cargo test -p sciencekit_model_selection grid_scoring`.
-- [ ] 1.2 Implement the classifier/regressor builders with candidate, splitter, scoring,
+- [x] 1.2 Implement the classifier/regressor builders with candidate, splitter, scoring,
   refit, error-score, groups and execution-mode setters; verify defaults and invalid values
   with `cargo test -p sciencekit_model_selection grid_builder`.
 
 ## 2. Evaluation
 
-- [ ] 2.1 Implement candidate/fold evaluation with gathered train/test blocks, storing
+- [x] 2.1 Implement candidate/fold evaluation with gathered train/test blocks, storing
   results by candidate and fold index; verify a hand-computed three-candidate/five-fold
   matrix; verify with `cargo test -p sciencekit_model_selection grid_evaluation`.
-- [ ] 2.2 Implement mean/std aggregation, best selection and deterministic ties; verify
+- [x] 2.2 Implement mean/std aggregation, best selection and deterministic ties; verify
   with `cargo test -p sciencekit_model_selection grid_selection`.
-- [ ] 2.3 Implement `error_score` Raise/Value behavior and a candidate that fails one fold;
+- [x] 2.3 Implement `error_score` Raise/Value behavior and a candidate that fails one fold;
   verify with `cargo test -p sciencekit_model_selection grid_errors`.
-- [ ] 2.4 Implement refit and the best-model accessors; verify with
+- [x] 2.4 Implement refit and the best-model accessors; verify with
   `cargo test -p sciencekit_model_selection grid_refit`.
 
 ## 3. Prediction and representation
 
-- [ ] 3.1 Implement classifier labels/probabilities and regressor responses delegating to
+- [x] 3.1 Implement classifier labels/probabilities and regressor responses delegating to
   the best model; verify with `cargo test -p sciencekit_model_selection grid_predict`.
-- [ ] 3.2 Add dense/sparse fold-gathering tests with no densification and a sparse grid
+- [x] 3.2 Add dense/sparse fold-gathering tests with no densification and a sparse grid
   search; verify with `cargo test -p sciencekit_model_selection grid_representation`.
-- [ ] 3.3 Add prediction-without-refit and concurrency tests; verify with
+- [x] 3.3 Add prediction-without-refit and concurrency tests; verify with
   `cargo test -p sciencekit_model_selection grid_concurrency`.
 
 ## 4. Acceptance and review
 
-- [ ] 4.1 Add `acceptance_tests/` covering tiny and large data, classifier/regressor,
+- [x] 4.1 Add `acceptance_tests/` covering tiny and large data, classifier/regressor,
   every scoring policy, multiple splitters, refit on/off, error scores, determinism and
   metric production; verify with `cargo test -p sciencekit_model_selection`.
-- [ ] 4.2 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
+- [x] 4.2 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
   warnings` and `cargo test --workspace`; fix every failure before pushing.
-- [ ] 4.3 Update `CHANGELOG.md` and the companion mdBook chapter (including a
+- [x] 4.3 Update `CHANGELOG.md` and the companion mdBook chapter (including a
   `Development Explained` chapter on grid evaluation, aggregation and refit); verify with
   `mdbook build docs`.
 - [ ] 4.4 Independent review by a separate agent validating every scenario in
