@@ -5,6 +5,7 @@ use super::super::{SKLabelScorer, SKSupervisedScorer, SKUnsupervisedScorer};
 use crate::SKError;
 use crate::fit_traits::{
     SKClassifierPredictor, SKClusterLabel, SKClustererPredictor, SKRegressorPredictor,
+    sk_validate_cluster_assignments,
 };
 use crate::{SKDataView, SKTargetView};
 
@@ -188,6 +189,10 @@ impl<F: crate::SKFloat> SKClustererPredictor<F> for ConstantClusterer {
 }
 
 /// An unsupervised "majority agreement" scorer over typed assignments.
+///
+/// Noise policy: **exclude** noise rows from both the numerator and the
+/// denominator; when every row is noise the score is `0.0`. Noise is never
+/// counted as a cluster.
 pub struct MajorityAgreement;
 impl<F: crate::SKFloat, M: SKClustererPredictor<F, Error = SKError>> SKUnsupervisedScorer<F, M>
     for MajorityAgreement
@@ -195,14 +200,22 @@ impl<F: crate::SKFloat, M: SKClustererPredictor<F, Error = SKError>> SKUnsupervi
     type Error = SKError;
     fn score_from_assignments(
         &self,
-        _features: SKDataView<'_, F>,
+        features: SKDataView<'_, F>,
         assignments: ArrayView1<'_, SKClusterLabel>,
     ) -> Result<f64, Self::Error> {
-        let total = assignments.len() as f64;
+        let number_of_rows = match features {
+            SKDataView::Dense(dense) => dense.nrows(),
+            SKDataView::Sparse(sparse) => sparse.rows(),
+        };
+        sk_validate_cluster_assignments(number_of_rows, assignments)?;
+        let label_count = assignments.iter().filter(|label| !label.is_noise()).count() as f64;
+        if label_count == 0.0 {
+            return Ok(0.0);
+        }
         let ones = assignments
             .iter()
             .filter(|label| label.cluster_index() == Some(1))
             .count() as f64;
-        Ok(ones / total)
+        Ok(ones / label_count)
     }
 }

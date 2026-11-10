@@ -558,6 +558,7 @@ Order faithful to the scikit-learn mapping (from the handoff), respecting depend
 
 ### Phase 5 — Unsupervised
 12. `sciencekit_cluster`: SKKMeans, SKDBSCAN, SKMiniBatchKMeans (streaming).
+    - Clusterers expose typed assignments (`SKClusterLabel`: a cluster identifier or explicit noise) through `SKClustererPredictor`; the unsupervised scorer evaluates those assignments directly and documents whether it excludes or rejects noise.
 13. `sciencekit_decomposition`: SKPCA, SKTruncatedSVD.
 14. `sciencekit_outlier`: anomaly detection.
 

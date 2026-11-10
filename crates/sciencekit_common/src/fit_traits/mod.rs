@@ -8,7 +8,9 @@
 //! model scalar (`SKRegressorPredictor`), classifiers predict scalar-independent
 //! labels plus scalar-preserving probabilities (`SKClassifierPredictor`). The
 //! transformer declares its output as an associated type for static pipeline
-//! chaining.
+//! chaining. Clustering exposes typed assignments through
+//! [`SKClustererPredictor`], where a label is a cluster identifier or explicit
+//! noise — never a numeric sentinel.
 //!
 //! This is a **pure dispatcher** module: `mod.rs` only declares and re-exports
 //! submodules; every implementation lives in its own file.

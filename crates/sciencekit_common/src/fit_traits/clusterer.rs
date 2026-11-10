@@ -104,10 +104,15 @@ impl SKClusterLabel {
                 "cluster assignment {value} is below the -1 noise convention"
             )));
         }
-        let index = u32::try_from(value).map_err(|_| {
-            SKError::Conversion(format!(
+        if value > i64::from(SKClusterIdentifier::MAXIMUM_INDEX) {
+            return Err(SKError::Conversion(format!(
                 "cluster assignment {value} exceeds the maximum index {}",
                 SKClusterIdentifier::MAXIMUM_INDEX
+            )));
+        }
+        let index = u32::try_from(value).map_err(|_| {
+            SKError::Conversion(format!(
+                "cluster assignment {value} does not fit a 32-bit cluster index"
             ))
         })?;
         Ok(Self::cluster(index))

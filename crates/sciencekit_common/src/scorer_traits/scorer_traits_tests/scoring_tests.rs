@@ -200,6 +200,54 @@ fn unsupervised_pure_form_over_assignments() {
     assert!((score - 0.75).abs() < 1e-9);
 }
 
+/// Unsupervised scorer: noise rows are excluded from the score.
+#[test]
+fn unsupervised_pure_form_excludes_noise() {
+    let scorer = majority::<f64, ConstantClusterer>();
+    let features = Array2::from_shape_vec((4, 2), vec![0.0_f64; 8]).unwrap();
+    let assignments = array![
+        SKClusterLabel::cluster(1),
+        SKClusterLabel::NOISE,
+        SKClusterLabel::cluster(0),
+        SKClusterLabel::cluster(1),
+    ];
+    let score =
+        <MajorityAgreement as SKUnsupervisedScorer<f64, ConstantClusterer>>::score_from_assignments(
+            &scorer, SKDataView::try_from(&features).unwrap(), assignments.view(),
+        )
+        .unwrap();
+    // Two cluster-1 rows out of three non-noise rows.
+    assert!((score - 2.0 / 3.0).abs() < 1e-12);
+}
+
+/// Unsupervised scorer: an all-noise batch scores zero rather than dividing by zero.
+#[test]
+fn unsupervised_pure_form_all_noise_scores_zero() {
+    let scorer = majority::<f64, ConstantClusterer>();
+    let features = Array2::from_shape_vec((2, 2), vec![0.0_f64; 4]).unwrap();
+    let assignments = array![SKClusterLabel::NOISE, SKClusterLabel::NOISE];
+    let score =
+        <MajorityAgreement as SKUnsupervisedScorer<f64, ConstantClusterer>>::score_from_assignments(
+            &scorer, SKDataView::try_from(&features).unwrap(), assignments.view(),
+        )
+        .unwrap();
+    assert_eq!(score, 0.0);
+}
+
+/// Unsupervised scorer: a mismatched assignment length is a structured error.
+#[test]
+fn unsupervised_pure_form_rejects_a_length_mismatch() {
+    let scorer = majority::<f64, ConstantClusterer>();
+    let features = Array2::from_shape_vec((4, 2), vec![0.0_f64; 8]).unwrap();
+    let assignments = array![SKClusterLabel::cluster(1), SKClusterLabel::cluster(0)];
+    let error =
+        <MajorityAgreement as SKUnsupervisedScorer<f64, ConstantClusterer>>::score_from_assignments(
+            &scorer, SKDataView::try_from(&features).unwrap(), assignments.view(),
+        )
+        .unwrap_err();
+    assert!(matches!(error, SKError::ShapeMismatch { .. }));
+}
+
 /// Unsupervised scorer: convenient form obtains model outputs then delegates.
 #[test]
 fn unsupervised_convenient_form_delegates() {

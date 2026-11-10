@@ -57,6 +57,19 @@ fn an_external_value_below_minus_one_is_rejected() {
 }
 
 #[test]
+fn an_external_value_above_the_maximum_index_is_rejected_without_panicking() {
+    let maximum = i64::from(SKClusterIdentifier::MAXIMUM_INDEX);
+    assert_eq!(
+        SKClusterLabel::from_i64(maximum).unwrap(),
+        SKClusterLabel::cluster(SKClusterIdentifier::MAXIMUM_INDEX)
+    );
+    for value in [maximum + 1, i64::from(u32::MAX), i64::MAX] {
+        let error = SKClusterLabel::from_i64(value).unwrap_err();
+        assert!(matches!(error, SKError::Conversion(_)));
+    }
+}
+
+#[test]
 fn fast_and_sparse_views_are_the_same_boundary() {
     // A constant clusterer returning one cluster per row: dense and sparse
     // inputs go through the same method and produce one assignment per row.
@@ -71,11 +84,24 @@ fn fast_and_sparse_views_are_the_same_boundary() {
     let sparse_labels = model.predict_clusters(sparse.view()).unwrap();
     assert_eq!(dense_labels.len(), 3);
     assert_eq!(sparse_labels.len(), 3);
-    assert!(
-        dense_labels
-            .iter()
-            .all(|label| label.cluster_index() == Some(0))
-    );
+    for labels in [&dense_labels, &sparse_labels] {
+        assert!(labels.iter().all(|label| !label.is_noise()));
+        assert!(labels.iter().all(|label| label.cluster_index() == Some(0)));
+    }
+}
+
+#[test]
+fn a_density_clusterer_emits_the_explicit_noise_variant() {
+    let model = MixedClusterer;
+    let dense = Array1::from_vec(vec![0.0_f64; 6])
+        .to_shape((3, 2))
+        .unwrap()
+        .to_owned();
+    let labels = model.predict_clusters(&dense).unwrap();
+    assert!(!labels[0].is_noise());
+    assert!(labels[1].is_noise());
+    assert_eq!(labels[1].cluster_index(), None);
+    assert_eq!(labels[2].cluster_index(), Some(4));
 }
 
 #[test]
@@ -149,5 +175,23 @@ impl<F: SKFloat> SKClustererPredictor<F> for ConstantClusterer {
             number_of_rows,
             SKClusterLabel::cluster(0),
         ))
+    }
+}
+
+/// A stand-in density clusterer: cluster 0, noise, cluster 4.
+struct MixedClusterer;
+
+impl<F: SKFloat> SKClustererPredictor<F> for MixedClusterer {
+    type Error = SKError;
+
+    fn predict_clusters<'a, X>(&self, _features: X) -> Result<Array1<SKClusterLabel>, Self::Error>
+    where
+        X: TryInto<SKDataView<'a, F>, Error = SKError>,
+    {
+        Ok(array![
+            SKClusterLabel::cluster(0),
+            SKClusterLabel::NOISE,
+            SKClusterLabel::cluster(4),
+        ])
     }
 }
