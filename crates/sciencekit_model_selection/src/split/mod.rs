@@ -3,6 +3,7 @@
 //! This is a **pure dispatcher** module: `mod.rs` only declares and re-exports
 //! submodules; every implementation lives in its own file.
 
+pub mod group;
 pub mod kfold;
 mod splitter;
 pub mod stratified;
