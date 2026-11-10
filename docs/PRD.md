@@ -545,6 +545,7 @@ Order faithful to the scikit-learn mapping (from the handoff), respecting depend
 ### Phase 3 — Neighborhood and SVM
 8. `sciencekit_metrics` (pairwise already in math) + `sciencekit_neighbors`: SKKNeighborsClassifier/SKKNeighborsRegressor, SKKDTree, SKBallTree.
    - Representation parity (§4.5.1): the neighbors estimators accept dense, sparse and mixed inputs. The KD-tree and Ball-tree indexes invoke the **dense-only exception** (§4.5.2) because tree geometry is dense by construction; they reject sparse views with `UnsupportedRepresentation`, while the estimators keep parity through the brute-force searcher over the stored training features.
+   - Incremental (`partial_fit`) and out-of-core (`fit_streaming`) index maintenance are **out of scope here**: the fitted models own an immutable training design, and a later out-of-core change can rebuild the index from it. Radius-neighbour estimators and metric learning are also future changes.
    - `memmap2`-backed tree indexes are **out of scope here** and delivered by Phase 7 (interop), like all persistence and export.
 9. `sciencekit_svm`: SKSVC, SKSVR, SKLinearSVC.
    - `SKSVC`/`SKSVR` keep representation parity through the sparse-aware kernel and `SKLinearSVC` through the sparse linear path; neither needs the dense-only exception.

@@ -21,13 +21,27 @@
 #![warn(missing_docs)]
 
 pub mod ball_tree;
+pub mod classifier;
 pub mod kd_tree;
 pub mod metric;
+pub mod neighbors;
+pub mod regressor;
 pub mod searcher;
 
 pub use ball_tree::{SKBallTree, SKBallTreeBuilder};
+pub use classifier::{
+    SKKNeighborsClassifier, SKKNeighborsClassifierBuilder, SKKNeighborsClassifierModel,
+};
 pub use kd_tree::{SKKDTree, SKKDTreeBuilder};
 pub use metric::{SKNeighborMetric, SKRequestedNeighborMetric};
+pub use neighbors::{
+    SKBruteForceSearcher, SKFeatureRepresentation, SKNeighborsAlgorithm, SKNeighborsMetric,
+    SKNeighborsWeights, SKSearchStrategy, SKTrainingData, sk_resolve_search_strategy,
+    sk_weighted_average,
+};
+pub use regressor::{
+    SKKNeighborsRegressor, SKKNeighborsRegressorBuilder, SKKNeighborsRegressorModel,
+};
 pub use searcher::{SKNearestNeighborsSearcher, SKNeighborQuery, SKRadiusNeighbors};
 
 #[cfg(test)]
