@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `sciencekit_impute` gains the nearest-neighbor imputer (spec
+  `nearest-neighbor-imputation`): `SKKNNImputer<F>`, builder-only with
+  `missing_values` (default `NaN`), `nearest_neighbors_count` (default 5),
+  `weights` (`Uniform` default, `Distance`), `add_indicator` (default false),
+  `keep_empty_features` (default false), `backend` (default `Faer`) and
+  `execution_mode` (default `Automatic`). Fit retains the training design, its
+  missingness mask, the rows observing every column, the observed column means
+  and the columns with at least one observed value; all-missing columns are
+  dropped by default and kept at zero when `keep_empty_features` is enabled.
+  Transform computes the exact NaN-aware Euclidean distance over the
+  co-observed features in fixed-size blocks, selects the nearest donors per
+  column with partial selection, and fills each cell with the uniform or
+  inverse-distance weighted average of the donors — zero-distance duplicates
+  take the whole weight — falling back to the observed column mean when no
+  donor distance is finite. `add_indicator` stacks the fitted missingness mask
+  after the imputed features and tolerates missingness unseen at fit. A scalar
+  marker is normalized to `NaN` for the distance kernel, so `-999` and similar
+  sentinels behave like `NaN` while a `NaN` under another marker is rejected as
+  a non-finite value. Sparse input is the documented dense-only exception: a
+  CSR implicit zero is an observed zero, so fit and transform return
+  `UnsupportedRepresentation` and point at `SKSimpleImputer`. Empty input, a
+  zero or excessive neighbour count, a feature-count mismatch and non-finite
+  values report structured errors; the fitted model is `Send + Sync`, the
+  transform is deterministic under concurrency and parallel rows equal the
+  sequential result.
+
 ## [0.5.0] — 2026-11-10
 
 Clustering metrics and the k-nearest-neighbour estimators.
