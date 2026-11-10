@@ -115,6 +115,14 @@ pub unsafe extern "C-unwind" fn luaopen_sciencekit(
 mod error_tests;
 
 #[cfg(test)]
+#[path = "concurrency_tests.rs"]
+mod concurrency_tests;
+
+#[cfg(test)]
+#[path = "large_tests.rs"]
+mod large_tests;
+
+#[cfg(test)]
 #[path = "lib_tests.rs"]
 mod lib_tests;
 
