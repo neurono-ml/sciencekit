@@ -85,6 +85,18 @@ fn a_sparse_classifier_pipeline_matches_the_dense_one() {
 }
 
 #[test]
+fn nominal_targets_flow_through_the_final_estimator() {
+    let labels = ["no", "no", "no", "no", "yes", "yes", "yes", "yes"];
+    let fitted = SKPipeline::start::<f64>()
+        .then(SKStandardScaler::build().build().unwrap())
+        .finalize_classifier(SKLogisticRegression::build().build().unwrap())
+        .unwrap()
+        .fit(&tiny_features(), &labels[..])
+        .unwrap();
+    assert_eq!(fitted.predict_labels(&tiny_features()).unwrap().len(), 8);
+}
+
+#[test]
 fn classifier_probabilities_are_a_distribution() {
     let fitted = classifier_pipeline();
     let probabilities = fitted.predict_probabilities(&tiny_features()).unwrap();
