@@ -22,6 +22,7 @@ pub mod execution;
 pub mod fit_traits;
 pub mod label_table;
 pub mod observability;
+pub mod random;
 pub mod scorer_traits;
 pub mod sk_float;
 pub mod target_view;
