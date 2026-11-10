@@ -44,7 +44,9 @@ pub use fit_traits::{
     SKFeatureTransformer, SKRegressorPredictor, SKSupervisedFit, SKUnsupervisedFit,
     sk_validate_cluster_assignments,
 };
-pub use interop::{SKTensor, SKTensorDType, SKTensorValues};
+pub use interop::{
+    SKModelMetadata, SKModelState, SKParameterValue, SKTensor, SKTensorDType, SKTensorValues,
+};
 pub use label_table::{SKLabelTable, sk_canonicalize_labels};
 pub use observability::{
     SKBackendKind, SKOperationAttributes, SKOperationKind, SKOperationObservation, sk_run_operation,
