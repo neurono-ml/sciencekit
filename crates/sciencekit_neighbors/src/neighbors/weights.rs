@@ -42,7 +42,7 @@ impl SKNeighborsWeights {
 }
 
 /// The weighted average of `values`, with the weights summing to the divisor.
-pub(crate) fn sk_weighted_average<F: SKFloat>(weights: &[F], values: &[F]) -> F {
+pub fn sk_weighted_average<F: SKFloat>(weights: &[F], values: &[F]) -> F {
     let mut weighted_sum = F::zero();
     let mut total_weight = F::zero();
     for (weight, value) in weights.iter().zip(values) {

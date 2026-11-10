@@ -30,8 +30,9 @@ pub use ball_tree::{SKBallTree, SKBallTreeBuilder};
 pub use kd_tree::{SKKDTree, SKKDTreeBuilder};
 pub use metric::{SKNeighborMetric, SKRequestedNeighborMetric};
 pub use neighbors::{
-    SKFeatureRepresentation, SKNeighborsAlgorithm, SKNeighborsMetric, SKNeighborsWeights,
-    SKSearchStrategy, sk_resolve_search_strategy,
+    SKBruteForceSearcher, SKFeatureRepresentation, SKNeighborsAlgorithm, SKNeighborsMetric,
+    SKNeighborsWeights, SKSearchStrategy, SKTrainingData, sk_resolve_search_strategy,
+    sk_weighted_average,
 };
 pub use searcher::{SKNearestNeighborsSearcher, SKNeighborQuery, SKRadiusNeighbors};
 

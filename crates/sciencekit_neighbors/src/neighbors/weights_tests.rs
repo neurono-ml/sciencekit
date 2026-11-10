@@ -1,8 +1,8 @@
 //! Companion tests for the neighbour weighting schemes
 //! (spec `nearest-neighbor-estimators`).
 
-use super::weights::sk_weighted_average;
 use super::SKNeighborsWeights;
+use super::weights::sk_weighted_average;
 
 fn assert_close(left: f64, right: f64) {
     assert!(
@@ -55,8 +55,5 @@ fn weights_zero_distance_makes_the_average_the_duplicate_mean() {
 #[test]
 fn weights_uniform_average_is_the_arithmetic_mean() {
     let weights = SKNeighborsWeights::Uniform.weights(&[1.0_f64, 2.0, 9.0]);
-    assert_close(
-        sk_weighted_average(&weights, &[2.0_f64, 4.0, 6.0]),
-        4.0,
-    );
+    assert_close(sk_weighted_average(&weights, &[2.0_f64, 4.0, 6.0]), 4.0);
 }

@@ -5,16 +5,22 @@
 //! submodules; every implementation lives in its own file.
 
 mod algorithm;
+mod brute_force;
 mod metric;
+mod training_data;
+mod validation;
 mod weights;
 
 pub use algorithm::{
     SK_AUTO_BALL_TREE_MINIMUM_FEATURES, SK_AUTO_TREE_MINIMUM_TRAINING_ROWS,
-    SKFeatureRepresentation, SKNeighborsAlgorithm, SKSearchStrategy,
-    sk_resolve_search_strategy,
+    SKFeatureRepresentation, SKNeighborsAlgorithm, SKSearchStrategy, sk_resolve_search_strategy,
 };
+pub use brute_force::SKBruteForceSearcher;
 pub use metric::SKNeighborsMetric;
-pub use weights::SKNeighborsWeights;
+pub use training_data::SKTrainingData;
+pub use weights::{SKNeighborsWeights, sk_weighted_average};
+
+pub(crate) use brute_force::sk_brute_force_k_nearest;
 
 #[cfg(test)]
 mod algorithm_tests;
