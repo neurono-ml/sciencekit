@@ -59,9 +59,12 @@ one change is `in_progress` at a time (merge-order hazard). `∥` means parallel
 | pipeline | type-safe-pipeline → {feature-union; pipeline-dag; streaming-pipeline} |
 | interop | interop-foundation → arrow-interop → {polars-interop; datafusion-interop; memory-mapped-interop} → {safetensors-internal-format; json-debug-format} → model-export-retrofit → onnx-export → onnx-import → native-model-import → lora-adapters |
 | gpu | gpu-compute-contracts → {gpu-opencl-backend; gpu-cuda-backend; gpu-rocm-backend} |
-| bindings | ffi-core → {lua-bindings; go-bindings} → {julia-dataset-interop; jvm-dataset-interop} |
+| bindings | ffi-core → {lua-bindings; go-bindings} |
+| python | python-bindings-complete → python-dataset-interop |
+| julia | julia-dataset-interop |
+| jvm | jvm-dataset-interop |
 | streaming | sparse-streaming-coverage |
-| product | umbrella-crate → python-bindings-complete → python-dataset-interop; workflows-cli |
+| product | umbrella-crate → workflows-cli |
 
 ## Joins and splits
 

@@ -96,17 +96,23 @@ lanes:
   - ffi-core
   - lua-bindings
   - go-bindings
-  - julia-dataset-interop
-  - jvm-dataset-interop
 - id: streaming
   merge_order:
   - sparse-streaming-coverage
 - id: product
   merge_order:
   - umbrella-crate
+  - workflows-cli
+- id: python
+  merge_order:
   - python-bindings-complete
   - python-dataset-interop
-  - workflows-cli
+- id: julia
+  merge_order:
+  - julia-dataset-interop
+- id: jvm
+  merge_order:
+  - jvm-dataset-interop
 changes:
 - id: representation-parity
   group: foundation-docs
@@ -699,7 +705,7 @@ changes:
     - cargo test -p sciencekit
 - id: python-bindings-complete
   group: wave7
-  lane: product
+  lane: python
   join: all
   depends_on:
   - knn-classifier-regressor
@@ -812,7 +818,7 @@ changes:
     - cargo test -p sciencekit_interop --features memmap
 - id: python-dataset-interop
   group: cross-cutting
-  lane: product
+  lane: python
   depends_on:
   - python-bindings-complete
   - interop-foundation
@@ -824,7 +830,7 @@ changes:
     - pytest python/tests/datasets
 - id: julia-dataset-interop
   group: cross-cutting
-  lane: bindings
+  lane: julia
   depends_on:
   - interop-foundation
   - arrow-interop
@@ -835,7 +841,7 @@ changes:
     - cargo test -p sciencekit_julia_abi
 - id: jvm-dataset-interop
   group: cross-cutting
-  lane: bindings
+  lane: jvm
   depends_on:
   - interop-foundation
   - arrow-interop
