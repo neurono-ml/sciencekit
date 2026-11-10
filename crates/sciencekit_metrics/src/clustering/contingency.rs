@@ -76,3 +76,30 @@ pub(super) fn sk_pair_count(count: usize) -> f64 {
     let count = count as f64;
     count * (count - 1.0) / 2.0
 }
+
+/// Shannon entropy in nats of a count vector over `total` observations.
+pub(super) fn sk_entropy(counts: &[usize], total: f64) -> f64 {
+    counts
+        .iter()
+        .filter(|count| **count > 0)
+        .map(|count| {
+            let probability = *count as f64 / total;
+            -probability * probability.ln()
+        })
+        .sum()
+}
+
+/// Mutual information in nats between the two labelings of a table.
+pub(super) fn sk_mutual_information(table: &SKContingencyTable) -> f64 {
+    let total = table.number_of_rows as f64;
+    table
+        .cells
+        .iter()
+        .map(|(true_index, predicted_index, count)| {
+            let count = *count as f64;
+            let expected = table.true_counts[*true_index] as f64
+                * table.predicted_counts[*predicted_index] as f64;
+            (count / total) * (count * total / expected).ln()
+        })
+        .sum()
+}
