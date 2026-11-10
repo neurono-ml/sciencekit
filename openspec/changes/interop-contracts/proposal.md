@@ -33,8 +33,8 @@ None.
 
 ## Impact
 
-- **Code:** `sciencekit_common` gains an `interop` module and re-exports; a new
-  `crates/sciencekit_interop` skeleton is created for the format adapters.
+- **Code:** `sciencekit_common` gains an `interop` module and re-exports; the
+  `sciencekit_interop` crate itself is created by `interop-foundation`.
 - **APIs:** additive. Every fitted model will implement `SKExportable` in
   `model-export-retrofit`.
 - **Dependencies:** none new.
