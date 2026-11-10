@@ -12,7 +12,7 @@ use super::inputs::sk_validate_clustering_inputs;
 /// For every cluster, the worst ratio `(scatter_i + scatter_j) / distance(i, j)`
 /// over the other clusters is averaged. Scatter is the mean Euclidean distance
 /// of a cluster's rows to its centroid. Coincident centroids yield an infinite
-/// ratio, reported as [`SKFloat::infinity`].
+/// ratio, reported as positive infinity.
 ///
 /// **Noise policy:** noise rows are excluded; fewer than two non-noise clusters
 /// are rejected with [`SKError::InvalidHyperparameter`].

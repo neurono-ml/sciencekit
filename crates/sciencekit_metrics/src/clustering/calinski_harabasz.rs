@@ -12,7 +12,7 @@ use super::inputs::sk_validate_clustering_inputs;
 /// The between-cluster dispersion (weighted centroid distance to the global
 /// mean) divided by the within-cluster dispersion, each scaled by its degrees
 /// of freedom. A perfectly compact clustering has zero within dispersion and
-/// yields [`SKFloat::infinity`].
+/// yields positive infinity.
 ///
 /// **Noise policy:** noise rows are excluded from every sum; fewer than two
 /// clusters, or no more rows than clusters, are rejected with
