@@ -10,6 +10,16 @@
 //! submodules; every implementation lives in its own file.
 
 mod row_merge;
+mod row_statistics;
+mod squared_euclidean;
+
+pub use squared_euclidean::{
+    sk_sparse_euclidean_distance_matrix, sk_sparse_squared_euclidean_distance_matrix,
+};
 
 #[cfg(test)]
+mod fixtures;
+#[cfg(test)]
 mod row_merge_tests;
+#[cfg(test)]
+mod squared_euclidean_tests;

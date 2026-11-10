@@ -67,8 +67,7 @@ pub(crate) struct SKRowMerge<'a, F> {
     right_position: usize,
 }
 
-impl<F: SKFloat> Iterator for SKRowMerge<'_, F> {
-    type Item = SKMergedCoordinate<F>;
+impl<F: SKFloat> Iterator for SKRowMerge<'_, F> {    type Item = SKMergedCoordinate<F>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let left = self
@@ -120,4 +119,27 @@ impl<F: SKFloat> Iterator for SKRowMerge<'_, F> {
             }
         }
     }
+}
+
+/// Dot product of two sorted sparse rows over their shared coordinates.
+///
+/// One-sided coordinates multiply against the implicit zero, so only the merge's
+/// shared entries contribute.
+pub(crate) fn sk_sparse_dot_product<F: SKFloat>(
+    left_indices: &[usize],
+    left_values: &[F],
+    right_indices: &[usize],
+    right_values: &[F],
+) -> F {
+    sk_merge_sorted_rows(left_indices, left_values, right_indices, right_values).fold(
+        F::zero(),
+        |accumulator, coordinate| match coordinate {
+            SKMergedCoordinate::Shared {
+                left_value,
+                right_value,
+                ..
+            } => accumulator + left_value * right_value,
+            _ => accumulator,
+        },
+    )
 }
