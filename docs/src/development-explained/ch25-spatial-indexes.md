@@ -109,9 +109,11 @@ stores its centre and the radius that covers all members. The **ball gap** is
 $g = \max(0, \lVert q - c \rVert - r)$: zero when the query is inside the ball, otherwise
 how far outside it lies. The bound is then converted to the metric's own unit — $g$ for
 Euclidean and Manhattan, $g^2$ for squared Euclidean, and $g/\sqrt{f}$ for Chebyshev, where
-$f$ is the feature count. Because a floating-point bound can round a few ulps above the true
-minimum, pruning only happens when the bound exceeds the limit by a small relative tolerance;
-exploring one extra node is cheap, while pruning a node exactly at the radius would be wrong.
+$f$ is the feature count. Because the subtraction mixes two large magnitudes, the implementation subtracts an
+error term proportional to $\varepsilon\,(\lVert q-c\rVert + r)$ from the gap before converting it.
+Pruning also requires the bound to exceed the limit by a small relative tolerance, so a bound
+that rounds onto the radius never discards a true neighbour: exploring one extra node is cheap,
+while pruning a node exactly at the radius would be wrong.
 
 ### Ties, and why they need a rule
 
