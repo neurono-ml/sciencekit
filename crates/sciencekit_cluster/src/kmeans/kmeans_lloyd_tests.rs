@@ -73,23 +73,18 @@ fn kmeans_lloyd_exhausted_budget_returns_an_unconverged_model() {
 fn kmeans_lloyd_empty_cluster_repair_moves_the_farthest_point() {
     let data = array![[0.0_f64], [0.1], [5.0], [10.0]];
     let labels = Array1::from(vec![0_usize, 0, 1, 1]);
-    let distances = array![
-        [0.0_f64, 25.0, 100.0],
-        [0.01, 24.0, 99.0],
-        [25.0, 0.0, 25.0],
-        [100.0, 25.0, 0.0]
-    ];
+    let assigned_distances = Array1::from(vec![0.0_f64, 0.01, 0.0, 25.0]);
 
     let centers = sk_update_centers(
         SKDataView::Dense(data.view()),
         &labels,
-        &distances,
+        &assigned_distances,
         3,
     );
     let repeated = sk_update_centers(
         SKDataView::Dense(data.view()),
         &labels,
-        &distances,
+        &assigned_distances,
         3,
     );
 
@@ -103,17 +98,12 @@ fn kmeans_lloyd_empty_cluster_repair_moves_the_farthest_point() {
 fn kmeans_lloyd_empty_cluster_repair_breaks_ties_by_row_index() {
     let data = array![[0.0_f64], [1.0], [2.0], [3.0]];
     let labels = Array1::from(vec![0_usize, 0, 1, 1]);
-    let distances = array![
-        [0.0_f64, 16.0, 25.0],
-        [0.0, 16.0, 25.0],
-        [16.0, 4.0, 25.0],
-        [16.0, 4.0, 25.0]
-    ];
+    let assigned_distances = Array1::from(vec![0.0_f64, 0.0, 4.0, 4.0]);
 
     let centers = sk_update_centers(
         SKDataView::Dense(data.view()),
         &labels,
-        &distances,
+        &assigned_distances,
         3,
     );
     assert!((centers[[2, 0]] - 2.0).abs() < 1e-12);

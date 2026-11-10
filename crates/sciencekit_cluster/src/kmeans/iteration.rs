@@ -29,11 +29,11 @@ pub(crate) fn sk_nearest_labels<F: SKFloat>(distances: &Array2<F>) -> Array1<usi
 pub(crate) fn sk_update_centers<F: SKFloat>(
     features: SKDataView<'_, F>,
     labels: &Array1<usize>,
-    distances: &Array2<F>,
+    assigned_distances: &Array1<F>,
     number_of_clusters: usize,
 ) -> Array2<F> {
     let number_of_features = sk_view_dimensions(&features).1;
-    let (effective_labels, counts) = repaired_labels(labels, distances, number_of_clusters);
+    let (effective_labels, counts) = repaired_labels(labels, assigned_distances, number_of_clusters);
     let mut sums = Array2::<F>::zeros((number_of_clusters, number_of_features));
     match features {
         SKDataView::Dense(dense) => {
@@ -72,7 +72,7 @@ pub(crate) fn sk_update_centers<F: SKFloat>(
 /// into each empty center, ascending by cluster index.
 fn repaired_labels<F: SKFloat>(
     labels: &Array1<usize>,
-    distances: &Array2<F>,
+    assigned_distances: &Array1<F>,
     number_of_clusters: usize,
 ) -> (Array1<usize>, Vec<usize>) {
     let mut effective = labels.clone();
@@ -89,7 +89,7 @@ fn repaired_labels<F: SKFloat>(
             .filter(|row| !used_rows.contains(row))
             .filter(|row| counts[effective[*row]] > 1)
             .fold(None, |best: Option<(usize, F)>, row| {
-                let distance = distances[[row, labels[row]]];
+                let distance = assigned_distances[row];
                 match best {
                     Some((_, best_distance)) if distance <= best_distance => best,
                     _ => Some((row, distance)),
@@ -100,7 +100,7 @@ fn repaired_labels<F: SKFloat>(
                     .filter(|row| !used_rows.contains(row))
                     .filter(|row| counts[effective[*row]] > 0)
                     .fold(None, |best: Option<(usize, F)>, row| {
-                        let distance = distances[[row, labels[row]]];
+                        let distance = assigned_distances[row];
                         match best {
                             Some((_, best_distance)) if distance <= best_distance => best,
                             _ => Some((row, distance)),

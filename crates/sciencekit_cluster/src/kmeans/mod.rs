@@ -6,6 +6,7 @@
 
 mod config;
 mod distance;
+mod elkan;
 mod init;
 mod iteration;
 mod lloyd;
@@ -24,6 +25,8 @@ pub(crate) use init::{
 
 #[cfg(test)]
 mod kmeans_distance_tests;
+#[cfg(test)]
+mod kmeans_elkan_tests;
 #[cfg(test)]
 mod kmeans_init_tests;
 #[cfg(test)]
