@@ -12,6 +12,7 @@
 mod data_type_mapping;
 mod import;
 mod schema_mapping;
+mod source;
 mod zero_copy;
 
 pub use data_type_mapping::sk_logical_type_from_arrow_data_type;
@@ -25,6 +26,7 @@ pub use schema_mapping::{
     sk_arrow_data_type_from_logical_type, sk_arrow_schema_from_tabular_schema,
     sk_tabular_schema_from_arrow_schema,
 };
+pub use source::{SKArrowOneShotTabularSource, SKArrowRecordBatchSource};
 pub use zero_copy::{
     SKArrowBorrowedColumn, SKArrowConversionReport, sk_arrow_borrowed_column,
     sk_arrow_conversion_report,
