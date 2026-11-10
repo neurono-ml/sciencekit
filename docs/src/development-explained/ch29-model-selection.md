@@ -165,8 +165,8 @@ position before the split is produced.
 | File | Responsibility |
 |---|---|
 | `index_split.rs`, `split/splitter.rs` | `SKIndexSplit` and the `SKSplitter` contract |
-| `split/gather/`, `target_partition.rs` | dense/CSR feature gathering and target gathering |
-| `split/shuffle.rs` | seeded Fisher–Yates |
+| `gather/` | dense/CSR feature gathering and target gathering (`target_partition`) |
+| `shuffle.rs` | seeded Fisher–Yates |
 | `split/kfold/`, `split/stratified/`, `split/group/` | the three K-fold flavours and their builders |
 | `train_test_split/` | fractions, counts, stratification |
 | `cross_validation/` | fit-and-score per fold (fresh model each fold) |
