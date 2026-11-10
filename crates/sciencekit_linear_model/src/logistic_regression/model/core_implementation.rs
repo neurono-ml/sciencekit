@@ -112,6 +112,11 @@ impl<F: SKFloat> SKLogisticRegressionModel<F> {
         self.config.include_intercept
     }
 
+    /// The seed the fit derived every stochastic choice from.
+    pub fn random_seed(&self) -> u64 {
+        self.config.random_seed
+    }
+
     /// The number of features the model was fitted on.
     pub fn feature_count(&self) -> usize {
         self.coefficients.ncols()

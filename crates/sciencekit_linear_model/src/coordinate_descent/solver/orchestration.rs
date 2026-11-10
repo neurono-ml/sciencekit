@@ -3,7 +3,9 @@
 //! `coordinate-descent-solver`).
 
 use ndarray::{Array1, ArrayView1};
-use sciencekit_common::{SKError, SKFloat};
+use sciencekit_common::{
+    SK_RANDOM_DOMAIN_STAGE, SKError, SKFloat, SKRandomGenerator, sk_derive_seed,
+};
 
 use super::super::access::SKColumnAccess;
 use super::super::config::SKCoordinateDescentConfig;
@@ -12,9 +14,6 @@ use super::super::solution::SKCoordinateDescentAlphaSolution;
 use super::gap_safe::sk_apply_gap_safe_screening;
 use super::iteration::sk_run_sweeps;
 
-/// Fixed seed for the deterministic random sweep order.
-const RANDOM_SEED: u64 = 0x9E37_79B9_7F4A_7C15;
-
 /// Solve one `alpha`, screening the initial active set when enabled.
 pub(crate) fn sk_solve_alpha<F: SKFloat, A: SKColumnAccess<F>>(
     access: &A,
@@ -22,6 +21,7 @@ pub(crate) fn sk_solve_alpha<F: SKFloat, A: SKColumnAccess<F>>(
     alpha: F,
     l1_ratio: F,
     include_intercept: bool,
+    component_index: u64,
     config: &SKCoordinateDescentConfig<F>,
 ) -> Result<SKCoordinateDescentAlphaSolution<F>, SKError> {
     let active = sk_initial_active_set(access, target, alpha * l1_ratio, include_intercept, config);
@@ -31,6 +31,7 @@ pub(crate) fn sk_solve_alpha<F: SKFloat, A: SKColumnAccess<F>>(
         alpha,
         l1_ratio,
         include_intercept,
+        component_index,
         config,
         active,
     )
@@ -39,12 +40,14 @@ pub(crate) fn sk_solve_alpha<F: SKFloat, A: SKColumnAccess<F>>(
 /// Solve one `alpha` on a caller-provided initial active set, reactivating any
 /// coordinate the KKT check finds violating (the correctness guarantee of
 /// screening).
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn sk_solve_alpha_with_initial_active<F: SKFloat, A: SKColumnAccess<F>>(
     access: &A,
     target: ArrayView1<F>,
     alpha: F,
     l1_ratio: F,
     include_intercept: bool,
+    component_index: u64,
     config: &SKCoordinateDescentConfig<F>,
     mut active: Vec<bool>,
 ) -> Result<SKCoordinateDescentAlphaSolution<F>, SKError> {
@@ -71,7 +74,11 @@ pub(crate) fn sk_solve_alpha_with_initial_active<F: SKFloat, A: SKColumnAccess<F
         .collect();
 
     let mut total_iterations = 0usize;
-    let mut seed = RANDOM_SEED;
+    let mut generator = SKRandomGenerator::new(sk_derive_seed(
+        config.random_seed,
+        SK_RANDOM_DOMAIN_STAGE,
+        component_index,
+    ));
     loop {
         let budget = config
             .maximum_number_of_iterations
@@ -92,7 +99,7 @@ pub(crate) fn sk_solve_alpha_with_initial_active<F: SKFloat, A: SKColumnAccess<F
             include_intercept,
             config,
             budget,
-            &mut seed,
+            &mut generator,
         );
         total_iterations += sweeps;
         if !converged {

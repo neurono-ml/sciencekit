@@ -43,6 +43,29 @@ pub(crate) fn zero_mean_feature() -> (Array2<f64>, Array1<f64>) {
     )
 }
 
+/// A six-column, twenty-four-row design with correlated columns, so the sweep
+/// order changes the path the coordinate updates take.
+pub(crate) fn correlated_design() -> (Array2<f64>, Array1<f64>) {
+    let rows = 24;
+    let columns = 6;
+    let features = Array2::from_shape_fn((rows, columns), |(row, column)| {
+        let wave = (((row * 7 + column * 13) % 17) as f64 - 8.0) / 8.0;
+        let shared = if row % 3 == 0 {
+            column as f64 * 0.05
+        } else {
+            0.0
+        };
+        wave + shared
+    });
+    let targets = Array1::from_shape_fn(rows, |row| {
+        let slope = 1.5 * features[[row, 0]] - 0.7 * features[[row, 1]]
+            + 0.3 * features[[row, 2]]
+            + 0.2 * (features[[row, 3]] + features[[row, 4]]);
+        slope + (((row * 5) % 11) as f64 - 5.0) / 25.0
+    });
+    (features, targets)
+}
+
 /// Convert a dense design to an equivalent CSR matrix, dropping exact zeros.
 pub(crate) fn to_csr(dense: &Array2<f64>) -> CsMat<f64> {
     let mut triplets = TriMat::new((dense.nrows(), dense.ncols()));

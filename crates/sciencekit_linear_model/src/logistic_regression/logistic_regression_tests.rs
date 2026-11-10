@@ -26,6 +26,7 @@ fn builder_defaults_are_documented() {
     assert!(estimator.include_intercept());
     assert_eq!(estimator.alpha(), 1.0);
     assert_eq!(estimator.c(), 1.0);
+    assert_eq!(estimator.random_seed(), 0);
 }
 
 #[test]
@@ -448,4 +449,107 @@ fn configuration_flows_through_the_model() {
         sciencekit_common::SKBackendKind::MatrixMultiply
     );
     assert!(model.intercepts().iter().all(|value| *value == 0.0));
+}
+
+/// A SAGA fit whose randomness is fully described by the builder seed.
+fn saga_estimator_with_tolerance(seed: u64, tolerance: f64) -> SKLogisticRegression<f64> {
+    SKLogisticRegression::<f64>::build()
+        .solver(SKLogisticSolver::Saga)
+        .penalty(SKLogisticPenalty::L1)
+        .alpha(0.05)
+        .random_seed(seed)
+        .maximum_number_of_iterations(10_000)
+        .tolerance(tolerance)
+        .build()
+        .unwrap()
+}
+
+fn saga_estimator(seed: u64) -> SKLogisticRegression<f64> {
+    saga_estimator_with_tolerance(seed, 1e-6)
+}
+
+#[test]
+fn saga_random_seed_defaults_to_zero_and_reaches_the_model() {
+    let (features, raw) = non_separable_binary_design();
+    let labels = labels_i64(&raw);
+    let estimator = SKLogisticRegression::<f64>::build()
+        .solver(SKLogisticSolver::Saga)
+        .penalty(SKLogisticPenalty::L1)
+        .alpha(0.5)
+        .maximum_number_of_iterations(10_000)
+        .tolerance(1e-6)
+        .build()
+        .unwrap();
+    assert_eq!(estimator.random_seed(), 0);
+    let model = estimator.fit(features.view(), labels.view()).unwrap();
+    assert_eq!(model.random_seed(), 0);
+
+    let seeded = SKLogisticRegression::<f64>::build()
+        .solver(SKLogisticSolver::Saga)
+        .random_seed(7)
+        .build()
+        .unwrap();
+    assert_eq!(seeded.random_seed(), 7);
+}
+
+#[test]
+fn saga_same_seed_reproduces_the_coefficients() {
+    let (features, raw) = non_separable_binary_design();
+    let labels = labels_i64(&raw);
+    let first = saga_estimator(7)
+        .fit(features.view(), labels.view())
+        .unwrap();
+    let second = saga_estimator(7)
+        .fit(features.view(), labels.view())
+        .unwrap();
+    assert_eq!(first.coefficients(), second.coefficients());
+    assert_eq!(first.intercepts(), second.intercepts());
+}
+
+#[test]
+fn saga_different_seeds_can_change_the_coefficients() {
+    let (features, labels) = binary_dataset();
+    let first = saga_estimator_with_tolerance(1, 1e-2)
+        .fit(features.view(), labels.view())
+        .unwrap();
+    let second = saga_estimator_with_tolerance(2, 1e-2)
+        .fit(features.view(), labels.view())
+        .unwrap();
+    assert_ne!(first.coefficients(), second.coefficients());
+}
+
+#[test]
+fn saga_one_versus_rest_heads_are_stored_by_class_index_across_thread_counts() {
+    // The per-class heads are solved in parallel; each owns a generator seeded
+    // from its class index, so the rows are the same whichever thread finishes
+    // first (spec scenario "Stable order").
+    let (features, raw) = three_class_design();
+    let labels = labels_i64(&raw);
+    let fit_with_threads = |threads: usize| {
+        let pool = rayon::ThreadPoolBuilder::new()
+            .num_threads(threads)
+            .build()
+            .unwrap();
+        pool.install(|| {
+            SKLogisticRegression::<f64>::build()
+                .solver(SKLogisticSolver::Saga)
+                .penalty(SKLogisticPenalty::L1)
+                .alpha(0.1)
+                .multi_class(SKMultiClass::OneVersusRest)
+                .random_seed(11)
+                .maximum_number_of_iterations(10_000)
+                .tolerance(1e-6)
+                .build()
+                .unwrap()
+                .fit(features.view(), labels.view())
+                .unwrap()
+        })
+    };
+    let single_threaded = fit_with_threads(1);
+    let multi_threaded = fit_with_threads(4);
+    assert_eq!(
+        single_threaded.coefficients(),
+        multi_threaded.coefficients()
+    );
+    assert_eq!(single_threaded.intercepts(), multi_threaded.intercepts());
 }

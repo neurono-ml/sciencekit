@@ -22,6 +22,7 @@ pub mod execution;
 pub mod fit_traits;
 pub mod label_table;
 pub mod observability;
+pub mod random;
 pub mod scorer_traits;
 pub mod sk_float;
 pub mod target_view;
@@ -43,6 +44,10 @@ pub use fit_traits::{
 pub use label_table::{SKLabelTable, sk_canonicalize_labels};
 pub use observability::{
     SKBackendKind, SKOperationAttributes, SKOperationKind, SKOperationObservation, sk_run_operation,
+};
+pub use random::{
+    SK_RANDOM_DOMAIN_FOLD, SK_RANDOM_DOMAIN_INITIALIZATION, SK_RANDOM_DOMAIN_PROJECTION,
+    SK_RANDOM_DOMAIN_STAGE, SK_RANDOM_DOMAIN_TREE, SKRandomGenerator, sk_derive_seed,
 };
 pub use scorer_traits::{SKLabelScorer, SKSupervisedScorer, SKUnsupervisedScorer};
 pub use sk_float::SKFloat;

@@ -26,6 +26,7 @@ pub struct SKLassoBuilder<F> {
     pub(super) screening: bool,
     pub(super) tolerance: F,
     pub(super) maximum_number_of_iterations: usize,
+    pub(super) random_seed: u64,
     pub(super) backend: SKBackendKind,
 }
 
@@ -41,6 +42,7 @@ impl<F: SKFloat> SKLassoBuilder<F> {
             screening: true,
             tolerance: F::from(1e-4).expect("1e-4 fits in the scalar"),
             maximum_number_of_iterations: 1000,
+            random_seed: 0,
             backend: SKBackendKind::Faer,
         }
     }
@@ -86,6 +88,15 @@ impl<F: SKFloat> SKLassoBuilder<F> {
     /// The iteration budget (default `1000`).
     pub fn maximum_number_of_iterations(mut self, value: usize) -> Self {
         self.maximum_number_of_iterations = value;
+        self
+    }
+
+    /// The seed of every stochastic choice in the fit (default `0`).
+    ///
+    /// Consulted by `SKSelection::Random`: the same seed, data and
+    /// configuration reproduce the coefficients.
+    pub fn random_seed(mut self, value: u64) -> Self {
+        self.random_seed = value;
         self
     }
 
@@ -135,6 +146,7 @@ impl<F: SKFloat> SKBuilder<SKLasso<F>> for SKLassoBuilder<F> {
             screening: self.screening,
             tolerance: self.tolerance,
             maximum_number_of_iterations: self.maximum_number_of_iterations,
+            random_seed: self.random_seed,
             backend: self.backend,
         })
     }
@@ -147,6 +159,7 @@ pub(super) fn coordinate_descent_config<F: SKFloat>(
     positive: bool,
     selection: SKSelection,
     screening: bool,
+    random_seed: u64,
 ) -> SKCoordinateDescentConfig<F> {
     SKCoordinateDescentConfig {
         tolerance,
@@ -154,5 +167,6 @@ pub(super) fn coordinate_descent_config<F: SKFloat>(
         positive,
         selection,
         screening,
+        random_seed,
     }
 }
