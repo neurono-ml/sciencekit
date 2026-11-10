@@ -115,3 +115,7 @@ generator.
 ## Open Questions
 
 None blocking. A parallel-stream API is a future convenience.
+
+The absence of ambient randomness is structural: no `rand`, thread-local, time- or
+address-based source exists in the generator or in any seeding path, so there is no
+behavioural syscall to assert; the source audit is the test.
