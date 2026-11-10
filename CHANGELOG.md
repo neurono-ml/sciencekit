@@ -35,6 +35,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   transform is deterministic under concurrency and parallel rows equal the
   sequential result.
 
+- `sciencekit_model_selection` gains the hyperparameter grid search (spec
+  `grid-search`): `SKGridSearchCVClassifier<F, E>` and
+  `SKGridSearchCVRegressor<F, E>`, builder-only with a list of fully configured
+  candidates, a splitter (`SKKFold`, `SKStratifiedKFold` or `SKGroupKFold`), a
+  scoring policy, `refit` (default true), `error_score` (`SKErrorScore::Raise`
+  by default or a numeric value), an optional group vector, `backend` (default
+  `Faer`) and `execution_mode` (default `Automatic`). Fit evaluates every
+  candidate on every fold in parallel, stores the scores by candidate and fold
+  index so results are independent of thread count, aggregates mean and
+  population standard deviation per candidate, and selects the highest mean
+  with ties broken by candidate index. When refit is enabled the winner is
+  retrained on all rows and exposed through `best_model`; otherwise prediction
+  returns `UnsupportedOperation`. The fitted models expose
+  `best_candidate_index`, `best_score`, `best_parameters`, `results`,
+  `mean_scores`, `standard_deviations`, `fold_scores` and
+  `ranked_candidate_indices`, and the classifier/regressor wrappers implement
+  the matching prediction contracts, delegating to the best model while
+  preserving dense and CSR views. Classification policies are accuracy,
+  balanced accuracy, F1/precision/recall with an averaging policy, binary AUC
+  and log loss; regression policies are negative MSE, negative MAE and R². The
+  builder rejects empty candidates, a missing splitter and an incompatible
+  scoring family, and a sparse-only candidate proves no fold is ever densified.
+
 ## [0.5.0] — 2026-11-10
 
 Clustering metrics and the k-nearest-neighbour estimators.

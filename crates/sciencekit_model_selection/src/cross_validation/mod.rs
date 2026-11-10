@@ -11,6 +11,8 @@ mod regressor;
 pub use classifier::sk_cross_val_score_classifier;
 pub use regressor::sk_cross_val_score_regressor;
 
+pub(crate) use fitting::{sk_fit_on_partition, sk_fit_on_views};
+
 #[cfg(test)]
 mod cross_validation_tests;
 #[cfg(test)]

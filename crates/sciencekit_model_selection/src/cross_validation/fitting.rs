@@ -20,7 +20,7 @@ where
     targets.with_view(|target_view| sk_fit_on_views(estimator, features.view(), target_view))
 }
 
-fn sk_fit_on_views<F, E>(
+pub(crate) fn sk_fit_on_views<F, E>(
     estimator: &E,
     features: SKDataView<'_, F>,
     targets: SKTargetView<'_, F>,

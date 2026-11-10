@@ -16,6 +16,7 @@
 
 pub mod cross_validation;
 pub mod gather;
+pub mod grid_search;
 pub mod index_split;
 pub mod shuffle;
 pub mod split;
@@ -23,6 +24,11 @@ pub mod train_test_split;
 
 pub use cross_validation::{sk_cross_val_score_classifier, sk_cross_val_score_regressor};
 pub use gather::{SKTargetPartition, sk_gather_rows};
+pub use grid_search::{
+    SKClassifierScoring, SKErrorScore, SKGridSearchCVClassifier, SKGridSearchCVClassifierBuilder,
+    SKGridSearchCVClassifierModel, SKGridSearchCVRegressor, SKGridSearchCVRegressorBuilder,
+    SKGridSearchCVRegressorModel, SKGridSearchResults, SKRegressorScoring, SKScoringFamily,
+};
 pub use index_split::SKIndexSplit;
 pub use shuffle::sk_shuffle_indices;
 pub use split::SKSplitter;
