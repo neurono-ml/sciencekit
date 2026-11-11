@@ -97,7 +97,7 @@
 - [x] 6.1 Add dense, sparse and mixed fit tests for `SKSVC` and `SKSVR`, asserting
   same-logical-matrix predictions agree within tolerance and no sparse input is densified;
   verify with `cargo test -p sciencekit_svm representation`.
-- [ ] 6.2 Add dense, sparse and mixed prediction tests against models fitted in each
+- [x] 6.2 Add dense, sparse and mixed prediction tests against models fitted in each
   representation; verify with `cargo test -p sciencekit_svm representation`.
 - [ ] 6.3 Add tests for empty input, single-class classification, feature-count mismatch,
   non-finite values and invalid kernel parameters, asserting the exact central error
