@@ -247,8 +247,14 @@ Interface in both directions and the columnar file sources with projection pushd
 [GPU compute contracts chapter](./ch38-gpu-compute-contracts.html) adds the device
 inventory and capabilities, the deterministic selection rule, the validated device
 buffers, the closed kernel catalogue and the execution plan that records a backend and a
-fallback reason. The
+fallback reason.
+The [randomized SVD chapter](./ch39-randomized-svd.html) adds the seeded range finder, the
+thin Householder QR, the small Gram SVD, the sparse products without densification, the
+implicit centering and the accuracy bound against the exact decomposition. The
 [random forest chapter](./ch40-random-forest.html) opens `sciencekit_ensemble` with
 seeded per-tree bootstrap sampling, de-correlated `Sqrt` feature subsampling, lock-free
 parallel CART fitting, out-of-bag accuracy and $R^2$ scoring, normalized mean feature
 importances and non-densifying CSR parity.
+The [JSON debug format chapter](./ch45-json-debug-format.html) adds the deterministic
+human-readable `SKModelState` schema, the pretty and compact writer, the duplicate-aware
+validating reader and the round-trip acceptance guarantees across scalar and tensor types.

@@ -78,13 +78,24 @@ every refusal a structured, named error rather than a panic.
    nulls, or of any other type, is refused with `UnsupportedRepresentation` so the caller
    materializes through the normal import path instead.
 4. **The missing-value policy decides what a null means.** Arrow's validity bitmap is
-   translated eagerly for numeric columns: `Reject` fails naming the column, `NumericNaN`
-   writes `NaN`, `ConstantFill(value)` writes the value, `CategoricalMissingCode` keeps the
-   null for the categorical path. Text and boolean columns *retain* their nulls, because the
-   sentinel decisions there belong to the categorical and target paths.
+   applied when a column is materialized: `Reject` fails naming the column, `NumericNaN`
+   writes `NaN`, `ConstantFill(value)` writes the value, and `CategoricalMissingCode` keeps
+   the missing code for the categorical path. The neutral column types keep the nulls they
+   receive: nullable integers stay `Integer64` with `Option<i64>` entries, text stays
+   `Nominal`, booleans stay `Boolean` — all of them with their nulls intact. The import
+   therefore never rewrites a batch's schema to make a null fit; the policy is applied
+   later, by `extract_target` / the categorical extraction, against the scalar the caller
+   actually asked for. That is also where the exactness guard lives: a nullable integer
+   column read as `f64` is fine up to `2^53`, while reading `16_777_217` as `f32` is
+   rejected instead of silently rounded.
 5. **A dictionary column is a label table plus codes.** `sk_dictionary_label_table` builds a
    reversible `SKLabelTable` following the dictionary's own value order, so code `i` restores
-   `label_of(i)` exactly. The import path converts the keys to `SKColumnData::CategoryCode`.
+   `label_of(i)` exactly. The import path converts the keys to `SKColumnData::CategoryCode`
+   after remapping them through the canonicalised label table, and a key that points at a
+   null or out-of-range dictionary slot is rejected. Only `Utf8` / `LargeUtf8` dictionary
+   values are accepted; any other value type is refused with `UnsupportedColumnType`,
+   consistently with the schema mapping. An empty string dictionary yields an empty label
+   table instead of an error.
 6. **The C Data Interface is the binding ABI.** Export produces Arrow's own `FFI_ArrowArray`
    and `FFI_ArrowSchema`; import consumes them and *takes ownership of the release
    callback*, which is exactly what keeps the data alive after the producer drops its
@@ -221,7 +232,9 @@ Everything below lives in `sciencekit_interop::arrow` and is compiled only when 
   `.with_selection()`, `.with_missing_value_policy()`, `.with_explicit_schema()`,
   `.with_csv_header()`, `.with_csv_delimiter()`, `.with_json_schema_inference()`.
 - **`SKArrowFileFormat`** — `Parquet`, `Csv`, `IpcFile`, `IpcStream`, `Json`, `NdJson`.
-- **`SKArrowFileOptions`** — the shared options struct behind those builders.
+- **`SKArrowFileOptions`** — a crate-private options struct behind those builders;
+  `SKArrowFileSource` accepts the options through its builder methods, so the type itself
+  is not part of the public API.
 
 ### Export
 
@@ -240,7 +253,11 @@ Everything below lives in `sciencekit_interop::arrow` and is compiled only when 
 - **`sk_export_record_batch_reader_to_stream(reader)`** / **`sk_import_stream(ffi)`** — the
   stream.
 - **`SKArrowFfiArray`** and **`SKArrowFfiStream`** — the owning wrappers, with
-  `.into_parts()` / `.from_parts()` and `.into_stream()` / `.from_stream()`.
+  `.into_parts()` / `.from_parts()` and `.into_stream()` / `.from_stream()`. `from_parts`
+  and `from_stream` are `unsafe`: they trust the caller that the pair is a valid, matching
+  Arrow C Data Interface pair (the same trust Arrow itself demands). `sk_import_array_from_ffi`
+  and `sk_import_stream` stay safe, because the only way to build the wrapper is through
+  `sk_export_*` or through the documented `unsafe` constructor.
 
 ## 5. A real walk-through, using the tests
 
@@ -273,9 +290,10 @@ zero-copy, a complete column of the other precision is a *cast*, and a nullable 
 `sk_numeric_nan_policy_writes_nan_at_null_positions`,
 `sk_constant_fill_policy_writes_the_constant_at_null_positions` and
 `sk_reject_policy_reports_the_arrow_field` cover three policies on the same fixture.
-`sk_nullable_integer_promotes_to_float64_for_the_nan_policy` covers the promotion: a
-nullable integer column cannot hold a NaN, so it is promoted to `Float64` — and the
-imported schema is rewritten to describe the data it now carries.
+`sk_nullable_integer_promotes_to_float64_for_the_nan_policy` covers the materialization: the
+import keeps the nullable integer column as `Integer64` with its nulls, and extracting it as
+`f64` under the numeric NaN policy writes `NaN` at the null positions. `f32` extraction of a
+value above `2^24` is rejected, and the batch schema is never rewritten mid-stream.
 `sk_lossy_integer_promotion_is_rejected` is the guard on the other side: a value too large
 to survive the promotion fails instead of being rounded.
 `sk_non_finite_fill_overflowing_f32_is_rejected` catches the `f32` narrowing case.
@@ -378,7 +396,7 @@ sparse.
 
 ## 7. The documented deviations
 
-Three places where the implementation departs from the original design, on purpose:
+Four places where the implementation departs from the original design, on purpose:
 
 1. **`Table` and `ChunkedArray` are not used.** The chunked representation is modelled
    directly as `&[Vec<ArrayRef>]` — one vector of chunk arrays per column — and
