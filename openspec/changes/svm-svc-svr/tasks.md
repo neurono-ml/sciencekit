@@ -118,7 +118,7 @@
 
 ## 8. Documentation, changelog and review
 
-- [ ] 8.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under `Unreleased →
+- [x] 8.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under `Unreleased →
   Added` for the kernel module, `SKSVC`, `SKSVR`, the SMO solver and probability
   calibration; verify the entry lists every public artifact.
 - [ ] 8.2 Companion documentation change on its own `docs/*` branch (merged into
