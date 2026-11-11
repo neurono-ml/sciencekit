@@ -27,7 +27,7 @@
   verify with `cargo test -p sciencekit_outlier isolation_builder`.
 - [x] 3.2 Implement fit (subsample, per-tree seeds, forest assembly) and the model state;
   verify with `cargo test -p sciencekit_outlier isolation_fit`.
-- [ ] 3.3 Implement `score_samples`, `decision_function`, typed `predict` and `fit_predict`
+- [x] 3.3 Implement `score_samples`, `decision_function`, typed `predict` and `fit_predict`
   with the contamination offset; verify with
   `cargo test -p sciencekit_outlier isolation_score`.
 - [ ] 3.4 Add validation tests for empty input, zero trees, invalid sample size,
