@@ -21,13 +21,8 @@ struct ColumnSpyRegressor {
     seen_prediction_matrices: Arc<Mutex<Vec<Array2<f64>>>>,
 }
 
-#[derive(Clone, Debug)]
-struct ColumnSpyModel {
-    seen_prediction_matrices: Arc<Mutex<Vec<Array2<f64>>>>,
-}
-
 impl SKSupervisedFit<f64> for ColumnSpyRegressor {
-    type Model = ColumnSpyModel;
+    type Model = Self;
     type Error = SKError;
 
     fn fit<'a, X, T>(&self, _features: X, _targets: T) -> Result<Self::Model, Self::Error>
@@ -35,13 +30,11 @@ impl SKSupervisedFit<f64> for ColumnSpyRegressor {
         X: TryInto<SKDataView<'a, f64>, Error = SKError>,
         T: TryInto<SKTargetView<'a, f64>, Error = SKError>,
     {
-        Ok(ColumnSpyModel {
-            seen_prediction_matrices: Arc::clone(&self.seen_prediction_matrices),
-        })
+        Ok(self.clone())
     }
 }
 
-impl SKRegressorPredictor<f64> for ColumnSpyModel {
+impl SKRegressorPredictor<f64> for ColumnSpyRegressor {
     type Error = SKError;
 
     fn predict<'a, X>(&self, features: X) -> Result<Array1<f64>, Self::Error>
@@ -74,11 +67,7 @@ fn estimator_fitted_on_columns_zero_and_two_receives_only_those_columns() {
     let train_features = Array2::from_shape_vec(
         (6, 3),
         vec![
-            1.0, 100.0, 2.0, //
-            2.0, -50.0, 1.0, //
-            3.0, 200.0, 4.0, //
-            4.0, -80.0, 3.0, //
-            5.0, 300.0, 6.0, //
+            1.0, 100.0, 2.0, 2.0, -50.0, 1.0, 3.0, 200.0, 4.0, 4.0, -80.0, 3.0, 5.0, 300.0, 6.0,
             6.0, -90.0, 5.0,
         ],
     )
@@ -101,41 +90,32 @@ fn estimator_fitted_on_columns_zero_and_two_receives_only_those_columns() {
     assert_eq!(bagging_model.estimator_features(0), Some(&[0usize, 2][..]));
 
     // Column 1 carries a huge sentinel (999_999.0) that must never reach the base model.
-    let query = Array2::from_shape_vec(
-        (2, 3),
-        vec![
-            10.0, 999_999.0, 30.0, //
-            40.0, -888_888.0, 60.0,
-        ],
-    )
-    .unwrap();
-    let query_view = SKDataView::Dense(query.view());
+    let query = Array2::from_shape_vec((2, 3), vec![10.0, 999_999.0, 30.0, 40.0, -888_888.0, 60.0])
+        .unwrap();
     let routed_predictions = sk_predict_regressor_chunk(
         bagging_model.estimator(0).unwrap(),
-        &query_view,
+        &SKDataView::Dense(query.view()),
         0,
         2,
         bagging_model.estimator_features(0).unwrap(),
     )
     .unwrap();
-
     assert_eq!(routed_predictions, Array1::from_vec(vec![40.0, 100.0]));
-    {
-        let recorded = seen.lock().unwrap();
-        assert_eq!(recorded.len(), 1);
-        assert_eq!(
-            recorded[0],
-            Array2::from_shape_vec((2, 2), vec![10.0, 30.0, 40.0, 60.0]).unwrap()
-        );
-    }
+    assert_eq!(
+        seen.lock().unwrap()[0],
+        Array2::from_shape_vec((2, 2), vec![10.0, 30.0, 40.0, 60.0]).unwrap()
+    );
 
-    // Sparse CSR routing also passes only columns [0, 2].
     let mut triplets = TriMat::new((2, 3));
-    triplets.add_triplet(0, 0, 10.0);
-    triplets.add_triplet(0, 1, 999_999.0);
-    triplets.add_triplet(0, 2, 30.0);
-    triplets.add_triplet(1, 1, -888_888.0);
-    triplets.add_triplet(1, 2, 60.0);
+    [
+        (0, 0, 10.0),
+        (0, 1, 999_999.0),
+        (0, 2, 30.0),
+        (1, 1, -888_888.0),
+        (1, 2, 60.0),
+    ]
+    .into_iter()
+    .for_each(|(row, column, value)| triplets.add_triplet(row, column, value));
     let sparse_query = triplets.to_csr::<usize>();
     let sparse_routed = sk_predict_regressor_chunk(
         bagging_model.estimator(0).unwrap(),
@@ -154,11 +134,7 @@ fn routed_single_estimator_matches_manually_subsetted_linear_regression() {
     let train_features = Array2::from_shape_vec(
         (6, 3),
         vec![
-            1.0, 500.0, 0.0, //
-            0.0, -400.0, 1.0, //
-            2.0, 300.0, 1.0, //
-            1.0, -200.0, 2.0, //
-            3.0, 100.0, 2.0, //
+            1.0, 500.0, 0.0, 0.0, -400.0, 1.0, 2.0, 300.0, 1.0, 1.0, -200.0, 2.0, 3.0, 100.0, 2.0,
             2.0, -100.0, 3.0,
         ],
     )
@@ -168,7 +144,7 @@ fn routed_single_estimator_matches_manually_subsetted_linear_regression() {
     });
 
     let linear = SKLinearRegression::build().build().unwrap();
-    let bagging_model = SKBaggingRegressor::build(linear.clone())
+    let bagging_model = SKBaggingRegressor::build(linear)
         .number_of_estimators(1)
         .bootstrap(false)
         .maximum_samples(SKMaximumSamples::All)
@@ -179,22 +155,16 @@ fn routed_single_estimator_matches_manually_subsetted_linear_regression() {
         .fit(train_features.view(), train_targets.view())
         .unwrap();
 
-    let manual_train = train_features.select(Axis(1), &[0, 2]);
     let manual_model = linear
-        .fit(manual_train.view(), train_targets.view())
+        .fit(
+            train_features.select(Axis(1), &[0, 2]).view(),
+            train_targets.view(),
+        )
         .unwrap();
-
     let query =
         Array2::<f64>::from_shape_vec((2, 3), vec![4.0, 77_777.0, 5.0, -1.0, -99_999.0, 2.0])
             .unwrap();
-    let routed = sk_predict_regressor_chunk(
-        bagging_model.estimator(0).unwrap(),
-        &SKDataView::Dense(query.view()),
-        0,
-        2,
-        bagging_model.estimator_features(0).unwrap(),
-    )
-    .unwrap();
+    let routed = bagging_model.predict(query.view()).unwrap();
     let manual = manual_model
         .predict(query.select(Axis(1), &[0, 2]).view())
         .unwrap();

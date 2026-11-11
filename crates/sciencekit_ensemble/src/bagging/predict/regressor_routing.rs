@@ -68,7 +68,6 @@ where
 
 /// Route arbitrary `rows` (such as OOB rows) through `feature_subset` into a
 /// regressor model.
-#[allow(dead_code)]
 pub(in crate::bagging) fn sk_predict_regressor_rows<F, M>(
     estimator: &M,
     features: &SKDataView<'_, F>,
@@ -101,6 +100,11 @@ where
             predictions.len(),
             1,
         )));
+    }
+    if let Some(position) = predictions.iter().position(|value| !value.is_finite()) {
+        return Err(SKBaggingError::Central(SKError::NonFiniteValue {
+            position,
+        }));
     }
     Ok(predictions)
 }

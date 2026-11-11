@@ -22,7 +22,6 @@ pub(super) fn sk_bagging_fit_dimensions<F>(
 
 /// Validate that a prediction feature view has at least one row, matches
 /// `expected_columns`, and uses dense or CSR storage.
-#[allow(dead_code)]
 pub(super) fn sk_bagging_predict_dimensions<F>(
     features: &SKDataView<'_, F>,
     expected_columns: usize,

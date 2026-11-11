@@ -4,7 +4,6 @@ use sciencekit_common::SKError;
 
 /// Fitted out-of-bag state stored on a bagging model.
 #[derive(Debug, Clone, PartialEq)]
-#[allow(dead_code)]
 pub(in crate::bagging) enum SKBaggingOobState<F> {
     Disabled,
     NoScoredRows,

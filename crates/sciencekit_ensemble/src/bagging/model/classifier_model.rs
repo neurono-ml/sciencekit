@@ -6,7 +6,6 @@ use super::oob_state::SKBaggingOobState;
 
 /// One fitted member of a classification bagging ensemble.
 #[derive(Debug, Clone)]
-#[allow(dead_code)]
 pub(in crate::bagging) enum SKBaggingClassifierMember<M> {
     Fitted {
         model: M,

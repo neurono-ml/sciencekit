@@ -10,7 +10,6 @@ use crate::bootstrap::SKMaximumSamples;
 /// Shared hyperparameters for [`crate::SKBaggingClassifier`] and
 /// [`crate::SKBaggingRegressor`].
 #[derive(Debug, Clone)]
-#[allow(dead_code)]
 pub(super) struct SKBaggingConfiguration {
     pub(super) state: SKBuilderState,
     pub(super) number_of_estimators: usize,
@@ -23,7 +22,6 @@ pub(super) struct SKBaggingConfiguration {
     pub(super) backend: SKBackendKind,
 }
 
-#[allow(dead_code)]
 impl SKBaggingConfiguration {
     /// Documented default configuration (spec `bagging-ensembles`).
     pub(super) fn new() -> Self {

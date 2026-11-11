@@ -13,7 +13,6 @@ use super::super::sampling::{
 /// Route contiguous rows `row_start..row_end` through `feature_subset` into a
 /// classifier member and return canonical `(chunk_rows, number_of_classes)`
 /// probabilities.
-#[allow(dead_code)]
 pub(in crate::bagging) fn sk_predict_classifier_member_chunk<F, M>(
     member: &SKBaggingClassifierMember<M>,
     features: &SKDataView<'_, F>,
@@ -83,7 +82,6 @@ where
 
 /// Route arbitrary `rows` (such as OOB rows) through `feature_subset` into a
 /// classifier member.
-#[allow(dead_code)]
 pub(in crate::bagging) fn sk_predict_classifier_member_rows<F, M>(
     member: &SKBaggingClassifierMember<M>,
     features: &SKDataView<'_, F>,

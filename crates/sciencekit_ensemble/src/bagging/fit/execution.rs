@@ -38,7 +38,6 @@ where
 
 /// Partition `row_count` prediction rows into deterministic chunks and evaluate
 /// each chunk sequentially or in parallel according to `execution_intent`.
-#[allow(dead_code)]
 pub(in crate::bagging) fn sk_map_row_chunks<T, E, F>(
     row_count: usize,
     estimator_count: usize,

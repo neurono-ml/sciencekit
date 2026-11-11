@@ -18,7 +18,6 @@ pub(super) fn sk_feature_subset_seed(global_seed: u64, estimator_index: usize) -
 }
 
 /// Draw row indices for `estimator_index` reusing the shared ensemble sampler.
-#[allow(dead_code)]
 pub(super) fn sk_bagging_row_indices(
     row_count: usize,
     maximum_samples: &SKMaximumSamples<f64>,
@@ -36,7 +35,6 @@ pub(super) fn sk_bagging_row_indices(
 }
 
 /// Draw feature column indices for `estimator_index`.
-#[allow(dead_code)]
 pub(super) fn sk_bagging_feature_indices(
     feature_count: usize,
     maximum_features: &SKMaximumFeatures<f64>,
@@ -64,7 +62,6 @@ pub(super) fn sk_bagging_feature_indices(
 }
 
 /// Whether `features` is the exact identity sequence `0..total_features`.
-#[allow(dead_code)]
 pub(super) fn sk_is_identity_features(features: &[usize], total_features: usize) -> bool {
     features.len() == total_features
         && features
@@ -74,7 +71,6 @@ pub(super) fn sk_is_identity_features(features: &[usize], total_features: usize)
 }
 
 /// Gather sampled `rows` and `features` from a dense matrix.
-#[allow(dead_code)]
 pub(super) fn sk_gather_dense_submatrix<F: SKFloat>(
     matrix: &ArrayView2<'_, F>,
     rows: &[usize],
@@ -87,7 +83,6 @@ pub(super) fn sk_gather_dense_submatrix<F: SKFloat>(
 }
 
 /// Project contiguous dense rows `row_start..row_end` onto `features`.
-#[allow(dead_code)]
 pub(super) fn sk_project_dense_rows<F: SKFloat>(
     matrix: &ArrayView2<'_, F>,
     row_start: usize,
@@ -101,7 +96,6 @@ pub(super) fn sk_project_dense_rows<F: SKFloat>(
 }
 
 /// Gather sampled `rows` and `features` from a CSR matrix without densifying.
-#[allow(dead_code)]
 pub(super) fn sk_gather_sparse_submatrix<F: SKFloat>(
     matrix: &CsMatView<'_, F>,
     rows: &[usize],
@@ -115,7 +109,6 @@ pub(super) fn sk_gather_sparse_submatrix<F: SKFloat>(
 
 /// Project contiguous CSR rows `row_start..row_end` onto `features` without
 /// densifying.
-#[allow(dead_code)]
 pub(super) fn sk_project_sparse_rows<F: SKFloat>(
     matrix: &CsMatView<'_, F>,
     row_start: usize,

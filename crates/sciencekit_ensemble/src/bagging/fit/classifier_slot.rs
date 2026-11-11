@@ -69,18 +69,30 @@ where
             model,
             local_to_ensemble,
         },
-        Err(_) if local_to_ensemble.len() < 2 => {
-            let probe = Array1::from_vec(vec![0_i64, 1]);
+        Err(single_row_error) if local_to_ensemble.len() < 2 => {
+            if drawn.len() < 2 {
+                return Err(SKBaggingError::Base(single_row_error));
+            }
+            let sole_class = local_to_ensemble[0];
+            let opposite_row = if class_indices[two_class_pair[0]] != sole_class {
+                two_class_pair[0]
+            } else {
+                two_class_pair[1]
+            };
+            let mut probe_rows = drawn;
+            probe_rows[0] = opposite_row;
+            let probe_labels =
+                Array1::from_shape_fn(probe_rows.len(), |position| i64::from(position == 0));
             sk_fit_base_classifier(
                 &estimator.base_estimator,
                 features,
-                &two_class_pair,
+                &probe_rows,
                 &feature_subset,
-                &probe,
+                &probe_labels,
             )
             .map_err(SKBaggingError::Base)?;
             SKBaggingClassifierMember::ConstantClass {
-                class_index: local_to_ensemble[0],
+                class_index: sole_class,
             }
         }
         Err(base_error) => return Err(SKBaggingError::Base(base_error)),

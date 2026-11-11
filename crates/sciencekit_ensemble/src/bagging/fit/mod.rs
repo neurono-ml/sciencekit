@@ -9,6 +9,5 @@ mod execution;
 mod regressor_fit;
 
 pub(super) use classifier_fit::sk_fit_bagging_classifier;
-#[allow(unused_imports)]
-pub(super) use execution::{sk_execute_estimator_slots, sk_map_row_chunks};
+pub(super) use execution::sk_map_row_chunks;
 pub(super) use regressor_fit::sk_fit_bagging_regressor;

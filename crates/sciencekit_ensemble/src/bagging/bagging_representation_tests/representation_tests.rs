@@ -1,14 +1,10 @@
-//! Companion tests for dense/CSR representation pass-through and base-error
-//! propagation on dense-only estimators.
+//! Dense/CSR pass-through and dense-only rejection tests.
 
-use std::error::Error;
-use std::fmt;
 use std::sync::{Arc, Mutex};
 
 use ndarray::{Array1, Array2};
 use sciencekit_common::{
-    SKBuilder, SKClassifierPredictor, SKDataView, SKError, SKRegressorPredictor, SKSupervisedFit,
-    SKTargetView,
+    SKBuilder, SKClassifierPredictor, SKError, SKRegressorPredictor, SKSupervisedFit,
 };
 use sciencekit_linear_model::linear_regression::core_implementation::SKLinearRegression;
 use sciencekit_neighbors::{SKKNeighborsClassifier, SKNeighborsAlgorithm};
@@ -17,134 +13,9 @@ use sprs::TriMat;
 
 use crate::{SKBaggingClassifier, SKBaggingError, SKBaggingRegressor};
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-enum CustomDenseOnlyError {
-    Central(String),
-    RejectedRepresentation(&'static str),
-}
-
-impl fmt::Display for CustomDenseOnlyError {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Central(message) => formatter.write_str(message),
-            Self::RejectedRepresentation(kind) => {
-                write!(formatter, "dense-only base rejected `{kind}`")
-            }
-        }
-    }
-}
-
-impl Error for CustomDenseOnlyError {}
-
-impl From<SKError> for CustomDenseOnlyError {
-    fn from(error: SKError) -> Self {
-        Self::Central(error.to_string())
-    }
-}
-
-#[derive(Clone, Debug)]
-struct CustomDenseOnlyClassifier;
-
-#[derive(Clone, Debug)]
-struct CustomDenseOnlyModel;
-
-impl SKSupervisedFit<f64> for CustomDenseOnlyClassifier {
-    type Model = CustomDenseOnlyModel;
-    type Error = CustomDenseOnlyError;
-
-    fn fit<'a, X, T>(&self, features: X, _targets: T) -> Result<Self::Model, Self::Error>
-    where
-        X: TryInto<SKDataView<'a, f64>, Error = SKError>,
-        T: TryInto<SKTargetView<'a, f64>, Error = SKError>,
-    {
-        let view = features.try_into()?;
-        match view {
-            SKDataView::Dense(_) => Ok(CustomDenseOnlyModel),
-            SKDataView::Sparse(_) => Err(CustomDenseOnlyError::RejectedRepresentation(
-                view.representation(),
-            )),
-            _ => Err(CustomDenseOnlyError::RejectedRepresentation("unknown")),
-        }
-    }
-}
-
-impl SKClassifierPredictor<f64> for CustomDenseOnlyModel {
-    type Error = CustomDenseOnlyError;
-
-    fn predict_labels<'a, X>(&self, features: X) -> Result<Array1<i64>, Self::Error>
-    where
-        X: TryInto<SKDataView<'a, f64>, Error = SKError>,
-    {
-        let probabilities = self.predict_probabilities(features)?;
-        Ok(Array1::zeros(probabilities.nrows()))
-    }
-
-    fn predict_probabilities<'a, X>(&self, features: X) -> Result<Array2<f64>, Self::Error>
-    where
-        X: TryInto<SKDataView<'a, f64>, Error = SKError>,
-    {
-        let view = features.try_into()?;
-        match view {
-            SKDataView::Dense(dense) => Ok(Array2::from_elem((dense.nrows(), 2), 0.5)),
-            SKDataView::Sparse(_) => Err(CustomDenseOnlyError::RejectedRepresentation(
-                view.representation(),
-            )),
-            _ => Err(CustomDenseOnlyError::RejectedRepresentation("unknown")),
-        }
-    }
-}
-
-#[derive(Clone, Debug)]
-struct RepresentationSpyRegressor {
-    seen_fit_representations: Arc<Mutex<Vec<&'static str>>>,
-    seen_predict_representations: Arc<Mutex<Vec<&'static str>>>,
-}
-
-#[derive(Clone, Debug)]
-struct RepresentationSpyModel {
-    seen_predict_representations: Arc<Mutex<Vec<&'static str>>>,
-}
-
-impl SKSupervisedFit<f64> for RepresentationSpyRegressor {
-    type Model = RepresentationSpyModel;
-    type Error = SKError;
-
-    fn fit<'a, X, T>(&self, features: X, _targets: T) -> Result<Self::Model, Self::Error>
-    where
-        X: TryInto<SKDataView<'a, f64>, Error = SKError>,
-        T: TryInto<SKTargetView<'a, f64>, Error = SKError>,
-    {
-        let view = features.try_into()?;
-        self.seen_fit_representations
-            .lock()
-            .unwrap()
-            .push(view.representation());
-        Ok(RepresentationSpyModel {
-            seen_predict_representations: Arc::clone(&self.seen_predict_representations),
-        })
-    }
-}
-
-impl SKRegressorPredictor<f64> for RepresentationSpyModel {
-    type Error = SKError;
-
-    fn predict<'a, X>(&self, features: X) -> Result<Array1<f64>, Self::Error>
-    where
-        X: TryInto<SKDataView<'a, f64>, Error = SKError>,
-    {
-        let view = features.try_into()?;
-        self.seen_predict_representations
-            .lock()
-            .unwrap()
-            .push(view.representation());
-        let rows = match view {
-            SKDataView::Dense(dense) => dense.nrows(),
-            SKDataView::Sparse(sparse) => sparse.rows(),
-            _ => 0,
-        };
-        Ok(Array1::from_elem(rows, 1.0))
-    }
-}
+use super::fixtures::{
+    CustomDenseOnlyClassifier, CustomDenseOnlyError, RepresentationSpyRegressor,
+};
 
 #[test]
 fn sparse_capable_base_receives_csr_without_densifying_and_matches_dense() {
@@ -288,8 +159,7 @@ fn dense_only_base_estimators_surface_error_through_sk_bagging_error_base() {
         Some(&CustomDenseOnlyError::RejectedRepresentation("csr"))
     );
 
-    let linear = SKLinearRegression::build().build().unwrap();
-    let linear_error = SKBaggingRegressor::build(linear)
+    let linear_error = SKBaggingRegressor::build(SKLinearRegression::build().build().unwrap())
         .number_of_estimators(2)
         .build()
         .unwrap()

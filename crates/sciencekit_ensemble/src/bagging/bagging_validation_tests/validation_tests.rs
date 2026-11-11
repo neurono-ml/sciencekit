@@ -1,67 +1,17 @@
-//! Companion validation tests for [`SKBaggingClassifier`] and
-//! [`SKBaggingRegressor`] asserting structured central [`SKError`] variants.
+//! Validation tests covering empty inputs, invalid hyperparameters, shape
+//! mismatches, non-finite inputs and out-of-range base outputs.
 
-use ndarray::{Array1, Array2, array};
+use ndarray::{Array2, array};
 use sciencekit_common::{
-    SKBuilder, SKClassifierPredictor, SKDataView, SKError, SKExecutionMode, SKRegressorPredictor,
-    SKSupervisedFit, SKTargetView,
+    SKBuilder, SKClassifierPredictor, SKError, SKExecutionMode, SKRegressorPredictor,
+    SKSupervisedFit,
 };
-use sciencekit_tree::{SKDecisionTreeClassifier, SKDecisionTreeRegressor, SKMaximumFeatures};
+use sciencekit_tree::{SKDecisionTreeClassifier, SKMaximumFeatures};
 use sprs::CsMat;
 
 use crate::{SKBaggingClassifier, SKBaggingError, SKBaggingRegressor, SKMaximumSamples};
 
-fn default_classifier() -> SKBaggingClassifier<SKDecisionTreeClassifier<f64>> {
-    let tree = SKDecisionTreeClassifier::<f64>::build().build().unwrap();
-    SKBaggingClassifier::build(tree).build().unwrap()
-}
-
-fn default_regressor() -> SKBaggingRegressor<SKDecisionTreeRegressor<f64>> {
-    let tree = SKDecisionTreeRegressor::<f64>::build().build().unwrap();
-    SKBaggingRegressor::build(tree).build().unwrap()
-}
-
-#[derive(Clone, Debug)]
-struct InvalidProbabilityClassifier(f64);
-
-impl SKSupervisedFit<f64> for InvalidProbabilityClassifier {
-    type Model = Self;
-    type Error = SKError;
-
-    fn fit<'a, X, T>(&self, _features: X, _targets: T) -> Result<Self::Model, Self::Error>
-    where
-        X: TryInto<SKDataView<'a, f64>, Error = SKError>,
-        T: TryInto<SKTargetView<'a, f64>, Error = SKError>,
-    {
-        Ok(self.clone())
-    }
-}
-
-impl SKClassifierPredictor<f64> for InvalidProbabilityClassifier {
-    type Error = SKError;
-
-    fn predict_labels<'a, X>(&self, features: X) -> Result<Array1<i64>, Self::Error>
-    where
-        X: TryInto<SKDataView<'a, f64>, Error = SKError>,
-    {
-        let probabilities = self.predict_probabilities(features)?;
-        Ok(Array1::zeros(probabilities.nrows()))
-    }
-
-    fn predict_probabilities<'a, X>(&self, features: X) -> Result<Array2<f64>, Self::Error>
-    where
-        X: TryInto<SKDataView<'a, f64>, Error = SKError>,
-    {
-        let rows = match features.try_into()? {
-            SKDataView::Dense(dense) => dense.nrows(),
-            SKDataView::Sparse(sparse) => sparse.rows(),
-            _ => 0,
-        };
-        Ok(Array2::from_shape_fn((rows, 2), |(_, column)| {
-            if column == 0 { self.0 } else { 1.0 - self.0 }
-        }))
-    }
-}
+use super::fixtures::{InvalidOutputBase, default_classifier, default_regressor};
 
 #[test]
 fn zero_estimators_and_invalid_fractions_are_rejected_at_construction() {
@@ -99,8 +49,7 @@ fn zero_estimators_and_invalid_fractions_are_rejected_at_construction() {
 fn empty_inputs_and_feature_count_mismatches_return_central_errors() {
     let empty_dense = Array2::<f64>::zeros((0, 2));
     let empty_sparse: CsMat<f64> = CsMat::empty(sprs::CSR, 2);
-    let labels = array![0_i64, 1];
-    let responses = array![1.0, 2.0];
+    let (labels, responses) = (array![0_i64, 1], array![1.0, 2.0]);
 
     assert!(matches!(
         default_classifier().fit(&empty_dense, labels.view()),
@@ -159,8 +108,7 @@ fn empty_inputs_and_feature_count_mismatches_return_central_errors() {
 
 #[test]
 fn non_finite_values_target_errors_and_out_of_range_probabilities_are_rejected() {
-    let labels = array![0_i64, 1];
-    let responses = array![1.0, 2.0];
+    let (labels, responses) = (array![0_i64, 1], array![1.0, 2.0]);
     let bad_sparse = CsMat::new((2, 2), vec![0, 1, 2], vec![1, 0], vec![f64::NAN, 1.0]);
 
     assert!(matches!(
@@ -207,17 +155,30 @@ fn non_finite_values_target_errors_and_out_of_range_probabilities_are_rejected()
         ))
     ));
 
-    let clean = array![[0.0, 1.0], [2.0, 3.0]];
-    let out_of_range_model = SKBaggingClassifier::build(InvalidProbabilityClassifier(1.4))
+    let clean = array![[0.0, 1.0], [2.0, 3.0], [4.0, 5.0], [6.0, 7.0]];
+    let out_of_range_model = SKBaggingClassifier::build(InvalidOutputBase(1.4))
         .number_of_estimators(2)
         .bootstrap(false)
         .build()
         .unwrap()
-        .fit(&clean, labels.view())
+        .fit(&clean, array![0_i64, 0, 1, 1].view())
         .unwrap();
     assert!(matches!(
         out_of_range_model.predict_probabilities(&clean),
         Err(SKBaggingError::Central(SKError::ProbabilityOutOfRange {
+            position: 0
+        }))
+    ));
+    let nan_oob = SKBaggingRegressor::build(InvalidOutputBase(f64::NAN))
+        .number_of_estimators(8)
+        .oob_score(true)
+        .random_seed(3)
+        .build()
+        .unwrap()
+        .fit(&clean, array![1.0, 2.0, 3.0, 4.0].view());
+    assert!(matches!(
+        nan_oob,
+        Err(SKBaggingError::Central(SKError::NonFiniteValue {
             position: 0
         }))
     ));
