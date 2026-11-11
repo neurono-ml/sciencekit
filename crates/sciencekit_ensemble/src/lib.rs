@@ -31,3 +31,6 @@ pub use random_forest::{
 // Re-export the split vocabulary owned by `sciencekit_tree` so consumers
 // configure a forest without depending on the tree crate directly.
 pub use sciencekit_tree::{SKClassWeight, SKMaximumFeatures, SKTreeCriterion};
+
+#[cfg(test)]
+mod acceptance_tests;
