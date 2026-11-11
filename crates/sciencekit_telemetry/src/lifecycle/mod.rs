@@ -11,6 +11,8 @@ mod shutdown;
 pub use init::SKTelemetry;
 
 #[cfg(test)]
+mod concurrency_tests;
+#[cfg(test)]
 mod lifecycle_tests;
 #[cfg(test)]
 mod noop_tests;

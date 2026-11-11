@@ -20,6 +20,7 @@ use crate::pipeline::{SKTelemetryPipeline, sk_build_otlp_pipeline};
 /// deterministic flushing and clean shutdown.
 pub struct SKTelemetry {
     pub(super) pipeline: SKTelemetryPipeline,
+    pub(super) flush_lock: std::sync::Mutex<()>,
     pub(super) is_shut_down: AtomicBool,
 }
 
@@ -75,6 +76,7 @@ impl SKTelemetry {
         global::set_tracer_provider(pipeline.tracer_provider().clone());
         Ok(Self {
             pipeline,
+            flush_lock: std::sync::Mutex::new(()),
             is_shut_down: AtomicBool::new(false),
         })
     }
