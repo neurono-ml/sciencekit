@@ -25,7 +25,7 @@
 
 - [x] 3.1 Implement the builder with the documented defaults and invalid-value tests;
   verify with `cargo test -p sciencekit_outlier isolation_builder`.
-- [ ] 3.2 Implement fit (subsample, per-tree seeds, forest assembly) and the model state;
+- [x] 3.2 Implement fit (subsample, per-tree seeds, forest assembly) and the model state;
   verify with `cargo test -p sciencekit_outlier isolation_fit`.
 - [ ] 3.3 Implement `score_samples`, `decision_function`, typed `predict` and `fit_predict`
   with the contamination offset; verify with
