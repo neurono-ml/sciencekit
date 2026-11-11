@@ -27,6 +27,6 @@ pub use configuration::{
 pub use pipeline::{
     SK_METRIC_OPERATION_COLUMNS, SK_METRIC_OPERATION_COUNT, SK_METRIC_OPERATION_DURATION,
     SK_METRIC_OPERATION_ERRORS, SK_METRIC_OPERATION_ROWS, SKTelemetryMetricsLayer,
-    sk_build_log_layer, sk_build_logger_provider, sk_build_meter_provider, sk_build_metrics_layer,
-    sk_build_trace_layer, sk_build_tracer_provider,
+    SKTelemetryPipeline, sk_build_log_layer, sk_build_logger_provider, sk_build_meter_provider,
+    sk_build_metrics_layer, sk_build_otlp_pipeline, sk_build_trace_layer, sk_build_tracer_provider,
 };

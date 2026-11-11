@@ -16,6 +16,7 @@ opentelemetry = { workspace = true, features = ["trace", "metrics", "logs"] }
 opentelemetry_sdk = { workspace = true, features = ["trace", "metrics", "logs"] }
 opentelemetry-appender-tracing = { workspace = true }
 opentelemetry-otlp = { workspace = true, optional = true }
+http = { version = "1", optional = true }
 tokio = { version = "=1.53.1", features = ["rt"], optional = true }
 
 [dev-dependencies]
@@ -30,6 +31,7 @@ default = []
 # Export traces, logs and metrics over OTLP/gRPC (tonic). Off by default.
 otlp-grpc = [
     "dep:opentelemetry-otlp",
+    "dep:http",
     "dep:tokio",
     "opentelemetry-otlp/grpc-tonic",
     "opentelemetry-otlp/trace",
