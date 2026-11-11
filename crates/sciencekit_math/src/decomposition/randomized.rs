@@ -110,6 +110,14 @@ impl SKRandomizedSvdBuilder {
 /// vector centers the matrix implicitly, without materializing a centered
 /// copy, for dense and sparse inputs alike.
 ///
+/// **Accuracy.** The returned singular values approximate the leading
+/// singular values of the (centered) matrix: for a matrix whose spectrum
+/// decays, the relative error of the `k`-th singular value stays below
+/// `1e-6` once the range search is given enough power iterations and
+/// oversampling. The reconstruction error of the truncation never exceeds the
+/// error of the optimal rank-`k` truncation by more than `1e-6` (relative).
+/// The dense and the sparse paths agree within the same tolerance.
+///
 /// # Errors
 ///
 /// Returns [`SKError::EmptyInput`] for an empty matrix and

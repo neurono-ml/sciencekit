@@ -73,6 +73,10 @@ pub use sparse_ops::{sk_csr_dense_product, sk_sparse_product};
 pub mod prelude {
     //! Convenience re-exports for downstream algorithm crates.
 
+    pub use crate::decomposition::{
+        SKRandomizedSvdBuilder, SKRandomizedSvdResult, sk_randomized_svd,
+    };
+
     pub use crate::backend::{
         SKFaerBackend, SKMathBackend, SKMatrixMultiplyBackend, SKNormKind, sk_default_math_backend,
     };
