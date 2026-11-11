@@ -17,7 +17,7 @@
   verify with `cargo test -p sciencekit_cluster minibatch_init`.
 - [x] 2.2 Implement `partial_fit` preserving centers/counts across calls, with a batched-
   equals-full-fit test; verify with `cargo test -p sciencekit_cluster minibatch_partial`.
-- [ ] 2.3 Implement dense and sparse batch assignment/update parity and no-densification
+- [x] 2.3 Implement dense and sparse batch assignment/update parity and no-densification
   tests; verify with `cargo test -p sciencekit_cluster minibatch_representation`.
 
 ## 3. Streaming
