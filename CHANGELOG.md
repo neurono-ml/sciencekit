@@ -9,6 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `sciencekit_decomposition` gains out-of-core Principal Component Analysis
+  (spec `incremental-pca`): `SKIncrementalPCA<F>`, `SKIncrementalPCABuilder<F>`
+  and `SKIncrementalPCAModel<F>`, builder-only with `number_of_components`
+  (default `None`, meaning `min(n_samples, n_features)` up to the feature
+  count), `batch_size` (default `1024`), `whiten` (default `false`),
+  `maximum_number_of_epochs` (default `1`), `backend` (default `Faer`) and
+  `execution_mode` (default `Automatic`). Dense batches accumulate exact
+  `(samples_seen, mean, scatter)` statistics via the Chan-Golub-LeVeque merge
+  across fixed 256-row parallel chunks without retaining rows; sparse CSR
+  batches accumulate Neumaier-compensated column sums and Gram products
+  (`Gram - n * mean * mean^T`) without ever densifying sparse storage.
+  Finalization divides the scatter matrix by `n - 1`, runs the configured
+  backend's symmetric eigensolver (`eigh`), sorts eigenvalues non-increasingly
+  and orients principal component rows deterministically to match `SKPCA`.
+  `fit` chunks in-memory dense/CSR matrices into `batch_size` blocks (coalescing
+  undersized trailing remainders), `SKIncrementalPCAModel::partial_fit` chains
+  dense and CSR batch updates, `fit_streaming` drives `SKSourceProvider`
+  through the shared prefetch executor across one pass for one-shot providers
+  and `maximum_number_of_epochs` passes for reopenable providers, and
+  `SKIncrementalPCAModel` implements `SKFeatureTransformer`, `transform`,
+  `inverse_transform` and format-agnostic `SKExportable`/`SKImportable` state
+  round-tripping.
+
 - `sciencekit_pipeline` gains parallel feature branching and column-wise
   concatenation (spec `feature-union`): `SKFeatureUnion` and
   `SKFeatureUnionBuilder` (`build`/`start` for compile-time tuples up to eight
