@@ -237,4 +237,7 @@ deterministic best selection, error policies and the refit. The
 [Lua bindings chapter](./ch35-lua-bindings.html) adds the embedded interpreter, userdata
 lifecycle, table conversion and the packaged module. The
 [Go bindings chapter](./ch36-go-bindings.html) adds the cgo boundary, C-owned copies,
-finalizers, structured errors and the build/CI story.
+finalizers, structured errors and the build/CI story. The
+[Arrow interop chapter](./ch37-arrow-interop.html) adds the neutral schema mapping, the
+borrowed primitive columns, the missing-value policies over Arrow nulls, the C Data
+Interface in both directions and the columnar file sources with projection pushdown.
