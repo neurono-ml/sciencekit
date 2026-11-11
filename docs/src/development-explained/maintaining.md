@@ -269,4 +269,8 @@ concatenation, member-indexed error context and nested pipeline composition.
 The [JSON debug format chapter](./ch45-json-debug-format.html) adds the deterministic
 human-readable `SKModelState` schema, the pretty and compact writer, the duplicate-aware
 validating reader and the round-trip acceptance guarantees across scalar and tensor types.
+The [Truncated SVD chapter](./ch49-truncated-svd.html) adds `SKTruncatedSVD` in
+`sciencekit_decomposition`: uncentered randomized low-rank factorization for latent semantic
+analysis, non-densifying CSR `fit`/`transform`/`inverse_transform` parity, two-pass sparse
+variance ratios and thread-count-invariant 256-row chunking.
 
