@@ -29,7 +29,7 @@
 
 ## 3. Acceptance and review
 
-- [ ] 3.1 Add `acceptance_tests/` covering tiny and large dense/sparse matrices, every
+- [x] 3.1 Add `acceptance_tests/` covering tiny and large dense/sparse matrices, every
   component boundary, determinism, concurrency and metric production; verify with
   `cargo test -p sciencekit_decomposition`.
 - [ ] 3.2 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
