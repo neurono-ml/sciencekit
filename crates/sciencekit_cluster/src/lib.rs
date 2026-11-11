@@ -15,7 +15,9 @@
 pub mod dbscan;
 pub mod kmeans;
 
-pub use dbscan::{SKDBSCANAlgorithm, SKDBSCANMetric, SKDBSCANSearchStrategy};
+pub use dbscan::{
+    SKDBSCAN, SKDBSCANAlgorithm, SKDBSCANBuilder, SKDBSCANMetric, SKDBSCANSearchStrategy,
+};
 pub use kmeans::{
     SKKMeans, SKKMeansAlgorithm, SKKMeansBuilder, SKKMeansInitialization, SKKMeansModel,
 };
