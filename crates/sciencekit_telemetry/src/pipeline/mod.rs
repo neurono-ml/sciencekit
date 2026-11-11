@@ -24,6 +24,8 @@ pub use traces::{sk_build_trace_layer, sk_build_tracer_provider};
 #[cfg(test)]
 mod logs_tests;
 #[cfg(test)]
+mod metrics_cardinality_tests;
+#[cfg(test)]
 mod metrics_tests;
 #[cfg(test)]
 mod pipeline_tests;

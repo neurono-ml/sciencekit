@@ -86,25 +86,43 @@ impl SKTelemetryPipeline {
         Box::new(tracing_subscriber::registry().with(self.layer()))
     }
 
-    /// Flush pending traces, logs and metrics across all three providers.
+    /// Flush pending traces, logs and metrics across all three providers within
+    /// the configured `flush_timeout`.
     pub fn force_flush(&self) -> Result<(), SKError> {
-        let mut failures = Vec::new();
-        if let Err(error) = self.tracer_provider.force_flush() {
-            failures.push(format!("traces: {error}"));
-        }
-        if let Err(error) = self.logger_provider.force_flush() {
-            failures.push(format!("logs: {error}"));
-        }
-        if let Err(error) = self.meter_provider.force_flush() {
-            failures.push(format!("metrics: {error}"));
-        }
-        if failures.is_empty() {
-            Ok(())
-        } else {
-            Err(SKError::UnsupportedOperation {
+        let timeout = self.configuration.flush_timeout();
+        let tracer_provider = self.tracer_provider.clone();
+        let logger_provider = self.logger_provider.clone();
+        let meter_provider = self.meter_provider.clone();
+        let (sender, receiver) = std::sync::mpsc::sync_channel(1);
+        std::thread::spawn(move || {
+            let mut failures = Vec::new();
+            if let Err(error) = tracer_provider.force_flush() {
+                failures.push(format!("traces: {error}"));
+            }
+            if let Err(error) = logger_provider.force_flush() {
+                failures.push(format!("logs: {error}"));
+            }
+            if let Err(error) = meter_provider.force_flush() {
+                failures.push(format!("metrics: {error}"));
+            }
+            let _ = sender.send(failures);
+        });
+        match receiver.recv_timeout(timeout) {
+            Ok(failures) if failures.is_empty() => Ok(()),
+            Ok(failures) => Err(SKError::UnsupportedOperation {
                 operation: "telemetry_force_flush",
                 reason: failures.join("; "),
-            })
+            }),
+            Err(std::sync::mpsc::RecvTimeoutError::Timeout) => Err(SKError::UnsupportedOperation {
+                operation: "telemetry_force_flush",
+                reason: format!("telemetry flush timed out after {timeout:?}"),
+            }),
+            Err(std::sync::mpsc::RecvTimeoutError::Disconnected) => {
+                Err(SKError::UnsupportedOperation {
+                    operation: "telemetry_force_flush",
+                    reason: "telemetry flush worker disconnected unexpectedly".to_string(),
+                })
+            }
         }
     }
 

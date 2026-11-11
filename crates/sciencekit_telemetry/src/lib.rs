@@ -8,6 +8,31 @@
 //! [`SKTelemetryConfiguration`] and initialize the global pipeline once at
 //! startup via [`SKTelemetry::init`].
 //!
+//! # Example
+//!
+//! ```
+//! use std::time::Duration;
+//! use sciencekit_common::SKBuilder;
+//! use sciencekit_telemetry::{
+//!     SKTelemetry, SKTelemetryConfiguration, SKTelemetrySampler, SKTelemetryTransport,
+//! };
+//!
+//! let configuration = SKTelemetryConfiguration::builder()
+//!     .service_name("sciencekit-worker")
+//!     .service_version("0.7.0")
+//!     .deployment_environment("production")
+//!     .endpoint("http://localhost:4317")
+//!     .transport(SKTelemetryTransport::Grpc)
+//!     .timeout(Duration::from_secs(5))
+//!     .sampler(SKTelemetrySampler::ParentBased(0.25))
+//!     .build()
+//!     .unwrap();
+//!
+//! assert_eq!(configuration.service_name(), "sciencekit-worker");
+//! assert!(!SKTelemetry::is_initialized());
+//! assert_eq!(SKTelemetry::active_exporter_count(), 0);
+//! ```
+//!
 //! **Naming:** public items follow PRD §3.4 — structs, enums and traits are
 //! prefixed `SK`, free-scope functions and constants use `sk_`/`SK_`, methods
 //! carry no prefix, and no Rust identifier uses abbreviations. Folder `mod.rs`
@@ -32,3 +57,6 @@ pub use pipeline::{
     SKTelemetryPipeline, sk_build_log_layer, sk_build_logger_provider, sk_build_meter_provider,
     sk_build_metrics_layer, sk_build_otlp_pipeline, sk_build_trace_layer, sk_build_tracer_provider,
 };
+
+#[cfg(test)]
+mod acceptance_tests;

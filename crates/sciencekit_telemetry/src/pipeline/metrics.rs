@@ -18,6 +18,35 @@ pub const SK_METRIC_OPERATION_COLUMNS: &str = "sciencekit.operation.columns";
 /// Counter recording library operations that terminated with an error.
 pub const SK_METRIC_OPERATION_ERRORS: &str = "sciencekit.operation.errors";
 
+pub(crate) fn sk_canonical_operation_label(raw: &str) -> &'static str {
+    match raw {
+        "fit" => "fit",
+        "partial_fit" => "partial_fit",
+        "fit_transform" => "fit_transform",
+        "transform" => "transform",
+        "predict" => "predict",
+        "fit_predict" => "fit_predict",
+        "score" => "score",
+        _ => "unknown",
+    }
+}
+
+pub(crate) fn sk_canonical_backend_label(raw: &str) -> &'static str {
+    raw.parse::<sciencekit_common::SKBackendKind>()
+        .map_or("unknown", sciencekit_common::SKBackendKind::name)
+}
+
+pub(crate) fn sk_canonical_mode_label(raw: &str) -> &'static str {
+    match raw {
+        "Automatic" => "Automatic",
+        "InProcessSynchronous" => "InProcessSynchronous",
+        "InProcessAsynchronous" => "InProcessAsynchronous",
+        "OutOfCoreStreaming" => "OutOfCoreStreaming",
+        "OutOfCoreMemoryMapped" => "OutOfCoreMemoryMapped",
+        _ => "unknown",
+    }
+}
+
 #[derive(Clone)]
 pub(crate) struct SKOperationInstruments {
     duration_milliseconds: Histogram<f64>,

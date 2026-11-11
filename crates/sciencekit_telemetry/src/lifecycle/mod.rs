@@ -13,6 +13,8 @@ pub use init::SKTelemetry;
 #[cfg(test)]
 mod concurrency_tests;
 #[cfg(test)]
+mod flush_timeout_tests;
+#[cfg(test)]
 mod lifecycle_tests;
 #[cfg(test)]
 mod noop_tests;

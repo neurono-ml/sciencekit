@@ -13,14 +13,16 @@ use tracing_subscriber::Layer;
 use tracing_subscriber::layer::Context;
 use tracing_subscriber::registry::LookupSpan;
 
-use super::metrics::SKOperationInstruments;
+use super::metrics::{
+    SKOperationInstruments, sk_canonical_backend_label, sk_canonical_mode_label,
+    sk_canonical_operation_label,
+};
 
-#[derive(Default)]
 struct OperationSpanState {
-    started_at: Option<Instant>,
-    operation: Option<String>,
-    backend: Option<String>,
-    mode: Option<String>,
+    started_at: Instant,
+    operation: &'static str,
+    backend: &'static str,
+    mode: &'static str,
     rows: Option<u64>,
     columns: Option<u64>,
     has_error: bool,
@@ -29,8 +31,13 @@ struct OperationSpanState {
 impl OperationSpanState {
     fn new() -> Self {
         Self {
-            started_at: Some(Instant::now()),
-            ..Self::default()
+            started_at: Instant::now(),
+            operation: "unknown",
+            backend: "unknown",
+            mode: "unknown",
+            rows: None,
+            columns: None,
+            has_error: false,
         }
     }
 }
@@ -40,27 +47,18 @@ struct OperationFieldVisitor<'a> {
 }
 
 impl OperationFieldVisitor<'_> {
-    fn assign_text(&mut self, name: &str, value: String) {
+    fn assign_text(&mut self, name: &str, value: &str) {
         let trimmed = value
             .strip_prefix('"')
             .and_then(|inner| inner.strip_suffix('"'))
-            .map(ToOwned::to_owned)
             .unwrap_or(value);
         match name {
-            "operation" => self.state.operation = Some(trimmed),
-            "backend" => self.state.backend = Some(trimmed),
-            "mode" => self.state.mode = Some(trimmed),
+            "operation" => self.state.operation = sk_canonical_operation_label(trimmed),
+            "backend" => self.state.backend = sk_canonical_backend_label(trimmed),
+            "mode" => self.state.mode = sk_canonical_mode_label(trimmed),
             "error" if !trimmed.is_empty() => self.state.has_error = true,
-            "rows" => {
-                if let Ok(parsed) = trimmed.parse::<u64>() {
-                    self.state.rows = Some(parsed);
-                }
-            }
-            "columns" => {
-                if let Ok(parsed) = trimmed.parse::<u64>() {
-                    self.state.columns = Some(parsed);
-                }
-            }
+            "rows" => self.state.rows = trimmed.parse::<u64>().ok().or(self.state.rows),
+            "columns" => self.state.columns = trimmed.parse::<u64>().ok().or(self.state.columns),
             _ => {}
         }
     }
@@ -82,18 +80,17 @@ impl Visit for OperationFieldVisitor<'_> {
     }
 
     fn record_str(&mut self, field: &Field, value: &str) {
-        self.assign_text(field.name(), value.to_string());
+        self.assign_text(field.name(), value);
     }
 
-    fn record_error(&mut self, field: &Field, value: &(dyn std::error::Error + 'static)) {
+    fn record_error(&mut self, field: &Field, _value: &(dyn std::error::Error + 'static)) {
         if field.name() == "error" {
-            let _ = value;
             self.state.has_error = true;
         }
     }
 
     fn record_debug(&mut self, field: &Field, value: &dyn fmt::Debug) {
-        self.assign_text(field.name(), format!("{value:?}"));
+        self.assign_text(field.name(), &format!("{value:?}"));
     }
 }
 
@@ -158,17 +155,11 @@ where
         else {
             return;
         };
-        let duration_milliseconds = state
-            .started_at
-            .map(|started| started.elapsed().as_secs_f64() * 1000.0)
-            .unwrap_or(0.0);
-        let operation = state.operation.unwrap_or_else(|| "unknown".to_string());
-        let backend = state.backend.unwrap_or_else(|| "unknown".to_string());
-        let mode = state.mode.unwrap_or_else(|| "unknown".to_string());
+        let duration_milliseconds = state.started_at.elapsed().as_secs_f64() * 1000.0;
         let labels = [
-            KeyValue::new("operation", operation),
-            KeyValue::new("backend", backend),
-            KeyValue::new("mode", mode),
+            KeyValue::new("operation", state.operation),
+            KeyValue::new("backend", state.backend),
+            KeyValue::new("mode", state.mode),
         ];
         self.instruments.record_completed_operation(
             &labels,

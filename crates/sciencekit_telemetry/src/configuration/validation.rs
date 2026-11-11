@@ -47,18 +47,7 @@ pub(crate) fn sk_validate_resource_attributes(
 }
 
 pub(crate) fn sk_validate_endpoint(endpoint: &str) -> Result<(), SKError> {
-    let trimmed = endpoint.trim();
-    let remainder = trimmed
-        .strip_prefix("http://")
-        .or_else(|| trimmed.strip_prefix("https://"));
-    let Some(after_scheme) = remainder else {
-        return Err(SKError::InvalidHyperparameter {
-            name: "endpoint",
-            reason: format!("endpoint `{endpoint}` must start with `http://` or `https://`"),
-        });
-    };
-
-    if trimmed
+    if endpoint
         .chars()
         .any(|character| character.is_whitespace() || character.is_control())
     {
@@ -67,6 +56,16 @@ pub(crate) fn sk_validate_endpoint(endpoint: &str) -> Result<(), SKError> {
             reason: format!("endpoint `{endpoint}` must not contain whitespace or control bytes"),
         });
     }
+
+    let remainder = endpoint
+        .strip_prefix("http://")
+        .or_else(|| endpoint.strip_prefix("https://"));
+    let Some(after_scheme) = remainder else {
+        return Err(SKError::InvalidHyperparameter {
+            name: "endpoint",
+            reason: format!("endpoint `{endpoint}` must start with `http://` or `https://`"),
+        });
+    };
 
     let authority = after_scheme
         .split(['/', '?', '#'])
@@ -83,7 +82,9 @@ fn sk_validate_authority(endpoint: &str, authority: &str) -> Result<(), SKError>
         });
     }
 
-    let (host, optional_port) = if let Some(after_bracket) = authority.strip_prefix('[') {
+    let (host, optional_port, is_bracketed_ipv6) = if let Some(after_bracket) =
+        authority.strip_prefix('[')
+    {
         let Some((ipv6_host, tail)) = after_bracket.split_once(']') else {
             return Err(SKError::InvalidHyperparameter {
                 name: "endpoint",
@@ -100,17 +101,17 @@ fn sk_validate_authority(endpoint: &str, authority: &str) -> Result<(), SKError>
                 reason: format!("endpoint `{endpoint}` has malformed characters after IPv6 host"),
             });
         };
-        (ipv6_host, port)
+        (ipv6_host, port, true)
     } else if let Some((host_part, port_part)) = authority.rsplit_once(':') {
-        (host_part, Some(port_part))
+        (host_part, Some(port_part), false)
     } else {
-        (authority, None)
+        (authority, None, false)
     };
 
     sk_validate_hyperparameter(
         "endpoint",
-        !host.is_empty(),
-        format!("endpoint `{endpoint}` must include a non-empty host"),
+        !host.is_empty() && (is_bracketed_ipv6 || !host.contains(':')),
+        format!("endpoint `{endpoint}` must include a valid host"),
     )?;
 
     if let Some(port_text) = optional_port {

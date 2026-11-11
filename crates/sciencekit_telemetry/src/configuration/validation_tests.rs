@@ -44,6 +44,10 @@ fn configuration_builder_rejects_malformed_endpoints() {
         "http://localhost:0",
         "http://localhost:70000",
         "http://localhost:notaport",
+        " http://localhost:4317 ",
+        "http://localhost:4317\n",
+        "http://localhost:4317:8080",
+        "http://::1:4317",
     ] {
         let error = SKTelemetryConfiguration::builder()
             .service_name("sciencekit")
