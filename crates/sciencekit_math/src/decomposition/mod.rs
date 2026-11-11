@@ -22,3 +22,5 @@ mod dense_tests;
 mod projection_tests;
 #[cfg(test)]
 mod result_tests;
+#[cfg(test)]
+mod sparse_tests;
