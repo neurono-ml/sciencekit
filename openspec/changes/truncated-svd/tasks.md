@@ -2,7 +2,7 @@
 
 ## 1. Module and fit
 
-- [ ] 1.1 Create `crates/sciencekit_decomposition/src/truncated_svd/` with dispatcher
+- [x] 1.1 Create `crates/sciencekit_decomposition/src/truncated_svd/` with dispatcher
   `mod.rs`, config and model; verify `cargo test -p sciencekit_decomposition truncated`
   compiles.
 - [ ] 1.2 Implement the randomized-SVD fit and model state (components, singular values,
