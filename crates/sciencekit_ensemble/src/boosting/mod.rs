@@ -4,8 +4,11 @@
 //! This is a **pure dispatcher** module: `mod.rs` only declares submodules and
 //! re-exports their public items.
 
+pub(crate) mod early_stopping;
 mod init;
 pub mod loss;
+pub(crate) mod multiclass_loop;
+pub(crate) mod scalar_loop;
 pub(crate) mod scores;
 pub(crate) mod stage;
 pub(crate) mod subsample;
@@ -18,6 +21,8 @@ pub use loss::{
     SKMulticlassLogLoss, SKMulticlassLogLossBuilder, SKSquaredErrorLoss,
 };
 
+#[cfg(test)]
+mod boosting_early_stop_tests;
 #[cfg(test)]
 mod boosting_stage_tests;
 #[cfg(test)]
