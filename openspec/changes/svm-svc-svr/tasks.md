@@ -50,7 +50,7 @@
 
 ## 3. SVC estimator
 
-- [ ] 3.1 Implement `SKSVCBuilder` with `C`, `kernel`, `degree`, `gamma`, `coef0`,
+- [x] 3.1 Implement `SKSVCBuilder` with `C`, `kernel`, `degree`, `gamma`, `coef0`,
   `tolerance`, `maximum_number_of_iterations`, `cache_size`, `shrinking`, `class_weight`,
   `probability`, `random_seed`, `backend` and `execution_mode`; add default and
   invalid-value tests; verify with `cargo test -p sciencekit_svm svc_builder`.
