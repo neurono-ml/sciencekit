@@ -48,6 +48,8 @@ mod safetensors_round_trip_tests;
 #[cfg(test)]
 mod safetensors_shards_tests;
 #[cfg(test)]
+mod safetensors_shards_validation_tests;
+#[cfg(test)]
 mod safetensors_validation_tests;
 #[cfg(test)]
 mod safetensors_wiring_tests;

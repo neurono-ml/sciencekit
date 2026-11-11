@@ -132,8 +132,22 @@ pub(crate) fn read_sharded_state_from_index<F: SKFloat>(
         let shard_path = parent.join(shard_name);
         let raw_bytes = fs::read(&shard_path)?;
         let uncompressed = decode_bytes(&shard_path, &raw_bytes)?;
-        let (_shard_meta, shard_tensors) = decode_single_file_parts::<F>(&uncompressed)?;
+        let (shard_meta, shard_tensors) = decode_single_file_parts::<F>(&uncompressed)?;
+        if shard_meta != metadata {
+            return Err(SKError::InvalidHyperparameter {
+                name: "shards",
+                reason: format!(
+                    "shard `{shard_name}` metadata disagrees with shard index metadata"
+                ),
+            });
+        }
         for tensor in shard_tensors {
+            if !seen_tensors.insert(tensor.name().to_string()) {
+                return Err(SKError::InvalidHyperparameter {
+                    name: "tensor_names",
+                    reason: format!("duplicate tensor `{}` across shards", tensor.name()),
+                });
+            }
             let expected_shard = index.tensor_to_shard.get(tensor.name());
             if expected_shard.map(String::as_str) != Some(shard_name.as_str()) {
                 return Err(SKError::InvalidHyperparameter {
@@ -142,12 +156,6 @@ pub(crate) fn read_sharded_state_from_index<F: SKFloat>(
                         "shard `{shard_name}` carries tensor `{}` not mapped to it in index",
                         tensor.name()
                     ),
-                });
-            }
-            if !seen_tensors.insert(tensor.name().to_string()) {
-                return Err(SKError::InvalidHyperparameter {
-                    name: "tensor_names",
-                    reason: format!("duplicate tensor `{}` across shards", tensor.name()),
                 });
             }
             merged_tensors.push(tensor);
