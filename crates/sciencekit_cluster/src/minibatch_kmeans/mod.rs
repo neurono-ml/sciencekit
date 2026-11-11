@@ -9,6 +9,7 @@ mod builder;
 mod config;
 mod core_implementation;
 mod model;
+mod reassign;
 mod state;
 mod update;
 
@@ -17,6 +18,8 @@ pub use builder::SKMiniBatchKMeansBuilder;
 pub use core_implementation::SKMiniBatchKMeans;
 pub use model::SKMiniBatchKMeansModel;
 
+#[cfg(test)]
+mod minibatch_reassign_tests;
 #[cfg(test)]
 mod minibatch_state_tests;
 #[cfg(test)]
