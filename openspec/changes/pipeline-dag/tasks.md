@@ -16,7 +16,7 @@
   chain; verify with `cargo test -p sciencekit_pipeline graph_fit`.
 - [x] 2.3 Implement prediction through the fitted graph and classifier/regressor wrappers;
   verify with `cargo test -p sciencekit_pipeline graph_predict`.
-- [ ] 2.4 Implement merge nodes and document/test edge-order concatenation; verify with
+- [x] 2.4 Implement merge nodes and document/test edge-order concatenation; verify with
   `cargo test -p sciencekit_pipeline graph_merge`.
 
 ## 3. Representation, concurrency and acceptance
