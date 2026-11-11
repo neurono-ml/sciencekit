@@ -595,7 +595,10 @@ Order faithful to the scikit-learn mapping (from the handoff), respecting depend
 13. `sciencekit_decomposition`: SKPCA, SKTruncatedSVD.
     - Representation parity (§4.5.1 / §4.5.2): `SKPCA` supports sparse CSR fitting without densification on `SKPCASolver::Randomized` via implicit centering; `Full` and `CovarianceEigh` invoke the documented dense-only exception because they materialize the centered design or its covariance, rejecting CSR with `UnsupportedRepresentation` (naming `Randomized` and `SKTruncatedSVD`) unless `allow_densification(true)` is explicitly set (with a warning reporting the byte cost).
     - Sparse exact full/eigh solvers, kernel PCA, streaming/incremental PCA (`SKIncrementalPCA`, delivered by its own change), GPU acceleration, `memmap2`-backed storage and model export (Phase 7) are explicit `SKPCA` non-goals.
-14. `sciencekit_outlier`: anomaly detection.
+14. `sciencekit_outlier`: anomaly detection (`SKIsolationForest`).
+    - Outlier detectors expose typed one-byte assignments (`SKOutlierLabel { Inlier, Outlier }`) plus `score_samples`, `decision_function` and `offset` through `SKOutlierPredictor<F>`; external `-1`/`1` codes exist only at the explicit `to_i64`/`from_i64` interop boundary.
+    - Representation parity (§4.5.1): `SKIsolationForest` fits and scores both dense views and sparse CSR views without densification (gathering per-tree CSR subsamples directly into compact CSC columns for split scans and walking `SKTree` nodes directly on CSR rows).
+    - Local Outlier Factor (`SKLocalOutlierFactor`), One-Class SVM (`SKOneClassSVM`), missing-value routing in isolation trees, streaming/`partial_fit`, GPU acceleration, `memmap2`-backed tree storage and model export (Phase 7) are explicit non-goals of the `outlier-detection` change.
 
 ### Phase 6 — Selection, pipeline, metrics
 15. `sciencekit_model_selection`: SKKFold, sk_train_test_split, SKGridSearchCV.
