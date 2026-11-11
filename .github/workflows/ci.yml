@@ -84,6 +84,12 @@ jobs:
         run: cargo test -p sciencekit_interop
       - name: Arrow adapter tests
         run: cargo test -p sciencekit_interop --features arrow
+      - name: Safetensors compression codec tests
+        run: |
+          for feature in compression-gzip compression-brotli compression-snappy; do
+            cargo test -p sciencekit_interop --features "$feature"
+          done
+          cargo test -p sciencekit_interop --features "compression-gzip,compression-brotli,compression-snappy"
       - name: Each optional engine feature builds
         run: |
           for feature in arrow polars datafusion memmap; do
