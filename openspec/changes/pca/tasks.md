@@ -46,10 +46,10 @@
   verify with `cargo test -p sciencekit_decomposition`.
 - [x] 4.2 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
   warnings` and `cargo test --workspace`; fix every failure before pushing.
-- [ ] 4.3 Update `CHANGELOG.md` and the companion mdBook chapter (including a
+- [x] 4.3 Update `CHANGELOG.md` and the companion mdBook chapter (including a
   `Development Explained` chapter on centering, SVD, eigh, whitening and the dense-only
   exception); verify with `mdbook build docs`.
-- [ ] 4.4 Record the sparse-full/eigh solver, kernel PCA, incremental PCA, GPU, `memmap2`
+- [x] 4.4 Record the sparse-full/eigh solver, kernel PCA, incremental PCA, GPU, `memmap2`
   and export non-goals in `docs/PRD.md`.
 - [ ] 4.5 Independent review by a separate agent validating every scenario in
   `principal-component-analysis`; address every finding and re-run the gates.
