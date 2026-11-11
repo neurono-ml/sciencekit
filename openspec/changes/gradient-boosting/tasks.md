@@ -64,7 +64,7 @@
   count, invalid subsample/feature/regularization, invalid validation fraction,
   single-class classification and non-finite values; verify with
   `cargo test -p sciencekit_ensemble gb_validation`.
-- [ ] 6.4 Add repeated-fit determinism, thread-count invariance and concurrent prediction
+- [x] 6.4 Add repeated-fit determinism, thread-count invariance and concurrent prediction
   tests, plus a `Send + Sync` assertion; verify with
   `cargo test -p sciencekit_ensemble gb_determinism`.
 
