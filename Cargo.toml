@@ -24,6 +24,7 @@ resolver = "3"
 members = [
     "crates/sciencekit_cluster",
     "crates/sciencekit_common",
+    "crates/sciencekit_ensemble",
     "crates/sciencekit_ffi",
     "crates/sciencekit_gpu",
     "crates/sciencekit_impute",

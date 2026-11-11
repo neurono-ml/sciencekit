@@ -13,6 +13,8 @@ sciencekit_common = { path = "../sciencekit_common", version = "0.1.0" }
 ndarray = { workspace = true }
 sprs = { workspace = true }
 num-traits = "0.2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 tracing = { workspace = true }
 tokio = { version = "=1.53.1", features = ["rt"] }
 
