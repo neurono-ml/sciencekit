@@ -2,7 +2,7 @@
 
 ## 1. Bagging module and error type
 
-- [ ] 1.1 Create `crates/sciencekit_ensemble/src/bagging/` with dispatcher `mod.rs`,
+- [x] 1.1 Create `crates/sciencekit_ensemble/src/bagging/` with dispatcher `mod.rs`,
   `error.rs` and `config.rs`; define `SKBaggingError<E>` with `From<SKError>` and
   `From<E>` and test both conversions; verify with
   `cargo test -p sciencekit_ensemble bagging_error`.

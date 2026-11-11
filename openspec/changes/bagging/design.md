@@ -43,9 +43,12 @@ later for pipelines (Wave 6) if it earns its place; it is not required here.
 ### Decision 3 — Error composition
 
 The base fit returns `B::Error: From<SKError>`. Bagging defines
-`SKBaggingError<E> { Central(SKError), Base(E) }` implementing `From<SKError>` and
-`From<E>`, and uses it as its `fit`/`predict` error type. This preserves the base
-estimator's specific error instead of flattening it into the central enum.
+`SKBaggingError<E> { Central(SKError), Base(E) }` implementing `From<SKError>` (producing
+`Central`), `SKBaggingError::from_base` / `From<SKBaseEstimatorError<E>>` (producing `Base`
+without colliding with `From<SKError>` when `E = SKError`), and `From<SKBaggingError<SKError>>
+for SKError` (for integration with central scorers and pipelines), and uses it as its
+`fit`/`predict` error type. This preserves the base estimator's specific error instead of
+flattening it into the central enum.
 
 Alternative considered: requiring `B::Error = SKError` (too restrictive) and
 `B::Error: Into<SKError>` (not guaranteed by the trait and loses algorithm-specific
