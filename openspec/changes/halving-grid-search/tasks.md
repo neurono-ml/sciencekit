@@ -22,7 +22,7 @@
 - [x] 3.1 Implement the classifier/regressor builders with defaults and validation
   (`factor`, resources, empty candidates, incompatible scorer); verify with
   `cargo test -p sciencekit_model_selection halving_builder`.
-- [ ] 3.2 Implement refit, best-model accessors and classifier/regressor prediction
+- [x] 3.2 Implement refit, best-model accessors and classifier/regressor prediction
   delegation; verify with `cargo test -p sciencekit_model_selection halving_refit`.
 - [ ] 3.3 Add prediction-without-refit, dense/sparse and concurrency tests; verify with
   `cargo test -p sciencekit_model_selection halving_concurrency`.
