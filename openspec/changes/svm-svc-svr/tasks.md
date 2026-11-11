@@ -111,7 +111,7 @@
 - [x] 7.2 Add a concurrent prediction test sharing one fitted model across threads and a
   parallel-equals-sequential large-batch test; verify with
   `cargo test -p sciencekit_svm concurrency`.
-- [ ] 7.3 Add `acceptance_tests/` covering tiny and large data (at least 10 000 rows),
+- [x] 7.3 Add `acceptance_tests/` covering tiny and large data (at least 10 000 rows),
   binary and multiclass classification, regression, every kernel, every representation
   and metric production through `sciencekit_metrics`; verify with
   `cargo test -p sciencekit_svm`.
