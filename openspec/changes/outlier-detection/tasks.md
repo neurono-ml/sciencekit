@@ -17,7 +17,7 @@
   `cargo test -p sciencekit_outlier isolation_tree`.
 - [x] 2.2 Implement path length (`c(n)`, leaf size) and the expected-depth reduction, with
   hand-computed tests; verify with `cargo test -p sciencekit_outlier isolation_path`.
-- [ ] 2.3 Implement dense and sparse tree building and dense/sparse score equivalence
+- [x] 2.3 Implement dense and sparse tree building and dense/sparse score equivalence
   without densification; verify with
   `cargo test -p sciencekit_outlier isolation_representation`.
 
