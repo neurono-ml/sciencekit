@@ -94,7 +94,7 @@ pub(super) fn sk_validate_matrix_input<F: SKFloat>(
     operation: &'static str,
 ) -> Result<(usize, usize), SKError> {
     let (rows_count, found_columns) = sk_view_dimensions(&features)?;
-    if rows_count == 0 || found_columns == 0 {
+    if rows_count == 0 {
         return Err(SKError::EmptyInput { operation });
     }
     if found_columns != expected_columns {

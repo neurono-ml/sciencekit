@@ -29,3 +29,5 @@ mod truncated_model_tests;
 mod truncated_representation_tests;
 #[cfg(test)]
 mod truncated_transform_tests;
+#[cfg(test)]
+mod truncated_validation_tests;
