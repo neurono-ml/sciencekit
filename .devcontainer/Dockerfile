@@ -2,15 +2,15 @@
 #
 # One image with every toolchain the repository's lanes need:
 # Rust 1.85 (the pinned MSRV), Python + maturin/pytest for the bindings lane,
-# Go and Julia for the FFI-based bindings, Lua 5.4 for the Lua binding smoke
+# Go, Julia and R for the FFI-based bindings, Lua 5.4 for the Lua binding smoke
 # test (the crate itself embeds Lua through `mlua` with the `vendored` feature,
 # so no system interpreter is required at runtime), and the OpenCL headers for
 # the GPU backend.
 #
-# The Go and Lua toolchains also serve the extracted language bindings, which
-# live in their own repositories (`neurono-ml/sciencekit-go` and
-# `neurono-ml/sciencekit-lua`) and consume the `sciencekit_ffi` C ABI built
-# here.
+# The Go, Lua and R toolchains also serve the extracted language bindings,
+# which live in their own repositories (`neurono-ml/sciencekit-go`,
+# `neurono-ml/sciencekit-lua` and `neurono-ml/sciencekit-r`) and consume the
+# `sciencekit_ffi` C ABI built here.
 #
 # ROCm is *not* installed here: it needs a kernel driver and a device that only
 # the GPU node provides. Run the GPU lane on that node with
@@ -73,5 +73,23 @@ RUN pip3 install --break-system-packages --no-cache-dir maturin pytest numpy
 
 # LuaJIT is not needed; the binding embeds the reference Lua 5.4 VM. `lua5.4`
 # above exists only for running `tests/run.lua` directly.
+
+# R, for the `r-bindings` lane (`neurono-ml/sciencekit-r`): base R, headers and
+# compilers for `.Call` shims, `testthat`, plus TeX/HTML tools for `R CMD check`.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        qpdf \
+        r-base \
+        r-base-dev \
+        r-cran-testthat \
+        texinfo \
+        texlive-fonts-recommended \
+        texlive-latex-base \
+        texlive-latex-extra \
+        texlive-latex-recommended \
+        tidy \
+    && rm -rf /var/lib/apt/lists/*
+ENV LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    R_RD4PDF="times,hyper"
 
 WORKDIR /workspace
