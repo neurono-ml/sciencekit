@@ -2,7 +2,7 @@
 
 ## 1. Contract and crate
 
-- [ ] 1.1 Add `SKOutlierLabel { Inlier, Outlier }` with its one-byte size assertion and
+- [x] 1.1 Add `SKOutlierLabel { Inlier, Outlier }` with its one-byte size assertion and
   `to_i64`/`from_i64` conversions, plus `SKOutlierPredictor<F>` (`predict`,
   `decision_function`, `score_samples`), with a constant detector test; re-export both and
   verify with `cargo test -p sciencekit_common outlier`.
