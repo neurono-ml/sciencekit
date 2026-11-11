@@ -25,7 +25,8 @@ register its routines with `R_registerRoutines`, and be callable through `.Call`
   idempotent `close()`.
 - Dense matrix conversion at the boundary with rectangularity and type validation;
   `f64`-only semantics.
-- `fit`, `predict`, `transform`, `score`, `save` and `load` exposed on the R objects.
+- `fit`, `predict`, `transform`, `score`, `save_model` and `load_model` exposed on the R
+  objects.
 - Structured errors: R conditions of class `sciencekit_error` carrying the ABI status name,
   the numeric status code and the native message.
 - A `testthat` suite and a CI workflow running `R CMD check .`.
@@ -49,9 +50,9 @@ None.
   `NAMESPACE`, `R/`, `src/`, `tests/testthat/`, plus a build script for the native library
   and a header-sync script.
 - **APIs:** additive R package.
-- **Dependencies:** the `sciencekit_ffi` shared library (vendored header + documented build
-  step; the ABI crate is not on crates.io yet, so the native library is built from a
-  checkout of the main repository).
+- **Dependencies:** the `sciencekit_ffi` static archive (vendored header + documented
+  build step; the ABI crate is not on crates.io yet, so `libsciencekit_ffi.a` is built
+  from a checkout of the main repository).
 - **Downstream:** exposes the library to R users.
 - **Acceptance criteria:** the package loads, every supported family fits/predicts/scores
   on a known fixture, the scaler transforms, persistence round-trips, errors carry the

@@ -43,7 +43,7 @@ the same release eagerly.
 #### Scenario: Operation on a closed handle
 
 - **WHEN** an operation is invoked on an object whose handle was released
-- **THEN** a structured error with the `invalid_handle` status is raised and no freed
+- **THEN** a structured error with the `invalid-handle` status is raised and no freed
   memory is dereferenced
 
 #### Scenario: Finalizer
@@ -80,8 +80,9 @@ and type validation, and the binding SHALL support `f64` semantics only.
 
 ### Requirement: Operations
 
-The package SHALL expose `fit`, `predict`, `transform`, `score`, `save` and `load` over the
-builder and model objects, for the estimator families the ABI supports.
+The package SHALL expose `fit`, `predict`, `transform`, `score`, `save_model` and
+`load_model` over the builder and model objects, for the estimator families the ABI
+supports.
 
 #### Scenario: Fit and predict
 

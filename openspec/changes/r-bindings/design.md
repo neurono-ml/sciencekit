@@ -31,14 +31,16 @@ workspace, following the same pattern as `neurono-ml/sciencekit-go` and
 
 The package lives in `neurono-ml/sciencekit-r` as a standalone R package (no Cargo
 workspace). Because `sciencekit_ffi` is not published on crates.io yet, the package
-**vendors the ABI header** and links the **shared library built from a checkout of the main
+**vendors the ABI header** and links the **static archive built from a checkout of the main
 repository**:
 
 - `scripts/sync-header.sh` copies `crates/sciencekit_ffi/include/sciencekit.h` from a
-  checkout of `neurono-ml/sciencekit` into `src/`, so the compiled-against ABI never drifts
-  from the targeted ABI.
+  checkout of `neurono-ml/sciencekit` into `src/sciencekit.h`, so the compiled-against ABI
+  never drifts from the targeted ABI.
 - `scripts/build-native-library.sh` builds `cargo build -p sciencekit_ffi --release` in
-  that checkout and installs the shared object where the package's linker flags find it.
+  that checkout and installs `libsciencekit_ffi.a` into `tools/native/`, where
+  `src/Makevars` links it into `sciencekitr.so` without requiring `LD_LIBRARY_PATH` or
+  non-portable `rpath` flags.
 
 This mirrors the Go binding's `lib/` + vendored-header pattern and keeps the R package
 free of a Cargo dependency it cannot express. A crates.io release of `sciencekit_ffi`
@@ -69,27 +71,28 @@ declares `useDynLib(sciencekitr, .registration = TRUE)`.
 
 ### Decision 3 — External pointers, finalizers and `close()`
 
-Builders and fitted models are R external pointers (`R_MakeExternalPtr`) whose protected
-payload points at a small C struct holding the native handle and the kind of handle it is.
-Two release paths share one idempotent routine:
+Builders and fitted models are R external pointers (`R_MakeExternalPtr`) whose external
+pointer address points at a small C struct (`SKRHandleBox`) holding the native handle and
+the kind of handle it is. Two release paths share one idempotent routine:
 
-- `close()` — R-level, explicit, eager; sets the payload's handle to `NULL`.
-- The finalizer — installed with `R_SetExternalPtrProtected`, called by the GC when the
-  pointer becomes unreachable.
+- `close()` — R-level, explicit, eager; sets the wrapper box's handle to `NULL`.
+- The finalizer — installed with `R_RegisterCFinalizerEx(..., TRUE)`, called by the GC when
+  the pointer becomes unreachable or when the R session exits.
 
 Both call the same C routine, which checks the handle for `NULL` before freeing and
 clears it afterwards. Calling `close()` twice is a no-op, not an error; calling an
 operation on a closed handle raises a `sciencekit_error` with status
-`invalid_handle` instead of dereferencing freed memory. The finalizer therefore cannot
+`invalid-handle` instead of dereferencing freed memory. The finalizer therefore cannot
 double-free, and `close()` cannot leak.
 
 ### Decision 4 — Dense matrix conversion and `f64`-only semantics
 
 R matrices are converted to the ABI's `SKFfiArray` descriptor at the boundary:
 
-- The object must be a numeric matrix (or a data frame / vector coerced to one) with
-  `double` storage. Integer and logical matrices are rejected with a clear message; they
-  are **not** silently coerced, because the binding is `f64`-only.
+- Feature inputs must be a 2D numeric matrix (or a rectangular data frame of numeric
+  columns) with `double` storage; target inputs must be a 1D `double` vector (or
+  single-column `double` matrix). Integer, logical and character inputs are rejected with
+  a clear message; they are **not** silently coerced, because the binding is `f64`-only.
 - The matrix must be rectangular: R's matrix type guarantees this, but a data frame with
   ragged columns must be rejected before the call.
 - The conversion copies the values into a C buffer (`double`), which is passed to the ABI
