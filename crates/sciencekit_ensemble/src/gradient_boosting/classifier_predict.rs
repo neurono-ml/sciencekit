@@ -7,7 +7,7 @@ use sciencekit_common::{
     sk_run_operation,
 };
 
-use crate::boosting::loss::SKBinaryLogLoss;
+use crate::boosting::loss::{SKBinaryLogLoss, SKMulticlassLogLoss};
 use crate::boosting::scores::sk_sparse_entry;
 
 use super::classifier_model::SKGradientBoostingClassifierModel;
@@ -59,12 +59,28 @@ impl<F: SKFloat> SKGradientBoostingClassifierModel<F> {
     }
 
     pub(super) fn evaluate_row_probabilities(&self, feature_value: impl Fn(usize) -> F) -> Vec<F> {
-        let initial = self.initial_predictions[0];
-        let raw_score = self.stages.iter().fold(initial, |score, stage_trees| {
-            score + self.learning_rate * stage_trees[0].leaf_value_for(&feature_value)
+        if self.number_of_classes == 2 {
+            let initial = self.initial_predictions[0];
+            let raw_score = self.stages.iter().fold(initial, |score, stage_trees| {
+                score + self.learning_rate * stage_trees[0].leaf_value_for(&feature_value)
+            });
+            let positive = SKBinaryLogLoss::sigmoid(raw_score);
+            return vec![F::one() - positive, positive];
+        }
+        let mut raw_scores = self.initial_predictions.clone();
+        self.stages.iter().for_each(|stage_trees| {
+            raw_scores
+                .iter_mut()
+                .zip(stage_trees.iter())
+                .for_each(|(score, tree)| {
+                    *score = *score + self.learning_rate * tree.leaf_value_for(&feature_value);
+                });
         });
-        let positive = SKBinaryLogLoss::sigmoid(raw_score);
-        vec![F::one() - positive, positive]
+        SKMulticlassLogLoss::build()
+            .number_of_classes(self.number_of_classes)
+            .build()
+            .expect("fitted class count >= 2")
+            .softmax(&raw_scores)
     }
 }
 

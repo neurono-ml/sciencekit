@@ -5,7 +5,8 @@ use sciencekit_common::{
     SKTargetView, sk_run_operation,
 };
 
-use crate::boosting::loss::SKBinaryLogLoss;
+use crate::boosting::loss::{SKBinaryLogLoss, SKMulticlassLogLoss};
+use crate::boosting::multiclass_loop::sk_run_multiclass_boosting;
 use crate::boosting::scalar_loop::sk_run_binary_boosting;
 
 use super::classifier::SKGradientBoostingClassifier;
@@ -105,9 +106,35 @@ pub(super) fn sk_fit_gradient_boosting_classifier<F: SKFloat>(
             });
         }
 
-        Err(SKError::UnsupportedOperation {
-            operation: "fit",
-            reason: "multiclass gradient boosting not yet wired".to_string(),
+        let multiclass_loss = SKMulticlassLogLoss::build()
+            .number_of_classes(number_of_classes)
+            .build()?;
+        let fitted = sk_run_multiclass_boosting(
+            &multiclass_loss,
+            &features,
+            &class_indices,
+            estimator.number_of_estimators(),
+            &parameters,
+            early_stopping,
+        )?;
+        let feature_importances =
+            sk_aggregate_stage_importances(fitted.stages.iter().flatten(), columns_count);
+        let stages = fitted
+            .stages
+            .into_iter()
+            .map(|stage_trees| stage_trees.into_iter().map(|slot| slot.tree).collect())
+            .collect();
+        Ok(SKGradientBoostingClassifierModel {
+            stages,
+            initial_predictions: fitted.initial_predictions,
+            learning_rate: estimator.learning_rate(),
+            classes,
+            number_of_classes,
+            feature_count: columns_count,
+            feature_importances,
+            loss: estimator.loss(),
+            backend: estimator.backend(),
+            execution_intent: estimator.execution_intent(),
         })
     })
 }

@@ -22,4 +22,6 @@ pub use loss_kind::{SKGradientBoostingClassificationLoss, SKGradientBoostingRegr
 #[cfg(test)]
 mod gb_classifier_builder_tests;
 #[cfg(test)]
+mod gb_classifier_multiclass_tests;
+#[cfg(test)]
 mod gb_classifier_tests;
