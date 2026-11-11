@@ -16,6 +16,8 @@ pub use model::SKFeatureUnionModel;
 pub use stages::{SKFeatureUnionArity, SKFeatureUnionStages};
 
 #[cfg(test)]
+mod union_concat_tests;
+#[cfg(test)]
 mod union_fit_tests;
 #[cfg(test)]
 mod union_stages_tests;
