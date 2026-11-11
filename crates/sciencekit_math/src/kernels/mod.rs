@@ -18,6 +18,7 @@ mod polynomial;
 mod radial_basis;
 mod reductions;
 mod scaling;
+mod sigmoid;
 mod validation;
 
 pub use config::{
@@ -36,6 +37,7 @@ pub use polynomial::sk_polynomial_kernel_matrix;
 pub use radial_basis::sk_radial_basis_function_kernel_matrix;
 pub use reductions::{sk_axis_sum, sk_axis_sum_squares};
 pub use scaling::sk_scale_in_place;
+pub use sigmoid::sk_sigmoid_kernel_matrix;
 pub use validation::sk_feature_population_variance;
 
 #[cfg(test)]
@@ -52,3 +54,5 @@ mod linear_tests;
 mod polynomial_tests;
 #[cfg(test)]
 mod radial_basis_tests;
+#[cfg(test)]
+mod sigmoid_tests;
