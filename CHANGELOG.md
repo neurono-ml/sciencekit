@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] — 2026-11-11
+
+Arrow interop, the GPU compute contracts, the randomized SVD kernel and the language bindings moving to their own repositories.
+
 ### Added
 
 - Randomized SVD kernel (spec `randomized-svd`): `sciencekit_math::decomposition`
@@ -123,7 +127,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   this repository. The stable C ABI (`sciencekit_ffi`) stays here: it is the
   shared contract both bindings consume.
 
-
 ## [0.6.0] — 2026-11-10
 
 The k-NN imputer, grid search and the embedded Lua bindings.
@@ -133,6 +136,7 @@ The k-NN imputer, grid search and the embedded Lua bindings.
 [0.4.0]: https://github.com/neurono-ml/sciencekit/compare/v0.3.0...v0.4.0
 [0.5.0]: https://github.com/neurono-ml/sciencekit/compare/v0.4.0...v0.5.0
 [0.6.0]: https://github.com/neurono-ml/sciencekit/compare/v0.5.0...v0.6.0
+[0.7.0]: https://github.com/neurono-ml/sciencekit/compare/v0.6.0...v0.7.0
 
 ### Added
 
