@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `sciencekit_ensemble` gains generic bootstrap-aggregating meta-estimators
+  (spec `bagging-ensembles`): `SKBaggingClassifier<B>` and
+  `SKBaggingRegressor<B>`, builder-only (`SKBaggingClassifierBuilder<B>`,
+  `SKBaggingRegressorBuilder<B>`) over any configured base estimator `B`
+  satisfying `SKSupervisedFit<F>` whose fitted model implements
+  `SKClassifierPredictor<F>` or `SKRegressorPredictor<F>`, with
+  `number_of_estimators` (default `10`), `maximum_samples` (`All` default,
+  `Count`, `Fraction`), `maximum_features` (`All` default, `Count`, `Fraction`,
+  `Sqrt`, `Log2`), `bootstrap` (default `true`), `bootstrap_features` (default
+  `false`), `oob_score` (default `false`), `random_seed` (default `0`),
+  `backend` (default `Faer`) and `execution_mode` (default `Automatic`). Fit
+  reuses the shared seeded bootstrap sampler and derives independent
+  per-estimator feature-subset seeds to train lock-free parallel rayon slots
+  without densifying borrowed CSR matrices, surfaces base estimator rejections
+  through `SKBaggingError<E>` (`Central` vs `Base`), routes inference and
+  out-of-bag accuracy / R² evaluation exclusively through each member's stored
+  feature subset without leaking excluded columns, averages canonical class
+  probabilities with smallest-index tie-breaking or continuous responses across
+  deterministic row chunks, and implements `SKExportable<F>` whenever the base
+  model is exportable.
+
 - `sciencekit_pipeline` gains parallel feature branching and column-wise
   concatenation (spec `feature-union`): `SKFeatureUnion` and
   `SKFeatureUnionBuilder` (`build`/`start` for compile-time tuples up to eight
