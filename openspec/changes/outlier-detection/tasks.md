@@ -47,7 +47,7 @@
 - [ ] 4.3 Update `CHANGELOG.md` and the companion mdBook chapter (including a
   `Development Explained` chapter on isolation trees, path length and the contamination
   offset); verify with `mdbook build docs`.
-- [ ] 4.4 Record the LOF/One-Class SVM/missing-value/streaming/GPU/memmap/export non-goals
+- [x] 4.4 Record the LOF/One-Class SVM/missing-value/streaming/GPU/memmap/export non-goals
   in `docs/PRD.md`.
 - [ ] 4.5 Independent review by a separate agent validating every scenario in
   `outlier-prediction` and `isolation-forest`; address every finding and re-run the gates.
