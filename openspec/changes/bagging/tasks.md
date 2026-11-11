@@ -32,7 +32,7 @@
 - [x] 3.2 Implement classifier probability averaging and label prediction with canonical
   tie-breaking; verify a hand-computed ensemble; verify with
   `cargo test -p sciencekit_ensemble bagging_classifier`.
-- [ ] 3.3 Implement regressor response averaging; verify a hand-computed ensemble; verify
+- [x] 3.3 Implement regressor response averaging; verify a hand-computed ensemble; verify
   with `cargo test -p sciencekit_ensemble bagging_regressor`.
 
 ## 4. OOB, representation and validation
