@@ -88,7 +88,6 @@ pub(super) fn sk_validate_fit_input<F: SKFloat>(
 }
 
 /// Validates `transform` or `inverse_transform` input shape and finiteness.
-#[allow(dead_code)]
 pub(super) fn sk_validate_matrix_input<F: SKFloat>(
     features: SKDataView<'_, F>,
     expected_columns: usize,

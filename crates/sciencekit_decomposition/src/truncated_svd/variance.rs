@@ -26,9 +26,18 @@ pub(super) fn sk_variance_and_ratio<F: SKFloat>(
         .iter()
         .fold(F::zero(), |accumulator, &value| accumulator + value);
     if ratio_sum > F::one() {
-        let excess = ratio_sum - F::one();
-        if let Some(first) = ratios.first_mut() {
-            *first = (*first - excess).max(F::zero());
+        ratios.mapv_inplace(|value| value / ratio_sum);
+        let adjusted_sum = ratios
+            .iter()
+            .fold(F::zero(), |accumulator, &value| accumulator + value);
+        if adjusted_sum > F::one() {
+            let excess = adjusted_sum - F::one();
+            if let Some(largest) = ratios
+                .iter_mut()
+                .max_by(|left, right| left.partial_cmp(right).unwrap_or(std::cmp::Ordering::Equal))
+            {
+                *largest = (*largest - excess).max(F::zero());
+            }
         }
     }
     Ok((explained_variance, ratios))

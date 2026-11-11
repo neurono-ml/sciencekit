@@ -2,13 +2,11 @@
 //! no-densification guarantee (`spec` `truncated-svd` and `data-view-boundary`).
 
 use ndarray::Array2;
-use sciencekit_common::{SKBackendKind, SKBuilderState, SKDataView, SKError};
+use sciencekit_common::{SKBuilder, SKError, SKUnsupervisedFit};
 use sprs::{CsMat, TriMat};
 
-use super::SK_TRUNCATED_SVD_PARITY_TOLERANCE;
-use super::config::{SKTruncatedSVDAlgorithm, SKTruncatedSVDConfiguration};
-use super::fit::sk_fit_with_projection;
 use super::product::{sk_peak_materialized_elements, sk_reset_peak_materialized_elements};
+use super::{SK_TRUNCATED_SVD_PARITY_TOLERANCE, SKTruncatedSVD};
 use crate::pca::test_tracing::PcaCaptureGuard;
 
 fn csr_from_dense_with_explicit_zero(dense: &Array2<f64>) -> CsMat<f64> {
@@ -36,20 +34,16 @@ fn truncated_representation_sparse_csr_equals_dense_within_documented_tolerance(
     });
     let sparse = csr_from_dense_with_explicit_zero(&dense);
 
-    let configuration = SKTruncatedSVDConfiguration {
-        number_of_components: 3,
-        algorithm: SKTruncatedSVDAlgorithm::Randomized,
-        number_of_iterations: 5,
-        tolerance: 0.0,
-        random_seed: 23,
-        backend: SKBackendKind::Faer,
-        builder_state: SKBuilderState::new(),
-    };
+    let estimator = SKTruncatedSVD::<f64>::build()
+        .number_of_components(3)
+        .random_seed(23)
+        .build()
+        .unwrap();
 
-    let (dense_model, dense_projected) =
-        sk_fit_with_projection(&configuration, SKDataView::Dense(dense.view()), "fit").unwrap();
-    let (sparse_model, sparse_projected) =
-        sk_fit_with_projection(&configuration, SKDataView::Sparse(sparse.view()), "fit").unwrap();
+    let dense_model = estimator.fit(&dense).unwrap();
+    let sparse_model = estimator.fit(sparse.view()).unwrap();
+    let dense_projected = dense_model.transform(&dense).unwrap();
+    let sparse_projected = sparse_model.transform(sparse.view()).unwrap();
 
     for (left, right) in dense_model
         .components()
@@ -102,20 +96,17 @@ fn truncated_representation_wide_sparse_matrix_fits_without_densification() {
     }
     let sparse = triplet.to_csr();
 
-    let configuration = SKTruncatedSVDConfiguration {
-        number_of_components: 3,
-        algorithm: SKTruncatedSVDAlgorithm::Randomized,
-        number_of_iterations: 4,
-        tolerance: 0.0,
-        random_seed: 19,
-        backend: SKBackendKind::Faer,
-        builder_state: SKBuilderState::new(),
-    };
+    let estimator = SKTruncatedSVD::<f64>::build()
+        .number_of_components(3)
+        .number_of_iterations(4)
+        .random_seed(19)
+        .build()
+        .unwrap();
 
     let capture = PcaCaptureGuard::begin();
     sk_reset_peak_materialized_elements();
-    let (model, projected) =
-        sk_fit_with_projection(&configuration, SKDataView::Sparse(sparse.view()), "fit").unwrap();
+    let model = estimator.fit(sparse.view()).unwrap();
+    let projected = model.transform(sparse.view()).unwrap();
     let peak_elements = sk_peak_materialized_elements();
     assert!(capture.warning_events().is_empty());
     // Full dense materialization would allocate rows * columns = 37_500_000 elements;
@@ -134,25 +125,13 @@ fn truncated_representation_rejects_csc_up_front_before_scanning_elements() {
     triplet.add_triplet(0, 1, 2.0_f64);
     triplet.add_triplet(2, 3, f64::NAN);
     let csc = triplet.to_csc();
-    let view = SKDataView::<f64>::try_from(csc.view());
 
-    match view {
-        Err(SKError::UnsupportedRepresentation { representation, .. }) => {
+    let estimator = SKTruncatedSVD::<f64>::build().build().unwrap();
+    let error = estimator.fit(csc.view()).unwrap_err();
+    match error {
+        SKError::UnsupportedRepresentation { representation, .. } => {
             assert_eq!(representation, "csc");
         }
-        Ok(converted) => {
-            let configuration = SKTruncatedSVDConfiguration {
-                number_of_components: 2,
-                algorithm: SKTruncatedSVDAlgorithm::Randomized,
-                number_of_iterations: 5,
-                tolerance: 0.0,
-                random_seed: 0,
-                backend: SKBackendKind::Faer,
-                builder_state: SKBuilderState::new(),
-            };
-            let error = sk_fit_with_projection(&configuration, converted, "fit").unwrap_err();
-            assert!(matches!(error, SKError::UnsupportedRepresentation { .. }));
-        }
-        Err(other) => panic!("expected UnsupportedRepresentation, found {other:?}"),
+        other => panic!("expected UnsupportedRepresentation, found {other:?}"),
     }
 }

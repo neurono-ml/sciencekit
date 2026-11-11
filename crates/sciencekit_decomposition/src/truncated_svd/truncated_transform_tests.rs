@@ -3,14 +3,12 @@
 
 use ndarray::{Array2, array};
 use sciencekit_common::{
-    SKBackendKind, SKBuilderState, SKDataView, SKExecutionMode, SKFeatureTransformer,
+    SKBackendKind, SKBuilder, SKExecutionMode, SKFeatureTransformer, SKUnsupervisedFit,
 };
 use sprs::{CsMat, TriMat};
 
-use super::SK_TRUNCATED_SVD_PARITY_TOLERANCE;
-use super::config::{SKTruncatedSVDAlgorithm, SKTruncatedSVDConfiguration};
-use super::fit::sk_fit_with_projection;
 use super::product::{sk_peak_materialized_elements, sk_reset_peak_materialized_elements};
+use super::{SK_TRUNCATED_SVD_PARITY_TOLERANCE, SKTruncatedSVD};
 use crate::pca::test_tracing::PcaCaptureGuard;
 
 fn csr_from_dense(dense: &Array2<f64>) -> CsMat<f64> {
@@ -37,17 +35,13 @@ fn truncated_transform_and_inverse_transform_shapes_and_rank_k_reconstruction() 
         (row as f64 + 1.5) * direction_one[column] - (row as f64 * 0.5) * direction_two[column]
     });
 
-    let configuration = SKTruncatedSVDConfiguration {
-        number_of_components: 3,
-        algorithm: SKTruncatedSVDAlgorithm::Randomized,
-        number_of_iterations: 5,
-        tolerance: 0.0,
-        random_seed: 7,
-        backend: SKBackendKind::Faer,
-        builder_state: SKBuilderState::new(),
-    };
-    let (model, _) =
-        sk_fit_with_projection(&configuration, SKDataView::Dense(train.view()), "fit").unwrap();
+    let model = SKTruncatedSVD::<f64>::build()
+        .number_of_components(3)
+        .random_seed(7)
+        .build()
+        .unwrap()
+        .fit(&train)
+        .unwrap();
 
     // Transform shape: m x k (4 x 3).
     let projected_query = model.transform(&query).unwrap();
@@ -89,42 +83,31 @@ fn truncated_transform_accepts_dense_and_sparse_views_across_all_combinations() 
     });
     let sparse_query = csr_from_dense(&dense_query);
 
-    let configuration = SKTruncatedSVDConfiguration {
-        number_of_components: 2,
-        algorithm: SKTruncatedSVDAlgorithm::Randomized,
-        number_of_iterations: 5,
-        tolerance: 0.0,
-        random_seed: 31,
-        backend: SKBackendKind::Faer,
-        builder_state: SKBuilderState::new(),
-    };
-    let (dense_model, _) =
-        sk_fit_with_projection(&configuration, SKDataView::Dense(dense_train.view()), "fit")
-            .unwrap();
-    let (sparse_model, _) = sk_fit_with_projection(
-        &configuration,
-        SKDataView::Sparse(sparse_train.view()),
-        "fit",
-    )
-    .unwrap();
+    let estimator = SKTruncatedSVD::<f64>::build()
+        .number_of_components(2)
+        .random_seed(31)
+        .build()
+        .unwrap();
+    let dense_model = estimator.fit(&dense_train).unwrap();
+    let sparse_model = estimator.fit(sparse_train.view()).unwrap();
 
     // All four dense/sparse fit x transform combinations agree.
-    let dd = dense_model.transform(&dense_query).unwrap();
+    let dense_on_dense = dense_model.transform(&dense_query).unwrap();
     sk_reset_peak_materialized_elements();
-    let ds = dense_model.transform(sparse_query.view()).unwrap();
+    let dense_on_sparse = dense_model.transform(sparse_query.view()).unwrap();
     assert_eq!(sk_peak_materialized_elements(), 9 * 2);
-    let sd = sparse_model.transform(&dense_query).unwrap();
-    let ss = sparse_model.transform(sparse_query.view()).unwrap();
+    let sparse_on_dense = sparse_model.transform(&dense_query).unwrap();
+    let sparse_on_sparse = sparse_model.transform(sparse_query.view()).unwrap();
 
-    for candidate in [&ds, &sd, &ss] {
-        for (left, right) in dd.iter().zip(candidate.iter()) {
+    for candidate in [&dense_on_sparse, &sparse_on_dense, &sparse_on_sparse] {
+        for (left, right) in dense_on_dense.iter().zip(candidate.iter()) {
             assert!((left - right).abs() < SK_TRUNCATED_SVD_PARITY_TOLERANCE);
         }
     }
 
     // Sparse CSR input to inverse_transform matches dense inverse_transform.
-    let sparse_projected = csr_from_dense(&dd);
-    let rebuilt_dense = dense_model.inverse_transform(&dd).unwrap();
+    let sparse_projected = csr_from_dense(&dense_on_dense);
+    let rebuilt_dense = dense_model.inverse_transform(&dense_on_dense).unwrap();
     let rebuilt_sparse = dense_model
         .inverse_transform(sparse_projected.view())
         .unwrap();
@@ -136,19 +119,15 @@ fn truncated_transform_accepts_dense_and_sparse_views_across_all_combinations() 
 #[test]
 fn truncated_transform_and_inverse_transform_record_transferred_backend_in_spans() {
     let data = array![[1.0_f64, 2.0, 0.5], [3.0, 5.0, 1.5], [5.0, 8.0, 2.5]];
-    let mut builder_state = SKBuilderState::new();
-    builder_state.execution_mode(SKExecutionMode::InProcessSynchronous);
-    let configuration = SKTruncatedSVDConfiguration {
-        number_of_components: 2,
-        algorithm: SKTruncatedSVDAlgorithm::Randomized,
-        number_of_iterations: 5,
-        tolerance: 0.0,
-        random_seed: 3,
-        backend: SKBackendKind::MatrixMultiply,
-        builder_state,
-    };
-    let (model, _) =
-        sk_fit_with_projection(&configuration, SKDataView::Dense(data.view()), "fit").unwrap();
+    let model = SKTruncatedSVD::<f64>::build()
+        .number_of_components(2)
+        .random_seed(3)
+        .backend(SKBackendKind::MatrixMultiply)
+        .execution_mode(SKExecutionMode::InProcessSynchronous)
+        .build()
+        .unwrap()
+        .fit(&data)
+        .unwrap();
 
     let capture = PcaCaptureGuard::begin();
     let projected = model.transform(&data).unwrap();

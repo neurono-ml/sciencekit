@@ -6,21 +6,45 @@ use std::mem::size_of;
 use ndarray::{Array1, Array2, azip};
 use sciencekit_common::{
     SKBuilderState, SKDataView, SKError, SKExecutionContext, SKExecutionPlan, SKFloat,
-    execution::SKAccessPattern,
+    SKOperationAttributes, SKOperationKind, SKUnsupervisedFit, execution::SKAccessPattern,
+    sk_run_operation,
 };
 use sciencekit_math::backend::SKBackendSelection;
 use sciencekit_math::decomposition::SKRandomizedSvdBuilder;
 use sciencekit_math::kernels::SK_AXIS_SUM_GRAIN;
 
 use super::config::SKTruncatedSVDConfiguration;
+use super::core_implementation::SKTruncatedSVD;
 use super::model::SKTruncatedSVDModel;
 use super::product::sk_multiply_view_by_dense;
-use super::validation::sk_validate_fit_input;
+use super::validation::{sk_validate_fit_input, sk_view_dimensions};
 use super::variance::sk_variance_and_ratio;
+
+impl<F: SKBackendSelection> SKUnsupervisedFit<F> for SKTruncatedSVD<F> {
+    type Model = SKTruncatedSVDModel<F>;
+    type Error = SKError;
+
+    fn fit<'a, X>(&self, features: X) -> Result<Self::Model, Self::Error>
+    where
+        X: TryInto<SKDataView<'a, F>, Error = SKError>,
+    {
+        let view = features.try_into()?;
+        let (rows_count, columns_count) = sk_view_dimensions(&view).unwrap_or((0, 0));
+        let attributes = SKOperationAttributes {
+            operation: SKOperationKind::Fit,
+            rows_count,
+            columns_count,
+            execution_mode: self.configuration.execution_mode(),
+            backend: self.configuration.backend,
+        };
+        sk_run_operation(attributes, || {
+            sk_fit_with_projection(&self.configuration, view, "fit").map(|(model, _)| model)
+        })
+    }
+}
 
 /// Fits an uncentered truncated SVD model from `configuration` and returns both
 /// the fitted model and the projected training rows (`X · componentsᵀ`).
-#[allow(dead_code)]
 pub(super) fn sk_fit_with_projection<F: SKBackendSelection>(
     configuration: &SKTruncatedSVDConfiguration<F>,
     features: SKDataView<'_, F>,

@@ -8,10 +8,35 @@ use sciencekit_common::{
 };
 use sciencekit_math::backend::SKBackendSelection;
 
-use super::fit::sk_resolve_plan;
+use super::core_implementation::SKTruncatedSVD;
+use super::fit::{sk_fit_with_projection, sk_resolve_plan};
 use super::model::SKTruncatedSVDModel;
 use super::product::sk_multiply_view_by_dense;
 use super::validation::{sk_validate_matrix_input, sk_view_dimensions};
+
+impl<F: SKBackendSelection> SKTruncatedSVD<F> {
+    /// Fits the estimator on `features` and projects the same input onto the
+    /// retained right singular vectors under a single `FitTransform` span,
+    /// without centering or densifying sparse CSR inputs.
+    pub fn fit_transform<'a, X>(&self, features: X) -> Result<Array2<F>, SKError>
+    where
+        X: TryInto<SKDataView<'a, F>, Error = SKError>,
+    {
+        let view = features.try_into()?;
+        let (rows_count, columns_count) = sk_view_dimensions(&view).unwrap_or((0, 0));
+        let attributes = SKOperationAttributes {
+            operation: SKOperationKind::FitTransform,
+            rows_count,
+            columns_count,
+            execution_mode: self.configuration.execution_mode(),
+            backend: self.configuration.backend,
+        };
+        sk_run_operation(attributes, || {
+            sk_fit_with_projection(&self.configuration, view, "fit_transform")
+                .map(|(_, projected)| projected)
+        })
+    }
+}
 
 impl<F: SKBackendSelection> SKTruncatedSVDModel<F> {
     /// Projects `features` onto the retained right singular vectors

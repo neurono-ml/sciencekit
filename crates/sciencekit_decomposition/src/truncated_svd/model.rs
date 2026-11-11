@@ -20,7 +20,7 @@ pub struct SKTruncatedSVDModel<F: SKFloat> {
 }
 
 impl<F: SKFloat> SKTruncatedSVDModel<F> {
-    #[allow(dead_code, clippy::too_many_arguments)]
+    #[allow(clippy::too_many_arguments)]
     pub(super) fn from_parts(
         components: Array2<F>,
         singular_values: Array1<F>,

@@ -1,22 +1,11 @@
-//! Companion tests for randomized-SVD fitting and `SKTruncatedSVDModel` state.
+//! Companion tests for `SKUnsupervisedFit` on `SKTruncatedSVD`, `fit_transform`
+//! and `SKTruncatedSVDModel` state accessors.
 
 use ndarray::{Array2, array};
-use sciencekit_common::{SKBackendKind, SKBuilderState, SKDataView};
+use sciencekit_common::{SKBackendKind, SKBuilder, SKExecutionMode, SKUnsupervisedFit};
 
-use super::config::{SKTruncatedSVDAlgorithm, SKTruncatedSVDConfiguration};
-use super::fit::sk_fit_with_projection;
-
-fn default_test_configuration(number_of_components: usize) -> SKTruncatedSVDConfiguration<f64> {
-    SKTruncatedSVDConfiguration {
-        number_of_components,
-        algorithm: SKTruncatedSVDAlgorithm::Randomized,
-        number_of_iterations: 5,
-        tolerance: 0.0,
-        random_seed: 0,
-        backend: SKBackendKind::Faer,
-        builder_state: SKBuilderState::new(),
-    }
-}
+use super::{SKTruncatedSVD, SKTruncatedSVDAlgorithm};
+use crate::pca::test_tracing::PcaCaptureGuard;
 
 #[test]
 fn truncated_fit_reconstructs_rank_one_matrix_without_centering() {
@@ -27,16 +16,23 @@ fn truncated_fit_reconstructs_rank_one_matrix_without_centering() {
     let direction = array![0.6_f64, 0.8, 0.0];
     let data = Array2::from_shape_fn((4, 3), |(row, column)| weights[row] * direction[column]);
 
-    let configuration = default_test_configuration(1);
-    let (model, projected) =
-        sk_fit_with_projection(&configuration, SKDataView::Dense(data.view()), "fit").unwrap();
+    let estimator = SKTruncatedSVD::<f64>::build()
+        .number_of_components(1)
+        .build()
+        .unwrap();
+    let model = estimator.fit(&data).unwrap();
+    let projected = estimator.fit_transform(&data).unwrap();
+    assert_eq!(projected, model.transform(&data).unwrap());
 
     assert_eq!(model.number_of_components(), 1);
     assert_eq!(model.number_of_features(), 3);
+    assert_eq!(model.algorithm(), SKTruncatedSVDAlgorithm::Randomized);
+    assert_eq!(model.backend(), SKBackendKind::Faer);
+    assert_eq!(model.execution_mode(), SKExecutionMode::Automatic);
     assert!((model.singular_values()[0] - 30.0_f64.sqrt()).abs() < 1e-10);
 
-    // Uncentered reconstruction: Z * components reproduces the non-zero means directly.
-    let reconstructed = projected.dot(&model.components());
+    // Uncentered reconstruction: inverse_transform reproduces the non-zero means directly.
+    let reconstructed = model.inverse_transform(&projected).unwrap();
     for (actual, expected) in reconstructed.iter().zip(data.iter()) {
         assert!((actual - expected).abs() < 1e-10);
     }
@@ -59,9 +55,12 @@ fn truncated_fit_reconstructs_rank_two_matrix_with_non_increasing_variance() {
         mode_one[row] * direction_one[column] + mode_two[row] * direction_two[column]
     });
 
-    let configuration = default_test_configuration(2);
-    let (model, projected) =
-        sk_fit_with_projection(&configuration, SKDataView::Dense(data.view()), "fit").unwrap();
+    let model = SKTruncatedSVD::<f64>::build()
+        .number_of_components(2)
+        .build()
+        .unwrap()
+        .fit(&data)
+        .unwrap();
 
     assert_eq!(model.components().dim(), (2, 4));
     let gram = model.components().dot(&model.components().t());
@@ -76,7 +75,8 @@ fn truncated_fit_reconstructs_rank_two_matrix_with_non_increasing_variance() {
     assert!(ratio_sum <= 1.0);
     assert!((ratio_sum - 1.0).abs() < 1e-10);
 
-    let reconstructed = projected.dot(&model.components());
+    let projected = model.transform(&data).unwrap();
+    let reconstructed = model.inverse_transform(&projected).unwrap();
     for (actual, expected) in reconstructed.iter().zip(data.iter()) {
         assert!((actual - expected).abs() < 1e-10);
     }
@@ -86,9 +86,12 @@ fn truncated_fit_reconstructs_rank_two_matrix_with_non_increasing_variance() {
 fn truncated_fit_completes_orthonormal_components_on_constant_and_rank_deficient_data() {
     // Non-zero constant 6 x 3 matrix: rank 1 uncentered, zero column variance.
     let constant = Array2::from_elem((6, 3), 4.0_f64);
-    let configuration = default_test_configuration(2);
-    let (model, projected) =
-        sk_fit_with_projection(&configuration, SKDataView::Dense(constant.view()), "fit").unwrap();
+    let model = SKTruncatedSVD::<f64>::build()
+        .number_of_components(2)
+        .build()
+        .unwrap()
+        .fit(&constant)
+        .unwrap();
 
     let gram = model.components().dot(&model.components().t());
     for ((row, column), &entry) in gram.indexed_iter() {
@@ -97,11 +100,64 @@ fn truncated_fit_completes_orthonormal_components_on_constant_and_rank_deficient
     }
     assert!((model.singular_values()[0] - (18.0_f64 * 16.0).sqrt()).abs() < 1e-10);
     assert!(model.singular_values()[1] < 1e-6);
-    assert!(model.explained_variance().iter().all(|&v| v.abs() < 1e-12));
-    assert!(model.explained_variance_ratio().iter().all(|&r| r == 0.0));
+    assert!(
+        model
+            .explained_variance()
+            .iter()
+            .all(|&variance| variance.abs() < 1e-12)
+    );
+    assert!(
+        model
+            .explained_variance_ratio()
+            .iter()
+            .all(|&ratio| ratio == 0.0)
+    );
 
-    let reconstructed = projected.dot(&model.components());
+    let projected = model.transform(&constant).unwrap();
+    let reconstructed = model.inverse_transform(&projected).unwrap();
     for (actual, expected) in reconstructed.iter().zip(constant.iter()) {
         assert!((actual - expected).abs() < 1e-10);
+    }
+}
+
+#[test]
+fn truncated_fit_transfers_configured_backend_and_records_fit_and_fit_transform_spans() {
+    let data = array![[1.0_f64, 2.0], [3.0, 5.0], [5.0, 8.0], [7.0, 11.0]];
+    let estimator = SKTruncatedSVD::<f64>::build()
+        .number_of_components(1)
+        .backend(SKBackendKind::NdArrayLinalg)
+        .execution_mode(SKExecutionMode::InProcessSynchronous)
+        .build()
+        .unwrap();
+
+    let capture = PcaCaptureGuard::begin();
+    let model = estimator.fit(&data).unwrap();
+    let projected = estimator.fit_transform(&data).unwrap();
+    let spans = capture.spans();
+
+    assert_eq!(model.backend(), SKBackendKind::NdArrayLinalg);
+    assert_eq!(
+        model.execution_mode(),
+        SKExecutionMode::InProcessSynchronous
+    );
+    assert_eq!(projected, model.transform(&data).unwrap());
+
+    for expected_operation in ["fit", "fit_transform"] {
+        let recorded = spans
+            .iter()
+            .find(|(name, fields)| {
+                name == "sciencekit.operation"
+                    && fields.get("operation").map(String::as_str) == Some(expected_operation)
+                    && fields.get("backend").map(String::as_str) == Some("ndarray-linalg")
+            })
+            .unwrap_or_else(|| {
+                panic!(
+                    "{expected_operation} must record configured backend in sciencekit.operation"
+                )
+            });
+        assert_eq!(
+            recorded.1.get("mode").map(String::as_str),
+            Some("InProcessSynchronous")
+        );
     }
 }
