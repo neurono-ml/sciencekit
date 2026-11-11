@@ -38,7 +38,7 @@ impl<F: SKBackendSelection> SKPCA<F> {
             backend: self.configuration.backend,
         };
         sk_run_operation(attributes, || {
-            let model = sk_fit_pca(self, view)?;
+            let model = sk_fit_pca(self, view, "fit_transform")?;
             sk_project_features(&model, view)
         })
     }

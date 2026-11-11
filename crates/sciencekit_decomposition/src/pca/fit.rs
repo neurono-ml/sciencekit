@@ -37,7 +37,7 @@ impl<F: SKBackendSelection> SKUnsupervisedFit<F> for SKPCA<F> {
             execution_mode: self.configuration.execution_mode(),
             backend: self.configuration.backend,
         };
-        sk_run_operation(attributes, || sk_fit_pca(self, view))
+        sk_run_operation(attributes, || sk_fit_pca(self, view, "fit"))
     }
 }
 
@@ -45,10 +45,11 @@ impl<F: SKBackendSelection> SKUnsupervisedFit<F> for SKPCA<F> {
 pub(super) fn sk_fit_pca<F: SKBackendSelection>(
     estimator: &SKPCA<F>,
     features: SKDataView<'_, F>,
+    operation: &'static str,
 ) -> Result<SKPCAModel<F>, SKError> {
     let configuration = estimator.configuration;
     let (rows_count, columns_count, resolved_components) =
-        sk_validate_fit_input(features, configuration.number_of_components)?;
+        sk_validate_fit_input(features, configuration.number_of_components, operation)?;
     let plan = sk_resolve_fit_plan(estimator, &features, rows_count, columns_count)?;
 
     let is_sparse = matches!(features, SKDataView::Sparse(_));

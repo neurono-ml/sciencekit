@@ -10,10 +10,11 @@ use super::centering::sk_view_dimensions;
 pub(super) fn sk_validate_fit_input<F: SKFloat>(
     features: SKDataView<'_, F>,
     requested_components: Option<usize>,
+    operation: &'static str,
 ) -> Result<(usize, usize, usize), SKError> {
     let (rows_count, columns_count) = sk_view_dimensions(&features)?;
     if rows_count == 0 || columns_count == 0 {
-        return Err(SKError::EmptyInput { operation: "fit" });
+        return Err(SKError::EmptyInput { operation });
     }
     let maximum_components = rows_count.min(columns_count);
     let resolved_components = requested_components.unwrap_or(maximum_components);
