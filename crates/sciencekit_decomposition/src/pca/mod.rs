@@ -17,6 +17,7 @@ pub use builder::SKPCABuilder;
 pub use config::SKPCASolver;
 pub use core_implementation::SKPCA;
 pub use model::SKPCAModel;
+pub(crate) use solvers::{SKPCADecomposition, sk_compute_variance_ratio, sk_orient_components};
 
 #[cfg(test)]
 mod pca_builder_tests;
