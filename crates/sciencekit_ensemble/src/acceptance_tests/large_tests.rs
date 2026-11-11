@@ -87,22 +87,16 @@ fn large_dense_and_sparse_classification_fits_with_oob_and_metrics() {
                 .expect("class") as i64
         })
         .collect();
-    let dense_pred = dense_oob.predict_labels(&dense).expect("dense predict");
-    let sparse_pred = sparse_no_oob
+    let dense_predictions = dense_oob.predict_labels(&dense).expect("dense predict");
+    let sparse_predictions = sparse_no_oob
         .predict_labels(sparse.view())
         .expect("sparse predict");
-    assert_eq!(dense_pred, sparse_pred);
+    assert_eq!(dense_predictions, sparse_predictions);
     assert!(sparse_no_oob.oob_score().is_err());
 
-    let accuracy: f64 =
-        sk_accuracy_score(&truth, dense_pred.as_slice().expect("slice")).expect("accuracy");
-    let macro_f1: f64 = sk_f1_score(
-        &truth,
-        dense_pred.as_slice().expect("slice"),
-        None,
-        SKAveraging::Macro,
-    )
-    .expect("f1");
+    let slice = dense_predictions.as_slice().expect("slice");
+    let accuracy: f64 = sk_accuracy_score(&truth, slice).expect("accuracy");
+    let macro_f1: f64 = sk_f1_score(&truth, slice, None, SKAveraging::Macro).expect("f1");
     let oob_accuracy = dense_oob.oob_score().expect("oob");
     assert!(accuracy > 0.85, "accuracy {accuracy}");
     assert!(macro_f1 > 0.85, "macro_f1 {macro_f1}");
@@ -133,19 +127,21 @@ fn large_dense_and_sparse_regression_fits_with_oob_and_metrics() {
         .fit(sparse.view(), responses.view())
         .expect("sparse fit");
 
-    let dense_pred = dense_oob.predict(&dense).expect("dense predict");
-    let sparse_pred = sparse_no_oob
+    let dense_predictions = dense_oob.predict(&dense).expect("dense predict");
+    let sparse_predictions = sparse_no_oob
         .predict(sparse.view())
         .expect("sparse predict");
-    assert_eq!(dense_pred, sparse_pred);
+    assert_eq!(dense_predictions, sparse_predictions);
     assert!(sparse_no_oob.oob_score().is_err());
 
-    let mse = sk_mean_squared_error(responses.view(), dense_pred.view()).expect("mse");
-    let mae = sk_mean_absolute_error(responses.view(), dense_pred.view()).expect("mae");
-    let r2 = sk_r2_score(responses.view(), dense_pred.view()).expect("r2");
+    let mean_squared =
+        sk_mean_squared_error(responses.view(), dense_predictions.view()).expect("mse");
+    let mean_absolute =
+        sk_mean_absolute_error(responses.view(), dense_predictions.view()).expect("mae");
+    let r2 = sk_r2_score(responses.view(), dense_predictions.view()).expect("r2");
     let oob_r2 = dense_oob.oob_score().expect("oob r2");
-    assert!(mse < 0.25, "mse {mse}");
-    assert!(mae < 0.40, "mae {mae}");
+    assert!(mean_squared < 0.25, "mean_squared {mean_squared}");
+    assert!(mean_absolute < 0.40, "mean_absolute {mean_absolute}");
     assert!(r2 > 0.90, "r2 {r2}");
     assert!(oob_r2 > 0.85, "oob_r2 {oob_r2}");
 }
@@ -175,15 +171,16 @@ fn large_forest_is_invariant_across_rayon_thread_counts() {
             })
     };
 
-    let (model_1, pred_1) = run_with_threads(1);
-    let (model_4, pred_4) = run_with_threads(4);
-    for index in 0..12 {
-        assert_eq!(model_1.tree(index), model_4.tree(index));
-    }
-    assert_eq!(model_1.feature_importances(), model_4.feature_importances());
+    let (first_model, first_predictions) = run_with_threads(1);
+    let (fourth_model, fourth_predictions) = run_with_threads(4);
+    assert!((0..12).all(|index| first_model.tree(index) == fourth_model.tree(index)));
     assert_eq!(
-        model_1.oob_score().expect("oob 1"),
-        model_4.oob_score().expect("oob 4")
+        first_model.feature_importances(),
+        fourth_model.feature_importances()
     );
-    assert_eq!(pred_1, pred_4);
+    assert_eq!(
+        first_model.oob_score().expect("oob 1"),
+        fourth_model.oob_score().expect("oob 4")
+    );
+    assert_eq!(first_predictions, fourth_predictions);
 }

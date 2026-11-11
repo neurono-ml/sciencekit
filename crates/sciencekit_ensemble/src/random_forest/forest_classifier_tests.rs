@@ -36,15 +36,15 @@ fn hand_computed_two_tree_forest_averages_probabilities() {
                 .expect("builds")
                 .fit(&features, labels.view())
                 .expect("fit succeeds");
-            let p0_first = candidate.tree(0)?.node(0)?.value();
-            let p0_second = candidate.tree(1)?.node(0)?.value();
-            if p0_first.len() == 2 && p0_second.len() == 2 {
-                let probs = candidate.predict_probabilities(array![[0.0]].view()).ok()?;
-                let first_ok =
-                    (p0_first[0] - 0.2).abs() < 1e-12 || (p0_first[1] - 0.2).abs() < 1e-12;
-                let second_ok =
-                    (p0_second[0] - 0.6).abs() < 1e-12 || (p0_second[1] - 0.6).abs() < 1e-12;
-                if (probs[[0, 0]] - 0.4).abs() < 1e-12 && first_ok && second_ok {
+            let first_values = candidate.tree(0)?.node(0)?.value();
+            let second_values = candidate.tree(1)?.node(0)?.value();
+            if first_values.len() == 2 && second_values.len() == 2 {
+                let probabilities = candidate.predict_probabilities(array![[0.0]].view()).ok()?;
+                let first_matches =
+                    (first_values[0] - 0.2).abs() < 1e-12 || (first_values[1] - 0.2).abs() < 1e-12;
+                let second_matches = (second_values[0] - 0.6).abs() < 1e-12
+                    || (second_values[1] - 0.6).abs() < 1e-12;
+                if (probabilities[[0, 0]] - 0.4).abs() < 1e-12 && first_matches && second_matches {
                     return Some(candidate);
                 }
             }

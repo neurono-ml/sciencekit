@@ -13,10 +13,9 @@ sciencekit_metrics = { path = "../sciencekit_metrics", version = "0.1.0" }
 sciencekit_tree = { path = "../sciencekit_tree", version = "0.1.0" }
 
 ndarray = { workspace = true }
-num-traits = "0.2"
 rayon = { workspace = true }
 sprs = { workspace = true }
-tracing = { workspace = true }
 
 [dev-dependencies]
+tracing = { workspace = true }
 tracing-subscriber = { workspace = true }

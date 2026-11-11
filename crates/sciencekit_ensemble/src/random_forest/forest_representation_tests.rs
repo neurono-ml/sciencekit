@@ -47,7 +47,7 @@ fn classifier_dense_and_sparse_fit_and_predict_are_equivalent() {
     let dense_model = build().fit(&dense, labels.view()).expect("dense fit");
     let sparse_model = build().fit(sparse.view(), labels.view()).expect("sparse");
 
-    assert!((0..20).all(|i| dense_model.tree(i) == sparse_model.tree(i)));
+    assert!((0..20).all(|index| dense_model.tree(index) == sparse_model.tree(index)));
     assert_eq!(
         dense_model.feature_importances(),
         sparse_model.feature_importances()
@@ -57,19 +57,17 @@ fn classifier_dense_and_sparse_fit_and_predict_are_equivalent() {
         sparse_model.oob_score().expect("oob")
     );
 
-    let dd = dense_model.predict_probabilities(&dense).expect("dd");
+    let expected = dense_model.predict_probabilities(&dense).expect("dense");
+    let dense_sparse = dense_model
+        .predict_probabilities(sparse.view())
+        .expect("sparse");
+    let sparse_dense = sparse_model.predict_probabilities(&dense).expect("dense");
+    let sparse_sparse = sparse_model
+        .predict_probabilities(sparse.view())
+        .expect("sparse");
     assert_eq!(
-        dd,
-        dense_model
-            .predict_probabilities(sparse.view())
-            .expect("ds")
-    );
-    assert_eq!(dd, sparse_model.predict_probabilities(&dense).expect("sd"));
-    assert_eq!(
-        dd,
-        sparse_model
-            .predict_probabilities(sparse.view())
-            .expect("ss")
+        (&expected, &expected, &expected),
+        (&dense_sparse, &sparse_dense, &sparse_sparse)
     );
     assert_eq!(
         dense_model.predict_labels(&dense).expect("labels"),
@@ -95,7 +93,7 @@ fn regressor_dense_and_sparse_fit_and_predict_are_equivalent() {
         .fit(sparse.view(), responses.view())
         .expect("sparse");
 
-    assert!((0..20).all(|i| dense_model.tree(i) == sparse_model.tree(i)));
+    assert!((0..20).all(|index| dense_model.tree(index) == sparse_model.tree(index)));
     assert_eq!(
         dense_model.feature_importances(),
         sparse_model.feature_importances()
@@ -105,10 +103,16 @@ fn regressor_dense_and_sparse_fit_and_predict_are_equivalent() {
         sparse_model.oob_score().expect("oob")
     );
 
-    let dd = dense_model.predict(&dense).expect("dd");
-    assert_eq!(dd, dense_model.predict(sparse.view()).expect("ds"));
-    assert_eq!(dd, sparse_model.predict(&dense).expect("sd"));
-    assert_eq!(dd, sparse_model.predict(sparse.view()).expect("ss"));
+    let dense_to_dense = dense_model.predict(&dense).expect("dense");
+    assert_eq!(
+        dense_to_dense,
+        dense_model.predict(sparse.view()).expect("sparse")
+    );
+    assert_eq!(dense_to_dense, sparse_model.predict(&dense).expect("dense"));
+    assert_eq!(
+        dense_to_dense,
+        sparse_model.predict(sparse.view()).expect("sparse")
+    );
 }
 
 /// An ultra-wide CSR design (`128 × 100_000`, where a dense matrix per tree

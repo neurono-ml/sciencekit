@@ -83,11 +83,12 @@ fn regression_forest_recovers_step_signal_under_both_criteria() {
             .fit(&features, responses.view())
             .expect("fit succeeds");
 
+        assert_eq!(parallel.backend(), SKBackendKind::MatrixMultiply);
         let probe = array![[0.5, 1.0, 2.0, 3.0], [6.0, 12.0, 2.0, 3.0]];
-        let pred_parallel = parallel.predict(&probe).expect("parallel predict");
-        let pred_sequential = sequential.predict(&probe).expect("sequential predict");
-        assert_eq!(pred_parallel, pred_sequential);
-        assert!((pred_parallel[0] - 10.0).abs() < 1.0);
-        assert!((pred_parallel[1] - 50.0).abs() < 1.0);
+        let parallel_predictions = parallel.predict(&probe).expect("parallel predict");
+        let sequential_predictions = sequential.predict(&probe).expect("sequential predict");
+        assert_eq!(parallel_predictions, sequential_predictions);
+        assert!((parallel_predictions[0] - 10.0).abs() < 1.0);
+        assert!((parallel_predictions[1] - 50.0).abs() < 1.0);
     }
 }

@@ -44,20 +44,20 @@ fn empty_input_is_rejected_on_fit_and_predict() {
     ));
 
     let train = array![[0.0, 1.0], [2.0, 3.0]];
-    let cls_model = default_classifier()
+    let classifier_model = default_classifier()
         .fit(&train, labels.view())
         .expect("fit");
-    let reg_model = default_regressor()
+    let regressor_model = default_regressor()
         .fit(&train, responses.view())
         .expect("fit");
     assert!(matches!(
-        cls_model.predict_labels(&empty_dense),
+        classifier_model.predict_labels(&empty_dense),
         Err(SKError::EmptyInput {
             operation: "predict"
         })
     ));
     assert!(matches!(
-        reg_model.predict(&empty_dense),
+        regressor_model.predict(&empty_dense),
         Err(SKError::EmptyInput {
             operation: "predict"
         })
@@ -76,19 +76,19 @@ fn shape_and_feature_count_mismatches_are_rejected() {
     ));
 
     let train = array![[0.0, 1.0], [2.0, 3.0]];
-    let cls_model = default_classifier()
+    let classifier_model = default_classifier()
         .fit(&train, labels.view())
         .expect("fit");
-    let reg_model = default_regressor()
+    let regressor_model = default_regressor()
         .fit(&train, array![1.0, 2.0].view())
         .expect("fit");
-    match cls_model.predict_probabilities(array![[1.0, 2.0, 3.0]].view()) {
+    match classifier_model.predict_probabilities(array![[1.0, 2.0, 3.0]].view()) {
         Err(SKError::ShapeMismatch { expected, found }) => {
             assert_eq!((expected, found), (vec![1, 2], vec![1, 3]));
         }
         other => panic!("expected ShapeMismatch, found {other:?}"),
     }
-    match reg_model.predict(array![[1.0]].view()) {
+    match regressor_model.predict(array![[1.0]].view()) {
         Err(SKError::ShapeMismatch { expected, found }) => {
             assert_eq!((expected, found), (vec![1, 2], vec![1, 1]));
         }
@@ -119,8 +119,7 @@ fn shape_and_feature_count_mismatches_are_rejected() {
 /// and prediction batches are rejected at their exact positions.
 #[test]
 fn non_finite_values_are_rejected_at_exact_positions() {
-    let labels = array![0_i64, 1];
-    let responses = array![1.0, 2.0];
+    let (labels, responses) = (array![0_i64, 1], array![1.0, 2.0]);
     let bad_sparse = CsMat::new((2, 2), vec![0, 1, 2], vec![1, 0], vec![f64::NAN, 1.0]);
 
     assert!(matches!(
@@ -141,18 +140,18 @@ fn non_finite_values_are_rejected_at_exact_positions() {
         default_regressor().fit(&clean, array![1.0, f64::NEG_INFINITY].view()),
         Err(SKError::NonFiniteValue { position: 1 })
     ));
-    let cls_model = default_classifier()
+    let classifier_model = default_classifier()
         .fit(&clean, labels.view())
         .expect("fit");
-    let reg_model = default_regressor()
+    let regressor_model = default_regressor()
         .fit(&clean, responses.view())
         .expect("fit");
     assert!(matches!(
-        cls_model.predict_labels(array![[0.0, f64::NAN]].view()),
+        classifier_model.predict_labels(array![[0.0, f64::NAN]].view()),
         Err(SKError::NonFiniteValue { position: 1 })
     ));
     assert!(matches!(
-        reg_model.predict(bad_sparse.view()),
+        regressor_model.predict(bad_sparse.view()),
         Err(SKError::NonFiniteValue { position: 1 })
     ));
 }
@@ -185,13 +184,13 @@ fn target_representations_and_incompatible_execution_modes_are_rejected() {
         Err(SKError::UnsupportedRepresentation { .. })
     ));
 
-    let streaming_cls = SKRandomForestClassifier::<f64>::build()
+    let streaming_classifier = SKRandomForestClassifier::<f64>::build()
         .number_of_trees(4)
         .execution_mode(SKExecutionMode::OutOfCoreStreaming)
         .build()
         .expect("builds");
     assert!(matches!(
-        streaming_cls.fit(&features, array![0_i64, 0, 1, 1].view()),
+        streaming_classifier.fit(&features, array![0_i64, 0, 1, 1].view()),
         Err(SKError::ExecutionModeIncompatible {
             mode: "out-of-core-streaming",
             pattern: "random-access",

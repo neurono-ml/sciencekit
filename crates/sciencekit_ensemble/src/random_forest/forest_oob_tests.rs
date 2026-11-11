@@ -54,15 +54,15 @@ fn disabled_oob_score_reports_unsupported_operation() {
 /// `UnsupportedOperation`.
 #[test]
 fn no_scored_oob_rows_reports_unsupported_operation() {
-    let reg_features = array![[1.0]];
-    let reg_responses = array![5.0];
+    let single_feature = array![[1.0]];
+    let single_response = array![5.0];
     let regressor = SKRandomForestRegressor::<f64>::build()
         .number_of_trees(1)
         .oob_score(true)
         .random_seed(0)
         .build()
         .expect("builds")
-        .fit(&reg_features, reg_responses.view())
+        .fit(&single_feature, single_response.view())
         .expect("fit succeeds");
     assert_eq!(regressor.oob_scored_rows(), 0);
     assert_eq!(regressor.out_of_bag_rows(0), Some(&[][..]));
@@ -74,8 +74,8 @@ fn no_scored_oob_rows_reports_unsupported_operation() {
         })
     ));
 
-    let cls_features = array![[0.0], [1.0]];
-    let cls_labels = array![0_i64, 1];
+    let pair_features = array![[0.0], [1.0]];
+    let pair_labels = array![0_i64, 1];
     let classifier = (0_u64..64)
         .map(|seed| {
             SKRandomForestClassifier::<f64>::build()
@@ -84,7 +84,7 @@ fn no_scored_oob_rows_reports_unsupported_operation() {
                 .random_seed(seed)
                 .build()
                 .expect("builds")
-                .fit(&cls_features, cls_labels.view())
+                .fit(&pair_features, pair_labels.view())
                 .expect("fit succeeds")
         })
         .find(|model| model.oob_scored_rows() == 0)
@@ -104,9 +104,6 @@ fn no_scored_oob_rows_reports_unsupported_operation() {
 #[test]
 fn oob_score_covers_rows_and_excludes_in_bag_trees() {
     let rows = 40usize;
-    // Feature 0 is the row index paired with alternating labels: in-bag trees
-    // memorize every row (~1.0 training accuracy), whereas OOB trees never saw
-    // that row's index and predict the neighbor's opposite label (~0.0 OOB).
     let noisy_features = Array2::from_shape_fn((rows, 1), |(row, _)| row as f64);
     let alternating_labels = Array1::from_shape_fn(rows, |row| (row % 2) as i64);
     let memorized = SKRandomForestClassifier::<f64>::build()
@@ -119,23 +116,21 @@ fn oob_score_covers_rows_and_excludes_in_bag_trees() {
         .expect("fit succeeds");
 
     assert_eq!(memorized.oob_scored_rows(), rows);
-    let in_bag_pred = memorized
+    let in_bag_predictions = memorized
         .predict_labels(&noisy_features)
         .expect("in-bag predict");
-    let in_bag_acc: f64 = sk_accuracy_score(
+    let in_bag_accuracy: f64 = sk_accuracy_score(
         alternating_labels.as_slice().expect("slice"),
-        in_bag_pred.as_slice().expect("slice"),
+        in_bag_predictions.as_slice().expect("slice"),
     )
     .expect("accuracy");
-    let oob_acc = memorized.oob_score().expect("oob score");
-    assert!(in_bag_acc > 0.95, "in-bag accuracy {in_bag_acc}");
+    let oob_accuracy = memorized.oob_score().expect("oob score");
+    assert!(in_bag_accuracy > 0.95, "in-bag accuracy {in_bag_accuracy}");
     assert!(
-        oob_acc < 0.35,
-        "OOB score {oob_acc} must exclude in-bag trees that memorized the row"
+        oob_accuracy < 0.35,
+        "OOB score {oob_accuracy} must exclude in-bag trees that memorized the row"
     );
 
-    // On a clean signal, both classifier OOB accuracy and regressor OOB R² are
-    // close to 1.0 and match manual OOB aggregation over regressor.trees().
     let signal_features = Array2::from_shape_fn((60, 2), |(row, column)| {
         if column == 0 {
             row as f64 / 10.0
@@ -144,7 +139,7 @@ fn oob_score_covers_rows_and_excludes_in_bag_trees() {
         }
     });
     let clean_labels = Array1::from_shape_fn(60, |row| i64::from(row >= 30));
-    let clean_cls = SKRandomForestClassifier::<f64>::build()
+    let clean_classifier = SKRandomForestClassifier::<f64>::build()
         .number_of_trees(40)
         .oob_score(true)
         .random_seed(23)
@@ -152,11 +147,11 @@ fn oob_score_covers_rows_and_excludes_in_bag_trees() {
         .expect("builds")
         .fit(&signal_features, clean_labels.view())
         .expect("fit succeeds");
-    assert_eq!(clean_cls.oob_scored_rows(), 60);
-    assert!(clean_cls.oob_score().expect("cls oob") > 0.90);
+    assert_eq!(clean_classifier.oob_scored_rows(), 60);
+    assert!(clean_classifier.oob_score().expect("classifier oob") > 0.90);
 
     let clean_responses = Array1::from_shape_fn(60, |row| if row < 30 { 5.0 } else { 25.0 });
-    let clean_reg = SKRandomForestRegressor::<f64>::build()
+    let clean_regressor = SKRandomForestRegressor::<f64>::build()
         .number_of_trees(40)
         .oob_score(true)
         .random_seed(23)
@@ -164,25 +159,27 @@ fn oob_score_covers_rows_and_excludes_in_bag_trees() {
         .expect("builds")
         .fit(&signal_features, clean_responses.view())
         .expect("fit succeeds");
-    assert_eq!(clean_reg.oob_scored_rows(), 60);
+    assert_eq!(clean_regressor.oob_scored_rows(), 60);
 
-    // Verify regressor OOB R² against independent aggregation of `trees()` over
-    // `out_of_bag_rows(t)`.
     let mut manual_sums = vec![0.0_f64; 60];
     let mut manual_counts = vec![0usize; 60];
-    for (tree_index, tree_model) in clean_reg.trees().iter().enumerate() {
-        let single_preds = tree_model
+    for (tree_index, tree_model) in clean_regressor.trees().iter().enumerate() {
+        let tree_predictions = tree_model
             .predict(signal_features.view())
             .expect("tree predict");
-        for &row in clean_reg.out_of_bag_rows(tree_index).expect("oob rows") {
-            manual_sums[row] += single_preds[row];
+        for &row in clean_regressor
+            .out_of_bag_rows(tree_index)
+            .expect("oob rows")
+        {
+            manual_sums[row] += tree_predictions[row];
             manual_counts[row] += 1;
         }
     }
-    let manual_oob_preds =
+    let manual_oob_predictions =
         Array1::from_iter((0..60).map(|row| manual_sums[row] / manual_counts[row] as f64));
-    let expected_r2 = sk_r2_score(clean_responses.view(), manual_oob_preds.view()).expect("r2");
-    let actual_r2 = clean_reg.oob_score().expect("reg oob");
+    let expected_r2 =
+        sk_r2_score(clean_responses.view(), manual_oob_predictions.view()).expect("r2");
+    let actual_r2 = clean_regressor.oob_score().expect("regressor oob");
     assert!((actual_r2 - expected_r2).abs() < 1e-12);
     assert!(actual_r2 > 0.85);
 }

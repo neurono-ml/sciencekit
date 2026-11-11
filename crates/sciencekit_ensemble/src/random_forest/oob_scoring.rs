@@ -149,7 +149,7 @@ pub(super) fn sk_regressor_oob_state<F: SKFloat>(
     }
     let scored_rows = true_targets.len();
     let true_array = Array1::from_vec(true_targets);
-    let pred_array = Array1::from_vec(predicted_targets);
-    let score = sk_r2_score(true_array.view(), pred_array.view())?;
+    let predicted_array = Array1::from_vec(predicted_targets);
+    let score = sk_r2_score(true_array.view(), predicted_array.view())?;
     Ok(SKForestOobState::Scored { score, scored_rows })
 }

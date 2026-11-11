@@ -151,3 +151,14 @@ pub(super) fn sk_sparse_feature_value<F: SKFloat>(row: &CsVecView<'_, F>, featur
         Err(_) => F::zero(),
     }
 }
+
+/// Collect distinct canonical class indices in first-occurrence order.
+pub(super) fn sk_first_occurrence_classes(sampled_classes: &[usize]) -> Vec<usize> {
+    let mut distinct = Vec::new();
+    sampled_classes.iter().for_each(|&class_index| {
+        if !distinct.contains(&class_index) {
+            distinct.push(class_index);
+        }
+    });
+    distinct
+}

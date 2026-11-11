@@ -65,15 +65,18 @@ fn tiny_classification_and_regression_fit_and_score_cleanly() {
         .expect("r2 scorer");
     assert!(r2 > 0.85, "tiny f32 R² {r2}");
     let labels_f32 = array![0_i64, 0, 1, 1, 2, 2];
-    let cls_f32 = SKRandomForestClassifier::<f32>::build()
+    let classifier_f32 = SKRandomForestClassifier::<f32>::build()
         .number_of_trees(20)
         .random_seed(13)
         .build()
         .expect("builds")
         .fit(&features_f32, labels_f32.view())
-        .expect("f32 cls fit");
+        .expect("f32 classifier fit");
     assert_eq!(
-        cls_f32.predict_labels(&features_f32).expect("pred").len(),
+        classifier_f32
+            .predict_labels(&features_f32)
+            .expect("predict")
+            .len(),
         6
     );
 }

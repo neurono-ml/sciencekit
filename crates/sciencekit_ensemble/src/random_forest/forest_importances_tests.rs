@@ -27,11 +27,11 @@ fn separating_feature_dominates_normalized_forest_importances() {
         .expect("builds")
         .fit(&features, labels.view())
         .expect("fit succeeds");
-    let cls_importances = classifier.feature_importances();
-    assert!((cls_importances[0] - 1.0).abs() < 1e-12);
-    assert_eq!(cls_importances[1], 0.0);
-    assert_eq!(cls_importances[2], 0.0);
-    assert!((cls_importances.sum() - 1.0).abs() < 1e-12);
+    let classifier_importances = classifier.feature_importances();
+    assert!((classifier_importances[0] - 1.0).abs() < 1e-12);
+    assert_eq!(classifier_importances[1], 0.0);
+    assert_eq!(classifier_importances[2], 0.0);
+    assert!((classifier_importances.sum() - 1.0).abs() < 1e-12);
 
     let responses = array![1.0, 1.5, 2.0, 10.0, 10.5, 11.0];
     let regressor = SKRandomForestRegressor::<f64>::build()
@@ -42,11 +42,11 @@ fn separating_feature_dominates_normalized_forest_importances() {
         .expect("builds")
         .fit(&features, responses.view())
         .expect("fit succeeds");
-    let reg_importances = regressor.feature_importances();
-    assert!((reg_importances[0] - 1.0).abs() < 1e-12);
-    assert_eq!(reg_importances[1], 0.0);
-    assert_eq!(reg_importances[2], 0.0);
-    assert!((reg_importances.sum() - 1.0).abs() < 1e-12);
+    let regressor_importances = regressor.feature_importances();
+    assert!((regressor_importances[0] - 1.0).abs() < 1e-12);
+    assert_eq!(regressor_importances[1], 0.0);
+    assert_eq!(regressor_importances[2], 0.0);
+    assert!((regressor_importances.sum() - 1.0).abs() < 1e-12);
 }
 
 /// When trees assign different importances to features, the forest importance

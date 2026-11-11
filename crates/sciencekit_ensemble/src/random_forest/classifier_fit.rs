@@ -17,7 +17,8 @@ use super::classifier_model::{SKClassifierTreeMember, SKRandomForestClassifierMo
 use super::execution::sk_execute_tree_slots;
 use super::importances::sk_classifier_importances;
 use super::input_validation::{
-    sk_canonicalize_targets, sk_fit_dimensions, sk_validate_finite_features,
+    sk_canonicalize_targets, sk_first_occurrence_classes, sk_fit_dimensions,
+    sk_validate_finite_features,
 };
 use super::oob_scoring::sk_classifier_oob_state;
 
@@ -142,7 +143,10 @@ fn sk_fit_classifier_slot<F: SKFloat>(
         SKClassWeight::None => SKClassWeight::None,
         SKClassWeight::Balanced => SKClassWeight::Balanced,
         SKClassWeight::Explicit(weights) => {
-            let mapped: Vec<F> = local_to_forest.iter().map(|&c| weights[c]).collect();
+            let mapped: Vec<F> = local_to_forest
+                .iter()
+                .map(|&class_index| weights[class_index])
+                .collect();
             if mapped.iter().all(|weight| *weight == F::zero()) {
                 return Ok(pure_leaf(local_to_forest[0]));
             }
@@ -166,7 +170,11 @@ fn sk_fit_classifier_slot<F: SKFloat>(
         builder = builder.maximum_depth(maximum_depth);
     }
     let tree_estimator = builder.build()?;
-    let sampled_labels = Array1::from_iter(sampled_classes.iter().map(|&c| c as i64));
+    let sampled_labels = Array1::from_iter(
+        sampled_classes
+            .iter()
+            .map(|&class_index| class_index as i64),
+    );
     let model = match features {
         SKDataView::Dense(dense) => tree_estimator.fit(
             sk_gather_dense_rows(dense, &drawn).view(),
@@ -185,14 +193,4 @@ fn sk_fit_classifier_slot<F: SKFloat>(
         },
         oob_rows,
     })
-}
-
-fn sk_first_occurrence_classes(sampled_classes: &[usize]) -> Vec<usize> {
-    let mut distinct = Vec::new();
-    sampled_classes.iter().for_each(|&class_index| {
-        if !distinct.contains(&class_index) {
-            distinct.push(class_index);
-        }
-    });
-    distinct
 }

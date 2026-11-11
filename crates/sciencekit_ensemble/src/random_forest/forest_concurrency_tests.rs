@@ -52,7 +52,9 @@ fn shared_classifier_serves_concurrent_threads_deterministically() {
             .expect("fit succeeds"),
     );
 
-    let expected_probs = model.predict_probabilities(dense.view()).expect("probs");
+    let expected_probabilities = model
+        .predict_probabilities(dense.view())
+        .expect("probabilities");
     let expected_labels = model.predict_labels(dense.view()).expect("labels");
 
     let handles: Vec<_> = (0..8)
@@ -77,8 +79,8 @@ fn shared_classifier_serves_concurrent_threads_deterministically() {
         .collect();
 
     for handle in handles {
-        let (probs, labels) = handle.join().expect("thread joins");
-        assert_eq!(probs, expected_probs);
+        let (probabilities, labels) = handle.join().expect("thread joins");
+        assert_eq!(probabilities, expected_probabilities);
         assert_eq!(labels, expected_labels);
     }
 }

@@ -3,65 +3,72 @@
 use std::collections::HashSet;
 
 use ndarray::{Array1, Array2};
-use sciencekit_common::{SKBackendKind, SKBuilder, SKExecutionMode, SKSupervisedFit};
+use sciencekit_common::{
+    SKBackendKind, SKBuilder, SKClassifierPredictor, SKExecutionMode, SKRegressorPredictor,
+    SKSupervisedFit,
+};
 use sciencekit_tree::SKMaximumFeatures;
 
 use super::{SKRandomForestClassifier, SKRandomForestRegressor};
 
 fn classification_fixture() -> (Array2<f64>, Array1<i64>) {
-    let rows = 120usize;
-    let features = Array2::from_shape_fn((rows, 4), |(row, column)| {
+    let features = Array2::from_shape_fn((120, 4), |(row, column)| {
         ((row * 17 + column * 11) % 37) as f64 / 10.0
     });
-    let labels = Array1::from_shape_fn(rows, |row| {
+    let labels = Array1::from_shape_fn(120, |row| {
         i64::from(features[[row, 0]] + features[[row, 1]] > 3.5)
     });
     (features, labels)
 }
 
 fn regression_fixture() -> (Array2<f64>, Array1<f64>) {
-    let rows = 120usize;
-    let features = Array2::from_shape_fn((rows, 4), |(row, column)| {
+    let features = Array2::from_shape_fn((120, 4), |(row, column)| {
         ((row * 13 + column * 19) % 41) as f64 / 10.0
     });
-    let responses = Array1::from_shape_fn(rows, |row| {
+    let responses = Array1::from_shape_fn(120, |row| {
         2.0 * features[[row, 0]] - features[[row, 2]] + 0.5
     });
     (features, responses)
 }
 
-/// Repeated fits with the same seed produce identical tree structures and leaf
-/// values for both the classifier and the regressor.
+/// Repeated fits with the same seed produce identical tree structures, leaf
+/// values and predictions for both the classifier and the regressor.
 #[test]
 fn repeated_fits_produce_identical_trees() {
     let (features, labels) = classification_fixture();
-    let fit_cls = || {
-        SKRandomForestClassifier::<f64>::build()
-            .number_of_trees(16)
-            .maximum_depth(4)
-            .random_seed(2026)
-            .build()
-            .expect("builds")
-            .fit(&features, labels.view())
-            .expect("fit")
-    };
-    let (first, second) = (fit_cls(), fit_cls());
+    let classifier = SKRandomForestClassifier::<f64>::build()
+        .number_of_trees(16)
+        .maximum_depth(4)
+        .random_seed(2026)
+        .build()
+        .expect("builds");
+    let first = classifier.fit(&features, labels.view()).expect("fit");
+    let second = classifier.fit(&features, labels.view()).expect("fit");
     assert_eq!((first.number_of_trees(), first.feature_count()), (16, 4));
     assert!((0..16).all(|index| first.tree(index) == second.tree(index)));
+    assert_eq!(
+        first.predict_probabilities(&features).expect("predict"),
+        second.predict_probabilities(&features).expect("predict")
+    );
 
-    let (reg_features, responses) = regression_fixture();
-    let fit_reg = || {
-        SKRandomForestRegressor::<f64>::build()
-            .number_of_trees(16)
-            .maximum_depth(4)
-            .random_seed(2026)
-            .build()
-            .expect("builds")
-            .fit(&reg_features, responses.view())
-            .expect("fit")
-    };
-    let (reg_first, reg_second) = (fit_reg(), fit_reg());
-    assert!((0..16).all(|index| reg_first.tree(index) == reg_second.tree(index)));
+    let (regression_features, responses) = regression_fixture();
+    let regressor = SKRandomForestRegressor::<f64>::build()
+        .number_of_trees(16)
+        .maximum_depth(4)
+        .random_seed(2026)
+        .build()
+        .expect("builds");
+    let first_model = regressor
+        .fit(&regression_features, responses.view())
+        .expect("fit");
+    let second_model = regressor
+        .fit(&regression_features, responses.view())
+        .expect("fit");
+    assert!((0..16).all(|index| first_model.tree(index) == second_model.tree(index)));
+    assert_eq!(
+        first_model.predict(&regression_features).expect("predict"),
+        second_model.predict(&regression_features).expect("predict")
+    );
 }
 
 /// Fitting sequentially (`InProcessSynchronous`) and through the parallel path
@@ -69,7 +76,7 @@ fn repeated_fits_produce_identical_trees() {
 #[test]
 fn parallel_fit_equals_sequential_fit() {
     let (features, labels) = classification_fixture();
-    let fit_cls = |mode| {
+    let fit_classifier = |mode| {
         SKRandomForestClassifier::<f64>::build()
             .number_of_trees(20)
             .maximum_depth(5)
@@ -80,12 +87,12 @@ fn parallel_fit_equals_sequential_fit() {
             .fit(&features, labels.view())
             .expect("fit")
     };
-    let sequential = fit_cls(SKExecutionMode::InProcessSynchronous);
-    let parallel = fit_cls(SKExecutionMode::Automatic);
+    let sequential = fit_classifier(SKExecutionMode::InProcessSynchronous);
+    let parallel = fit_classifier(SKExecutionMode::Automatic);
     assert!((0..20).all(|index| sequential.tree(index) == parallel.tree(index)));
 
-    let (reg_features, responses) = regression_fixture();
-    let fit_reg = |mode| {
+    let (regression_features, responses) = regression_fixture();
+    let fit_regressor = |mode| {
         SKRandomForestRegressor::<f64>::build()
             .number_of_trees(20)
             .maximum_depth(5)
@@ -93,15 +100,16 @@ fn parallel_fit_equals_sequential_fit() {
             .execution_mode(mode)
             .build()
             .expect("builds")
-            .fit(&reg_features, responses.view())
+            .fit(&regression_features, responses.view())
             .expect("fit")
     };
-    let reg_seq = fit_reg(SKExecutionMode::InProcessSynchronous);
-    let reg_par = fit_reg(SKExecutionMode::Automatic);
-    assert!((0..20).all(|index| reg_seq.tree(index) == reg_par.tree(index)));
+    let sequential_model = fit_regressor(SKExecutionMode::InProcessSynchronous);
+    let parallel_model = fit_regressor(SKExecutionMode::Automatic);
+    assert!((0..20).all(|index| sequential_model.tree(index) == parallel_model.tree(index)));
 }
 
-/// Fitting on rayon pools of different thread counts produces identical trees.
+/// Fitting on rayon pools of different thread counts produces identical trees
+/// and predictions.
 #[test]
 fn thread_count_does_not_change_fitted_forest() {
     let (features, labels) = classification_fixture();
@@ -120,11 +128,18 @@ fn thread_count_does_not_change_fitted_forest() {
     };
     let (one_thread, four_threads) = (fit_on_threads(1), fit_on_threads(4));
     assert!((0..24).all(|index| one_thread.tree(index) == four_threads.tree(index)));
+    assert_eq!(
+        one_thread
+            .predict_probabilities(&features)
+            .expect("predict"),
+        four_threads
+            .predict_probabilities(&features)
+            .expect("predict")
+    );
 }
 
-/// On a nine-feature problem where feature 8 perfectly separates the classes,
-/// `All` always splits on feature 8 at the root while `Sqrt` (3 features per
-/// split) explores other root features.
+/// On nine features where feature 8 cleanly separates the classes, `All`
+/// always picks feature 8 at root while `Sqrt` (3 features) diversifies.
 #[test]
 fn feature_subsampling_sqrt_and_all_control_candidate_splits() {
     assert_eq!(SKMaximumFeatures::<f64>::Sqrt.resolved_count(9), 3);
@@ -150,13 +165,11 @@ fn feature_subsampling_sqrt_and_all_control_candidate_splits() {
             .fit(&features, labels.view())
             .expect("fit");
         (0..24)
-            .map(|i| {
+            .map(|index| {
                 model
-                    .tree(i)
-                    .expect("tree")
-                    .node(0)
-                    .expect("root")
-                    .split_feature()
+                    .tree(index)
+                    .and_then(|tree| tree.node(0))
+                    .and_then(|node| node.split_feature())
             })
             .collect()
     };
