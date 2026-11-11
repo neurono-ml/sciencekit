@@ -8,6 +8,7 @@
 
 #[cfg(test)]
 mod instrumentation;
+mod centering;
 mod kernel;
 mod operator;
 mod projection;
@@ -20,6 +21,8 @@ pub use projection::sk_seeded_projection;
 pub use randomized::{SKRandomizedSvdBuilder, sk_randomized_svd};
 pub use result::SKRandomizedSvdResult;
 
+#[cfg(test)]
+mod centered_tests;
 #[cfg(test)]
 mod dense_tests;
 #[cfg(test)]

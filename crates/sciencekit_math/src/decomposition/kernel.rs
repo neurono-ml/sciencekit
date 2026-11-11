@@ -4,6 +4,9 @@
 use ndarray::ArrayView1;
 use sciencekit_common::{SKDataView, SKError, SKFloat};
 
+use super::centering::{
+    sk_subtract_feature_mean_contribution, sk_subtract_sample_mean_contribution,
+};
 use super::operator::SKMatrixOperator;
 use super::projection::sk_seeded_projection;
 use super::qr::sk_thin_qr;
@@ -93,15 +96,27 @@ pub(crate) fn sk_randomized_svd_kernel<F: SKBackendSelection>(
         .max(1);
     let projection = sk_seeded_projection::<F>(columns, basis_size, random_seed);
     let mut projected = operator.multiply(backend, &projection.view());
+    if let Some(mean) = centering {
+        sk_subtract_sample_mean_contribution(&mut projected, &mean, &projection.view());
+    }
 
     for _ in 0..number_of_power_iterations {
         let basis = sk_thin_qr(&projected.view());
-        let transposed = operator.transpose_multiply(backend, &basis.view());
+        let mut transposed = operator.transpose_multiply(backend, &basis.view());
+        if let Some(mean) = centering {
+            sk_subtract_feature_mean_contribution(&mut transposed, &mean, &basis.view());
+        }
         projected = operator.multiply(backend, &transposed.view());
+        if let Some(mean) = centering {
+            sk_subtract_sample_mean_contribution(&mut projected, &mean, &transposed.view());
+        }
     }
 
     let basis = sk_thin_qr(&projected.view());
-    let transposed = operator.transpose_multiply(backend, &basis.view());
+    let mut transposed = operator.transpose_multiply(backend, &basis.view());
+    if let Some(mean) = centering {
+        sk_subtract_feature_mean_contribution(&mut transposed, &mean, &basis.view());
+    }
     let projected_matrix = transposed.t().to_owned();
 
     let (left, singular_values, right) = sk_small_svd(backend, &projected_matrix.view())?;

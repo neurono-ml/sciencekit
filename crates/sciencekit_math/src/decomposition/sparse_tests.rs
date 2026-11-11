@@ -10,7 +10,7 @@ use super::instrumentation::{sk_largest_dense_intermediate, sk_reset_dense_inter
 use super::randomized::sk_randomized_svd;
 
 /// Builds the CSR matrix of a dense fixture.
-fn to_csr(matrix: &Array2<f64>) -> CsMat<f64> {
+pub(crate) fn to_csr(matrix: &Array2<f64>) -> CsMat<f64> {
     let (rows, columns) = matrix.dim();
     let mut indptr = vec![0usize];
     let mut indices = Vec::new();
