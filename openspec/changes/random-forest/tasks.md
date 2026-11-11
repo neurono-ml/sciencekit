@@ -12,7 +12,7 @@
 
 ## 2. Forest configuration and fitting
 
-- [ ] 2.1 Implement `SKRandomForestClassifierBuilder` and `SKRandomForestRegressorBuilder`
+- [x] 2.1 Implement `SKRandomForestClassifierBuilder` and `SKRandomForestRegressorBuilder`
   with the documented defaults and invalid-value tests (`number_of_trees` zero, invalid
   sample fraction, OOB without bootstrap); verify with
   `cargo test -p sciencekit_ensemble forest_builder`.
