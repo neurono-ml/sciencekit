@@ -10,6 +10,7 @@ mod core_implementation;
 mod expansion;
 mod fit;
 mod model;
+mod predict;
 mod region_query;
 mod validation;
 
@@ -24,6 +25,8 @@ mod dbscan_builder_tests;
 mod dbscan_fit_tests;
 #[cfg(test)]
 mod dbscan_model_tests;
+#[cfg(test)]
+mod dbscan_predict_tests;
 #[cfg(test)]
 mod dbscan_query_tests;
 #[cfg(test)]

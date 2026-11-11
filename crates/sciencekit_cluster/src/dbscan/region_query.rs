@@ -4,7 +4,8 @@
 use sciencekit_common::{SKDataView, SKError, SKFloat};
 use sciencekit_neighbors::{
     SKBallTree, SKBallTreeBuilder, SKBruteForceSearcher, SKKDTree, SKKDTreeBuilder,
-    SKNearestNeighborsSearcher, SKNeighborMetric, SKRadiusNeighbors, SKTrainingData,
+    SKNearestNeighborsSearcher, SKNeighborMetric, SKNeighborQuery, SKRadiusNeighbors,
+    SKTrainingData,
 };
 
 use super::config::{
@@ -39,6 +40,19 @@ impl<F: SKFloat> SKDBSCANIndex<F> {
             Self::KdTree(tree) => tree.radius_neighbors(queries, radius),
             Self::BallTree(tree) => tree.radius_neighbors(queries, radius),
             Self::BruteForce(searcher) => searcher.radius_neighbors(queries, radius),
+        }
+    }
+
+    /// Exact `k`-nearest indexed rows for every query row.
+    pub(crate) fn k_nearest(
+        &self,
+        queries: SKDataView<'_, F>,
+        neighbors_count: usize,
+    ) -> Result<SKNeighborQuery<F>, SKError> {
+        match self {
+            Self::KdTree(tree) => tree.k_nearest(queries, neighbors_count),
+            Self::BallTree(tree) => tree.k_nearest(queries, neighbors_count),
+            Self::BruteForce(searcher) => searcher.k_nearest(queries, neighbors_count),
         }
     }
 }

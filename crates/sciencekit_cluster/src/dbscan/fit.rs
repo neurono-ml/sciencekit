@@ -6,11 +6,12 @@ use sciencekit_common::{
     SKClusterLabel, SKDataView, SKError, SKFloat, SKOperationAttributes, SKOperationKind,
     SKUnsupervisedFit, sk_run_operation,
 };
-use sciencekit_neighbors::SKTrainingData;
+use sciencekit_neighbors::{SKBruteForceSearcher, SKTrainingData};
 
 use super::core_implementation::SKDBSCAN;
-use super::expansion::sk_run_dbscan_partition;
-use super::model::SKDBSCANModel;
+use super::expansion::{sk_extract_core_samples, sk_run_dbscan_partition};
+use super::model::{SKDBSCANCoreSearch, SKDBSCANModel};
+use super::region_query::sk_build_index;
 use super::validation::{sk_validate_fit_features, sk_view_dimensions};
 
 impl<F: SKFloat> SKUnsupervisedFit<F> for SKDBSCAN<F> {
@@ -67,11 +68,41 @@ fn sk_fit_estimator<F: SKFloat>(
 
     let training = SKTrainingData::from_view(features);
     let expansion = sk_run_dbscan_partition(&configuration, &training)?;
+    let core_search = if expansion.core_sample_indices.is_empty() {
+        None
+    } else {
+        let core_indices = expansion
+            .core_sample_indices
+            .as_slice()
+            .expect("core_sample_indices is contiguous");
+        let core_samples = sk_extract_core_samples(&training, core_indices);
+        let labels = core_indices
+            .iter()
+            .map(|&index| expansion.labels[index])
+            .collect();
+        let tree = if expansion.strategy.is_tree() {
+            Some(sk_build_index(
+                &configuration,
+                &core_samples,
+                expansion.strategy,
+            )?)
+        } else {
+            None
+        };
+        let brute_force =
+            SKBruteForceSearcher::build(core_samples, configuration.metric.neighbors_metric())?;
+        Some(SKDBSCANCoreSearch {
+            labels,
+            tree,
+            brute_force,
+        })
+    };
 
     Ok(SKDBSCANModel::from_expansion(
         expansion,
         training.columns(),
         training.representation(),
+        core_search,
         configuration,
     ))
 }

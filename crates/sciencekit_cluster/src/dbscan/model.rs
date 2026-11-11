@@ -1,13 +1,33 @@
-//! The fitted DBSCAN model (spec `dbscan`, decision 6).
+//! The fitted DBSCAN model (spec `dbscan`, decisions 4 and 6).
 
 use ndarray::{Array1, ArrayView1};
 use sciencekit_common::{SKBackendKind, SKClusterLabel, SKExecutionMode, SKFloat};
+use sciencekit_neighbors::SKBruteForceSearcher;
 
 use super::config::{SKDBSCANConfiguration, SKDBSCANMetric, SKDBSCANSearchStrategy};
 use super::expansion::SKDBSCANExpansion;
+use super::region_query::SKDBSCANIndex;
+
+/// Core-sample index retained for the nearest-core assignment extension.
+#[derive(Debug, Clone)]
+pub(super) struct SKDBSCANCoreSearch<F: SKFloat> {
+    /// Cluster label of each core sample, aligned with the core-sample matrix.
+    pub(super) labels: Vec<SKClusterLabel>,
+    /// Optional dense tree index over the core samples.
+    pub(super) tree: Option<SKDBSCANIndex<F>>,
+    /// Representation-preserving brute-force searcher over the core samples.
+    pub(super) brute_force: SKBruteForceSearcher<F>,
+}
 
 /// Fitted DBSCAN state: typed training assignments, core-sample indices,
-/// cluster count, fitted `eps` and the producing run's configuration.
+/// cluster count, fitted `eps` and the nearest-core assignment state.
+///
+/// New observations can be assigned through
+/// [`sciencekit_common::SKClustererPredictor`]. That method implements a
+/// **nearest-core heuristic** (an extension beyond scikit-learn, which offers
+/// no `DBSCAN.predict`): each query row joins the cluster of its nearest core
+/// sample when that distance is at most `eps`, and receives
+/// [`SKClusterLabel::Noise`] otherwise, without re-clustering the training set.
 #[derive(Debug, Clone)]
 pub struct SKDBSCANModel<F: SKFloat> {
     pub(super) labels: Array1<SKClusterLabel>,
@@ -19,6 +39,7 @@ pub struct SKDBSCANModel<F: SKFloat> {
     pub(super) metric: SKDBSCANMetric,
     pub(super) search_strategy: SKDBSCANSearchStrategy,
     pub(super) training_representation: &'static str,
+    pub(super) core_search: Option<SKDBSCANCoreSearch<F>>,
     pub(super) backend: SKBackendKind,
     pub(super) execution_mode: SKExecutionMode,
 }
@@ -29,6 +50,7 @@ impl<F: SKFloat> SKDBSCANModel<F> {
         expansion: SKDBSCANExpansion,
         number_of_features: usize,
         training_representation: &'static str,
+        core_search: Option<SKDBSCANCoreSearch<F>>,
         configuration: SKDBSCANConfiguration<F>,
     ) -> Self {
         Self {
@@ -41,6 +63,7 @@ impl<F: SKFloat> SKDBSCANModel<F> {
             metric: configuration.metric,
             search_strategy: expansion.strategy,
             training_representation,
+            core_search,
             backend: configuration.backend,
             execution_mode: configuration.execution_mode,
         }

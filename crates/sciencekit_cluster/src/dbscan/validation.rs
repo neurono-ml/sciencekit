@@ -58,3 +58,31 @@ pub(crate) fn sk_validate_fit_features<F: SKFloat>(
     }
     sk_validate_finiteness(features)
 }
+
+/// Validate the query batch supplied to `predict_clusters`.
+pub(crate) fn sk_validate_query_features<F: SKFloat>(
+    features: SKDataView<'_, F>,
+    expected_columns: usize,
+) -> Result<(), SKError> {
+    if !matches!(features, SKDataView::Dense(_) | SKDataView::Sparse(_)) {
+        return Err(SKError::UnsupportedRepresentation {
+            representation: features.representation(),
+            suggestion: "convert the input to a dense matrix or a CSR matrix",
+        });
+    }
+    let (rows, columns) = sk_view_dimensions(&features);
+    if rows == 0 {
+        return Err(SKError::EmptyInput {
+            operation: "predict",
+        });
+    }
+    if columns != expected_columns {
+        return Err(SKError::shape_mismatch_2d(
+            rows,
+            expected_columns,
+            rows,
+            columns,
+        ));
+    }
+    sk_validate_finiteness(features)
+}
