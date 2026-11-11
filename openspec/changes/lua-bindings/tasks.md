@@ -27,7 +27,11 @@
 - [x] 3.4 Update `CHANGELOG.md` and the companion mdBook chapter (including a
   `Development Explained` subsection on userdata lifecycle and table conversion); verify
   with `mdbook build docs`.
-- [ ] 3.5 Independent review by a separate agent validating every scenario in
+- [x] 3.5 Extract the crate into its own repository (`neurono-ml/sciencekit-lua`) as a
+  standalone Cargo project depending on `sciencekit_ffi` through a git dependency; verify
+  by building the module and running both the Rust and the Lua suites in the new
+  repository.
+- [ ] 3.6 Independent review by a separate agent validating every scenario in
   `lua-bindings`; address every finding and re-run the gates.
 
 ## Workflow follow-up
