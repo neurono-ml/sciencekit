@@ -2,7 +2,7 @@
 
 ## 1. Crate and centering
 
-- [ ] 1.1 Create `crates/sciencekit_decomposition` with `Cargo.toml`, `lib.rs` and the
+- [x] 1.1 Create `crates/sciencekit_decomposition` with `Cargo.toml`, `lib.rs` and the
   `pca` dispatcher; add it to `[workspace.members]`; verify
   `cargo test -p sciencekit_decomposition` compiles.
 - [ ] 1.2 Implement centering and mean storage with a hand-computed zero-mean test; verify
