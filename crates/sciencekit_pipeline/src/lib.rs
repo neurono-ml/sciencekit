@@ -44,6 +44,7 @@
 
 mod block;
 pub mod feature_union;
+pub mod graph;
 pub mod pipeline;
 mod stage;
 mod stages;
@@ -53,6 +54,10 @@ pub use feature_union::{
     SKAppendUnionStage, SKBlockTransformer, SKBoxedFittedStage, SKFeatureUnion,
     SKFeatureUnionArity, SKFeatureUnionBuilder, SKFeatureUnionMemberError, SKFeatureUnionModel,
     SKFeatureUnionStages,
+};
+pub use graph::{
+    SKBoxedFinalModel, SKNodeIdentifier, SKPipelineGraph, SKPipelineGraphBuilder,
+    SKPipelineGraphNodeKind,
 };
 pub use pipeline::{
     SKPipeline, SKPipelineBuilder, SKPipelineClassifier, SKPipelineClassifierBuilder,
