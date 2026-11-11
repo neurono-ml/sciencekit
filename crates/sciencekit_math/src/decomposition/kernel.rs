@@ -6,7 +6,7 @@ use sciencekit_common::{SKDataView, SKError, SKFloat};
 
 use super::operator::SKMatrixOperator;
 use super::projection::sk_seeded_projection;
-use super::result::SKRandomizedSvdResult;
+use super::result::{SKRandomizedSvdResult, sk_apply_sign_convention};
 use crate::backend::{SKBackendSelection, SKMathBackend};
 
 /// Rejects an invalid configuration before any computation happens.
@@ -113,9 +113,13 @@ pub(crate) fn sk_randomized_svd_kernel<F: SKBackendSelection>(
         .take(components)
         .collect();
 
+    let mut u = u.slice(ndarray::s![.., ..components]).to_owned();
+    let mut v = v.slice(ndarray::s![.., ..components]).to_owned();
+    sk_apply_sign_convention(&mut u, &mut v);
+
     Ok(SKRandomizedSvdResult {
-        u: u.slice(ndarray::s![.., ..components]).to_owned(),
+        u,
         singular_values,
-        v: v.slice(ndarray::s![.., ..components]).to_owned(),
+        v,
     })
 }

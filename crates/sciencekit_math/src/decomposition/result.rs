@@ -35,3 +35,34 @@ impl<F: SKFloat> SKRandomizedSvdResult<F> {
         self.u.dot(&diagonal).dot(&self.v.t())
     }
 }
+
+/// Fixes the sign of every singular-vector pair.
+///
+/// A singular vector is defined only up to sign, so the kernel makes the
+/// largest-magnitude entry of each left singular vector positive. An exact tie
+/// is resolved by the smallest row index. The matching column of the right
+/// singular vectors is flipped with it, so `U Σ Vᵀ` is preserved.
+pub(crate) fn sk_apply_sign_convention<F: SKFloat>(u: &mut Array2<F>, v: &mut Array2<F>) {
+    let components = u.ncols();
+    for component in 0..components {
+        let mut pivot_row = 0usize;
+        let mut pivot_magnitude = F::zero();
+        for row in 0..u.nrows() {
+            let magnitude = u[(row, component)].abs();
+            if row == 0 || magnitude > pivot_magnitude {
+                pivot_magnitude = magnitude;
+                pivot_row = row;
+            }
+        }
+        if u[(pivot_row, component)] < F::zero() {
+            for row in 0..u.nrows() {
+                u[(row, component)] = -u[(row, component)];
+            }
+            if component < v.ncols() {
+                for row in 0..v.nrows() {
+                    v[(row, component)] = -v[(row, component)];
+                }
+            }
+        }
+    }
+}

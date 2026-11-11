@@ -86,3 +86,63 @@ fn randomized_dense_projects_a_wide_matrix_without_oversampling_overflow() {
     assert_eq!(result.u.dim(), (10, 8));
     assert_eq!(result.v.dim(), (40, 8));
 }
+
+#[test]
+fn randomized_dense_result_shapes_match_the_input() {
+    let matrix = fixture_low_rank_matrix(30, 12, 4, 13);
+    let result = sk_randomized_svd(SKDataView::Dense(matrix.view()), 5, 2, 3, 8, None)
+        .expect("the decomposition must succeed");
+    assert_eq!(result.u.dim(), (30, 5));
+    assert_eq!(result.v.dim(), (12, 5));
+    assert_eq!(result.singular_values.len(), 5);
+}
+
+#[test]
+fn randomized_dense_singular_values_are_non_negative_and_sorted() {
+    let matrix = fixture_low_rank_matrix(30, 12, 4, 17);
+    let result = sk_randomized_svd(SKDataView::Dense(matrix.view()), 5, 2, 3, 8, None)
+        .expect("the decomposition must succeed");
+    for pair in result.singular_values.windows(2) {
+        assert!(pair[0] >= pair[1], "the singular values must be non-increasing");
+    }
+    assert!(result.singular_values.iter().all(|value| *value >= 0.0));
+}
+
+#[test]
+fn randomized_dense_sign_convention_makes_the_pivot_entry_positive() {
+    let matrix = fixture_low_rank_matrix(30, 12, 4, 23);
+    let result = sk_randomized_svd(SKDataView::Dense(matrix.view()), 5, 2, 3, 8, None)
+        .expect("the decomposition must succeed");
+    for component in 0..result.u.ncols() {
+        let column = result.u.column(component);
+        let pivot = column
+            .iter()
+            .enumerate()
+            .max_by(|first, second| {
+                first
+                    .1
+                    .abs()
+                    .partial_cmp(&second.1.abs())
+                    .unwrap_or(std::cmp::Ordering::Equal)
+                    .then_with(|| second.0.cmp(&first.0))
+            })
+            .map(|(index, value)| (index, *value))
+            .expect("the column is not empty");
+        assert!(
+            pivot.1 >= 0.0,
+            "the largest-magnitude entry of a singular vector must be positive"
+        );
+    }
+}
+
+#[test]
+fn randomized_dense_repeated_calls_return_identical_results() {
+    let matrix = fixture_low_rank_matrix(30, 12, 4, 29);
+    let first = sk_randomized_svd(SKDataView::Dense(matrix.view()), 5, 2, 3, 8, None)
+        .expect("the decomposition must succeed");
+    let second = sk_randomized_svd(SKDataView::Dense(matrix.view()), 5, 2, 3, 8, None)
+        .expect("the decomposition must succeed");
+    assert_eq!(first.u, second.u);
+    assert_eq!(first.singular_values, second.singular_values);
+    assert_eq!(first.v, second.v);
+}
