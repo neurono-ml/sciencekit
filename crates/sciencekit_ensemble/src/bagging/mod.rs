@@ -29,6 +29,8 @@ mod bagging_builder_tests;
 #[cfg(test)]
 mod bagging_classifier_tests;
 #[cfg(test)]
+mod bagging_concurrency_tests;
+#[cfg(test)]
 mod bagging_error_tests;
 #[cfg(test)]
 mod bagging_fit_tests;

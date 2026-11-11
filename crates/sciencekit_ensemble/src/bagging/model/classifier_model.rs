@@ -27,6 +27,8 @@ pub struct SKBaggingClassifierModel<F, M> {
     pub(in crate::bagging) classes: SKLabelTable,
     pub(in crate::bagging) number_of_classes: usize,
     pub(in crate::bagging) feature_count: usize,
+    pub(in crate::bagging) bootstrap: bool,
+    pub(in crate::bagging) bootstrap_features: bool,
     pub(in crate::bagging) backend: SKBackendKind,
     pub(in crate::bagging) execution_intent: SKExecutionMode,
 }
@@ -87,6 +89,16 @@ impl<F: SKFloat, M> SKBaggingClassifierModel<F, M> {
         self.out_of_bag_rows
             .as_ref()
             .and_then(|all| all.get(estimator_index).map(Vec::as_slice))
+    }
+
+    /// Whether rows were sampled with replacement at fit time.
+    pub fn bootstrap(&self) -> bool {
+        self.bootstrap
+    }
+
+    /// Whether features were sampled with replacement at fit time.
+    pub fn bootstrap_features(&self) -> bool {
+        self.bootstrap_features
     }
 
     /// The backend kind carried from the estimator.

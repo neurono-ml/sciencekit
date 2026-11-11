@@ -12,6 +12,8 @@ pub struct SKBaggingRegressorModel<F, M> {
     pub(in crate::bagging) out_of_bag_rows: Option<Vec<Vec<usize>>>,
     pub(in crate::bagging) oob_state: SKBaggingOobState<F>,
     pub(in crate::bagging) feature_count: usize,
+    pub(in crate::bagging) bootstrap: bool,
+    pub(in crate::bagging) bootstrap_features: bool,
     pub(in crate::bagging) backend: SKBackendKind,
     pub(in crate::bagging) execution_intent: SKExecutionMode,
 }
@@ -63,6 +65,16 @@ impl<F: SKFloat, M> SKBaggingRegressorModel<F, M> {
         self.out_of_bag_rows
             .as_ref()
             .and_then(|all| all.get(estimator_index).map(Vec::as_slice))
+    }
+
+    /// Whether rows were sampled with replacement at fit time.
+    pub fn bootstrap(&self) -> bool {
+        self.bootstrap
+    }
+
+    /// Whether features were sampled with replacement at fit time.
+    pub fn bootstrap_features(&self) -> bool {
+        self.bootstrap_features
     }
 
     /// The backend kind carried from the estimator.

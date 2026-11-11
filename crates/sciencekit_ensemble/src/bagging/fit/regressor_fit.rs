@@ -111,6 +111,8 @@ where
             out_of_bag_rows,
             oob_state,
             feature_count: columns_count,
+            bootstrap: configuration.bootstrap,
+            bootstrap_features: configuration.bootstrap_features,
             backend: estimator.backend(),
             execution_intent: estimator.execution_intent(),
         })

@@ -4,6 +4,7 @@
 //! submodules; every implementation lives in its own file.
 
 mod classifier_fit;
+mod classifier_slot;
 mod execution;
 mod regressor_fit;
 
