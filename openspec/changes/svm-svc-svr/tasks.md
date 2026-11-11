@@ -5,7 +5,7 @@
 - [x] 1.1 Add `kernels` module scaffold (`mod.rs` dispatcher, `config.rs` with `SKKernel`
   and `SKKernelGamma`) and tests for default gamma resolution `Scale`/`Auto`/`Value` and
   invalid parameters; verify with `cargo test -p sciencekit_math kernel`.
-- [ ] 1.2 Write and implement the linear kernel for dense inputs, with known dot products,
+- [x] 1.2 Write and implement the linear kernel for dense inputs, with known dot products,
   shape, symmetry and a large-input test; verify with
   `cargo test -p sciencekit_math kernel`.
 - [ ] 1.3 Add sparse×sparse, sparse×dense and dense×sparse linear-kernel paths, with
