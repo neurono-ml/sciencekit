@@ -67,7 +67,9 @@ pub fn sk_ffi_status_for_error(error: &SKError) -> SKFfiStatus {
         SKError::UnsupportedRepresentation { .. }
         | SKError::UnsupportedOperation { .. }
         | SKError::ExecutionModeIncompatible { .. }
-        | SKError::BatchBufferOversize { .. } => SKFfiStatus::Unsupported,
+        | SKError::BatchBufferOversize { .. }
+        | SKError::DeviceUnavailable { .. }
+        | SKError::UnsupportedScalarType { .. } => SKFfiStatus::Unsupported,
         SKError::InvalidHyperparameter { .. }
         | SKError::UnexpectedMissingness { .. }
         | SKError::Conversion(_)
@@ -81,7 +83,9 @@ pub fn sk_ffi_status_for_error(error: &SKError) -> SKFfiStatus {
         | SKError::NullValueInColumn { .. }
         | SKError::UnevenColumnLengths { .. }
         | SKError::SchemaMismatch { .. } => SKFfiStatus::InvalidArgument,
-        SKError::NotConverged { .. } => SKFfiStatus::Internal,
+        SKError::NotConverged { .. } | SKError::DeviceTransferFailure { .. } => {
+            SKFfiStatus::Internal
+        }
         _ => SKFfiStatus::Internal,
     }
 }

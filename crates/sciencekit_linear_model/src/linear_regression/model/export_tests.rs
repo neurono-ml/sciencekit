@@ -3,7 +3,8 @@
 
 use ndarray::array;
 use sciencekit_common::{
-    SKBuilder, SKExportable, SKImportable, SKModelMetadata, SKModelState, SKSupervisedFit,
+    SKBackendKind, SKBuilder, SKExportable, SKImportable, SKModelMetadata, SKModelState,
+    SKParameterValue, SKSupervisedFit,
 };
 
 use super::SKLinearRegressionModel;
@@ -66,4 +67,55 @@ fn export_import_rejects_missing_tensors() {
     .unwrap();
     let state = SKModelState::new(metadata, Vec::new()).expect("an empty state is valid");
     assert!(SKLinearRegressionModel::<f64>::import_state(&state).is_err());
+}
+
+/// Exporting then importing a model preserves every host and device backend kind.
+#[test]
+fn export_import_round_trip_preserves_device_and_host_backends() {
+    let features = array![[0.0_f64, 0.0], [1.0, 0.0], [0.0, 1.0], [2.0, 3.0]];
+    let targets = array![1.0_f64, 3.0, 4.0, 14.0];
+
+    for kind in SKBackendKind::ALL {
+        let estimator = SKLinearRegression::build()
+            .backend(kind)
+            .build()
+            .expect("every backend kind builds a valid estimator");
+        let model = estimator
+            .fit(features.view(), targets.view())
+            .expect("fit succeeds");
+        let state = model.export_state().expect("export succeeds");
+        let restored =
+            SKLinearRegressionModel::<f64>::import_state(&state).expect("import succeeds");
+        assert_eq!(
+            restored.backend(),
+            kind,
+            "backend `{kind:?}` must survive export/import"
+        );
+    }
+}
+
+/// Importing also accepts the lowercase `SKBackendKind::name()` spellings.
+#[test]
+fn import_accepts_lowercase_backend_names() {
+    let base_state = fitted_model().export_state().expect("export succeeds");
+    for kind in [
+        SKBackendKind::OpenCl,
+        SKBackendKind::Cuda,
+        SKBackendKind::Rocm,
+    ] {
+        let metadata = SKModelMetadata::new(
+            SK_LINEAR_REGRESSION_ESTIMATOR_NAME,
+            SK_LINEAR_REGRESSION_FORMAT_VERSION,
+            sciencekit_common::SKTensorDataType::F64,
+            base_state.metadata().feature_count(),
+        )
+        .unwrap()
+        .with_parameter("backend", SKParameterValue::from(kind.name().to_string()))
+        .unwrap();
+        let tensors = base_state.tensors().values().cloned().collect();
+        let state = SKModelState::new(metadata, tensors).unwrap();
+        let restored =
+            SKLinearRegressionModel::<f64>::import_state(&state).expect("import succeeds");
+        assert_eq!(restored.backend(), kind);
+    }
 }

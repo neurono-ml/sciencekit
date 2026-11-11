@@ -165,3 +165,26 @@ fn unknown_label_carries_the_label() {
     }
     assert!(format!("{err}").contains('7'));
 }
+
+/// Device error variants render the backend, scalar type and failure reason.
+#[test]
+fn device_errors_render_backend_scalar_and_reason() {
+    let unavailable = SKError::DeviceUnavailable {
+        backend: "opencl",
+        reason: "no runtime".to_string(),
+    };
+    assert!(unavailable.to_string().contains("opencl"));
+    assert!(unavailable.to_string().contains("no runtime"));
+
+    let scalar = SKError::UnsupportedScalarType {
+        backend: "cuda",
+        scalar_type: "f64",
+    };
+    assert!(scalar.to_string().contains("cuda"));
+    assert!(scalar.to_string().contains("f64"));
+
+    let transfer = SKError::DeviceTransferFailure {
+        reason: "device lost".to_string(),
+    };
+    assert!(transfer.to_string().contains("device lost"));
+}

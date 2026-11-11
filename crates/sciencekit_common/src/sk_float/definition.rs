@@ -6,10 +6,18 @@ use num_traits::Float;
 ///
 /// Implemented only by the standard floating-point types `f32` and `f64`.
 /// Sealed via a private supertrait — external crates cannot implement it.
-pub trait SKFloat: Float + Send + Sync + 'static + private::SKFloatSealed {}
+pub trait SKFloat: Float + Send + Sync + 'static + private::SKFloatSealed {
+    /// The canonical Rust name of this scalar type (`"f32"` or `"f64"`).
+    const SCALAR_NAME: &'static str;
+}
 
-impl SKFloat for f32 {}
-impl SKFloat for f64 {}
+impl SKFloat for f32 {
+    const SCALAR_NAME: &'static str = "f32";
+}
+
+impl SKFloat for f64 {
+    const SCALAR_NAME: &'static str = "f64";
+}
 
 /// Private sealing module. Kept out of the public API so that only the
 /// implementations declared here can ever satisfy [`SKFloat`].

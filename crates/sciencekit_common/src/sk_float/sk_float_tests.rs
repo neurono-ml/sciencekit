@@ -42,3 +42,10 @@ fn integers_do_not_satisfy_the_contract() {
     // (It is a compile-time property that `i32: SKFloat` does not hold.)
     let _ = accepts_float(1.0_f64);
 }
+
+/// Each sealed scalar exposes its stable Rust name without `std::any::type_name`.
+#[test]
+fn scalar_name_identifies_each_sealed_float() {
+    assert_eq!(<f32 as SKFloat>::SCALAR_NAME, "f32");
+    assert_eq!(<f64 as SKFloat>::SCALAR_NAME, "f64");
+}

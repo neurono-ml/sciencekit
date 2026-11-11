@@ -1,5 +1,6 @@
 //! Shared fixtures for the provider entry point tests.
 
+use crate::SKBackendKind;
 use crate::batching::provider::provider_test_sources::FiniteSource;
 use crate::execution::{SKExecutionMode, SKExecutionPlan};
 
@@ -14,5 +15,7 @@ pub(super) fn streaming_plan() -> SKExecutionPlan {
         batch_size: Some(1),
         buffer_depth: 1,
         available_memory_bytes: u64::MAX,
+        backend: SKBackendKind::Faer,
+        fallback_reason: None,
     }
 }

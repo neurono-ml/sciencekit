@@ -12,6 +12,7 @@
 
 mod batch_guard;
 mod context;
+mod device_plan;
 mod modes;
 mod plan;
 mod resolve;
@@ -29,6 +30,8 @@ pub use streaming_driver::{
 
 #[cfg(test)]
 mod execution_tests;
+#[cfg(test)]
+mod gpu_planning_tests;
 #[cfg(test)]
 mod sparse_guard_tests;
 #[cfg(test)]
