@@ -8,7 +8,7 @@ use crate::kmeans::SKKMeansInitialization;
 
 /// Mini-batch KMeans with per-center learning rates and out-of-core streaming,
 /// constructed only through [`SKMiniBatchKMeansBuilder`].
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct SKMiniBatchKMeans<F: SKFloat> {
     pub(super) configuration: SKMiniBatchKMeansConfiguration<F>,
 }

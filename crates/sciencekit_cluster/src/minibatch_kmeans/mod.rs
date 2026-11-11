@@ -29,6 +29,8 @@ pub use model::SKMiniBatchKMeansModel;
 #[cfg(test)]
 mod minibatch_builder_tests;
 #[cfg(test)]
+mod minibatch_determinism_tests;
+#[cfg(test)]
 mod minibatch_init_tests;
 #[cfg(test)]
 mod minibatch_model_tests;

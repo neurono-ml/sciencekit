@@ -8,7 +8,7 @@ use super::state::SKMiniBatchState;
 
 /// Fitted MiniBatchKMeans state: dense centers, per-center counts, optional
 /// in-memory training assignments, inertia, batch/epoch progress and metadata.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct SKMiniBatchKMeansModel<F: SKFloat> {
     pub(super) centers: Array2<F>,
     pub(super) counts: Array1<usize>,

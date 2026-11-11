@@ -2,14 +2,15 @@
 //! `mini-batch-k-means`).
 
 use sciencekit_common::{
-    SKBackendKind, SKError, SKExecutionMode, SKFloat, sk_validate_hyperparameter,
+    SKBackendKind, SKClusterIdentifier, SKError, SKExecutionMode, SKFloat,
+    sk_validate_hyperparameter,
 };
 
 use super::builder::SKMiniBatchKMeansBuilder;
 use crate::kmeans::SKKMeansInitialization;
 
 /// The validated configuration carried by a built [`super::SKMiniBatchKMeans`].
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub(crate) struct SKMiniBatchKMeansConfiguration<F: SKFloat> {
     /// Requested cluster count.
     pub(crate) number_of_clusters: usize,
@@ -40,10 +41,11 @@ pub(crate) struct SKMiniBatchKMeansConfiguration<F: SKFloat> {
 impl<F: SKFloat> SKMiniBatchKMeansConfiguration<F> {
     /// Validates accumulated builder fields and constructs the configuration.
     pub(super) fn from_builder(builder: &SKMiniBatchKMeansBuilder<F>) -> Result<Self, SKError> {
+        let max_clusters = SKClusterIdentifier::MAXIMUM_INDEX as usize + 1;
         sk_validate_hyperparameter(
             "number_of_clusters",
-            builder.number_of_clusters > 0,
-            "must be strictly positive",
+            builder.number_of_clusters > 0 && builder.number_of_clusters <= max_clusters,
+            "must be in 1..=u32::MAX",
         )?;
         sk_validate_hyperparameter(
             "number_of_initializations",

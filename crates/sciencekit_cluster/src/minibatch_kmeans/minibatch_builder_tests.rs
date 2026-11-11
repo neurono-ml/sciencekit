@@ -1,7 +1,9 @@
 //! Companion tests for [`SKMiniBatchKMeansBuilder`] defaults, overrides and
 //! validation (spec `mini-batch-k-means`, task 4.1).
 
-use sciencekit_common::{SKBackendKind, SKBuilder, SKError, SKExecutionMode};
+use sciencekit_common::{
+    SKBackendKind, SKBuilder, SKClusterIdentifier, SKError, SKExecutionMode,
+};
 
 use super::{SKKMeansInitialization, SKMiniBatchKMeans};
 
@@ -87,6 +89,13 @@ fn minibatch_builder_rejects_invalid_hyperparameters() {
     assert_invalid(
         SKMiniBatchKMeans::<f64>::build()
             .number_of_clusters(0)
+            .build()
+            .unwrap_err(),
+        "number_of_clusters",
+    );
+    assert_invalid(
+        SKMiniBatchKMeans::<f64>::build()
+            .number_of_clusters(SKClusterIdentifier::MAXIMUM_INDEX as usize + 2)
             .build()
             .unwrap_err(),
         "number_of_clusters",
