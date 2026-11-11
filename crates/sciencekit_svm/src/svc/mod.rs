@@ -5,6 +5,7 @@
 
 mod builder;
 mod core_implementation;
+mod decision;
 mod fit;
 mod model;
 mod predict;
@@ -19,6 +20,8 @@ pub use weights::{SKClassWeight, sk_resolve_class_weights, sk_validate_static_cl
 
 #[cfg(test)]
 mod svc_builder_tests;
+#[cfg(test)]
+mod svc_decision_tests;
 #[cfg(test)]
 mod svc_fit_tests;
 #[cfg(test)]
