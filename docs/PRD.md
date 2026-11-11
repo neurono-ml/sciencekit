@@ -594,6 +594,7 @@ Order faithful to the scikit-learn mapping (from the handoff), respecting depend
 13. `sciencekit_decomposition`: SKPCA, SKTruncatedSVD.
     - Representation parity (§4.5.1 / §4.5.2): `SKPCA` supports sparse CSR fitting without densification on `SKPCASolver::Randomized` via implicit centering; `Full` and `CovarianceEigh` invoke the documented dense-only exception because they materialize the centered design or its covariance, rejecting CSR with `UnsupportedRepresentation` (naming `Randomized` and `SKTruncatedSVD`) unless `allow_densification(true)` is explicitly set (with a warning reporting the byte cost).
     - Sparse exact full/eigh solvers, kernel PCA, streaming/incremental PCA (`SKIncrementalPCA`, delivered by its own change), GPU acceleration, `memmap2`-backed storage and model export (Phase 7) are explicit `SKPCA` non-goals.
+    - `SKTruncatedSVD` computes uncentered low-rank Singular Value Decomposition via `SKRandomizedSvdBuilder` (`SKTruncatedSVDAlgorithm::Randomized`) directly on dense and sparse CSR views with single-dispatch `fit`, `fit_transform`, `transform` and `inverse_transform`, never densifying sparse storage. Feature centering (provided by `SKPCA`), ARPACK/IRLBA solvers (`SKTruncatedSVDAlgorithm::Arpack`), missing-value handling, GPU acceleration, `memmap2`-backed storage and model export (Phase 7) are explicit `SKTruncatedSVD` non-goals.
 14. `sciencekit_outlier`: anomaly detection.
 
 ### Phase 6 — Selection, pipeline, metrics
