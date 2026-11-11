@@ -279,4 +279,10 @@ The [outlier detection chapter](./ch48-outlier-detection.html) closes Wave 5 in
 `SKOutlierPredictor<F>` contract, seeded random isolation trees over `SKTree`, harmonic BST
 path-length scoring, `Auto` and quantile contamination offsets, and non-densifying CSR-to-CSC
 representation parity.
+The [extended Safetensors format chapter](./ch54-safetensors-internal-format.html) adds the
+binary `SKModelState` persistence adapter in `sciencekit_interop::safetensors`: standard
+single-file Safetensors compatibility, `sciencekit.*` header metadata, `SKShardPlan`
+multi-shard splitting with atomic `.index.json` manifests, dual-region header and payload
+padding for in-place seek appends with automatic shard overflow, and optional magic-byte
+auto-detected Gzip, Brotli and Snappy compression.
 
