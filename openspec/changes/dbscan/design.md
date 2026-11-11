@@ -49,7 +49,7 @@ component therefore determines its id.
 
 ### Decision 4 — Assignment extension
 
-`predict_assignments` finds the nearest core sample (through the same searcher) and assigns
+`predict_clusters` finds the nearest core sample (through the same searcher) and assigns
 its cluster if the distance is within `eps`; otherwise it returns
 `SKClusterLabel::Noise`. This is an
 extension beyond scikit-learn (which has no DBSCAN `predict`) and is documented as a
@@ -72,8 +72,8 @@ the central taxonomy.
 
 ```
 crates/sciencekit_cluster/src/dbscan/
-  mod.rs, builder.rs, config.rs, region_query.rs, expansion.rs, model.rs,
-  fit.rs, predict.rs, *_tests.rs
+  mod.rs, builder.rs, config.rs, core_implementation.rs, region_query.rs,
+  expansion.rs, model.rs, fit.rs, predict.rs, validation.rs, *_tests.rs
 ```
 
 `mod.rs` is a pure dispatcher; implementation files stay under 200 lines.

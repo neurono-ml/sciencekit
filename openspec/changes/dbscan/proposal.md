@@ -12,7 +12,7 @@ index from Wave 3 (W3.2) through its region query.
 - New `SKDBSCAN<F>` in `sciencekit_cluster`, producing a fitted model with labels and core
   sample information.
 - Builder-only surface: `eps` (default 0.5), `minimum_samples` (default 5), `metric`
-  (`Euclidean` default, `Manhattan`, `Chebyshev`), `algorithm` (`Auto` default, `KdTree`,
+  (`Euclidean` default, `Manhattan`, `Chebyshev`, `Cosine`), `algorithm` (`Auto` default, `KdTree`,
   `BallTree`, `BruteForce`), `leaf_size` (default 40), `backend` (default `Faer`) and
   `execution_mode` (default `Automatic`).
 - Fit uses a region query: trees for dense metric-compatible data, brute force for sparse
@@ -22,7 +22,7 @@ index from Wave 3 (W3.2) through its region query.
   index in each component seeds the cluster id).
 - The model exposes typed assignments, core sample indices, cluster count and the fitted
   `eps`, and implements `SKUnsupervisedFit` plus `SKClustererPredictor`. `fit_predict` is
-  provided; `predict` assigns a new point to the nearest core sample's cluster when it lies
+  provided; `predict_clusters` assigns a new point to the nearest core sample's cluster when it lies
   within `eps`, otherwise `SKClusterLabel::Noise`, and documents this extension.
 - Validation: empty input, non-positive `eps`, zero `minimum_samples`, feature-count
   mismatch, non-finite values and an unsupported metric/algorithm pair.

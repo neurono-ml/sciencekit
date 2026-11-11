@@ -10,7 +10,7 @@ labeling, the prediction extension, representation parity and validation.
 ### Requirement: Builder-only construction with documented defaults
 
 `SKDBSCAN` SHALL be constructible only through its builder, exposing `eps` (default 0.5),
-`minimum_samples` (default 5), `metric` (`Euclidean` default, `Manhattan`, `Chebyshev`),
+`minimum_samples` (default 5), `metric` (`Euclidean` default, `Manhattan`, `Chebyshev`, `Cosine`),
 `algorithm` (`Auto` default, `KdTree`, `BallTree`, `BruteForce`), `leaf_size` (default 40),
 `backend` (default `Faer`) and `execution_mode` (default `Automatic`).
 
