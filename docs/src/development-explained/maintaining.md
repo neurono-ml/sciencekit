@@ -251,3 +251,7 @@ fallback reason.
 The [randomized SVD chapter](./ch39-randomized-svd.html) adds the seeded range finder, the
 thin Householder QR, the small Gram SVD, the sparse products without densification, the
 implicit centering and the accuracy bound against the exact decomposition.
+The [PCA chapter](./ch44-pca.html) builds `SKPCA` in `sciencekit_decomposition` on top of
+that kernel: feature centering, the `Full`/`Randomized`/`CovarianceEigh` solver portfolio and
+`Auto` resolution, component-sign determinism, epsilon-floored whitening, and the explicit
+sparse-densification contract.
