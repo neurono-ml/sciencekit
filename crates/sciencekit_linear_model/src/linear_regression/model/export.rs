@@ -135,11 +135,19 @@ fn tensor_dtype<F: SKFloat>() -> sciencekit_common::SKTensorDataType {
     }
 }
 
-/// Parse the persisted backend name, defaulting to `Faer` for unknown values.
+/// Parse the persisted backend name, accepting both `Debug` and lowercase
+/// [`SKBackendKind::name`] spellings and defaulting to `Faer` for unknowns.
 fn parse_backend(name: &str) -> SKBackendKind {
+    if let Ok(kind) = name.parse::<SKBackendKind>() {
+        return kind;
+    }
     match name {
+        "Faer" => SKBackendKind::Faer,
         "MatrixMultiply" => SKBackendKind::MatrixMultiply,
         "NdArrayLinalg" => SKBackendKind::NdArrayLinalg,
+        "OpenCl" => SKBackendKind::OpenCl,
+        "Cuda" => SKBackendKind::Cuda,
+        "Rocm" => SKBackendKind::Rocm,
         _ => SKBackendKind::Faer,
     }
 }

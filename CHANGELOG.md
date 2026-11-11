@@ -55,6 +55,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   column indices, stored values and shape metadata, for both `f32` and `f64`.
   Arrow versions are pinned to 58.3, the last release whose MSRV is Rust 1.85.
 
+- `sciencekit_gpu` — the device-compute contracts shared by the OpenCL, CUDA
+  and ROCm backends (spec `gpu-compute-contracts`), re-exported at the crate
+  root. `SKDeviceInfo` and `SKDeviceCapabilities` describe an enumerated
+  device, its memory, scalar types and supported kernels; `SKDeviceDiscovery`
+  is the availability-detection abstraction; `SKComputeBackend<F>` adds
+  `transfer_policy`, `upload`, `download` and `dispatch` over
+  `SKDeviceBuffer<F>`, whose builder validates device ownership, shape,
+  overflow, capacity and payload. The closed `SKGpuKernel` catalogue names
+  pairwise distance, GEMM, elementwise and tree prediction, and an unsupported
+  kernel reports `UnsupportedOperation` naming it. `gpu-opencl`, `gpu-cuda` and
+  `gpu-rocm` are off by default and the foundation crate pulls in no GPU
+  runtime; tests drive a mock backend, so no device is required to build or
+  test.
+- `SKBackendKind` gains the `OpenCl`, `Cuda` and `Rocm` kinds alongside the CPU
+  kinds, with documented display names, `FromStr` parsing, `Default`,
+  host/device predicates and `SKLinearRegressionModel` export/import round-trip
+  support. Every workspace match is updated; the host math dispatch keeps
+  device kinds on the pure-Rust backend until a GPU kernel backend owns them.
+- Deterministic device selection and honest span telemetry: `sk_select_device`
+  filters by the configured kind, the required scalar type and the required
+  kernel, then orders by `(kind priority, device index)`; when nothing matches
+  it returns `SKFallbackReason` (`NoDeviceAvailable`, `ScalarTypeNotSupported`,
+  `KernelNotSupported` or `ExplicitModeDoesNotSelectDevice`).
+  `SKExecutionContext` carries an optional `SKDeviceContext` and threads
+  `scalar_size_bytes` into selection; `SKExecutionPlan` exposes the selected
+  `backend` and `fallback_reason`. Runtimes populate the explicit process-wide
+  inventory via `sk_register_device_inventory`, and `SKOperationObservation`
+  resolves device kinds through `sk_resolve_operation_backend` so spans record
+  the backend that actually served the operation plus any fallback reason.
+- New structured errors for device work: `DeviceUnavailable` and
+  `UnsupportedScalarType` (mapped to `SKFfiStatus::Unsupported` across FFI),
+  and `DeviceTransferFailure` (mapped to `SKFfiStatus::Internal`).
+
 ### Moved
 
 - The Go bindings (spec `go-bindings`) now live in their own repository,

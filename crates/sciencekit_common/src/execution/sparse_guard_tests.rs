@@ -37,6 +37,7 @@ fn simulated(
         access_pattern: SKAccessPattern::Sequential,
         batch_size_hint: Some(batch_elements),
         batch_byte_size_hint: batch_byte_size,
+        device: None,
     }
 }
 

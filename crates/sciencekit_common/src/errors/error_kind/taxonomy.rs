@@ -1,4 +1,4 @@
-//! The central error enum and its convenience constructors.
+//! The central error enum.
 
 use std::io;
 use thiserror::Error;
@@ -15,9 +15,7 @@ pub enum SKError {
         /// The shape actually received.
         found: Vec<usize>,
     },
-
-    /// An algorithm supporting only part of the representations received an
-    /// unsupported one. Distinct from a shape error.
+    /// Input data uses a representation this algorithm does not support.
     #[error(
         "data representation `{representation}` is not supported by this algorithm; {suggestion}"
     )]
@@ -27,14 +25,7 @@ pub enum SKError {
         /// A conversion path the consumer can take.
         suggestion: &'static str,
     },
-
-    /// An operation requested from an otherwise valid configuration, which that
-    /// configuration cannot perform.
-    ///
-    /// Distinct from [`SKError::UnsupportedRepresentation`], which reports an
-    /// input representation the algorithm cannot consume, and from
-    /// [`SKError::InvalidHyperparameter`], which reports a value rejected when
-    /// the configuration was built.
+    /// An operation that an otherwise valid configuration cannot perform.
     #[error("operation `{operation}` is not supported: {reason}")]
     UnsupportedOperation {
         /// The name of the requested operation.
@@ -42,7 +33,6 @@ pub enum SKError {
         /// Why the operation is unavailable.
         reason: String,
     },
-
     /// An identifiable invalid hyperparameter value.
     #[error("invalid hyperparameter `{name}`: {reason}")]
     InvalidHyperparameter {
@@ -51,9 +41,7 @@ pub enum SKError {
         /// Why the value is invalid.
         reason: String,
     },
-
-    /// An explicitly requested execution mode incompatible with the algorithm's
-    /// declared access pattern.
+    /// An explicit execution mode incompatible with the declared access pattern.
     #[error("execution mode `{mode}` is incompatible with the declared access pattern `{pattern}`")]
     ExecutionModeIncompatible {
         /// The requested mode.
@@ -61,9 +49,7 @@ pub enum SKError {
         /// The declared access pattern.
         pattern: &'static str,
     },
-
-    /// A streaming batch hint whose double-buffered footprint exceeds available
-    /// memory. Raised at resolution, before any data is processed.
+    /// A streaming batch hint whose double-buffered footprint exceeds available memory.
     #[error(
         "streaming batch buffer overflow: {required_bytes} bytes needed (2 × {batch_bytes} per batch) exceeds {available_bytes} bytes available"
     )]
@@ -75,20 +61,16 @@ pub enum SKError {
         /// The available memory in bytes.
         available_bytes: u64,
     },
-
     /// An iterative process exhausted its iterations without converging.
     #[error("failed to converge after {iterations} iterations")]
     NotConverged {
         /// The number of iterations executed.
         iterations: usize,
     },
-
     /// A platform I/O error, with the original error preserved as source.
     #[error("I/O error: {0}")]
     Io(#[from] io::Error),
-
-    /// Missingness met at transform in a feature that was complete at fit
-    /// time, while `error_on_new` is enabled.
+    /// Missingness met at transform in a feature complete at fit time under `error_on_new`.
     #[error(
         "feature {column} was complete at fit time but is missing at transform; set error_on_new(false) to tolerate new missingness"
     )]
@@ -96,39 +78,33 @@ pub enum SKError {
         /// The feature column that never carried a missing value at fit time.
         column: usize,
     },
-
     /// A conversion failure at the data boundary.
     #[error("conversion failure: {0}")]
     Conversion(String),
-
     /// An operation that requires at least one observation received none.
     #[error("operation `{operation}` requires at least one observation")]
     EmptyInput {
         /// The operation that required observations.
         operation: &'static str,
     },
-
     /// A non-finite numeric value received where finite values are required.
     #[error("non-finite value at position {position}")]
     NonFiniteValue {
         /// The zero-based position of the offending value.
         position: usize,
     },
-
     /// A probability outside the closed unit interval.
     #[error("probability at position {position} is outside [0, 1]")]
     ProbabilityOutOfRange {
         /// The zero-based position of the offending probability.
         position: usize,
     },
-
     /// A label observed outside an explicitly supplied label space.
     #[error("label {label} is outside the resolved label space")]
     UnknownLabel {
         /// The offending label.
         label: i64,
     },
-
     /// A tabular selection named a column the schema does not carry.
     #[error("unknown column `{column}`; {suggestion}")]
     UnknownColumn {
@@ -137,7 +113,6 @@ pub enum SKError {
         /// A way to correct the selection.
         suggestion: String,
     },
-
     /// A tabular schema or selection carries the same column more than once.
     #[error("duplicate column `{column}`; {suggestion}")]
     DuplicateColumn {
@@ -146,7 +121,6 @@ pub enum SKError {
         /// A way to resolve the duplication.
         suggestion: String,
     },
-
     /// A column's logical type cannot enter the requested conversion path.
     #[error("unsupported column type `{logical_type}` for column `{column}`; {suggestion}")]
     UnsupportedColumnType {
@@ -157,7 +131,6 @@ pub enum SKError {
         /// A conversion path the consumer can take.
         suggestion: String,
     },
-
     /// A nullable column carries a null the selected policy does not handle.
     #[error("column `{column}` contains a null value under the `{policy}` missing-value policy")]
     NullValueInColumn {
@@ -166,7 +139,6 @@ pub enum SKError {
         /// The policy that rejected it.
         policy: &'static str,
     },
-
     /// A tabular batch's columns do not all have the same length.
     #[error(
         "column `{column}` has {found} rows but the batch has {expected} rows; all columns must be row-aligned"
@@ -179,7 +151,6 @@ pub enum SKError {
         /// The row count the column carries.
         found: usize,
     },
-
     /// A schema and the data (or another schema) do not describe the same table.
     #[error("schema mismatch: expected {expected}, found {found}")]
     SchemaMismatch {
@@ -187,5 +158,27 @@ pub enum SKError {
         expected: String,
         /// What it actually received.
         found: String,
+    },
+    /// A requested device backend has no usable enumerated device or runtime.
+    #[error("device backend `{backend}` is unavailable: {reason}")]
+    DeviceUnavailable {
+        /// The backend whose device could not be used.
+        backend: &'static str,
+        /// Why the device is unavailable.
+        reason: String,
+    },
+    /// A device backend does not execute the scalar type an operation carries.
+    #[error("device backend `{backend}` does not support the scalar type `{scalar_type}`")]
+    UnsupportedScalarType {
+        /// The backend that rejected the scalar type.
+        backend: &'static str,
+        /// The rejected scalar type, by its Rust name (`f32`, `f64`).
+        scalar_type: &'static str,
+    },
+    /// A host↔device transfer failed after the device was selected.
+    #[error("device transfer failed: {reason}")]
+    DeviceTransferFailure {
+        /// Why the transfer failed.
+        reason: String,
     },
 }
