@@ -236,5 +236,5 @@ distance blocks, weighting with a column-mean fallback and the dense-only contra
 deterministic best selection, error policies and the refit. The
 [Lua bindings chapter](./ch35-lua-bindings.html) adds the embedded interpreter, userdata
 lifecycle, table conversion and the packaged module. The
-[Go bindings chapter](./ch36-go-bindings.html) adds the cgo boundary, pinned buffers,
+[Go bindings chapter](./ch36-go-bindings.html) adds the cgo boundary, C-owned copies,
 finalizers, structured errors and the build/CI story.
