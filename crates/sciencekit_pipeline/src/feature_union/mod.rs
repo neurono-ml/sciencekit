@@ -6,11 +6,16 @@
 
 mod append;
 mod builder;
+mod concatenate;
+mod model;
 mod stages;
 
 pub use append::SKAppendUnionStage;
 pub use builder::{SKFeatureUnion, SKFeatureUnionBuilder};
+pub use model::SKFeatureUnionModel;
 pub use stages::{SKFeatureUnionArity, SKFeatureUnionStages};
 
+#[cfg(test)]
+mod union_fit_tests;
 #[cfg(test)]
 mod union_stages_tests;

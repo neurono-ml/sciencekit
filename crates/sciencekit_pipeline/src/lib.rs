@@ -51,7 +51,7 @@ mod stages;
 pub use block::{SKFeatureBlock, SKIntoFeatureBlock};
 pub use feature_union::{
     SKAppendUnionStage, SKFeatureUnion, SKFeatureUnionArity, SKFeatureUnionBuilder,
-    SKFeatureUnionStages,
+    SKFeatureUnionModel, SKFeatureUnionStages,
 };
 pub use pipeline::{
     SKPipeline, SKPipelineBuilder, SKPipelineClassifier, SKPipelineClassifierBuilder,
