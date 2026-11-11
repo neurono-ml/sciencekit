@@ -110,12 +110,14 @@ pub(super) fn sk_resolve_model_plan<F: SKFloat>(
     rows_count: usize,
     columns_count: usize,
 ) -> Result<SKExecutionPlan, SKError> {
+    let effective_columns = columns_count.max(model.number_of_features());
     let elements = match features {
-        SKDataView::Dense(_) => (rows_count as u64).saturating_mul(columns_count as u64),
+        SKDataView::Dense(_) => (rows_count as u64).saturating_mul(effective_columns as u64),
         SKDataView::Sparse(sparse) => sparse.nnz() as u64,
         _ => 0,
     };
     let mut context = SKExecutionContext::real();
+    context.cpu_cores = context.cpu_cores.min(rayon::current_num_threads().max(1));
     context.dataset_size_bytes = elements.saturating_mul(size_of::<F>() as u64);
     context.scalar_size_bytes = size_of::<F>() as u64;
     context.dataset_elements = Some(elements);

@@ -63,8 +63,8 @@ fn acceptance_pca_tiny_dense_and_single_precision_f32() {
 #[test]
 fn acceptance_pca_component_count_boundaries_and_whitening() {
     // Tall (12 x 4): min(n, d) = 4; test k = 1 and k = 4 (None).
-    let tall = Array2::from_shape_fn((12, 4), |(row, col)| {
-        (row as f64) * (col as f64 + 1.0) + ((row + col) % 3) as f64 * 0.4
+    let tall = Array2::from_shape_fn((12, 4), |(row, column)| {
+        (row as f64) * (column as f64 + 1.0) + ((row + column) % 3) as f64 * 0.4
     });
     let one_component = SKPCA::<f64>::build()
         .number_of_components(1)
@@ -88,8 +88,8 @@ fn acceptance_pca_component_count_boundaries_and_whitening() {
     }
 
     // Wide (4 x 9): min(n, d) = 4; full reconstruction still exact on training rows.
-    let wide = Array2::from_shape_fn((4, 9), |(row, col)| {
-        ((row + 1) as f64 * 0.7 * (col as f64 + 0.3)).sin() * 5.0 + col as f64
+    let wide = Array2::from_shape_fn((4, 9), |(row, column)| {
+        ((row + 1) as f64 * 0.7 * (column as f64 + 0.3)).sin() * 5.0 + column as f64
     });
     let wide_model = SKPCA::<f64>::build().build().unwrap().fit(&wide).unwrap();
     assert_eq!(wide_model.number_of_components(), 4);

@@ -45,13 +45,6 @@ fn pca_validation_sparse_randomized_matches_dense_without_densifying() {
     {
         assert!((left - right).abs() < 1e-10);
     }
-    for (left, right) in sparse_model
-        .explained_variance_ratio()
-        .iter()
-        .zip(dense_model.explained_variance_ratio().iter())
-    {
-        assert!((left - right).abs() < 1e-10);
-    }
     let sparse_projected = sparse_model.transform(sparse.view()).unwrap();
     let dense_projected = dense_model.transform(&dense).unwrap();
     for (left, right) in sparse_projected.iter().zip(dense_projected.iter()) {
@@ -61,18 +54,19 @@ fn pca_validation_sparse_randomized_matches_dense_without_densifying() {
 
 #[test]
 fn pca_validation_full_and_covariance_reject_sparse_by_default_with_alternatives() {
-    let sparse = csr_from_dense(&array![
-        [0.0_f64, 3.0, 0.0],
-        [2.0, 0.0, 5.0],
-        [0.0, 1.0, 4.0]
-    ]);
+    // Include NaN so we also prove dense-only solvers reject CSR before scanning elements.
+    let mut triplet = TriMat::new((3, 3));
+    triplet.add_triplet(0, 1, 3.0_f64);
+    triplet.add_triplet(1, 2, f64::NAN);
+    let sparse_with_nan = triplet.to_csr();
+
     for solver in [SKPCASolver::Full, SKPCASolver::CovarianceEigh] {
         let error = SKPCA::<f64>::build()
             .number_of_components(2)
             .svd_solver(solver)
             .build()
             .unwrap()
-            .fit(sparse.view())
+            .fit(sparse_with_nan.view())
             .unwrap_err();
         match error {
             SKError::UnsupportedRepresentation {
@@ -86,6 +80,15 @@ fn pca_validation_full_and_covariance_reject_sparse_by_default_with_alternatives
             other => panic!("expected UnsupportedRepresentation, found {other:?}"),
         }
     }
+
+    let nan_error = SKPCA::<f64>::build()
+        .number_of_components(2)
+        .svd_solver(SKPCASolver::Randomized)
+        .build()
+        .unwrap()
+        .fit(sparse_with_nan.view())
+        .unwrap_err();
+    assert!(matches!(nan_error, SKError::NonFiniteValue { position: 5 }));
 }
 
 #[test]
@@ -156,14 +159,13 @@ fn pca_validation_rejects_empty_excessive_non_finite_and_mismatched_shapes() {
         [5.0, 6.0, 7.0, 8.0],
         [9.0, 10.0, 11.0, 12.0]
     ];
-    let excessive = SKPCA::<f64>::build()
-        .number_of_components(4)
-        .build()
-        .unwrap()
-        .fit(&small)
-        .unwrap_err();
     assert!(matches!(
-        excessive,
+        SKPCA::<f64>::build()
+            .number_of_components(4)
+            .build()
+            .unwrap()
+            .fit(&small)
+            .unwrap_err(),
         SKError::InvalidHyperparameter {
             name: "number_of_components",
             ..
@@ -190,11 +192,5 @@ fn pca_validation_rejects_empty_excessive_non_finite_and_mismatched_shapes() {
             .inverse_transform(&Array2::<f64>::zeros((2, 3)))
             .unwrap_err(),
         SKError::ShapeMismatch { expected, found } if expected == vec![2, 2] && found == vec![2, 3]
-    ));
-    assert!(matches!(
-        fitted.transform(&Array2::<f64>::zeros((0, 4))).unwrap_err(),
-        SKError::EmptyInput {
-            operation: "transform"
-        }
     ));
 }

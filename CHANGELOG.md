@@ -7,10 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.7.0] — 2026-11-11
-
-Arrow interop, the GPU compute contracts, the randomized SVD kernel and the language bindings moving to their own repositories.
-
 ### Added
 
 - `sciencekit_decomposition` sub-crate (spec `principal-component-analysis`):
@@ -42,6 +38,12 @@ Arrow interop, the GPU compute contracts, the randomized SVD kernel and the lang
   boundaries, whitening, validation errors, thread-count-invariant determinism,
   concurrent sharing and reconstruction metrics (`sk_mean_squared_error`,
   `sk_r2_score`) via `sciencekit_metrics`.
+
+## [0.7.0] — 2026-11-11
+
+Arrow interop, the GPU compute contracts, the randomized SVD kernel and the language bindings moving to their own repositories.
+
+### Added
 
 - Randomized SVD kernel (spec `randomized-svd`): `sciencekit_math::decomposition`
   gains `sk_randomized_svd` and the builder `SKRandomizedSvdBuilder`, returning

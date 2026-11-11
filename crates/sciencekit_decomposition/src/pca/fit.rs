@@ -18,7 +18,7 @@ use super::model::SKPCAModel;
 use super::solvers::{
     sk_resolve_pca_solver, sk_solve_covariance_eigh, sk_solve_full_svd, sk_solve_randomized_svd,
 };
-use super::validation::sk_validate_fit_input;
+use super::validation::{sk_validate_finiteness, sk_validate_fit_shape};
 
 impl<F: SKBackendSelection> SKUnsupervisedFit<F> for SKPCA<F> {
     type Model = SKPCAModel<F>;
@@ -49,8 +49,7 @@ pub(super) fn sk_fit_pca<F: SKBackendSelection>(
 ) -> Result<SKPCAModel<F>, SKError> {
     let configuration = estimator.configuration;
     let (rows_count, columns_count, resolved_components) =
-        sk_validate_fit_input(features, configuration.number_of_components, operation)?;
-    let plan = sk_resolve_fit_plan(estimator, &features, rows_count, columns_count)?;
+        sk_validate_fit_shape(&features, configuration.number_of_components, operation)?;
 
     let is_sparse = matches!(features, SKDataView::Sparse(_));
     let resolved_solver = sk_resolve_pca_solver(
@@ -62,8 +61,7 @@ pub(super) fn sk_fit_pca<F: SKBackendSelection>(
         configuration.allow_densification,
     );
 
-    // Check sparse representation compatibility before computing moments so a
-    // rejected solver fails immediately without scanning elements.
+    // Reject incompatible sparse representations before scanning any element.
     if is_sparse
         && !configuration.allow_densification
         && matches!(
@@ -77,6 +75,8 @@ pub(super) fn sk_fit_pca<F: SKBackendSelection>(
         });
     }
 
+    sk_validate_finiteness(features)?;
+    let plan = sk_resolve_fit_plan(estimator, &features, rows_count, columns_count)?;
     let mean = sk_feature_means(features, plan.parallelism)?;
     let total_variance = sk_total_centered_variance(features, mean.view())?;
 
@@ -144,6 +144,7 @@ fn sk_resolve_fit_plan<F: SKFloat>(
         _ => 0,
     };
     let mut context = SKExecutionContext::real();
+    context.cpu_cores = context.cpu_cores.min(rayon::current_num_threads().max(1));
     context.dataset_size_bytes = elements.saturating_mul(size_of::<F>() as u64);
     context.scalar_size_bytes = size_of::<F>() as u64;
     context.dataset_elements = Some(elements);

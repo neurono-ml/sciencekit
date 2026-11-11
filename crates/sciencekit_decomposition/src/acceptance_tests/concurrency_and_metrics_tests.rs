@@ -46,7 +46,7 @@ fn acceptance_pca_produces_reconstruction_metrics_via_sciencekit_metrics() {
     let data = planted_rank_matrix(600, 16, 3, 1e-3);
     let flattened_truth = Array1::from_iter(data.iter().copied());
 
-    let mut previous_mse = f64::INFINITY;
+    let mut previous_mean_squared_error = f64::INFINITY;
     for components in [1usize, 2, 3] {
         let model = SKPCA::<f64>::build()
             .number_of_components(components)
@@ -59,15 +59,16 @@ fn acceptance_pca_produces_reconstruction_metrics_via_sciencekit_metrics() {
         let reconstructed = model.inverse_transform(&projected).unwrap();
         let flattened_reconstructed = Array1::from_iter(reconstructed.iter().copied());
 
-        let mse =
+        let mean_squared_error =
             sk_mean_squared_error(flattened_truth.view(), flattened_reconstructed.view()).unwrap();
-        let r2 = sk_r2_score(flattened_truth.view(), flattened_reconstructed.view()).unwrap();
-        assert!(mse < previous_mse);
-        previous_mse = mse;
+        let determination_score =
+            sk_r2_score(flattened_truth.view(), flattened_reconstructed.view()).unwrap();
+        assert!(mean_squared_error < previous_mean_squared_error);
+        previous_mean_squared_error = mean_squared_error;
 
         if components == 3 {
-            assert!(mse < 1e-5);
-            assert!(r2 > 0.9999);
+            assert!(mean_squared_error < 1e-5);
+            assert!(determination_score > 0.9999);
         }
     }
 }

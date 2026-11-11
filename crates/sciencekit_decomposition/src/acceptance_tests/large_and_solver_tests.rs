@@ -39,7 +39,7 @@ fn acceptance_pca_large_dense_design_and_all_solver_branches() {
         .unwrap()
         .fit(&large)
         .unwrap();
-    let cov_large = SKPCA::<f64>::build()
+    let covariance_large = SKPCA::<f64>::build()
         .number_of_components(3)
         .svd_solver(SKPCASolver::CovarianceEigh)
         .build()
@@ -47,7 +47,7 @@ fn acceptance_pca_large_dense_design_and_all_solver_branches() {
         .fit(&large)
         .unwrap();
 
-    for candidate in [&auto_large, &cov_large] {
+    for candidate in [&auto_large, &covariance_large] {
         for (left, right) in full_large
             .explained_variance()
             .iter()

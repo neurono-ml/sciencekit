@@ -88,10 +88,10 @@ fn pca_transform_full_components_inverse_transform_reconstructs_training_data() 
 #[test]
 fn pca_transform_whitening_normalizes_component_variance_and_handles_near_zero_variance() {
     let data = Array2::from_shape_fn((40, 3), |(row, column)| {
-        let r = row as f64;
+        let row_scalar = row as f64;
         match column {
-            0 => 4.0 * (0.21 * r).sin() + 10.0,
-            1 => 1.5 * (0.37 * r + 0.4).cos() - 3.0,
+            0 => 4.0 * (0.21 * row_scalar).sin() + 10.0,
+            1 => 1.5 * (0.37 * row_scalar + 0.4).cos() - 3.0,
             _ => 0.35 * ((row % 7) as f64 - 3.0) + 2.0,
         }
     });
@@ -155,15 +155,20 @@ fn pca_transform_records_model_backend_in_transform_and_fit_transform_spans() {
     let model = estimator.fit(&data).unwrap();
 
     let capture = PcaCaptureGuard::begin();
-    let _ = model.transform(&data).unwrap();
+    let projected = model.transform(&data).unwrap();
+    let _ = model.inverse_transform(&projected).unwrap();
     let _ = estimator.fit_transform(&data).unwrap();
     let spans = capture.spans();
 
-    assert!(spans.iter().any(|(name, fields)| {
-        name == "sciencekit.operation"
-            && fields.get("operation").map(String::as_str) == Some("transform")
-            && fields.get("backend").map(String::as_str) == Some("matrixmultiply")
-    }));
+    let transform_spans = spans
+        .iter()
+        .filter(|(name, fields)| {
+            name == "sciencekit.operation"
+                && fields.get("operation").map(String::as_str) == Some("transform")
+                && fields.get("backend").map(String::as_str) == Some("matrixmultiply")
+        })
+        .count();
+    assert_eq!(transform_spans, 2);
     assert!(spans.iter().any(|(name, fields)| {
         name == "sciencekit.operation"
             && fields.get("operation").map(String::as_str) == Some("fit_transform")

@@ -10,12 +10,12 @@ use super::solvers::{sk_solve_full_svd, sk_solve_randomized_svd};
 
 fn planted_low_rank_design(rows: usize, columns: usize) -> Array2<f64> {
     Array2::from_shape_fn((rows, columns), |(row, column)| {
-        let r = row as f64;
-        let c = (column + 1) as f64;
-        let factor_one = (0.17 * r + 0.5).sin() * (4.0 * c);
-        let factor_two = (0.31 * r - 0.2).cos() * (1.8 * (columns - column) as f64);
+        let row_scalar = row as f64;
+        let column_scalar = (column + 1) as f64;
+        let factor_one = (0.17 * row_scalar + 0.5).sin() * (4.0 * column_scalar);
+        let factor_two = (0.31 * row_scalar - 0.2).cos() * (1.8 * (columns - column) as f64);
         let factor_three = ((row % 7) as f64 - 3.0) * (0.4 * ((column % 3) as f64 + 1.0));
-        factor_one + factor_two + factor_three + 2.5 * c
+        factor_one + factor_two + factor_three + 2.5 * column_scalar
     })
 }
 
@@ -123,5 +123,24 @@ fn pca_randomized_is_reproducible_and_matches_across_dense_and_sparse_views() {
     .unwrap();
     for (left, right) in first.components.iter().zip(from_dense.components.iter()) {
         assert!((left - right).abs() < 1e-10);
+    }
+
+    // Constant / zero-variance input still produces orthonormal component rows.
+    let constant = Array2::from_elem((6, 3), 4.0_f64);
+    let constant_mean = sk_feature_means(SKDataView::Dense(constant.view()), 1).unwrap();
+    let constant_svd = sk_solve_randomized_svd(
+        SKDataView::Dense(constant.view()),
+        constant_mean.view(),
+        3,
+        3,
+        5,
+        SKBackendKind::Faer,
+        0.0,
+    )
+    .unwrap();
+    let gram = constant_svd.components.dot(&constant_svd.components.t());
+    for ((row, column), &entry) in gram.indexed_iter() {
+        let expected = if row == column { 1.0 } else { 0.0 };
+        assert!((entry - expected).abs() < 1e-12);
     }
 }

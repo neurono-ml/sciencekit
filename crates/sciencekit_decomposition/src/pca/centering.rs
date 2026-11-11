@@ -4,9 +4,11 @@
 
 use std::mem::size_of;
 
-use ndarray::{Array1, Array2, ArrayView1, ArrayView2, azip};
+use ndarray::{Array1, Array2, ArrayView1, ArrayView2, Axis, azip};
+use rayon::prelude::*;
 use sciencekit_common::{SKDataView, SKError, SKFloat};
-use sciencekit_math::kernels::sk_axis_sum;
+
+const MEAN_REDUCTION_ROW_CHUNK: usize = 256;
 
 /// Suggestion string returned when a dense-only solver rejects a sparse view.
 pub(super) const SPARSE_SOLVER_SUGGESTION: &str = "use SKPCASolver::Randomized for implicit sparse centering, SKTruncatedSVD for uncentered sparse decomposition, or set allow_densification(true)";
@@ -26,7 +28,8 @@ pub(super) fn sk_view_dimensions<F>(
 }
 
 /// Computes the per-feature arithmetic mean across all rows without densifying
-/// a sparse matrix.
+/// a sparse matrix, using fixed-size row blocks on dense matrices so parallel
+/// and sequential reductions yield bit-identical sums.
 pub(super) fn sk_feature_means<F: SKFloat>(
     features: SKDataView<'_, F>,
     parallelism: usize,
@@ -38,7 +41,25 @@ pub(super) fn sk_feature_means<F: SKFloat>(
     let rows_scalar = F::from(rows_count).expect("row count fits in scalar");
     match features {
         SKDataView::Dense(dense) => {
-            let sums = sk_axis_sum(&dense, 0, parallelism);
+            let partials: Vec<Array1<F>> =
+                if parallelism > 1 && rows_count > MEAN_REDUCTION_ROW_CHUNK {
+                    dense
+                        .axis_chunks_iter(Axis(0), MEAN_REDUCTION_ROW_CHUNK)
+                        .into_par_iter()
+                        .map(sk_sum_dense_chunk)
+                        .collect()
+                } else {
+                    dense
+                        .axis_chunks_iter(Axis(0), MEAN_REDUCTION_ROW_CHUNK)
+                        .map(sk_sum_dense_chunk)
+                        .collect()
+                };
+            let mut sums = Array1::<F>::zeros(columns_count);
+            for partial in partials {
+                azip!((accumulator in &mut sums, &value in &partial) {
+                    *accumulator = *accumulator + value;
+                });
+            }
             Ok(sums.mapv(|sum| sum / rows_scalar))
         }
         SKDataView::Sparse(sparse) => {
@@ -55,6 +76,16 @@ pub(super) fn sk_feature_means<F: SKFloat>(
             suggestion: "convert the input to a supported dense or CSR view",
         }),
     }
+}
+
+fn sk_sum_dense_chunk<F: SKFloat>(chunk: ArrayView2<'_, F>) -> Array1<F> {
+    let mut partial = Array1::<F>::zeros(chunk.ncols());
+    for row in chunk.rows() {
+        azip!((accumulator in &mut partial, &value in row) {
+            *accumulator = *accumulator + value;
+        });
+    }
+    partial
 }
 
 /// Materializes `X - 1 μᵀ` from a dense feature view.
@@ -83,18 +114,14 @@ pub(super) fn sk_total_centered_variance<F: SKFloat>(
     }
     let degrees_of_freedom = F::from(rows_count - 1).expect("degrees of freedom fit in scalar");
     let sum_of_squares = match features {
-        SKDataView::Dense(dense) => {
-            let mut total = F::zero();
-            for row in dense.rows() {
-                let mut row_sum = F::zero();
-                azip!((&value in row, &column_mean in mean) {
-                    let deviation = value - column_mean;
-                    row_sum = row_sum + deviation * deviation;
-                });
-                total = total + row_sum;
-            }
-            total
-        }
+        SKDataView::Dense(dense) => dense.rows().into_iter().fold(F::zero(), |total, row| {
+            let mut row_sum = F::zero();
+            azip!((&value in row, &column_mean in mean) {
+                let deviation = value - column_mean;
+                row_sum = row_sum + deviation * deviation;
+            });
+            total + row_sum
+        }),
         SKDataView::Sparse(sparse) => {
             let mut column_sum_squares = vec![F::zero(); columns_count];
             let mut nonzero_counts = vec![0usize; columns_count];
@@ -109,9 +136,9 @@ pub(super) fn sk_total_centered_variance<F: SKFloat>(
                 .into_iter()
                 .zip(nonzero_counts)
                 .zip(mean.iter())
-                .fold(F::zero(), |acc, ((stored_squares, count), &column_mean)| {
+                .fold(F::zero(), |accumulator, ((stored, count), &column_mean)| {
                     let zero_rows = F::from(rows_count - count).expect("row count fits in scalar");
-                    acc + stored_squares + zero_rows * column_mean * column_mean
+                    accumulator + stored + zero_rows * column_mean * column_mean
                 })
         }
         _ => {
@@ -125,8 +152,7 @@ pub(super) fn sk_total_centered_variance<F: SKFloat>(
 }
 
 /// Returns the centered dense matrix `X − 1 μᵀ`, rejecting sparse inputs unless
-/// `allow_densification` is explicitly enabled (in which case a warning with the
-/// estimated byte cost is emitted).
+/// `allow_densification` is explicitly enabled (emitting a byte-cost warning).
 pub(super) fn sk_centered_dense_or_reject<F: SKFloat>(
     features: SKDataView<'_, F>,
     mean: ArrayView1<'_, F>,
@@ -134,15 +160,15 @@ pub(super) fn sk_centered_dense_or_reject<F: SKFloat>(
 ) -> Result<Array2<F>, SKError> {
     match features {
         SKDataView::Dense(dense) => Ok(sk_center_dense(dense, mean)),
+        SKDataView::Sparse(_) if !allow_densification => Err(SKError::UnsupportedRepresentation {
+            representation: "csr",
+            suggestion: SPARSE_SOLVER_SUGGESTION,
+        }),
         SKDataView::Sparse(sparse) => {
-            if !allow_densification {
-                return Err(SKError::UnsupportedRepresentation {
-                    representation: "csr",
-                    suggestion: SPARSE_SOLVER_SUGGESTION,
-                });
-            }
             let (rows, columns) = (sparse.rows(), sparse.cols());
-            let estimated_dense_bytes = (rows as u64) * (columns as u64) * (size_of::<F>() as u64);
+            let estimated_dense_bytes = (rows as u64)
+                .saturating_mul(columns as u64)
+                .saturating_mul(size_of::<F>() as u64);
             tracing::warn!(
                 rows = rows,
                 columns = columns,

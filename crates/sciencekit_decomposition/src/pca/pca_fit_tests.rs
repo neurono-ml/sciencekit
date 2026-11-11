@@ -79,10 +79,19 @@ fn pca_fit_transfers_configured_backend_and_records_fit_span() {
 #[test]
 fn pca_fit_agrees_across_all_solvers_on_low_rank_design() {
     let data = Array2::from_shape_fn((45, 6), |(row, column)| {
-        let r = row as f64;
-        let c = (column + 1) as f64;
-        3.0 * (0.19 * r).sin() * c + 1.4 * (0.37 * r).cos() * (7.0 - c) + 5.0 * c
+        let row_scalar = row as f64;
+        let column_scalar = (column + 1) as f64;
+        3.0 * (0.19 * row_scalar).sin() * column_scalar
+            + 1.4 * (0.37 * row_scalar).cos() * (7.0 - column_scalar)
+            + 5.0 * column_scalar
     });
+    let auto_small = SKPCA::<f64>::build()
+        .number_of_components(2)
+        .build()
+        .unwrap()
+        .fit(&data)
+        .unwrap();
+    assert_eq!(auto_small.resolved_solver(), SKPCASolver::Full);
 
     let full = SKPCA::<f64>::build()
         .number_of_components(2)

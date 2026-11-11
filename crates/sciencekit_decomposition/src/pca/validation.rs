@@ -5,14 +5,14 @@ use sciencekit_common::{SKDataView, SKError, SKFloat};
 
 use super::centering::sk_view_dimensions;
 
-/// Validates a training view, resolves the target component count (`None` →
-/// `min(n_samples, n_features)`) and rejects non-finite entries.
-pub(super) fn sk_validate_fit_input<F: SKFloat>(
-    features: SKDataView<'_, F>,
+/// Validates the shape and requested component count (`None` →
+/// `min(n_samples, n_features)`) before any element or representation scan.
+pub(super) fn sk_validate_fit_shape<F: SKFloat>(
+    features: &SKDataView<'_, F>,
     requested_components: Option<usize>,
     operation: &'static str,
 ) -> Result<(usize, usize, usize), SKError> {
-    let (rows_count, columns_count) = sk_view_dimensions(&features)?;
+    let (rows_count, columns_count) = sk_view_dimensions(features)?;
     if rows_count == 0 || columns_count == 0 {
         return Err(SKError::EmptyInput { operation });
     }
@@ -26,7 +26,6 @@ pub(super) fn sk_validate_fit_input<F: SKFloat>(
             ),
         });
     }
-    sk_validate_finiteness(features)?;
     Ok((rows_count, columns_count, resolved_components))
 }
 

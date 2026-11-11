@@ -23,9 +23,11 @@ fn csr_from_dense(dense: &Array2<f64>) -> CsMat<f64> {
 
 fn deterministic_design(rows: usize, columns: usize) -> Array2<f64> {
     Array2::from_shape_fn((rows, columns), |(row, column)| {
-        let r = row as f64;
-        let c = (column + 1) as f64;
-        2.8 * (0.13 * r + 0.2 * c).sin() + 1.1 * (0.29 * r - 0.4 * c).cos() + 0.5 * c
+        let row_scalar = row as f64;
+        let column_scalar = (column + 1) as f64;
+        2.8 * (0.13 * row_scalar + 0.2 * column_scalar).sin()
+            + 1.1 * (0.29 * row_scalar - 0.4 * column_scalar).cos()
+            + 0.5 * column_scalar
     })
 }
 
@@ -40,7 +42,9 @@ fn pca_concurrency_estimator_builder_and_model_are_send_and_sync() {
 
 #[test]
 fn pca_concurrency_repeated_fits_agree_across_runs_and_rayon_thread_counts() {
-    let dense = deterministic_design(64, 10);
+    // 4_096 x 32 = 131_072 elements (> SK_AXIS_SUM_GRAIN = 100_000), exercising
+    // the multi-threaded rayon chunked path under pool_four and sequential under pool_one.
+    let dense = deterministic_design(4_096, 32);
     let mut sparse_source = Array2::<f64>::zeros((64, 12));
     for row in 0..64 {
         sparse_source[(row, row % 12)] = (row as f64 + 1.0) * 0.75;
@@ -48,8 +52,17 @@ fn pca_concurrency_repeated_fits_agree_across_runs_and_rayon_thread_counts() {
     }
     let sparse = csr_from_dense(&sparse_source);
 
+    let pool_one = rayon::ThreadPoolBuilder::new()
+        .num_threads(1)
+        .build()
+        .unwrap();
+    let pool_four = rayon::ThreadPoolBuilder::new()
+        .num_threads(4)
+        .build()
+        .unwrap();
+
     for solver in [
-        SKPCASolver::Full,
+        SKPCASolver::Auto,
         SKPCASolver::Randomized,
         SKPCASolver::CovarianceEigh,
     ] {
@@ -59,25 +72,34 @@ fn pca_concurrency_repeated_fits_agree_across_runs_and_rayon_thread_counts() {
             .random_seed(29)
             .build()
             .unwrap();
-        let pool_one = rayon::ThreadPoolBuilder::new()
-            .num_threads(1)
-            .build()
-            .unwrap();
-        let pool_four = rayon::ThreadPoolBuilder::new()
-            .num_threads(4)
-            .build()
-            .unwrap();
 
         let first = pool_one.install(|| estimator.fit(&dense).unwrap());
         let second = pool_four.install(|| estimator.fit(&dense).unwrap());
         assert_eq!(first.components(), second.components());
         assert_eq!(first.singular_values(), second.singular_values());
         assert_eq!(first.explained_variance(), second.explained_variance());
-        assert_eq!(
-            pool_one.install(|| first.transform(&dense).unwrap()),
-            pool_four.install(|| second.transform(&dense).unwrap())
-        );
+        let projected_one = pool_one.install(|| first.transform(&dense).unwrap());
+        let projected_four = pool_four.install(|| second.transform(&dense).unwrap());
+        assert_eq!(projected_one, projected_four);
+        let rebuilt_one = pool_one.install(|| first.inverse_transform(&projected_one).unwrap());
+        let rebuilt_four = pool_four.install(|| second.inverse_transform(&projected_four).unwrap());
+        assert_eq!(rebuilt_one, rebuilt_four);
     }
+
+    let full_small = deterministic_design(64, 10);
+    let full_query = deterministic_design(10_240, 10);
+    let full_estimator = SKPCA::<f64>::build()
+        .number_of_components(3)
+        .svd_solver(SKPCASolver::Full)
+        .build()
+        .unwrap();
+    let full_one = pool_one.install(|| full_estimator.fit(&full_small).unwrap());
+    let full_four = pool_four.install(|| full_estimator.fit(&full_small).unwrap());
+    assert_eq!(full_one.components(), full_four.components());
+    assert_eq!(
+        pool_one.install(|| full_one.transform(&full_query).unwrap()),
+        pool_four.install(|| full_four.transform(&full_query).unwrap())
+    );
 
     let sparse_estimator = SKPCA::<f64>::build()
         .number_of_components(3)

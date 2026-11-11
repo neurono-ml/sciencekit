@@ -1,5 +1,5 @@
-//! Shared solver output container, component sign convention and variance
-//! derivation from singular values.
+//! Shared solver output container, orthonormal completion, component sign
+//! convention and variance derivation from singular values.
 
 use ndarray::{Array1, Array2, azip};
 use sciencekit_common::SKFloat;
@@ -18,11 +18,25 @@ pub(in crate::pca) struct SKPCADecomposition<F: SKFloat> {
     pub(in crate::pca) singular_values: Array1<F>,
 }
 
-/// Applies the deterministic PCA sign convention: the largest-magnitude
-/// coordinate of every principal component row is made non-negative, breaking
-/// exact ties by the smallest feature index.
+/// Ensures every component row is a unit vector orthogonal to preceding rows
+/// (completing zero-norm directions deterministically on rank-deficient inputs)
+/// and applies the PCA sign convention so the largest-magnitude coordinate of
+/// every row is non-negative (ties broken by smallest feature index).
 pub(super) fn sk_orient_components<F: SKFloat>(components: &mut Array2<F>) {
+    let (number_of_components, number_of_features) = components.dim();
+    let mut completed: Vec<Array1<F>> = Vec::with_capacity(number_of_components);
+
     for mut row in components.rows_mut() {
+        let squared_norm = row
+            .iter()
+            .fold(F::zero(), |accumulator, &value| accumulator + value * value);
+        if squared_norm <= F::epsilon() * F::epsilon() {
+            if let Some(basis_vector) =
+                sk_orthogonal_basis_completion(&completed, number_of_features)
+            {
+                row.assign(&basis_vector);
+            }
+        }
         let mut pivot_column = 0usize;
         let mut pivot_magnitude = F::zero();
         for (column, &value) in row.iter().enumerate() {
@@ -37,7 +51,29 @@ pub(super) fn sk_orient_components<F: SKFloat>(components: &mut Array2<F>) {
                 *value = -*value;
             });
         }
+        completed.push(row.to_owned());
     }
+}
+
+fn sk_orthogonal_basis_completion<F: SKFloat>(
+    existing_rows: &[Array1<F>],
+    number_of_features: usize,
+) -> Option<Array1<F>> {
+    (0..number_of_features).find_map(|basis_index| {
+        let mut candidate = Array1::<F>::zeros(number_of_features);
+        candidate[basis_index] = F::one();
+        for previous in existing_rows {
+            let dot = candidate.dot(previous);
+            azip!((entry in &mut candidate, &basis_value in previous) {
+                *entry = *entry - dot * basis_value;
+            });
+        }
+        let norm = candidate
+            .iter()
+            .fold(F::zero(), |accumulator, &value| accumulator + value * value)
+            .sqrt();
+        (norm > F::epsilon()).then(|| candidate.mapv(|value| value / norm))
+    })
 }
 
 /// Derives explained variance and explained-variance ratio from singular values
