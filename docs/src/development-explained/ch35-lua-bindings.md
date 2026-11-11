@@ -8,7 +8,10 @@ package, or a matching `liblua` before the module builds.
 This chapter builds the Lua binding: the embedded interpreter, the module entry point, userdata
 for builders and models, table↔matrix conversion, error mapping, lifecycle and packaging.
 
-The capability is `lua-bindings`; the code lives in `crates/sciencekit_lua/`.
+The capability is `lua-bindings`; the code lives in its own repository,
+[`neurono-ml/sciencekit-lua`](https://github.com/neurono-ml/sciencekit-lua), as the
+standalone Cargo project `sciencekit_lua`. The main repository keeps the Rust core and the
+shared C ABI (`sciencekit_ffi`) that the crate consumes through a git dependency.
 
 ## 1. The problem, in plain words
 
@@ -144,6 +147,9 @@ lifecycle. It is the "can a Lua user actually use this" test.
 
 ## 6. Look inside
 
+The files live in the [`neurono-ml/sciencekit-lua`](https://github.com/neurono-ml/sciencekit-lua)
+repository, at its root:
+
 | File | Responsibility |
 |---|---|
 | `src/lib.rs`, `src/module.rs` | the module entry point and exports |
@@ -151,6 +157,7 @@ lifecycle. It is the "can a Lua user actually use this" test.
 | `src/convert.rs` | table ↔ buffer conversion and rectangularity |
 | `src/operations.rs` | fit/predict/transform/score/save/load wiring |
 | `src/errors.rs` | ABI status → Lua error mapping |
+| `Cargo.toml` | the standalone project and its git dependency on `sciencekit_ffi` |
 | `tests/run.lua`, `sciencekit-*.rockspec` | the Lua suite and packaging |
 
 ## 7. What this unlocks
