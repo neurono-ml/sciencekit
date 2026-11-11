@@ -16,7 +16,7 @@
   with the documented defaults and invalid-value tests (`number_of_trees` zero, invalid
   sample fraction, OOB without bootstrap); verify with
   `cargo test -p sciencekit_ensemble forest_builder`.
-- [ ] 2.2 Implement parallel per-tree fitting over bootstrap samples with deterministic
+- [x] 2.2 Implement parallel per-tree fitting over bootstrap samples with deterministic
   seeds and lock-free slots; verify parallel-equals-sequential and repeated-fit
   determinism; verify with `cargo test -p sciencekit_ensemble forest_fit`.
 - [ ] 2.3 Implement classifier probability averaging and label prediction with canonical
