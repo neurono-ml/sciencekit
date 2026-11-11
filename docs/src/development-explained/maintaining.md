@@ -262,6 +262,11 @@ The [PCA chapter](./ch44-pca.html) builds `SKPCA` in `sciencekit_decomposition` 
 the randomized SVD kernel: feature centering, the `Full`/`Randomized`/`CovarianceEigh`
 solver portfolio and `Auto` resolution, component-sign determinism, epsilon-floored
 whitening, and the explicit sparse-densification contract.
+fallback reason. The
+[feature union chapter](./ch43-feature-union.html) adds parallel transformer fan-out inside
+`sciencekit_pipeline`: tuple and boxed member collections, CSR-preserving horizontal
+concatenation, member-indexed error context and nested pipeline composition.
 The [JSON debug format chapter](./ch45-json-debug-format.html) adds the deterministic
 human-readable `SKModelState` schema, the pretty and compact writer, the duplicate-aware
 validating reader and the round-trip acceptance guarantees across scalar and tensor types.
+

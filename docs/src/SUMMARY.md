@@ -70,6 +70,7 @@
   - [Randomized SVD: a big factorization from small pieces](development-explained/ch39-randomized-svd.md)
   - [Random forests: bootstrap samples, de-correlated splits and honest out-of-bag scores](development-explained/ch40-random-forest.md)
   - [DBSCAN: density, reachability and honest noise](development-explained/ch42-dbscan.md)
+  - [Feature unions: parallel branches and honest concatenation](development-explained/ch43-feature-union.md)
   - [Principal Component Analysis: centering, three solvers and honest sparsity](development-explained/ch44-pca.md)
   - [JSON debug format: reading a fitted model with your eyes](development-explained/ch45-json-debug-format.md)
   - [Maintaining this book](development-explained/maintaining.md)
