@@ -55,7 +55,7 @@ Four engineering hazards hide behind that simple picture:
 | **Any sparse member promotes the union output to CSR; all-dense stays dense** | Converting a narrow dense branch into CSR entries costs $O(\text{non-zeros})$ work; densifying a wide sparse branch costs $O(n \times w_{\text{sparse}})$ memory. Promoting to CSR preserves sparsity end-to-end. | Always emitting dense (memory blow-up on categoricals/text) or always emitting CSR (unnecessary overhead when every branch is dense). |
 | **Scalar-free `SKFeatureUnion<Stages>` configuration + `SKFeatureUnionArity`** | `SKFeatureUnion` holds no floating-point constants of its own. Separating member counting (`SKFeatureUnionArity`) from `SKFeatureUnionStages<F>` lets `.build()` validate non-emptiness without a turbofish scalar, and lets scalar-generic branches serve both `f32` and `f64`. | Adding `PhantomData<F>` to `SKFeatureUnion<F, Stages>` (forces callers to annotate `f64` even before data arrives). |
 | **Direct `SKPipelineTransformer` implementations over sealed `f32` and `f64`** | `sciencekit_pipeline` already provides a blanket `SKPipelineTransformer<F>` implementation for any `T: SKUnsupervisedFit<F>`. Implementing `SKPipelineTransformer<f32>` and `SKPipelineTransformer<f64>` directly for `SKFeatureUnion<Stages>` and non-empty `SKPipelineBuilder` satisfies Rust's orphan/coherence rules because `SKFloat` is sealed to `f32` and `f64`. | Implementing `SKUnsupervisedFit` on `SKFeatureUnion` (would clone the input block an extra time at every nested boundary). |
-| **Dual error surface (`fit` / `fit_checked` and `transform` / `transform_checked`)** | `SKError` variants that carry messages gain `"feature union member {index}: ..."` automatically, while structured fixed-field variants (`ShapeMismatch`, `UnsupportedRepresentation`) stay intact for pattern matching and also expose `.member_index()` through `SKFeatureUnionMemberError`. | Flattening every member failure into `SKError::Conversion(String)` (breaks callers matching structured `SKError` variants). |
+| **Dual error surface (`fit` / `fit_checked` and `transform` / `transform_checked`)** | `SKError` variants that carry messages gain `"feature union member {index}: ..."` automatically, while structured fixed-field variants (`ShapeMismatch`, `UnsupportedRepresentation`) stay intact for pattern matching and also expose `.member_index()` through `SKFeatureUnionMemberError` recorded directly on the operation span. | Flattening every member failure into `SKError::Conversion(String)` (breaks callers matching structured `SKError` variants). |
 
 ---
 
@@ -72,21 +72,21 @@ own output block before the union stitches the columns left-to-right.
 flowchart LR
     accTitle: Fan-out fitting and horizontal concatenation inside SKFeatureUnion
     accDescr: An input feature block fans out unchanged to three parallel branches: a sub-pipeline that imputes and scales numeric columns, a sparse one-hot encoder, and a missingness indicator. Their outputs are concatenated horizontally in declaration order into one wider block fed to the final estimator.
-    IN["Input SKFeatureBlock<br/>n rows × p columns"] --> B0["Member 0: Sub-pipeline<br/>Imputer → StandardScaler<br/>(width w₀)"]
-    IN --> B1["Member 1: Encoder<br/>One-Hot CSR<br/>(width w₁)"]
-    IN --> B2["Member 2: Indicator<br/>Missing mask<br/>(width w₂)"]
-    B0 --> CAT["Horizontal Concatenate<br/>n rows × (w₀ + w₁ + w₂) columns"]
+    IN["SKFeatureBlock<br/>n rows × p cols"] --> B0["Member 0<br/>Imputer → Scaler<br/>width w₀"]
+    IN --> B1["Member 1<br/>One-Hot CSR<br/>width w₁"]
+    IN --> B2["Member 2<br/>Missing mask<br/>width w₂"]
+    B0 --> CAT["Concatenate<br/>width w₀ + w₁ + w₂"]
     B1 --> CAT
     B2 --> CAT
-    CAT --> EST["Downstream Stage or<br/>Supervised Estimator"]
-    classDef input fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#1e3a8a
-    classDef branch fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#14532d
-    classDef concat fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#581c87
-    classDef final fill:#fef9c3,stroke:#ca8a04,stroke-width:2px,color:#713f12
-    class IN input
-    class B0,B1,B2 branch
-    class CAT concat
-    class EST final
+    CAT --> EST["Next Stage or<br/>Estimator"]
+    classDef sky fill:#e0f2fe,stroke:#0284c7,stroke-width:2px,color:#0c4a6e
+    classDef emerald fill:#f0fdf4,stroke:#16a34a,stroke-width:2px,color:#14532d
+    classDef violet fill:#ede9fe,stroke:#7c3aed,stroke-width:2px,color:#3b0764
+    classDef amber fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#78350f
+    class IN sky
+    class B0,B1,B2 emerald
+    class CAT violet
+    class EST amber
 ```
 
 ### How CSR horizontal stacking works without densifying
@@ -99,11 +99,12 @@ arrays:
 
 Suppose for row $r$, member $0$ (width $w_0 = 2$, dense) produces $[1.5, 0.0]$ and member $1$
 (width $w_1 = 3$, CSR) stores $4.0$ at local column $1$. Rather than expanding member $1$ into
-$[0.0, 4.0, 0.0]$, the union walks row $r$ across all members keeping a cumulative column offset:
+$[0.0, 4.0, 0.0]$, the union pre-counts total stored entries across all members, reserves exact
+buffer capacities once, and walks row $r$ across all members keeping a cumulative column offset:
 
-- **Offset $0$ (member $0$, width $2$):** non-zero entry $(0 + 0,\; 1.5)$ is emitted; the exact
+- **Offset $0$ (member $0$, width $2$):** non-zero entry $(0 + 0,\; 1.5)$ is appended; the exact
   zero at column $1$ stays implicit.
-- **Offset $2$ (member $1$, width $3$):** stored entry $(2 + 1,\; 4.0) = (3,\; 4.0)$ is emitted.
+- **Offset $2$ (member $1$, width $3$):** stored entry $(2 + 1,\; 4.0) = (3,\; 4.0)$ is appended.
 
 Because each member's columns are visited in ascending order and each member's offset shifts past
 all previous widths, every row's combined column indices are strictly increasing by construction.
@@ -112,18 +113,18 @@ all previous widths, every row's combined column indices are strictly increasing
 flowchart TB
     accTitle: Representation policy when concatenating member outputs
     accDescr: Before allocating an output buffer, SKFeatureUnion validates that every member returned the expected row count and a supported Dense or CSR representation. If all members emitted Dense, ndarray::concatenate stacks them into a Dense block. If at least one member emitted Sparse CSR, every member is merged row-by-row with cumulative column offsets into a single CSR block.
-    V["Validate member outputs<br/>row count == n, no CSC"] --> Q{"Any member<br/>is Sparse CSR?"}
-    Q -->|"No (all Dense)"| D["ndarray::concatenate(Axis(1))<br/>→ SKFeatureBlock::Dense"]
-    Q -->|"Yes (mixed or all Sparse)"| S["Row-wise offset merge<br/>local column c → offsetₖ + c<br/>→ SKFeatureBlock::Sparse (CSR)"]
-    V -->|"Mismatch or CSC"| E["SKError::ShapeMismatch or<br/>SKError::UnsupportedRepresentation"]
-    classDef check fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#1e3a8a
-    classDef dense fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#14532d
-    classDef sparse fill:#e0e7ff,stroke:#4f46e5,stroke-width:2px,color:#312e81
-    classDef error fill:#fee2e2,stroke:#dc2626,stroke-width:2px,color:#7f1d1d
-    class V,Q check
-    class D dense
-    class S sparse
-    class E error
+    V["Validate outputs<br/>rows == n, no CSC"] --> Q{"Any member<br/>Sparse CSR?"}
+    Q -->|"No (all Dense)"| D["Axis(1) stack<br/>SKFeatureBlock::Dense"]
+    Q -->|"Yes (any Sparse)"| S["Row offset merge<br/>SKFeatureBlock::Sparse"]
+    V -->|"Mismatch or CSC"| E["ShapeMismatch or<br/>UnsupportedRepr"]
+    classDef sky fill:#e0f2fe,stroke:#0284c7,stroke-width:2px,color:#0c4a6e
+    classDef emerald fill:#f0fdf4,stroke:#16a34a,stroke-width:2px,color:#14532d
+    classDef violet fill:#ede9fe,stroke:#7c3aed,stroke-width:2px,color:#3b0764
+    classDef rose fill:#ffe4e6,stroke:#e11d48,stroke-width:2px,color:#7f1d1d
+    class V,Q sky
+    class D emerald
+    class S violet
+    class E rose
 ```
 
 ### Object-safe erasure for dynamic unions (`SKBlockTransformer`)
@@ -162,9 +163,9 @@ without requiring `Clone` on estimators.
   `.member_widths()`, `.number_of_features()` (and `.number_of_output_features()`),
   `.number_of_input_features()`, `.stages()`, `.fitted_stages()`, `.backend()`, and
   `.execution_mode()`.
-- **`SKFeatureUnionMemberError`** — pairs `member_index: Option<usize>` with the structured
-  `SKError` so callers using `fit_checked` or `transform_checked` know both the failing member and
-  the exact `SKError` variant.
+- **`SKFeatureUnionMemberError`** — exposes `.member_index()` (`Option<usize>`), `.error()`
+  (`&SKError`), and `.into_sk_error()` so callers using `fit_checked` or `transform_checked` know
+  both the failing member and the exact `SKError` variant.
 
 ---
 
@@ -190,7 +191,7 @@ pipeline, where the second stage would see centered zero means.
 
 ### `all_sparse_members_concatenate_to_csr_with_shifted_column_offsets` & `mixed_dense_then_sparse_promotes_union_output_to_csr_with_exact_offsets`
 
-In `union_concat_tests.rs`, a sparse-only test stage (`SKSparseOnlyShiftStage`) returns
+In `union_concatenation_tests.rs`, a sparse-only test stage (`SKSparseOnlyShiftStage`) returns
 `UnsupportedRepresentation` if its input is ever densified; pairing it with `SKSimpleImputer` on a
 CSR input proves the input remains sparse and the shifted columns land at offsets `0..2` and `2..5`.
 Combining dense `SKSimpleImputer` output with sparse `SKMissingIndicator` output (`sparse_output(true)`)
@@ -210,12 +211,14 @@ context and `fit_checked` / `transform_checked` structured error preservation, w
 member row counts, wrong query column counts, and CSC sparse outputs fail before any output buffer
 is written.
 
-### `accessors_report_member_count_widths_and_summed_total_width` & `concurrent_transform_across_threads_agrees_with_sequential_result`
+### `accessors_report_member_count_widths_and_summed_total_width`, `non_default_backend_and_execution_mode_propagate_to_fitted_model` & `concurrent_transform_across_threads_agrees_with_sequential_result`
 
 In `union_model_tests.rs`, a three-branch union with widths `[2, 1, 2]` verifies that
-`member_widths().iter().sum()` equals `number_of_features()` (`5`), compile-time `Send + Sync`
-bounds hold for both tuple and boxed models, and eight threads transforming concurrently inside
-`std::thread::scope` match the sequential result bit-for-bit.
+`member_widths().iter().sum()` equals `number_of_features()` (`5`), non-default
+`SKBackendKind::MatrixMultiply` and `SKExecutionMode::InProcessSynchronous` overrides propagate into
+the fitted model, compile-time `Send + Sync` bounds hold for both tuple and boxed models, and eight
+threads transforming concurrently inside `std::thread::scope` match the sequential result
+bit-for-bit.
 
 ### `scaler_union_one_hot_encoder_into_classifier_concatenates_columns_and_predicts`, `sub_pipeline_branch_composes_inside_feature_union_and_regressor_pipeline`, `nested_feature_unions_and_sub_pipelines_compose_into_regressor_metrics` & `large_sparse_feature_union_pipeline_fits_without_densification`
 
@@ -224,3 +227,36 @@ In `union_pipeline_tests.rs` and `acceptance_tests/feature_union_{small,large}_t
 `SKOneHotEncoder` ahead of `SKLogisticRegression`, nesting multi-stage `SKPipelineBuilder` chains
 and inner unions ahead of `SKLinearRegression` ($R^2 > 0.99$), and fitting 600-row sparse designs
 end-to-end without densification.
+
+---
+
+## 6. Look inside
+
+| File | Responsibility |
+|---|---|
+| `crates/sciencekit_pipeline/src/feature_union/mod.rs` | Pure dispatcher declaring submodules, re-exports, and companion test suites. |
+| `crates/sciencekit_pipeline/src/feature_union/builder.rs` | `SKFeatureUnion` and `SKFeatureUnionBuilder`, empty-union guard, backend and execution-mode configuration. |
+| `crates/sciencekit_pipeline/src/feature_union/append.rs` | `SKAppendUnionStage` extending flat tuples from zero up to eight members. |
+| `crates/sciencekit_pipeline/src/feature_union/stages.rs` | `SKFeatureUnionArity` and `SKFeatureUnionStages<F>` implemented for tuples of one through eight stages. |
+| `crates/sciencekit_pipeline/src/feature_union/boxed.rs` | `SKBlockTransformer<F>` and `SKBoxedFittedStage` dynamic fallback for runtime member lists. |
+| `crates/sciencekit_pipeline/src/feature_union/concatenate.rs` | Upfront shape/representation checks, dense `Axis(1)` stacking, and pre-sized CSR horizontal concatenation. |
+| `crates/sciencekit_pipeline/src/feature_union/errors.rs` | `SKFeatureUnionMemberError` and `sk_wrap_member_error` preserving structured `SKError` variants with member indices. |
+| `crates/sciencekit_pipeline/src/feature_union/model.rs` | `SKFeatureUnionModel<F, Stages>`, `fit` / `fit_checked`, and `transform` / `transform_checked` under `sk_run_operation`. |
+| `crates/sciencekit_pipeline/src/feature_union/accessors.rs` | Width, member-count, stage, fitted-stage, backend, and execution-mode accessors. |
+| `crates/sciencekit_pipeline/src/feature_union/pipeline_stage.rs` | `SKPipelineTransformer` implementations for `SKFeatureUnion` and nested `SKPipelineBuilder` branches. |
+
+---
+
+## 7. Recap
+
+- **`SKFeatureUnion` fans one input block out to parallel branches** and concatenates their outputs
+  left-to-right in declaration order.
+- **Static tuples up to eight members keep concrete types;** `Vec<Box<dyn SKBlockTransformer<F>>>`
+  provides an object-safe runtime escape hatch over the same `SKFeatureBlock` medium.
+- **Sparsity is respected end-to-end:** all-dense outputs stay dense, any sparse member promotes the
+  concatenated block to CSR with cumulative column offsets, and sparse inputs are never densified.
+- **Errors stay structured and indexed:** every member failure surfaces its zero-based member index
+  while preserving the underlying `SKError` variant and recording directly on its observability
+  span.
+- **Unions and pipelines nest freely:** a union is a stage in `SKPipeline`, and a multi-stage
+  `SKPipelineBuilder` is a valid branch inside `SKFeatureUnion`.
