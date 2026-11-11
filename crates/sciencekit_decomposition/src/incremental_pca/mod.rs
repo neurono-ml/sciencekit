@@ -3,12 +3,13 @@
 //!
 //! Pure dispatcher module: submodules hold configuration, Chan-Golub-LeVeque
 //! scatter accumulation, sparse Gram updates, symmetric-eigensolver
-//! finalization, builder, fitting, streaming and projection.
+//! finalization, builder, fitting, streaming, projection and state export.
 
 mod accumulator;
 mod builder;
 mod config;
 mod core_implementation;
+mod export;
 mod finalize;
 mod fit;
 mod merge;
@@ -41,5 +42,7 @@ mod incremental_sparse_tests;
 mod incremental_streaming_tests;
 #[cfg(test)]
 mod incremental_transform_tests;
+#[cfg(test)]
+mod incremental_validation_inputs_tests;
 #[cfg(test)]
 mod incremental_validation_tests;

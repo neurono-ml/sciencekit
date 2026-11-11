@@ -6,5 +6,7 @@
 mod fixtures;
 
 mod concurrency_and_metrics_tests;
+mod incremental_pca_scale_tests;
+mod incremental_pca_streaming_tests;
 mod large_and_solver_tests;
 mod tiny_and_boundary_tests;
