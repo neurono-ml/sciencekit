@@ -9,7 +9,7 @@
 
 ## 2. Reader and validation
 
-- [ ] 2.1 Implement reading back into `SKModelState` and a round-trip test; verify with
+- [x] 2.1 Implement reading back into `SKModelState` and a round-trip test; verify with
   `cargo test -p sciencekit_interop json_round_trip`.
 - [ ] 2.2 Add malformed JSON, unknown major version, duplicate name, dtype and shape
   mismatch tests; verify with `cargo test -p sciencekit_interop json_validation`.
