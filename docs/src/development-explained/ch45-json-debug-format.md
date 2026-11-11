@@ -31,7 +31,7 @@ flowchart LR
 
     M1["Fitted model<br/>SKExportable"]:::violet --> S1["SKModelState<br/>metadata + BTreeMap"]:::blue
     S1 --> W["SKJsonDebugWriter<br/>Pretty | Compact"]:::green
-    W --> J["Deterministic JSON<br/>sorted keys + flat arrays"]:::amber
+    W --> J["Deterministic JSON<br/>sorted keys, flat arrays"]:::amber
     J --> R["SKJsonDebugReader<br/>validate before work"]:::orange
     R -->|"valid v1"| S2["SKModelState<br/>exact round-trip"]:::blue
     R -->|"corrupt / mismatch"| E["Structured SKError<br/>no partial model"]:::rose
@@ -45,7 +45,7 @@ flowchart LR
     classDef rose fill:#ffe4e6,stroke:#e11d48,color:#7f1d1d
 ```
 
-The central state `SKModelState<F>` sits on both sides of the wire. Neither `SKLinearRegressionModel` nor `SKStandardScaler` knows JSON exists; they export and import `SKModelState<F>`, while `sciencekit_interop::json` owns the text grammar and every byte of `serde_json` dependency.
+The central state `SKModelState<F>` sits on both sides of the wire. Fitted models implementing `SKExportable` and `SKImportable` (such as `SKLinearRegressionModel<F>`, and other estimator families as their export contracts land) never know JSON exists; they export and import `SKModelState<F>`, while `sciencekit_interop::json` owns the text grammar and every byte of `serde_json` dependency.
 
 ---
 
@@ -133,7 +133,7 @@ let restored: SKLinearRegressionModel<f64> = sk_import_model_json(&json)?;
 
 ## 6. Validation table: every rejection is structured
 
-Validation runs before tensor allocation so a malformed or mismatched document never leaves a half-built model behind:
+Validation runs before `SKTensor` and `SKModelState` construction so a malformed or mismatched document never leaves a half-built model behind:
 
 | Failure condition | Returned `SKError` |
 |---|---|
