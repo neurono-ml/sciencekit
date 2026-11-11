@@ -38,7 +38,7 @@
 - [x] 2.3 Implement the KKT stopping criterion and the iteration/effort bookkeeping, with
   tests for a converged toy problem, an exhausted budget returning `NotConverged` and the
   reported iteration count; verify with `cargo test -p sciencekit_svm smo`.
-- [ ] 2.4 Implement the bounded LRU kernel-row cache over dense and CSR training views,
+- [x] 2.4 Implement the bounded LRU kernel-row cache over dense and CSR training views,
   with tests for hit/miss, eviction, row recomputation and cache-size zero; verify with
   `cargo test -p sciencekit_svm cache`.
 - [ ] 2.5 Implement the binary C-SVC SMO loop with clipping and bias recovery, and verify
