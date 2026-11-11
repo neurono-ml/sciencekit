@@ -99,7 +99,7 @@
   verify with `cargo test -p sciencekit_svm representation`.
 - [x] 6.2 Add dense, sparse and mixed prediction tests against models fitted in each
   representation; verify with `cargo test -p sciencekit_svm representation`.
-- [ ] 6.3 Add tests for empty input, single-class classification, feature-count mismatch,
+- [x] 6.3 Add tests for empty input, single-class classification, feature-count mismatch,
   non-finite values and invalid kernel parameters, asserting the exact central error
   variant; verify with `cargo test -p sciencekit_svm validation`.
 
