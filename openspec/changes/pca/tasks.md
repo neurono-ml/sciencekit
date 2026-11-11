@@ -51,7 +51,7 @@
   exception); verify with `mdbook build docs`.
 - [x] 4.4 Record the sparse-full/eigh solver, kernel PCA, incremental PCA, GPU, `memmap2`
   and export non-goals in `docs/PRD.md`.
-- [ ] 4.5 Independent review by a separate agent validating every scenario in
+- [x] 4.5 Independent review by a separate agent validating every scenario in
   `principal-component-analysis`; address every finding and re-run the gates.
 
 ## Workflow follow-up

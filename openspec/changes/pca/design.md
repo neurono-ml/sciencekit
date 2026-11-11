@@ -67,8 +67,10 @@ than `n_features`.
 ### Decision 6 — Auto policy
 
 ```
-if number_of_components >= 0.8 * min(n_samples, n_features) → Full
+if is_sparse and not allow_densification → Randomized
+else if 5 * number_of_components >= 4 * min(n_samples, n_features) → Full
 else if n_samples > 10 * n_features and n_features <= 1000 → CovarianceEigh
+else if max(n_samples, n_features) <= 500 → Full
 else → Randomized
 ```
 
@@ -94,8 +96,10 @@ the model.
 ```
 crates/sciencekit_decomposition/src/
   lib.rs
-  pca/{mod.rs, builder.rs, config.rs, centering.rs, solvers.rs, core_implementation.rs, model.rs, fit.rs, transform.rs, *_tests.rs}
-  acceptance_tests/mod.rs
+  pca/{mod.rs, builder.rs, config.rs, centering.rs, core_implementation.rs, model.rs, fit.rs, validation.rs, *_tests.rs}
+  pca/solvers/{mod.rs, state.rs, full.rs, randomized.rs, covariance.rs, resolution.rs}
+  pca/transform/{mod.rs, projection.rs, reconstruction.rs}
+  acceptance_tests/{mod.rs, fixtures.rs, *_tests.rs}
 ```
 
 `mod.rs` files are pure dispatchers; implementation files stay under 200 lines.
