@@ -4,11 +4,13 @@
 //! This is a **pure dispatcher** module: it only declares and re-exports its
 //! submodules; every implementation lives in its own file.
 
+mod assign;
 mod builder;
 mod config;
 mod core_implementation;
 mod model;
 mod state;
+mod update;
 
 pub use crate::kmeans::SKKMeansInitialization;
 pub use builder::SKMiniBatchKMeansBuilder;
@@ -17,3 +19,5 @@ pub use model::SKMiniBatchKMeansModel;
 
 #[cfg(test)]
 mod minibatch_state_tests;
+#[cfg(test)]
+mod minibatch_update_tests;
