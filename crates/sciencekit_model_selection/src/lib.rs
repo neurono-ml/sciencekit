@@ -31,7 +31,9 @@ pub use grid_search::{
     SKGridSearchCVRegressorModel, SKGridSearchResults, SKRegressorScoring, SKScoringFamily,
 };
 pub use halving::{
-    SKHalvingResource, SKHalvingRound, sk_halving_candidate_schedule, sk_halving_resource_schedule,
+    SKHalvingGridSearchClassifier, SKHalvingGridSearchClassifierBuilder,
+    SKHalvingGridSearchRegressor, SKHalvingGridSearchRegressorBuilder, SKHalvingResource,
+    SKHalvingRound, SKHalvingScoring, sk_halving_candidate_schedule, sk_halving_resource_schedule,
 };
 pub use index_split::SKIndexSplit;
 pub use shuffle::sk_shuffle_indices;
