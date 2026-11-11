@@ -56,7 +56,7 @@
 
 ## 6. Importances, representation and validation
 
-- [ ] 6.1 Implement aggregated feature importances and test normalization across stages;
+- [x] 6.1 Implement aggregated feature importances and test normalization across stages;
   verify with `cargo test -p sciencekit_ensemble gb_importances`.
 - [ ] 6.2 Add dense-vs-sparse fit/predict equivalence tests and a no-densification test;
   verify with `cargo test -p sciencekit_ensemble gb_representation`.
