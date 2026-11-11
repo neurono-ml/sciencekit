@@ -6,9 +6,13 @@
 //! This is a **pure dispatcher** module: `mod.rs` only declares and re-exports
 //! submodules; every implementation lives in its own file.
 
+mod projection;
 mod result;
 
+pub use projection::sk_seeded_projection;
 pub use result::SKRandomizedSvdResult;
 
+#[cfg(test)]
+mod projection_tests;
 #[cfg(test)]
 mod result_tests;
