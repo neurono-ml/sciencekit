@@ -43,7 +43,7 @@
   production; verify with `cargo test -p sciencekit_decomposition`.
 - [x] 4.2 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
   warnings` and `cargo test --workspace`; fix every failure before pushing.
-- [ ] 4.3 Update `CHANGELOG.md` and the companion mdBook chapter (including a
+- [x] 4.3 Update `CHANGELOG.md` and the companion mdBook chapter (including a
   `Development Explained` chapter on covariance merging and streaming finalization); verify
   with `mdbook build docs`.
 - [x] 4.4 Record the GPU/memmap/export non-goals in `docs/PRD.md`.
