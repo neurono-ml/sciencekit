@@ -2,7 +2,7 @@
 
 ## 1. Crate and configuration
 
-- [ ] 1.1 Create `crates/sciencekit_telemetry` with `Cargo.toml`, `lib.rs` and the config/
+- [x] 1.1 Create `crates/sciencekit_telemetry` with `Cargo.toml`, `lib.rs` and the config/
   resource/sampler modules; verify `cargo test -p sciencekit_telemetry config`.
 - [ ] 1.2 Implement the builder and validation (endpoint/transport/service/sampler/batch)
   with invalid-value tests; verify with `cargo test -p sciencekit_telemetry config`.
