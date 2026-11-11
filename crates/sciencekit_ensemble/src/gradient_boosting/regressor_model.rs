@@ -10,6 +10,7 @@ use super::loss_kind::SKGradientBoostingRegressionLoss;
 #[derive(Debug, Clone)]
 pub struct SKGradientBoostingRegressorModel<F> {
     pub(super) stages: Vec<SKTree<F>>,
+    pub(super) stage_importances: Vec<Vec<F>>,
     pub(super) initial_prediction: F,
     pub(super) learning_rate: F,
     pub(super) feature_count: usize,
@@ -54,6 +55,13 @@ impl<F: SKFloat> SKGradientBoostingRegressorModel<F> {
     /// Sample-weighted normalized feature importances aggregated across stages.
     pub fn feature_importances(&self) -> ArrayView1<'_, F> {
         ArrayView1::from(&self.feature_importances)
+    }
+
+    /// Normalized feature importances of the tree grown at `stage_index`.
+    pub fn stage_feature_importances(&self, stage_index: usize) -> Option<ArrayView1<'_, F>> {
+        self.stage_importances
+            .get(stage_index)
+            .map(ArrayView1::from)
     }
 
     /// Configured regression loss carried from the estimator.

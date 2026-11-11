@@ -87,13 +87,15 @@ pub(super) fn sk_fit_gradient_boosting_classifier<F: SKFloat>(
             )?;
             let feature_importances =
                 sk_aggregate_stage_importances(fitted.stages.iter(), columns_count);
-            let stages = fitted
-                .stages
-                .into_iter()
-                .map(|stage| vec![stage.tree])
-                .collect();
+            let mut stages = Vec::with_capacity(fitted.stages.len());
+            let mut stage_importances = Vec::with_capacity(fitted.stages.len());
+            fitted.stages.into_iter().for_each(|stage| {
+                stages.push(vec![stage.tree]);
+                stage_importances.push(vec![stage.feature_importances]);
+            });
             return Ok(SKGradientBoostingClassifierModel {
                 stages,
+                stage_importances,
                 initial_predictions: vec![fitted.initial_prediction],
                 learning_rate: estimator.learning_rate(),
                 classes,
@@ -119,13 +121,21 @@ pub(super) fn sk_fit_gradient_boosting_classifier<F: SKFloat>(
         )?;
         let feature_importances =
             sk_aggregate_stage_importances(fitted.stages.iter().flatten(), columns_count);
-        let stages = fitted
-            .stages
-            .into_iter()
-            .map(|stage_trees| stage_trees.into_iter().map(|slot| slot.tree).collect())
-            .collect();
+        let mut stages = Vec::with_capacity(fitted.stages.len());
+        let mut stage_importances = Vec::with_capacity(fitted.stages.len());
+        fitted.stages.into_iter().for_each(|stage_trees| {
+            let mut trees = Vec::with_capacity(stage_trees.len());
+            let mut importances = Vec::with_capacity(stage_trees.len());
+            stage_trees.into_iter().for_each(|slot| {
+                trees.push(slot.tree);
+                importances.push(slot.feature_importances);
+            });
+            stages.push(trees);
+            stage_importances.push(importances);
+        });
         Ok(SKGradientBoostingClassifierModel {
             stages,
+            stage_importances,
             initial_predictions: fitted.initial_predictions,
             learning_rate: estimator.learning_rate(),
             classes,

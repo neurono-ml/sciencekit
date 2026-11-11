@@ -91,9 +91,15 @@ pub(super) fn sk_fit_gradient_boosting_regressor<F: SKFloat>(
         };
         let feature_importances =
             sk_aggregate_stage_importances(fitted.stages.iter(), columns_count);
-        let stages = fitted.stages.into_iter().map(|slot| slot.tree).collect();
+        let mut stages = Vec::with_capacity(fitted.stages.len());
+        let mut stage_importances = Vec::with_capacity(fitted.stages.len());
+        fitted.stages.into_iter().for_each(|slot| {
+            stages.push(slot.tree);
+            stage_importances.push(slot.feature_importances);
+        });
         Ok(SKGradientBoostingRegressorModel {
             stages,
+            stage_importances,
             initial_prediction: fitted.initial_prediction,
             learning_rate: estimator.learning_rate(),
             feature_count: columns_count,
