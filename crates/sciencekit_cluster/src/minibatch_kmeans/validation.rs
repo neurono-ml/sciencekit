@@ -63,7 +63,16 @@ pub(crate) fn sk_validate_supported_representation<F>(
     features: &SKDataView<'_, F>,
 ) -> Result<(), SKError> {
     match features {
-        SKDataView::Dense(_) | SKDataView::Sparse(_) => Ok(()),
+        SKDataView::Dense(_) => Ok(()),
+        SKDataView::Sparse(sparse) => {
+            if !sparse.is_csr() {
+                return Err(SKError::UnsupportedRepresentation {
+                    representation: "csc",
+                    suggestion: "convert the sparse matrix to CSR before calling MiniBatchKMeans",
+                });
+            }
+            Ok(())
+        }
         _ => Err(SKError::UnsupportedRepresentation {
             representation: features.representation(),
             suggestion: "convert the input to a supported dense or CSR view",

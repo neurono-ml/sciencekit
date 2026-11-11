@@ -61,6 +61,12 @@ pub(crate) fn sk_update_centers_and_counts<F: SKFloat>(
                 });
         }
         SKDataView::Sparse(sparse) => {
+            if !sparse.is_csr() {
+                return Err(SKError::UnsupportedRepresentation {
+                    representation: "csc",
+                    suggestion: "convert the sparse matrix to CSR before calling MiniBatchKMeans",
+                });
+            }
             let mut inverse_totals = vec![F::zero(); number_of_clusters];
             centers
                 .rows_mut()

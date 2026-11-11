@@ -28,6 +28,12 @@ pub(crate) fn sk_assign_batch_rows<F: SKFloat>(
             .map(|row| nearest_dense_center(row, centers))
             .collect(),
         SKDataView::Sparse(sparse) => {
+            if !sparse.is_csr() {
+                return Err(SKError::UnsupportedRepresentation {
+                    representation: "csc",
+                    suggestion: "convert the sparse matrix to CSR before calling MiniBatchKMeans",
+                });
+            }
             let center_norms = compute_center_norms(centers);
             (0..sparse.rows())
                 .into_par_iter()

@@ -53,6 +53,12 @@ pub(crate) fn sk_reassign_low_count_centers<F: SKFloat>(
             })
             .collect(),
         SKDataView::Sparse(sparse) => {
+            if !sparse.is_csr() {
+                return Err(SKError::UnsupportedRepresentation {
+                    representation: "csc",
+                    suggestion: "convert the sparse matrix to CSR before calling MiniBatchKMeans",
+                });
+            }
             let center_norms = compute_center_norms(&centers.view());
             sparse
                 .outer_iterator()

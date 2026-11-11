@@ -29,6 +29,8 @@ mod minibatch_partial_tests;
 #[cfg(test)]
 mod minibatch_reassign_tests;
 #[cfg(test)]
+mod minibatch_representation_tests;
+#[cfg(test)]
 mod minibatch_state_tests;
 #[cfg(test)]
 mod minibatch_update_tests;
