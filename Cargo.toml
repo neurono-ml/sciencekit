@@ -8,7 +8,7 @@
 
 [package]
 name = "sciencekit"
-version = "0.6.0"
+version = "0.7.0"
 edition = "2024"
 license = "Apache-2.0"
 rust-version = "1.85"
@@ -26,6 +26,7 @@ members = [
     "crates/sciencekit_common",
     "crates/sciencekit_ensemble",
     "crates/sciencekit_ffi",
+    "crates/sciencekit_gpu",
     "crates/sciencekit_impute",
     "crates/sciencekit_interop",
     "crates/sciencekit_linear_model",

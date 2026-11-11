@@ -69,6 +69,15 @@ macro_rules! impl_backend_selection {
                     SKBackendKind::NdArrayLinalg => Box::new(SKNdArrayLinalgBackend::new()),
                     #[cfg(not(feature = "blas-backend"))]
                     SKBackendKind::NdArrayLinalg => Box::new(SKFaerBackend::new()),
+                    // Device kinds are not host math backends: heavy dense
+                    // algebra stays on the host until a GPU kernel backend owns
+                    // it. Operation spans resolve the device kind against the
+                    // registered device inventory (spec `gpu-compute-contracts`),
+                    // recording the CPU fallback and reason when no device is
+                    // available.
+                    SKBackendKind::OpenCl | SKBackendKind::Cuda | SKBackendKind::Rocm => {
+                        Box::new(SKFaerBackend::new())
+                    }
                 }
             }
         }

@@ -5,7 +5,7 @@ use sprs::CsMat;
 
 use super::streaming_driver::SKStreamDecision;
 use super::{SKExecutionMode, SKExecutionPlan, sk_run_streaming_driver};
-use crate::{SKDataBatch, SKDataView, SKError, SKLazySource};
+use crate::{SKBackendKind, SKDataBatch, SKDataView, SKError, SKLazySource};
 
 /// A source of sparse batches: each block has shape `1 × 4` with two
 /// non-zeros that encode its position.
@@ -48,6 +48,8 @@ fn streaming_plan() -> SKExecutionPlan {
         batch_size: Some(2),
         buffer_depth: 1,
         available_memory_bytes: u64::MAX,
+        backend: SKBackendKind::Faer,
+        fallback_reason: None,
     }
 }
 

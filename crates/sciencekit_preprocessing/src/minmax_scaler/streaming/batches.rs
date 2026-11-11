@@ -99,6 +99,7 @@ pub(crate) fn batch_parallelism<F: SKFloat>(
         access_pattern: SKAccessPattern::Sequential,
         batch_size_hint: None,
         batch_byte_size_hint: None,
+        device: None,
     };
     sk_resolve_execution_plan(SKExecutionMode::Automatic, &context)
         .map(|plan| plan.parallelism)
