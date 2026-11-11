@@ -19,3 +19,5 @@ pub use weights::{SKClassWeight, sk_resolve_class_weights, sk_validate_static_cl
 mod svc_builder_tests;
 #[cfg(test)]
 mod svc_fit_tests;
+#[cfg(test)]
+mod svc_multiclass_tests;

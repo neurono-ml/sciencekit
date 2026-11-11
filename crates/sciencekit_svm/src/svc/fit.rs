@@ -2,6 +2,7 @@
 //! (spec `support-vector-machines`).
 
 use ndarray::{Array1, Array2};
+use rayon::prelude::*;
 use sciencekit_common::{
     SKDataView, SKError, SKFloat, SKOperationAttributes, SKOperationKind, SKSupervisedFit,
     SKTargetView, sk_run_operation,
@@ -129,12 +130,6 @@ fn sk_fit_svc<F: SKFloat>(
     let (rows, columns) = sk_validate_svm_training_features(features, config.kernel, "fit")?;
     let (class_indices, classes) = sk_canonicalize_svc_targets(targets, rows)?;
     let number_of_classes = classes.number_of_classes();
-    if number_of_classes > 2 {
-        return Err(SKError::UnsupportedOperation {
-            operation: "svc_multiclass",
-            reason: "one-vs-one multiclass arrives in task 3.3".to_owned(),
-        });
-    }
     let per_class_weights =
         sk_resolve_class_weights(&config.class_weight, &class_indices, number_of_classes)?;
     let kernel_parameters = sk_resolve_kernel_parameters(
@@ -145,18 +140,28 @@ fn sk_fit_svc<F: SKFloat>(
         features,
     )?;
 
-    let binary = sk_fit_binary_pair(
-        config,
-        features,
-        &class_indices,
-        &per_class_weights,
-        kernel_parameters,
-        0,
-        1,
-    )?;
+    let pairs: Vec<(usize, usize)> = (0..number_of_classes)
+        .flat_map(|class_a| ((class_a + 1)..number_of_classes).map(move |class_b| (class_a, class_b)))
+        .collect();
+
+    let pairwise_models = pairs
+        .into_par_iter()
+        .map(|(class_negative, class_positive)| {
+            sk_fit_binary_pair(
+                config,
+                features,
+                &class_indices,
+                &per_class_weights,
+                kernel_parameters,
+                class_negative,
+                class_positive,
+            )
+        })
+        .collect::<Result<Vec<_>, SKError>>()?;
+
     Ok(SKSVCModel {
         classes,
-        pairwise_models: vec![binary],
+        pairwise_models,
         kernel_parameters,
         number_of_features: columns,
         backend: config.backend,
