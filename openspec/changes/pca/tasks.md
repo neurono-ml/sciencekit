@@ -13,7 +13,7 @@
 - [x] 2.1 Implement the full-SVD solver with components, singular values, explained
   variance and ratio, and a reconstruction test; verify with
   `cargo test -p sciencekit_decomposition pca_full`.
-- [ ] 2.2 Implement the randomized solver using `sk_randomized_svd`, with full-vs-randomized
+- [x] 2.2 Implement the randomized solver using `sk_randomized_svd`, with full-vs-randomized
   agreement and reproducibility tests; verify with
   `cargo test -p sciencekit_decomposition pca_randomized`.
 - [ ] 2.3 Implement the covariance-eigh solver with sorting and full-SVD agreement tests;
