@@ -49,8 +49,8 @@ pub use errors::SKError;
 pub use execution::{SKExecutionContext, SKExecutionMode, SKExecutionPlan};
 pub use fit_traits::{
     SKClassifierPredictor, SKClusterIdentifier, SKClusterLabel, SKClustererPredictor,
-    SKFeatureTransformer, SKRegressorPredictor, SKSupervisedFit, SKUnsupervisedFit,
-    sk_validate_cluster_assignments,
+    SKFeatureTransformer, SKOutlierLabel, SKOutlierPredictor, SKRegressorPredictor,
+    SKSupervisedFit, SKUnsupervisedFit, sk_validate_cluster_assignments,
 };
 pub use interop::{
     SKExportable, SKImportable, SKModelMetadata, SKModelState, SKParameterValue, SKTensor,
