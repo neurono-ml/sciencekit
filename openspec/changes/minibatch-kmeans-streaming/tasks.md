@@ -38,7 +38,7 @@
 - [x] 4.3 Add validation tests for empty/small batches, zero clusters, invalid
   initialization/reassignment/tolerance, non-finite values and feature-count mismatch;
   verify with `cargo test -p sciencekit_cluster minibatch_validation`.
-- [ ] 4.4 Add repeated-run determinism, thread-count invariance and concurrent assignment
+- [x] 4.4 Add repeated-run determinism, thread-count invariance and concurrent assignment
   tests, plus a `Send + Sync` assertion; verify with
   `cargo test -p sciencekit_cluster minibatch_determinism`.
 
