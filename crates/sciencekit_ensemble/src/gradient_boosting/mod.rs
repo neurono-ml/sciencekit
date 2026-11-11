@@ -39,3 +39,5 @@ mod gb_importances_tests;
 mod gb_regressor_builder_tests;
 #[cfg(test)]
 mod gb_regressor_tests;
+#[cfg(test)]
+mod gb_representation_tests;

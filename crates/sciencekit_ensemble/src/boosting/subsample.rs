@@ -6,10 +6,43 @@ use sciencekit_common::{
     sk_derive_seed,
 };
 use sciencekit_tree::{SKStructureConstraints, SKTreeStructure};
+use sprs::CsMat;
 
 use crate::bootstrap::{sk_gather_dense_rows, sk_gather_sparse_rows};
 
 use super::stage::sk_stage_tree_seed;
+
+/// Owned dense or CSR row subset materialized without densifying sparse inputs.
+pub(super) enum SKOwnedRowSubset<F> {
+    Dense(ndarray::Array2<F>),
+    Sparse(CsMat<F>),
+}
+
+impl<F: SKFloat> SKOwnedRowSubset<F> {
+    pub(super) fn gather(features: &SKDataView<'_, F>, indices: &[usize]) -> Result<Self, SKError> {
+        match features {
+            SKDataView::Dense(dense) => Ok(Self::Dense(sk_gather_dense_rows(dense, indices))),
+            SKDataView::Sparse(sparse) if sparse.is_csr() => {
+                Ok(Self::Sparse(sk_gather_sparse_rows(sparse, indices)))
+            }
+            SKDataView::Sparse(_) => Err(SKError::UnsupportedRepresentation {
+                representation: "csc",
+                suggestion: "convert the sparse matrix to CSR with to_csr",
+            }),
+            _ => Err(SKError::UnsupportedRepresentation {
+                representation: "unknown",
+                suggestion: "convert the features to a dense matrix or a CSR matrix",
+            }),
+        }
+    }
+
+    pub(super) fn as_view(&self) -> SKDataView<'_, F> {
+        match self {
+            Self::Dense(dense) => SKDataView::Dense(dense.view()),
+            Self::Sparse(sparse) => SKDataView::Sparse(sparse.view()),
+        }
+    }
+}
 
 /// Draw the row subset fitted by `(stage_index, class_index)`.
 ///
@@ -81,9 +114,15 @@ pub(crate) fn sk_build_subsampled_structure<F: SKFloat>(
             let gathered = sk_gather_dense_rows(dense, &selected);
             SKTreeStructure::build_structure(gathered.view(), residual_array.view(), constraints)?
         }
-        SKDataView::Sparse(sparse) => {
+        SKDataView::Sparse(sparse) if sparse.is_csr() => {
             let gathered = sk_gather_sparse_rows(sparse, &selected);
             SKTreeStructure::build_structure(gathered.view(), residual_array.view(), constraints)?
+        }
+        SKDataView::Sparse(_) => {
+            return Err(SKError::UnsupportedRepresentation {
+                representation: "csc",
+                suggestion: "convert the sparse matrix to CSR with to_csr",
+            });
         }
         _ => {
             return Err(SKError::UnsupportedRepresentation {

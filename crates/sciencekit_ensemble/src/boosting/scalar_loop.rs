@@ -1,11 +1,7 @@
 //! Multi-stage scalar boosting driver (regression and binary classification)
 //! with optional held-out validation early stopping and best-stage restoration.
 
-use ndarray::Array2;
 use sciencekit_common::{SKDataView, SKError, SKFloat};
-use sprs::CsMat;
-
-use crate::bootstrap::{sk_gather_dense_rows, sk_gather_sparse_rows};
 
 use super::early_stopping::{
     SKEarlyStoppingConfig, SKEarlyStoppingMonitor, sk_split_classification_validation_rows,
@@ -15,37 +11,13 @@ use super::init::sk_initialize_scalar_scores;
 use super::loss::SKGradientLoss;
 use super::scores::sk_update_raw_scores;
 use super::stage::{SKBoostingStageParameters, SKFittedStageTree, sk_fit_scalar_stage};
+use super::subsample::SKOwnedRowSubset;
 
 /// Output of a scalar (regression or binary classification) boosting run.
 #[derive(Debug, Clone)]
 pub(crate) struct SKFittedScalarStages<F> {
     pub(crate) initial_prediction: F,
     pub(crate) stages: Vec<SKFittedStageTree<F>>,
-}
-
-pub(super) enum SKOwnedRowSubset<F> {
-    Dense(Array2<F>),
-    Sparse(CsMat<F>),
-}
-
-impl<F: SKFloat> SKOwnedRowSubset<F> {
-    pub(super) fn gather(features: &SKDataView<'_, F>, indices: &[usize]) -> Result<Self, SKError> {
-        match features {
-            SKDataView::Dense(dense) => Ok(Self::Dense(sk_gather_dense_rows(dense, indices))),
-            SKDataView::Sparse(sparse) => Ok(Self::Sparse(sk_gather_sparse_rows(sparse, indices))),
-            _ => Err(SKError::UnsupportedRepresentation {
-                representation: "unknown",
-                suggestion: "convert the features to a dense matrix or a CSR matrix",
-            }),
-        }
-    }
-
-    pub(super) fn as_view(&self) -> SKDataView<'_, F> {
-        match self {
-            Self::Dense(dense) => SKDataView::Dense(dense.view()),
-            Self::Sparse(sparse) => SKDataView::Sparse(sparse.view()),
-        }
-    }
 }
 
 /// Fit up to `number_of_estimators` scalar stages, optionally monitoring

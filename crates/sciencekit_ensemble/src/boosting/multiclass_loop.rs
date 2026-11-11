@@ -9,9 +9,10 @@ use super::early_stopping::{
 };
 use super::init::sk_initialize_multiclass_scores;
 use super::loss::SKMulticlassLogLoss;
-use super::scalar_loop::{LoopExit, SKOwnedRowSubset};
+use super::scalar_loop::LoopExit;
 use super::scores::sk_update_raw_scores;
 use super::stage::{SKBoostingStageParameters, SKFittedStageTree, sk_fit_multiclass_stage};
+use super::subsample::SKOwnedRowSubset;
 
 /// Output of a multiclass boosting run (`C` trees per stage).
 #[derive(Debug, Clone)]
