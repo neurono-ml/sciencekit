@@ -110,6 +110,7 @@ and receives a Python binding as soon as it is validated on CPU.
 | `SKMiniBatchKMeans` | Mini-batch k-means with streaming (`SKLazySource`) | <span class="sk-pill sk-pill--neutral">Planned</span> |
 | `SKDBSCAN` | Density-based clustering over KD-tree / ball-tree and sparse brute-force region queries with explicit `SKClusterLabel::Noise` and nearest-core prediction | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKPCA` | Principal component analysis (full SVD · covariance eigh · sparse randomized SVD) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
+| `SKIncrementalPCA` | Out-of-core incremental PCA (Chan-Golub-LeVeque scatter merge · CSR Gram accumulation · `partial_fit` & `fit_streaming`) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKTruncatedSVD` | Truncated SVD for sparse data | <span class="sk-pill sk-pill--neutral">Planned</span> |
 | Anomaly detection | Outlier estimators from the scikit-learn family | <span class="sk-pill sk-pill--neutral">Planned</span> |
 

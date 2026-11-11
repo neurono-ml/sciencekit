@@ -274,4 +274,8 @@ The [generic bagging chapter](./ch46-bagging.html) extends `sciencekit_ensemble`
 any base estimator, independent row and feature bootstrap streams, non-densifying CSR
 feature-subset routing, two-tier `SKBaggingError<E>` propagation and out-of-bag accuracy
 and $R^2$ scoring.
+The [incremental PCA chapter](./ch50-incremental-pca.html) extends `sciencekit_decomposition`
+out-of-core with `SKIncrementalPCA`: exact Chan-Golub-LeVeque scatter merging, Neumaier-compensated
+sparse CSR Gram updates without densification, symmetric `eigh` finalization matching `SKPCA`,
+chained `partial_fit` updates and reopenable multi-epoch `fit_streaming`.
 
