@@ -14,7 +14,9 @@ mod working_set;
 
 pub use cache::SKKernelRowCache;
 pub use gradient::SKSmoState;
-pub use problems::{SKBinarySvcSmoResult, sk_solve_binary_c_svc};
+pub use problems::{
+    SKBinarySvcSmoResult, SKEpsilonSvrSmoResult, sk_solve_binary_c_svc, sk_solve_epsilon_svr,
+};
 pub use shrinking::{sk_reconstruct_full_gradients, sk_shrink_active_set};
 pub use solver::{SKSmoOptions, sk_solve_smo_quadratic_program};
 pub use stopping::{
@@ -30,5 +32,7 @@ mod cache_tests;
 mod stopping_tests;
 #[cfg(test)]
 mod svc_loop_tests;
+#[cfg(test)]
+mod svr_loop_tests;
 #[cfg(test)]
 mod working_set_tests;
