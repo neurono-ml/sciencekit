@@ -9,6 +9,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `sciencekit_outlier` sub-crate and `sciencekit_common` outlier prediction
+  contract (specs `outlier-prediction` and `isolation-forest`): one-byte typed
+  `SKOutlierLabel { Inlier, Outlier }` with explicit external `to_i64` /
+  `from_i64` conversions (`1` / `-1`), `SKOutlierPredictor<F>` (`offset`,
+  `score_samples`, `decision_function`, `predict`), and builder-only
+  `SKIsolationForest<F>` (`SKIsolationForestBuilder<F>`) with
+  `number_of_trees` (default `100`), `maximum_samples`
+  (`SKIsolationMaximumSamples::Auto` default, meaning `min(256, n_samples)`,
+  plus `Count` and `Fraction`), `contamination` (`SKContamination::Auto`
+  default with fixed offset `-0.5`, or `Fraction` in `(0, 0.5]` selecting the
+  exact linear-interpolated training quantile), `maximum_features` (default
+  `1.0`), `bootstrap` (default `false`), `random_seed` (default `0`), `backend`
+  (default `Faer`) and `execution_mode` (default `Automatic`). Fitting derives
+  independent per-tree SplitMix64 sub-seeds (`SK_RANDOM_DOMAIN_TREE` /
+  `SK_RANDOM_DOMAIN_STAGE`), grows random isolation trees up to
+  `ceil(log2(subsample_size))` over the shared `sciencekit_tree::SKTree` node
+  layout (`SKTree::leaf_and_depth_for`), gathers sparse CSR subsamples directly
+  into compact CSC columns without densification, and returns a `Send + Sync`
+  `SKIsolationForestModel<F>` exposing `anomaly_scores`
+  (`2^(-E[h(x)] / c(n))`), `score_samples` (`-anomaly_score`),
+  `decision_function` (`score_samples - offset`), typed `predict`, `offset`,
+  `subsample_size`, `feature_count`, `number_of_trees`, `tree`, `backend` and
+  `execution_mode`, alongside `SKIsolationForest::fit_predict`. Companion and
+  acceptance suites (up to 20 000 rows) verify hand-computed harmonic path
+  lengths, four-way dense/CSR equivalence, scalar invariance (`f32`/`f64`),
+  thread-count-invariant determinism, lock-free concurrent serving and
+  evaluation metrics (`sk_roc_auc_score`, `sk_average_precision_score`,
+  `sk_accuracy_score`, `sk_f1_score`) via `sciencekit_metrics`.
+
 - `sciencekit_pipeline` gains parallel feature branching and column-wise
   concatenation (spec `feature-union`): `SKFeatureUnion` and
   `SKFeatureUnionBuilder` (`build`/`start` for compile-time tuples up to eight
