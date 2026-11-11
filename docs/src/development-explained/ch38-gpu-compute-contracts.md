@@ -84,17 +84,21 @@ performance claim.
    required_kernel)` filters, sorts by `(kind priority, device index)` and takes the first.
    No enumeration, no probing, no I/O: the inventory is an *input*, so planning is
    deterministic and testable without a machine.
-4. **The kind priority is fixed and documented.** An explicitly configured backend wins
-   outright (priority 0); otherwise OpenCL (1) before CUDA (2) before ROCm (3), because
-   OpenCL is vendor-transparent. Within one kind, the lowest device index wins.
+4. **The preference decides the candidate set, then a fixed order breaks ties.**
+   `SKDevicePreference::Backend(kind)` restricts the candidates *strictly* to that kind — a
+   requested `Cuda` never silently runs on OpenCL — and any other device yields
+   `NoDeviceAvailable`. `SKDevicePreference::AnyDevice` accepts every device kind and orders
+   them OpenCL → CUDA → ROCm, because OpenCL is vendor-transparent. Within one kind, the
+   lowest device index wins.
 5. **Device buffers are validated at construction.** `SKDeviceBuffer` carries its backend
    kind, device index, scalar type, logical shape and capacity. The builder rejects a
    shape that exceeds the capacity and a payload that does not match the shape — a buffer
    can never exist in an inconsistent state.
 6. **The transfer policy defaults to an explicit copy.** `SKDeviceTransferPolicy::Explicit`
-   is the default; `MappedWhenSupported` opts into a mapped view and falls back to an
-   explicit copy when the device does not advertise `supports_mapped_memory`. Transfer
-   costs stay visible at the call site.
+   is the default; `MappedWhenSupported` declares that a backend can expose a mapped view.
+   The policy is reported by `SKComputeBackend::transfer_policy`, so the caller can see the
+   cost model before dispatching; a device that does not advertise
+   `supports_mapped_memory` must declare `Explicit`.
 7. **The kernel catalogue is closed.** Four families — `PairwiseDistance`, `Gemm`,
    `Elementwise`, `TreePredict` — with a stable name each. A backend that does not
    implement one returns `SKError::UnsupportedOperation` *naming the kernel*. It never
@@ -137,9 +141,9 @@ handles a dispatch.
 
 ### Capabilities are opt-in
 
-`SKDeviceCapabilities` has `supports_f32`, `supports_f64`, `supports_mapped_memory` and
-`supported_kernels`, and **every one of them defaults to `false`**. A device must declare
-what it can do. The alternative — defaulting to "yes" and letting a backend opt out — means
+`SKDeviceCapabilities` has the three boolean flags `supports_f32`, `supports_f64` and
+`supports_mapped_memory`, which **default to `false`**, plus `supported_kernels`, a
+`Vec<SKGpuKernel>` that **defaults to an empty list**. A device must declare what it can do. The alternative — defaulting to "yes" and letting a backend opt out — means
 an unknown backend is mistaken for a capable one, and the failure appears later, as a
 wrong answer rather than as an error.
 
@@ -219,14 +223,20 @@ Each renders as a stable kebab-case token, and that token is what lands on the s
   `Self::Error: From<SKError>` so a backend reports a structured failure without leaking a
   runtime type into planning.
 - **`SKComputeBackend<F>`** — the compute contract: `backend_kind()`,
-  `upload(ArrayView2<F>) -> SKDeviceBuffer<F>`, `download(&SKDeviceBuffer<F>) -> Array2<F>`,
-  and `dispatch(SKGpuKernel, &[SKDeviceBufferRef<F>]) -> SKDeviceBuffer<F>`.
+  `transfer_policy() -> SKDeviceTransferPolicy` (provided, defaults to `Explicit`),
+  `upload(ArrayView2<'_, F>) -> Result<SKDeviceBuffer<F>, Self::Error>`,
+  `download(&SKDeviceBuffer<F>) -> Result<Array2<F>, Self::Error>` and
+  `dispatch(SKGpuKernel, &[SKDeviceBufferRef<'_, F>]) -> Result<SKDeviceBuffer<F>, Self::Error>`.
+  The `Self::Error` associated type keeps runtime error types out of the contract, and
+  `SKDeviceBufferRef<'_, F>` carries the lifetime of the borrowed argument buffers.
 - **`SKDeviceBuffer<F>`** — the validated device buffer: `.backend_kind()`,
   `.device_index()`, `.scalar_type()`, `.shape()`, `.capacity()`,
   `.to_host_matrix()`.
 - **`SKDeviceBufferBuilder<F>`** — the only public constructor: `.new(kind, index)`,
   `.shape(rows, columns)`, `.capacity(elements)`, `.values(vec)`, `.build()`.
-- **`SKDeviceTransferPolicy`** — `Explicit` (the default) or `MappedWhenSupported`.
+- **`SKDeviceTransferPolicy`** — `Explicit` (the default) or `MappedWhenSupported`; every
+  backend declares its policy through `SKComputeBackend::transfer_policy`, so the policy is
+  part of the contract rather than a convention.
 - **`SKDeviceBufferRef<'a, F>`** — a borrowed argument buffer passed to `dispatch`.
 
 ### Observability
