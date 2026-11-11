@@ -12,7 +12,7 @@
 
 ## 2. Isolation trees
 
-- [ ] 2.1 Implement the random-feature/random-threshold split and growth limit, with tests
+- [x] 2.1 Implement the random-feature/random-threshold split and growth limit, with tests
   for a one-sample leaf and a threshold inside the observed range; verify with
   `cargo test -p sciencekit_outlier isolation_tree`.
 - [ ] 2.2 Implement path length (`c(n)`, leaf size) and the expected-depth reduction, with
