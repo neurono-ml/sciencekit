@@ -21,6 +21,8 @@ pub use svc::{SKBinarySVCModel, SKClassWeight, SKSVC, SKSVCBuilder, SKSVCModel};
 pub use svr::{SKSVR, SKSVRBuilder, SKSVRModel};
 
 #[cfg(test)]
+mod concurrency_tests;
+#[cfg(test)]
 mod determinism_tests;
 #[cfg(test)]
 mod representation_fit_tests;
