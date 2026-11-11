@@ -2,7 +2,7 @@
 
 ## 1. Union core
 
-- [ ] 1.1 Create the `feature_union` module, the tuple `SKFeatureUnionStages` trait and a
+- [x] 1.1 Create the `feature_union` module, the tuple `SKFeatureUnionStages` trait and a
   two-member scalar chain; verify `cargo test -p sciencekit_pipeline union` compiles.
 - [ ] 1.2 Implement fit/transform over the tuple and a hand-checkable two-member
   concatenation; verify with `cargo test -p sciencekit_pipeline union_fit`.
