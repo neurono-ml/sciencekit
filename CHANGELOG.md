@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Randomized SVD kernel (spec `randomized-svd`): `sciencekit_math::decomposition`
+  gains `sk_randomized_svd` and the builder `SKRandomizedSvdBuilder`, returning
+  `SKRandomizedSvdResult` (left singular vectors, non-increasing singular
+  values and right singular vectors). The range finder draws a seeded Gaussian
+  test basis from the shared deterministic generator, orthonormalizes the
+  projected basis with a thin Householder QR, refines it with the configured
+  number of power iterations and decomposes the small projected matrix. Dense
+  and CSR inputs are supported and dispatch once per operation; a sparse input
+  is never densified and the dense intermediates stay at
+  `(k + oversampling) × max(rows, columns)` cells. An optional centering vector
+  centers the matrix implicitly, without materializing a centered copy, for
+  dense and sparse inputs alike. The same seed always yields the same
+  factorization, independently of the thread count, and the singular-vector
+  signs follow a fixed convention (the largest-magnitude entry of the left
+  singular vector is positive).
+
 ### Moved
 
 - The Go bindings (spec `go-bindings`) now live in their own repository,
