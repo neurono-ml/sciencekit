@@ -10,7 +10,7 @@
 ## 2. Arrays and operations
 
 - [x] 2.1 Implement matrix conversion with shape validation, contiguous copies and
-  `runtime.KeepAlive`; verify with `go test ./...`.
+  a `C.malloc` buffer; verify with `go test ./...`.
 - [x] 2.2 Implement fit/predict/transform/score/save/load; verify with `go test ./...`.
 - [x] 2.3 Implement error mapping and closed-handle tests; verify with `go test ./...`.
 
