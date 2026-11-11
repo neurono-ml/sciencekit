@@ -99,7 +99,7 @@ and receives a Python binding as soon as it is validated on CPU.
 | `SKDecisionTreeRegressor` | CART for regression (dense and sparse, deterministic) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKRandomForestClassifier` | Random-forest classification (bootstrap, OOB accuracy, dense and sparse) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKRandomForestRegressor` | Random-forest regression (bootstrap, OOB $R^2$, dense and sparse) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
-| `SKBagging` | Parallel bootstrap aggregation | <span class="sk-pill sk-pill--neutral">Planned</span> |
+| `SKBaggingClassifier` / `SKBaggingRegressor` | Generic parallel bootstrap and feature-subspace aggregation over any supervised base estimator (OOB accuracy / $R^2$, dense and sparse) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKGradientBoosting` | Sequential gradient boosting | <span class="sk-pill sk-pill--neutral">Planned</span> |
 
 ## Unsupervised · `sciencekit_cluster`, `sciencekit_decomposition`, `sciencekit_outlier`
