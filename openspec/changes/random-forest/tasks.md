@@ -59,7 +59,7 @@
   `mdbook build docs`.
 - [x] 5.3 Record the deferred missing-value routing, streaming, `memmap2` and export work
   in `docs/PRD.md`; verify the amended paragraphs render.
-- [ ] 5.4 Independent review by a separate agent validating every scenario in
+- [x] 5.4 Independent review by a separate agent validating every scenario in
   `random-forests` against the code and tests; address every finding and re-run the gates.
 
 ## Workflow follow-up
