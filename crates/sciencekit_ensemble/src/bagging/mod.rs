@@ -10,6 +10,7 @@ mod config;
 mod error;
 mod model;
 mod regressor;
+mod sampling;
 
 pub use builder::{SKBaggingClassifierBuilder, SKBaggingRegressorBuilder};
 pub use classifier::SKBaggingClassifier;
@@ -23,3 +24,5 @@ mod bagging_bounds_tests;
 mod bagging_builder_tests;
 #[cfg(test)]
 mod bagging_error_tests;
+#[cfg(test)]
+mod bagging_sampling_tests;
