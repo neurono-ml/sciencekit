@@ -23,6 +23,8 @@ mod pca_builder_tests;
 #[cfg(test)]
 mod pca_centering_tests;
 #[cfg(test)]
+mod pca_concurrency_tests;
+#[cfg(test)]
 mod pca_covariance_tests;
 #[cfg(test)]
 mod pca_fit_tests;
