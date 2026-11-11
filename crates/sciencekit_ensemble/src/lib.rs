@@ -14,9 +14,14 @@
 mod bootstrap;
 
 pub mod boosting;
+pub mod gradient_boosting;
 pub mod random_forest;
 
 pub use bootstrap::SKMaximumSamples;
+pub use gradient_boosting::{
+    SKGradientBoostingClassificationLoss, SKGradientBoostingClassifier,
+    SKGradientBoostingClassifierBuilder, SKGradientBoostingRegressionLoss,
+};
 pub use random_forest::{
     SKRandomForestClassifier, SKRandomForestClassifierBuilder, SKRandomForestClassifierModel,
     SKRandomForestRegressor, SKRandomForestRegressorBuilder, SKRandomForestRegressorModel,
