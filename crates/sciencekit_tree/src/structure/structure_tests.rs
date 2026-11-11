@@ -123,3 +123,62 @@ fn build_structure_supports_sparse_csr_without_densifying() {
         sparse_structure.feature_importances()
     );
 }
+
+/// `SKDecisionTreeRegressor` fitted through its public builder uses its
+/// configured criterion (`SquaredError` leaf mean and `AbsoluteError` leaf
+/// median) and is unaffected by the structure-only surface.
+#[test]
+fn public_decision_tree_regressor_is_unaffected_by_structure_surface() {
+    use crate::{SKDecisionTreeRegressor, SKTreeCriterion};
+    use sciencekit_common::{SKBuilder, SKRegressorPredictor, SKSupervisedFit};
+
+    let features = array![[0.0], [1.0], [2.0], [10.0], [11.0], [12.0]];
+    let responses = array![1.0, 2.0, 9.0, 10.0, 20.0, 90.0];
+
+    let squared_model = SKDecisionTreeRegressor::<f64>::build()
+        .criterion(SKTreeCriterion::SquaredError)
+        .maximum_depth(1)
+        .minimum_samples_leaf(3)
+        .build()
+        .expect("squared regressor builds")
+        .fit(&features, responses.view())
+        .expect("squared regressor fits");
+    let absolute_model = SKDecisionTreeRegressor::<f64>::build()
+        .criterion(SKTreeCriterion::AbsoluteError)
+        .maximum_depth(1)
+        .minimum_samples_leaf(3)
+        .build()
+        .expect("absolute regressor builds")
+        .fit(&features, responses.view())
+        .expect("absolute regressor fits");
+
+    let queries = array![[0.5], [11.5]];
+    let squared_predictions = squared_model.predict(&queries).expect("squared predict");
+    let absolute_predictions = absolute_model.predict(&queries).expect("absolute predict");
+    // Left leaf [1, 2, 9]: mean = 4.0, median = 2.0.
+    // Right leaf [10, 20, 90]: mean = 40.0, median = 20.0.
+    assert!((squared_predictions[0] - 4.0).abs() < 1e-12);
+    assert!((squared_predictions[1] - 40.0).abs() < 1e-12);
+    assert!((absolute_predictions[0] - 2.0).abs() < 1e-12);
+    assert!((absolute_predictions[1] - 20.0).abs() < 1e-12);
+
+    let constraints = SKStructureConstraints::<f64>::build()
+        .maximum_depth(1)
+        .minimum_samples_leaf(3)
+        .build()
+        .expect("constraints build");
+    let mut structure = SKTreeStructure::build_structure(&features, responses.view(), &constraints)
+        .expect("structure builds");
+    assert_eq!(structure.tree().leaf_value_for(|_| 0.5), 0.0);
+    structure
+        .replace_leaf_values(&[-1.25, 3.75])
+        .expect("replace succeeds");
+    assert_eq!(structure.tree().leaf_value_for(|_| 0.5), -1.25);
+    assert_eq!(structure.tree().leaf_value_for(|_| 11.5), 3.75);
+
+    // Re-evaluating the public models confirms no shared state or drift.
+    assert_eq!(
+        squared_model.predict(&queries).expect("squared predict"),
+        squared_predictions
+    );
+}

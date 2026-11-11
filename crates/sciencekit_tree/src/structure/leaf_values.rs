@@ -12,6 +12,16 @@ impl<F: SKFloat> SKTree<F> {
         self.nodes.iter().filter(|node| node.is_leaf()).count()
     }
 
+    /// Evaluate the scalar leaf value reached by `feature_value`.
+    pub fn leaf_value_for(&self, feature_value: impl Fn(usize) -> F) -> F {
+        let leaf_index = self.leaf_index_for(feature_value);
+        self.nodes[leaf_index]
+            .value
+            .first()
+            .copied()
+            .unwrap_or_else(F::zero)
+    }
+
     /// Replace every leaf value in ascending leaf-node storage order while
     /// preserving all internal splits, thresholds, child links and counts.
     pub fn replace_leaf_values(&mut self, values: &[F]) -> Result<(), SKError> {
