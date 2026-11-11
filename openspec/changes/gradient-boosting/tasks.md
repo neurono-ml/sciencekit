@@ -60,7 +60,7 @@
   verify with `cargo test -p sciencekit_ensemble gb_importances`.
 - [x] 6.2 Add dense-vs-sparse fit/predict equivalence tests and a no-densification test;
   verify with `cargo test -p sciencekit_ensemble gb_representation`.
-- [ ] 6.3 Add validation tests for empty input, non-positive learning rate/estimator
+- [x] 6.3 Add validation tests for empty input, non-positive learning rate/estimator
   count, invalid subsample/feature/regularization, invalid validation fraction,
   single-class classification and non-finite values; verify with
   `cargo test -p sciencekit_ensemble gb_validation`.
