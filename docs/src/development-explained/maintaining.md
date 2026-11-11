@@ -269,4 +269,9 @@ concatenation, member-indexed error context and nested pipeline composition.
 The [JSON debug format chapter](./ch45-json-debug-format.html) adds the deterministic
 human-readable `SKModelState` schema, the pretty and compact writer, the duplicate-aware
 validating reader and the round-trip acceptance guarantees across scalar and tensor types.
+The [generic bagging chapter](./ch46-bagging.html) extends `sciencekit_ensemble` with
+`SKBaggingClassifier<B>` and `SKBaggingRegressor<B>`: compile-time supervision bounds over
+any base estimator, independent row and feature bootstrap streams, non-densifying CSR
+feature-subset routing, two-tier `SKBaggingError<E>` propagation and out-of-bag accuracy
+and $R^2$ scoring.
 
