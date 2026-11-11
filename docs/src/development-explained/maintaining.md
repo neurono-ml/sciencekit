@@ -274,4 +274,9 @@ The [generic bagging chapter](./ch46-bagging.html) extends `sciencekit_ensemble`
 any base estimator, independent row and feature bootstrap streams, non-densifying CSR
 feature-subset routing, two-tier `SKBaggingError<E>` propagation and out-of-bag accuracy
 and $R^2$ scoring.
+The [outlier detection chapter](./ch48-outlier-detection.html) closes Wave 5 in
+`sciencekit_outlier` and `sciencekit_common`: the one-byte `SKOutlierLabel` and
+`SKOutlierPredictor<F>` contract, seeded random isolation trees over `SKTree`, harmonic BST
+path-length scoring, `Auto` and quantile contamination offsets, and non-densifying CSR-to-CSC
+representation parity.
 
