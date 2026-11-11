@@ -23,7 +23,10 @@ mod bootstrap;
 pub mod bagging;
 pub mod random_forest;
 
-pub use bagging::{SKBaggingError, SKBaseEstimatorError};
+pub use bagging::{
+    SKBaggingClassifier, SKBaggingClassifierBuilder, SKBaggingError, SKBaggingRegressor,
+    SKBaggingRegressorBuilder, SKBaseEstimatorError,
+};
 pub use bootstrap::SKMaximumSamples;
 pub use random_forest::{
     SKRandomForestClassifier, SKRandomForestClassifierBuilder, SKRandomForestClassifierModel,
