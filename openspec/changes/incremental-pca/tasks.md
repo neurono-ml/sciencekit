@@ -16,7 +16,7 @@
 - [x] 2.1 Implement finalization (covariance, eigh, sorting, components, explained variance
   and ratio) and the equality-with-PCA test; verify with
   `cargo test -p sciencekit_decomposition incremental_finalize`.
-- [ ] 2.2 Implement the builder with the documented defaults and invalid-value tests;
+- [x] 2.2 Implement the builder with the documented defaults and invalid-value tests;
   verify with `cargo test -p sciencekit_decomposition incremental_builder`.
 - [ ] 2.3 Implement `partial_fit`, `fit` chunking and model accessors; verify with
   `cargo test -p sciencekit_decomposition incremental_fit`.
