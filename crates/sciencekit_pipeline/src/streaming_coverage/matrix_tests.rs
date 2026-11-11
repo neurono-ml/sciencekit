@@ -39,6 +39,7 @@ fn every_streaming_implementation_is_in_the_coverage_matrix() {
         "SKLogisticRegression",
         "SKSGDClassifier",
         "SKSGDRegressor",
+        "SKIncrementalPCA",
     ] {
         assert!(
             names.contains(&expected),
