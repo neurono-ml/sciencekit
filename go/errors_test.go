@@ -41,6 +41,9 @@ func TestNativeErrorCarriesStatusAndMessage(t *testing.T) {
 	if failure.Message == "" {
 		t.Fatal("expected the native message on the error")
 	}
+	if !strings.Contains(strings.ToLower(failure.Message), "shape") {
+		t.Fatalf("expected the native shape diagnosis, got %q", failure.Message)
+	}
 	if !strings.Contains(err.Error(), "sciencekit shape (2)") {
 		t.Fatalf("expected the status name in the message, got %q", err.Error())
 	}

@@ -62,6 +62,8 @@ func (model *nativeModel) transformF32(features *descriptor) ([]float32, []int64
 
 // inferF64 runs one inference call and copies the owned output back to Go.
 func (model *nativeModel) inferF64(operation string, invoke func(*C.SKFfiArray) C.SKFfiStatus) ([]float64, []int64, error) {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
 	output, err := newOutputDescriptor()
 	if err != nil {
 		return nil, nil, newError(StatusInternal, operation, err.Error())
@@ -80,6 +82,8 @@ func (model *nativeModel) inferF64(operation string, invoke func(*C.SKFfiArray) 
 
 // inferF32 runs one inference call and copies the owned output back to Go.
 func (model *nativeModel) inferF32(operation string, invoke func(*C.SKFfiArray) C.SKFfiStatus) ([]float32, []int64, error) {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
 	output, err := newOutputDescriptor()
 	if err != nil {
 		return nil, nil, newError(StatusInternal, operation, err.Error())
