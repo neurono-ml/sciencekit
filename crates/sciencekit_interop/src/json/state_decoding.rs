@@ -9,7 +9,7 @@ use sciencekit_common::{
 
 use super::SK_JSON_DEBUG_FORMAT_VERSION;
 use super::schema::expected_scalar_descriptor;
-use super::schema_deserialization::RawJsonModelDocument;
+use super::schema_deserialization::{RawJsonModelDocument, RawJsonVersionEnvelope};
 use super::tensor_decoding::{decode_tensor_values, validate_tensor_headers};
 
 fn parse_model_scalar_data_type(text: &str) -> Result<SKTensorDataType, SKError> {
@@ -23,12 +23,19 @@ fn parse_model_scalar_data_type(text: &str) -> Result<SKTensorDataType, SKError>
     }
 }
 
-fn require_field<T>(value: Option<T>, field_name: &'static str) -> Result<T, SKError> {
-    value.ok_or_else(|| {
-        SKError::Conversion(format!(
-            "invalid JSON model state: missing required field `{field_name}`"
-        ))
-    })
+/// Parse UTF-8 JSON text, checking `format_version` before typing version-1 fields.
+pub(crate) fn decode_json_str<F: SKFloat>(input: &str) -> Result<SKModelState<F>, SKError> {
+    let envelope: RawJsonVersionEnvelope = serde_json::from_str(input)
+        .map_err(|error| SKError::Conversion(format!("invalid JSON model state: {error}")))?;
+    if envelope.format_version != SK_JSON_DEBUG_FORMAT_VERSION {
+        return Err(SKError::UnsupportedRepresentation {
+            representation: "JSON debug format major version",
+            suggestion: "re-export the model state with format_version 1",
+        });
+    }
+    let raw: RawJsonModelDocument = serde_json::from_str(input)
+        .map_err(|error| SKError::Conversion(format!("invalid JSON model state: {error}")))?;
+    decode_raw_document(raw)
 }
 
 /// Validate a parsed JSON debug document up front and rebuild an [`SKModelState`].
@@ -41,34 +48,29 @@ pub(crate) fn decode_raw_document<F: SKFloat>(
             suggestion: "re-export the model state with format_version 1",
         });
     }
-    let estimator = require_field(raw.estimator, "estimator")?;
-    let raw_scalar_type = require_field(raw.scalar_data_type, "dtype")?;
-    let feature_count = require_field(raw.feature_count, "feature_count")?;
-    let raw_hyperparameters = require_field(raw.hyperparameters, "hyperparameters")?;
-    let raw_tensors = require_field(raw.tensors, "tensors")?;
-
-    let scalar_data_type = parse_model_scalar_data_type(&raw_scalar_type)?;
+    let scalar_data_type = parse_model_scalar_data_type(&raw.scalar_data_type)?;
     let (expected_scalar_type, expected_name) = expected_scalar_descriptor::<F>();
     if scalar_data_type != expected_scalar_type {
         return Err(SKError::InvalidHyperparameter {
             name: "dtype",
             reason: format!(
-                "document dtype `{raw_scalar_type}` disagrees with target scalar `{expected_name}`"
+                "document dtype `{}` disagrees with target scalar `{expected_name}`",
+                raw.scalar_data_type
             ),
         });
     }
 
     let mut metadata = SKModelMetadata::new(
-        estimator,
+        raw.estimator,
         raw.estimator_format_version,
         scalar_data_type,
-        feature_count,
+        raw.feature_count,
     )?;
     if let Some(labels) = raw.class_labels {
         metadata = metadata.with_class_labels(labels)?;
     }
     let mut seen_parameters = BTreeSet::new();
-    for (name, raw_parameter) in raw_hyperparameters {
+    for (name, raw_parameter) in raw.hyperparameters {
         if !seen_parameters.insert(name.clone()) {
             return Err(SKError::InvalidHyperparameter {
                 name: "hyperparameters",
@@ -78,9 +80,9 @@ pub(crate) fn decode_raw_document<F: SKFloat>(
         metadata = metadata.with_parameter(name, raw_parameter.into_parameter_value()?)?;
     }
 
-    let parsed_types = validate_tensor_headers(&raw_tensors, scalar_data_type)?;
-    let mut tensors = Vec::with_capacity(raw_tensors.len());
-    for ((name, raw_tensor), data_type) in raw_tensors.into_iter().zip(parsed_types) {
+    let parsed_types = validate_tensor_headers(&raw.tensors, scalar_data_type)?;
+    let mut tensors = Vec::with_capacity(raw.tensors.len());
+    for ((name, raw_tensor), data_type) in raw.tensors.into_iter().zip(parsed_types) {
         let values = decode_tensor_values::<F>(&name, data_type, raw_tensor.values)?;
         tensors.push(SKTensor::new(name, data_type, raw_tensor.shape, values)?);
     }

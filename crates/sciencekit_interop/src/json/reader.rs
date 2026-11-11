@@ -11,9 +11,8 @@ use sciencekit_common::{
     builders::{SKBuilder, SKBuilderState},
 };
 
-use super::SKJsonDebugReaderBuilder;
-use super::schema_deserialization::RawJsonModelDocument;
-use super::state_decoding::decode_raw_document;
+use super::state_decoding::decode_json_str;
+use super::{SK_JSON_DEBUG_FORMAT_VERSION, SKJsonDebugReaderBuilder};
 
 /// Parses and validates human-readable JSON debug documents into [`SKModelState`].
 ///
@@ -59,7 +58,7 @@ impl SKJsonDebugReader {
         let result = span.in_scope(operation);
         match &result {
             Ok(state) => {
-                span.record("format_version", state.metadata().format_version());
+                span.record("format_version", SK_JSON_DEBUG_FORMAT_VERSION);
                 span.record("estimator", state.metadata().estimator_name());
                 span.record("tensor_count", state.number_of_tensors());
             }
@@ -71,17 +70,23 @@ impl SKJsonDebugReader {
         result
     }
 
+    fn decode_from_reader<F: SKFloat, R: io::Read>(
+        mut reader: R,
+    ) -> Result<SKModelState<F>, SKError> {
+        let mut bytes = Vec::new();
+        reader.read_to_end(&mut bytes)?;
+        let text = std::str::from_utf8(&bytes).map_err(|error| {
+            SKError::Conversion(format!("invalid UTF-8 in JSON input: {error}"))
+        })?;
+        decode_json_str(text)
+    }
+
     /// Parse and validate a UTF-8 JSON string into an [`SKModelState`].
     pub fn read_state_from_string<F: SKFloat>(
         &self,
         input: &str,
     ) -> Result<SKModelState<F>, SKError> {
-        self.run_read_span(|| {
-            let raw: RawJsonModelDocument = serde_json::from_str(input).map_err(|error| {
-                SKError::Conversion(format!("invalid JSON model state: {error}"))
-            })?;
-            decode_raw_document(raw)
-        })
+        self.run_read_span(|| decode_json_str(input))
     }
 
     /// Parse and validate UTF-8 JSON from an [`io::Read`] stream into an [`SKModelState`].
@@ -89,16 +94,7 @@ impl SKJsonDebugReader {
         &self,
         reader: R,
     ) -> Result<SKModelState<F>, SKError> {
-        self.run_read_span(|| {
-            let raw: RawJsonModelDocument = serde_json::from_reader(reader).map_err(|error| {
-                if error.is_io() {
-                    SKError::Io(io::Error::other(error))
-                } else {
-                    SKError::Conversion(format!("invalid JSON model state: {error}"))
-                }
-            })?;
-            decode_raw_document(raw)
-        })
+        self.run_read_span(|| Self::decode_from_reader(reader))
     }
 
     /// Read, parse and validate a JSON debug file at `path`.
@@ -106,8 +102,10 @@ impl SKJsonDebugReader {
         &self,
         path: &Path,
     ) -> Result<SKModelState<F>, SKError> {
-        let file = File::open(path)?;
-        self.read_state_from_reader(BufReader::new(file))
+        self.run_read_span(|| {
+            let file = File::open(path)?;
+            Self::decode_from_reader(BufReader::new(file))
+        })
     }
 
     /// Parse JSON and reconstruct a fitted model through [`SKImportable`].

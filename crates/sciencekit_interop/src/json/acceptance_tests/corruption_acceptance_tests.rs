@@ -6,7 +6,9 @@ use std::path::Path;
 use sciencekit_common::{
     SKError, SKModelMetadata, SKModelState, SKParameterValue, SKTensor, SKTensorDataType,
 };
+use tracing_subscriber::layer::SubscriberExt;
 
+use super::fixtures::SpanRecorder;
 use crate::json::{
     sk_read_model_state_json, sk_read_model_state_json_file, sk_write_model_state_json_compact,
 };
@@ -36,10 +38,21 @@ fn json_acceptance_truncated_prefixes_return_conversion_without_panicking() {
 /// Corrupt metadata, invalid class tables, unsupported hyperparameters and missing files fail cleanly.
 #[test]
 fn json_acceptance_corrupt_metadata_and_missing_files_return_structured_errors() {
-    let missing_file_error =
+    let recorder = SpanRecorder::default();
+    let subscriber = tracing_subscriber::registry().with(recorder.clone());
+    let missing_file_error = tracing::subscriber::with_default(subscriber, || {
         sk_read_model_state_json_file::<f64>(Path::new("/nonexistent/sciencekit_missing.json"))
-            .unwrap_err();
+    })
+    .unwrap_err();
     assert!(matches!(missing_file_error, SKError::Io(_)));
+    assert!(
+        recorder
+            .names
+            .lock()
+            .unwrap()
+            .iter()
+            .any(|name| name == "sciencekit.interop.json.read")
+    );
 
     let invalid_metadata_cases: &[(&str, &str)] = &[
         (

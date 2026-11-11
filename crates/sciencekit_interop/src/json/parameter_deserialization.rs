@@ -83,9 +83,12 @@ impl<'de> Deserialize<'de> for RawJsonParameter {
                 Ok(RawJsonParameter::Unsupported("null"))
             }
 
-            fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> Result<Self::Value, A::Error> {
+            fn visit_seq<A: SeqAccess<'de>>(
+                self,
+                mut sequence: A,
+            ) -> Result<Self::Value, A::Error> {
                 let mut items = Vec::new();
-                while let Some(item) = seq.next_element::<RawJsonParameter>()? {
+                while let Some(item) = sequence.next_element::<RawJsonParameter>()? {
                     items.push(item);
                 }
                 Ok(RawJsonParameter::List(items))

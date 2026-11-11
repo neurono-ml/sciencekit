@@ -17,18 +17,18 @@ use crate::json::{
 /// Tiny zero-tensor states round-trip cleanly for both `f32` and `f64`.
 #[test]
 fn json_acceptance_tiny_states_round_trip_for_both_scalars() {
-    let single_meta =
+    let single_metadata =
         SKModelMetadata::new("SKDummyTransformer", 1, SKTensorDataType::F32, 1).unwrap();
-    let single_state = SKModelState::<f32>::new(single_meta, Vec::new()).unwrap();
+    let single_state = SKModelState::<f32>::new(single_metadata, Vec::new()).unwrap();
     let single_json = sk_write_model_state_json_pretty(&single_state).unwrap();
     assert_eq!(
         sk_read_model_state_json::<f32>(&single_json).unwrap(),
         single_state
     );
 
-    let double_meta =
+    let double_metadata =
         SKModelMetadata::new("SKDummyTransformer", 1, SKTensorDataType::F64, 0).unwrap();
-    let double_state = SKModelState::<f64>::new(double_meta, Vec::new()).unwrap();
+    let double_state = SKModelState::<f64>::new(double_metadata, Vec::new()).unwrap();
     let double_json = sk_write_model_state_json_compact(&double_state).unwrap();
     assert_eq!(
         sk_read_model_state_json::<f64>(&double_json).unwrap(),

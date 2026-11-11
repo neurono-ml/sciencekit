@@ -27,7 +27,7 @@ pub(crate) struct JsonModelDocument<'state> {
     scalar_data_type: &'static str,
     feature_count: usize,
     class_labels: Option<&'state [String]>,
-    hyperparameters: BTreeMap<&'state str, JsonParameterRef<'state>>,
+    hyperparameters: BTreeMap<&'state str, JsonParameterReference<'state>>,
     tensors: BTreeMap<&'state str, JsonTensorDocument<'state>>,
 }
 
@@ -37,12 +37,12 @@ pub(crate) struct JsonTensorDocument<'state> {
     #[serde(rename = "dtype")]
     data_type: &'static str,
     shape: &'state [usize],
-    values: JsonTensorValuesRef<'state>,
+    values: JsonTensorValuesReference<'state>,
 }
 
 #[derive(Debug, Serialize)]
 #[serde(untagged)]
-enum JsonTensorValuesRef<'state> {
+enum JsonTensorValuesReference<'state> {
     Float32(&'state [f32]),
     Float64(&'state [f64]),
     Integer64(&'state [i64]),
@@ -50,9 +50,9 @@ enum JsonTensorValuesRef<'state> {
 }
 
 #[derive(Debug, Clone, Copy)]
-struct JsonParameterRef<'state>(&'state SKParameterValue);
+struct JsonParameterReference<'state>(&'state SKParameterValue);
 
-impl Serialize for JsonParameterRef<'_> {
+impl Serialize for JsonParameterReference<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self.0 {
             SKParameterValue::Bool(flag) => serializer.serialize_bool(*flag),
@@ -60,8 +60,8 @@ impl Serialize for JsonParameterRef<'_> {
             SKParameterValue::Float(float) => serializer.serialize_f64(*float),
             SKParameterValue::String(text) => serializer.serialize_str(text),
             SKParameterValue::List(items) => {
-                let wrapped: Vec<JsonParameterRef<'_>> =
-                    items.iter().map(JsonParameterRef).collect();
+                let wrapped: Vec<JsonParameterReference<'_>> =
+                    items.iter().map(JsonParameterReference).collect();
                 wrapped.serialize(serializer)
             }
             _ => Err(serde::ser::Error::custom(
@@ -98,15 +98,15 @@ fn ensure_finite<F: SKFloat>(elements: &[F]) -> Result<(), SKError> {
 
 fn borrow_tensor_values<F: SKFloat>(
     values: &SKTensorValues<F>,
-) -> Result<JsonTensorValuesRef<'_>, SKError> {
+) -> Result<JsonTensorValuesReference<'_>, SKError> {
     match values {
         SKTensorValues::Floating(elements) => {
             ensure_finite(elements)?;
             let any_elements = elements as &dyn Any;
             if let Some(single) = any_elements.downcast_ref::<Vec<f32>>() {
-                Ok(JsonTensorValuesRef::Float32(single.as_slice()))
+                Ok(JsonTensorValuesReference::Float32(single.as_slice()))
             } else if let Some(double) = any_elements.downcast_ref::<Vec<f64>>() {
-                Ok(JsonTensorValuesRef::Float64(double.as_slice()))
+                Ok(JsonTensorValuesReference::Float64(double.as_slice()))
             } else {
                 Err(SKError::UnsupportedRepresentation {
                     representation: "unknown floating scalar in SKTensorValues",
@@ -114,8 +114,8 @@ fn borrow_tensor_values<F: SKFloat>(
                 })
             }
         }
-        SKTensorValues::Integer(elements) => Ok(JsonTensorValuesRef::Integer64(elements)),
-        SKTensorValues::Boolean(elements) => Ok(JsonTensorValuesRef::Boolean(elements)),
+        SKTensorValues::Integer(elements) => Ok(JsonTensorValuesReference::Integer64(elements)),
+        SKTensorValues::Boolean(elements) => Ok(JsonTensorValuesReference::Boolean(elements)),
         _ => Err(SKError::UnsupportedRepresentation {
             representation: "unknown tensor payload variant",
             suggestion: "export F32, F64, I64 or Bool tensors",
@@ -141,7 +141,7 @@ pub(crate) fn build_json_document<F: SKFloat>(
     let mut hyperparameters = BTreeMap::new();
     for (name, parameter) in state.metadata().parameters() {
         validate_parameter_finiteness(parameter)?;
-        hyperparameters.insert(name.as_str(), JsonParameterRef(parameter));
+        hyperparameters.insert(name.as_str(), JsonParameterReference(parameter));
     }
 
     let mut tensors = BTreeMap::new();

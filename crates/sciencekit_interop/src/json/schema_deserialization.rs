@@ -12,27 +12,28 @@ fn default_estimator_format_version() -> u32 {
     1
 }
 
-/// Raw JSON debug document preserving duplicate map entries for explicit validation.
-///
-/// Version-1 fields are optional at the parser boundary so `format_version` is
-/// checked first, even when a future major version alters the remaining fields.
+/// Lightweight envelope header inspected before typing version-1 fields.
+#[derive(Debug, Deserialize)]
+pub(crate) struct RawJsonVersionEnvelope {
+    pub(crate) format_version: u32,
+}
+
+/// Raw version-1 JSON debug document preserving duplicate map entries for validation.
 #[derive(Debug, Deserialize)]
 pub(crate) struct RawJsonModelDocument {
     pub(crate) format_version: u32,
-    #[serde(default)]
-    pub(crate) estimator: Option<String>,
+    pub(crate) estimator: String,
     #[serde(default = "default_estimator_format_version")]
     pub(crate) estimator_format_version: u32,
-    #[serde(default, rename = "dtype")]
-    pub(crate) scalar_data_type: Option<String>,
-    #[serde(default)]
-    pub(crate) feature_count: Option<usize>,
+    #[serde(rename = "dtype")]
+    pub(crate) scalar_data_type: String,
+    pub(crate) feature_count: usize,
     #[serde(default)]
     pub(crate) class_labels: Option<Vec<String>>,
-    #[serde(default, deserialize_with = "deserialize_optional_ordered_entries")]
-    pub(crate) hyperparameters: Option<Vec<(String, RawJsonParameter)>>,
-    #[serde(default, deserialize_with = "deserialize_optional_ordered_entries")]
-    pub(crate) tensors: Option<Vec<(String, RawJsonTensor)>>,
+    #[serde(deserialize_with = "deserialize_ordered_entries")]
+    pub(crate) hyperparameters: Vec<(String, RawJsonParameter)>,
+    #[serde(deserialize_with = "deserialize_ordered_entries")]
+    pub(crate) tensors: Vec<(String, RawJsonTensor)>,
 }
 
 /// Raw tensor entry prior to dtype, shape and duplicate-name validation.
@@ -91,8 +92,11 @@ impl<'de> Deserialize<'de> for RawJsonScalar {
                 Ok(RawJsonScalar::Unsupported("null"))
             }
 
-            fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> Result<Self::Value, A::Error> {
-                while seq.next_element::<IgnoredAny>()?.is_some() {}
+            fn visit_seq<A: SeqAccess<'de>>(
+                self,
+                mut sequence: A,
+            ) -> Result<Self::Value, A::Error> {
+                while sequence.next_element::<IgnoredAny>()?.is_some() {}
                 Ok(RawJsonScalar::Unsupported("array"))
             }
 
@@ -106,9 +110,7 @@ impl<'de> Deserialize<'de> for RawJsonScalar {
     }
 }
 
-fn deserialize_optional_ordered_entries<'de, D, V>(
-    deserializer: D,
-) -> Result<Option<Vec<(String, V)>>, D::Error>
+fn deserialize_ordered_entries<'de, D, V>(deserializer: D) -> Result<Vec<(String, V)>, D::Error>
 where
     D: Deserializer<'de>,
     V: Deserialize<'de>,
@@ -116,7 +118,7 @@ where
     struct EntriesVisitor<V>(PhantomData<V>);
 
     impl<'de, V: Deserialize<'de>> Visitor<'de> for EntriesVisitor<V> {
-        type Value = Option<Vec<(String, V)>>;
+        type Value = Vec<(String, V)>;
 
         fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
             formatter.write_str("a JSON object")
@@ -127,7 +129,7 @@ where
             while let Some(pair) = map.next_entry::<String, V>()? {
                 entries.push(pair);
             }
-            Ok(Some(entries))
+            Ok(entries)
         }
     }
 

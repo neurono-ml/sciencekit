@@ -16,7 +16,7 @@ mod format_mode;
 mod parameter_deserialization;
 mod reader;
 mod reader_builder;
-pub(crate) mod schema;
+mod schema;
 mod schema_deserialization;
 mod state_decoding;
 mod tensor_decoding;

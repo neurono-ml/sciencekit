@@ -4,12 +4,12 @@ use sciencekit_common::SKError;
 
 use super::sk_read_model_state_json;
 
-fn document_with_tensors(scalar_dtype: &str, tensors_body: &str) -> String {
+fn document_with_tensors(scalar_data_type: &str, tensors_body: &str) -> String {
     format!(
         r#"{{
             "format_version": 1,
             "estimator": "SKMock",
-            "dtype": "{scalar_dtype}",
+            "dtype": "{scalar_data_type}",
             "feature_count": 1,
             "class_labels": null,
             "hyperparameters": {{}},
@@ -52,11 +52,17 @@ fn json_validation_rejects_malformed_json_with_conversion_error() {
 /// Any major version other than 1 is rejected as `UnsupportedRepresentation` before v1 checks.
 #[test]
 fn json_validation_rejects_unknown_major_versions() {
-    let full_v2 = r#"{"format_version": 2, "estimator": "SKMock", "dtype": "f64", "feature_count": 1, "class_labels": null, "hyperparameters": {}, "tensors": {}}"#;
-    let full_v0 = r#"{"format_version": 0, "estimator": "SKMock", "dtype": "f64", "feature_count": 1, "class_labels": null, "hyperparameters": {}, "tensors": {}}"#;
-    let evolved_v2 = r#"{"format_version": 2, "manifest": {}}"#;
+    let full_version_two = r#"{"format_version": 2, "estimator": "SKMock", "dtype": "f64", "feature_count": 1, "class_labels": null, "hyperparameters": {}, "tensors": {}}"#;
+    let full_version_zero = r#"{"format_version": 0, "estimator": "SKMock", "dtype": "f64", "feature_count": 1, "class_labels": null, "hyperparameters": {}, "tensors": {}}"#;
+    let evolved_version_two = r#"{"format_version": 2, "manifest": {}}"#;
+    let incompatible_tensors_version_two = r#"{"format_version": 2, "tensors": []}"#;
 
-    for unsupported in [full_v2, full_v0, evolved_v2] {
+    for unsupported in [
+        full_version_two,
+        full_version_zero,
+        evolved_version_two,
+        incompatible_tensors_version_two,
+    ] {
         let error = sk_read_model_state_json::<f64>(unsupported).unwrap_err();
         assert!(
             matches!(error, SKError::UnsupportedRepresentation { .. }),
@@ -133,12 +139,12 @@ fn json_validation_rejects_invalid_and_mismatched_dtypes() {
         ));
     }
 
-    let overflow_f32 = document_with_tensors(
+    let overflow_single_precision = document_with_tensors(
         "f32",
         r#""weight": { "dtype": "F32", "shape": [1], "values": [1.0e300] }"#,
     );
     assert!(matches!(
-        sk_read_model_state_json::<f32>(&overflow_f32),
+        sk_read_model_state_json::<f32>(&overflow_single_precision),
         Err(SKError::NonFiniteValue { position: 0 })
     ));
 }
