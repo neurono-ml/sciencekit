@@ -8,6 +8,7 @@ mod builder;
 mod classifier;
 mod config;
 mod error;
+mod export;
 mod fit;
 mod model;
 mod oob;
@@ -19,9 +20,15 @@ mod validation;
 pub use builder::{SKBaggingClassifierBuilder, SKBaggingRegressorBuilder};
 pub use classifier::SKBaggingClassifier;
 pub use error::{SKBaggingError, SKBaseEstimatorError};
+pub use export::{
+    SK_BAGGING_CLASSIFIER_ESTIMATOR_NAME, SK_BAGGING_FORMAT_VERSION,
+    SK_BAGGING_REGRESSOR_ESTIMATOR_NAME,
+};
 pub use model::{SKBaggingClassifierModel, SKBaggingRegressorModel};
 pub use regressor::SKBaggingRegressor;
 
+#[cfg(test)]
+mod acceptance_tests;
 #[cfg(test)]
 mod bagging_bounds_tests;
 #[cfg(test)]
