@@ -24,6 +24,8 @@ pub use result::SKRandomizedSvdResult;
 #[cfg(test)]
 mod centered_tests;
 #[cfg(test)]
+mod concurrency_tests;
+#[cfg(test)]
 mod dense_tests;
 #[cfg(test)]
 mod projection_tests;
