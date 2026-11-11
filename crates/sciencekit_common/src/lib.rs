@@ -41,7 +41,8 @@ pub use data_view::{
 };
 pub use device::{
     SK_HOST_FALLBACK_BACKEND, SKDeviceContext, SKDevicePreference, SKFallbackReason, SKGpuKernel,
-    sk_select_device,
+    sk_clear_device_inventory, sk_register_device_inventory, sk_registered_device_inventory,
+    sk_resolve_operation_backend, sk_select_device,
 };
 pub use device::{SKDeviceCapabilities, SKDeviceInfo};
 pub use errors::SKError;

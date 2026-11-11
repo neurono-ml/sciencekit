@@ -2,8 +2,13 @@
 
 use tracing_subscriber::prelude::*;
 
-use super::{SKBackendKind, SKOperationAttributes, SKOperationKind, SKOperationObservation};
-use crate::device::{SKDeviceCapabilities, SKDeviceContext, SKDeviceInfo, SKFallbackReason};
+use super::{
+    SKBackendKind, SKOperationAttributes, SKOperationKind, SKOperationObservation, sk_run_operation,
+};
+use crate::device::{
+    SKDeviceCapabilities, SKDeviceContext, SKDeviceInfo, SKFallbackReason,
+    lock_device_inventory_for_test, sk_register_device_inventory,
+};
 use crate::execution::{
     SKAccessPattern, SKExecutionContext, SKExecutionMode, sk_resolve_execution_plan,
 };
@@ -34,10 +39,22 @@ fn context(device: Option<SKDeviceContext>) -> SKExecutionContext {
     }
 }
 
-/// The selected device kind is what the span records — never a hardcoded CPU
-/// value.
+fn mock_opencl_device() -> SKDeviceInfo {
+    SKDeviceInfo::new(
+        0,
+        SKBackendKind::OpenCl,
+        "Mock OpenCL 0",
+        1 << 20,
+        SKDeviceCapabilities::new(true, true, false),
+    )
+}
+
+/// When an OpenCL device is registered, the span records `opencl` and no fallback.
 #[test]
 fn the_selected_device_kind_is_recorded_in_the_span() {
+    let _guard = lock_device_inventory_for_test();
+    sk_register_device_inventory(vec![mock_opencl_device()]);
+
     let recording = RecordingLayer::default();
     let subscriber = tracing_subscriber::registry().with(recording.clone());
     tracing::subscriber::with_default(subscriber, || {
@@ -51,18 +68,72 @@ fn the_selected_device_kind_is_recorded_in_the_span() {
     assert_eq!(fields.get("fallback_reason"), None);
 }
 
-/// A fallback reason is recorded on the span as a stable token.
+/// Without a registered device, a requested GPU kind falls back to `faer` with a reason.
 #[test]
-fn the_fallback_reason_is_recorded_on_the_span() {
+fn unregistered_device_kind_falls_back_to_host_and_records_reason() {
+    let _guard = lock_device_inventory_for_test();
+
     let recording = RecordingLayer::default();
     let subscriber = tracing_subscriber::registry().with(recording.clone());
     tracing::subscriber::with_default(subscriber, || {
-        let observation = SKOperationObservation::begin(attributes(SKBackendKind::Faer));
-        observation.record_fallback_reason(SKFallbackReason::NoDeviceAvailable);
+        sk_run_operation(attributes(SKBackendKind::OpenCl), || {
+            Ok::<_, crate::SKError>(())
+        })
+        .unwrap();
+    });
+
+    let fields = recording.single_span_fields();
+    assert_eq!(fields.get("backend").map(String::as_str), Some("faer"));
+    assert_eq!(
+        fields.get("fallback_reason").map(String::as_str),
+        Some("no-device-available")
+    );
+}
+
+/// A configured host backend is recorded unchanged and carries no fallback reason.
+#[test]
+fn host_backend_kind_is_recorded_unchanged_without_fallback() {
+    let recording = RecordingLayer::default();
+    let subscriber = tracing_subscriber::registry().with(recording.clone());
+    tracing::subscriber::with_default(subscriber, || {
+        let observation = SKOperationObservation::begin(attributes(SKBackendKind::MatrixMultiply));
         observation.in_scope(|| ());
         observation.finish();
     });
 
+    let fields = recording.single_span_fields();
+    assert_eq!(
+        fields.get("backend").map(String::as_str),
+        Some("matrixmultiply")
+    );
+    assert_eq!(fields.get("fallback_reason"), None);
+}
+
+/// A fallback reason is recorded on the span as a stable token and never double-recorded.
+#[test]
+fn the_fallback_reason_is_recorded_once_on_the_span() {
+    let _guard = lock_device_inventory_for_test();
+
+    let recording = RecordingLayer::default();
+    let subscriber = tracing_subscriber::registry().with(recording.clone());
+    tracing::subscriber::with_default(subscriber, || {
+        let observation = SKOperationObservation::begin(attributes(SKBackendKind::OpenCl));
+        observation.record_fallback_reason(SKFallbackReason::KernelNotSupported);
+        observation.in_scope(|| ());
+        observation.finish();
+    });
+
+    let recorded = recording.recorded();
+    let fallback_entries: Vec<_> = recorded[0]
+        .1
+        .iter()
+        .filter(|(name, _)| name == "fallback_reason")
+        .collect();
+    assert_eq!(
+        fallback_entries.len(),
+        1,
+        "fallback_reason must not double-record"
+    );
     let fields = recording.single_span_fields();
     assert_eq!(fields.get("backend").map(String::as_str), Some("faer"));
     assert_eq!(
@@ -74,13 +145,9 @@ fn the_fallback_reason_is_recorded_on_the_span() {
 /// A plan that selects a device records its kind and no fallback reason.
 #[test]
 fn a_device_plan_records_its_backend_and_no_fallback() {
-    let inventory = vec![SKDeviceInfo::new(
-        0,
-        SKBackendKind::OpenCl,
-        "Mock OpenCL 0",
-        1 << 20,
-        SKDeviceCapabilities::new(true, true, false),
-    )];
+    let _guard = lock_device_inventory_for_test();
+    let inventory = vec![mock_opencl_device()];
+    sk_register_device_inventory(inventory.clone());
     let context = context(Some(
         SKDeviceContext::new(SKBackendKind::OpenCl).with_inventory(inventory),
     ));
@@ -105,6 +172,7 @@ fn a_device_plan_records_its_backend_and_no_fallback() {
 /// A plan that falls back records the reason it carries.
 #[test]
 fn a_fallback_plan_records_the_reason_it_carries() {
+    let _guard = lock_device_inventory_for_test();
     let context = context(Some(SKDeviceContext::new(SKBackendKind::Cuda)));
     let plan = sk_resolve_execution_plan(SKExecutionMode::Automatic, &context).unwrap();
     assert_eq!(

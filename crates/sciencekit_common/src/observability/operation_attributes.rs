@@ -45,10 +45,10 @@ impl fmt::Display for SKOperationKind {
 /// The bounded set of compute backends an operation may route to.
 ///
 /// The first three kinds are host (CPU) backends; `OpenCl`, `Cuda` and `Rocm`
-/// name device backends whose concrete implementations live in the
-/// `gpu-opencl-backend`, `gpu-cuda-backend` and `gpu-rocm-backend` crates. The
-/// enum is deliberately closed: the compiler forces every exhaustive match in
-/// the workspace to name the device kinds too.
+/// name device backends whose concrete implementations live in the future
+/// `sciencekit_gpu_opencl`, `sciencekit_gpu_cuda` and `sciencekit_gpu_rocm`
+/// crates. The enum is deliberately closed: the compiler forces every
+/// exhaustive match in the workspace to name the device kinds too.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum SKBackendKind {
     /// The pure-Rust default backend backed by `faer`.
@@ -126,7 +126,7 @@ impl std::str::FromStr for SKBackendKind {
     fn from_str(name: &str) -> Result<Self, Self::Err> {
         SKBackendKind::ALL
             .into_iter()
-            .find(|kind| kind.to_string() == name)
+            .find(|kind| kind.name() == name)
             .ok_or_else(|| crate::SKError::Conversion(format!("unknown backend kind `{name}`")))
     }
 }
