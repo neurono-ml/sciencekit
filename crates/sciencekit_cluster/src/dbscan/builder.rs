@@ -9,6 +9,7 @@ use super::config::{SKDBSCANAlgorithm, SKDBSCANConfiguration, SKDBSCANMetric};
 use super::core_implementation::SKDBSCAN;
 
 /// Builder-only construction surface for [`SKDBSCAN`].
+#[derive(Debug, Clone, Copy)]
 pub struct SKDBSCANBuilder<F: SKFloat> {
     pub(super) state: SKBuilderState,
     pub(super) eps: F,

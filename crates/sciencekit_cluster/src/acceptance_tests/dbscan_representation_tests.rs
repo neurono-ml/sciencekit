@@ -75,22 +75,22 @@ fn dbscan_acceptance_representation_dense_sparse_and_trees_agree() {
 #[test]
 fn dbscan_acceptance_representation_high_dimensional_auto_uses_ball_tree_and_wide_csr_stays_sparse()
 {
-    let high_dim = Array2::from_shape_fn((30, 24), |(row, column)| {
+    let high_dimensional = Array2::from_shape_fn((30, 24), |(row, column)| {
         let group = (row / 10) as f64 * 50.0;
         group + ((row + column) % 3) as f64 * 0.02
     });
-    let high_dim_model = SKDBSCAN::<f64>::build()
+    let high_dimensional_model = SKDBSCAN::<f64>::build()
         .eps(1.0)
         .minimum_samples(4)
         .build()
         .unwrap()
-        .fit(&high_dim)
+        .fit(&high_dimensional)
         .unwrap();
     assert_eq!(
-        high_dim_model.search_strategy(),
+        high_dimensional_model.search_strategy(),
         SKDBSCANSearchStrategy::BallTree
     );
-    assert_eq!(high_dim_model.number_of_clusters(), 3);
+    assert_eq!(high_dimensional_model.number_of_clusters(), 3);
 
     let width = 5_000_000;
     let csr = CsMat::new(

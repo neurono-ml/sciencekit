@@ -50,7 +50,7 @@ fn csr_from_dense(dense: &Array2<f64>) -> CsMat<f64> {
     triplet.to_csr()
 }
 
-fn config(
+fn build_configuration(
     eps: f64,
     minimum_samples: usize,
     metric: SKDBSCANMetric,
@@ -78,17 +78,17 @@ fn dbscan_representation_dense_trees_and_brute_force_agree() {
         SKDBSCANMetric::Chebyshev,
     ] {
         let kd = sk_run_dbscan_partition(
-            &config(0.5, 4, metric, SKDBSCANAlgorithm::KdTree),
+            &build_configuration(0.5, 4, metric, SKDBSCANAlgorithm::KdTree),
             &training,
         )
         .unwrap();
         let ball = sk_run_dbscan_partition(
-            &config(0.5, 4, metric, SKDBSCANAlgorithm::BallTree),
+            &build_configuration(0.5, 4, metric, SKDBSCANAlgorithm::BallTree),
             &training,
         )
         .unwrap();
         let brute = sk_run_dbscan_partition(
-            &config(0.5, 4, metric, SKDBSCANAlgorithm::BruteForce),
+            &build_configuration(0.5, 4, metric, SKDBSCANAlgorithm::BruteForce),
             &training,
         )
         .unwrap();
@@ -117,7 +117,7 @@ fn dbscan_representation_sparse_and_dense_fits_agree() {
         (SKDBSCANMetric::Chebyshev, 0.4),
         (SKDBSCANMetric::Cosine, 0.01),
     ] {
-        let configuration = config(eps, 4, metric, SKDBSCANAlgorithm::Auto);
+        let configuration = build_configuration(eps, 4, metric, SKDBSCANAlgorithm::Auto);
         let dense_result = sk_run_dbscan_partition(&configuration, &dense_training).unwrap();
         let sparse_result = sk_run_dbscan_partition(&configuration, &sparse_training).unwrap();
 
@@ -149,12 +149,13 @@ fn dbscan_representation_wide_sparse_design_and_core_extraction_never_densify() 
     let indices = vec![0, 0, 0, 5_000_000, 5_000_000, width - 1];
     let values = vec![1.0_f64, 1.05, 1.10, 10.0, 10.05, 50.0];
     let csr = CsMat::new((6, width), indptr, indices, values);
-    let nnz_before = csr.nnz();
+    let non_zeros_before = csr.nnz();
 
     let training = SKTrainingData::from_view(SKDataView::Sparse(csr.view()));
     assert_eq!(training.representation(), "csr");
 
-    let configuration = config(0.2, 3, SKDBSCANMetric::Euclidean, SKDBSCANAlgorithm::Auto);
+    let configuration =
+        build_configuration(0.2, 3, SKDBSCANMetric::Euclidean, SKDBSCANAlgorithm::Auto);
     let result = sk_run_dbscan_partition(&configuration, &training).unwrap();
     assert_eq!(result.strategy, SKDBSCANSearchStrategy::BruteForce);
     assert_eq!(result.number_of_clusters, 1);
@@ -176,5 +177,5 @@ fn dbscan_representation_wide_sparse_design_and_core_extraction_never_densify() 
     assert_eq!(core_samples.representation(), "csr");
     assert_eq!(core_samples.rows(), 3);
     assert_eq!(core_samples.columns(), width);
-    assert_eq!(csr.nnz(), nnz_before);
+    assert_eq!(csr.nnz(), non_zeros_before);
 }
