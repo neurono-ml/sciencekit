@@ -16,6 +16,7 @@ use super::final_estimator::{
 };
 use super::graph_definition::SKPipelineGraph;
 use super::node::{GraphNodePayload, SKNodeIdentifier};
+use super::validate::sk_validate_graph;
 
 /// Mandatory builder for [`SKPipelineGraph`].
 pub struct SKPipelineGraphBuilder<F: SKFloat> {
@@ -154,18 +155,14 @@ impl<F: SKFloat> SKPipelineGraphBuilder<F> {
         self
     }
 
-    /// Construct a [`SKPipelineGraph`] from this builder.
+    /// Validate acyclicity, single final estimator sink and full reachability.
+    pub fn validate(&self) -> Result<(), SKError> {
+        sk_validate_graph(&self.graph, &self.invalid_endpoints).map(|_| ())
+    }
+
+    /// Validate and construct a [`SKPipelineGraph`] from this builder.
     pub fn build(self) -> Result<SKPipelineGraph<F>, SKError> {
-        let final_node = self
-            .graph
-            .node_indices()
-            .find(|&node| matches!(self.graph[node], GraphNodePayload::FinalEstimator(_)))
-            .map(|node| SKNodeIdentifier::new(node.index()))
-            .ok_or_else(|| SKError::InvalidHyperparameter {
-                name: "final_estimator",
-                reason: "pipeline graph requires exactly one final estimator node, found 0"
-                    .to_string(),
-            })?;
+        let final_node = sk_validate_graph(&self.graph, &self.invalid_endpoints)?;
         let topological_order = (0..self.graph.node_count())
             .map(SKNodeIdentifier::new)
             .collect();

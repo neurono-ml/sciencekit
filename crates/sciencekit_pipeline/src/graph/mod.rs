@@ -9,6 +9,7 @@ mod builder_accessors;
 mod final_estimator;
 mod graph_definition;
 mod node;
+mod validate;
 
 pub use builder::SKPipelineGraphBuilder;
 pub use final_estimator::SKBoxedFinalModel;
@@ -17,3 +18,5 @@ pub use node::{SKNodeIdentifier, SKPipelineGraphNodeKind};
 
 #[cfg(test)]
 mod graph_builder_tests;
+#[cfg(test)]
+mod graph_validate_tests;
