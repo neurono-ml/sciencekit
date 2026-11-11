@@ -45,8 +45,15 @@ impl SKArrowFfiArray {
         (array, schema)
     }
 
-    /// Reassemble a pair from C structures.
-    pub fn from_parts(array: FFI_ArrowArray, schema: FFI_ArrowSchema) -> Self {
+    /// Reassemble a pair from raw Arrow C Data Interface structures.
+    ///
+    /// # Safety
+    /// The caller must guarantee that `array` and `schema` form a valid,
+    /// matching Arrow C Data Interface pair whose buffers, lengths, offsets,
+    /// children, dictionary pointers and release callbacks conform to the
+    /// Arrow C Data Interface specification and have not already been
+    /// consumed.
+    pub unsafe fn from_parts(array: FFI_ArrowArray, schema: FFI_ArrowSchema) -> Self {
         SKArrowFfiArray {
             array: Some(array),
             schema: Some(schema),
@@ -73,13 +80,8 @@ pub fn sk_export_array_to_ffi(array: &dyn Array) -> Result<SKArrowFfiArray, SKEr
 /// release callback.
 ///
 /// The imported array keeps the source buffers alive: releasing the producer
-/// handle is exactly the ownership transfer this call performs, so the data
-/// stays valid for as long as the imported array lives.
-///
-/// # Safety
-/// The caller must guarantee that the pair conforms to the Arrow C Data
-/// Interface; the safe wrapper is only available for pairs produced by
-/// [`sk_export_array_to_ffi`] or a conforming producer.
+/// handle is the ownership transfer this call performs, so the data stays valid
+/// for as long as the imported array lives.
 ///
 /// # Errors
 /// Returns [`SKError::Conversion`] when the pair is malformed or the schema and
@@ -99,8 +101,10 @@ pub fn sk_import_array_from_ffi(ffi: SKArrowFfiArray) -> Result<ArrayRef, SKErro
             "the C array is empty or was already released",
         ));
     }
-    // SAFETY: the pair was produced by an Arrow C Data Interface exporter and
-    // is consumed exactly once; `from_ffi` takes ownership of the buffers.
+    // SAFETY: a `SKArrowFfiArray` is constructed only by `sk_export_array_to_ffi`
+    // or by `unsafe fn SKArrowFfiArray::from_parts` (whose caller guarantees a
+    // valid, matching Arrow C Data Interface pair), and `into_parts` consumes
+    // it once so `from_ffi` takes exclusive ownership of the buffers.
     let data = unsafe { arrow_array::ffi::from_ffi(array, &schema) }
         .map_err(|error| sk_ffi_error("import", error))?;
     Ok(make_array(data))

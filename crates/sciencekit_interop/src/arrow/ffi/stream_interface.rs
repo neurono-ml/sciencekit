@@ -32,8 +32,13 @@ impl SKArrowFfiStream {
             .expect("an exported stream always carries its handle")
     }
 
-    /// Reassemble a wrapper from a C stream.
-    pub fn from_stream(stream: FFI_ArrowArrayStream) -> Self {
+    /// Reassemble a wrapper from a raw Arrow C Stream Interface structure.
+    ///
+    /// # Safety
+    /// The caller must guarantee that `stream` conforms to the Arrow C Stream
+    /// Interface (`get_schema`, `get_next`, `get_last_error`, `release` and
+    /// `private_data` form a valid, unconsumed producer stream).
+    pub unsafe fn from_stream(stream: FFI_ArrowArrayStream) -> Self {
         SKArrowFfiStream {
             stream: Some(stream),
         }

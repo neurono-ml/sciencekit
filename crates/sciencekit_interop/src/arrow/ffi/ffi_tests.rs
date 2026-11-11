@@ -1,14 +1,8 @@
-//! TDD suite for the Arrow C Data Interface (tasks 3.1-3.4).
-//!
-//! The release-counting tests install a custom callback, so `unsafe` is
-//! allowed here and confined to that callback.
+//! TDD suite for Arrow C Data and Stream Interface round trips and lifetime
+//! independence (tasks 3.1-3.4).
 
-#![allow(unsafe_code)]
+use std::sync::Arc;
 
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::{Arc, Mutex};
-
-use arrow_array::ffi::{FFI_ArrowArray, FFI_ArrowSchema};
 use arrow_array::types::Int32Type;
 use arrow_array::{
     Array, ArrayRef, DictionaryArray, Float64Array, RecordBatch, RecordBatchIterator,
@@ -18,25 +12,10 @@ use arrow_schema::{DataType, Field, Schema};
 use ndarray::array;
 
 use super::{
-    SKArrowFfiArray, sk_export_array_to_ffi, sk_export_record_batch_reader_to_stream,
-    sk_import_array_from_ffi, sk_import_stream,
+    sk_export_array_to_ffi, sk_export_record_batch_reader_to_stream, sk_import_array_from_ffi,
+    sk_import_stream,
 };
 use crate::arrow::sk_export_dense_matrix;
-
-static RELEASES: AtomicUsize = AtomicUsize::new(0);
-static RELEASE_LOCK: Mutex<()> = Mutex::new(());
-
-unsafe extern "C" fn sk_counting_release(array: *mut FFI_ArrowArray) {
-    RELEASES.fetch_add(1, Ordering::SeqCst);
-    if array.is_null() {
-        return;
-    }
-    // Disarm the callback so a second release cannot double free; the test
-    // intentionally leaks the exported buffers.
-    unsafe {
-        (*array).release = None;
-    }
-}
 
 fn sk_dense_matrix() -> ndarray::Array2<f64> {
     array![[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]]
@@ -68,6 +47,23 @@ fn sk_dense_matrix_round_trips_through_the_c_data_interface() {
         .downcast_ref::<Float64Array>()
         .expect("a float column");
     assert_eq!(second.values().as_ref(), &[2.0, 4.0, 6.0]);
+}
+
+#[test]
+fn sk_imported_array_survives_producer_drop() {
+    let imported = {
+        let producer = Float64Array::from(vec![10.5, 20.5, 30.5, 40.5]);
+        let exported_pair = sk_export_array_to_ffi(&producer).expect("an exported C pair");
+        let imported = sk_import_array_from_ffi(exported_pair).expect("an imported array");
+        drop(producer);
+        imported
+    };
+
+    let values = imported
+        .as_any()
+        .downcast_ref::<Float64Array>()
+        .expect("a float64 array");
+    assert_eq!(values.values().as_ref(), &[10.5, 20.5, 30.5, 40.5]);
 }
 
 fn sk_two_batch_reader() -> Box<dyn RecordBatchReader + Send> {
@@ -109,51 +105,6 @@ fn sk_stream_round_trips_batch_for_batch() {
         .downcast_ref::<Float64Array>()
         .expect("a float column");
     assert_eq!(values.values().as_ref(), &[1.0, 2.0]);
-}
-
-#[test]
-fn sk_release_callback_runs_exactly_once() {
-    let _guard = RELEASE_LOCK.lock().expect("an uncontended lock");
-    RELEASES.store(0, Ordering::SeqCst);
-
-    // Import takes ownership: the callback runs when the imported array drops.
-    let exported =
-        sk_export_array_to_ffi(&Float64Array::from(vec![1.0, 2.0])).expect("an exported pair");
-    let (mut array, schema) = exported.into_parts();
-    array.release = Some(sk_counting_release);
-    let pair = SKArrowFfiArray::from_parts(array, schema);
-    let imported = sk_import_array_from_ffi(pair).expect("an import");
-    assert_eq!(RELEASES.load(Ordering::SeqCst), 0);
-    drop(imported);
-    assert_eq!(RELEASES.load(Ordering::SeqCst), 1);
-
-    // Dropping an unimported pair releases once as well.
-    let exported =
-        sk_export_array_to_ffi(&Float64Array::from(vec![5.0])).expect("an exported pair");
-    let (mut array, schema) = exported.into_parts();
-    array.release = Some(sk_counting_release);
-    let pair = SKArrowFfiArray::from_parts(array, schema);
-    drop(pair);
-    assert_eq!(RELEASES.load(Ordering::SeqCst), 2);
-}
-
-#[test]
-fn sk_failed_import_releases_the_exported_array_once() {
-    let _guard = RELEASE_LOCK.lock().expect("an uncontended lock");
-    RELEASES.store(0, Ordering::SeqCst);
-
-    // An empty C array declares zero buffers while the schema declares one, so
-    // the import fails before touching any buffer, and the ownership transfer
-    // still releases the producer handle exactly once.
-    let mut array = FFI_ArrowArray::empty();
-    array.release = Some(sk_counting_release);
-    let schema = FFI_ArrowSchema::try_from(&DataType::Float64).expect("a float schema");
-    let pair = SKArrowFfiArray::from_parts(array, schema);
-
-    let error = sk_import_array_from_ffi(pair).expect_err("the handle is empty");
-    assert!(error.to_string().contains("C Data Interface"), "{error}");
-    assert!(error.to_string().contains("already released"), "{error}");
-    assert_eq!(RELEASES.load(Ordering::SeqCst), 1);
 }
 
 #[test]

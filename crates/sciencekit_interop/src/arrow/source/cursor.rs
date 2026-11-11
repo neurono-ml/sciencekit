@@ -18,7 +18,7 @@ use crate::selection::SKColumnSelection;
 /// marks it final.
 pub(crate) struct SKArrowBatchCursor {
     reader: Box<dyn RecordBatchReader + Send>,
-    projection: Vec<usize>,
+    projection: Option<Vec<usize>>,
     batch_size: usize,
     policy: SKMissingValuePolicy,
     position: usize,
@@ -42,7 +42,13 @@ impl SKArrowBatchCursor {
                 reason: "a streaming batch must hold at least one row".to_string(),
             });
         }
-        let projection = sk_projection_indices(schema, selection)?;
+        let projection = match selection {
+            Some(_) => Some(sk_projection_indices(schema, selection)?),
+            None => {
+                let _ = sk_projection_indices(schema, None)?;
+                None
+            }
+        };
         Ok(SKArrowBatchCursor {
             reader,
             projection,
@@ -57,12 +63,22 @@ impl SKArrowBatchCursor {
     }
 
     fn pull_projected(&mut self) -> Result<Option<RecordBatch>, SKError> {
-        match self.reader.next() {
-            None => Ok(None),
-            Some(Ok(batch)) => Ok(Some(sk_project_record_batch(&batch, &self.projection)?)),
-            Some(Err(error)) => Err(SKError::Conversion(format!(
-                "Arrow record-batch reader failed: {error}"
-            ))),
+        loop {
+            match self.reader.next() {
+                None => return Ok(None),
+                Some(Ok(batch)) if batch.num_rows() == 0 => continue,
+                Some(Ok(batch)) => {
+                    return match &self.projection {
+                        Some(indices) => Ok(Some(sk_project_record_batch(&batch, indices)?)),
+                        None => Ok(Some(batch)),
+                    };
+                }
+                Some(Err(error)) => {
+                    return Err(SKError::Conversion(format!(
+                        "Arrow record-batch reader failed: {error}"
+                    )));
+                }
+            }
         }
     }
 

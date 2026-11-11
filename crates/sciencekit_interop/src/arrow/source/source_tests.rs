@@ -173,3 +173,33 @@ fn sk_reopenable_source_replays_the_same_batches() {
     assert_eq!(passes[0], vec![4, 1, 4, 1]);
     assert_eq!(passes[0], passes[1]);
 }
+
+#[test]
+fn sk_trailing_empty_batches_do_not_hide_the_final_marker() {
+    let mut source = SKArrowRecordBatchSource::new(
+        || {
+            Ok(reader_of(vec![
+                batch_of(0, 0),
+                batch_of(0, 4),
+                batch_of(4, 0),
+            ]))
+        },
+        None,
+        10,
+        SKMissingValuePolicy::Reject,
+    )
+    .expect("a valid source");
+    source.open().expect("an open");
+
+    let first = source
+        .next_batch()
+        .expect("a batch")
+        .expect("the non-empty batch");
+    assert_eq!(first.number_of_rows(), 4);
+    assert_eq!(first.position(), 0);
+    assert!(
+        first.is_final(),
+        "trailing zero-row batches must not clear the final flag"
+    );
+    assert!(source.next_batch().expect("the end").is_none());
+}
