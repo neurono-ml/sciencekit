@@ -9,7 +9,6 @@ mod oob;
 mod sampler;
 
 pub use maximum_samples::SKMaximumSamples;
-#[cfg_attr(not(test), allow(unused_imports))]
 pub(crate) use oob::sk_out_of_bag_rows;
 #[cfg_attr(not(test), allow(unused_imports))]
 pub(crate) use sampler::{

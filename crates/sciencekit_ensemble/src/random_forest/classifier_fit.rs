@@ -13,13 +13,12 @@ use crate::bootstrap::{
 };
 
 use super::classifier::SKRandomForestClassifier;
-use super::classifier_model::{
-    SKClassifierTreeMember, SKForestOobState, SKRandomForestClassifierModel,
-};
+use super::classifier_model::{SKClassifierTreeMember, SKRandomForestClassifierModel};
 use super::execution::sk_execute_tree_slots;
 use super::input_validation::{
     sk_canonicalize_targets, sk_fit_dimensions, sk_validate_finite_features,
 };
+use super::oob_scoring::sk_classifier_oob_state;
 
 struct ClassifierSlot<F> {
     member: SKClassifierTreeMember<F>,
@@ -88,10 +87,18 @@ pub(super) fn sk_fit_random_forest_classifier<F: SKFloat>(
             }
         });
 
+        let oob_state = sk_classifier_oob_state(
+            &features,
+            &class_indices,
+            number_of_classes,
+            &members,
+            oob_per_tree.as_deref(),
+        )?;
+
         Ok(SKRandomForestClassifierModel {
             members,
             out_of_bag_rows: oob_per_tree,
-            oob_state: SKForestOobState::Disabled,
+            oob_state,
             classes,
             number_of_classes,
             feature_count: columns_count,

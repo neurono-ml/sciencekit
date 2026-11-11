@@ -12,9 +12,9 @@ use crate::bootstrap::{
     sk_tree_seed,
 };
 
-use super::classifier_model::SKForestOobState;
 use super::execution::sk_execute_tree_slots;
 use super::input_validation::{sk_fit_dimensions, sk_validate_finite_features};
+use super::oob_scoring::sk_regressor_oob_state;
 use super::regressor::SKRandomForestRegressor;
 use super::regressor_model::SKRandomForestRegressorModel;
 
@@ -74,10 +74,13 @@ pub(super) fn sk_fit_random_forest_regressor<F: SKFloat>(
             }
         });
 
+        let oob_state =
+            sk_regressor_oob_state(&features, &responses_view, &trees, oob_per_tree.as_deref())?;
+
         Ok(SKRandomForestRegressorModel {
             trees,
             out_of_bag_rows: oob_per_tree,
-            oob_state: SKForestOobState::Disabled,
+            oob_state,
             feature_count: columns_count,
             feature_importances: vec![F::zero(); columns_count],
             criterion: estimator.criterion,

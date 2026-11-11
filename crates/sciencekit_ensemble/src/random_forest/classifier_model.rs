@@ -23,7 +23,6 @@ pub(super) enum SKClassifierTreeMember<F> {
 }
 
 /// Fitted out-of-bag state stored on a random-forest model.
-#[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq)]
 pub(super) enum SKForestOobState<F> {
     Disabled,
