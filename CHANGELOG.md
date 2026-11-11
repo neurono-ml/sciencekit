@@ -9,6 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `sciencekit_cluster` gains the density-based spatial clusterer (spec
+  `dbscan`): `SKDBSCAN<F>`, builder-only with `eps` (default 0.5),
+  `minimum_samples` (default 5), `metric` (`Euclidean` default, `Manhattan`,
+  `Chebyshev`, `Cosine`), `algorithm` (`Auto` default, `KdTree`, `BallTree`,
+  `BruteForce`), `leaf_size` (default 40), `backend` (default `Faer`) and
+  `execution_mode` (default `Automatic`). Fit obtains each row's inclusive
+  `eps` neighbourhood through `sciencekit_neighbors` (`SKKDTree` or
+  `SKBallTree` for dense tree-compatible metrics, `SKBruteForceSearcher` for
+  sparse CSR or cosine distance, never densifying sparse storage) with the row
+  itself always included, identifies core samples (`>= minimum_samples`
+  neighbours), and expands density-connected components deterministically in
+  ascending training-index order so the smallest core index in each component
+  seeds its sequential cluster identifier and shared border points join the
+  earliest-seeded cluster; unreachable non-core points receive the explicit
+  `SKClusterLabel::Noise` variant. `SKDBSCANModel<F>` is `Send + Sync`, exposes
+  `labels`, `core_sample_indices`, `number_of_clusters`, `number_of_features`,
+  `eps`, `minimum_samples`, `metric`, `search_strategy`,
+  `training_representation`, `backend` and `execution_mode`, and implements
+  `SKClustererPredictor<F>` through a documented nearest-core heuristic that
+  assigns each query row to the cluster of its nearest fitted core sample when
+  within `eps` and `SKClusterLabel::Noise` otherwise across all four dense/CSR
+  combinations. Construction and fit/predict validate empty inputs,
+  non-positive or non-finite `eps`, zero `minimum_samples` or `leaf_size`,
+  feature-count mismatches, non-finite values, CSC views and incompatible
+  tree/metric or tree/representation pairs.
+
 - `sciencekit_ensemble` introduces Breiman random forests (spec
   `random-forests`): `SKRandomForestClassifier<F>`, `SKRandomForestRegressor<F>`
   and `SKMaximumSamples<F>`, builder-only with `number_of_trees` (default 100),
