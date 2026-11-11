@@ -20,3 +20,6 @@ pub use isolation_forest::{
     SKIsolationForest, SKIsolationForestBuilder, SKIsolationForestModel, SKIsolationMaximumSamples,
 };
 pub use sciencekit_common::{SKOutlierLabel, SKOutlierPredictor};
+
+#[cfg(test)]
+mod acceptance_tests;
