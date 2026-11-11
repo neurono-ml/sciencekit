@@ -105,7 +105,7 @@
 
 ## 7. Determinism, concurrency and acceptance
 
-- [ ] 7.1 Add tests proving repeated fits produce identical support vectors, dual
+- [x] 7.1 Add tests proving repeated fits produce identical support vectors, dual
   coefficients and predictions, and that `random_seed` makes probability calibration
   repeatable; verify with `cargo test -p sciencekit_svm determinism`.
 - [ ] 7.2 Add a concurrent prediction test sharing one fitted model across threads and a
