@@ -7,6 +7,7 @@ use petgraph::graph::{DiGraph, NodeIndex};
 use sciencekit_common::{SKBackendKind, SKExecutionMode, SKFloat};
 
 use super::builder::SKPipelineGraphBuilder;
+use super::merge::sk_ordered_predecessors;
 use super::node::{GraphNodePayload, SKNodeIdentifier, SKPipelineGraphNodeKind};
 
 /// Validated directed acyclic graph of feature stages ending in a single
@@ -62,6 +63,12 @@ impl<F: SKFloat> SKPipelineGraph<F> {
         self.graph
             .node_weight(NodeIndex::new(node.index()))
             .map(GraphNodePayload::kind)
+    }
+
+    /// Predecessor nodes feeding `node`, in exact `connect` insertion order
+    /// (the horizontal concatenation order used when merging).
+    pub fn incoming_nodes(&self, node: SKNodeIdentifier) -> Vec<SKNodeIdentifier> {
+        sk_ordered_predecessors(&self.graph, node)
     }
 
     /// Configured math backend recorded in every operation span.

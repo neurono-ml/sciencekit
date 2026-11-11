@@ -1,5 +1,18 @@
 //! Incoming-edge resolution and edge-order horizontal block concatenation for
-//! [`super::SKPipelineGraph`] (spec `pipeline-graph`).
+//! [`super::SKPipelineGraph`] (spec `pipeline-graph`, Task 2.4).
+//!
+//! # Merge Policy
+//!
+//! - **Zero incoming edges (root node):** receives the caller's input
+//!   [`SKFeatureBlock`].
+//! - **One incoming edge:** receives that predecessor's output block without
+//!   copying or densifying.
+//! - **Multiple incoming edges (merge):** incoming blocks are concatenated
+//!   horizontally along the column axis in **exact `connect(source, target)`
+//!   edge insertion order** (never in node-identifier order or `petgraph`'s
+//!   internal reverse adjacency order). All-dense blocks stay dense; if any
+//!   incoming block is sparse CSR, the merged block is CSR without densifying
+//!   sparse inputs.
 
 use petgraph::Direction;
 use petgraph::graph::{DiGraph, NodeIndex};
@@ -12,11 +25,28 @@ use super::errors::SKPipelineGraphNodeError;
 use super::node::{GraphNodePayload, SKNodeIdentifier};
 use super::order::SKNodeBlockStore;
 
-/// Resolve the incoming [`SKFeatureBlock`] for `node`:
-/// - `0` incoming edges: root node receives `input_block`.
-/// - `1` incoming edge: receives the predecessor's output block.
-/// - `>= 2` incoming edges: concatenates predecessor blocks horizontally in
-///   exact `connect(source, target)` edge insertion order.
+/// Predecessor node identifiers feeding `node`, ordered by ascending
+/// `connect(source, target)` insertion order.
+pub(super) fn sk_ordered_predecessors<F: SKFloat>(
+    graph: &DiGraph<GraphNodePayload<F>, usize>,
+    node: SKNodeIdentifier,
+) -> Vec<SKNodeIdentifier> {
+    if node.index() >= graph.node_count() {
+        return Vec::new();
+    }
+    let mut incoming_edges: Vec<(usize, SKNodeIdentifier)> = graph
+        .edges_directed(NodeIndex::new(node.index()), Direction::Incoming)
+        .map(|edge| (*edge.weight(), SKNodeIdentifier::new(edge.source().index())))
+        .collect();
+    incoming_edges.sort_by_key(|&(insertion_order, _)| insertion_order);
+    incoming_edges
+        .into_iter()
+        .map(|(_, predecessor)| predecessor)
+        .collect()
+}
+
+/// Resolve the incoming [`SKFeatureBlock`] for `node` according to the merge
+/// policy.
 pub(super) fn sk_resolve_incoming_block<F: SKFloat>(
     graph: &DiGraph<GraphNodePayload<F>, usize>,
     node: SKNodeIdentifier,
@@ -24,20 +54,15 @@ pub(super) fn sk_resolve_incoming_block<F: SKFloat>(
     block_store: &SKNodeBlockStore<F>,
     expected_widths: Option<&[usize]>,
 ) -> Result<(SKFeatureBlock<F>, Vec<usize>), SKPipelineGraphNodeError> {
-    let mut incoming_edges: Vec<(usize, SKNodeIdentifier)> = graph
-        .edges_directed(NodeIndex::new(node.index()), Direction::Incoming)
-        .map(|edge| (*edge.weight(), SKNodeIdentifier::new(edge.source().index())))
-        .collect();
-    incoming_edges.sort_by_key(|&(insertion_order, _)| insertion_order);
-
-    if incoming_edges.is_empty() {
+    let predecessors = sk_ordered_predecessors(graph, node);
+    if predecessors.is_empty() {
         let width = input_block.number_of_columns();
         return Ok((input_block.clone(), vec![width]));
     }
 
-    let blocks: Vec<SKFeatureBlock<F>> = incoming_edges
+    let blocks: Vec<SKFeatureBlock<F>> = predecessors
         .iter()
-        .map(|&(_, predecessor)| {
+        .map(|&predecessor| {
             block_store.get(predecessor).cloned().ok_or_else(|| {
                 SKPipelineGraphNodeError::node(
                     node,

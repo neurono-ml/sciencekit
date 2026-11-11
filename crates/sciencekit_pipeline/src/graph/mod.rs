@@ -34,6 +34,8 @@ mod graph_builder_tests;
 #[cfg(test)]
 mod graph_fit_tests;
 #[cfg(test)]
+mod graph_merge_tests;
+#[cfg(test)]
 mod graph_order_tests;
 #[cfg(test)]
 mod graph_predict_tests;

@@ -6,6 +6,7 @@ use sciencekit_common::{SKBackendKind, SKBuilder, SKError, SKExecutionMode, SKFl
 
 use super::builder::SKPipelineGraphBuilder;
 use super::graph_definition::SKPipelineGraph;
+use super::merge::sk_ordered_predecessors;
 use super::node::{GraphNodePayload, SKNodeIdentifier, SKPipelineGraphNodeKind};
 
 impl<F: SKFloat> SKPipelineGraphBuilder<F> {
@@ -24,6 +25,12 @@ impl<F: SKFloat> SKPipelineGraphBuilder<F> {
         self.graph
             .node_weight(NodeIndex::new(node.index()))
             .map(GraphNodePayload::kind)
+    }
+
+    /// Predecessor nodes connected into `node` in exact `connect` insertion
+    /// order (the horizontal concatenation order used when merging).
+    pub fn incoming_nodes(&self, node: SKNodeIdentifier) -> Vec<SKNodeIdentifier> {
+        sk_ordered_predecessors(&self.graph, node)
     }
 
     /// Currently configured math backend.

@@ -131,6 +131,12 @@ impl<F: SKFloat> SKPipelineGraphModel<F> {
         self.fitted_node_blocks.get(node)
     }
 
+    /// Column widths of each incoming branch feeding `node` in edge insertion
+    /// order, recorded during `fit`.
+    pub fn incoming_widths(&self, node: SKNodeIdentifier) -> Option<&[usize]> {
+        self.incoming_widths.get(&node).map(Vec::as_slice)
+    }
+
     /// Borrow the type-erased fitted final supervised model.
     pub fn final_model(&self) -> &SKBoxedFinalModel<F> {
         &self.final_model

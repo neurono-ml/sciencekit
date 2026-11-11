@@ -79,6 +79,9 @@ impl<F: SKFloat> SKPipelineGraphBuilder<F> {
     }
 
     /// Add an explicit horizontal-concatenation merge node.
+    ///
+    /// Multiple incoming edges connected into this node are concatenated
+    /// column-wise in the exact order [`Self::connect`] was called.
     pub fn add_merge(&mut self) -> SKNodeIdentifier {
         self.push_node(GraphNodePayload::Merge)
     }
@@ -122,6 +125,10 @@ impl<F: SKFloat> SKPipelineGraphBuilder<F> {
     }
 
     /// Insert a directed feature-block flow edge from `source` to `target`.
+    ///
+    /// When `target` receives multiple incoming edges, their feature blocks are
+    /// concatenated horizontally in the exact insertion order of `connect`
+    /// calls targeting `target`.
     pub fn connect(&mut self, source: SKNodeIdentifier, target: SKNodeIdentifier) -> &mut Self {
         let count = self.graph.node_count();
         if source.index() >= count || target.index() >= count {
