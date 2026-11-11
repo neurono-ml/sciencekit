@@ -1,15 +1,8 @@
-//! `sciencekit_ensemble` — ensemble estimators for sciencekit (spec
-//! `random-forests`).
+//! `sciencekit_ensemble` — ensemble estimators for sciencekit (specs
+//! `random-forests` and `gradient-boosting`).
 //!
 //! The crate ships [`SKRandomForestClassifier`] and [`SKRandomForestRegressor`],
-//! constructed only through their builders. A forest grows one CART tree per
-//! bootstrap sample, delegating split search to [`sciencekit_tree`], and
-//! aggregates the trees into a deterministic prediction.
-//!
-//! Each tree derives its own seed from the forest seed and its index, so a
-//! forest is identical across repeated fits and across thread counts. Dense and
-//! borrowed CSR designs enter through the shared data boundary and are never
-//! densified.
+//! together with the shared gradient-boosting substrate in [`boosting`].
 //!
 //! **Naming:** public items follow PRD §3.4 — structs and traits are prefixed
 //! `SK`, free-scope functions use `sk_`, methods carry no prefix. Files stay at
@@ -20,6 +13,7 @@
 
 mod bootstrap;
 
+pub mod boosting;
 pub mod random_forest;
 
 pub use bootstrap::SKMaximumSamples;
@@ -29,7 +23,7 @@ pub use random_forest::{
 };
 
 // Re-export the split vocabulary owned by `sciencekit_tree` so consumers
-// configure a forest without depending on the tree crate directly.
+// configure an ensemble without depending on the tree crate directly.
 pub use sciencekit_tree::{SKClassWeight, SKMaximumFeatures, SKTreeCriterion};
 
 #[cfg(test)]
