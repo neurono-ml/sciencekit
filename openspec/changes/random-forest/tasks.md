@@ -5,7 +5,7 @@
 - [x] 1.1 Create `crates/sciencekit_ensemble` with `Cargo.toml`, `lib.rs`, the
   `bootstrap` module and the `random_forest` dispatcher; add it to
   `[workspace.members]`; verify `cargo test -p sciencekit_ensemble` compiles.
-- [ ] 1.2 Write and implement the seeded bootstrap sampler (row indices with replacement,
+- [x] 1.2 Write and implement the seeded bootstrap sampler (row indices with replacement,
   seeded SplitMix64, deterministic per-tree seeds) and the OOB mask, with tests for
   reproducibility, sample size, replacement and the no-bootstrap case; verify with
   `cargo test -p sciencekit_ensemble bootstrap`.
