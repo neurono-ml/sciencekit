@@ -6,7 +6,7 @@
   `error.rs` and `config.rs`; define `SKBaggingError<E>` with `From<SKError>` and
   `From<E>` and test both conversions; verify with
   `cargo test -p sciencekit_ensemble bagging_error`.
-- [ ] 1.2 Implement the generic builder parameters (`number_of_estimators`,
+- [x] 1.2 Implement the generic builder parameters (`number_of_estimators`,
   `maximum_samples`, `maximum_features`, `bootstrap`, `bootstrap_features`, `oob_score`,
   `random_seed`, `backend`, `execution_mode`) with default and invalid-value tests; verify
   with `cargo test -p sciencekit_ensemble bagging_builder`.
