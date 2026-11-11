@@ -10,6 +10,35 @@ use super::config::SKDBSCANConfiguration;
 use super::region_query::{sk_build_index, sk_radius_neighborhoods, sk_resolve_strategy};
 use super::{SKDBSCANAlgorithm, SKDBSCANMetric, SKDBSCANSearchStrategy};
 
+fn assert_unsupported(error: SKError, expected_repr: &'static str) {
+    match error {
+        SKError::UnsupportedRepresentation {
+            representation,
+            suggestion,
+        } => {
+            assert_eq!(representation, expected_repr);
+            assert!(suggestion.contains("BruteForce"));
+        }
+        other => panic!("expected UnsupportedRepresentation, found {other:?}"),
+    }
+}
+
+fn sample_configuration(
+    eps: f64,
+    metric: SKDBSCANMetric,
+    algorithm: SKDBSCANAlgorithm,
+) -> SKDBSCANConfiguration<f64> {
+    SKDBSCANConfiguration {
+        eps,
+        minimum_samples: 2,
+        metric,
+        algorithm,
+        leaf_size: 2,
+        backend: SKBackendKind::Faer,
+        execution_mode: SKExecutionMode::Automatic,
+    }
+}
+
 #[test]
 fn dbscan_query_configuration_defaults_and_metric_catalogue() {
     assert_eq!(SKDBSCANMetric::default(), SKDBSCANMetric::Euclidean);
@@ -74,44 +103,14 @@ fn dbscan_query_auto_falls_back_to_brute_force_for_sparse_and_cosine() {
 #[test]
 fn dbscan_query_explicit_tree_rejects_sparse_and_cosine_with_guidance() {
     for tree_algorithm in [SKDBSCANAlgorithm::KdTree, SKDBSCANAlgorithm::BallTree] {
-        match sk_resolve_strategy(tree_algorithm, SKDBSCANMetric::Euclidean, false, 3).unwrap_err()
-        {
-            SKError::UnsupportedRepresentation {
-                representation,
-                suggestion,
-            } => {
-                assert_eq!(representation, "csr");
-                assert!(suggestion.contains("BruteForce"));
-            }
-            other => panic!("expected UnsupportedRepresentation, found {other:?}"),
-        }
-
-        match sk_resolve_strategy(tree_algorithm, SKDBSCANMetric::Cosine, true, 3).unwrap_err() {
-            SKError::UnsupportedRepresentation {
-                representation,
-                suggestion,
-            } => {
-                assert_eq!(representation, "cosine distance");
-                assert!(suggestion.contains("BruteForce"));
-            }
-            other => panic!("expected UnsupportedRepresentation, found {other:?}"),
-        }
-    }
-}
-
-fn sample_configuration(
-    eps: f64,
-    metric: SKDBSCANMetric,
-    algorithm: SKDBSCANAlgorithm,
-) -> SKDBSCANConfiguration<f64> {
-    SKDBSCANConfiguration {
-        eps,
-        minimum_samples: 2,
-        metric,
-        algorithm,
-        leaf_size: 2,
-        backend: SKBackendKind::Faer,
-        execution_mode: SKExecutionMode::Automatic,
+        assert_unsupported(
+            sk_resolve_strategy(tree_algorithm, SKDBSCANMetric::Euclidean, false, 3).unwrap_err(),
+            "csr",
+        );
+        assert_unsupported(
+            sk_resolve_strategy(tree_algorithm, SKDBSCANMetric::Cosine, true, 3).unwrap_err(),
+            "cosine distance",
+        );
     }
 }
 
@@ -124,9 +123,8 @@ fn dbscan_query_radius_neighborhoods_include_each_point_itself() {
         SKDBSCANSearchStrategy::BallTree,
         SKDBSCANSearchStrategy::BruteForce,
     ] {
-        let configuration =
-            sample_configuration(0.3, SKDBSCANMetric::Euclidean, SKDBSCANAlgorithm::Auto);
-        let index = sk_build_index(&configuration, &training, strategy).unwrap();
+        let cfg = sample_configuration(0.3, SKDBSCANMetric::Euclidean, SKDBSCANAlgorithm::Auto);
+        let index = sk_build_index(&cfg, &training, strategy).unwrap();
         let neighborhoods = sk_radius_neighborhoods(&index, &training, 0.3).unwrap();
         assert_eq!(neighborhoods, vec![vec![0, 1], vec![0, 1], vec![2]]);
         for (row, neighbors) in neighborhoods.iter().enumerate() {
@@ -134,16 +132,10 @@ fn dbscan_query_radius_neighborhoods_include_each_point_itself() {
         }
     }
 
-    // Even a zero-norm row under cosine distance (self cosine distance = 1.0 > eps)
-    // includes itself in its own DBSCAN neighbourhood.
-    let cosine_configuration =
+    let cosine_cfg =
         sample_configuration(0.25, SKDBSCANMetric::Cosine, SKDBSCANAlgorithm::BruteForce);
-    let cosine_index = sk_build_index(
-        &cosine_configuration,
-        &training,
-        SKDBSCANSearchStrategy::BruteForce,
-    )
-    .unwrap();
+    let cosine_index =
+        sk_build_index(&cosine_cfg, &training, SKDBSCANSearchStrategy::BruteForce).unwrap();
     let cosine_neighborhoods = sk_radius_neighborhoods(&cosine_index, &training, 0.25).unwrap();
     for (row, neighbors) in cosine_neighborhoods.iter().enumerate() {
         assert!(neighbors.contains(&row));
@@ -157,10 +149,9 @@ fn dbscan_query_tree_and_brute_force_neighborhoods_agree_across_metrics() {
         [0.4, 0.3],
         [0.0, 0.5],
         [3.0, 3.0],
-        [3.2, 2.9],
+        [3.2, 2.9]
     ];
     let dense_training = SKTrainingData::from_view(SKDataView::Dense(dense.view()));
-
     let mut triplet = TriMat::new(dense.dim());
     for ((row, column), &value) in dense.indexed_iter() {
         if value != 0.0 {
@@ -175,39 +166,21 @@ fn dbscan_query_tree_and_brute_force_neighborhoods_agree_across_metrics() {
         SKDBSCANMetric::Manhattan,
         SKDBSCANMetric::Chebyshev,
     ] {
-        let configuration = sample_configuration(0.6, metric, SKDBSCANAlgorithm::Auto);
-        let kd_index = sk_build_index(
-            &configuration,
-            &dense_training,
-            SKDBSCANSearchStrategy::KdTree,
-        )
-        .unwrap();
-        let ball_index = sk_build_index(
-            &configuration,
-            &dense_training,
-            SKDBSCANSearchStrategy::BallTree,
-        )
-        .unwrap();
-        let brute_dense = sk_build_index(
-            &configuration,
-            &dense_training,
-            SKDBSCANSearchStrategy::BruteForce,
-        )
-        .unwrap();
-        let brute_sparse = sk_build_index(
-            &configuration,
-            &sparse_training,
-            SKDBSCANSearchStrategy::BruteForce,
-        )
-        .unwrap();
+        let cfg = sample_configuration(0.6, metric, SKDBSCANAlgorithm::Auto);
+        let kd = sk_build_index(&cfg, &dense_training, SKDBSCANSearchStrategy::KdTree).unwrap();
+        let ball = sk_build_index(&cfg, &dense_training, SKDBSCANSearchStrategy::BallTree).unwrap();
+        let brute_dense =
+            sk_build_index(&cfg, &dense_training, SKDBSCANSearchStrategy::BruteForce).unwrap();
+        let brute_sparse =
+            sk_build_index(&cfg, &sparse_training, SKDBSCANSearchStrategy::BruteForce).unwrap();
 
         let expected = sk_radius_neighborhoods(&brute_dense, &dense_training, 0.6).unwrap();
         assert_eq!(
-            sk_radius_neighborhoods(&kd_index, &dense_training, 0.6).unwrap(),
+            sk_radius_neighborhoods(&kd, &dense_training, 0.6).unwrap(),
             expected
         );
         assert_eq!(
-            sk_radius_neighborhoods(&ball_index, &dense_training, 0.6).unwrap(),
+            sk_radius_neighborhoods(&ball, &dense_training, 0.6).unwrap(),
             expected
         );
         assert_eq!(
