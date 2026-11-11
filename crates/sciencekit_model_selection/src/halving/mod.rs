@@ -24,7 +24,11 @@ pub use trace::SKHalvingRound;
 #[cfg(test)]
 mod halving_aggressive_tests;
 #[cfg(test)]
+mod halving_concurrency_tests;
+#[cfg(test)]
 mod halving_evaluation_tests;
+#[cfg(test)]
+mod halving_representation_tests;
 #[cfg(test)]
 mod halving_scheduler_tests;
 #[cfg(test)]

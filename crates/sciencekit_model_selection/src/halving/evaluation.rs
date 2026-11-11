@@ -9,6 +9,7 @@ use crate::SKSplitter;
 use crate::grid_search::SKErrorScore;
 use crate::grid_search::evaluation::{SKFoldScorer, sk_evaluate_candidates};
 use crate::grid_search::observation::sk_view_dimensions;
+use crate::split::validation::{sk_validate_finite_features, sk_validate_finite_targets};
 
 use super::scheduler::{sk_halving_resource_schedule, sk_surviving_candidate_count};
 use super::subsample::sk_gather_round_subsample;
@@ -135,6 +136,8 @@ fn sk_validate_fit_inputs<F: SKFloat, E>(
             found: vec![request.targets.len()],
         });
     }
+    sk_validate_finite_features(&request.features)?;
+    sk_validate_finite_targets(Some(request.targets))?;
     if let Some(group_values) = request.groups {
         if group_values.len() != total_rows {
             return Err(SKError::ShapeMismatch {
