@@ -14,6 +14,7 @@ mod model;
 mod partial_fit;
 mod reassign;
 mod state;
+mod streaming;
 mod update;
 mod validation;
 
@@ -32,5 +33,7 @@ mod minibatch_reassign_tests;
 mod minibatch_representation_tests;
 #[cfg(test)]
 mod minibatch_state_tests;
+#[cfg(test)]
+mod minibatch_streaming_tests;
 #[cfg(test)]
 mod minibatch_update_tests;
