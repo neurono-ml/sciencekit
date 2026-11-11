@@ -68,5 +68,8 @@
   - [Arrow interop: one memory model for every engine](development-explained/ch37-arrow-interop.md)
   - [GPU compute contracts: devices, buffers and honest fallbacks](development-explained/ch38-gpu-compute-contracts.md)
   - [Randomized SVD: a big factorization from small pieces](development-explained/ch39-randomized-svd.md)
+  - [Random forests: bootstrap samples, de-correlated splits and honest out-of-bag scores](development-explained/ch40-random-forest.md)
+  - [DBSCAN: density, reachability and honest noise](development-explained/ch42-dbscan.md)
   - [Principal Component Analysis: centering, three solvers and honest sparsity](development-explained/ch44-pca.md)
+  - [JSON debug format: reading a fitted model with your eyes](development-explained/ch45-json-debug-format.md)
   - [Maintaining this book](development-explained/maintaining.md)
