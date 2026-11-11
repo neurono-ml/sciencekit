@@ -14,8 +14,18 @@
 
 mod format_mode;
 pub(crate) mod schema;
+mod writer;
+mod writer_builder;
 
 pub use format_mode::{SK_JSON_DEBUG_FORMAT_VERSION, SKJsonFormatMode};
+pub use writer::{
+    SKJsonDebugWriter, sk_export_model_json, sk_write_model_state_json,
+    sk_write_model_state_json_compact, sk_write_model_state_json_file,
+    sk_write_model_state_json_pretty,
+};
+pub use writer_builder::SKJsonDebugWriterBuilder;
 
 #[cfg(test)]
 mod json_schema_tests;
+#[cfg(test)]
+mod json_writer_tests;

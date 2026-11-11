@@ -1,10 +1,9 @@
 //! Wire schema types for the human-readable JSON debug representation
 //! (spec `json-debug-format`).
 
-#![cfg_attr(not(test), allow(dead_code))]
-
 use std::any::{Any, TypeId};
 use std::collections::BTreeMap;
+use std::io;
 
 use sciencekit_common::{
     SKError, SKFloat, SKModelState, SKParameterValue, SKTensorDataType, SKTensorValues,
@@ -41,7 +40,6 @@ pub(crate) struct JsonTensorDocument<'state> {
     values: JsonTensorValuesRef<'state>,
 }
 
-/// Borrowed flat tensor values serialized as a homogeneous JSON array.
 #[derive(Debug, Serialize)]
 #[serde(untagged)]
 enum JsonTensorValuesRef<'state> {
@@ -51,7 +49,6 @@ enum JsonTensorValuesRef<'state> {
     Boolean(&'state [bool]),
 }
 
-/// Borrowed wrapper serializing [`SKParameterValue`] without variant tags.
 #[derive(Debug, Clone, Copy)]
 struct JsonParameterRef<'state>(&'state SKParameterValue);
 
@@ -76,10 +73,9 @@ impl Serialize for JsonParameterRef<'_> {
 
 /// Return the expected tensor data type and wire scalar name for `F`.
 pub(crate) fn expected_scalar_descriptor<F: SKFloat>() -> (SKTensorDataType, &'static str) {
-    if TypeId::of::<F>() == TypeId::of::<f32>() {
-        (SKTensorDataType::F32, "f32")
-    } else {
-        (SKTensorDataType::F64, "f64")
+    match TypeId::of::<F>() == TypeId::of::<f32>() {
+        true => (SKTensorDataType::F32, "f32"),
+        false => (SKTensorDataType::F64, "f64"),
     }
 }
 
@@ -93,22 +89,24 @@ fn validate_parameter_finiteness(value: &SKParameterValue) -> Result<(), SKError
     }
 }
 
+fn ensure_finite<F: SKFloat>(elements: &[F]) -> Result<(), SKError> {
+    elements
+        .iter()
+        .position(|item| !item.is_finite())
+        .map_or(Ok(()), |position| Err(SKError::NonFiniteValue { position }))
+}
+
 fn borrow_tensor_values<F: SKFloat>(
     values: &SKTensorValues<F>,
 ) -> Result<JsonTensorValuesRef<'_>, SKError> {
     match values {
         SKTensorValues::Floating(elements) => {
+            ensure_finite(elements)?;
             let any_elements = elements as &dyn Any;
-            if let Some(single_precision) = any_elements.downcast_ref::<Vec<f32>>() {
-                if let Some(position) = single_precision.iter().position(|item| !item.is_finite()) {
-                    return Err(SKError::NonFiniteValue { position });
-                }
-                Ok(JsonTensorValuesRef::Float32(single_precision.as_slice()))
-            } else if let Some(double_precision) = any_elements.downcast_ref::<Vec<f64>>() {
-                if let Some(position) = double_precision.iter().position(|item| !item.is_finite()) {
-                    return Err(SKError::NonFiniteValue { position });
-                }
-                Ok(JsonTensorValuesRef::Float64(double_precision.as_slice()))
+            if let Some(single) = any_elements.downcast_ref::<Vec<f32>>() {
+                Ok(JsonTensorValuesRef::Float32(single.as_slice()))
+            } else if let Some(double) = any_elements.downcast_ref::<Vec<f64>>() {
+                Ok(JsonTensorValuesRef::Float64(double.as_slice()))
             } else {
                 Err(SKError::UnsupportedRepresentation {
                     representation: "unknown floating scalar in SKTensorValues",
@@ -149,14 +147,13 @@ pub(crate) fn build_json_document<F: SKFloat>(
     let mut tensors = BTreeMap::new();
     for (name, tensor) in state.tensors() {
         let values = borrow_tensor_values(tensor.values())?;
-        tensors.insert(
-            name.as_str(),
-            JsonTensorDocument {
-                data_type: tensor.data_type().as_str(),
-                shape: tensor.shape(),
-                values,
-            },
-        );
+        let data_type = tensor.data_type().as_str();
+        let entry = JsonTensorDocument {
+            data_type,
+            shape: tensor.shape(),
+            values,
+        };
+        tensors.insert(name.as_str(), entry);
     }
 
     Ok(JsonModelDocument {
@@ -171,15 +168,32 @@ pub(crate) fn build_json_document<F: SKFloat>(
     })
 }
 
+/// Stream a validated model state into an arbitrary [`io::Write`] sink.
+pub(crate) fn encode_model_state_to_writer<F: SKFloat, W: io::Write>(
+    state: &SKModelState<F>,
+    format_mode: SKJsonFormatMode,
+    writer: W,
+) -> Result<(), SKError> {
+    let document = build_json_document(state)?;
+    let result = match format_mode {
+        SKJsonFormatMode::Pretty => serde_json::to_writer_pretty(writer, &document),
+        SKJsonFormatMode::Compact => serde_json::to_writer(writer, &document),
+    };
+    result.map_err(|error| {
+        if error.is_io() {
+            SKError::Io(io::Error::other(error))
+        } else {
+            SKError::Conversion(format!("JSON serialization failed: {error}"))
+        }
+    })
+}
+
 /// Serialize a validated model state into a UTF-8 JSON string.
 pub(crate) fn encode_model_state_to_json_string<F: SKFloat>(
     state: &SKModelState<F>,
     format_mode: SKJsonFormatMode,
 ) -> Result<String, SKError> {
-    let document = build_json_document(state)?;
-    let serialized = match format_mode {
-        SKJsonFormatMode::Pretty => serde_json::to_string_pretty(&document),
-        SKJsonFormatMode::Compact => serde_json::to_string(&document),
-    };
-    serialized.map_err(|error| SKError::Conversion(format!("JSON serialization failed: {error}")))
+    let mut bytes = Vec::new();
+    encode_model_state_to_writer(state, format_mode, &mut bytes)?;
+    String::from_utf8(bytes).map_err(|error| SKError::Conversion(error.to_string()))
 }
