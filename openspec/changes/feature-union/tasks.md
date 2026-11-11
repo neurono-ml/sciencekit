@@ -16,7 +16,7 @@
   verify with `cargo test -p sciencekit_pipeline union_boxed`.
 - [x] 2.2 Implement member-index error wrapping, row-count mismatch and empty-union
   validation; verify with `cargo test -p sciencekit_pipeline union_validation`.
-- [ ] 2.3 Add accessors (member count, per-member widths, total width) and a concurrency
+- [x] 2.3 Add accessors (member count, per-member widths, total width) and a concurrency
   test; verify with `cargo test -p sciencekit_pipeline union_model`.
 
 ## 3. Pipeline integration and acceptance
