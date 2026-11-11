@@ -25,7 +25,7 @@
 - [x] 3.3 Update `CHANGELOG.md` and the companion mdBook chapter (including a
   `Development Explained` subsection on the JSON schema and its debug purpose); verify with
   `mdbook build docs`.
-- [ ] 3.4 Independent review by a separate agent validating every scenario in
+- [x] 3.4 Independent review by a separate agent validating every scenario in
   `json-debug-format`; address every finding and re-run the gates.
 
 ## Workflow follow-up
