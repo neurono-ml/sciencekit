@@ -97,7 +97,8 @@ and receives a Python binding as soon as it is validated on CPU.
 |---|---|---|
 | `SKDecisionTreeClassifier` | CART for classification (dense and sparse, deterministic) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKDecisionTreeRegressor` | CART for regression (dense and sparse, deterministic) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
-| `SKRandomForest` | Random forest aggregated in parallel with rayon | <span class="sk-pill sk-pill--neutral">Planned</span> |
+| `SKRandomForestClassifier` | Random-forest classification (bootstrap, OOB accuracy, dense and sparse) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
+| `SKRandomForestRegressor` | Random-forest regression (bootstrap, OOB $R^2$, dense and sparse) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKBagging` | Parallel bootstrap aggregation | <span class="sk-pill sk-pill--neutral">Planned</span> |
 | `SKGradientBoosting` | Sequential gradient boosting | <span class="sk-pill sk-pill--neutral">Planned</span> |
 
@@ -107,8 +108,8 @@ and receives a Python binding as soon as it is validated on CPU.
 |---|---|---|
 | `SKKMeans` | Lloyd + Elkan k-means with seeded k-means++ (memmap indexes remain Phase 7) | <span class="sk-pill sk-pill--ok">Implemented</span> |
 | `SKMiniBatchKMeans` | Mini-batch k-means with streaming (`SKLazySource`) | <span class="sk-pill sk-pill--neutral">Planned</span> |
-| `SKDBSCAN` | Density-based clustering | <span class="sk-pill sk-pill--neutral">Planned</span> |
-| `SKPCA` | Principal component analysis | <span class="sk-pill sk-pill--neutral">Planned</span> |
+| `SKDBSCAN` | Density-based clustering over KD-tree / ball-tree and sparse brute-force region queries with explicit `SKClusterLabel::Noise` and nearest-core prediction | <span class="sk-pill sk-pill--emerald">Implemented</span> |
+| `SKPCA` | Principal component analysis (full SVD · covariance eigh · sparse randomized SVD) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKTruncatedSVD` | Truncated SVD for sparse data | <span class="sk-pill sk-pill--neutral">Planned</span> |
 | Anomaly detection | Outlier estimators from the scikit-learn family | <span class="sk-pill sk-pill--neutral">Planned</span> |
 
