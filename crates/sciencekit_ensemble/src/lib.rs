@@ -1,8 +1,14 @@
 //! `sciencekit_ensemble` — ensemble estimators for sciencekit (specs
-//! `random-forests` and `gradient-boosting`).
+//! `random-forests`, `bagging-ensembles` and `gradient-boosting`).
 //!
-//! The crate ships [`SKRandomForestClassifier`] and [`SKRandomForestRegressor`],
-//! together with the shared gradient-boosting substrate in [`boosting`].
+//! The crate ships [`SKRandomForestClassifier`], [`SKRandomForestRegressor`],
+//! [`SKBaggingClassifier`], [`SKBaggingRegressor`],
+//! [`SKGradientBoostingClassifier`] and [`SKGradientBoostingRegressor`],
+//! constructed only through their builders, together with the shared
+//! gradient-boosting substrate in [`boosting`].
+//!
+//! Dense and borrowed CSR designs enter through the shared data boundary and
+//! are never densified.
 //!
 //! **Naming:** public items follow PRD §3.4 — structs and traits are prefixed
 //! `SK`, free-scope functions use `sk_`, methods carry no prefix. Files stay at
@@ -13,10 +19,15 @@
 
 mod bootstrap;
 
+pub mod bagging;
 pub mod boosting;
 pub mod gradient_boosting;
 pub mod random_forest;
 
+pub use bagging::{
+    SKBaggingClassifier, SKBaggingClassifierBuilder, SKBaggingClassifierModel, SKBaggingError,
+    SKBaggingRegressor, SKBaggingRegressorBuilder, SKBaggingRegressorModel, SKBaseEstimatorError,
+};
 pub use bootstrap::SKMaximumSamples;
 pub use gradient_boosting::{
     SKGradientBoostingClassificationLoss, SKGradientBoostingClassifier,
