@@ -2,11 +2,14 @@
 
 ## 1. Graph
 
-- [ ] 1.1 Add `dag.yaml` with every active change, lane, `depends_on`,
+- [x] 1.1 Add `dag.yaml` with every active change, lane, `depends_on`,
   `soft_depends_on`, join flags and completion checks; verify it parses as YAML.
 - [ ] 1.2 Add a consistency check that every dependency resolves to a known change, there
   are no duplicates and every change has a lane/completion block; verify with the check.
-- [ ] 1.3 Add the lane `merge_order` lists and confirm they match the design table.
+- [x] 1.3 Add the lane `merge_order` lists and confirm they match the design table.
+- [x] 1.4 Add the `r` language lane with the `r-bindings` change (own repository
+  `neurono-ml/sciencekit-r`, depending on `ffi-core` and `interop-foundation`); verify
+  the graph still parses and every dependency resolves.
 
 ## 2. Readiness and completion tooling
 
@@ -20,7 +23,7 @@
 
 ## 3. Documentation and review
 
-- [ ] 3.1 Keep `design.md` layers/parallel tables in sync with `dag.yaml`; verify with the
+- [x] 3.1 Keep `design.md` layers/parallel tables in sync with `dag.yaml`; verify with the
   consistency check.
 - [ ] 3.2 Run `openspec validate implementation-dag` and `mdbook build docs`.
 - [ ] 3.3 Independent review by a separate agent validating that every active change is in

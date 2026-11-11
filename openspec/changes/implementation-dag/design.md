@@ -2,7 +2,7 @@
 
 ## Context
 
-See `proposal.md` — Why. The source of truth is `dag.yaml` (60 active changes, plus three
+See `proposal.md` — Why. The source of truth is `dag.yaml` (61 active changes, plus three
 superseded nodes kept for traceability). This design
 explains the layers, lanes and the automated cycle; it must stay in sync with the YAML.
 
@@ -25,7 +25,7 @@ Computed from `depends_on` only (soft dependencies do not block start):
 | Layer | Changes ready at this layer |
 |---|---|
 | L0 | representation-parity, wave-seven-deferrals, deterministic-randomness, clustering-contracts, interop-contracts, interop-foundation, gpu-compute-contracts, telemetry-export, ffi-core, sparse-pairwise-distances, kd-tree-and-ball-tree, knn-imputer, metrics-ranking, type-safe-pipeline, sparse-streaming-coverage |
-| L1 | randomized-svd-kernel, model-selection-core, metrics-clustering, decision-tree-cart, dbscan, kmeans-lloyd-elkan, knn-classifier-regressor, svm-svc-svr, gpu-opencl-backend, gpu-cuda-backend, gpu-rocm-backend, lua-bindings, go-bindings, arrow-interop, safetensors-internal-format, json-debug-format, feature-union, pipeline-dag, streaming-pipeline |
+| L1 | randomized-svd-kernel, r-bindings, model-selection-core, metrics-clustering, decision-tree-cart, dbscan, kmeans-lloyd-elkan, knn-classifier-regressor, svm-svc-svr, gpu-opencl-backend, gpu-cuda-backend, gpu-rocm-backend, lua-bindings, go-bindings, arrow-interop, safetensors-internal-format, json-debug-format, feature-union, pipeline-dag, streaming-pipeline |
 | L2 | pca, random-forest, gradient-boosting, minibatch-kmeans-streaming, svm-linear-svc, grid-search-cv, outlier-detection, polars-interop, datafusion-interop, memory-mapped-interop, julia-dataset-interop, jvm-dataset-interop |
 | L3 | truncated-svd, incremental-pca, bagging, histogram-gradient-boosting, halving-grid-search |
 | L4 | model-export-retrofit (join over all model families) |
@@ -63,6 +63,7 @@ one change is `in_progress` at a time (merge-order hazard). `∥` means parallel
 | python | python-bindings-complete → python-dataset-interop |
 | julia | julia-dataset-interop |
 | jvm | jvm-dataset-interop |
+| r | r-bindings |
 | streaming | sparse-streaming-coverage |
 | product | umbrella-crate → workflows-cli |
 
@@ -82,6 +83,8 @@ one change is `in_progress` at a time (merge-order hazard). `∥` means parallel
   `status: superseded` and are never scheduled.
 - `polars-datafusion-sources` is superseded by `arrow-interop`, `polars-interop`,
   `datafusion-interop` and `memory-mapped-interop`; it is not scheduled.
+- `r-bindings` is the R lane over the stable C ABI: it needs `ffi-core` for the ABI
+  itself and `interop-foundation` for the model-state contract behind save/load.
 - `umbrella-crate`, `python-bindings-complete` and `workflows-cli` are joins and should
   start only after their dependency sets are merged.
 - `safetensors-internal-format` and `json-debug-format` have a **soft** dependency on

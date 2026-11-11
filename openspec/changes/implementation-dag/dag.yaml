@@ -113,6 +113,9 @@ lanes:
 - id: jvm
   merge_order:
   - jvm-dataset-interop
+- id: r
+  merge_order:
+  - r-bindings
 changes:
 - id: representation-parity
   group: foundation-docs
@@ -851,3 +854,15 @@ changes:
     - ./gradlew test
     - sbt test
     - cargo test -p sciencekit_jvm_abi
+- id: r-bindings
+  group: cross-cutting
+  lane: r
+  depends_on:
+  - ffi-core
+  - interop-foundation
+  completion:
+    openspec: openspec status --change r-bindings --json
+    tests:
+    - R CMD check .
+    extra:
+    - openspec validate r-bindings

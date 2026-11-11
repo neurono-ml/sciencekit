@@ -2,7 +2,7 @@
 
 ## Why
 
-There are 60 active OpenSpec changes across Waves 3–7, cross-cutting work and the newly
+There are 61 active OpenSpec changes across Waves 3–7, cross-cutting work and the newly
 added dataset interop changes. Agents need one authoritative dependency graph, with
 completion checks, so they can start independent changes in parallel, block on real
 dependencies, and avoid merge conflicts in shared crates. Today the ordering is spread
@@ -24,6 +24,8 @@ across wave-plan prose and per-change designs.
 - Dataset interop nodes included: `interop-foundation`, `arrow-interop`,
   `polars-interop`, `datafusion-interop`, `memory-mapped-interop`,
   `python-dataset-interop`, `julia-dataset-interop`, `jvm-dataset-interop`.
+- Language-binding nodes included: `lua-bindings`, `go-bindings`, `r-bindings` (own
+  `r` lane, alongside the `python`, `julia` and `jvm` lanes).
 - Superseded nodes retained for traceability: `polars-datafusion-sources`,
   `julia-bindings`, `jvm-bindings`.
 - No application code and no runtime behavior change; `.openspec.yaml` sets
