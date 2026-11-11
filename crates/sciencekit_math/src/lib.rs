@@ -50,7 +50,9 @@ pub use backend::{
     SKMatrixMultiplyBackend, SKNormKind, SKQRDecomposition, SKSingularValueDecomposition,
     sk_default_math_backend, sk_math_backend_for_kind,
 };
-pub use decomposition::{SKRandomizedSvdResult, sk_seeded_projection};
+pub use decomposition::{
+    SKRandomizedSvdBuilder, SKRandomizedSvdResult, sk_randomized_svd, sk_seeded_projection,
+};
 pub use kernels::{
     SK_AXIS_SUM_GRAIN, SK_BINARY_COMBINE_GRAIN, SK_ELEMENTWISE_TRANSFORM_GRAIN,
     SK_SCALE_IN_PLACE_GRAIN, sk_axis_min_max, sk_axis_sum, sk_axis_sum_squares, sk_binary_combine,
