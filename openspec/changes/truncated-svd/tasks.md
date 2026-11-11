@@ -5,7 +5,7 @@
 - [x] 1.1 Create `crates/sciencekit_decomposition/src/truncated_svd/` with dispatcher
   `mod.rs`, config and model; verify `cargo test -p sciencekit_decomposition truncated`
   compiles.
-- [ ] 1.2 Implement the randomized-SVD fit and model state (components, singular values,
+- [x] 1.2 Implement the randomized-SVD fit and model state (components, singular values,
   explained variance and ratio), with a rank-1/rank-2 reconstruction test; verify with
   `cargo test -p sciencekit_decomposition truncated_fit`.
 - [ ] 1.3 Implement dense/sparse parity and a no-densification test, including the
