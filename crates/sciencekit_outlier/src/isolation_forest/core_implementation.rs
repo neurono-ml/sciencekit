@@ -8,7 +8,7 @@ use super::config::{SKContamination, SKIsolationMaximumSamples};
 /// Configured Isolation Forest outlier detector (spec `isolation-forest`).
 ///
 /// Constructed exclusively via [`SKIsolationForest::build`].
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct SKIsolationForest<F: SKFloat> {
     pub(super) state: SKBuilderState,
     pub(super) number_of_trees: usize,

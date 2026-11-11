@@ -9,7 +9,7 @@ use super::config::{SKContamination, SKIsolationMaximumSamples};
 use super::core_implementation::SKIsolationForest;
 
 /// Builder-only construction surface for [`SKIsolationForest`].
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct SKIsolationForestBuilder<F: SKFloat> {
     state: SKBuilderState,
     number_of_trees: usize,

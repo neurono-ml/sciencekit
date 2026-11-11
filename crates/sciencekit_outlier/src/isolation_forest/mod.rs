@@ -26,6 +26,8 @@ mod config_tests;
 #[cfg(test)]
 mod isolation_builder_tests;
 #[cfg(test)]
+mod isolation_concurrency_tests;
+#[cfg(test)]
 mod isolation_fit_tests;
 #[cfg(test)]
 mod isolation_path_tests;

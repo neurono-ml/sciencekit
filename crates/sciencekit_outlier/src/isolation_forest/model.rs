@@ -4,7 +4,7 @@ use sciencekit_common::{SKBackendKind, SKExecutionMode, SKFloat};
 use sciencekit_tree::SKTree;
 
 /// Fitted Isolation Forest model holding the isolation-tree ensemble and score offset.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct SKIsolationForestModel<F> {
     pub(super) trees: Vec<SKTree<F>>,
     pub(super) subsample_size: usize,
