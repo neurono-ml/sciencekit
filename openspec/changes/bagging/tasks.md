@@ -42,7 +42,7 @@
 - [x] 4.2 Add representation tests with a sparse-capable base estimator and a dense-only
   base estimator, asserting the base error surfaces through `SKBaggingError::Base`; verify
   with `cargo test -p sciencekit_ensemble bagging_representation`.
-- [ ] 4.3 Add validation tests for empty input, zero estimator count, invalid fractions,
+- [x] 4.3 Add validation tests for empty input, zero estimator count, invalid fractions,
   feature-count mismatch and non-finite values; verify with
   `cargo test -p sciencekit_ensemble bagging_validation`.
 - [ ] 4.4 Add a `Send + Sync` assertion and a concurrent-prediction test sharing one
