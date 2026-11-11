@@ -258,6 +258,10 @@ importances and non-densifying CSR parity.
 The [DBSCAN chapter](./ch42-dbscan.html) adds density reachability over spatial trees and
 sparse brute force, the core/border/noise taxonomy with typed `SKClusterLabel::Noise`,
 deterministic component numbering and the nearest-core `predict_clusters` extension.
+The [PCA chapter](./ch44-pca.html) builds `SKPCA` in `sciencekit_decomposition` on top of
+the randomized SVD kernel: feature centering, the `Full`/`Randomized`/`CovarianceEigh`
+solver portfolio and `Auto` resolution, component-sign determinism, epsilon-floored
+whitening, and the explicit sparse-densification contract.
 The [JSON debug format chapter](./ch45-json-debug-format.html) adds the deterministic
 human-readable `SKModelState` schema, the pretty and compact writer, the duplicate-aware
 validating reader and the round-trip acceptance guarantees across scalar and tensor types.
