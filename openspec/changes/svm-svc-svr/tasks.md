@@ -44,7 +44,7 @@
 - [x] 2.5 Implement the binary C-SVC SMO loop with clipping and bias recovery, and verify
   it separates a small separable data set and matches a hand-computed dual solution on a
   two-point problem; verify with `cargo test -p sciencekit_svm svc`.
-- [ ] 2.6 Implement the epsilon-SVR SMO loop over the `2n` formulation, and verify a
+- [x] 2.6 Implement the epsilon-SVR SMO loop over the `2n` formulation, and verify a
   one-dimensional smooth response, the epsilon band and the support-vector count; verify
   with `cargo test -p sciencekit_svm svr`.
 
