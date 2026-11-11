@@ -141,21 +141,7 @@ fn safetensors_shards_rejects_duplicate_shards_duplicate_tensors_and_mismatched_
     let mismatched_meta_index = temporary_directory.path().join("mm.safetensors.index.json");
     std::fs::write(
         &mismatched_meta_index,
-        r#"{
-            "format_version": 1,
-            "metadata": {
-                "sciencekit.format_version": "1",
-                "sciencekit.estimator_name": "SKLasso",
-                "sciencekit.scalar_data_type": "F64",
-                "sciencekit.feature_count": "2",
-                "sciencekit.parameters": "{}"
-            },
-            "shards": ["s1.safetensors", "s3.safetensors"],
-            "weight_map": {
-                "lasso.weights": "s1.safetensors",
-                "ridge.intercept": "s3.safetensors"
-            }
-        }"#,
+        r#"{"format_version":1,"metadata":{"sciencekit.format_version":"1","sciencekit.estimator_name":"SKLasso","sciencekit.scalar_data_type":"F64","sciencekit.feature_count":"2","sciencekit.parameters":"{}"},"shards":["s1.safetensors","s3.safetensors"],"weight_map":{"lasso.weights":"s1.safetensors","ridge.intercept":"s3.safetensors"}}"#,
     )
     .unwrap();
     assert!(matches!(

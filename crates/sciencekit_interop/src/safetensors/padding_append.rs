@@ -8,6 +8,8 @@ use std::path::Path;
 
 use sciencekit_common::{SKError, SKFloat, SKModelState, SKTensor};
 
+use super::compression::decompress_safetensors_bytes;
+use super::compression_types::{SKSafetensorsCompression, sk_detect_safetensors_compression};
 use super::header::{
     SK_SAFETENSORS_FORMAT_VERSION, SK_SAFETENSORS_PADDING_TENSOR_NAME, decode_metadata_header,
 };
@@ -45,7 +47,10 @@ pub(crate) fn append_tensors_to_path<F: SKFloat>(
         );
     }
 
-    let file_bytes = fs::read(path)?;
+    let raw_file_bytes = fs::read(path)?;
+    let is_compressed = sk_detect_safetensors_compression(&raw_file_bytes).is_some()
+        || SKSafetensorsCompression::from_path(path).is_some();
+    let file_bytes = decompress_safetensors_bytes(Some(path), &raw_file_bytes)?;
     let mut metadata_map = validate_wire_safetensors(&file_bytes)?;
     let parsed_metadata = decode_metadata_header::<F>(&metadata_map)?;
 
@@ -88,7 +93,7 @@ pub(crate) fn append_tensors_to_path<F: SKFloat>(
         encoded_additions.push((tensor.name().to_string(), dtype, shape, payload));
     }
 
-    if added_bytes <= padding_span {
+    if !is_compressed && added_bytes <= padding_span {
         let remaining_padding = padding_span - added_bytes;
         let mut updated_metadata = metadata_map.clone();
         updated_metadata.insert(

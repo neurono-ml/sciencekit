@@ -46,6 +46,8 @@ pub use writer_functions::{
 };
 
 #[cfg(test)]
+mod safetensors_compression_detection_tests;
+#[cfg(test)]
 mod safetensors_compression_tests;
 #[cfg(test)]
 mod safetensors_padding_tests;
