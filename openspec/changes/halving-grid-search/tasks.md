@@ -12,7 +12,7 @@
 
 - [x] 2.1 Implement seeded resource subsampling and stratified classification
   subsampling; verify with `cargo test -p sciencekit_model_selection halving_subsample`.
-- [ ] 2.2 Reuse the grid-search evaluation over the subsampled folds and store round
+- [x] 2.2 Reuse the grid-search evaluation over the subsampled folds and store round
   results; verify with `cargo test -p sciencekit_model_selection halving_evaluation`.
 - [ ] 2.3 Implement aggressive elimination and test a round that prunes candidates early;
   verify with `cargo test -p sciencekit_model_selection halving_aggressive`.
