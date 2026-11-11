@@ -52,10 +52,11 @@
 
 - [x] 5.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under `Unreleased →
   Added` for the ensemble crate, both forests and OOB scoring.
-- [ ] 5.2 Companion documentation change on its own `docs/*` branch (merged into
-  `docs/documentations`): add the random-forest chapter, register it in `SUMMARY.md`, add
-  a `Development Explained` chapter covering bagging, feature subsampling, OOB and
-  parallel aggregation, update `maintaining.md`, and verify with `mdbook build docs`.
+- [x] 5.2 Companion documentation change on its own `docs/*` branch (merged into
+  `docs/documentations`): add `docs/src/development-explained/ch40-random-forest.md`
+  covering bagging, feature subsampling, OOB and parallel aggregation, register it in
+  `SUMMARY.md`, update `algorithms.md` and `maintaining.md`, and verify with
+  `mdbook build docs`.
 - [x] 5.3 Record the deferred missing-value routing, streaming, `memmap2` and export work
   in `docs/PRD.md`; verify the amended paragraphs render.
 - [ ] 5.4 Independent review by a separate agent validating every scenario in
