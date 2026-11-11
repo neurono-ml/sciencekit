@@ -29,7 +29,7 @@
 
 ## 3. Validation and concurrency
 
-- [ ] 3.1 Add validation tests for empty batches, component count, batch-size restriction,
+- [x] 3.1 Add validation tests for empty batches, component count, batch-size restriction,
   feature-count mismatch and non-finite values; verify with
   `cargo test -p sciencekit_decomposition incremental_validation`.
 - [ ] 3.2 Add repeated-fit determinism, batch-size invariance, concurrent transform and
