@@ -74,5 +74,6 @@
   - [Principal Component Analysis: centering, three solvers and honest sparsity](development-explained/ch44-pca.md)
   - [JSON debug format: reading a fitted model with your eyes](development-explained/ch45-json-debug-format.md)
   - [Generic bagging: composing any learner over bootstrap rows, routed subspaces and honest out-of-bag scores](development-explained/ch46-bagging.md)
+  - [Outlier detection: random isolation trees, path length and the contamination offset](development-explained/ch48-outlier-detection.md)
   - [Extended Safetensors format: safe binary checkpoints, sharding, in-place padding and compression](development-explained/ch54-safetensors-internal-format.md)
   - [Maintaining this book](development-explained/maintaining.md)
