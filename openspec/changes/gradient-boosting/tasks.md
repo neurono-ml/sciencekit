@@ -6,7 +6,7 @@
   response vector, leaf-count reporting and leaf-value replacement; confirm the failures,
   then implement `structure/build.rs` and `structure/leaf_values.rs`; verify with
   `cargo test -p sciencekit_tree structure`.
-- [ ] 1.2 Add a test proving `SKDecisionTreeRegressor` uses its public criterion and is
+- [x] 1.2 Add a test proving `SKDecisionTreeRegressor` uses its public criterion and is
   unaffected by the advanced surface; verify with
   `cargo test -p sciencekit_tree structure`.
 
