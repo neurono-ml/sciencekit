@@ -8,7 +8,7 @@
 - [x] 1.2 Implement the per-center update and count bookkeeping, with the one-center
   closed form and learning-rate decay tests; verify with
   `cargo test -p sciencekit_cluster minibatch_update`.
-- [ ] 1.3 Implement the deterministic reassignment rule and tests for threshold crossing
+- [x] 1.3 Implement the deterministic reassignment rule and tests for threshold crossing
   and outlier choice; verify with `cargo test -p sciencekit_cluster minibatch_reassign`.
 
 ## 2. Initialization and partial fit
