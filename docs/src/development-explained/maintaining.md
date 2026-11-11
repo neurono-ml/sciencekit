@@ -248,3 +248,6 @@ Interface in both directions and the columnar file sources with projection pushd
 inventory and capabilities, the deterministic selection rule, the validated device
 buffers, the closed kernel catalogue and the execution plan that records a backend and a
 fallback reason.
+The [randomized SVD chapter](./ch39-randomized-svd.html) adds the seeded range finder, the
+thin Householder QR, the small Gram SVD, the sparse products without densification, the
+implicit centering and the accuracy bound against the exact decomposition.
