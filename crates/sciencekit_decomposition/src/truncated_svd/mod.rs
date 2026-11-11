@@ -5,10 +5,15 @@
 //! its submodules; every implementation lives in its own file.
 
 mod config;
+mod fit;
 mod model;
+mod validation;
+mod variance;
 
 pub use config::SKTruncatedSVDAlgorithm;
 pub use model::SKTruncatedSVDModel;
 
+#[cfg(test)]
+mod truncated_fit_tests;
 #[cfg(test)]
 mod truncated_model_tests;
