@@ -28,7 +28,7 @@
 
 ## 2. SVM crate scaffold and SMO core
 
-- [ ] 2.1 Create `crates/sciencekit_svm` with `Cargo.toml`, `lib.rs` and dispatcher
+- [x] 2.1 Create `crates/sciencekit_svm` with `Cargo.toml`, `lib.rs` and dispatcher
   `mod.rs` files for `kernel`, `smo`, `svc`, `svr`, `probability`; add it to
   `[workspace.members]`; verify `cargo test -p sciencekit_svm` compiles an empty crate.
 - [ ] 2.2 Implement the gradient state and second-order working-set selection in
