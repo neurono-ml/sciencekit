@@ -1,14 +1,15 @@
 //! The random-forest regressor configuration estimator.
 
 use sciencekit_common::{
-    SKBackendKind, SKBuilderState, SKError, SKExecutionContext, SKExecutionMode, SKExecutionPlan,
-    SKFloat,
+    SKBackendKind, SKBuilderState, SKDataView, SKError, SKExecutionContext, SKExecutionMode,
+    SKExecutionPlan, SKFloat, SKSupervisedFit, SKTargetView,
 };
 use sciencekit_tree::{SKMaximumFeatures, SKTreeCriterion};
 
 use crate::bootstrap::SKMaximumSamples;
 
 use super::regressor_builder::SKRandomForestRegressorBuilder;
+use super::regressor_model::SKRandomForestRegressorModel;
 
 /// Breiman random-forest regressor, constructed only through its builder.
 #[derive(Debug, Clone)]
@@ -96,5 +97,22 @@ impl<F: SKFloat> SKRandomForestRegressor<F> {
     /// Resolve the execution intent against an execution context.
     pub fn resolve_plan(&self, context: &SKExecutionContext) -> Result<SKExecutionPlan, SKError> {
         self.plan.resolve_plan(context)
+    }
+}
+
+impl<F: SKFloat> SKSupervisedFit<F> for SKRandomForestRegressor<F> {
+    type Model = SKRandomForestRegressorModel<F>;
+    type Error = SKError;
+
+    fn fit<'a, X, T>(&self, features: X, targets: T) -> Result<Self::Model, Self::Error>
+    where
+        X: TryInto<SKDataView<'a, F>, Error = SKError>,
+        T: TryInto<SKTargetView<'a, F>, Error = SKError>,
+    {
+        super::regressor_fit::sk_fit_random_forest_regressor(
+            self,
+            features.try_into()?,
+            targets.try_into()?,
+        )
     }
 }

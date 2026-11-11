@@ -1,14 +1,15 @@
 //! The random-forest classifier configuration estimator.
 
 use sciencekit_common::{
-    SKBackendKind, SKBuilderState, SKError, SKExecutionContext, SKExecutionMode, SKExecutionPlan,
-    SKFloat,
+    SKBackendKind, SKBuilderState, SKDataView, SKError, SKExecutionContext, SKExecutionMode,
+    SKExecutionPlan, SKFloat, SKSupervisedFit, SKTargetView,
 };
 use sciencekit_tree::{SKClassWeight, SKMaximumFeatures, SKTreeCriterion};
 
 use crate::bootstrap::SKMaximumSamples;
 
 use super::classifier_builder::SKRandomForestClassifierBuilder;
+use super::classifier_model::SKRandomForestClassifierModel;
 
 /// Breiman random-forest classifier, constructed only through its builder.
 #[derive(Debug, Clone)]
@@ -102,5 +103,22 @@ impl<F: SKFloat> SKRandomForestClassifier<F> {
     /// Resolve the execution intent against an execution context.
     pub fn resolve_plan(&self, context: &SKExecutionContext) -> Result<SKExecutionPlan, SKError> {
         self.plan.resolve_plan(context)
+    }
+}
+
+impl<F: SKFloat> SKSupervisedFit<F> for SKRandomForestClassifier<F> {
+    type Model = SKRandomForestClassifierModel<F>;
+    type Error = SKError;
+
+    fn fit<'a, X, T>(&self, features: X, targets: T) -> Result<Self::Model, Self::Error>
+    where
+        X: TryInto<SKDataView<'a, F>, Error = SKError>,
+        T: TryInto<SKTargetView<'a, F>, Error = SKError>,
+    {
+        super::classifier_fit::sk_fit_random_forest_classifier(
+            self,
+            features.try_into()?,
+            targets.try_into()?,
+        )
     }
 }

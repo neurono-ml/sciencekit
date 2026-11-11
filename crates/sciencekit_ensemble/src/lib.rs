@@ -24,8 +24,8 @@ pub mod random_forest;
 
 pub use bootstrap::SKMaximumSamples;
 pub use random_forest::{
-    SKRandomForestClassifier, SKRandomForestClassifierBuilder, SKRandomForestRegressor,
-    SKRandomForestRegressorBuilder,
+    SKRandomForestClassifier, SKRandomForestClassifierBuilder, SKRandomForestClassifierModel,
+    SKRandomForestRegressor, SKRandomForestRegressorBuilder, SKRandomForestRegressorModel,
 };
 
 // Re-export the split vocabulary owned by `sciencekit_tree` so consumers

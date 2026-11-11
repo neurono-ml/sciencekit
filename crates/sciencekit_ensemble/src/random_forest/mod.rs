@@ -6,15 +6,26 @@
 
 mod classifier;
 mod classifier_builder;
+mod classifier_fit;
+mod classifier_model;
+mod execution;
+#[allow(dead_code)]
+mod input_validation;
 mod regressor;
 mod regressor_builder;
+mod regressor_fit;
+mod regressor_model;
 mod validation;
 
 pub use crate::bootstrap::SKMaximumSamples;
 pub use classifier::SKRandomForestClassifier;
 pub use classifier_builder::SKRandomForestClassifierBuilder;
+pub use classifier_model::SKRandomForestClassifierModel;
 pub use regressor::SKRandomForestRegressor;
 pub use regressor_builder::SKRandomForestRegressorBuilder;
+pub use regressor_model::SKRandomForestRegressorModel;
 
 #[cfg(test)]
 mod forest_builder_tests;
+#[cfg(test)]
+mod forest_fit_tests;
