@@ -75,6 +75,18 @@ pub(super) fn sk_resolve_incoming_block<F: SKFloat>(
     if blocks.len() == 1 {
         let single = blocks.into_iter().next().unwrap();
         let width = single.number_of_columns();
+        if let Some(&[expected_width]) = expected_widths {
+            if width != expected_width {
+                let rows = input_block.number_of_rows();
+                return Err(SKPipelineGraphNodeError::node(
+                    node,
+                    SKError::ShapeMismatch {
+                        expected: vec![rows, expected_width],
+                        found: vec![rows, width],
+                    },
+                ));
+            }
+        }
         return Ok((single, vec![width]));
     }
 
