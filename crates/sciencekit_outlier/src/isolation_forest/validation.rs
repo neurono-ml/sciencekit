@@ -81,11 +81,8 @@ pub(super) fn sk_validate_fit_features<F: SKFloat>(
 ) -> Result<(usize, usize), SKError> {
     sk_validate_supported_view(features)?;
     let (rows_count, columns_count) = sk_view_dimensions(features);
-    if rows_count == 0 {
+    if rows_count == 0 || columns_count == 0 {
         return Err(SKError::EmptyInput { operation });
-    }
-    if columns_count == 0 {
-        return Err(SKError::shape_mismatch_2d(rows_count, 1, rows_count, 0));
     }
     if let SKIsolationMaximumSamples::Count(explicit_count) = maximum_samples {
         if explicit_count > rows_count {

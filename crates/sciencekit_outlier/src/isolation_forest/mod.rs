@@ -35,3 +35,5 @@ mod isolation_representation_tests;
 mod isolation_score_tests;
 #[cfg(test)]
 mod isolation_tree_tests;
+#[cfg(test)]
+mod isolation_validation_tests;
