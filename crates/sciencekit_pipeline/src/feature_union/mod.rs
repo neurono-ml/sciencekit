@@ -11,6 +11,7 @@ mod builder;
 mod concatenate;
 mod errors;
 mod model;
+mod pipeline_stage;
 mod stages;
 
 pub use append::SKAppendUnionStage;
@@ -28,6 +29,8 @@ mod union_concat_tests;
 mod union_fit_tests;
 #[cfg(test)]
 mod union_model_tests;
+#[cfg(test)]
+mod union_pipeline_tests;
 #[cfg(test)]
 mod union_stages_tests;
 #[cfg(test)]
