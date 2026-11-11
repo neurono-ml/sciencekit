@@ -8,12 +8,14 @@ mod append;
 mod boxed;
 mod builder;
 mod concatenate;
+mod errors;
 mod model;
 mod stages;
 
 pub use append::SKAppendUnionStage;
 pub use boxed::{SKBlockTransformer, SKBoxedFittedStage};
 pub use builder::{SKFeatureUnion, SKFeatureUnionBuilder};
+pub use errors::SKFeatureUnionMemberError;
 pub use model::SKFeatureUnionModel;
 pub use stages::{SKFeatureUnionArity, SKFeatureUnionStages};
 
@@ -25,3 +27,5 @@ mod union_concat_tests;
 mod union_fit_tests;
 #[cfg(test)]
 mod union_stages_tests;
+#[cfg(test)]
+mod union_validation_tests;

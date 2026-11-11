@@ -8,6 +8,7 @@ use sciencekit_common::{SKError, SKFloat};
 use crate::{SKFeatureBlock, SKPipelineTransformer};
 
 use super::builder::{SKFeatureUnion, SKFeatureUnionBuilder};
+use super::errors::{SKFeatureUnionMemberError, sk_validate_probe_output};
 use super::stages::{SKFeatureUnionArity, SKFeatureUnionStages};
 
 /// Type-erased fitted state of one dynamic [`SKBlockTransformer`] member.
@@ -80,10 +81,10 @@ impl<F: SKFloat> SKFeatureUnionArity for Vec<Box<dyn SKBlockTransformer<F>>> {
 impl<F: SKFloat> SKFeatureUnionStages<F> for Vec<Box<dyn SKBlockTransformer<F>>> {
     type FittedStages = Vec<SKBoxedFittedStage>;
 
-    fn fit_stages(
+    fn fit_stages_checked(
         &self,
         block: &SKFeatureBlock<F>,
-    ) -> Result<(Self::FittedStages, Vec<usize>), SKError> {
+    ) -> Result<(Self::FittedStages, Vec<usize>), SKFeatureUnionMemberError> {
         let expected_rows = block.number_of_rows();
         let pairs: Vec<(SKBoxedFittedStage, usize)> = self
             .iter()
@@ -95,16 +96,13 @@ impl<F: SKFloat> SKFeatureUnionStages<F> for Vec<Box<dyn SKBlockTransformer<F>>>
                     operation = "fit"
                 );
                 let _guard = span.enter();
-                let fitted = stage.fit_block(block)?;
-                let probe = stage.transform_block(&fitted, block)?;
-                let found_rows = probe.number_of_rows();
-                let width = probe.number_of_columns();
-                if found_rows != expected_rows {
-                    return Err(SKError::ShapeMismatch {
-                        expected: vec![expected_rows, width],
-                        found: vec![found_rows, width],
-                    });
-                }
+                let fitted = stage
+                    .fit_block(block)
+                    .map_err(|error| SKFeatureUnionMemberError::member(member_index, error))?;
+                let probe = stage
+                    .transform_block(&fitted, block)
+                    .map_err(|error| SKFeatureUnionMemberError::member(member_index, error))?;
+                let width = sk_validate_probe_output(member_index, &probe, expected_rows)?;
                 Ok((fitted, width))
             })
             .collect::<Result<Vec<_>, _>>()?;
@@ -113,11 +111,11 @@ impl<F: SKFloat> SKFeatureUnionStages<F> for Vec<Box<dyn SKBlockTransformer<F>>>
         Ok((fitted_stages, widths))
     }
 
-    fn transform_stages(
+    fn transform_stages_checked(
         &self,
         fitted: &Self::FittedStages,
         block: &SKFeatureBlock<F>,
-    ) -> Result<Vec<SKFeatureBlock<F>>, SKError> {
+    ) -> Result<Vec<SKFeatureBlock<F>>, SKFeatureUnionMemberError> {
         self.iter()
             .zip(fitted.iter())
             .enumerate()
@@ -128,7 +126,9 @@ impl<F: SKFloat> SKFeatureUnionStages<F> for Vec<Box<dyn SKBlockTransformer<F>>>
                     operation = "transform"
                 );
                 let _guard = span.enter();
-                stage.transform_block(member_fitted, block)
+                stage
+                    .transform_block(member_fitted, block)
+                    .map_err(|error| SKFeatureUnionMemberError::member(member_index, error))
             })
             .collect()
     }
