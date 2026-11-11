@@ -1,20 +1,80 @@
-//! Shard file writing and sharded state merging (spec `safetensors-format`).
+//! Shard file writing, shard append and sharded state merging (spec `safetensors-format`).
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::path::Path;
 
-use sciencekit_common::{SKError, SKFloat, SKModelState, SKTensor};
+use sciencekit_common::{SKError, SKFloat, SKModelMetadata, SKModelState, SKTensor};
 
 use super::header::{
     SK_SAFETENSORS_FORMAT_VERSION, decode_metadata_header, encode_metadata_header,
 };
+use super::padding_encode::SKAppendOutcome;
 use super::shard_index::{
     shard_file_name_for_number, sk_read_safetensors_shard_index, sk_safetensors_index_path,
     write_shard_index_atomic,
 };
-use super::shard_plan::{SKShardIndex, SKShardPlan, state_total_payload_bytes};
+use super::shard_plan::{
+    SKShardIndex, SKShardPlan, state_total_payload_bytes, tensor_payload_bytes,
+};
 use super::single_file::{decode_single_file_parts, encode_single_file_bytes};
+
+pub(crate) fn next_available_shard_name(
+    base_path: &Path,
+    existing_shards: &[String],
+    extension: &str,
+) -> String {
+    let taken: BTreeSet<&str> = existing_shards.iter().map(String::as_str).collect();
+    let mut number = 1_usize;
+    loop {
+        let candidate = shard_file_name_for_number(base_path, number, extension);
+        if !taken.contains(candidate.as_str()) {
+            return candidate;
+        }
+        number += 1;
+    }
+}
+
+/// Append `new_tensors` as a new immutable shard on an already-sharded model.
+pub(crate) fn append_to_existing_shard_set<F: SKFloat>(
+    base_path: &Path,
+    index_path: &Path,
+    new_tensors: &[SKTensor<F>],
+    extension: &str,
+    validate_additions: impl FnOnce(&[SKTensor<F>], &BTreeSet<String>) -> Result<(), SKError>,
+    encode_shard: impl Fn(&[u8]) -> Result<Vec<u8>, SKError>,
+) -> Result<SKAppendOutcome, SKError> {
+    let mut index = sk_read_safetensors_shard_index(index_path)?;
+    let metadata: SKModelMetadata = decode_metadata_header::<F>(&index.metadata)?;
+    let existing_names: BTreeSet<String> = index.tensor_to_shard.keys().cloned().collect();
+    validate_additions(new_tensors, &existing_names)?;
+
+    let shard_file = next_available_shard_name(base_path, &index.shards, extension);
+    let shard_state = SKModelState::new(metadata, new_tensors.to_vec())?;
+    let raw_shard = encode_single_file_bytes(&shard_state)?;
+    let encoded = encode_shard(&raw_shard)?;
+    let parent = index_path.parent().unwrap_or_else(|| Path::new("."));
+    fs::write(parent.join(&shard_file), encoded)?;
+
+    let added_bytes: usize = new_tensors.iter().map(tensor_payload_bytes).sum();
+    let previous_total = index
+        .metadata
+        .get("total_size")
+        .and_then(|value| value.parse::<usize>().ok())
+        .unwrap_or(0);
+    index.metadata.insert(
+        "total_size".to_string(),
+        previous_total.saturating_add(added_bytes).to_string(),
+    );
+    index.shards.push(shard_file.clone());
+    for tensor in new_tensors {
+        index
+            .tensor_to_shard
+            .insert(tensor.name().to_string(), shard_file.clone());
+    }
+    write_shard_index_atomic(index_path, &index)?;
+    Ok(SKAppendOutcome::NewShard { shard_file })
+}
 
 /// Split `state` according to `plan`, writing immutable shards and an atomic index.
 pub(crate) fn write_sharded_state_to_path<F: SKFloat>(

@@ -8,15 +8,20 @@ use sciencekit_common::{
 use super::SKSafetensorsWriter;
 use super::shard_plan::SKShardPlan;
 
+const DEFAULT_HEADER_PADDING_MINIMUM: usize = 1024;
+
 /// Builder configuring an [`SKSafetensorsWriter`].
 ///
-/// Defaults to [`SKBackendKind::Faer`] and [`SKExecutionMode::Automatic`].
+/// Defaults to [`SKBackendKind::Faer`], [`SKExecutionMode::Automatic`], no sharding
+/// and zero padding.
 #[derive(Debug, Clone)]
 pub struct SKSafetensorsWriterBuilder {
     pub(super) state: SKBuilderState,
     pub(super) backend: SKBackendKind,
     pub(super) shard_plan: Option<SKShardPlan>,
     pub(super) pending_maximum_shard_bytes: Option<usize>,
+    pub(super) header_padding_bytes: usize,
+    pub(super) payload_padding_bytes: usize,
 }
 
 impl SKSafetensorsWriterBuilder {
@@ -27,6 +32,8 @@ impl SKSafetensorsWriterBuilder {
             backend: SKBackendKind::Faer,
             shard_plan: None,
             pending_maximum_shard_bytes: None,
+            header_padding_bytes: 0,
+            payload_padding_bytes: 0,
         }
     }
 
@@ -41,6 +48,29 @@ impl SKSafetensorsWriterBuilder {
     pub fn maximum_shard_bytes(mut self, maximum_shard_bytes: usize) -> Self {
         self.pending_maximum_shard_bytes = Some(maximum_shard_bytes);
         self.shard_plan = None;
+        self
+    }
+
+    /// Reserve payload padding bytes and matching header slack for in-place appends.
+    pub fn padding_bytes(mut self, padding_bytes: usize) -> Self {
+        self.payload_padding_bytes = padding_bytes;
+        self.header_padding_bytes = if padding_bytes > 0 {
+            padding_bytes.max(DEFAULT_HEADER_PADDING_MINIMUM)
+        } else {
+            0
+        };
+        self
+    }
+
+    /// Override the reserved JSON header padding slack in bytes.
+    pub fn header_padding_bytes(mut self, header_padding_bytes: usize) -> Self {
+        self.header_padding_bytes = header_padding_bytes;
+        self
+    }
+
+    /// Override the reserved payload padding capacity in bytes.
+    pub fn payload_padding_bytes(mut self, payload_padding_bytes: usize) -> Self {
+        self.payload_padding_bytes = payload_padding_bytes;
         self
     }
 
@@ -91,6 +121,8 @@ impl SKBuilder<SKSafetensorsWriter> for SKSafetensorsWriterBuilder {
             plan: self.state,
             backend: self.backend,
             shard_plan: resolved_shard_plan,
+            header_padding_bytes: self.header_padding_bytes,
+            payload_padding_bytes: self.payload_padding_bytes,
         })
     }
 }

@@ -5,6 +5,8 @@
 //! submodules; every implementation lives in its own file.
 
 mod header;
+mod padding_append;
+mod padding_encode;
 mod parameter_codec;
 mod reader;
 mod reader_builder;
@@ -17,8 +19,10 @@ mod wire_header_deserialization;
 mod wire_validation;
 mod writer;
 mod writer_builder;
+mod writer_functions;
 
 pub use header::{SK_SAFETENSORS_FORMAT_VERSION, SK_SAFETENSORS_PADDING_TENSOR_NAME};
+pub use padding_encode::SKAppendOutcome;
 pub use reader::{
     SKSafetensorsReader, sk_import_model_safetensors, sk_import_model_safetensors_file,
     sk_read_model_state_safetensors, sk_read_model_state_safetensors_file,
@@ -28,12 +32,15 @@ pub use shard_index::{sk_read_safetensors_shard_index, sk_safetensors_index_path
 pub use shard_plan::{
     SK_DEFAULT_MAXIMUM_SHARD_BYTES, SKShardIndex, SKShardPlan, SKShardPlanBuilder,
 };
-pub use writer::{
-    SKSafetensorsWriter, sk_export_model_safetensors, sk_export_model_safetensors_file,
+pub use writer::SKSafetensorsWriter;
+pub use writer_builder::SKSafetensorsWriterBuilder;
+pub use writer_functions::{
+    sk_append_safetensors_tensor, sk_export_model_safetensors, sk_export_model_safetensors_file,
     sk_write_model_state_safetensors, sk_write_model_state_safetensors_file,
 };
-pub use writer_builder::SKSafetensorsWriterBuilder;
 
+#[cfg(test)]
+mod safetensors_padding_tests;
 #[cfg(test)]
 mod safetensors_round_trip_io_tests;
 #[cfg(test)]
