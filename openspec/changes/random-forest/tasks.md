@@ -50,7 +50,7 @@
 
 ## 5. Documentation, changelog and review
 
-- [ ] 5.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under `Unreleased →
+- [x] 5.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under `Unreleased →
   Added` for the ensemble crate, both forests and OOB scoring.
 - [ ] 5.2 Companion documentation change on its own `docs/*` branch (merged into
   `docs/documentations`): add the random-forest chapter, register it in `SUMMARY.md`, add
