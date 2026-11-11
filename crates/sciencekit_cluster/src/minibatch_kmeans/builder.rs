@@ -3,7 +3,6 @@
 
 use sciencekit_common::{
     SKBackendKind, SKBuilderState, SKError, SKExecutionMode, SKFloat, builders::SKBuilder,
-    sk_validate_hyperparameter,
 };
 
 use super::config::SKMiniBatchKMeansConfiguration;
@@ -11,6 +10,7 @@ use super::core_implementation::SKMiniBatchKMeans;
 use crate::kmeans::SKKMeansInitialization;
 
 /// Builder-only construction surface for [`SKMiniBatchKMeans`].
+#[derive(Debug, Clone, Copy)]
 pub struct SKMiniBatchKMeansBuilder<F: SKFloat> {
     pub(super) state: SKBuilderState,
     pub(super) number_of_clusters: usize,
@@ -119,75 +119,6 @@ impl<F: SKFloat> SKMiniBatchKMeansBuilder<F> {
         self.state.execution_mode(mode);
         self
     }
-
-    /// Validates the accumulated configuration.
-    fn validated_configuration(&self) -> Result<SKMiniBatchKMeansConfiguration<F>, SKError> {
-        sk_validate_hyperparameter(
-            "number_of_clusters",
-            self.number_of_clusters > 0,
-            "must be strictly positive",
-        )?;
-        sk_validate_hyperparameter(
-            "number_of_initializations",
-            self.number_of_initializations > 0,
-            "must be strictly positive",
-        )?;
-        sk_validate_hyperparameter(
-            "batch_size",
-            self.batch_size > 0,
-            "must be strictly positive",
-        )?;
-        let initialization_batch_size = match self.initialization_batch_size {
-            Some(explicit) => {
-                sk_validate_hyperparameter(
-                    "initialization_batch_size",
-                    explicit >= self.number_of_clusters,
-                    "must be at least number_of_clusters",
-                )?;
-                explicit
-            }
-            None => self
-                .batch_size
-                .saturating_mul(3)
-                .max(self.number_of_clusters),
-        };
-        sk_validate_hyperparameter(
-            "maximum_number_of_iterations",
-            self.maximum_number_of_iterations > 0,
-            "must be strictly positive",
-        )?;
-        sk_validate_hyperparameter(
-            "maximum_number_of_epochs",
-            self.maximum_number_of_epochs > 0,
-            "must be strictly positive",
-        )?;
-        sk_validate_hyperparameter(
-            "tolerance",
-            self.tolerance.is_finite() && self.tolerance >= F::zero(),
-            "must be finite and non-negative",
-        )?;
-        sk_validate_hyperparameter(
-            "reassignment_ratio",
-            self.reassignment_ratio.is_finite()
-                && self.reassignment_ratio >= F::zero()
-                && self.reassignment_ratio <= F::one(),
-            "must be finite and in [0, 1]",
-        )?;
-        Ok(SKMiniBatchKMeansConfiguration {
-            number_of_clusters: self.number_of_clusters,
-            initialization: self.initialization,
-            number_of_initializations: self.number_of_initializations,
-            batch_size: self.batch_size,
-            initialization_batch_size,
-            maximum_number_of_iterations: self.maximum_number_of_iterations,
-            maximum_number_of_epochs: self.maximum_number_of_epochs,
-            tolerance: self.tolerance,
-            reassignment_ratio: self.reassignment_ratio,
-            random_seed: self.random_seed,
-            backend: self.backend,
-            execution_mode: self.state.execution_intent(),
-        })
-    }
 }
 
 impl<F: SKFloat> Default for SKMiniBatchKMeansBuilder<F> {
@@ -206,7 +137,7 @@ impl<F: SKFloat> SKBuilder<SKMiniBatchKMeans<F>> for SKMiniBatchKMeansBuilder<F>
     }
 
     fn build(self) -> Result<SKMiniBatchKMeans<F>, SKError> {
-        let configuration = self.validated_configuration()?;
+        let configuration = SKMiniBatchKMeansConfiguration::from_builder(&self)?;
         Ok(SKMiniBatchKMeans::from_configuration(configuration))
     }
 }
