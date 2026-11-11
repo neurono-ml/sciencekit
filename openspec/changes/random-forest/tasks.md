@@ -19,7 +19,7 @@
 - [x] 2.2 Implement parallel per-tree fitting over bootstrap samples with deterministic
   seeds and lock-free slots; verify parallel-equals-sequential and repeated-fit
   determinism; verify with `cargo test -p sciencekit_ensemble forest_fit`.
-- [ ] 2.3 Implement classifier probability averaging and label prediction with canonical
+- [x] 2.3 Implement classifier probability averaging and label prediction with canonical
   tie-breaking; verify a hand-computed forest; verify with
   `cargo test -p sciencekit_ensemble forest_classifier`.
 - [ ] 2.4 Implement regressor response averaging; verify a hand-computed forest; verify
