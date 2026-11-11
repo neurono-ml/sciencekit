@@ -65,5 +65,6 @@
   - [Grid search: trying every candidate honestly](development-explained/ch34-grid-search.md)
   - [Lua bindings: embedding Lua, not requiring it](development-explained/ch35-lua-bindings.md)
   - [Go bindings: cgo over a stable C ABI](development-explained/ch36-go-bindings.md)
+  - [Arrow interop: one memory model for every engine](development-explained/ch37-arrow-interop.md)
   - [GPU compute contracts: devices, buffers and honest fallbacks](development-explained/ch38-gpu-compute-contracts.md)
   - [Maintaining this book](development-explained/maintaining.md)
