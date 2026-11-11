@@ -19,7 +19,7 @@
 
 ## 3. Estimators and prediction
 
-- [ ] 3.1 Implement the classifier/regressor builders with defaults and validation
+- [x] 3.1 Implement the classifier/regressor builders with defaults and validation
   (`factor`, resources, empty candidates, incompatible scorer); verify with
   `cargo test -p sciencekit_model_selection halving_builder`.
 - [ ] 3.2 Implement refit, best-model accessors and classifier/regressor prediction
