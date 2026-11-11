@@ -75,7 +75,7 @@
 - [x] 4.1 Implement Platt scaling with deterministic five-fold cross-validated decision
   values and regularized maximum likelihood; verify monotonicity, probability bounds and
   a hand-computed binary fixture; verify with `cargo test -p sciencekit_svm platt`.
-- [ ] 4.2 Implement pairwise coupling from the binary probabilities, with convergence and
+- [x] 4.2 Implement pairwise coupling from the binary probabilities, with convergence and
   iteration-cap tests on a three-class fixture; verify with
   `cargo test -p sciencekit_svm coupling`.
 - [ ] 4.3 Wire `predict_probabilities` to Platt plus coupling, verify rows sum to one and
