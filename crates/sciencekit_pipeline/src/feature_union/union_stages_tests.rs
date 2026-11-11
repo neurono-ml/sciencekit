@@ -32,16 +32,16 @@ fn two_member_scalar_chain_counts_members_and_fits_both_stages() {
 
 #[test]
 fn incremental_with_stage_builds_tuples_up_to_eight_members() {
-    let s = || SKStandardScaler::build().build().unwrap();
+    let make_scaler = || SKStandardScaler::build().build().unwrap();
     let union = SKFeatureUnion::build()
-        .with_stage(s())
-        .with_stage(s())
-        .with_stage(s())
-        .with_stage(s())
-        .with_stage(s())
-        .with_stage(s())
-        .with_stage(s())
-        .with_stage(s())
+        .with_stage(make_scaler())
+        .with_stage(make_scaler())
+        .with_stage(make_scaler())
+        .with_stage(make_scaler())
+        .with_stage(make_scaler())
+        .with_stage(make_scaler())
+        .with_stage(make_scaler())
+        .with_stage(make_scaler())
         .backend(SKBackendKind::Faer)
         .execution_mode(SKExecutionMode::Automatic)
         .build()

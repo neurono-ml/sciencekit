@@ -50,6 +50,33 @@ fn accessors_report_member_count_widths_and_summed_total_width() {
 }
 
 #[test]
+fn non_default_backend_and_execution_mode_propagate_to_fitted_model() {
+    let input = SKFeatureBlock::from(array![[1.0_f64, 2.0], [3.0, 4.0]]);
+    let union = SKFeatureUnion::build()
+        .stages((
+            SKStandardScaler::build().build().unwrap(),
+            SKMinMaxScaler::<f64>::build().build().unwrap(),
+        ))
+        .backend(SKBackendKind::MatrixMultiply)
+        .execution_mode(SKExecutionMode::InProcessSynchronous)
+        .build()
+        .unwrap();
+
+    assert_eq!(union.backend(), SKBackendKind::MatrixMultiply);
+    assert_eq!(
+        union.execution_mode(),
+        SKExecutionMode::InProcessSynchronous
+    );
+
+    let fitted = union.fit(&input).unwrap();
+    assert_eq!(fitted.backend(), SKBackendKind::MatrixMultiply);
+    assert_eq!(
+        fitted.execution_mode(),
+        SKExecutionMode::InProcessSynchronous
+    );
+}
+
+#[test]
 fn fitted_tuple_and_boxed_unions_are_send_and_sync() {
     fn assert_send_sync<T: Send + Sync>() {}
     assert_send_sync::<SKFeatureUnionModel<f64, (SKStandardScaler, SKMinMaxScaler<f64>)>>();

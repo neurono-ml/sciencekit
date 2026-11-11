@@ -24,7 +24,7 @@ pub use stages::{SKFeatureUnionArity, SKFeatureUnionStages};
 #[cfg(test)]
 mod union_boxed_tests;
 #[cfg(test)]
-mod union_concat_tests;
+mod union_concatenation_tests;
 #[cfg(test)]
 mod union_fit_tests;
 #[cfg(test)]
@@ -33,5 +33,7 @@ mod union_model_tests;
 mod union_pipeline_tests;
 #[cfg(test)]
 mod union_stages_tests;
+#[cfg(test)]
+mod union_validation_fixtures_tests;
 #[cfg(test)]
 mod union_validation_tests;

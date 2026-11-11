@@ -62,34 +62,19 @@ impl<Stages> SKFeatureUnion<Stages> {
             execution_mode: self.execution_intent,
             backend: self.backend,
         };
-        let mut captured_error: Option<SKFeatureUnionMemberError> = None;
-        let outcome =
-            sk_run_operation(attributes, || match self.stages.fit_stages_checked(block) {
-                Ok(pair) => Ok(pair),
-                Err(member_error) => {
-                    let placeholder = SKError::Conversion("member fit failed".to_string());
-                    captured_error = Some(member_error);
-                    Err(placeholder)
-                }
-            });
-        match outcome {
-            Ok((fitted_stages, member_widths)) => {
-                let number_of_features = member_widths.iter().copied().sum();
-                Ok(SKFeatureUnionModel {
-                    stages: Arc::clone(&self.stages),
-                    fitted_stages,
-                    member_widths,
-                    number_of_input_features: block.number_of_columns(),
-                    number_of_features,
-                    backend: self.backend,
-                    execution_intent: self.execution_intent,
-                })
-            }
-            Err(fallback) => {
-                Err(captured_error
-                    .unwrap_or_else(|| SKFeatureUnionMemberError::union_level(fallback)))
-            }
-        }
+        sk_run_operation(attributes, || {
+            let (fitted_stages, member_widths) = self.stages.fit_stages_checked(block)?;
+            let number_of_features = member_widths.iter().copied().sum();
+            Ok(SKFeatureUnionModel {
+                stages: Arc::clone(&self.stages),
+                fitted_stages,
+                member_widths,
+                number_of_input_features: block.number_of_columns(),
+                number_of_features,
+                backend: self.backend,
+                execution_intent: self.execution_intent,
+            })
+        })
     }
 }
 
@@ -117,14 +102,6 @@ where
     ) -> Result<SKFeatureBlock<F>, SKFeatureUnionMemberError> {
         let rows_count = block.number_of_rows();
         let columns_count = block.number_of_columns();
-        if columns_count != self.number_of_input_features {
-            return Err(SKFeatureUnionMemberError::union_level(
-                SKError::ShapeMismatch {
-                    expected: vec![rows_count, self.number_of_input_features],
-                    found: vec![rows_count, columns_count],
-                },
-            ));
-        }
         let attributes = SKOperationAttributes {
             operation: SKOperationKind::Transform,
             rows_count,
@@ -132,33 +109,24 @@ where
             execution_mode: self.execution_intent,
             backend: self.backend,
         };
-        let mut captured_error: Option<SKFeatureUnionMemberError> = None;
-        let outcome = sk_run_operation(attributes, || {
-            let outputs = match self
+        sk_run_operation(attributes, || {
+            if columns_count != self.number_of_input_features {
+                return Err(SKFeatureUnionMemberError::union_level(
+                    SKError::ShapeMismatch {
+                        expected: vec![rows_count, self.number_of_input_features],
+                        found: vec![rows_count, columns_count],
+                    },
+                ));
+            }
+            let outputs = self
                 .stages
-                .transform_stages_checked(&self.fitted_stages, block)
-            {
-                Ok(outputs) => outputs,
-                Err(member_error) => {
-                    let placeholder = SKError::Conversion("member transform failed".to_string());
-                    captured_error = Some(member_error);
-                    return Err(placeholder);
-                }
-            };
+                .transform_stages_checked(&self.fitted_stages, block)?;
             sk_concatenate_blocks(
                 &outputs,
                 rows_count,
                 &self.member_widths,
                 self.number_of_features,
             )
-            .map_err(|error| {
-                let placeholder = SKError::Conversion("concatenation failed".to_string());
-                captured_error = Some(SKFeatureUnionMemberError::union_level(error));
-                placeholder
-            })
-        });
-        outcome.map_err(|fallback| {
-            captured_error.unwrap_or_else(|| SKFeatureUnionMemberError::union_level(fallback))
         })
     }
 }

@@ -25,7 +25,7 @@ impl SKBoxedFittedStage {
     }
 
     /// Borrow the underlying concrete fitted stage model.
-    pub fn downcast_ref<Fitted: 'static>(&self) -> Result<&Fitted, SKError> {
+    pub fn downcast_reference<Fitted: 'static>(&self) -> Result<&Fitted, SKError> {
         self.inner.downcast_ref::<Fitted>().ok_or_else(|| {
             SKError::Conversion(
                 "boxed feature union member received a mismatched fitted stage type".to_string(),
@@ -67,7 +67,7 @@ where
         fitted: &SKBoxedFittedStage,
         block: &SKFeatureBlock<F>,
     ) -> Result<SKFeatureBlock<F>, SKError> {
-        let concrete = fitted.downcast_ref::<Stage::Fitted>()?;
+        let concrete = fitted.downcast_reference::<Stage::Fitted>()?;
         self.transform_stage(concrete, block)
     }
 }

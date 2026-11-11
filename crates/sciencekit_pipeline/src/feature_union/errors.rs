@@ -80,25 +80,41 @@ impl From<SKFeatureUnionMemberError> for SKError {
 /// Preserve the structured [`SKError`] variant while attaching the zero-based
 /// member index to every variant that carries a dynamic message.
 pub(super) fn sk_wrap_member_error(member_index: usize, error: SKError) -> SKError {
+    let prefix = format!("feature union member {member_index}: ");
     match error {
         SKError::InvalidHyperparameter { name, reason } => SKError::InvalidHyperparameter {
             name,
-            reason: format!("feature union member {member_index}: {reason}"),
+            reason: format!("{prefix}{reason}"),
         },
         SKError::UnsupportedOperation { operation, reason } => SKError::UnsupportedOperation {
             operation,
-            reason: format!("feature union member {member_index}: {reason}"),
+            reason: format!("{prefix}{reason}"),
         },
-        SKError::Conversion(message) => {
-            SKError::Conversion(format!("feature union member {member_index}: {message}"))
-        }
+        SKError::Conversion(message) => SKError::Conversion(format!("{prefix}{message}")),
         SKError::Io(io_error) => SKError::Io(io::Error::new(
             io_error.kind(),
-            format!("feature union member {member_index}: {io_error}"),
+            format!("{prefix}{io_error}"),
         )),
+        SKError::UnknownColumn { column, suggestion } => SKError::UnknownColumn {
+            column,
+            suggestion: format!("{prefix}{suggestion}"),
+        },
+        SKError::DuplicateColumn { column, suggestion } => SKError::DuplicateColumn {
+            column,
+            suggestion: format!("{prefix}{suggestion}"),
+        },
+        SKError::UnsupportedColumnType {
+            column,
+            logical_type,
+            suggestion,
+        } => SKError::UnsupportedColumnType {
+            column,
+            logical_type,
+            suggestion: format!("{prefix}{suggestion}"),
+        },
         SKError::SchemaMismatch { expected, found } => SKError::SchemaMismatch {
             expected,
-            found: format!("feature union member {member_index}: {found}"),
+            found: format!("{prefix}{found}"),
         },
         other => other,
     }
