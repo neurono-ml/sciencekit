@@ -25,7 +25,7 @@
   implicit densification; verify with `cargo test -p sciencekit_pipeline graph_representation`.
 - [x] 3.2 Add repeated-fit determinism, concurrent prediction and `Send + Sync` tests;
   verify with `cargo test -p sciencekit_pipeline graph_concurrency`.
-- [ ] 3.3 Add `acceptance_tests/` covering tiny and large graphs, linear-equivalent graphs,
+- [x] 3.3 Add `acceptance_tests/` covering tiny and large graphs, linear-equivalent graphs,
   disconnected/cyclic fixtures, dense/sparse, concurrency and metric production; verify
   with `cargo test -p sciencekit_pipeline`.
 - [ ] 3.4 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
