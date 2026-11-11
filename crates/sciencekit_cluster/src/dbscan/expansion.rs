@@ -2,9 +2,10 @@
 
 use std::collections::VecDeque;
 
-use ndarray::Array1;
+use ndarray::{Array1, Axis};
 use sciencekit_common::{SKClusterIdentifier, SKClusterLabel, SKError, SKFloat};
 use sciencekit_neighbors::SKTrainingData;
+use sprs::CsMat;
 
 use super::config::{SKDBSCANConfiguration, SKDBSCANSearchStrategy};
 use super::region_query::{sk_build_index, sk_radius_neighborhoods, sk_resolve_strategy};
@@ -98,4 +99,34 @@ pub(crate) fn sk_expand_clusters(
         number_of_clusters: next_cluster_id,
         strategy,
     })
+}
+
+/// Extract the core rows from `training` while preserving its representation
+/// (dense `Array2` or sparse CSR `CsMat`) without densifying sparse storage.
+pub(crate) fn sk_extract_core_samples<F: SKFloat>(
+    training: &SKTrainingData<F>,
+    core_indices: &[usize],
+) -> SKTrainingData<F> {
+    match training {
+        SKTrainingData::Dense(dense) => SKTrainingData::Dense(dense.select(Axis(0), core_indices)),
+        SKTrainingData::Sparse(sparse) => {
+            let mut indptr = Vec::with_capacity(core_indices.len() + 1);
+            let mut indices = Vec::new();
+            let mut values = Vec::new();
+            indptr.push(0);
+            for &row in core_indices {
+                if let Some(vector) = sparse.outer_view(row) {
+                    indices.extend_from_slice(vector.indices());
+                    values.extend_from_slice(vector.data());
+                }
+                indptr.push(indices.len());
+            }
+            SKTrainingData::Sparse(CsMat::new(
+                (core_indices.len(), sparse.cols()),
+                indptr,
+                indices,
+                values,
+            ))
+        }
+    }
 }

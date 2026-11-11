@@ -14,3 +14,5 @@ pub use config::{SKDBSCANAlgorithm, SKDBSCANMetric, SKDBSCANSearchStrategy};
 mod dbscan_fit_tests;
 #[cfg(test)]
 mod dbscan_query_tests;
+#[cfg(test)]
+mod dbscan_representation_tests;
