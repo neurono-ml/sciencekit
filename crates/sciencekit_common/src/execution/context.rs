@@ -1,6 +1,7 @@
 //! The execution context a resolution depends on.
 
 use super::modes::SKAccessPattern;
+use crate::device::SKDeviceContext;
 
 /// The explicit context a resolution depends on. The default constructor reads
 /// the physical machine (via `sysinfo`); tests inject simulated values.
@@ -30,6 +31,10 @@ pub struct SKExecutionContext {
     /// present, the buffer guard uses it verbatim — the honest size of a sparse
     /// block's stored CSR arrays rather than its dense `rows × columns` figure.
     pub batch_byte_size_hint: Option<u64>,
+    /// The optional device request: the configured backend, the required kernel
+    /// and the enumerated device inventory. `None` means "no device was
+    /// considered" and the plan stays on the host backend.
+    pub device: Option<SKDeviceContext>,
 }
 
 impl SKExecutionContext {
@@ -56,6 +61,7 @@ impl SKExecutionContext {
             access_pattern: SKAccessPattern::Sequential,
             batch_size_hint: None,
             batch_byte_size_hint: None,
+            device: None,
         }
     }
 }

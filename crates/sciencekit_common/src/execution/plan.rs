@@ -1,5 +1,8 @@
 //! The resolved execution plan produced by resolution.
 
+use crate::device::SKFallbackReason;
+use crate::observability::SKBackendKind;
+
 use super::modes::SKExecutionMode;
 
 /// The resolved plan for one operation.
@@ -22,4 +25,11 @@ pub struct SKExecutionPlan {
     /// from the double-buffer contract with [`buffer_depth`](SKExecutionPlan::buffer_depth)
     /// pinned to `1`, and must become `(depth + 1) ×` if the depth is raised.
     pub available_memory_bytes: u64,
+    /// The backend the plan runs on — the selected device kind, or the host
+    /// backend when no device serves the operation.
+    pub backend: SKBackendKind,
+    /// Why the plan did not select a device, when one was requested but is not
+    /// usable. `None` means "no device was requested, or the selected device is
+    /// the configured one".
+    pub fallback_reason: Option<SKFallbackReason>,
 }

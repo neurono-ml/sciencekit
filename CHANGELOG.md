@@ -39,6 +39,208 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `sk_couple_pairwise_probabilities`,
   `sk_couple_pairwise_probabilities_with_budget`).
 
+- `sciencekit_pipeline` gains parallel feature branching and column-wise
+  concatenation (spec `feature-union`): `SKFeatureUnion` and
+  `SKFeatureUnionBuilder` (`build`/`start` for compile-time tuples up to eight
+  heterogeneous members via `SKFeatureUnionStages`, plus `boxed` with
+  `Vec<Box<dyn SKBlockTransformer<F>>>` for dynamic construction),
+  `SKFeatureUnionModel` exposing `number_of_members`, `member_widths`,
+  `number_of_features`, `number_of_output_features`,
+  `number_of_input_features`, `stages`, `fitted_stages`, `backend` and
+  `execution_mode`, CSR-preserving horizontal concatenation (all-dense outputs
+  stay dense; any sparse member promotes the union output to CSR without
+  densifying sparse inputs), member-indexed error context via
+  `SKFeatureUnionMemberError` (`fit_checked`/`transform_checked`), and direct
+  `SKPipelineTransformer` integration for both `SKFeatureUnion` and nested
+  `SKPipelineBuilder` branches.
+
+- `sciencekit_decomposition` sub-crate (spec `principal-component-analysis`):
+  `SKPCA<F>`, a builder-only Principal Component Analysis estimator with
+  `number_of_components` (default `None`, meaning `min(n_samples, n_features)`),
+  `svd_solver` (`Auto` default, `Full`, `Randomized`, `CovarianceEigh`),
+  `whiten` (default `false`), `tolerance` (default `0.0`),
+  `number_of_power_iterations` (default `5`), `allow_densification` (default
+  `false`), `random_seed` (default `0`), `backend` (default `Faer`) and
+  `execution_mode` (default `Automatic`). Fitting computes per-feature empirical
+  means and total unbiased centered variance, resolves `Auto` deterministically
+  (`Full` on high component fractions or small dense designs, `CovarianceEigh`
+  on tall-skinny dense designs where `n_samples > 10 * n_features` and
+  `n_features <= 1000`, and `Randomized` on larger truncated or sparse designs),
+  orients every principal component row so its largest-magnitude coordinate is
+  non-negative, and returns a distinct `SKPCAModel<F>` exposing `components`,
+  `explained_variance`, `explained_variance_ratio`, `singular_values`, `mean`,
+  `resolved_solver`, `number_of_components`, `number_of_features`, `whiten`,
+  `backend` and `execution_mode`. The `Randomized` solver fits sparse CSR views
+  through implicit centering (`SKRandomizedSvdBuilder`) without materializing a
+  dense centered matrix; `Full` and `CovarianceEigh` reject sparse input with
+  `UnsupportedRepresentation` naming `Randomized` and `SKTruncatedSVD` unless
+  `allow_densification(true)` is set, in which case a warning reports the
+  estimated dense byte cost. `SKPCAModel<F>` implements `SKFeatureTransformer<F>`
+  and inherent `transform` and `inverse_transform` over dense and CSR views
+  without densification, with floored whitening scales and row-chunked parallel
+  projection; `SKPCA::fit_transform` runs under a single `FitTransform` span.
+  Companion and acceptance tests cover `f32`/`f64`, all solvers, component
+  boundaries, whitening, validation errors, thread-count-invariant determinism,
+  concurrent sharing and reconstruction metrics (`sk_mean_squared_error`,
+  `sk_r2_score`) via `sciencekit_metrics`.
+
+- `sciencekit_cluster` gains the density-based spatial clusterer (spec
+  `dbscan`): `SKDBSCAN<F>`, builder-only with `eps` (default 0.5),
+  `minimum_samples` (default 5), `metric` (`Euclidean` default, `Manhattan`,
+  `Chebyshev`, `Cosine`), `algorithm` (`Auto` default, `KdTree`, `BallTree`,
+  `BruteForce`), `leaf_size` (default 40), `backend` (default `Faer`) and
+  `execution_mode` (default `Automatic`). Fit obtains each row's inclusive
+  `eps` neighbourhood through `sciencekit_neighbors` (`SKKDTree` or
+  `SKBallTree` for dense tree-compatible metrics, `SKBruteForceSearcher` for
+  sparse CSR or cosine distance, never densifying sparse storage) with the row
+  itself always included, identifies core samples (`>= minimum_samples`
+  neighbours), and expands density-connected components deterministically in
+  ascending training-index order so the smallest core index in each component
+  seeds its sequential cluster identifier and shared border points join the
+  earliest-seeded cluster; unreachable non-core points receive the explicit
+  `SKClusterLabel::Noise` variant. `SKDBSCANModel<F>` is `Send + Sync`, exposes
+  `labels`, `core_sample_indices`, `number_of_clusters`, `number_of_features`,
+  `eps`, `minimum_samples`, `metric`, `search_strategy`,
+  `training_representation`, `backend` and `execution_mode`, and implements
+  `SKClustererPredictor<F>` through a documented nearest-core heuristic that
+  assigns each query row to the cluster of its nearest fitted core sample when
+  within `eps` and `SKClusterLabel::Noise` otherwise across all four dense/CSR
+  combinations. Construction and fit/predict validate empty inputs,
+  non-positive or non-finite `eps`, zero `minimum_samples` or `leaf_size`,
+  feature-count mismatches, non-finite values, CSC views and incompatible
+  tree/metric or tree/representation pairs.
+
+- `sciencekit_ensemble` introduces Breiman random forests (spec
+  `random-forests`): `SKRandomForestClassifier<F>`, `SKRandomForestRegressor<F>`
+  and `SKMaximumSamples<F>`, builder-only with `number_of_trees` (default 100),
+  `criterion` (`Gini` / `Entropy` for classification, `SquaredError` /
+  `AbsoluteError` for regression), `maximum_depth`, `minimum_samples_split`,
+  `minimum_samples_leaf`, `maximum_features` (`Sqrt` default), `bootstrap`
+  (default true), `maximum_samples` (`All` default, `Count`, `Fraction`),
+  `random_seed` (default 0), `class_weight` (classifier), `oob_score` (default
+  false), `backend` (default `Faer`) and `execution_mode` (default `Automatic`).
+  Fit grows one CART tree per bootstrap sample in parallel lock-free slots via
+  rayon, deriving distinct deterministic per-tree split and bootstrap seeds from
+  `random_seed` and the tree index so the fitted forest is identical across
+  repeated fits and rayon thread counts. Prediction averages canonical class
+  probabilities with smallest-index tie-breaking (classifier) or leaf responses
+  (regressor), exposes normalized mean feature importances, and computes
+  out-of-bag accuracy or R² through `sciencekit_metrics` exclusively over rows
+  excluded from each tree's bootstrap sample (`UnsupportedOperation` when
+  disabled or when zero rows fall out of bag). Dense and borrowed CSR designs
+  have full representation parity on fit and prediction without densifying
+  sparse inputs.
+
+- Human-readable JSON debug model format (spec `json-debug-format`):
+  `sciencekit_interop::json` adds `SKJsonDebugWriter` /
+  `SKJsonDebugWriterBuilder`, `SKJsonDebugReader` / `SKJsonDebugReaderBuilder`,
+  `SKJsonFormatMode` (`Pretty` default, `Compact`),
+  `SK_JSON_DEBUG_FORMAT_VERSION` (`1`) and the convenience entry points
+  `sk_write_model_state_json`, `sk_write_model_state_json_pretty`,
+  `sk_write_model_state_json_compact`, `sk_write_model_state_json_file`,
+  `sk_read_model_state_json`, `sk_read_model_state_json_file`,
+  `sk_export_model_json` and `sk_import_model_json` over
+  `sciencekit_common::SKModelState`. Both builders follow the shared builder
+  contract with `backend` (default `Faer`) and `execution_mode` (default
+  `Automatic`), and every write or read emits a structured `tracing` span. The
+  schema records `format_version`, `estimator`, scalar `dtype` (`"f32"` or
+  `"f64"`), `feature_count`, optional `class_labels`, untagged typed
+  `hyperparameters` and `BTreeMap`-ordered named `tensors` carrying `dtype`
+  (`"F32"`, `"F64"`, `"I64"` or `"Bool"`), `shape` and flat `values` for clean
+  line-oriented diffs and exact `f32`/`f64` round-trips. Unknown fields within
+  major version `1` are ignored for forward compatibility, while malformed JSON
+  (`SKError::Conversion`), unknown major versions
+  (`SKError::UnsupportedRepresentation`), non-finite floats
+  (`SKError::NonFiniteValue`), duplicate tensor or hyperparameter keys, invalid
+  or mismatched dtypes (`SKError::InvalidHyperparameter`) and tensor
+  shape/value-count disagreements (`SKError::ShapeMismatch`) are rejected up
+  front before materializing model state.
+
+## [0.7.0] — 2026-11-11
+
+Arrow interop, the GPU compute contracts, the randomized SVD kernel and the language bindings moving to their own repositories.
+
+### Added
+
+- Randomized SVD kernel (spec `randomized-svd`): `sciencekit_math::decomposition`
+  gains `sk_randomized_svd` and the builder `SKRandomizedSvdBuilder`, returning
+  `SKRandomizedSvdResult` (left singular vectors, non-increasing singular
+  values and right singular vectors). The range finder draws a seeded Gaussian
+  test basis from the shared deterministic generator, orthonormalizes the
+  projected basis with a thin Householder QR, refines it with the configured
+  number of power iterations and decomposes the small projected matrix. Dense
+  and CSR inputs are supported and dispatch once per operation; a sparse input
+  is never densified and the dense intermediates stay at
+  `(k + oversampling) × max(rows, columns)` cells. An optional centering vector
+  centers the matrix implicitly, without materializing a centered copy, for
+  dense and sparse inputs alike. The same seed always yields the same
+  factorization, independently of the thread count, and the singular-vector
+  signs follow a fixed convention (the largest-magnitude entry of the left
+  singular vector is positive).
+
+- `sciencekit_interop` gains the Apache Arrow adapter behind the optional,
+  default-off `arrow` feature (spec `arrow-columnar-interop`, change
+  `arrow-interop`). It imports Arrow record batches, chunked columns
+  (`Vec<ArrayRef>` — Arrow's Rust implementation removed `Table` and
+  `ChunkedArray` upstream) and batch readers into the neutral tabular seam,
+  preserving column names, order, logical types and row count. Arrow validity
+  bitmaps feed the shared missing-value policy: floating-point nulls become the
+  NaN sentinel or the constant fill, nullable integer columns retain their
+  64-bit values across import and promote at materialization with an exactness
+  guard for the target scalar (`f32` or `f64`), the categorical policy reserves
+  the missing code, and the reject policy names the Arrow field. Primitive `f32`, `f64` and `i64` columns
+  without nulls expose borrowed, pointer-identical views; text columns expose a
+  borrowed UTF-8 view; dictionary columns become category codes with a
+  deterministic, reversible label table. The Arrow-to-neutral schema mapping and
+  its reverse preserve roles and disambiguate category codes through field
+  metadata, while nested, temporal, binary, decimal, `UInt64` and `Float16`
+  columns are rejected with a structured error naming the field and a conversion
+  suggestion. Reopenable and one-shot tabular sources stream a
+  `RecordBatchReader` in batches of the configured size and mark the final
+  batch, and path-based sources open Parquet (row-group aware, with projection
+  pushdown), CSV (inferred or explicit schema, header and delimiter options),
+  Arrow IPC/Feather files and streams, and record-oriented JSON/NDJSON, all
+  reopenable and yielding structured errors for truncated or malformed files.
+  The Arrow C Data Interface is implemented in both directions for arrays and
+  batch streams with ownership transferred exactly once, release-once tests and
+  dictionary/text round trips. Exports cover predictions as floating arrays,
+  dense and supervised blocks as record batches, and CSR blocks as row pointers,
+  column indices, stored values and shape metadata, for both `f32` and `f64`.
+  Arrow versions are pinned to 58.3, the last release whose MSRV is Rust 1.85.
+
+- `sciencekit_gpu` — the device-compute contracts shared by the OpenCL, CUDA
+  and ROCm backends (spec `gpu-compute-contracts`), re-exported at the crate
+  root. `SKDeviceInfo` and `SKDeviceCapabilities` describe an enumerated
+  device, its memory, scalar types and supported kernels; `SKDeviceDiscovery`
+  is the availability-detection abstraction; `SKComputeBackend<F>` adds
+  `transfer_policy`, `upload`, `download` and `dispatch` over
+  `SKDeviceBuffer<F>`, whose builder validates device ownership, shape,
+  overflow, capacity and payload. The closed `SKGpuKernel` catalogue names
+  pairwise distance, GEMM, elementwise and tree prediction, and an unsupported
+  kernel reports `UnsupportedOperation` naming it. `gpu-opencl`, `gpu-cuda` and
+  `gpu-rocm` are off by default and the foundation crate pulls in no GPU
+  runtime; tests drive a mock backend, so no device is required to build or
+  test.
+- `SKBackendKind` gains the `OpenCl`, `Cuda` and `Rocm` kinds alongside the CPU
+  kinds, with documented display names, `FromStr` parsing, `Default`,
+  host/device predicates and `SKLinearRegressionModel` export/import round-trip
+  support. Every workspace match is updated; the host math dispatch keeps
+  device kinds on the pure-Rust backend until a GPU kernel backend owns them.
+- Deterministic device selection and honest span telemetry: `sk_select_device`
+  filters by the configured kind, the required scalar type and the required
+  kernel, then orders by `(kind priority, device index)`; when nothing matches
+  it returns `SKFallbackReason` (`NoDeviceAvailable`, `ScalarTypeNotSupported`,
+  `KernelNotSupported` or `ExplicitModeDoesNotSelectDevice`).
+  `SKExecutionContext` carries an optional `SKDeviceContext` and threads
+  `scalar_size_bytes` into selection; `SKExecutionPlan` exposes the selected
+  `backend` and `fallback_reason`. Runtimes populate the explicit process-wide
+  inventory via `sk_register_device_inventory`, and `SKOperationObservation`
+  resolves device kinds through `sk_resolve_operation_backend` so spans record
+  the backend that actually served the operation plus any fallback reason.
+- New structured errors for device work: `DeviceUnavailable` and
+  `UnsupportedScalarType` (mapped to `SKFfiStatus::Unsupported` across FFI),
+  and `DeviceTransferFailure` (mapped to `SKFfiStatus::Internal`).
+
 ### Moved
 
 - The Go bindings (spec `go-bindings`) now live in their own repository,
@@ -83,6 +285,7 @@ The k-NN imputer, grid search and the embedded Lua bindings.
 [0.4.0]: https://github.com/neurono-ml/sciencekit/compare/v0.3.0...v0.4.0
 [0.5.0]: https://github.com/neurono-ml/sciencekit/compare/v0.4.0...v0.5.0
 [0.6.0]: https://github.com/neurono-ml/sciencekit/compare/v0.5.0...v0.6.0
+[0.7.0]: https://github.com/neurono-ml/sciencekit/compare/v0.6.0...v0.7.0
 
 ### Added
 

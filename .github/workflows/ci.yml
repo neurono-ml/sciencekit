@@ -82,6 +82,8 @@ jobs:
         run: cargo update -p psm --precise 0.1.24
       - name: Core build + tests (no engine feature)
         run: cargo test -p sciencekit_interop
+      - name: Arrow adapter tests
+        run: cargo test -p sciencekit_interop --features arrow
       - name: Each optional engine feature builds
         run: |
           for feature in arrow polars datafusion memmap; do
