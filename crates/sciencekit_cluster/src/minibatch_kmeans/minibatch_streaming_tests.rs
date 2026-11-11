@@ -143,3 +143,47 @@ fn minibatch_streaming_reopenable_provider_runs_multiple_epochs_and_sparse_batch
     assert_eq!(model.counts().sum(), 54);
     assert!(!model.converged());
 }
+
+#[test]
+fn minibatch_streaming_positive_tolerance_stops_early_and_zero_tolerance_runs_full_budget() {
+    let opens_early = Arc::new(AtomicUsize::new(0));
+    let opens_early_clone = Arc::clone(&opens_early);
+    let early_provider = SKReopenableSource::new(move || {
+        opens_early_clone.fetch_add(1, Ordering::SeqCst);
+        Ok(VecBatchSource::from_dense(three_planted_chunks()))
+    });
+
+    let early_estimator = SKMiniBatchKMeans::<f64>::build()
+        .number_of_clusters(2)
+        .maximum_number_of_epochs(10)
+        .tolerance(0.05)
+        .reassignment_ratio(0.0)
+        .random_seed(3)
+        .build()
+        .unwrap();
+
+    let early_model = early_estimator.fit_streaming(early_provider).unwrap();
+    assert!(early_model.converged());
+    assert!(early_model.epochs_consumed() < 10);
+    assert!(early_model.batches_processed() < 30);
+    assert_eq!(
+        opens_early.load(Ordering::SeqCst),
+        early_model.epochs_consumed()
+    );
+
+    let zero_tolerance_provider =
+        SKReopenableSource::new(|| Ok(VecBatchSource::from_dense(three_planted_chunks())));
+    let full_budget_model = SKMiniBatchKMeans::<f64>::build()
+        .number_of_clusters(2)
+        .maximum_number_of_epochs(4)
+        .tolerance(0.0)
+        .reassignment_ratio(0.0)
+        .random_seed(3)
+        .build()
+        .unwrap()
+        .fit_streaming(zero_tolerance_provider)
+        .unwrap();
+    assert!(!full_budget_model.converged());
+    assert_eq!(full_budget_model.epochs_consumed(), 4);
+    assert_eq!(full_budget_model.batches_processed(), 12);
+}

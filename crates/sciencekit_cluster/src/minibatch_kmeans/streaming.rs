@@ -44,7 +44,7 @@ impl<F: SKFloat> SKMiniBatchStreamDriver<F> {
             execution_mode: self.configuration.execution_mode,
             backend: self.configuration.backend,
         };
-        let step_result = sk_run_operation(attributes, || -> Result<(), SKError> {
+        let step_result = sk_run_operation(attributes, || -> Result<bool, SKError> {
             let view = batch.view();
             match self.inner.as_mut() {
                 None => {
@@ -55,9 +55,10 @@ impl<F: SKFloat> SKMiniBatchStreamDriver<F> {
                     )?;
                     let (centers, _) = sk_initialize_minibatch_centers(view, &self.configuration)?;
                     let mut state = SKMiniBatchState::new(centers, self.configuration);
-                    state.apply_batch(view)?;
+                    let converged = state.apply_batch(view)?;
                     self.feature_count = batch.number_of_columns();
                     self.inner = Some(state);
+                    Ok(converged)
                 }
                 Some(state) => {
                     sk_validate_continuation_batch(
@@ -67,14 +68,14 @@ impl<F: SKFloat> SKMiniBatchStreamDriver<F> {
                         false,
                         "fit_streaming",
                     )?;
-                    state.apply_batch(view)?;
+                    state.apply_batch(view)
                 }
             }
-            Ok(())
         });
 
         match step_result {
-            Ok(()) => SKStreamDecision::Continue,
+            Ok(true) => SKStreamDecision::Stop,
+            Ok(false) => SKStreamDecision::Continue,
             Err(error) => {
                 self.error = Some(error);
                 SKStreamDecision::Stop
