@@ -29,9 +29,9 @@ impl SKPipeline {
 /// A pipeline under construction: a typed tuple of configured stages plus the
 /// backend and execution intent every operation records.
 pub struct SKPipelineBuilder<F: SKFloat, Stages> {
-    pub(super) stages: Stages,
-    pub(super) backend: SKBackendKind,
-    pub(super) execution_intent: SKExecutionMode,
+    pub(crate) stages: Stages,
+    pub(crate) backend: SKBackendKind,
+    pub(crate) execution_intent: SKExecutionMode,
     pub(super) marker: PhantomData<F>,
 }
 
