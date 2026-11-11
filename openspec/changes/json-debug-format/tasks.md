@@ -2,7 +2,7 @@
 
 ## 1. Schema and writer
 
-- [ ] 1.1 Add the JSON schema types and a fixture test for a hand-written state; verify
+- [x] 1.1 Add the JSON schema types and a fixture test for a hand-written state; verify
   with `cargo test -p sciencekit_interop json_schema`.
 - [ ] 1.2 Implement pretty and compact writing with deterministic key ordering; verify
   with `cargo test -p sciencekit_interop json_writer`.
