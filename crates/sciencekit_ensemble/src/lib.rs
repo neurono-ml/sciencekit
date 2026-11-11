@@ -21,7 +21,8 @@ pub use bootstrap::SKMaximumSamples;
 pub use gradient_boosting::{
     SKGradientBoostingClassificationLoss, SKGradientBoostingClassifier,
     SKGradientBoostingClassifierBuilder, SKGradientBoostingClassifierModel,
-    SKGradientBoostingRegressionLoss,
+    SKGradientBoostingRegressionLoss, SKGradientBoostingRegressor,
+    SKGradientBoostingRegressorBuilder,
 };
 pub use random_forest::{
     SKRandomForestClassifier, SKRandomForestClassifierBuilder, SKRandomForestClassifierModel,
