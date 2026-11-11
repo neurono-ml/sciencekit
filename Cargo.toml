@@ -14,6 +14,9 @@ license = "Apache-2.0"
 rust-version = "1.85"
 description = "Machine Learning library in Rust reimplementing all of scikit-learn — extreme performance, zero-copy and native out-of-core."
 repository = "https://github.com/neurono-ml/sciencekit"
+# The Go binding and the Go workspace live outside the Cargo workspace; keep
+# them out of the published crate tarball.
+exclude = ["go/", "go.work", ".devcontainer/"]
 
 [workspace]
 resolver = "3"
