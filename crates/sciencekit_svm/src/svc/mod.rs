@@ -3,10 +3,11 @@
 //!
 //! Pure dispatcher module: implementations live in dedicated files.
 
+pub(crate) mod fit;
+
 mod builder;
 mod core_implementation;
 mod decision;
-pub(crate) mod fit;
 mod model;
 mod predict;
 mod targets;
@@ -28,5 +29,7 @@ mod svc_fit_tests;
 mod svc_multiclass_tests;
 #[cfg(test)]
 mod svc_predict_tests;
+#[cfg(test)]
+mod svc_probability_tests;
 #[cfg(test)]
 mod svc_weights_tests;

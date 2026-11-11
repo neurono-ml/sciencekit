@@ -16,6 +16,7 @@ use super::weights::sk_resolve_class_weights;
 use crate::kernel::{
     SKOwnedFeatureBlock, sk_svm_view_dimensions, sk_validate_svm_training_features,
 };
+use crate::probability::sk_calibrate_binary_platt;
 use crate::smo::{SKSmoOptions, sk_solve_binary_c_svc};
 
 impl<F: SKFloat> SKSupervisedFit<F> for SKSVC<F> {
@@ -60,6 +61,7 @@ pub(crate) fn sk_extract_subset_features<F: SKFloat>(
 }
 
 /// Fit one binary `(class_negative, class_positive)` C-SVC problem.
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn sk_fit_binary_pair<F: SKFloat>(
     configuration: &SKSVCConfiguration<F>,
     features: SKDataView<'_, F>,
@@ -68,6 +70,7 @@ pub(crate) fn sk_fit_binary_pair<F: SKFloat>(
     kernel_parameters: SKKernelParameters<F>,
     class_negative: usize,
     class_positive: usize,
+    pair_index: u64,
 ) -> Result<SKBinarySVCModel<F>, SKError> {
     let mut pair_rows = Vec::new();
     let mut signs = Vec::new();
@@ -99,6 +102,20 @@ pub(crate) fn sk_fit_binary_pair<F: SKFloat>(
         options,
     )?;
 
+    let platt_parameters = if configuration.probability {
+        Some(sk_calibrate_binary_platt(
+            subset.view(),
+            &signs,
+            &upper_bounds,
+            kernel_parameters,
+            options,
+            configuration.random_seed,
+            pair_index,
+        )?)
+    } else {
+        None
+    };
+
     let support_training_indices: Vec<usize> = solved
         .support_indices
         .iter()
@@ -118,6 +135,7 @@ pub(crate) fn sk_fit_binary_pair<F: SKFloat>(
         dual_coefficients: Array1::from(solved.dual_coefficients),
         bias: solved.bias,
         iterations: solved.iterations,
+        platt_parameters,
     })
 }
 
@@ -146,7 +164,8 @@ fn sk_fit_svc<F: SKFloat>(
 
     let pairwise_models = pairs
         .into_par_iter()
-        .map(|(class_negative, class_positive)| {
+        .enumerate()
+        .map(|(pair_index, (class_negative, class_positive))| {
             sk_fit_binary_pair(
                 config,
                 features,
@@ -155,6 +174,7 @@ fn sk_fit_svc<F: SKFloat>(
                 kernel_parameters,
                 class_negative,
                 class_positive,
+                pair_index as u64,
             )
         })
         .collect::<Result<Vec<_>, SKError>>()?;

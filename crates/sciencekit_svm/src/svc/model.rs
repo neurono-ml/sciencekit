@@ -6,6 +6,7 @@ use sciencekit_common::{SKBackendKind, SKExecutionMode, SKFloat, SKLabelTable};
 use sciencekit_math::SKKernelParameters;
 
 use crate::kernel::SKOwnedFeatureBlock;
+use crate::probability::SKPlattParameters;
 
 /// One fitted binary C-SVC model separating canonical `(class_negative, class_positive)`.
 ///
@@ -20,6 +21,7 @@ pub struct SKBinarySVCModel<F: SKFloat> {
     pub(crate) dual_coefficients: Array1<F>,
     pub(crate) bias: F,
     pub(crate) iterations: usize,
+    pub(crate) platt_parameters: Option<SKPlattParameters<F>>,
 }
 
 impl<F: SKFloat> SKBinarySVCModel<F> {
@@ -56,6 +58,11 @@ impl<F: SKFloat> SKBinarySVCModel<F> {
     /// Number of SMO iterations executed for this binary pair.
     pub fn iterations(&self) -> usize {
         self.iterations
+    }
+
+    /// Fitted Platt scaling parameters when probability calibration was enabled.
+    pub fn platt_parameters(&self) -> Option<SKPlattParameters<F>> {
+        self.platt_parameters
     }
 }
 
