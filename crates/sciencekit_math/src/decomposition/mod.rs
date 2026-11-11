@@ -34,6 +34,8 @@ mod projection_tests;
 #[cfg(test)]
 mod result_tests;
 #[cfg(test)]
+mod sparse_acceptance_tests;
+#[cfg(test)]
 mod sparse_tests;
 #[cfg(test)]
 mod validation_tests;

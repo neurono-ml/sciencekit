@@ -4,13 +4,12 @@
 //! representations, and pins the documented accuracy tolerance against the
 //! exact singular-value decomposition.
 
-use ndarray::{Array1, Array2};
+use ndarray::Array2;
 use sciencekit_common::SKDataView;
 
 use super::dense_tests::{fixture_low_rank_matrix, fixture_matrix, relative_error};
 use super::qr::sk_thin_qr;
 use super::randomized::sk_randomized_svd;
-use super::sparse_tests::to_csr;
 use crate::backend::{SKFaerBackend, SKMathBackend};
 
 /// The documented tolerance of the singular values against the exact
@@ -168,22 +167,6 @@ fn randomized_acceptance_large_dense_matrix_is_factorized() {
 }
 
 #[test]
-fn randomized_acceptance_large_sparse_matrix_is_factorized() {
-    let mut dense = Array2::<f64>::zeros((500, 1_000));
-    for row in 0..500 {
-        for offset in 0..4usize {
-            dense[(row, (row * 3 + offset) % 1_000)] = 1.0 + offset as f64;
-        }
-    }
-    let sparse = to_csr(&dense);
-    let result = sk_randomized_svd(SKDataView::Sparse(sparse.view()), 6, 3, 8, 23, None)
-        .expect("the decomposition must succeed");
-    assert_eq!(result.u.dim(), (500, 6));
-    assert_eq!(result.v.dim(), (1_000, 6));
-    assert!(result.singular_values.iter().all(|value| *value >= 0.0));
-}
-
-#[test]
 fn randomized_acceptance_produces_the_reconstruction_error_metric() {
     let matrix = fixture_low_rank_matrix(40, 12, 3, 73);
     let result = sk_randomized_svd(SKDataView::Dense(matrix.view()), 3, 2, 4, 29, None)
@@ -195,25 +178,4 @@ fn randomized_acceptance_produces_the_reconstruction_error_metric() {
         metric < 1e-8,
         "the reconstruction error {metric} is too large"
     );
-}
-
-#[test]
-fn randomized_acceptance_centered_large_sparse_matrix_is_factorized() {
-    let mut dense = Array2::<f64>::zeros((400, 800));
-    for row in 0..400 {
-        dense[(row, row % 800)] = 2.0;
-    }
-    let sparse = to_csr(&dense);
-    let mean = Array1::<f64>::from_elem(800, 0.05);
-    let result = sk_randomized_svd(
-        SKDataView::Sparse(sparse.view()),
-        5,
-        2,
-        6,
-        31,
-        Some(mean.view()),
-    )
-    .expect("the centered decomposition must succeed");
-    assert_eq!(result.u.dim(), (400, 5));
-    assert_eq!(result.v.dim(), (800, 5));
 }
