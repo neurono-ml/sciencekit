@@ -29,7 +29,7 @@
 - [x] 3.2 Implement `SKUnsupervisedFit` and the model accessors (components, variance,
   ratio, singular values, mean); verify with
   `cargo test -p sciencekit_decomposition pca_fit`.
-- [ ] 3.3 Implement `transform`, `inverse_transform` and `fit_transform`, including the
+- [x] 3.3 Implement `transform`, `inverse_transform` and `fit_transform`, including the
   whitening scaling and the full-component reconstruction test; verify with
   `cargo test -p sciencekit_decomposition pca_transform`.
 - [ ] 3.4 Add the sparse randomized test (no dense `Xc`, equals dense centered), the
