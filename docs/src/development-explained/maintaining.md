@@ -243,4 +243,8 @@ repositories — [`neurono-ml/sciencekit-go`](https://github.com/neurono-ml/scie
 the `sciencekit_ffi` C ABI that this repository keeps. The
 [Arrow interop chapter](./ch37-arrow-interop.html) adds the neutral schema mapping, the
 borrowed primitive columns, the missing-value policies over Arrow nulls, the C Data
-Interface in both directions and the columnar file sources with projection pushdown.
+Interface in both directions and the columnar file sources with projection pushdown. The
+[GPU compute contracts chapter](./ch38-gpu-compute-contracts.html) adds the device
+inventory and capabilities, the deterministic selection rule, the validated device
+buffers, the closed kernel catalogue and the execution plan that records a backend and a
+fallback reason.
