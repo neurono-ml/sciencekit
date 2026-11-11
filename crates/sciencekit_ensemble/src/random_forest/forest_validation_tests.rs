@@ -1,7 +1,7 @@
 //! Companion validation tests asserting exact central `SKError` variants
 //! (task 4.1).
 
-use ndarray::{Array1, Array2, array};
+use ndarray::{Array2, array};
 use sciencekit_common::{
     SKBuilder, SKClassifierPredictor, SKError, SKExecutionMode, SKRegressorPredictor,
     SKSupervisedFit,
@@ -13,14 +13,12 @@ use super::{SKRandomForestClassifier, SKRandomForestRegressor};
 
 fn default_classifier() -> SKRandomForestClassifier<f64> {
     SKRandomForestClassifier::<f64>::build()
-        .number_of_trees(4)
         .build()
         .expect("builds")
 }
 
 fn default_regressor() -> SKRandomForestRegressor<f64> {
     SKRandomForestRegressor::<f64>::build()
-        .number_of_trees(4)
         .build()
         .expect("builds")
 }
@@ -30,8 +28,7 @@ fn default_regressor() -> SKRandomForestRegressor<f64> {
 fn empty_input_is_rejected_on_fit_and_predict() {
     let empty_dense: Array2<f64> = Array2::zeros((0, 2));
     let empty_sparse: CsMat<f64> = CsMat::empty(sprs::CSR, 2);
-    let labels = Array1::from_vec(vec![0_i64, 1]);
-    let responses = Array1::from_vec(vec![1.0, 2.0]);
+    let (labels, responses) = (array![0_i64, 1], array![1.0, 2.0]);
 
     assert!(matches!(
         default_classifier().fit(&empty_dense, labels.view()),
@@ -82,16 +79,15 @@ fn shape_and_feature_count_mismatches_are_rejected() {
     let cls_model = default_classifier()
         .fit(&train, labels.view())
         .expect("fit");
+    let reg_model = default_regressor()
+        .fit(&train, array![1.0, 2.0].view())
+        .expect("fit");
     match cls_model.predict_probabilities(array![[1.0, 2.0, 3.0]].view()) {
         Err(SKError::ShapeMismatch { expected, found }) => {
             assert_eq!((expected, found), (vec![1, 2], vec![1, 3]));
         }
         other => panic!("expected ShapeMismatch, found {other:?}"),
     }
-
-    let reg_model = default_regressor()
-        .fit(&train, array![1.0, 2.0].view())
-        .expect("fit");
     match reg_model.predict(array![[1.0]].view()) {
         Err(SKError::ShapeMismatch { expected, found }) => {
             assert_eq!((expected, found), (vec![1, 2], vec![1, 1]));
@@ -110,7 +106,6 @@ fn shape_and_feature_count_mismatches_are_rejected() {
     ));
 
     let wrong_weights = SKRandomForestClassifier::<f64>::build()
-        .number_of_trees(4)
         .class_weight(SKClassWeight::Explicit(vec![1.0, 2.0, 3.0]))
         .build()
         .expect("builds");
@@ -149,13 +144,13 @@ fn non_finite_values_are_rejected_at_exact_positions() {
     let cls_model = default_classifier()
         .fit(&clean, labels.view())
         .expect("fit");
+    let reg_model = default_regressor()
+        .fit(&clean, responses.view())
+        .expect("fit");
     assert!(matches!(
         cls_model.predict_labels(array![[0.0, f64::NAN]].view()),
         Err(SKError::NonFiniteValue { position: 1 })
     ));
-    let reg_model = default_regressor()
-        .fit(&clean, responses.view())
-        .expect("fit");
     assert!(matches!(
         reg_model.predict(bad_sparse.view()),
         Err(SKError::NonFiniteValue { position: 1 })

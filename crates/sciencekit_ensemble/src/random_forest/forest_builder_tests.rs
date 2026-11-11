@@ -130,6 +130,15 @@ fn zero_number_of_trees_is_rejected() {
     );
 }
 
+/// Requesting OOB scoring while `bootstrap` is false is rejected at build time.
+#[test]
+fn oob_score_without_bootstrap_is_rejected() {
+    let cls = SKRandomForestClassifier::<f64>::build().bootstrap(false);
+    let reg = SKRandomForestRegressor::<f64>::build().bootstrap(false);
+    assert_invalid_hyperparameter(cls.oob_score(true).build(), "oob_score");
+    assert_invalid_hyperparameter(reg.oob_score(true).build(), "oob_score");
+}
+
 /// Invalid sample counts and fractions are rejected naming `maximum_samples`.
 #[test]
 fn invalid_maximum_samples_is_rejected() {
@@ -140,75 +149,39 @@ fn invalid_maximum_samples_is_rejected() {
         SKMaximumSamples::Fraction(1.2),
         SKMaximumSamples::Fraction(f64::NAN),
     ] {
-        assert_invalid_hyperparameter(
-            SKRandomForestClassifier::<f64>::build()
-                .maximum_samples(invalid.clone())
-                .build(),
-            "maximum_samples",
-        );
-        assert_invalid_hyperparameter(
-            SKRandomForestRegressor::<f64>::build()
-                .maximum_samples(invalid)
-                .build(),
-            "maximum_samples",
-        );
+        let cls = SKRandomForestClassifier::<f64>::build().maximum_samples(invalid.clone());
+        let reg = SKRandomForestRegressor::<f64>::build().maximum_samples(invalid);
+        assert_invalid_hyperparameter(cls.build(), "maximum_samples");
+        assert_invalid_hyperparameter(reg.build(), "maximum_samples");
     }
-}
-
-/// Requesting OOB scoring while `bootstrap` is false is rejected at build time.
-#[test]
-fn oob_score_without_bootstrap_is_rejected() {
-    assert_invalid_hyperparameter(
-        SKRandomForestClassifier::<f64>::build()
-            .bootstrap(false)
-            .oob_score(true)
-            .build(),
-        "oob_score",
-    );
-    assert_invalid_hyperparameter(
-        SKRandomForestRegressor::<f64>::build()
-            .bootstrap(false)
-            .oob_score(true)
-            .build(),
-        "oob_score",
-    );
 }
 
 /// Invalid split/leaf/feature/criterion/class-weight values are rejected.
 #[test]
 fn invalid_tree_constraints_criterion_and_class_weight_are_rejected() {
+    let cls = || SKRandomForestClassifier::<f64>::build();
+    let reg = || SKRandomForestRegressor::<f64>::build();
     assert_invalid_hyperparameter(
-        SKRandomForestClassifier::<f64>::build()
-            .minimum_samples_split(1)
-            .build(),
+        cls().minimum_samples_split(1).build(),
         "minimum_samples_split",
     );
     assert_invalid_hyperparameter(
-        SKRandomForestRegressor::<f64>::build()
-            .minimum_samples_leaf(0)
-            .build(),
+        reg().minimum_samples_leaf(0).build(),
         "minimum_samples_leaf",
     );
     assert_invalid_hyperparameter(
-        SKRandomForestClassifier::<f64>::build()
+        cls()
             .maximum_features(SKMaximumFeatures::Fraction(0.0))
             .build(),
         "maximum_features",
     );
     assert_invalid_hyperparameter(
-        SKRandomForestClassifier::<f64>::build()
-            .criterion(SKTreeCriterion::SquaredError)
-            .build(),
+        cls().criterion(SKTreeCriterion::SquaredError).build(),
         "criterion",
     );
+    assert_invalid_hyperparameter(reg().criterion(SKTreeCriterion::Gini).build(), "criterion");
     assert_invalid_hyperparameter(
-        SKRandomForestRegressor::<f64>::build()
-            .criterion(SKTreeCriterion::Gini)
-            .build(),
-        "criterion",
-    );
-    assert_invalid_hyperparameter(
-        SKRandomForestClassifier::<f64>::build()
+        cls()
             .class_weight(SKClassWeight::Explicit(vec![0.0, 0.0]))
             .build(),
         "class_weight",

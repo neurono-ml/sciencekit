@@ -29,29 +29,35 @@ pub(super) fn sk_classifier_oob_state<F: SKFloat>(
 
     match features {
         SKDataView::Dense(dense) => {
-            members.iter().zip(oob_per_tree.iter()).for_each(|(member, oob_rows)| {
-                oob_rows.iter().for_each(|&row| {
-                    let slice = &mut probability_sums
-                        [row * number_of_classes..(row + 1) * number_of_classes];
-                    sk_accumulate_member_probabilities(member, slice, |feature| {
-                        dense[[row, feature]]
+            members
+                .iter()
+                .zip(oob_per_tree.iter())
+                .for_each(|(member, oob_rows)| {
+                    oob_rows.iter().for_each(|&row| {
+                        let slice = &mut probability_sums
+                            [row * number_of_classes..(row + 1) * number_of_classes];
+                        sk_accumulate_member_probabilities(member, slice, |feature| {
+                            dense[[row, feature]]
+                        });
+                        oob_counts[row] += 1;
                     });
-                    oob_counts[row] += 1;
                 });
-            });
         }
         SKDataView::Sparse(sparse) => {
-            members.iter().zip(oob_per_tree.iter()).for_each(|(member, oob_rows)| {
-                oob_rows.iter().for_each(|&row| {
-                    let sparse_row = sparse.outer_view(row).expect("row within bounds");
-                    let slice = &mut probability_sums
-                        [row * number_of_classes..(row + 1) * number_of_classes];
-                    sk_accumulate_member_probabilities(member, slice, |feature| {
-                        sk_sparse_feature_value(&sparse_row, feature)
+            members
+                .iter()
+                .zip(oob_per_tree.iter())
+                .for_each(|(member, oob_rows)| {
+                    oob_rows.iter().for_each(|&row| {
+                        let sparse_row = sparse.outer_view(row).expect("row within bounds");
+                        let slice = &mut probability_sums
+                            [row * number_of_classes..(row + 1) * number_of_classes];
+                        sk_accumulate_member_probabilities(member, slice, |feature| {
+                            sk_sparse_feature_value(&sparse_row, feature)
+                        });
+                        oob_counts[row] += 1;
                     });
-                    oob_counts[row] += 1;
                 });
-            });
         }
         _ => unreachable!("dimensions already validated"),
     }
@@ -97,25 +103,31 @@ pub(super) fn sk_regressor_oob_state<F: SKFloat>(
 
     match features {
         SKDataView::Dense(dense) => {
-            trees.iter().zip(oob_per_tree.iter()).for_each(|(tree, oob_rows)| {
-                oob_rows.iter().for_each(|&row| {
-                    response_sums[row] = response_sums[row]
-                        + sk_regressor_tree_value(tree, |feature| dense[[row, feature]]);
-                    oob_counts[row] += 1;
+            trees
+                .iter()
+                .zip(oob_per_tree.iter())
+                .for_each(|(tree, oob_rows)| {
+                    oob_rows.iter().for_each(|&row| {
+                        response_sums[row] = response_sums[row]
+                            + sk_regressor_tree_value(tree, |feature| dense[[row, feature]]);
+                        oob_counts[row] += 1;
+                    });
                 });
-            });
         }
         SKDataView::Sparse(sparse) => {
-            trees.iter().zip(oob_per_tree.iter()).for_each(|(tree, oob_rows)| {
-                oob_rows.iter().for_each(|&row| {
-                    let sparse_row = sparse.outer_view(row).expect("row within bounds");
-                    response_sums[row] = response_sums[row]
-                        + sk_regressor_tree_value(tree, |feature| {
-                            sk_sparse_feature_value(&sparse_row, feature)
-                        });
-                    oob_counts[row] += 1;
+            trees
+                .iter()
+                .zip(oob_per_tree.iter())
+                .for_each(|(tree, oob_rows)| {
+                    oob_rows.iter().for_each(|&row| {
+                        let sparse_row = sparse.outer_view(row).expect("row within bounds");
+                        response_sums[row] = response_sums[row]
+                            + sk_regressor_tree_value(tree, |feature| {
+                                sk_sparse_feature_value(&sparse_row, feature)
+                            });
+                        oob_counts[row] += 1;
+                    });
                 });
-            });
         }
         _ => unreachable!("dimensions already validated"),
     }

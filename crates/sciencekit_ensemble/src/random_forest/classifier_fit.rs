@@ -66,7 +66,6 @@ pub(super) fn sk_fit_random_forest_classifier<F: SKFloat>(
                 });
             }
         }
-
         let sample_size = estimator.maximum_samples.resolved_count(rows_count);
         let slots = sk_execute_tree_slots(
             estimator.number_of_trees,
@@ -76,18 +75,7 @@ pub(super) fn sk_fit_random_forest_classifier<F: SKFloat>(
                 sk_fit_classifier_slot(estimator, &features, &class_indices, rows_count, tree_index)
             },
         )?;
-
-        let mut members = Vec::with_capacity(slots.len());
-        let mut oob_per_tree = estimator
-            .oob_score
-            .then(|| Vec::with_capacity(slots.len()));
-        slots.into_iter().for_each(|slot| {
-            members.push(slot.member);
-            if let (Some(target), Some(rows)) = (&mut oob_per_tree, slot.oob_rows) {
-                target.push(rows);
-            }
-        });
-
+        let (members, oob_per_tree) = sk_unpack_slots(slots, estimator.oob_score);
         let oob_state = sk_classifier_oob_state(
             &features,
             &class_indices,
@@ -95,9 +83,7 @@ pub(super) fn sk_fit_random_forest_classifier<F: SKFloat>(
             &members,
             oob_per_tree.as_deref(),
         )?;
-
         let feature_importances = sk_classifier_importances(&members, columns_count);
-
         Ok(SKRandomForestClassifierModel {
             members,
             out_of_bag_rows: oob_per_tree,
@@ -111,6 +97,21 @@ pub(super) fn sk_fit_random_forest_classifier<F: SKFloat>(
             execution_intent: estimator.execution_intent(),
         })
     })
+}
+
+fn sk_unpack_slots<F>(
+    slots: Vec<ClassifierSlot<F>>,
+    oob_score: bool,
+) -> (Vec<SKClassifierTreeMember<F>>, Option<Vec<Vec<usize>>>) {
+    let mut members = Vec::with_capacity(slots.len());
+    let mut oob = oob_score.then(|| Vec::with_capacity(slots.len()));
+    slots.into_iter().for_each(|slot| {
+        members.push(slot.member);
+        if let (Some(target), Some(rows)) = (&mut oob, slot.oob_rows) {
+            target.push(rows);
+        }
+    });
+    (members, oob)
 }
 
 fn sk_fit_classifier_slot<F: SKFloat>(
@@ -133,33 +134,23 @@ fn sk_fit_classifier_slot<F: SKFloat>(
     let sampled_classes: Vec<usize> = drawn.iter().map(|&row| class_indices[row]).collect();
     let local_to_forest = sk_first_occurrence_classes(&sampled_classes);
 
+    let pure_leaf = |class_index| ClassifierSlot {
+        member: SKClassifierTreeMember::PureLeaf { class_index },
+        oob_rows: oob_rows.clone(),
+    };
     let local_weight = match &estimator.class_weight {
         SKClassWeight::None => SKClassWeight::None,
         SKClassWeight::Balanced => SKClassWeight::Balanced,
         SKClassWeight::Explicit(weights) => {
-            let mapped: Vec<F> = local_to_forest
-                .iter()
-                .map(|&class_index| weights[class_index])
-                .collect();
+            let mapped: Vec<F> = local_to_forest.iter().map(|&c| weights[c]).collect();
             if mapped.iter().all(|weight| *weight == F::zero()) {
-                return Ok(ClassifierSlot {
-                    member: SKClassifierTreeMember::PureLeaf {
-                        class_index: local_to_forest[0],
-                    },
-                    oob_rows,
-                });
+                return Ok(pure_leaf(local_to_forest[0]));
             }
             SKClassWeight::Explicit(mapped)
         }
     };
-
     if local_to_forest.len() < 2 {
-        return Ok(ClassifierSlot {
-            member: SKClassifierTreeMember::PureLeaf {
-                class_index: local_to_forest[0],
-            },
-            oob_rows,
-        });
+        return Ok(pure_leaf(local_to_forest[0]));
     }
 
     let mut builder = SKDecisionTreeClassifier::<F>::build()
@@ -175,21 +166,18 @@ fn sk_fit_classifier_slot<F: SKFloat>(
         builder = builder.maximum_depth(maximum_depth);
     }
     let tree_estimator = builder.build()?;
-    let sampled_labels =
-        Array1::from_iter(sampled_classes.iter().map(|&class_index| class_index as i64));
-
+    let sampled_labels = Array1::from_iter(sampled_classes.iter().map(|&c| c as i64));
     let model = match features {
-        SKDataView::Dense(dense) => {
-            let gathered = sk_gather_dense_rows(dense, &drawn);
-            tree_estimator.fit(gathered.view(), sampled_labels.view())?
-        }
-        SKDataView::Sparse(sparse) => {
-            let gathered = sk_gather_sparse_rows(sparse, &drawn);
-            tree_estimator.fit(gathered.view(), sampled_labels.view())?
-        }
+        SKDataView::Dense(dense) => tree_estimator.fit(
+            sk_gather_dense_rows(dense, &drawn).view(),
+            sampled_labels.view(),
+        )?,
+        SKDataView::Sparse(sparse) => tree_estimator.fit(
+            sk_gather_sparse_rows(sparse, &drawn).view(),
+            sampled_labels.view(),
+        )?,
         _ => unreachable!("dimensions already validated"),
     };
-
     Ok(ClassifierSlot {
         member: SKClassifierTreeMember::Fitted {
             model,

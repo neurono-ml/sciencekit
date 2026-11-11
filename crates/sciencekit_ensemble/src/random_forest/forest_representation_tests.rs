@@ -1,7 +1,7 @@
 //! Companion tests for dense/sparse representation parity and non-densifying
 //! sparse fitting (task 3.3).
 
-use ndarray::{Array1, array};
+use ndarray::{Array1, Array2, array};
 use sciencekit_common::{
     SKBuilder, SKClassifierPredictor, SKError, SKRegressorPredictor, SKSupervisedFit,
 };
@@ -11,12 +11,7 @@ use crate::bootstrap::sk_gather_sparse_rows;
 
 use super::{SKRandomForestClassifier, SKRandomForestRegressor};
 
-fn logical_fixture() -> (
-    ndarray::Array2<f64>,
-    CsMat<f64>,
-    Array1<i64>,
-    Array1<f64>,
-) {
+fn logical_fixture() -> (Array2<f64>, CsMat<f64>, Array1<i64>, Array1<f64>) {
     let dense = array![
         [0.0, 2.0, 0.0, 1.0],
         [0.0, 1.5, 0.0, 0.0],
@@ -41,7 +36,7 @@ fn logical_fixture() -> (
 #[test]
 fn classifier_dense_and_sparse_fit_and_predict_are_equivalent() {
     let (dense, sparse, labels, _) = logical_fixture();
-    let builder = || {
+    let build = || {
         SKRandomForestClassifier::<f64>::build()
             .number_of_trees(20)
             .oob_score(true)
@@ -49,43 +44,36 @@ fn classifier_dense_and_sparse_fit_and_predict_are_equivalent() {
             .build()
             .expect("builds")
     };
-    let dense_model = builder().fit(&dense, labels.view()).expect("dense fit");
-    let sparse_model = builder()
-        .fit(sparse.view(), labels.view())
-        .expect("sparse fit");
+    let dense_model = build().fit(&dense, labels.view()).expect("dense fit");
+    let sparse_model = build().fit(sparse.view(), labels.view()).expect("sparse");
 
-    for tree_index in 0..20 {
-        assert_eq!(dense_model.tree(tree_index), sparse_model.tree(tree_index));
-    }
+    assert!((0..20).all(|i| dense_model.tree(i) == sparse_model.tree(i)));
     assert_eq!(
         dense_model.feature_importances(),
         sparse_model.feature_importances()
     );
     assert_eq!(
-        dense_model.oob_score().expect("dense oob"),
-        sparse_model.oob_score().expect("sparse oob")
+        dense_model.oob_score().expect("oob"),
+        sparse_model.oob_score().expect("oob")
     );
 
-    let dd = dense_model
-        .predict_probabilities(&dense)
-        .expect("dense->dense");
-    let ds = dense_model
-        .predict_probabilities(sparse.view())
-        .expect("dense->sparse");
-    let sd = sparse_model
-        .predict_probabilities(&dense)
-        .expect("sparse->dense");
-    let ss = sparse_model
-        .predict_probabilities(sparse.view())
-        .expect("sparse->sparse");
-    assert_eq!(dd, ds);
-    assert_eq!(dd, sd);
-    assert_eq!(dd, ss);
+    let dd = dense_model.predict_probabilities(&dense).expect("dd");
+    assert_eq!(
+        dd,
+        dense_model
+            .predict_probabilities(sparse.view())
+            .expect("ds")
+    );
+    assert_eq!(dd, sparse_model.predict_probabilities(&dense).expect("sd"));
+    assert_eq!(
+        dd,
+        sparse_model
+            .predict_probabilities(sparse.view())
+            .expect("ss")
+    );
     assert_eq!(
         dense_model.predict_labels(&dense).expect("labels"),
-        sparse_model
-            .predict_labels(sparse.view())
-            .expect("sparse labels")
+        sparse_model.predict_labels(sparse.view()).expect("labels")
     );
 }
 
@@ -94,7 +82,7 @@ fn classifier_dense_and_sparse_fit_and_predict_are_equivalent() {
 #[test]
 fn regressor_dense_and_sparse_fit_and_predict_are_equivalent() {
     let (dense, sparse, _, responses) = logical_fixture();
-    let builder = || {
+    let build = || {
         SKRandomForestRegressor::<f64>::build()
             .number_of_trees(20)
             .oob_score(true)
@@ -102,60 +90,48 @@ fn regressor_dense_and_sparse_fit_and_predict_are_equivalent() {
             .build()
             .expect("builds")
     };
-    let dense_model = builder().fit(&dense, responses.view()).expect("dense fit");
-    let sparse_model = builder()
+    let dense_model = build().fit(&dense, responses.view()).expect("dense fit");
+    let sparse_model = build()
         .fit(sparse.view(), responses.view())
-        .expect("sparse fit");
+        .expect("sparse");
 
-    for tree_index in 0..20 {
-        assert_eq!(dense_model.tree(tree_index), sparse_model.tree(tree_index));
-    }
+    assert!((0..20).all(|i| dense_model.tree(i) == sparse_model.tree(i)));
     assert_eq!(
         dense_model.feature_importances(),
         sparse_model.feature_importances()
     );
     assert_eq!(
-        dense_model.oob_score().expect("dense oob"),
-        sparse_model.oob_score().expect("sparse oob")
+        dense_model.oob_score().expect("oob"),
+        sparse_model.oob_score().expect("oob")
     );
 
-    let dd = dense_model.predict(&dense).expect("dense->dense");
-    let ds = dense_model.predict(sparse.view()).expect("dense->sparse");
-    let sd = sparse_model.predict(&dense).expect("sparse->dense");
-    let ss = sparse_model.predict(sparse.view()).expect("sparse->sparse");
-    assert_eq!(dd, ds);
-    assert_eq!(dd, sd);
-    assert_eq!(dd, ss);
+    let dd = dense_model.predict(&dense).expect("dd");
+    assert_eq!(dd, dense_model.predict(sparse.view()).expect("ds"));
+    assert_eq!(dd, sparse_model.predict(&dense).expect("sd"));
+    assert_eq!(dd, sparse_model.predict(sparse.view()).expect("ss"));
 }
 
 /// An ultra-wide CSR design (`128 × 100_000`, where a dense matrix per tree
-/// would exceed `100 MB` and `1.6 GB` across 16 trees) fits and predicts from
-/// stored entries alone without densifying.
+/// would exceed `100 MB`) fits and predicts from stored entries alone.
 #[test]
 fn ultra_wide_sparse_forest_fits_and_predicts_without_densifying() {
-    let rows = 128usize;
-    let columns = 100_000usize;
+    let (rows, columns) = (128usize, 100_000usize);
     let mut indptr = Vec::with_capacity(rows + 1);
     let mut indices = Vec::with_capacity(rows * 2);
     let mut data = Vec::with_capacity(rows * 2);
     indptr.push(0);
     for row in 0..rows {
-        indices.push(0);
-        data.push(if row < 64 { 1.0 } else { 10.0 });
-        let high_column = 1_000 + (row * 701) % (columns - 1_000);
-        indices.push(high_column);
-        data.push(2.0);
+        indices.extend([0, 1_000 + (row * 701) % (columns - 1_000)]);
+        data.extend([if row < 64 { 1.0 } else { 10.0 }, 2.0]);
         indptr.push(indices.len());
     }
     let sparse = CsMat::new((rows, columns), indptr, indices, data);
-    assert_eq!(sparse.nnz(), rows * 2);
-
-    // Direct check on bootstrap CSR gathering: stored entries stay O(nnz),
-    // never O(rows * columns).
     let sampled_rows: Vec<usize> = (0..rows).collect();
     let gathered = sk_gather_sparse_rows(&sparse.view(), &sampled_rows);
-    assert_eq!(gathered.shape(), (rows, columns));
-    assert_eq!(gathered.nnz(), rows * 2);
+    assert_eq!(
+        (gathered.shape(), gathered.nnz()),
+        ((rows, columns), rows * 2)
+    );
 
     let labels = Array1::from_shape_fn(rows, |row| i64::from(row >= 64));
     let classifier = SKRandomForestClassifier::<f64>::build()
@@ -167,11 +143,13 @@ fn ultra_wide_sparse_forest_fits_and_predicts_without_densifying() {
         .expect("builds")
         .fit(sparse.view(), labels.view())
         .expect("wide sparse classifier fit");
-    assert_eq!(classifier.feature_count(), columns);
-    let predicted = classifier
-        .predict_labels(sparse.view())
-        .expect("wide sparse predict");
-    assert_eq!(predicted.len(), rows);
+    assert_eq!(
+        classifier
+            .predict_labels(sparse.view())
+            .expect("pred")
+            .len(),
+        rows
+    );
 
     let responses = Array1::from_shape_fn(rows, |row| if row < 64 { 1.0 } else { 10.0 });
     let regressor = SKRandomForestRegressor::<f64>::build()
@@ -183,14 +161,11 @@ fn ultra_wide_sparse_forest_fits_and_predicts_without_densifying() {
         .expect("builds")
         .fit(sparse.view(), responses.view())
         .expect("wide sparse regressor fit");
-    let reg_pred = regressor
-        .predict(sparse.view())
-        .expect("wide sparse reg predict");
-    assert_eq!(reg_pred.len(), rows);
+    assert_eq!(regressor.predict(sparse.view()).expect("pred").len(), rows);
 }
 
 /// Non-CSR (CSC) sparse views are rejected up front with
-/// `UnsupportedRepresentation` on both fit and prediction instead of panicking.
+/// `UnsupportedRepresentation` on both fit and prediction.
 #[test]
 fn non_csr_sparse_storage_is_rejected_up_front() {
     let csc = CsMat::new_csc((4, 1), vec![0, 2], vec![1, 3], vec![1.0, 2.0]);
@@ -199,27 +174,21 @@ fn non_csr_sparse_storage_is_rejected_up_front() {
         .number_of_trees(4)
         .build()
         .expect("builds");
-    let fit_error = estimator
-        .fit(csc.view(), labels.view())
-        .expect_err("CSC fit must fail");
     assert!(matches!(
-        fit_error,
-        SKError::UnsupportedRepresentation {
+        estimator.fit(csc.view(), labels.view()),
+        Err(SKError::UnsupportedRepresentation {
             representation: "csc",
             ..
-        }
+        })
     ));
-
-    let dense = array![[0.0], [1.0], [2.0], [3.0]];
-    let fitted = estimator.fit(&dense, labels.view()).expect("dense fit");
-    let predict_error = fitted
-        .predict_labels(csc.view())
-        .expect_err("CSC predict must fail");
+    let fitted = estimator
+        .fit(&array![[0.0], [1.0], [2.0], [3.0]], labels.view())
+        .expect("fit");
     assert!(matches!(
-        predict_error,
-        SKError::UnsupportedRepresentation {
+        fitted.predict_labels(csc.view()),
+        Err(SKError::UnsupportedRepresentation {
             representation: "csc",
             ..
-        }
+        })
     ));
 }

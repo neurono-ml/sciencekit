@@ -8,7 +8,9 @@ use sprs::{CsMatView, CsVecView};
 
 /// Validate that a fit feature view has at least one row and column, and uses a
 /// supported representation.
-pub(super) fn sk_fit_dimensions<F>(features: &SKDataView<'_, F>) -> Result<(usize, usize), SKError> {
+pub(super) fn sk_fit_dimensions<F>(
+    features: &SKDataView<'_, F>,
+) -> Result<(usize, usize), SKError> {
     let (rows, columns) = match features {
         SKDataView::Dense(dense) => (dense.nrows(), dense.ncols()),
         SKDataView::Sparse(sparse) => {

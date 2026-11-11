@@ -80,7 +80,12 @@ fn large_dense_and_sparse_classification_fits_with_oob_and_metrics() {
 
     let truth: Vec<i64> = labels
         .iter()
-        .map(|label| dense_oob.classes().index_of(&label.to_string()).expect("class") as i64)
+        .map(|label| {
+            dense_oob
+                .classes()
+                .index_of(&label.to_string())
+                .expect("class") as i64
+        })
         .collect();
     let dense_pred = dense_oob.predict_labels(&dense).expect("dense predict");
     let sparse_pred = sparse_no_oob
@@ -129,7 +134,9 @@ fn large_dense_and_sparse_regression_fits_with_oob_and_metrics() {
         .expect("sparse fit");
 
     let dense_pred = dense_oob.predict(&dense).expect("dense predict");
-    let sparse_pred = sparse_no_oob.predict(sparse.view()).expect("sparse predict");
+    let sparse_pred = sparse_no_oob
+        .predict(sparse.view())
+        .expect("sparse predict");
     assert_eq!(dense_pred, sparse_pred);
     assert!(sparse_no_oob.oob_score().is_err());
 

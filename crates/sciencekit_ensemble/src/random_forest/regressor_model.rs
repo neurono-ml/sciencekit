@@ -37,7 +37,9 @@ impl<F: SKFloat> SKRandomForestRegressorModel<F> {
 
     /// Inspect the underlying CART node structure of `tree_index`.
     pub fn tree(&self, tree_index: usize) -> Option<&SKTree<F>> {
-        self.trees.get(tree_index).map(SKDecisionTreeRegressorModel::tree)
+        self.trees
+            .get(tree_index)
+            .map(SKDecisionTreeRegressorModel::tree)
     }
 
     /// Normalized forest feature importances.

@@ -36,19 +36,15 @@ fn hand_computed_two_tree_forest_averages_probabilities() {
                 .expect("builds")
                 .fit(&features, labels.view())
                 .expect("fit succeeds");
-            let tree0 = candidate.tree(0)?;
-            let tree1 = candidate.tree(1)?;
-            let p0_first = tree0.node(0)?.value();
-            let p0_second = tree1.node(0)?.value();
-            // Check canonical class 0 probabilities via single-tree fits or root values:
-            // on `[0, 0, 1, 1, 1]`, if both classes are present and class 0 came first in
-            // one or second in another, check the forest average directly once verified.
+            let p0_first = candidate.tree(0)?.node(0)?.value();
+            let p0_second = candidate.tree(1)?.node(0)?.value();
             if p0_first.len() == 2 && p0_second.len() == 2 {
                 let probs = candidate.predict_probabilities(array![[0.0]].view()).ok()?;
-                if (probs[[0, 0]] - 0.4).abs() < 1e-12
-                    && ((p0_first[0] - 0.2).abs() < 1e-12 || (p0_first[1] - 0.2).abs() < 1e-12)
-                    && ((p0_second[0] - 0.6).abs() < 1e-12 || (p0_second[1] - 0.6).abs() < 1e-12)
-                {
+                let first_ok =
+                    (p0_first[0] - 0.2).abs() < 1e-12 || (p0_first[1] - 0.2).abs() < 1e-12;
+                let second_ok =
+                    (p0_second[0] - 0.6).abs() < 1e-12 || (p0_second[1] - 0.6).abs() < 1e-12;
+                if (probs[[0, 0]] - 0.4).abs() < 1e-12 && first_ok && second_ok {
                     return Some(candidate);
                 }
             }
@@ -149,7 +145,8 @@ struct DebugVisitor(HashMap<String, String>);
 
 impl Visit for DebugVisitor {
     fn record_debug(&mut self, field: &tracing::field::Field, value: &dyn fmt::Debug) {
-        self.0.insert(field.name().to_string(), format!("{value:?}"));
+        self.0
+            .insert(field.name().to_string(), format!("{value:?}"));
     }
 }
 
@@ -192,7 +189,10 @@ fn configured_backend_is_recorded_in_prediction_span() {
 
     let spans = recorder.spans.lock().expect("lock");
     assert_eq!(spans.len(), 1);
-    assert_eq!(spans[0].get("operation").map(String::as_str), Some("predict"));
+    assert_eq!(
+        spans[0].get("operation").map(String::as_str),
+        Some("predict")
+    );
     assert_eq!(
         spans[0].get("backend").map(String::as_str),
         Some("matrixmultiply")

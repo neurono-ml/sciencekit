@@ -72,5 +72,8 @@ fn tiny_classification_and_regression_fit_and_score_cleanly() {
         .expect("builds")
         .fit(&features_f32, labels_f32.view())
         .expect("f32 cls fit");
-    assert_eq!(cls_f32.predict_labels(&features_f32).expect("pred").len(), 6);
+    assert_eq!(
+        cls_f32.predict_labels(&features_f32).expect("pred").len(),
+        6
+    );
 }

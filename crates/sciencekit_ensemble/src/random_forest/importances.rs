@@ -43,7 +43,9 @@ fn sk_normalize_mean<F: SKFloat>(mut totals: Vec<F>, tree_count: usize) -> Vec<F
         return totals;
     }
     let divisor = F::from(tree_count).expect("tree count fits in scalar");
-    totals.iter_mut().for_each(|value| *value = *value / divisor);
+    totals
+        .iter_mut()
+        .for_each(|value| *value = *value / divisor);
     let sum = totals.iter().fold(F::zero(), |acc, &value| acc + value);
     if sum > F::zero() {
         totals.iter_mut().for_each(|value| *value = *value / sum);

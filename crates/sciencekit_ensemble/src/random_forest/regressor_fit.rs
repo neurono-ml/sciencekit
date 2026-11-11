@@ -60,14 +60,18 @@ pub(super) fn sk_fit_random_forest_regressor<F: SKFloat>(
             sample_size,
             estimator.execution_intent(),
             |tree_index| {
-                sk_fit_regressor_slot(estimator, &features, &responses_view, rows_count, tree_index)
+                sk_fit_regressor_slot(
+                    estimator,
+                    &features,
+                    &responses_view,
+                    rows_count,
+                    tree_index,
+                )
             },
         )?;
 
         let mut trees = Vec::with_capacity(slots.len());
-        let mut oob_per_tree = estimator
-            .oob_score
-            .then(|| Vec::with_capacity(slots.len()));
+        let mut oob_per_tree = estimator.oob_score.then(|| Vec::with_capacity(slots.len()));
         slots.into_iter().for_each(|slot| {
             trees.push(slot.model);
             if let (Some(target), Some(rows)) = (&mut oob_per_tree, slot.oob_rows) {
