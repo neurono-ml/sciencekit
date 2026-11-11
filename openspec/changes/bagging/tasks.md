@@ -59,7 +59,7 @@
 
 - [x] 6.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under `Unreleased →
   Added` for the generic bagging estimators, feature routing and OOB scoring.
-- [ ] 6.2 Companion documentation change on its own `docs/*` branch (merged into
+- [x] 6.2 Companion documentation change on its own `docs/*` branch (merged into
   `docs/documentations`): add the bagging chapter, register it in `SUMMARY.md`, add a
   `Development Explained` chapter covering the generic base-estimator contract, feature
   routing and OOB, update `maintaining.md`, and verify with `mdbook build docs`.
