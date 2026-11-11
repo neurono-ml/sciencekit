@@ -6,6 +6,7 @@ mod core_implementation;
 mod execution;
 mod fit;
 mod model;
+mod predict;
 mod score;
 mod sparse;
 mod subsample;
@@ -30,5 +31,7 @@ mod isolation_fit_tests;
 mod isolation_path_tests;
 #[cfg(test)]
 mod isolation_representation_tests;
+#[cfg(test)]
+mod isolation_score_tests;
 #[cfg(test)]
 mod isolation_tree_tests;

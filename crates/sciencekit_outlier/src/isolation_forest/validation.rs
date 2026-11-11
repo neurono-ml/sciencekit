@@ -100,3 +100,26 @@ pub(super) fn sk_validate_fit_features<F: SKFloat>(
     sk_validate_finiteness(features)?;
     Ok((rows_count, columns_count))
 }
+
+/// Validates query features against `expected_columns` before scoring or predicting.
+pub(super) fn sk_validate_query_features<F: SKFloat>(
+    features: &SKDataView<'_, F>,
+    expected_columns: usize,
+    operation: &'static str,
+) -> Result<(usize, usize), SKError> {
+    sk_validate_supported_view(features)?;
+    let (rows_count, columns_count) = sk_view_dimensions(features);
+    if rows_count == 0 {
+        return Err(SKError::EmptyInput { operation });
+    }
+    if columns_count != expected_columns {
+        return Err(SKError::shape_mismatch_2d(
+            rows_count,
+            expected_columns,
+            rows_count,
+            columns_count,
+        ));
+    }
+    sk_validate_finiteness(features)?;
+    Ok((rows_count, columns_count))
+}
