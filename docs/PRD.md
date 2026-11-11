@@ -564,8 +564,8 @@ Order faithful to the scikit-learn mapping (from the handoff), respecting depend
    - Incremental (`partial_fit`) and out-of-core (`fit_streaming`) index maintenance are **out of scope here**: the fitted models own an immutable training design, and a later out-of-core change can rebuild the index from it. Radius-neighbour estimators and metric learning are also future changes.
    - `memmap2`-backed tree indexes are **out of scope here** and delivered by Phase 7 (interop), like all persistence and export.
 9. `sciencekit_svm`: SKSVC, SKSVR, SKLinearSVC.
-   - `SKSVC`/`SKSVR` keep representation parity through the sparse-aware kernel and `SKLinearSVC` through the sparse linear path; neither needs the dense-only exception.
-   - SVM kernel caches backed by `memmap2` are **out of scope here** and delivered by Phase 7 (interop).
+   - `SKSVC`/`SKSVR` keep representation parity through the sparse-aware kernel and `SKLinearSVC` through the sparse linear path; neither needs the dense-only exception. Precomputed Gram matrices are the sole dense-only input wrapper (`UnsupportedRepresentation` on sparse).
+   - `memmap2`-backed kernel caches, model persistence and model export are **out of scope here** and delivered by Phase 7 (the interop wave), not by the `svm-svc-svr` algorithm change; SMO retains an in-memory bounded LRU kernel-row cache (`cache_size` in MiB) and support-vector-only model state (`SKOwnedFeatureBlock`).
 
 ### Phase 4 — Trees and ensembles
 10. `sciencekit_tree`: SKDecisionTreeClassifier/SKDecisionTreeRegressor.
