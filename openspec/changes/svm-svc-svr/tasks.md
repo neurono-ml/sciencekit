@@ -66,7 +66,7 @@
 - [x] 3.5 Implement `decision_function` with the documented OvO confidence layout and
   verify its shape, monotonic relation to labels and a binary fixture; verify with
   `cargo test -p sciencekit_svm svc_decision`.
-- [ ] 3.6 Implement class weights, proving the balanced policy changes the fitted boundary
+- [x] 3.6 Implement class weights, proving the balanced policy changes the fitted boundary
   on an imbalanced fixture and the explicit map is honored; verify with
   `cargo test -p sciencekit_svm svc_weights`.
 
