@@ -33,7 +33,7 @@
 - [x] 3.4 Add validation tests for empty input, zero trees, invalid sample size,
   contamination range, feature-count mismatch and non-finite values; verify with
   `cargo test -p sciencekit_outlier isolation_validation`.
-- [ ] 3.5 Add repeated-fit determinism, thread-count invariance, concurrent prediction and
+- [x] 3.5 Add repeated-fit determinism, thread-count invariance, concurrent prediction and
   `Send + Sync` tests; verify with
   `cargo test -p sciencekit_outlier isolation_concurrency`.
 
