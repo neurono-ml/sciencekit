@@ -31,7 +31,7 @@ fn multiple_devices_are_ordered_by_kind_priority_then_index() {
         device(0, SKBackendKind::Rocm, "ROCm 0"),
     ];
 
-    let selected = sk_select_device(&inventory, SKDevicePreference::AnyDevice, None)
+    let selected = sk_select_device(&inventory, SKDevicePreference::AnyDevice, None, None)
         .expect("a device is present");
     assert_eq!(selected.name, "OpenCL 0");
 }
@@ -50,6 +50,7 @@ fn a_configured_backend_selects_its_first_device() {
         &inventory,
         SKDevicePreference::Backend(SKBackendKind::Cuda),
         None,
+        None,
     )
     .expect("a CUDA device is present");
     assert_eq!(selected.name, "CUDA 0");
@@ -64,6 +65,7 @@ fn no_matching_device_reports_the_host_fallback() {
         &inventory,
         SKDevicePreference::Backend(SKBackendKind::OpenCl),
         None,
+        None,
     )
     .expect_err("no OpenCL device is present");
     assert_eq!(reason, SKFallbackReason::NoDeviceAvailable);
@@ -73,7 +75,7 @@ fn no_matching_device_reports_the_host_fallback() {
 /// An empty inventory falls back without an error.
 #[test]
 fn an_empty_inventory_falls_back_to_the_host_backend() {
-    let reason = sk_select_device(&[], SKDevicePreference::AnyDevice, None)
+    let reason = sk_select_device(&[], SKDevicePreference::AnyDevice, None, None)
         .expect_err("no device is present");
     assert_eq!(reason, SKFallbackReason::NoDeviceAvailable);
 }
@@ -85,6 +87,7 @@ fn a_host_backend_preference_never_selects_a_device() {
     let reason = sk_select_device(
         &inventory,
         SKDevicePreference::Backend(SKBackendKind::Faer),
+        None,
         None,
     )
     .expect_err("a host backend is not a device");
@@ -99,10 +102,10 @@ fn selection_is_deterministic_across_repeated_calls() {
         device(1, SKBackendKind::OpenCl, "OpenCL 1"),
         device(0, SKBackendKind::OpenCl, "OpenCL 0"),
     ];
-    let first = sk_select_device(&inventory, SKDevicePreference::AnyDevice, None).unwrap();
+    let first = sk_select_device(&inventory, SKDevicePreference::AnyDevice, None, None).unwrap();
     for _ in 0..16 {
         assert_eq!(
-            sk_select_device(&inventory, SKDevicePreference::AnyDevice, None).unwrap(),
+            sk_select_device(&inventory, SKDevicePreference::AnyDevice, None, None).unwrap(),
             first
         );
     }
@@ -120,7 +123,51 @@ fn fallback_reasons_render_as_stable_tokens() {
         "kernel-not-supported"
     );
     assert_eq!(
+        SKFallbackReason::ScalarTypeNotSupported.to_string(),
+        "scalar-type-not-supported"
+    );
+    assert_eq!(
         SKFallbackReason::ExplicitModeDoesNotSelectDevice.to_string(),
         "explicit-mode-does-not-select-device"
     );
+}
+
+/// An `f64` request against an `f32`-only device falls back with `ScalarTypeNotSupported`.
+#[test]
+fn selection_falls_back_when_no_device_supports_the_scalar_type() {
+    let inventory = vec![SKDeviceInfo::new(
+        0,
+        SKBackendKind::OpenCl,
+        "OpenCL 0 (f32)",
+        1024,
+        SKDeviceCapabilities::new(true, false, false),
+    )];
+    let reason = sk_select_device(&inventory, SKDevicePreference::AnyDevice, None, Some("f64"))
+        .expect_err("f64 is not supported");
+    assert_eq!(reason, SKFallbackReason::ScalarTypeNotSupported);
+}
+
+/// Multi-device selection skips an `f32`-only first device and selects the `f64`-capable second.
+#[test]
+fn selection_skips_scalar_incompatible_device_and_picks_next() {
+    let inventory = vec![
+        SKDeviceInfo::new(
+            0,
+            SKBackendKind::OpenCl,
+            "OpenCL 0 (f32)",
+            1024,
+            SKDeviceCapabilities::new(true, false, false),
+        ),
+        SKDeviceInfo::new(
+            1,
+            SKBackendKind::OpenCl,
+            "OpenCL 1 (f64)",
+            1024,
+            SKDeviceCapabilities::new(true, true, false),
+        ),
+    ];
+    let selected = sk_select_device(&inventory, SKDevicePreference::AnyDevice, None, Some("f64"))
+        .expect("device 1 supports f64");
+    assert_eq!(selected.index, 1);
+    assert_eq!(selected.name, "OpenCL 1 (f64)");
 }

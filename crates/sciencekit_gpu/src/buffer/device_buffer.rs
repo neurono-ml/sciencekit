@@ -46,7 +46,7 @@ impl<F: SKFloat> SKDeviceBuffer<F> {
         Ok(SKDeviceBuffer {
             backend_kind,
             device_index,
-            scalar_type: std::any::type_name::<F>(),
+            scalar_type: F::SCALAR_NAME,
             shape,
             capacity,
             values,

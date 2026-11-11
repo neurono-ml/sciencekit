@@ -21,6 +21,8 @@ pub enum SKFallbackReason {
     NoDeviceAvailable,
     /// Devices are present, but none supports the kernel the operation needs.
     KernelNotSupported,
+    /// Devices are present, but none supports the scalar type the operation carries.
+    ScalarTypeNotSupported,
     /// The operation requested an explicit host execution mode, which never
     /// selects a device.
     ExplicitModeDoesNotSelectDevice,
@@ -31,6 +33,7 @@ impl fmt::Display for SKFallbackReason {
         let token = match self {
             SKFallbackReason::NoDeviceAvailable => "no-device-available",
             SKFallbackReason::KernelNotSupported => "kernel-not-supported",
+            SKFallbackReason::ScalarTypeNotSupported => "scalar-type-not-supported",
             SKFallbackReason::ExplicitModeDoesNotSelectDevice => {
                 "explicit-mode-does-not-select-device"
             }

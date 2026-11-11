@@ -22,7 +22,8 @@ pub fn sk_resolve_execution_plan(
     intent: SKExecutionMode,
     context: &SKExecutionContext,
 ) -> Result<SKExecutionPlan, SKError> {
-    let (backend, fallback_reason) = plan_backend(intent, context.device.as_ref());
+    let (backend, fallback_reason) =
+        plan_backend(intent, context.device.as_ref(), context.scalar_size_bytes);
     match intent {
         SKExecutionMode::Automatic => {
             let fits_in_memory = context.dataset_size_bytes <= context.available_memory_bytes;

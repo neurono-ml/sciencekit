@@ -119,7 +119,7 @@ impl<F: SKFloat> SKComputeBackend<F> for SKMockComputeBackend {
             return Err(failure);
         }
         let device = self.primary_device()?;
-        let scalar_type = std::any::type_name::<F>();
+        let scalar_type = F::SCALAR_NAME;
         if !device.supports_scalar_type(scalar_type) {
             return Err(SKError::UnsupportedScalarType {
                 backend: "mock",

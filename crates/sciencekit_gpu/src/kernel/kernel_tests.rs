@@ -104,6 +104,7 @@ fn a_device_without_the_required_kernel_is_not_selected() {
         &inventory,
         SKDevicePreference::AnyDevice,
         Some(SKGpuKernel::Gemm),
+        None,
     )
     .expect_err("GEMM is not supported");
     assert_eq!(reason, SKFallbackReason::KernelNotSupported);
@@ -123,7 +124,38 @@ fn a_device_with_the_required_kernel_is_selected() {
         &inventory,
         SKDevicePreference::AnyDevice,
         Some(SKGpuKernel::Gemm),
+        None,
     )
     .expect("GEMM is supported");
     assert_eq!(device.name, "Mock OpenCL 0");
+}
+
+/// When device 0 lacks the required kernel and device 1 has it, selection picks device 1.
+#[test]
+fn selection_skips_device_missing_kernel_and_picks_second_device() {
+    let inventory = vec![
+        SKDeviceInfo::new(
+            0,
+            SKBackendKind::OpenCl,
+            "Mock OpenCL 0",
+            1024,
+            capabilities(&[SKGpuKernel::Elementwise]),
+        ),
+        SKDeviceInfo::new(
+            1,
+            SKBackendKind::OpenCl,
+            "Mock OpenCL 1",
+            1024,
+            capabilities(&[SKGpuKernel::Gemm]),
+        ),
+    ];
+    let device = sk_select_device(
+        &inventory,
+        SKDevicePreference::AnyDevice,
+        Some(SKGpuKernel::Gemm),
+        Some("f64"),
+    )
+    .expect("device 1 implements GEMM");
+    assert_eq!(device.index, 1);
+    assert_eq!(device.name, "Mock OpenCL 1");
 }

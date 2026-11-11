@@ -24,16 +24,19 @@ pub enum SKDevicePreference {
 
 /// Select the first compatible device, or report why the plan must fall back.
 ///
-/// The ordering is deterministic: devices of the preferred kind come first,
-/// then devices of the vendor-transparent OpenCL kind, then CUDA, then ROCm;
-/// within one kind the lowest device index wins. A host backend kind (or an
-/// empty inventory) yields [`SKFallbackReason::NoDeviceAvailable`]; devices that
-/// exist but do not implement `required_kernel` yield
+/// [`SKDevicePreference::Backend`] restricts candidates strictly to that device
+/// kind; [`SKDevicePreference::AnyDevice`] accepts any device kind, ordered by
+/// the vendor-transparent OpenCL kind first, then CUDA, then ROCm. Within one
+/// kind, the lowest `index` wins. A host backend kind (or an empty inventory)
+/// yields [`SKFallbackReason::NoDeviceAvailable`]; devices that do not support
+/// `required_scalar_type` yield [`SKFallbackReason::ScalarTypeNotSupported`];
+/// devices that do not implement `required_kernel` yield
 /// [`SKFallbackReason::KernelNotSupported`].
 pub fn sk_select_device(
     inventory: &[SKDeviceInfo],
     preference: SKDevicePreference,
     required_kernel: Option<SKGpuKernel>,
+    required_scalar_type: Option<&str>,
 ) -> Result<SKDeviceInfo, SKFallbackReason> {
     let mut candidates: Vec<&SKDeviceInfo> = inventory
         .iter()
@@ -46,6 +49,14 @@ pub fn sk_select_device(
 
     if candidates.is_empty() {
         return Err(SKFallbackReason::NoDeviceAvailable);
+    }
+
+    candidates.retain(|device| match required_scalar_type {
+        Some(scalar_type) => device.supports_scalar_type(scalar_type),
+        None => true,
+    });
+    if candidates.is_empty() {
+        return Err(SKFallbackReason::ScalarTypeNotSupported);
     }
 
     candidates.retain(|device| match required_kernel {

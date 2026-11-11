@@ -17,6 +17,7 @@ use super::modes::SKExecutionMode;
 pub(crate) fn plan_backend(
     intent: SKExecutionMode,
     device: Option<&SKDeviceContext>,
+    scalar_size_bytes: u64,
 ) -> (SKBackendKind, Option<SKFallbackReason>) {
     let Some(device) = device else {
         return (SKBackendKind::default(), None);
@@ -35,8 +36,19 @@ pub(crate) fn plan_backend(
         &device.device_inventory,
         SKDevicePreference::Backend(configured),
         device.required_kernel,
+        scalar_type_for_size(scalar_size_bytes),
     ) {
         Ok(selected) => (selected.kind, None),
         Err(reason) => (SK_HOST_FALLBACK_BACKEND, Some(reason)),
+    }
+}
+
+/// Map the context's scalar byte width onto the capability name (`"f32"` or `"f64"`).
+fn scalar_type_for_size(scalar_size_bytes: u64) -> Option<&'static str> {
+    match scalar_size_bytes {
+        0 => None,
+        4 => Some("f32"),
+        8 => Some("f64"),
+        _ => Some("unsupported"),
     }
 }
