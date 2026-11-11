@@ -14,6 +14,7 @@ mod grain;
 mod gram;
 mod linear;
 mod min_max;
+mod polynomial;
 mod reductions;
 mod scaling;
 mod validation;
@@ -30,6 +31,7 @@ pub use grain::{
 pub use gram::{sk_gram_matrix, sk_gram_vector};
 pub use linear::sk_linear_kernel_matrix;
 pub use min_max::sk_axis_min_max;
+pub use polynomial::sk_polynomial_kernel_matrix;
 pub use reductions::{sk_axis_sum, sk_axis_sum_squares};
 pub use scaling::sk_scale_in_place;
 pub use validation::sk_feature_population_variance;
@@ -44,3 +46,5 @@ mod gram_tests;
 mod kernels_tests;
 #[cfg(test)]
 mod linear_tests;
+#[cfg(test)]
+mod polynomial_tests;

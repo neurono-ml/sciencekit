@@ -51,8 +51,8 @@ pub use kernels::{
     SK_SCALE_IN_PLACE_GRAIN, SKKernel, SKKernelGamma, SKKernelParameters, sk_axis_min_max,
     sk_axis_sum, sk_axis_sum_squares, sk_binary_combine, sk_elementwise_transform,
     sk_feature_population_variance, sk_gram_matrix, sk_gram_vector, sk_linear_kernel_matrix,
-    sk_resolve_kernel_gamma, sk_resolve_kernel_parameters, sk_scale_in_place,
-    sk_validate_kernel_hyperparameters,
+    sk_polynomial_kernel_matrix, sk_resolve_kernel_gamma, sk_resolve_kernel_parameters,
+    sk_scale_in_place, sk_validate_kernel_hyperparameters,
 };
 pub use layout::{sk_force_contiguous, sk_is_c_contiguous, sk_is_f_contiguous, sk_memory_layout};
 pub use pairwise::{
