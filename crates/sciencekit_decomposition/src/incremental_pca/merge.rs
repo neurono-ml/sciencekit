@@ -141,10 +141,7 @@ fn sk_sum_chunk_rows<F: SKFloat>(chunk: ArrayView2<'_, F>) -> Array1<F> {
     sum
 }
 
-fn sk_center_chunk<F: SKFloat>(
-    chunk: ArrayView2<'_, F>,
-    mean: ArrayView1<'_, F>,
-) -> Array2<F> {
+fn sk_center_chunk<F: SKFloat>(chunk: ArrayView2<'_, F>, mean: ArrayView1<'_, F>) -> Array2<F> {
     let mut centered = chunk.to_owned();
     for mut row in centered.rows_mut() {
         azip!((value in &mut row, &column_mean in mean) {

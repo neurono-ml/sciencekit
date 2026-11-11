@@ -14,7 +14,7 @@ const MEAN_REDUCTION_ROW_CHUNK: usize = 256;
 pub(super) const SPARSE_SOLVER_SUGGESTION: &str = "use SKPCASolver::Randomized for implicit sparse centering, SKTruncatedSVD for uncentered sparse decomposition, or set allow_densification(true)";
 
 /// Returns `(number_of_rows, number_of_columns)` for a supported feature view.
-pub(super) fn sk_view_dimensions<F>(
+pub(crate) fn sk_view_dimensions<F>(
     features: &SKDataView<'_, F>,
 ) -> Result<(usize, usize), SKError> {
     match features {
@@ -89,7 +89,7 @@ fn sk_sum_dense_chunk<F: SKFloat>(chunk: ArrayView2<'_, F>) -> Array1<F> {
 }
 
 /// Materializes `X - 1 μᵀ` from a dense feature view.
-pub(super) fn sk_center_dense<F: SKFloat>(
+pub(crate) fn sk_center_dense<F: SKFloat>(
     dense: ArrayView2<'_, F>,
     mean: ArrayView1<'_, F>,
 ) -> Array2<F> {

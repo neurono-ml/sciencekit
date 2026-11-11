@@ -72,8 +72,12 @@ fn incremental_sparse_mixed_with_dense_batches_matches_single_dense_pass() {
     let mut reference = SKCovarianceAccumulator::<f64>::new(6);
     sk_update_dense(&mut reference, backend.as_ref(), dense.view(), 1);
 
-    let first = dense.slice_axis(Axis(0), ndarray::Slice::from(0..10)).to_owned();
-    let second = dense.slice_axis(Axis(0), ndarray::Slice::from(10..22)).to_owned();
+    let first = dense
+        .slice_axis(Axis(0), ndarray::Slice::from(0..10))
+        .to_owned();
+    let second = dense
+        .slice_axis(Axis(0), ndarray::Slice::from(10..22))
+        .to_owned();
     let third = dense.slice_axis(Axis(0), ndarray::Slice::from(22..30));
     let first_csr = csr_from_dense(&first);
     let second_csr = csr_from_dense(&second);

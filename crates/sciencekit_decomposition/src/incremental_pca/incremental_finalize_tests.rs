@@ -31,12 +31,7 @@ fn incremental_finalize_sorted_components_and_equals_full_pca() {
     assert_eq!(finalized.components.dim(), (4, 6));
 
     // Explained variance is non-increasing.
-    for pair in finalized
-        .explained_variance
-        .as_slice()
-        .unwrap()
-        .windows(2)
-    {
+    for pair in finalized.explained_variance.as_slice().unwrap().windows(2) {
         assert!(pair[0] >= pair[1]);
     }
 
