@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `sciencekit_ensemble` introduces Breiman random forests (spec
+  `random-forests`): `SKRandomForestClassifier<F>`, `SKRandomForestRegressor<F>`
+  and `SKMaximumSamples<F>`, builder-only with `number_of_trees` (default 100),
+  `criterion` (`Gini` / `Entropy` for classification, `SquaredError` /
+  `AbsoluteError` for regression), `maximum_depth`, `minimum_samples_split`,
+  `minimum_samples_leaf`, `maximum_features` (`Sqrt` default), `bootstrap`
+  (default true), `maximum_samples` (`All` default, `Count`, `Fraction`),
+  `random_seed` (default 0), `class_weight` (classifier), `oob_score` (default
+  false), `backend` (default `Faer`) and `execution_mode` (default `Automatic`).
+  Fit grows one CART tree per bootstrap sample in parallel lock-free slots via
+  rayon, deriving distinct deterministic per-tree split and bootstrap seeds from
+  `random_seed` and the tree index so the fitted forest is identical across
+  repeated fits and rayon thread counts. Prediction averages canonical class
+  probabilities with smallest-index tie-breaking (classifier) or leaf responses
+  (regressor), exposes normalized mean feature importances, and computes
+  out-of-bag accuracy or R² through `sciencekit_metrics` exclusively over rows
+  excluded from each tree's bootstrap sample (`UnsupportedOperation` when
+  disabled or when zero rows fall out of bag). Dense and borrowed CSR designs
+  have full representation parity on fit and prediction without densifying
+  sparse inputs.
+
 - Human-readable JSON debug model format (spec `json-debug-format`):
   `sciencekit_interop::json` adds `SKJsonDebugWriter` /
   `SKJsonDebugWriterBuilder`, `SKJsonDebugReader` / `SKJsonDebugReaderBuilder`,
