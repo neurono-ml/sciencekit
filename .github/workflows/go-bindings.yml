@@ -6,12 +6,18 @@ on:
     paths:
       - "go/**"
       - "go.work"
+      - "Cargo.toml"
+      - "rust-toolchain.toml"
+      - "scripts/build-go-library.sh"
       - "crates/sciencekit_ffi/**"
       - ".github/workflows/go-bindings.yml"
   pull_request:
     paths:
       - "go/**"
       - "go.work"
+      - "Cargo.toml"
+      - "rust-toolchain.toml"
+      - "scripts/build-go-library.sh"
       - "crates/sciencekit_ffi/**"
       - ".github/workflows/go-bindings.yml"
 
@@ -37,6 +43,8 @@ jobs:
         run: cargo update -p psm --precise 0.1.24
       - name: Build the sciencekit shared library
         run: cargo build -p sciencekit_ffi --release
+      - name: gofmt
+        run: test -z "$(gofmt -l go)"
       - name: go vet
         env:
           CGO_CFLAGS: -I${{ github.workspace }}/crates/sciencekit_ffi/include
@@ -49,3 +57,10 @@ jobs:
           CGO_LDFLAGS: -L${{ github.workspace }}/target/release -lsciencekit_ffi
           LD_LIBRARY_PATH: ${{ github.workspace }}/target/release
         run: go test -race ./go/...
+      - name: go test with strict cgo pointer checks
+        env:
+          GOEXPERIMENT: cgocheck2
+          CGO_CFLAGS: -I${{ github.workspace }}/crates/sciencekit_ffi/include
+          CGO_LDFLAGS: -L${{ github.workspace }}/target/release -lsciencekit_ffi
+          LD_LIBRARY_PATH: ${{ github.workspace }}/target/release
+        run: go test ./go/...
