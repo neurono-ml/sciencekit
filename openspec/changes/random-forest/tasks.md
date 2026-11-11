@@ -41,7 +41,7 @@
 - [x] 4.1 Add tests for empty input, feature-count mismatch, non-finite values and
   single-class classification, asserting the exact central error variant; verify with
   `cargo test -p sciencekit_ensemble forest_validation`.
-- [ ] 4.2 Add a `Send + Sync` assertion and a concurrent-prediction test sharing one
+- [x] 4.2 Add a `Send + Sync` assertion and a concurrent-prediction test sharing one
   forest; verify with `cargo test -p sciencekit_ensemble forest_concurrency`.
 - [ ] 4.3 Add `acceptance_tests/` covering tiny and large data (at least 20 000 rows),
   classifier and regressor, OOB on/off, dense/sparse, thread-count invariance and metric
