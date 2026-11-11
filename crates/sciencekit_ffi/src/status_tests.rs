@@ -49,3 +49,33 @@ fn status_maps_io_errors_to_io() {
     let error = SKError::Io(std::io::Error::other("disk"));
     assert_eq!(sk_ffi_status_for_error(&error), SKFfiStatus::Io);
 }
+
+/// Unavailable devices and unsupported scalar types map to `Unsupported`.
+#[test]
+fn status_maps_device_capability_errors_to_unsupported() {
+    let unavailable = SKError::DeviceUnavailable {
+        backend: "opencl",
+        reason: "no ICD found".to_string(),
+    };
+    let unsupported_scalar = SKError::UnsupportedScalarType {
+        backend: "cuda",
+        scalar_type: "f64",
+    };
+    assert_eq!(
+        sk_ffi_status_for_error(&unavailable),
+        SKFfiStatus::Unsupported
+    );
+    assert_eq!(
+        sk_ffi_status_for_error(&unsupported_scalar),
+        SKFfiStatus::Unsupported
+    );
+}
+
+/// A host↔device transfer failure after selection maps to `Internal`.
+#[test]
+fn status_maps_device_transfer_failure_to_internal() {
+    let transfer = SKError::DeviceTransferFailure {
+        reason: "DMA timeout".to_string(),
+    };
+    assert_eq!(sk_ffi_status_for_error(&transfer), SKFfiStatus::Internal);
+}
