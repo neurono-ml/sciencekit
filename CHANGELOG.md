@@ -13,6 +13,36 @@ Arrow interop, the GPU compute contracts, the randomized SVD kernel and the lang
 
 ### Added
 
+- `sciencekit_decomposition` sub-crate (spec `principal-component-analysis`):
+  `SKPCA<F>`, a builder-only Principal Component Analysis estimator with
+  `number_of_components` (default `None`, meaning `min(n_samples, n_features)`),
+  `svd_solver` (`Auto` default, `Full`, `Randomized`, `CovarianceEigh`),
+  `whiten` (default `false`), `tolerance` (default `0.0`),
+  `number_of_power_iterations` (default `5`), `allow_densification` (default
+  `false`), `random_seed` (default `0`), `backend` (default `Faer`) and
+  `execution_mode` (default `Automatic`). Fitting computes per-feature empirical
+  means and total unbiased centered variance, resolves `Auto` deterministically
+  (`Full` on high component fractions or small dense designs, `CovarianceEigh`
+  on tall-skinny dense designs where `n_samples > 10 * n_features` and
+  `n_features <= 1000`, and `Randomized` on larger truncated or sparse designs),
+  orients every principal component row so its largest-magnitude coordinate is
+  non-negative, and returns a distinct `SKPCAModel<F>` exposing `components`,
+  `explained_variance`, `explained_variance_ratio`, `singular_values`, `mean`,
+  `resolved_solver`, `number_of_components`, `number_of_features`, `whiten`,
+  `backend` and `execution_mode`. The `Randomized` solver fits sparse CSR views
+  through implicit centering (`SKRandomizedSvdBuilder`) without materializing a
+  dense centered matrix; `Full` and `CovarianceEigh` reject sparse input with
+  `UnsupportedRepresentation` naming `Randomized` and `SKTruncatedSVD` unless
+  `allow_densification(true)` is set, in which case a warning reports the
+  estimated dense byte cost. `SKPCAModel<F>` implements `SKFeatureTransformer<F>`
+  and inherent `transform` and `inverse_transform` over dense and CSR views
+  without densification, with floored whitening scales and row-chunked parallel
+  projection; `SKPCA::fit_transform` runs under a single `FitTransform` span.
+  Companion and acceptance tests cover `f32`/`f64`, all solvers, component
+  boundaries, whitening, validation errors, thread-count-invariant determinism,
+  concurrent sharing and reconstruction metrics (`sk_mean_squared_error`,
+  `sk_r2_score`) via `sciencekit_metrics`.
+
 - Randomized SVD kernel (spec `randomized-svd`): `sciencekit_math::decomposition`
   gains `sk_randomized_svd` and the builder `SKRandomizedSvdBuilder`, returning
   `SKRandomizedSvdResult` (left singular vectors, non-increasing singular
