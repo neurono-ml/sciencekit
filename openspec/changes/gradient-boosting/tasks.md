@@ -16,7 +16,7 @@
   Hessian, link and loss methods, and the squared-error implementation; verify hand-computed
   gradients, Hessians and initial mean; verify with
   `cargo test -p sciencekit_ensemble boosting_loss`.
-- [ ] 2.2 Implement absolute-error and Huber losses with their documented degeneracy
+- [x] 2.2 Implement absolute-error and Huber losses with their documented degeneracy
   (constant Hessian for absolute error, clipped gradient for Huber) and hand-computed
   tests; verify with `cargo test -p sciencekit_ensemble boosting_loss`.
 - [ ] 2.3 Implement binary log-loss with sigmoid and multiclass log-loss with softmax,
