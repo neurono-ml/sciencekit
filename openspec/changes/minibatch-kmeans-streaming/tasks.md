@@ -25,7 +25,7 @@
 - [x] 3.1 Implement `fit_streaming` over `SKSourceProvider` through the shared executor, with
   a one-pass test and a reopenable multi-epoch test; verify with
   `cargo test -p sciencekit_cluster minibatch_streaming`.
-- [ ] 3.2 Implement the positive-tolerance early stop and batch/epoch reporting; verify with
+- [x] 3.2 Implement the positive-tolerance early stop and batch/epoch reporting; verify with
   `cargo test -p sciencekit_cluster minibatch_streaming`.
 
 ## 4. Estimator, model and validation
