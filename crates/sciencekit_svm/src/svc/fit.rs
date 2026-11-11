@@ -131,7 +131,7 @@ fn sk_fit_svc<F: SKFloat>(
     let (class_indices, classes) = sk_canonicalize_svc_targets(targets, rows)?;
     let number_of_classes = classes.number_of_classes();
     let per_class_weights =
-        sk_resolve_class_weights(&config.class_weight, &class_indices, number_of_classes)?;
+        sk_resolve_class_weights(&config.class_weight, &class_indices, &classes)?;
     let kernel_parameters = sk_resolve_kernel_parameters(
         config.kernel,
         config.gamma,

@@ -28,3 +28,5 @@ mod svc_fit_tests;
 mod svc_multiclass_tests;
 #[cfg(test)]
 mod svc_predict_tests;
+#[cfg(test)]
+mod svc_weights_tests;
