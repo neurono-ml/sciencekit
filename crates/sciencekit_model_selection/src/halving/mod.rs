@@ -14,6 +14,8 @@ pub use scheduler::{sk_halving_candidate_schedule, sk_halving_resource_schedule}
 pub use trace::SKHalvingRound;
 
 #[cfg(test)]
+mod halving_aggressive_tests;
+#[cfg(test)]
 mod halving_evaluation_tests;
 #[cfg(test)]
 mod halving_scheduler_tests;
