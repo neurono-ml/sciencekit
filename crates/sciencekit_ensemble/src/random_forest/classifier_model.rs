@@ -11,7 +11,6 @@ use sciencekit_tree::{SKDecisionTreeClassifierModel, SKTree, SKTreeCriterion};
 /// table. When a small bootstrap draw lands entirely in one class, CART has
 /// zero impurity and cannot split, so `PureLeaf` stores that constant class
 /// directly.
-#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub(super) enum SKClassifierTreeMember<F> {
     Fitted {

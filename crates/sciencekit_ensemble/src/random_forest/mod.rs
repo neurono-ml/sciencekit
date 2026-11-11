@@ -8,8 +8,8 @@ mod classifier;
 mod classifier_builder;
 mod classifier_fit;
 mod classifier_model;
+mod classifier_predict;
 mod execution;
-#[allow(dead_code)]
 mod input_validation;
 mod regressor;
 mod regressor_builder;
@@ -27,5 +27,7 @@ pub use regressor_model::SKRandomForestRegressorModel;
 
 #[cfg(test)]
 mod forest_builder_tests;
+#[cfg(test)]
+mod forest_classifier_tests;
 #[cfg(test)]
 mod forest_fit_tests;

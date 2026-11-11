@@ -127,7 +127,6 @@ pub(super) fn sk_canonicalize_targets<F: SKFloat>(
 
 /// Read one feature value from a CSR row view, treating an absent coordinate as
 /// an observed zero.
-#[allow(dead_code)]
 pub(super) fn sk_sparse_feature_value<F: SKFloat>(row: &CsVecView<'_, F>, feature: usize) -> F {
     match row.indices().binary_search(&feature) {
         Ok(position) => row.data()[position],

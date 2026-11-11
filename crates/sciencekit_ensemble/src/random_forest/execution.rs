@@ -27,7 +27,6 @@ where
 }
 
 /// Evaluate `row_count` independent prediction rows in order.
-#[allow(dead_code)]
 pub(super) fn sk_map_prediction_rows<T, F>(
     row_count: usize,
     tree_count: usize,
