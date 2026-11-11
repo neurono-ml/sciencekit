@@ -17,7 +17,7 @@
 - [x] 2.1 Implement `transform` and `inverse_transform` for dense and sparse views, with
   shape and reconstruction tests; verify with
   `cargo test -p sciencekit_decomposition truncated_transform`.
-- [ ] 2.2 Implement the builder with the documented defaults and invalid-value tests;
+- [x] 2.2 Implement the builder with the documented defaults and invalid-value tests;
   verify with `cargo test -p sciencekit_decomposition truncated_builder`.
 - [ ] 2.3 Implement `SKUnsupervisedFit` and the model accessors; verify with
   `cargo test -p sciencekit_decomposition truncated_fit`.
