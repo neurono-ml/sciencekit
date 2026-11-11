@@ -31,7 +31,7 @@
 - [x] 3.2 Implement seeded row subsampling and feature subsampling, with reproducibility
   and full-sample tests; verify with
   `cargo test -p sciencekit_ensemble boosting_subsample`.
-- [ ] 3.3 Implement early stopping with the seeded validation split, best-stage restore and
+- [x] 3.3 Implement early stopping with the seeded validation split, best-stage restore and
   stage-count reporting; verify with `cargo test -p sciencekit_ensemble boosting_early_stop`.
 
 ## 4. Classifier
