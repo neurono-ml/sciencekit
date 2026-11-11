@@ -32,7 +32,7 @@
   case; verify with `cargo test -p sciencekit_ensemble forest_oob`.
 - [x] 3.2 Implement mean forest feature importances with normalization and a test on a
   separating feature; verify with `cargo test -p sciencekit_ensemble forest_importances`.
-- [ ] 3.3 Add dense-vs-sparse fit/predict equivalence tests and a test proving sparse
+- [x] 3.3 Add dense-vs-sparse fit/predict equivalence tests and a test proving sparse
   fitting does not densify; verify with
   `cargo test -p sciencekit_ensemble forest_representation`.
 
