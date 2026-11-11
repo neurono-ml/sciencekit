@@ -5,7 +5,7 @@
 - [x] 1.1 Add `petgraph` to the workspace and create the `graph` module with
   `SKPipelineGraphBuilder`, node ids and edge insertion; verify `cargo test -p
   sciencekit_pipeline graph` compiles.
-- [ ] 1.2 Implement cycle, final-node and reachability validation with doomed-graph
+- [x] 1.2 Implement cycle, final-node and reachability validation with doomed-graph
   fixtures; verify with `cargo test -p sciencekit_pipeline graph_validate`.
 
 ## 2. Execution
