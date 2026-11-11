@@ -12,6 +12,7 @@ mod config;
 mod elementwise;
 mod grain;
 mod gram;
+mod linear;
 mod min_max;
 mod reductions;
 mod scaling;
@@ -27,6 +28,7 @@ pub use grain::{
     SK_SCALE_IN_PLACE_GRAIN,
 };
 pub use gram::{sk_gram_matrix, sk_gram_vector};
+pub use linear::sk_linear_kernel_matrix;
 pub use min_max::sk_axis_min_max;
 pub use reductions::{sk_axis_sum, sk_axis_sum_squares};
 pub use scaling::sk_scale_in_place;
@@ -40,3 +42,5 @@ mod grain_tests;
 mod gram_tests;
 #[cfg(test)]
 mod kernels_tests;
+#[cfg(test)]
+mod linear_tests;

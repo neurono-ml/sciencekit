@@ -32,6 +32,7 @@ pub use sparse::{
     sk_sparse_euclidean_distance_matrix, sk_sparse_manhattan_distance_matrix,
     sk_sparse_squared_euclidean_distance_matrix,
 };
+pub(crate) use simd_dot::dot_product_simd;
 pub use squared_euclidean::{sk_euclidean_distance_matrix, sk_squared_euclidean_distance_matrix};
 
 #[cfg(test)]

@@ -60,6 +60,27 @@ pub(crate) fn sk_validate_kernel_finiteness<F: SKFloat>(
     }
 }
 
+/// Validate a `(left, right)` kernel pair: supported views, matching feature
+/// dimensions and finite entries on both sides.
+pub(crate) fn sk_validate_kernel_pair<F: SKFloat>(
+    left: &SKDataView<'_, F>,
+    right: &SKDataView<'_, F>,
+) -> Result<(usize, usize), SKError> {
+    let (left_rows, left_columns) = sk_kernel_view_dimensions(left)?;
+    let (right_rows, right_columns) = sk_kernel_view_dimensions(right)?;
+    if left_columns != right_columns {
+        return Err(SKError::shape_mismatch_2d(
+            left_rows,
+            left_columns,
+            right_rows,
+            right_columns,
+        ));
+    }
+    sk_validate_kernel_finiteness(left)?;
+    sk_validate_kernel_finiteness(right)?;
+    Ok((left_rows, right_rows))
+}
+
 /// Population variance over all `rows * columns` logical entries of `features`.
 ///
 /// Implicit zeros in CSR storage contribute zero to the sum and sum of squares,
