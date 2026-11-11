@@ -9,7 +9,7 @@ finalizers and module packaging.
 
 ## What Changes
 
-- New Go module `github.com/neurono-ml/sciencekit-go` (outside the Cargo workspace) over
+- New Go module `github.com/neurono-ml/sciencekit/go` (outside the Cargo workspace) over
   `sciencekit_ffi`.
 - cgo bindings for status/version/handles/arrays and fit/predict/transform/score/save/load.
 - Go wrapper types for builders/models with `Finalizer` cleanup and explicit `Close`.

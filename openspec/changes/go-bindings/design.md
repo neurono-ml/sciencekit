@@ -27,13 +27,13 @@ via `CGO_LDFLAGS`/`LD_LIBRARY_PATH` or a documented build step.
 ### Decision 2 — Arrays
 
 A matrix is a flat `[]float64`/`[]float32` plus rows/cols; the wrapper builds a contiguous
-copy if needed and passes a pointer with `runtime.KeepAlive`. Outputs are copied into a new
+copy if needed and passes a pointer with a `C.malloc` copy. Outputs are copied into a new
 Go slice and the native buffer is freed.
 
 ### Decision 3 — Errors and lifecycle
 
 `SKFfiStatus` maps to a `ScienceKitError` with `Code`/`Message`. Builders/models hold a
-`uintptr` handle; `Close` frees it; `runtime.SetFinalizer` frees if the user forgets. Calls
+`typed `*C.SKFfiBuilder` / `*C.SKFfiModel`` handle; `Close` frees it; `runtime.SetFinalizer` frees if the user forgets. Calls
 on a closed handle return an error.
 
 ### Decision 4 — File layout
@@ -54,7 +54,7 @@ go/
 - **cgo build/link complexity** → documented flags and CI.
 - **Finalizer timing** → explicit Close preferred; idempotent finalizer.
 - **Pointer passing rules** → use `unsafe.Pointer` only for the call duration with
-  `runtime.KeepAlive`.
+  a `C.malloc` copy.
 - **ABI changes** → version query at init.
 
 ## Migration Plan
