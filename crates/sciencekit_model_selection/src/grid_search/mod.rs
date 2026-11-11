@@ -12,7 +12,7 @@ mod builder;
 mod classifier;
 mod configuration;
 mod error_score;
-mod evaluation;
+pub(crate) mod evaluation;
 pub(crate) mod observation;
 mod prediction;
 mod regressor;
