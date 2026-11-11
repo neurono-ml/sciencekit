@@ -251,3 +251,6 @@ fallback reason.
 The [randomized SVD chapter](./ch39-randomized-svd.html) adds the seeded range finder, the
 thin Householder QR, the small Gram SVD, the sparse products without densification, the
 implicit centering and the accuracy bound against the exact decomposition.
+The [JSON debug format chapter](./ch45-json-debug-format.html) adds the deterministic
+human-readable `SKModelState` schema, the pretty and compact writer, the duplicate-aware
+validating reader and the round-trip acceptance guarantees across scalar and tensor types.
