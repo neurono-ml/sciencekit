@@ -64,3 +64,86 @@ fn linear_kernel_handles_large_dense_inputs() {
         .sum();
     assert!((kernel[[17, 43]] - reference_cell).abs() < 1e-9);
 }
+
+#[test]
+fn linear_kernel_matches_across_all_four_dense_and_sparse_pairs() {
+    let left_dense = array![
+        [0.0_f64, 2.0, 0.0, -3.0],
+        [1.5, 0.0, 4.0, 0.0],
+        [0.0, 0.0, 0.0, 0.0]
+    ];
+    let right_dense = array![[2.0_f64, 1.0, 0.0, 0.5], [0.0, -2.0, 3.0, 4.0]];
+
+    let to_csr = |dense: &Array2<f64>| {
+        let mut triplets = sprs::TriMat::new(dense.dim());
+        dense
+            .indexed_iter()
+            .filter(|(_, value)| **value != 0.0)
+            .for_each(|((r, c), &v)| triplets.add_triplet(r, c, v));
+        triplets.to_csr()
+    };
+    let left_csr = to_csr(&left_dense);
+    let right_csr = to_csr(&right_dense);
+
+    let dd = sk_linear_kernel_matrix(
+        SKDataView::Dense(left_dense.view()),
+        SKDataView::Dense(right_dense.view()),
+    )
+    .unwrap();
+    let ss = sk_linear_kernel_matrix(
+        SKDataView::Sparse(left_csr.view()),
+        SKDataView::Sparse(right_csr.view()),
+    )
+    .unwrap();
+    let sd = sk_linear_kernel_matrix(
+        SKDataView::Sparse(left_csr.view()),
+        SKDataView::Dense(right_dense.view()),
+    )
+    .unwrap();
+    let ds = sk_linear_kernel_matrix(
+        SKDataView::Dense(left_dense.view()),
+        SKDataView::Sparse(right_csr.view()),
+    )
+    .unwrap();
+
+    for candidate in [&ss, &sd, &ds] {
+        assert_eq!(candidate.dim(), dd.dim());
+        candidate
+            .iter()
+            .zip(dd.iter())
+            .for_each(|(&actual, &expected)| assert!((actual - expected).abs() < 1e-12));
+    }
+}
+
+#[test]
+fn linear_kernel_handles_ultra_wide_csr_without_densifying() {
+    // 4 rows by 100,000,000 columns: densifying would allocate 3.2 GB per matrix.
+    let left = sprs::CsMat::new(
+        (4, 100_000_000),
+        vec![0, 2, 4, 5, 7],
+        vec![3, 99_999_991, 10, 50_000_000, 99_999_991, 3, 50_000_000],
+        vec![2.0_f64, 3.0, -1.0, 4.0, 5.0, 7.0, -2.0],
+    );
+    let right = sprs::CsMat::new(
+        (2, 100_000_000),
+        vec![0, 2, 4],
+        vec![3, 50_000_000, 10, 99_999_991],
+        vec![1.5_f64, 2.5, -3.0, 4.0],
+    );
+
+    let kernel = sk_linear_kernel_matrix(
+        SKDataView::Sparse(left.view()),
+        SKDataView::Sparse(right.view()),
+    )
+    .unwrap();
+
+    assert_eq!(kernel.dim(), (4, 2));
+    // Row 0 = {3: 2, 99_999_991: 3}; Right 0 = {3: 1.5, 50_000_000: 2.5} => 3.0
+    // Row 0 dot Right 1 ({10: -3, 99_999_991: 4}) => 12.0
+    assert!((kernel[[0, 0]] - 3.0).abs() < 1e-12);
+    assert!((kernel[[0, 1]] - 12.0).abs() < 1e-12);
+    assert!((kernel[[1, 0]] - 10.0).abs() < 1e-12);
+    assert!((kernel[[1, 1]] - 3.0).abs() < 1e-12);
+    assert!((kernel[[2, 1]] - 20.0).abs() < 1e-12);
+    assert!((kernel[[3, 0]] - 5.5).abs() < 1e-12);
+}
