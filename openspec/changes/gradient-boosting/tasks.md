@@ -28,7 +28,7 @@
 - [x] 3.1 Implement the stage loop (gradient computation, structure build, Newton leaf
   replacement, shrinkage, raw-score update) and test a single-stage hand-computed update;
   verify with `cargo test -p sciencekit_ensemble boosting_stage`.
-- [ ] 3.2 Implement seeded row subsampling and feature subsampling, with reproducibility
+- [x] 3.2 Implement seeded row subsampling and feature subsampling, with reproducibility
   and full-sample tests; verify with
   `cargo test -p sciencekit_ensemble boosting_subsample`.
 - [ ] 3.3 Implement early stopping with the seeded validation split, best-stage restore and
