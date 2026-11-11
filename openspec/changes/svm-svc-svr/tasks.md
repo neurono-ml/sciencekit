@@ -8,7 +8,7 @@
 - [x] 1.2 Write and implement the linear kernel for dense inputs, with known dot products,
   shape, symmetry and a large-input test; verify with
   `cargo test -p sciencekit_math kernel`.
-- [ ] 1.3 Add sparse×sparse, sparse×dense and dense×sparse linear-kernel paths, with
+- [x] 1.3 Add sparse×sparse, sparse×dense and dense×sparse linear-kernel paths, with
   same-logical-matrix equivalence tests and a test proving no densification; verify with
   `cargo test -p sciencekit_math kernel`.
 - [ ] 1.4 Write and implement the polynomial kernel (degree, gamma, coef0), including
