@@ -6,4 +6,6 @@
 
 pub mod loss;
 
-pub use loss::{SKGradientLoss, SKSquaredErrorLoss};
+pub use loss::{
+    SKAbsoluteErrorLoss, SKGradientLoss, SKHuberLoss, SKHuberLossBuilder, SKSquaredErrorLoss,
+};
