@@ -13,7 +13,7 @@
 
 ## 2. Finalize and estimator
 
-- [ ] 2.1 Implement finalization (covariance, eigh, sorting, components, explained variance
+- [x] 2.1 Implement finalization (covariance, eigh, sorting, components, explained variance
   and ratio) and the equality-with-PCA test; verify with
   `cargo test -p sciencekit_decomposition incremental_finalize`.
 - [ ] 2.2 Implement the builder with the documented defaults and invalid-value tests;
