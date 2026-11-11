@@ -14,6 +14,9 @@
 //!   `sk_pairwise_distance_matrix` dispatcher.
 //! - [`sparse_ops`] — sparse (`sprs`) product kernels (sparse×dense,
 //!   sparse×sparse) over zero-copy views.
+//! - [`decomposition`] — decomposition kernels: the deterministic randomized
+//!   [`sk_randomized_svd`](decomposition::sk_randomized_svd) range finder over
+//!   dense and sparse feature matrices.
 //! - [`solvers`] — iterative linear solvers: the zero-copy
 //!   [`SKLinearOperator`](solvers::SKLinearOperator) abstraction, the
 //!   [`sk_conjugate_gradient`](solvers::sk_conjugate_gradient) SPD solve and the
@@ -35,6 +38,7 @@
 #![warn(missing_docs)]
 
 pub mod backend;
+pub mod decomposition;
 pub mod kernels;
 pub mod layout;
 pub mod pairwise;
@@ -46,6 +50,7 @@ pub use backend::{
     SKMatrixMultiplyBackend, SKNormKind, SKQRDecomposition, SKSingularValueDecomposition,
     sk_default_math_backend, sk_math_backend_for_kind,
 };
+pub use decomposition::SKRandomizedSvdResult;
 pub use kernels::{
     SK_AXIS_SUM_GRAIN, SK_BINARY_COMBINE_GRAIN, SK_ELEMENTWISE_TRANSFORM_GRAIN,
     SK_SCALE_IN_PLACE_GRAIN, sk_axis_min_max, sk_axis_sum, sk_axis_sum_squares, sk_binary_combine,
