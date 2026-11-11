@@ -26,7 +26,7 @@
 
 - [x] 3.1 Implement `SKPCABuilder` with the documented defaults and invalid-value tests;
   verify with `cargo test -p sciencekit_decomposition pca_builder`.
-- [ ] 3.2 Implement `SKUnsupervisedFit` and the model accessors (components, variance,
+- [x] 3.2 Implement `SKUnsupervisedFit` and the model accessors (components, variance,
   ratio, singular values, mean); verify with
   `cargo test -p sciencekit_decomposition pca_fit`.
 - [ ] 3.3 Implement `transform`, `inverse_transform` and `fit_transform`, including the
