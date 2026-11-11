@@ -99,17 +99,17 @@ Every point falls into **exactly one** of three roles:
 flowchart LR
     accTitle: Core, border and noise roles in DBSCAN
     accDescr: Core points C0, C1 and C2 each have at least minimum_samples neighbours within eps and expand density to one another and to fringe point B. Border point B joins the cluster because C0 reaches it, yet B does not propagate density onward to nearby point N1, so both N1 and distant point N2 receive SKClusterLabel::Noise.
-    subgraph Cluster0["Cluster(0) — dense component"]
-        C1["Core row 1<br/>|N| >= m"] <-->|"d <= eps<br/>expands"| C0["Core row 0 (seed)<br/>|N| >= m"]
-        C2["Core row 2<br/>|N| >= m"] <-->|"d <= eps<br/>expands"| C0
-        C0 -->|"d <= eps<br/>absorbs fringe"| B["Border row 4<br/>|N| < m"]
+    subgraph Cluster0["Cluster(0) component"]
+        C1["Core row 1<br/>|N| >= m"] <-->|"d <= eps | expands"| C0["Core row 0 (seed)<br/>|N| >= m"]
+        C2["Core row 2<br/>|N| >= m"] <-->|"d <= eps | expands"| C0
+        C0 -->|"d <= eps | absorbs"| B["Border row 4<br/>|N| < m"]
     end
-    B -.->|"d <= eps, NOT core:<br/>propagation stops"| N1["Noise row 5<br/>SKClusterLabel::Noise"]
+    B -.->|"not core | stops"| N1["Noise row 5<br/>SKClusterLabel::Noise"]
     N2["Isolated row 6<br/>SKClusterLabel::Noise"]
 
-    classDef core fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#14532d
-    classDef border fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#1e3a8a
-    classDef noise fill:#ffe4e6,stroke:#e11d48,stroke-width:2px,color:#881337
+    classDef core fill:#f0fdf4,stroke:#16a34a,color:#14532d
+    classDef border fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e
+    classDef noise fill:#ffe4e6,stroke:#e11d48,color:#7f1d1d
     class C0,C1,C2 core
     class B border
     class N1,N2 noise
@@ -155,22 +155,22 @@ densifying) and builds `SKDBSCANCoreSearch`:
 flowchart TD
     accTitle: SKDBSCANModel nearest-core assignment pipeline
     accDescr: A query batch enters predict_clusters, passes shape, finiteness and CSR/dense validation, handles an all-noise model by returning Noise, dispatches dense queries on a tree model to k_nearest(1) on the core tree and sparse or brute-force queries to SKBruteForceSearcher over core samples, then compares the nearest core distance against eps to emit Cluster(id) or SKClusterLabel::Noise.
-    Q["Query batch X_query<br/>(Dense or CSR)"] --> V["sk_validate_query_features<br/>non-empty, cols match, finite, not CSC"]
+    Q["Query batch<br/>Dense or CSR"] --> V["Validate queries<br/>shape, finite, not CSC"]
     V --> E{"Any fitted<br/>core samples?"}
-    E -->|"No (0 clusters)"| ALLN["Return SKClusterLabel::Noise<br/>for every query row"]
-    E -->|"Yes"| D{"Core tree present<br/>AND query is Dense?"}
+    E -->|"No (0 clusters)"| ALLN["Return<br/>SKClusterLabel::Noise"]
+    E -->|"Yes"| D{"Core tree present<br/>and Dense query?"}
     D -->|"Yes"| T["Core KdTree / BallTree<br/>k_nearest(queries, 1)"]
-    D -->|"No (CSR query or BruteForce)"| BF["Core SKBruteForceSearcher<br/>k_nearest(queries, 1) — no densification"]
+    D -->|"No | CSR or BruteForce"| BF["SKBruteForceSearcher<br/>k_nearest(queries, 1)<br/>no densification"]
     T --> CMP{"distance <= eps?"}
     BF --> CMP
-    CMP -->|"Yes"| CL["Assign nearest core's<br/>SKClusterLabel::Cluster(id)"]
-    CMP -->|"No"| NS["Assign<br/>SKClusterLabel::Noise"]
+    CMP -->|"Yes"| CL["Nearest core label<br/>Cluster(id)"]
+    CMP -->|"No"| NS["Return<br/>SKClusterLabel::Noise"]
 
-    classDef input fill:#e0e7ff,stroke:#4f46e5,stroke-width:2px,color:#1e1b4b
-    classDef guard fill:#fef9c3,stroke:#ca8a04,stroke-width:2px,color:#713f12
-    classDef index fill:#cffafe,stroke:#0891b2,stroke-width:2px,color:#164e63
-    classDef outCluster fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#14532d
-    classDef outNoise fill:#ffe4e6,stroke:#e11d48,stroke-width:2px,color:#881337
+    classDef input fill:#ede9fe,stroke:#7c3aed,color:#3b0764
+    classDef guard fill:#fef3c7,stroke:#d97706,color:#78350f
+    classDef index fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e
+    classDef outCluster fill:#f0fdf4,stroke:#16a34a,color:#14532d
+    classDef outNoise fill:#ffe4e6,stroke:#e11d48,color:#7f1d1d
     class Q input
     class V,E,D,CMP guard
     class T,BF index
@@ -247,15 +247,18 @@ within $0.45$ of a *border* row yet $1.3 > 0.9$ from the nearest *core* row (con
 queries each with dense and CSR batches, asserting all four combinations return identical
 assignments.
 
-### `dbscan_acceptance_large_twenty_thousand_row_fit_recovers_chains_and_noise` and `dbscan_acceptance_metrics_recovers_non_convex_concentric_rings_where_kmeans_cannot`
+### `dbscan_acceptance_large_twenty_thousand_row_fit_recovers_chains_and_noise`, `dbscan_acceptance_metrics_recovers_non_convex_concentric_rings_where_kmeans_cannot` and `dbscan_acceptance_metrics_silhouette_excludes_noise_and_scores_fitted_model`
 
 In `acceptance_tests/`, the large-scale test plants $20{,}000$ rows across $4$ elongated,
 $100$-station density chains plus $200$ isolated noise points ($20{,}200$ rows total) and verifies
-exact recovery of all $4$ chains and all $200$ `Noise` labels via `SKKDTree`. The metrics test
+exact recovery of all $4$ chains and all $200$ `Noise` labels via `SKKDTree`. In
+`dbscan_metric_tests.rs`, `dbscan_acceptance_metrics_recovers_non_convex_concentric_rings_where_kmeans_cannot`
 fits `SKDBSCAN` and `SKKMeans` on two concentric rings ($r = 1$ and $r = 4$) with noise:
-`SKDBSCAN` achieves `sk_adjusted_rand_score == 1.0` and `sk_v_measure_score == 1.0`, while
-`SKKMeans` scores below $0.25$, and `SKSilhouetteScorer` evaluates `SKDBSCANModel` directly while
-excluding noise rows.
+`SKDBSCAN` achieves `sk_adjusted_rand_score == 1.0` and `sk_v_measure_score == 1.0` while
+`SKKMeans` scores below $0.25$; and
+`dbscan_acceptance_metrics_silhouette_excludes_noise_and_scores_fitted_model` verifies that
+`SKSilhouetteScorer` evaluates `SKDBSCANModel` directly via `SKUnsupervisedScorer::score` while
+excluding `SKClusterLabel::Noise` rows.
 
 ## 6. Look inside
 
