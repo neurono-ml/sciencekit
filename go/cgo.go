@@ -125,6 +125,9 @@ type nativeBuilder struct {
 
 // newNativeBuilder creates a configured-with-defaults builder handle.
 func newNativeBuilder(estimatorFamily, dtype int32) (*nativeBuilder, error) {
+	if err := requireCompatibleABI(); err != nil {
+		return nil, err
+	}
 	pointer := C.sk_ffi_builder_create(C.int32_t(estimatorFamily), C.int32_t(dtype))
 	if pointer == nil {
 		return nil, newError(StatusUnknown, "builder_create", "the library returned a null builder")

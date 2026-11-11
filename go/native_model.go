@@ -123,6 +123,9 @@ func (model *nativeModel) save(path string) error {
 
 // loadNativeModel reads a model state from path.
 func loadNativeModel(path string) (*nativeModel, error) {
+	if err := requireCompatibleABI(); err != nil {
+		return nil, err
+	}
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 	cPath, release := cString(path)

@@ -1,5 +1,11 @@
 package sciencekit
 
+import "fmt"
+
+// expectedABIMajor is the ABI major version this binding implements. A library
+// that reports another major is rejected at package initialization.
+const expectedABIMajor int32 = 1
+
 // VersionInfo is the semantic version of the C ABI.
 type VersionInfo struct {
 	Major int32
@@ -27,7 +33,34 @@ var (
 func init() {
 	major, minor, patch, err := nativeVersion()
 	cachedVersion = VersionInfo{Major: major, Minor: minor, Patch: patch}
-	cachedError = err
+	if err != nil {
+		cachedError = err
+		return
+	}
+	cachedError = checkABICompatibility(cachedVersion)
+}
+
+// checkABICompatibility rejects a library whose ABI major differs from the one
+// this binding implements.
+func checkABICompatibility(version VersionInfo) error {
+	if version.Major != expectedABIMajor {
+		return newError(
+			StatusUnsupported,
+			"abi_version",
+			fmt.Sprintf(
+				"the loaded library reports ABI major %d, but this binding requires %d",
+				version.Major,
+				expectedABIMajor,
+			),
+		)
+	}
+	return nil
+}
+
+// requireCompatibleABI returns the initialization failure, if the loaded
+// library is incompatible or unreadable.
+func requireCompatibleABI() error {
+	return cachedError
 }
 
 // Version reads the ABI version of the loaded library, captured at package
