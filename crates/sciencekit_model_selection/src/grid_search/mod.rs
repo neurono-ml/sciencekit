@@ -24,6 +24,7 @@ pub use classifier::{SKGridSearchCVClassifier, SKGridSearchCVClassifierModel};
 pub use error_score::SKErrorScore;
 pub use regressor::{SKGridSearchCVRegressor, SKGridSearchCVRegressorModel};
 pub use results::SKGridSearchResults;
+pub(crate) use results::sk_compare_scores;
 pub use sciencekit_metrics::classification::SKAveraging;
 pub use scoring::{SKClassifierScoring, SKRegressorScoring, SKScoringFamily};
 
