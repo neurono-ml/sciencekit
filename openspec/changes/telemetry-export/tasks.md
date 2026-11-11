@@ -22,7 +22,7 @@
 
 - [x] 3.1 Implement `init`, `force_flush`, `shutdown`, double-init error and drop behavior;
   verify with `cargo test -p sciencekit_telemetry lifecycle`.
-- [ ] 3.2 Add a no-op default test proving no exporter/traffic without initialization;
+- [x] 3.2 Add a no-op default test proving no exporter/traffic without initialization;
   verify with `cargo test -p sciencekit_telemetry noop`.
 - [ ] 3.3 Add concurrent operation/export and shutdown tests; verify with
   `cargo test -p sciencekit_telemetry concurrency`.
