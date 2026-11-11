@@ -21,7 +21,7 @@
 
 ## 3. Pipeline integration and acceptance
 
-- [ ] 3.1 Use the union as a stage inside `SKPipeline` and test a scaler∪encoder→classifier
+- [x] 3.1 Use the union as a stage inside `SKPipeline` and test a scaler∪encoder→classifier
   chain; verify with `cargo test -p sciencekit_pipeline union_pipeline`.
 - [ ] 3.2 Add `acceptance_tests/` covering tiny and large data, dense/sparse/mixed
   members, tuple/boxed construction, nested pipelines, concurrency and metric production;
