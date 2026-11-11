@@ -8,7 +8,7 @@
 - [x] 1.2 Implement the randomized-SVD fit and model state (components, singular values,
   explained variance and ratio), with a rank-1/rank-2 reconstruction test; verify with
   `cargo test -p sciencekit_decomposition truncated_fit`.
-- [ ] 1.3 Implement dense/sparse parity and a no-densification test, including the
+- [x] 1.3 Implement dense/sparse parity and a no-densification test, including the
   documented tolerance; verify with
   `cargo test -p sciencekit_decomposition truncated_representation`.
 
