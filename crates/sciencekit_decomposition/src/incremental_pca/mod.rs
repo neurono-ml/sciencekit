@@ -39,3 +39,5 @@ mod incremental_sparse_tests;
 mod incremental_streaming_tests;
 #[cfg(test)]
 mod incremental_transform_tests;
+#[cfg(test)]
+mod incremental_validation_tests;

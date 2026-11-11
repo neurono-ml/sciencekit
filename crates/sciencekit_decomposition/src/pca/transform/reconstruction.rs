@@ -13,9 +13,8 @@ use sciencekit_math::backend::{SKBackendSelection, sk_math_backend_for_kind};
 use sciencekit_math::kernels::SK_AXIS_SUM_GRAIN;
 use sciencekit_math::sparse_ops::sk_csr_dense_product;
 
-use crate::pca::centering::sk_view_dimensions;
 use crate::pca::model::SKPCAModel;
-use crate::pca::validation::sk_validate_matrix_input;
+use crate::pca::validation::{sk_validate_matrix_input, sk_view_dimensions};
 
 const DENSE_RECONSTRUCT_ROW_CHUNK: usize = 256;
 

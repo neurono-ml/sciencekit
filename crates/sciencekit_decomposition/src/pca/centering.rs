@@ -8,24 +8,12 @@ use ndarray::{Array1, Array2, ArrayView1, ArrayView2, Axis, azip};
 use rayon::prelude::*;
 use sciencekit_common::{SKDataView, SKError, SKFloat};
 
+use super::validation::sk_view_dimensions;
+
 const MEAN_REDUCTION_ROW_CHUNK: usize = 256;
 
 /// Suggestion string returned when a dense-only solver rejects a sparse view.
 pub(super) const SPARSE_SOLVER_SUGGESTION: &str = "use SKPCASolver::Randomized for implicit sparse centering, SKTruncatedSVD for uncentered sparse decomposition, or set allow_densification(true)";
-
-/// Returns `(number_of_rows, number_of_columns)` for a supported feature view.
-pub(crate) fn sk_view_dimensions<F>(
-    features: &SKDataView<'_, F>,
-) -> Result<(usize, usize), SKError> {
-    match features {
-        SKDataView::Dense(dense) => Ok(dense.dim()),
-        SKDataView::Sparse(sparse) => Ok((sparse.rows(), sparse.cols())),
-        _ => Err(SKError::UnsupportedRepresentation {
-            representation: features.representation(),
-            suggestion: "convert the input to a supported dense or CSR view",
-        }),
-    }
-}
 
 /// Computes the per-feature arithmetic mean across all rows without densifying
 /// a sparse matrix, using fixed-size row blocks on dense matrices so parallel

@@ -79,6 +79,11 @@ impl<F: SKFloat> SKIncrementalPCABuilder<F> {
                 components > 0,
                 "must be strictly positive",
             )?;
+            sk_validate_hyperparameter(
+                "batch_size",
+                self.configuration.batch_size >= components,
+                "must be at least number_of_components",
+            )?;
         }
         sk_validate_hyperparameter(
             "batch_size",

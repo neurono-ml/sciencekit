@@ -87,6 +87,15 @@ impl<F: SKBackendSelection> SKIncrementalPCA<F> {
                     ),
                 });
             }
+            if self.configuration.batch_size < resolved_components {
+                return Err(SKError::InvalidHyperparameter {
+                    name: "batch_size",
+                    reason: format!(
+                        "batch_size ({}) must be at least number_of_components ({resolved_components})",
+                        self.configuration.batch_size
+                    ),
+                });
+            }
             let decomposition =
                 sk_finalize_accumulator(&accumulator, backend.as_ref(), resolved_components)?;
             Ok(SKIncrementalPCAModel::from_accumulator_and_decomposition(
