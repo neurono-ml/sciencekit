@@ -2,6 +2,7 @@
 
 mod config;
 mod score;
+mod sparse;
 mod subsample;
 mod tree;
 
@@ -14,5 +15,7 @@ pub use config::{
 mod config_tests;
 #[cfg(test)]
 mod isolation_path_tests;
+#[cfg(test)]
+mod isolation_representation_tests;
 #[cfg(test)]
 mod isolation_tree_tests;

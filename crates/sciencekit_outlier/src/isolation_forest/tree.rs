@@ -6,7 +6,9 @@ use ndarray::ArrayView2;
 use sciencekit_common::{SKFloat, SKRandomGenerator};
 use sciencekit_tree::{SKTree, SKTreeNode};
 
+use super::sparse::SparseSubsample;
 use super::subsample::{DenseSubsample, IsolationSampleSource};
+use sprs::CsMatView;
 
 /// Computes `ceil(log2(sample_size))` for `sample_size > 1`, or `0` otherwise.
 pub(crate) fn sk_isolation_depth_limit(sample_size: usize) -> usize {
@@ -25,6 +27,18 @@ pub(crate) fn sk_build_dense_isolation_tree<F: SKFloat>(
     generator: &mut SKRandomGenerator,
 ) -> SKTree<F> {
     let source = DenseSubsample::new(subsample);
+    sk_grow_isolation_tree(&source, candidate_features, depth_limit, generator)
+}
+
+/// Builds a single isolation tree from selected rows of a sparse CSR matrix without densification.
+pub(crate) fn sk_build_sparse_isolation_tree<F: SKFloat>(
+    csr: CsMatView<'_, F>,
+    sampled_rows: &[usize],
+    candidate_features: &[usize],
+    depth_limit: usize,
+    generator: &mut SKRandomGenerator,
+) -> SKTree<F> {
+    let source = SparseSubsample::from_csr_rows(csr, sampled_rows);
     sk_grow_isolation_tree(&source, candidate_features, depth_limit, generator)
 }
 
