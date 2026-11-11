@@ -5,7 +5,7 @@
 - [x] 1.1 Create `crates/sciencekit_cluster/src/minibatch_kmeans/` with dispatcher
   `mod.rs`, config, state and model; verify `cargo test -p sciencekit_cluster minibatch`
   compiles.
-- [ ] 1.2 Implement the per-center update and count bookkeeping, with the one-center
+- [x] 1.2 Implement the per-center update and count bookkeeping, with the one-center
   closed form and learning-rate decay tests; verify with
   `cargo test -p sciencekit_cluster minibatch_update`.
 - [ ] 1.3 Implement the deterministic reassignment rule and tests for threshold crossing
