@@ -121,11 +121,11 @@
 - [x] 8.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under `Unreleased →
   Added` for the kernel module, `SKSVC`, `SKSVR`, the SMO solver and probability
   calibration; verify the entry lists every public artifact.
-- [ ] 8.2 Companion documentation change on its own `docs/*` branch (merged into
-  `docs/documentations`): add the kernel/SVM chapter to `docs/src/`, register it in
-  `SUMMARY.md`, add a `Development Explained` chapter covering the kernel formulas, SMO,
-  OvO, Platt/coupling and the support-vector model, update `maintaining.md`, and verify
-  with `mdbook build docs`.
+- [x] 8.2 Companion documentation change on its own `docs/*` branch (`docs/svm-svc-svr-book` merged into
+  `docs/documentations`): add `docs/src/development-explained/ch41-svm.md` covering the
+  kernel formulas, SMO, OvO, Platt/coupling and the support-vector model, register it in
+  `SUMMARY.md`, update `algorithms.md`, `roadmap.md` and `maintaining.md`, and verify with
+  `mdbook build docs`.
 - [x] 8.3 Record the Wave 7 deferral in `docs/PRD.md` — `memmap2`-backed kernel caches,
   persistence and model export are delivered by the interop wave, not by this change —
   and verify the amended paragraphs render in the book.
