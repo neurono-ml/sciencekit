@@ -31,10 +31,7 @@ impl<F: SKFloat> SKRandomizedSvdResult<F> {
     /// The metric is `‖X − U Σ Vᵀ‖_F / ‖X‖_F`; a zero reference reports a
     /// zero error. A reference whose shape differs from the factorized matrix
     /// is rejected with a shape mismatch.
-    pub fn relative_frobenius_error(
-        &self,
-        reference: &ArrayView2<'_, F>,
-    ) -> Result<F, SKError> {
+    pub fn relative_frobenius_error(&self, reference: &ArrayView2<'_, F>) -> Result<F, SKError> {
         let (rows, columns) = reference.dim();
         if rows != self.u.nrows() || columns != self.v.nrows() {
             return Err(SKError::shape_mismatch_2d(

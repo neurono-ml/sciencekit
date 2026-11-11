@@ -51,7 +51,8 @@ pub(crate) fn sk_thin_qr<F: SKFloat>(matrix: &ArrayView2<'_, F>) -> Array2<F> {
             }
             let weight = factor * projection;
             for (offset, &value) in reflector.iter().enumerate() {
-                working[(step + offset, column)] = working[(step + offset, column)] - weight * value;
+                working[(step + offset, column)] =
+                    working[(step + offset, column)] - weight * value;
             }
         }
         reflectors.push((step, reflector));

@@ -6,9 +6,9 @@
 //! This is a **pure dispatcher** module: `mod.rs` only declares and re-exports
 //! submodules; every implementation lives in its own file.
 
+mod centering;
 #[cfg(test)]
 mod instrumentation;
-mod centering;
 mod kernel;
 mod operator;
 mod projection;

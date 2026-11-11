@@ -2,7 +2,7 @@
 //! final small decomposition.
 
 use ndarray::ArrayView1;
-use sciencekit_common::{SKDataView, SKError, SKFloat};
+use sciencekit_common::{SKDataView, SKError};
 
 use super::centering::{
     sk_subtract_feature_mean_contribution, sk_subtract_sample_mean_contribution,
@@ -15,7 +15,7 @@ use super::small_svd::sk_small_svd;
 use crate::backend::{SKBackendSelection, SKMathBackend};
 
 /// Rejects an invalid configuration before any computation happens.
-pub(crate) fn sk_validate_parameters<F: SKFloat>(
+pub(crate) fn sk_validate_parameters(
     rows: usize,
     columns: usize,
     number_of_components: usize,
@@ -81,7 +81,7 @@ pub(crate) fn sk_randomized_svd_kernel<F: SKBackendSelection>(
 ) -> Result<SKRandomizedSvdResult<F>, SKError> {
     let operator = SKMatrixOperator::new(matrix)?;
     let (rows, columns) = (operator.rows(), operator.columns());
-    sk_validate_parameters::<F>(
+    sk_validate_parameters(
         rows,
         columns,
         number_of_components,
@@ -119,12 +119,16 @@ pub(crate) fn sk_randomized_svd_kernel<F: SKBackendSelection>(
     }
     let projected_matrix = transposed.t().to_owned();
 
-    let (left, singular_values, right) = sk_small_svd(backend, &projected_matrix.view())?;
-    let mut u = basis.dot(&left);
-    let mut v = right;
+    let decomposition = sk_small_svd(backend, &projected_matrix.view())?;
+    let mut u = basis.dot(&decomposition.left);
+    let mut v = decomposition.right;
 
     let components = number_of_components.min(u.ncols()).min(v.ncols());
-    let singular_values: Vec<F> = singular_values.into_iter().take(components).collect();
+    let singular_values: Vec<F> = decomposition
+        .singular_values
+        .into_iter()
+        .take(components)
+        .collect();
     u = u.slice(ndarray::s![.., ..components]).to_owned();
     v = v.slice(ndarray::s![.., ..components]).to_owned();
     sk_apply_sign_convention(&mut u, &mut v);

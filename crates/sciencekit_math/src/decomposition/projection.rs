@@ -15,11 +15,8 @@ pub fn sk_seeded_projection<F: SKFloat>(
     columns: usize,
     random_seed: u64,
 ) -> Array2<F> {
-    let mut generator = SKRandomGenerator::new(sk_derive_seed(
-        random_seed,
-        SK_RANDOM_DOMAIN_PROJECTION,
-        0,
-    ));
+    let mut generator =
+        SKRandomGenerator::new(sk_derive_seed(random_seed, SK_RANDOM_DOMAIN_PROJECTION, 0));
     Array2::from_shape_fn((rows, columns), |_| {
         <F as num_traits::NumCast>::from(generator.normal()).unwrap_or_else(F::zero)
     })

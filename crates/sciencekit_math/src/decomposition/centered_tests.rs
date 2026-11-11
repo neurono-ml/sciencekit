@@ -30,19 +30,33 @@ fn randomized_centered_dense_matches_the_explicit_centering() {
     let mean = fixture_mean(12);
     let centered = explicit_centered(&matrix, &mean);
 
-    let implicit = sk_randomized_svd(SKDataView::Dense(matrix.view()), 3, 2, 4, 12, Some(mean.view()))
-        .expect("the centered decomposition must succeed");
+    let implicit = sk_randomized_svd(
+        SKDataView::Dense(matrix.view()),
+        3,
+        2,
+        4,
+        12,
+        Some(mean.view()),
+    )
+    .expect("the centered decomposition must succeed");
     let explicit = sk_randomized_svd(SKDataView::Dense(centered.view()), 3, 2, 4, 12, None)
         .expect("the explicit decomposition must succeed");
 
-    for (left, right) in implicit.singular_values.iter().zip(explicit.singular_values.iter()) {
+    for (left, right) in implicit
+        .singular_values
+        .iter()
+        .zip(explicit.singular_values.iter())
+    {
         assert!(
             (left - right).abs() < 1e-8,
             "the singular values differ: {left} against {right}"
         );
     }
     let difference = relative_error(&explicit.reconstruct(), &implicit.reconstruct());
-    assert!(difference < 1e-8, "the reconstructions differ: {difference}");
+    assert!(
+        difference < 1e-8,
+        "the reconstructions differ: {difference}"
+    );
 }
 
 #[test]
@@ -51,8 +65,15 @@ fn randomized_centered_sparse_matches_the_centered_dense() {
     let mean = fixture_mean(12);
     let sparse = to_csr(&matrix);
 
-    let dense = sk_randomized_svd(SKDataView::Dense(matrix.view()), 3, 2, 4, 12, Some(mean.view()))
-        .expect("the dense decomposition must succeed");
+    let dense = sk_randomized_svd(
+        SKDataView::Dense(matrix.view()),
+        3,
+        2,
+        4,
+        12,
+        Some(mean.view()),
+    )
+    .expect("the dense decomposition must succeed");
     let sparse = sk_randomized_svd(
         SKDataView::Sparse(sparse.view()),
         3,
@@ -63,14 +84,21 @@ fn randomized_centered_sparse_matches_the_centered_dense() {
     )
     .expect("the sparse decomposition must succeed");
 
-    for (left, right) in dense.singular_values.iter().zip(sparse.singular_values.iter()) {
+    for (left, right) in dense
+        .singular_values
+        .iter()
+        .zip(sparse.singular_values.iter())
+    {
         assert!(
             (left - right).abs() < 1e-8,
             "the singular values differ: {left} against {right}"
         );
     }
     let difference = relative_error(&dense.reconstruct(), &sparse.reconstruct());
-    assert!(difference < 1e-8, "the reconstructions differ: {difference}");
+    assert!(
+        difference < 1e-8,
+        "the reconstructions differ: {difference}"
+    );
 }
 
 #[test]

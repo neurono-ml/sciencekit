@@ -39,7 +39,11 @@ fn randomized_sparse_matches_the_dense_factorization() {
 
     assert_eq!(dense.u.dim(), sparse.u.dim());
     assert_eq!(dense.v.dim(), sparse.v.dim());
-    for (left, right) in dense.singular_values.iter().zip(sparse.singular_values.iter()) {
+    for (left, right) in dense
+        .singular_values
+        .iter()
+        .zip(sparse.singular_values.iter())
+    {
         assert!(
             (left - right).abs() < 1e-8,
             "the singular values differ: {left} against {right}"
@@ -48,7 +52,10 @@ fn randomized_sparse_matches_the_dense_factorization() {
     let dense_reconstruction = dense.reconstruct();
     let sparse_reconstruction = sparse.reconstruct();
     let difference = relative_error(&dense_reconstruction, &sparse_reconstruction);
-    assert!(difference < 1e-8, "the reconstructions differ: {difference}");
+    assert!(
+        difference < 1e-8,
+        "the reconstructions differ: {difference}"
+    );
 }
 
 #[test]

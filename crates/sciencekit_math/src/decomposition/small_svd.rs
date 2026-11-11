@@ -12,33 +12,38 @@ use sciencekit_common::{SKError, SKFloat};
 
 use crate::backend::SKMathBackend;
 
-/// The singular-value decomposition of the small projected matrix.
-///
-/// Returns the left singular vectors (`rows × rows`), the singular values in
-/// non-increasing order and the right singular vectors
-/// (`columns × rows`).
+/// The decomposition of the small projected matrix.
+pub(crate) struct SKSmallDecomposition<F: SKFloat> {
+    /// The left singular vectors, with shape `rows × rows`.
+    pub(crate) left: Array2<F>,
+    /// The singular values, in non-increasing order.
+    pub(crate) singular_values: Vec<F>,
+    /// The right singular vectors, with shape `columns × rows`.
+    pub(crate) right: Array2<F>,
+}
+
+/// Computes the singular-value decomposition of the small projected matrix.
 pub(crate) fn sk_small_svd<F: SKFloat>(
     backend: &dyn SKMathBackend<F>,
     matrix: &ArrayView2<'_, F>,
-) -> Result<(Array2<F>, Vec<F>, Array2<F>), SKError> {
+) -> Result<SKSmallDecomposition<F>, SKError> {
     let rows = matrix.nrows();
     let gram = matrix.dot(&matrix.t());
     let (eigenvalues, eigenvectors) = backend.eigh(gram.view())?;
 
     let mut left = Array2::<F>::zeros((rows, rows));
     let mut singular_values = Vec::with_capacity(rows);
-    for order in 0..rows {
-        // The eigenvalues arrive in ascending order; the singular values are
-        // reported in non-increasing order.
-        let source = rows - 1 - order;
-        let eigenvalue = eigenvalues[source].max(F::zero());
-        singular_values.push(eigenvalue.sqrt());
+    // The eigenvalues arrive in ascending order; the singular values are
+    // reported in non-increasing order.
+    for source in (0..rows).rev() {
+        let singular_value = eigenvalues[source].max(F::zero()).sqrt();
+        let order = rows - 1 - source;
+        singular_values.push(singular_value);
         left.column_mut(order).assign(&eigenvectors.column(source));
     }
 
     let mut right = matrix.t().dot(&left);
-    for order in 0..rows {
-        let singular_value = singular_values[order];
+    for (order, &singular_value) in singular_values.iter().enumerate() {
         if singular_value > F::zero() {
             right
                 .column_mut(order)
@@ -48,5 +53,9 @@ pub(crate) fn sk_small_svd<F: SKFloat>(
         }
     }
 
-    Ok((left, singular_values, right))
+    Ok(SKSmallDecomposition {
+        left,
+        singular_values,
+        right,
+    })
 }

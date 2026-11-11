@@ -11,7 +11,7 @@ use super::dense_tests::{fixture_low_rank_matrix, fixture_matrix, relative_error
 use super::qr::sk_thin_qr;
 use super::randomized::sk_randomized_svd;
 use super::sparse_tests::to_csr;
-use crate::backend::{SKMathBackend, SKFaerBackend};
+use crate::backend::{SKFaerBackend, SKMathBackend};
 
 /// The documented tolerance of the singular values against the exact
 /// decomposition.
@@ -92,15 +92,19 @@ fn randomized_acceptance_every_component_count_boundary_is_supported() {
 fn randomized_acceptance_singular_values_match_the_exact_decomposition() {
     let matrix = decaying_spectrum_fixture(60, 30, 0.4);
     let components = 6;
-    let result = sk_randomized_svd(SKDataView::Dense(matrix.view()), components, 7, 10, 13, None)
-        .expect("the decomposition must succeed");
+    let result = sk_randomized_svd(
+        SKDataView::Dense(matrix.view()),
+        components,
+        7,
+        10,
+        13,
+        None,
+    )
+    .expect("the decomposition must succeed");
     let exact = exact_singular_values(&matrix);
 
-    for (index, (&approximate, &expected)) in result
-        .singular_values
-        .iter()
-        .zip(exact.iter())
-        .enumerate()
+    for (index, (&approximate, &expected)) in
+        result.singular_values.iter().zip(exact.iter()).enumerate()
     {
         assert!(
             (approximate - expected).abs() <= SINGULAR_VALUE_TOLERANCE * expected.max(1.0),
@@ -113,8 +117,15 @@ fn randomized_acceptance_singular_values_match_the_exact_decomposition() {
 fn randomized_acceptance_reconstruction_matches_the_exact_decomposition() {
     let matrix = decaying_spectrum_fixture(60, 30, 0.4);
     let components = 6;
-    let result = sk_randomized_svd(SKDataView::Dense(matrix.view()), components, 7, 10, 13, None)
-        .expect("the decomposition must succeed");
+    let result = sk_randomized_svd(
+        SKDataView::Dense(matrix.view()),
+        components,
+        7,
+        10,
+        13,
+        None,
+    )
+    .expect("the decomposition must succeed");
     let error = relative_error(&matrix, &result.reconstruct());
     let exact = exact_singular_values(&matrix);
     let expected = expected_truncation_error(&exact, components);
@@ -130,11 +141,8 @@ fn randomized_acceptance_a_decaying_spectrum_is_recovered() {
     let result = sk_randomized_svd(SKDataView::Dense(matrix.view()), 5, 5, 10, 17, None)
         .expect("the decomposition must succeed");
     let exact = exact_singular_values(&matrix);
-    for (index, (&approximate, &expected)) in result
-        .singular_values
-        .iter()
-        .zip(exact.iter())
-        .enumerate()
+    for (index, (&approximate, &expected)) in
+        result.singular_values.iter().zip(exact.iter()).enumerate()
     {
         assert!(
             (approximate - expected).abs() <= SINGULAR_VALUE_TOLERANCE * expected.max(1.0),
@@ -183,7 +191,10 @@ fn randomized_acceptance_produces_the_reconstruction_error_metric() {
     let metric = result
         .relative_frobenius_error(&matrix.view())
         .expect("the metric must be computed");
-    assert!(metric < 1e-8, "the reconstruction error {metric} is too large");
+    assert!(
+        metric < 1e-8,
+        "the reconstruction error {metric} is too large"
+    );
 }
 
 #[test]

@@ -39,23 +39,24 @@ pub(crate) fn fixture_low_rank_matrix(
 /// The relative Frobenius error between a matrix and its reconstruction.
 pub(crate) fn relative_error(reference: &Array2<f64>, approximation: &Array2<f64>) -> f64 {
     let difference = reference - approximation;
-    let numerator = difference.iter().map(|value| value * value).sum::<f64>().sqrt();
-    let denominator = reference.iter().map(|value| value * value).sum::<f64>().sqrt();
+    let numerator = difference
+        .iter()
+        .map(|value| value * value)
+        .sum::<f64>()
+        .sqrt();
+    let denominator = reference
+        .iter()
+        .map(|value| value * value)
+        .sum::<f64>()
+        .sqrt();
     numerator / denominator
 }
 
 #[test]
 fn randomized_dense_reconstructs_a_low_rank_matrix() {
     let matrix = fixture_low_rank_matrix(60, 20, 3, 5);
-    let result = sk_randomized_svd(
-        SKDataView::Dense(matrix.view()),
-        3,
-        2,
-        5,
-        7,
-        None,
-    )
-    .expect("the decomposition must succeed");
+    let result = sk_randomized_svd(SKDataView::Dense(matrix.view()), 3, 2, 5, 7, None)
+        .expect("the decomposition must succeed");
 
     let reconstruction = result.reconstruct();
     let error = relative_error(&matrix, &reconstruction);
@@ -103,7 +104,10 @@ fn randomized_dense_singular_values_are_non_negative_and_sorted() {
     let result = sk_randomized_svd(SKDataView::Dense(matrix.view()), 5, 2, 3, 8, None)
         .expect("the decomposition must succeed");
     for pair in result.singular_values.windows(2) {
-        assert!(pair[0] >= pair[1], "the singular values must be non-increasing");
+        assert!(
+            pair[0] >= pair[1],
+            "the singular values must be non-increasing"
+        );
     }
     assert!(result.singular_values.iter().all(|value| *value >= 0.0));
 }
