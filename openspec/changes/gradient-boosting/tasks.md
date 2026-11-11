@@ -2,7 +2,7 @@
 
 ## 1. Tree advanced surface
 
-- [ ] 1.1 Write `sciencekit_tree/structure_tests.rs` for a structure-only build on a
+- [x] 1.1 Write `sciencekit_tree/structure_tests.rs` for a structure-only build on a
   response vector, leaf-count reporting and leaf-value replacement; confirm the failures,
   then implement `structure/build.rs` and `structure/leaf_values.rs`; verify with
   `cargo test -p sciencekit_tree structure`.
