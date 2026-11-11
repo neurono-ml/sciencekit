@@ -33,7 +33,7 @@
 - [x] 4.1 Add `acceptance_tests/` covering tiny and large models, sharded and padded
   files, every compression feature, concurrent reads and corruption cases; verify with
   `cargo test -p sciencekit_interop`.
-- [ ] 4.2 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
+- [x] 4.2 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
   warnings` and `cargo test --workspace`; fix every failure before pushing.
 - [ ] 4.3 Update `CHANGELOG.md` and the companion mdBook chapter (including a
   `Development Explained` chapter on the extended Safetensors layout, sharding and
