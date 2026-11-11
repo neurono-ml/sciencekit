@@ -74,13 +74,15 @@ function call with a stack switch; the expensive part is the boundary crossing a
 The **cgo pointer rules** forbid passing a Go pointer that contains another Go pointer, which
 is why a matrix is copied into a C buffer rather than handing the Go slice directly.
 
-### Why `KeepAlive`
+### Why cgo needs a C-owned copy
 
-Go's collector only needs a value to be alive until its last *use*. For a C call, the Go slice
-is used to produce the pointer, and to the compiler that use ends before C reads the memory. A
-collection in between would free the buffer under C's feet. `runtime.KeepAlive(slice)` after
-the call extends the lifetime to the end of the statement, which is exactly the semantics cgo
-requires.
+The cgo pointer rules forbid storing a Go pointer inside C memory. A descriptor whose `data`
+field points at a Go slice — even one kept alive with `runtime.KeepAlive` — violates that rule,
+because `KeepAlive` only extends reachability; it does not pin the object or make the pointer
+safe to store in C. The binding therefore allocates the shape array and the data buffer with
+`C.malloc`, copies the values in, and frees both after the call. `GOEXPERIMENT=cgocheck2`
+turns any remaining violation into a runtime abort, which is why CI runs the suite in that
+mode.
 
 ### Finalizers are a safety net, not a lifecycle
 
@@ -138,7 +140,8 @@ round-trips, an unsupported one returns `UNSUPPORTED` rather than writing a brok
 ### The devcontainer run
 
 The whole suite runs inside the devcontainer (`go test ./go/...`) against a release cdylib,
-plus `go vet`, `gofmt -l` and `go test -race`, which is what the CI job reproduces.
+plus `go vet`, `gofmt -l`, `go test -race` and `GOEXPERIMENT=cgocheck2 go test ./go/...`,
+which is what the CI job reproduces.
 
 ## 6. Look inside
 
