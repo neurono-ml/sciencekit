@@ -46,7 +46,7 @@
 - [ ] 4.3 Update `CHANGELOG.md` and the companion mdBook chapter (including a
   `Development Explained` chapter on covariance merging and streaming finalization); verify
   with `mdbook build docs`.
-- [ ] 4.4 Record the GPU/memmap/export non-goals in `docs/PRD.md`.
+- [x] 4.4 Record the GPU/memmap/export non-goals in `docs/PRD.md`.
 - [ ] 4.5 Independent review by a separate agent validating every scenario in
   `incremental-pca`; address every finding and re-run the gates.
 
