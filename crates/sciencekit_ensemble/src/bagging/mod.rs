@@ -8,9 +8,11 @@ mod builder;
 mod classifier;
 mod config;
 mod error;
+mod fit;
 mod model;
 mod regressor;
 mod sampling;
+mod validation;
 
 pub use builder::{SKBaggingClassifierBuilder, SKBaggingRegressorBuilder};
 pub use classifier::SKBaggingClassifier;
@@ -24,5 +26,7 @@ mod bagging_bounds_tests;
 mod bagging_builder_tests;
 #[cfg(test)]
 mod bagging_error_tests;
+#[cfg(test)]
+mod bagging_fit_tests;
 #[cfg(test)]
 mod bagging_sampling_tests;

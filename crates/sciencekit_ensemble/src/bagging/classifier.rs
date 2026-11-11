@@ -112,14 +112,11 @@ where
     type Model = SKBaggingClassifierModel<F, B::Model>;
     type Error = SKBaggingError<B::Error>;
 
-    fn fit<'a, X, T>(&self, _features: X, _targets: T) -> Result<Self::Model, Self::Error>
+    fn fit<'a, X, T>(&self, features: X, targets: T) -> Result<Self::Model, Self::Error>
     where
         X: TryInto<SKDataView<'a, F>, Error = SKError>,
         T: TryInto<SKTargetView<'a, F>, Error = SKError>,
     {
-        Err(SKBaggingError::Central(SKError::UnsupportedOperation {
-            operation: "fit",
-            reason: "fitting wired in task 2.3".to_string(),
-        }))
+        super::fit::sk_fit_bagging_classifier(self, features.try_into()?, targets.try_into()?)
     }
 }
