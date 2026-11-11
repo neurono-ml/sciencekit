@@ -12,7 +12,7 @@
 
 ## 2. Loss contract
 
-- [ ] 2.1 Implement `SKGradientLoss` with the initial prediction, negative gradient,
+- [x] 2.1 Implement `SKGradientLoss` with the initial prediction, negative gradient,
   Hessian, link and loss methods, and the squared-error implementation; verify hand-computed
   gradients, Hessians and initial mean; verify with
   `cargo test -p sciencekit_ensemble boosting_loss`.
