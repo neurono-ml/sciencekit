@@ -88,7 +88,7 @@
   `maximum_number_of_iterations`, `cache_size`, `shrinking`, `backend` and
   `execution_mode`; add default and invalid-value tests; verify with
   `cargo test -p sciencekit_svm svr_builder`.
-- [ ] 5.2 Implement `SKSVR::fit` and `predict` with support-vector-only state, and verify
+- [x] 5.2 Implement `SKSVR::fit` and `predict` with support-vector-only state, and verify
   a smooth one-dimensional response and the epsilon-band support-vector monotonicity;
   verify with `cargo test -p sciencekit_svm svr`.
 
