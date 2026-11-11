@@ -7,10 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.7.0] — 2026-11-11
-
-Arrow interop, the GPU compute contracts, the randomized SVD kernel and the language bindings moving to their own repositories.
-
 ### Added
 
 - Human-readable JSON debug model format (spec `json-debug-format`):
@@ -37,6 +33,12 @@ Arrow interop, the GPU compute contracts, the randomized SVD kernel and the lang
   or mismatched dtypes (`SKError::InvalidHyperparameter`) and tensor
   shape/value-count disagreements (`SKError::ShapeMismatch`) are rejected up
   front before materializing model state.
+
+## [0.7.0] — 2026-11-11
+
+Arrow interop, the GPU compute contracts, the randomized SVD kernel and the language bindings moving to their own repositories.
+
+### Added
 
 - Randomized SVD kernel (spec `randomized-svd`): `sciencekit_math::decomposition`
   gains `sk_randomized_svd` and the builder `SKRandomizedSvdBuilder`, returning
