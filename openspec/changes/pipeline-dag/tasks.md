@@ -23,7 +23,7 @@
 
 - [x] 3.1 Add dense/sparse flow tests, a representation rejection with node id and no
   implicit densification; verify with `cargo test -p sciencekit_pipeline graph_representation`.
-- [ ] 3.2 Add repeated-fit determinism, concurrent prediction and `Send + Sync` tests;
+- [x] 3.2 Add repeated-fit determinism, concurrent prediction and `Send + Sync` tests;
   verify with `cargo test -p sciencekit_pipeline graph_concurrency`.
 - [ ] 3.3 Add `acceptance_tests/` covering tiny and large graphs, linear-equivalent graphs,
   disconnected/cyclic fixtures, dense/sparse, concurrency and metric production; verify
