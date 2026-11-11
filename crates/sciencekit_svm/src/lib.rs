@@ -24,3 +24,5 @@ pub use svr::{SKSVR, SKSVRBuilder, SKSVRModel};
 mod representation_fit_tests;
 #[cfg(test)]
 mod representation_predict_tests;
+#[cfg(test)]
+mod validation_tests;
