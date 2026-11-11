@@ -50,7 +50,7 @@
 - [x] 5.1 Implement `SKGradientBoostingRegressorBuilder` with the documented defaults and
   invalid-value tests; verify with
   `cargo test -p sciencekit_ensemble gb_regressor_builder`.
-- [ ] 5.2 Implement fit and prediction for squared error, absolute error and Huber; verify
+- [x] 5.2 Implement fit and prediction for squared error, absolute error and Huber; verify
   hand-computed updates and a smooth response; verify with
   `cargo test -p sciencekit_ensemble gb_regressor`.
 
