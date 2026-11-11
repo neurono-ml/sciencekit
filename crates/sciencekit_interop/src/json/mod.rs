@@ -41,4 +41,6 @@ mod json_round_trip_tests;
 #[cfg(test)]
 mod json_schema_tests;
 #[cfg(test)]
+mod json_validation_tests;
+#[cfg(test)]
 mod json_writer_tests;
