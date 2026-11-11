@@ -5,16 +5,20 @@
 //! implementation lives in its own file.
 
 mod append;
+mod boxed;
 mod builder;
 mod concatenate;
 mod model;
 mod stages;
 
 pub use append::SKAppendUnionStage;
+pub use boxed::{SKBlockTransformer, SKBoxedFittedStage};
 pub use builder::{SKFeatureUnion, SKFeatureUnionBuilder};
 pub use model::SKFeatureUnionModel;
 pub use stages::{SKFeatureUnionArity, SKFeatureUnionStages};
 
+#[cfg(test)]
+mod union_boxed_tests;
 #[cfg(test)]
 mod union_concat_tests;
 #[cfg(test)]
