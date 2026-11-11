@@ -7,11 +7,20 @@ structured errors and an explicit lifecycle, without hand-written `unsafe` in
 application code.
 
 ```go
-import sciencekit "github.com/neurono-ml/sciencekit-go"
+import sciencekit "github.com/neurono-ml/sciencekit/go"
 ```
 
 The module lives in `go/` of the sciencekit repository and is not a member of
-the Cargo workspace.
+the Cargo workspace. It is a subdirectory module of this repository and is
+consumed from an in-tree checkout: the `#cgo` directives resolve the header at
+`crates/sciencekit_ffi/include` and the cdylib at `target/release` relative to
+the module. A downstream module can point at a checkout with a `replace`
+directive:
+
+```
+require github.com/neurono-ml/sciencekit/go v0.0.0
+replace github.com/neurono-ml/sciencekit/go => /path/to/sciencekit/go
+```
 
 ## Requirements
 

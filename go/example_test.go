@@ -3,7 +3,7 @@ package sciencekit_test
 import (
 	"fmt"
 
-	sciencekit "github.com/neurono-ml/sciencekit-go"
+	sciencekit "github.com/neurono-ml/sciencekit/go"
 )
 
 // ExampleNewLinearRegressionBuilder fits a line through three collinear points

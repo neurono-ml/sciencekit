@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	sciencekit "github.com/neurono-ml/sciencekit-go"
+	sciencekit "github.com/neurono-ml/sciencekit/go"
 )
 
 func main() {
