@@ -6,7 +6,7 @@
 mod builder;
 mod core_implementation;
 mod decision;
-mod fit;
+pub(crate) mod fit;
 mod model;
 mod predict;
 mod targets;
