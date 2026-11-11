@@ -33,7 +33,7 @@ impl<F: SKFloat> SKUnsupervisedFit<F> for SKMiniBatchKMeans<F> {
             execution_mode: self.configuration.execution_mode,
             backend: self.configuration.backend,
         };
-        sk_run_operation(attributes, || sk_fit_in_memory(self, features))
+        sk_run_operation(attributes, || sk_fit_in_memory(self, features, "fit"))
     }
 }
 
@@ -82,7 +82,7 @@ impl<F: SKFloat> SKMiniBatchKMeans<F> {
             backend: self.configuration.backend,
         };
         sk_run_operation(attributes, || {
-            let model = sk_fit_in_memory(self, features)?;
+            let model = sk_fit_in_memory(self, features, "fit_predict")?;
             Ok(model
                 .labels
                 .expect("in-memory fit always populates training assignments"))
@@ -93,9 +93,10 @@ impl<F: SKFloat> SKMiniBatchKMeans<F> {
 pub(crate) fn sk_fit_in_memory<F: SKFloat>(
     estimator: &SKMiniBatchKMeans<F>,
     features: SKDataView<'_, F>,
+    operation: &'static str,
 ) -> Result<SKMiniBatchKMeansModel<F>, SKError> {
     let configuration = estimator.configuration;
-    sk_validate_initial_batch(features, configuration.number_of_clusters, "fit")?;
+    sk_validate_initial_batch(features, configuration.number_of_clusters, operation)?;
     let (centers, _) = sk_initialize_minibatch_centers(features, &configuration)?;
     let mut state = SKMiniBatchState::new(centers, configuration);
 

@@ -44,3 +44,5 @@ mod minibatch_state_tests;
 mod minibatch_streaming_tests;
 #[cfg(test)]
 mod minibatch_update_tests;
+#[cfg(test)]
+mod minibatch_validation_tests;
