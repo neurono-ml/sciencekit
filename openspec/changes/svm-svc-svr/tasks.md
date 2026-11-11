@@ -126,7 +126,7 @@
   `SUMMARY.md`, add a `Development Explained` chapter covering the kernel formulas, SMO,
   OvO, Platt/coupling and the support-vector model, update `maintaining.md`, and verify
   with `mdbook build docs`.
-- [ ] 8.3 Record the Wave 7 deferral in `docs/PRD.md` — `memmap2`-backed kernel caches,
+- [x] 8.3 Record the Wave 7 deferral in `docs/PRD.md` — `memmap2`-backed kernel caches,
   persistence and model export are delivered by the interop wave, not by this change —
   and verify the amended paragraphs render in the book.
 - [ ] 8.4 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
