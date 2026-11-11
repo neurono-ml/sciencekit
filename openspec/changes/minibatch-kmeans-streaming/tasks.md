@@ -44,7 +44,7 @@
 
 ## 5. Acceptance and review
 
-- [ ] 5.1 Add `acceptance_tests/` covering tiny data, large streaming data (at least
+- [x] 5.1 Add `acceptance_tests/` covering tiny data, large streaming data (at least
   50 000 rows), dense/sparse, one/multi-epoch providers, comparison with full KMeans and
   metric production; verify with `cargo test -p sciencekit_cluster`.
 - [ ] 5.2 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
