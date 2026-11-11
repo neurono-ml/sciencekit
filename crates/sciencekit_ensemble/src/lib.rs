@@ -22,6 +22,8 @@ mod bootstrap;
 
 pub mod random_forest;
 
+pub use bootstrap::SKMaximumSamples;
+
 // Re-export the split vocabulary owned by `sciencekit_tree` so consumers
 // configure a forest without depending on the tree crate directly.
 pub use sciencekit_tree::{SKClassWeight, SKMaximumFeatures, SKTreeCriterion};
