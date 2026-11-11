@@ -23,7 +23,7 @@
 
 ## 3. Estimator and scoring
 
-- [ ] 3.1 Implement the builder with the documented defaults and invalid-value tests;
+- [x] 3.1 Implement the builder with the documented defaults and invalid-value tests;
   verify with `cargo test -p sciencekit_outlier isolation_builder`.
 - [ ] 3.2 Implement fit (subsample, per-tree seeds, forest assembly) and the model state;
   verify with `cargo test -p sciencekit_outlier isolation_fit`.
