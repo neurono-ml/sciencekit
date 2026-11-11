@@ -16,7 +16,7 @@
 - [x] 2.1 Write compile-time tests proving a classifier base configuration satisfies
   `SKBaggingClassifier<B>` and a regressor configuration does not; verify with
   `cargo test -p sciencekit_ensemble bagging_bounds`.
-- [ ] 2.2 Implement bootstrap row sampling reusing the shared sampler and, when enabled,
+- [x] 2.2 Implement bootstrap row sampling reusing the shared sampler and, when enabled,
   feature subset sampling; verify row/feature reproducibility and sample shapes; verify
   with `cargo test -p sciencekit_ensemble bagging_sampling`.
 - [ ] 2.3 Implement parallel per-estimator fitting (each estimator on its row and feature
