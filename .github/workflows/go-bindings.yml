@@ -1,5 +1,8 @@
 name: Go bindings
 
+permissions:
+  contents: read
+
 on:
   push:
     branches: [main]

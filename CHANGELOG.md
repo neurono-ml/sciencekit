@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Go bindings (spec `go-bindings`): a `sciencekit-go` module under `go/` that
+- Go bindings (spec `go-bindings`): a `sciencekit/go` module under `go/` that
   loads `sciencekit_ffi` through cgo and exposes typed builders and models for
   linear regression and the standard scaler (`Fit`, `Predict`, `Transform`,
   `Score`, `Save`, `LoadLinearRegression`). Dense `Matrix[float32|float64]`

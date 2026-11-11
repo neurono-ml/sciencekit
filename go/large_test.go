@@ -6,7 +6,7 @@ import (
 )
 
 // TestLargeMatrixFitPredict proves the wrapper handles a realistically sized
-// matrix without intermediate copies of the input.
+// matrix with the matrix copied into C memory once per call.
 func TestLargeMatrixFitPredict(t *testing.T) {
 	const rows = 2000
 	const columns = 8
