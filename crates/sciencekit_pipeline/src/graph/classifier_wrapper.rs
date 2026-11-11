@@ -9,6 +9,7 @@ use sciencekit_common::{
     SKFloat, SKTargetView,
 };
 
+use super::errors::SKPipelineGraphNodeError;
 use super::final_estimator::SKBoxedFinalModel;
 use super::graph_definition::SKPipelineGraph;
 use super::model::SKPipelineGraphModel;
@@ -32,7 +33,26 @@ impl<F: SKFloat> SKPipelineGraph<F> {
         X: TryInto<SKDataView<'a, F>, Error = SKError>,
         T: TryInto<SKTargetView<'a, F>, Error = SKError>,
     {
-        self.fit(features, targets)?.into_classifier()
+        self.fit_classifier_checked(features, targets)
+            .map_err(Into::into)
+    }
+
+    /// Checked variant of [`Self::fit_classifier`] attributing node-level
+    /// failures to their [`SKNodeIdentifier`].
+    pub fn fit_classifier_checked<'a, X, T>(
+        &self,
+        features: X,
+        targets: T,
+    ) -> Result<SKPipelineGraphClassifier<F>, SKPipelineGraphNodeError>
+    where
+        X: TryInto<SKDataView<'a, F>, Error = SKError>,
+        T: TryInto<SKTargetView<'a, F>, Error = SKError>,
+    {
+        let fitted = self.fit_checked(features, targets)?;
+        let final_node = fitted.final_node();
+        fitted
+            .into_classifier()
+            .map_err(|error| SKPipelineGraphNodeError::node(final_node, error))
     }
 }
 
@@ -94,6 +114,30 @@ impl<F: SKFloat> SKPipelineGraphClassifier<F> {
     /// Execution intent recorded in operation spans.
     pub fn execution_mode(&self) -> SKExecutionMode {
         self.inner.execution_mode()
+    }
+
+    /// Checked label prediction attributing node-level failures to their
+    /// [`SKNodeIdentifier`].
+    pub fn predict_labels_checked<'a, X>(
+        &self,
+        features: X,
+    ) -> Result<Array1<i64>, SKPipelineGraphNodeError>
+    where
+        X: TryInto<SKDataView<'a, F>, Error = SKError>,
+    {
+        self.inner.predict_labels_checked(features)
+    }
+
+    /// Checked class-probability prediction attributing node-level failures to
+    /// their [`SKNodeIdentifier`].
+    pub fn predict_probabilities_checked<'a, X>(
+        &self,
+        features: X,
+    ) -> Result<Array2<F>, SKPipelineGraphNodeError>
+    where
+        X: TryInto<SKDataView<'a, F>, Error = SKError>,
+    {
+        self.inner.predict_probabilities_checked(features)
     }
 }
 

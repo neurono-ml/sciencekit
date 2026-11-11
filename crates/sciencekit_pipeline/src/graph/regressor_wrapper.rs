@@ -9,6 +9,7 @@ use sciencekit_common::{
     SKRegressorPredictor, SKTargetView,
 };
 
+use super::errors::SKPipelineGraphNodeError;
 use super::final_estimator::SKBoxedFinalModel;
 use super::graph_definition::SKPipelineGraph;
 use super::model::SKPipelineGraphModel;
@@ -32,7 +33,26 @@ impl<F: SKFloat> SKPipelineGraph<F> {
         X: TryInto<SKDataView<'a, F>, Error = SKError>,
         T: TryInto<SKTargetView<'a, F>, Error = SKError>,
     {
-        self.fit(features, targets)?.into_regressor()
+        self.fit_regressor_checked(features, targets)
+            .map_err(Into::into)
+    }
+
+    /// Checked variant of [`Self::fit_regressor`] attributing node-level
+    /// failures to their [`SKNodeIdentifier`].
+    pub fn fit_regressor_checked<'a, X, T>(
+        &self,
+        features: X,
+        targets: T,
+    ) -> Result<SKPipelineGraphRegressor<F>, SKPipelineGraphNodeError>
+    where
+        X: TryInto<SKDataView<'a, F>, Error = SKError>,
+        T: TryInto<SKTargetView<'a, F>, Error = SKError>,
+    {
+        let fitted = self.fit_checked(features, targets)?;
+        let final_node = fitted.final_node();
+        fitted
+            .into_regressor()
+            .map_err(|error| SKPipelineGraphNodeError::node(final_node, error))
     }
 }
 
@@ -94,6 +114,15 @@ impl<F: SKFloat> SKPipelineGraphRegressor<F> {
     /// Execution intent recorded in operation spans.
     pub fn execution_mode(&self) -> SKExecutionMode {
         self.inner.execution_mode()
+    }
+
+    /// Checked response prediction attributing node-level failures to their
+    /// [`SKNodeIdentifier`].
+    pub fn predict_checked<'a, X>(&self, features: X) -> Result<Array1<F>, SKPipelineGraphNodeError>
+    where
+        X: TryInto<SKDataView<'a, F>, Error = SKError>,
+    {
+        self.inner.predict_checked(features)
     }
 }
 

@@ -40,4 +40,6 @@ mod graph_order_tests;
 #[cfg(test)]
 mod graph_predict_tests;
 #[cfg(test)]
+mod graph_representation_tests;
+#[cfg(test)]
 mod graph_validate_tests;
