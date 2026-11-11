@@ -237,4 +237,8 @@ deterministic best selection, error policies and the refit. The
 [Lua bindings chapter](./ch35-lua-bindings.html) adds the embedded interpreter, userdata
 lifecycle, table conversion and the packaged module. The
 [Go bindings chapter](./ch36-go-bindings.html) adds the cgo boundary, C-owned copies,
-finalizers, structured errors and the build/CI story.
+finalizers, structured errors and the build/CI story. The
+[GPU compute contracts chapter](./ch38-gpu-compute-contracts.html) adds the device
+inventory and capabilities, the deterministic selection rule, the validated device
+buffers, the closed kernel catalogue and the execution plan that records a backend and a
+fallback reason.
