@@ -19,3 +19,6 @@ pub mod svr;
 pub use sciencekit_math::{SKKernel, SKKernelGamma, SKKernelParameters};
 pub use svc::{SKBinarySVCModel, SKClassWeight, SKSVC, SKSVCBuilder, SKSVCModel};
 pub use svr::{SKSVR, SKSVRBuilder, SKSVRModel};
+
+#[cfg(test)]
+mod representation_fit_tests;
