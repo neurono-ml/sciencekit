@@ -3,9 +3,7 @@
 
 use std::path::Path;
 
-use sciencekit_common::{
-    SKBuilder, SKError, SKModelMetadata, SKModelState, SKTensor, SKTensorDataType,
-};
+use sciencekit_common::{SKError, SKModelMetadata, SKModelState, SKTensor, SKTensorDataType};
 
 use super::{
     SK_BROTLI_MAGIC, SK_GZIP_MAGIC, SK_SNAPPY_MAGIC, SKSafetensorsCompression, SKSafetensorsWriter,

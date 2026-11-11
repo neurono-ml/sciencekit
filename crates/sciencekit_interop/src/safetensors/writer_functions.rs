@@ -3,7 +3,7 @@
 
 use std::path::Path;
 
-use sciencekit_common::{SKBuilder, SKError, SKExportable, SKFloat, SKModelState, SKTensor};
+use sciencekit_common::{SKError, SKExportable, SKFloat, SKModelState, SKTensor};
 
 use super::padding_encode::SKAppendOutcome;
 use super::writer::SKSafetensorsWriter;

@@ -108,6 +108,11 @@ impl SKShardPlanBuilder {
         self.state.execution_mode(mode);
         self
     }
+
+    /// Validate and build an [`SKShardPlan`].
+    pub fn build(self) -> Result<SKShardPlan, SKError> {
+        <Self as SKBuilder<SKShardPlan>>::build(self)
+    }
 }
 
 impl Default for SKShardPlanBuilder {

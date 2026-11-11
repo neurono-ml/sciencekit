@@ -2,7 +2,7 @@
 //! (spec `safetensors-format`).
 
 use sciencekit_common::{
-    SKBuilder, SKError, SKModelMetadata, SKModelState, SKParameterValue, SKTensor, SKTensorDataType,
+    SKError, SKModelMetadata, SKModelState, SKParameterValue, SKTensor, SKTensorDataType,
 };
 
 use super::{

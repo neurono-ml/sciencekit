@@ -39,6 +39,11 @@ impl SKSafetensorsReaderBuilder {
         self.state.execution_mode(mode);
         self
     }
+
+    /// Finalize this builder into an [`SKSafetensorsReader`].
+    pub fn build(self) -> Result<SKSafetensorsReader, SKError> {
+        <Self as SKBuilder<SKSafetensorsReader>>::build(self)
+    }
 }
 
 impl Default for SKSafetensorsReaderBuilder {

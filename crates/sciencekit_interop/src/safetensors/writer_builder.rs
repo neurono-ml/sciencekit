@@ -97,6 +97,11 @@ impl SKSafetensorsWriterBuilder {
         self.state.execution_mode(mode);
         self
     }
+
+    /// Finalize and validate this builder into an [`SKSafetensorsWriter`].
+    pub fn build(self) -> Result<SKSafetensorsWriter, SKError> {
+        <Self as SKBuilder<SKSafetensorsWriter>>::build(self)
+    }
 }
 
 impl Default for SKSafetensorsWriterBuilder {

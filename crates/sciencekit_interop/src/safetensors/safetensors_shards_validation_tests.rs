@@ -4,9 +4,7 @@
 use std::collections::HashMap;
 use std::io::ErrorKind;
 
-use sciencekit_common::{
-    SKBuilder, SKError, SKModelMetadata, SKModelState, SKTensor, SKTensorDataType,
-};
+use sciencekit_common::{SKError, SKModelMetadata, SKModelState, SKTensor, SKTensorDataType};
 
 use super::{
     SKSafetensorsWriter, sk_read_model_state_safetensors, sk_read_model_state_safetensors_file,

@@ -1,8 +1,8 @@
 //! Sharding plan, shard writer and merged index reader tests (spec `safetensors-format`).
 
 use sciencekit_common::{
-    SKBackendKind, SKBuilder, SKError, SKExecutionMode, SKModelMetadata, SKModelState,
-    SKParameterValue, SKTensor, SKTensorDataType,
+    SKBackendKind, SKError, SKExecutionMode, SKModelMetadata, SKModelState, SKParameterValue,
+    SKTensor, SKTensorDataType,
 };
 
 use super::{

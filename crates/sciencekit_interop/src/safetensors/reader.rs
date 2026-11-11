@@ -8,7 +8,7 @@ use std::time::Instant;
 
 use sciencekit_common::{
     SKBackendKind, SKError, SKExecutionMode, SKFloat, SKImportable, SKModelState,
-    builders::{SKBuilder, SKBuilderState},
+    builders::SKBuilderState,
 };
 
 use super::compression::decompress_safetensors_bytes;

@@ -7,7 +7,7 @@
     feature = "compression-snappy"
 ))]
 use sciencekit_common::{
-    SKBuilder, SKModelMetadata, SKModelState, SKParameterValue, SKTensor, SKTensorDataType,
+    SKModelMetadata, SKModelState, SKParameterValue, SKTensor, SKTensorDataType,
 };
 
 use super::SKSafetensorsCompression;
