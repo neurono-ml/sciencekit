@@ -9,6 +9,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `sciencekit_decomposition` gains uncentered low-rank Singular Value
+  Decomposition (spec `truncated-svd`): `SKTruncatedSVD<F>`, a builder-only
+  estimator with `number_of_components` (default `2`), `algorithm`
+  (`SKTruncatedSVDAlgorithm::Randomized` default; `Arpack` reserved and
+  rejected as an explicit non-goal), `number_of_iterations` (default `5`),
+  `tolerance` (default `0.0`), `random_seed` (default `0`), `backend` (default
+  `Faer`) and `execution_mode` (default `Automatic`). Fitting delegates to the
+  seeded randomized range finder (`SKRandomizedSvdBuilder`) on the uncentered
+  design without subtracting feature means or densifying sparse CSR views,
+  completes rank-deficient singular directions via deterministic Gram-Schmidt
+  so `components` remains row-orthonormal, computes population
+  `explained_variance` over projected training rows and divides by the non-densifying
+  total input column variance for `explained_variance_ratio` (clamping rounding
+  overshoot to `<= 1.0`), and returns `SKTruncatedSVDModel<F>` exposing
+  `components`, `singular_values`, `explained_variance`,
+  `explained_variance_ratio`, `number_of_components`, `number_of_features`,
+  `algorithm`, `backend` and `execution_mode`. `SKTruncatedSVDModel<F>`
+  implements `SKFeatureTransformer<F>` plus inherent `transform` and
+  `inverse_transform` across all dense and CSR combinations using fixed 256-row
+  chunks for thread-count-invariant evaluation, `SKTruncatedSVD::fit_transform`
+  runs under a single `FitTransform` span, and `SK_TRUNCATED_SVD_PARITY_TOLERANCE`
+  (`1e-6`) documents the dense/CSR equivalence and rank-`k` reconstruction
+  bound. Companion and acceptance tests cover `f32`/`f64`, rank-1/rank-2 and
+  constant fixtures, non-densification on wide CSR tables, validation guards,
+  1- vs 4-thread Rayon invariance, `Send + Sync` concurrent sharing, and
+  reconstruction metrics (`sk_mean_squared_error`, `sk_r2_score`) via
+  `sciencekit_metrics`.
+
 - `sciencekit_pipeline` gains parallel feature branching and column-wise
   concatenation (spec `feature-union`): `SKFeatureUnion` and
   `SKFeatureUnionBuilder` (`build`/`start` for compile-time tuples up to eight
