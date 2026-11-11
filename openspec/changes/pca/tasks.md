@@ -10,7 +10,7 @@
 
 ## 2. Solvers
 
-- [ ] 2.1 Implement the full-SVD solver with components, singular values, explained
+- [x] 2.1 Implement the full-SVD solver with components, singular values, explained
   variance and ratio, and a reconstruction test; verify with
   `cargo test -p sciencekit_decomposition pca_full`.
 - [ ] 2.2 Implement the randomized solver using `sk_randomized_svd`, with full-vs-randomized
