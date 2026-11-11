@@ -154,7 +154,7 @@ fn automatic_plan_falls_back_when_the_scalar_type_is_unsupported() {
     let f32_only = SKDeviceInfo::new(
         0,
         SKBackendKind::OpenCl,
-        "Mock f32 OpenCL 0",
+        "OpenCL 0 (f32)",
         1 << 30,
         SKDeviceCapabilities::new(true, false, false).with_kernels(&[SKGpuKernel::Gemm]),
     );
@@ -163,7 +163,6 @@ fn automatic_plan_falls_back_when_the_scalar_type_is_unsupported() {
         Some(SKGpuKernel::Gemm),
         vec![f32_only],
     )));
-
     let plan = sk_resolve_execution_plan(SKExecutionMode::Automatic, &context).unwrap();
     assert_eq!(plan.backend, SKBackendKind::Faer);
     assert_eq!(
@@ -178,23 +177,17 @@ fn automatic_plan_skips_incompatible_first_device_for_capable_second_device() {
     let f32_only = SKDeviceInfo::new(
         0,
         SKBackendKind::OpenCl,
-        "OpenCL 0 (f32 only)",
+        "OpenCL 0 (f32)",
         1 << 30,
         SKDeviceCapabilities::new(true, false, false).with_kernels(&[SKGpuKernel::Gemm]),
     );
-    let full_device = SKDeviceInfo::new(
-        1,
-        SKBackendKind::OpenCl,
-        "OpenCL 1 (f64 + gemm)",
-        1 << 30,
-        SKDeviceCapabilities::new(true, true, false).with_kernels(&[SKGpuKernel::Gemm]),
-    );
+    let mut capable = device(SKBackendKind::OpenCl, &[SKGpuKernel::Gemm]);
+    capable.index = 1;
     let context = context(Some(device_context(
         SKBackendKind::OpenCl,
         Some(SKGpuKernel::Gemm),
-        vec![f32_only, full_device],
+        vec![f32_only, capable],
     )));
-
     let plan = sk_resolve_execution_plan(SKExecutionMode::Automatic, &context).unwrap();
     assert_eq!(plan.backend, SKBackendKind::OpenCl);
     assert_eq!(plan.fallback_reason, None);
