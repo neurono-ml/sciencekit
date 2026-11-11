@@ -63,7 +63,7 @@
   `docs/documentations`): add the bagging chapter, register it in `SUMMARY.md`, add a
   `Development Explained` chapter covering the generic base-estimator contract, feature
   routing and OOB, update `maintaining.md`, and verify with `mdbook build docs`.
-- [ ] 6.3 Record the heterogeneous-ensemble and streaming/memmap/export non-goals in
+- [x] 6.3 Record the heterogeneous-ensemble and streaming/memmap/export non-goals in
   `docs/PRD.md`; verify the amended paragraphs render.
 - [ ] 6.4 Independent review by a separate agent validating every scenario in
   `bagging-ensembles` against the code and tests; address every finding and re-run the
