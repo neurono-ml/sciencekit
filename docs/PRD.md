@@ -580,6 +580,14 @@ Order faithful to the scikit-learn mapping (from the handoff), respecting depend
     - Streaming/`partial_fit` (delivered by the MiniBatchKMeans change), missing
       values, GPU acceleration, `memmap2`-backed sources and model export are
       explicit KMeans non-goals; persistence and export remain Phase 7 work.
+    - DBSCAN (`SKDBSCAN`) serves dense tree-compatible metrics through the
+      `sciencekit_neighbors` KD-tree and ball-tree region queries (`§4.5.2`
+      dense-only geometry exception on the trees) and preserves representation
+      parity over sparse CSR and cosine inputs through `SKBruteForceSearcher`,
+      never densifying sparse storage. HDBSCAN/OPTICS, streaming/`partial_fit`,
+      missing values, GPU acceleration, `memmap2`-backed indexes and model
+      export are explicit non-goals of the `dbscan` change; persistence and
+      export remain Phase 7 work.
     - Clusterers expose typed assignments (`SKClusterLabel`: a cluster identifier or explicit noise) through `SKClustererPredictor`; the unsupervised scorer evaluates those assignments directly and documents whether it excludes or rejects noise.
 13. `sciencekit_decomposition`: SKPCA, SKTruncatedSVD.
 14. `sciencekit_outlier`: anomaly detection.
