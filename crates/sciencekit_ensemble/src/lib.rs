@@ -24,8 +24,8 @@ pub mod bagging;
 pub mod random_forest;
 
 pub use bagging::{
-    SKBaggingClassifier, SKBaggingClassifierBuilder, SKBaggingError, SKBaggingRegressor,
-    SKBaggingRegressorBuilder, SKBaseEstimatorError,
+    SKBaggingClassifier, SKBaggingClassifierBuilder, SKBaggingClassifierModel, SKBaggingError,
+    SKBaggingRegressor, SKBaggingRegressorBuilder, SKBaggingRegressorModel, SKBaseEstimatorError,
 };
 pub use bootstrap::SKMaximumSamples;
 pub use random_forest::{

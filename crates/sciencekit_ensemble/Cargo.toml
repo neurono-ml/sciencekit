@@ -17,5 +17,7 @@ rayon = { workspace = true }
 sprs = { workspace = true }
 
 [dev-dependencies]
+sciencekit_linear_model = { path = "../sciencekit_linear_model" }
+sciencekit_neighbors = { path = "../sciencekit_neighbors" }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }

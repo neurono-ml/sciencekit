@@ -1,7 +1,10 @@
 //! The generic bagging classifier configuration estimator.
 
+use std::error::Error;
+
 use sciencekit_common::{
-    SKBackendKind, SKError, SKExecutionContext, SKExecutionMode, SKExecutionPlan,
+    SKBackendKind, SKClassifierPredictor, SKDataView, SKError, SKExecutionContext, SKExecutionMode,
+    SKExecutionPlan, SKFloat, SKSupervisedFit, SKTargetView,
 };
 use sciencekit_tree::SKMaximumFeatures;
 
@@ -9,9 +12,27 @@ use crate::bootstrap::SKMaximumSamples;
 
 use super::builder::SKBaggingClassifierBuilder;
 use super::config::SKBaggingConfiguration;
+use super::error::SKBaggingError;
+use super::model::SKBaggingClassifierModel;
 
 /// Generic bootstrap-aggregating classifier over base estimator `B`,
 /// constructed only through its builder.
+///
+/// The base estimator's fitted model must implement [`SKClassifierPredictor`];
+/// passing a regressor configuration fails to compile when fitting:
+///
+/// ```compile_fail
+/// use ndarray::{Array1, Array2};
+/// use sciencekit_common::{SKBuilder, SKSupervisedFit};
+/// use sciencekit_ensemble::SKBaggingClassifier;
+/// use sciencekit_tree::SKDecisionTreeRegressor;
+///
+/// let regressor = SKDecisionTreeRegressor::<f64>::build().build().unwrap();
+/// let bagging = SKBaggingClassifier::build(regressor).build().unwrap();
+/// let features = Array2::<f64>::zeros((4, 2));
+/// let labels = Array1::from_vec(vec![0_i64, 0, 1, 1]);
+/// let _ = bagging.fit(features.view(), labels.view());
+/// ```
 #[derive(Debug, Clone)]
 pub struct SKBaggingClassifier<B> {
     pub(super) base_estimator: B,
@@ -77,5 +98,28 @@ impl<B> SKBaggingClassifier<B> {
     /// Resolve the execution intent against an execution context.
     pub fn resolve_plan(&self, context: &SKExecutionContext) -> Result<SKExecutionPlan, SKError> {
         self.configuration.state.resolve_plan(context)
+    }
+}
+
+impl<F, B> SKSupervisedFit<F> for SKBaggingClassifier<B>
+where
+    F: SKFloat,
+    B: SKSupervisedFit<F> + Clone + Send + Sync,
+    B::Model: SKClassifierPredictor<F> + Send + Sync,
+    B::Error: Error + Send + 'static,
+    <B::Model as SKClassifierPredictor<F>>::Error: Error + Send + 'static,
+{
+    type Model = SKBaggingClassifierModel<F, B::Model>;
+    type Error = SKBaggingError<B::Error>;
+
+    fn fit<'a, X, T>(&self, _features: X, _targets: T) -> Result<Self::Model, Self::Error>
+    where
+        X: TryInto<SKDataView<'a, F>, Error = SKError>,
+        T: TryInto<SKTargetView<'a, F>, Error = SKError>,
+    {
+        Err(SKBaggingError::Central(SKError::UnsupportedOperation {
+            operation: "fit",
+            reason: "fitting wired in task 2.3".to_string(),
+        }))
     }
 }
