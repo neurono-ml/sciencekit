@@ -52,7 +52,7 @@
 - [ ] 5.3 Update `CHANGELOG.md` and the companion mdBook chapter (including a
   `Development Explained` chapter on per-center learning rates, reassignment and streaming
   epochs); verify with `mdbook build docs`.
-- [ ] 5.4 Record the no-Elkan/GPU/memmap/export non-goals in `docs/PRD.md`.
+- [x] 5.4 Record the no-Elkan/GPU/memmap/export non-goals in `docs/PRD.md`.
 - [ ] 5.5 Independent review by a separate agent validating every scenario in
   `mini-batch-k-means`; address every finding and re-run the gates.
 
