@@ -5,6 +5,8 @@
 //! its submodules; every implementation lives in its own file.
 
 mod full;
+mod randomized;
 mod state;
 
 pub(super) use full::sk_solve_full_svd;
+pub(super) use randomized::sk_solve_randomized_svd;

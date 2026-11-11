@@ -11,4 +11,6 @@ mod pca_centering_tests;
 #[cfg(test)]
 mod pca_full_tests;
 #[cfg(test)]
+mod pca_randomized_tests;
+#[cfg(test)]
 mod test_tracing;
