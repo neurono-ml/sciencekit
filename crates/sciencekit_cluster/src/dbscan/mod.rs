@@ -31,3 +31,5 @@ mod dbscan_predict_tests;
 mod dbscan_query_tests;
 #[cfg(test)]
 mod dbscan_representation_tests;
+#[cfg(test)]
+mod dbscan_validation_tests;
