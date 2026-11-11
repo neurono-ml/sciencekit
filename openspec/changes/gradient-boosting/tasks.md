@@ -42,7 +42,7 @@
 - [x] 4.2 Implement binary fit and probability/label prediction; verify a hand-computed
   score and a separable fixture; verify with
   `cargo test -p sciencekit_ensemble gb_classifier`.
-- [ ] 4.3 Implement multiclass fit (one tree per class per stage), softmax probabilities
+- [x] 4.3 Implement multiclass fit (one tree per class per stage), softmax probabilities
   and canonical labels; verify with `cargo test -p sciencekit_ensemble gb_classifier`.
 
 ## 5. Regressor
