@@ -11,6 +11,7 @@ use sciencekit_common::{
     builders::SKBuilderState,
 };
 
+use super::compression::{SKSafetensorsCompression, compress_safetensors_bytes};
 use super::header::SK_SAFETENSORS_FORMAT_VERSION;
 use super::padding_append::append_tensors_to_path;
 use super::padding_encode::{SKAppendOutcome, encode_state_with_padding};
@@ -28,6 +29,7 @@ pub struct SKSafetensorsWriter {
     pub(super) shard_plan: Option<SKShardPlan>,
     pub(super) header_padding_bytes: usize,
     pub(super) payload_padding_bytes: usize,
+    pub(super) compression: SKSafetensorsCompression,
 }
 
 impl SKSafetensorsWriter {
@@ -61,6 +63,11 @@ impl SKSafetensorsWriter {
         self.payload_padding_bytes
     }
 
+    /// Configured whole-file compression mode.
+    pub fn compression(&self) -> SKSafetensorsCompression {
+        self.compression
+    }
+
     fn run_write_span<T>(
         &self,
         estimator: &str,
@@ -72,6 +79,7 @@ impl SKSafetensorsWriter {
             format_version = SK_SAFETENSORS_FORMAT_VERSION,
             estimator = estimator,
             tensor_count = tensor_count,
+            compression = %self.compression,
             backend = %self.backend,
             execution_mode = ?self.plan.execution_intent(),
             duration_ms = tracing::field::Empty,
@@ -87,7 +95,12 @@ impl SKSafetensorsWriter {
     }
 
     fn encode_single<F: SKFloat>(&self, state: &SKModelState<F>) -> Result<Vec<u8>, SKError> {
-        encode_state_with_padding(state, self.header_padding_bytes, self.payload_padding_bytes)
+        let raw = encode_state_with_padding(
+            state,
+            self.header_padding_bytes,
+            self.payload_padding_bytes,
+        )?;
+        compress_safetensors_bytes(&raw, self.compression)
     }
 
     /// Serialize `state` into an in-memory Safetensors byte vector.
@@ -108,15 +121,9 @@ impl SKSafetensorsWriter {
         state: &SKModelState<F>,
         mut writer: W,
     ) -> Result<(), SKError> {
-        self.run_write_span(
-            state.metadata().estimator_name(),
-            state.number_of_tensors(),
-            || {
-                let encoded = self.encode_single(state)?;
-                writer.write_all(&encoded)?;
-                Ok(())
-            },
-        )
+        let bytes = self.write_state_to_bytes(state)?;
+        writer.write_all(&bytes)?;
+        Ok(())
     }
 
     /// Write `state` to `path`, splitting into immutable shards when `shard_plan` is exceeded.
@@ -135,8 +142,8 @@ impl SKSafetensorsWriter {
                             state,
                             path,
                             plan,
-                            "safetensors",
-                            |raw| Ok(raw.to_vec()),
+                            self.compression.file_extension(),
+                            |raw| compress_safetensors_bytes(raw, self.compression),
                         );
                     }
                 }
@@ -165,7 +172,9 @@ impl SKSafetensorsWriter {
         tensors: &[SKTensor<F>],
     ) -> Result<SKAppendOutcome, SKError> {
         self.run_write_span("append", tensors.len(), || {
-            append_tensors_to_path(path, tensors, "safetensors", |raw| Ok(raw.to_vec()))
+            append_tensors_to_path(path, tensors, self.compression.file_extension(), |raw| {
+                compress_safetensors_bytes(raw, self.compression)
+            })
         })
     }
 
@@ -174,8 +183,7 @@ impl SKSafetensorsWriter {
         &self,
         model: &M,
     ) -> Result<Vec<u8>, SKError> {
-        let state = model.export_state()?;
-        self.write_state_to_bytes(&state)
+        self.write_state_to_bytes(&model.export_state()?)
     }
 
     /// Export `model` through [`SKExportable`] and write its state to `path`.
@@ -184,7 +192,6 @@ impl SKSafetensorsWriter {
         model: &M,
         path: &Path,
     ) -> Result<(), SKError> {
-        let state = model.export_state()?;
-        self.write_state_to_path(&state, path)
+        self.write_state_to_path(&model.export_state()?, path)
     }
 }

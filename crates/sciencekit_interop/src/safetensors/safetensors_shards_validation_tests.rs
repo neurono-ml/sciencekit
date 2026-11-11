@@ -62,7 +62,7 @@ fn safetensors_shards_rejects_duplicate_shards_duplicate_tensors_and_mismatched_
     let temporary_directory = tempfile::tempdir().unwrap();
     let dup_shard_index = temporary_directory
         .path()
-        .join("dup_shard.safetensors.index.json");
+        .join("dup.safetensors.index.json");
     std::fs::write(
         &dup_shard_index,
         r#"{"format_version":1,"metadata":{},"shards":["a.safetensors","a.safetensors"],"weight_map":{}}"#,
@@ -75,7 +75,7 @@ fn safetensors_shards_rejects_duplicate_shards_duplicate_tensors_and_mismatched_
 
     let traversal_index = temporary_directory
         .path()
-        .join("traversal.safetensors.index.json");
+        .join("esc.safetensors.index.json");
     std::fs::write(
         &traversal_index,
         r#"{"format_version":1,"metadata":{},"shards":["../escape.safetensors"],"weight_map":{}}"#,
@@ -102,9 +102,7 @@ fn safetensors_shards_rejects_duplicate_shards_duplicate_tensors_and_mismatched_
         .write_state_to_path(&state_one, &shard_b_path)
         .unwrap();
 
-    let duplicate_tensor_index = temporary_directory
-        .path()
-        .join("dup_tensor.safetensors.index.json");
+    let duplicate_tensor_index = temporary_directory.path().join("dt.safetensors.index.json");
     std::fs::write(
         &duplicate_tensor_index,
         r#"{
@@ -140,9 +138,7 @@ fn safetensors_shards_rejects_duplicate_shards_duplicate_tensors_and_mismatched_
         .write_state_to_path(&foreign_state, &shard_c_path)
         .unwrap();
 
-    let mismatched_meta_index = temporary_directory
-        .path()
-        .join("mismatch_meta.safetensors.index.json");
+    let mismatched_meta_index = temporary_directory.path().join("mm.safetensors.index.json");
     std::fs::write(
         &mismatched_meta_index,
         r#"{

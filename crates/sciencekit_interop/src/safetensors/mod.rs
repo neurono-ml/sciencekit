@@ -4,6 +4,8 @@
 //! This is a **pure dispatcher** module: `mod.rs` only declares and re-exports
 //! submodules; every implementation lives in its own file.
 
+mod compression;
+mod compression_types;
 mod header;
 mod padding_append;
 mod padding_encode;
@@ -21,6 +23,10 @@ mod writer;
 mod writer_builder;
 mod writer_functions;
 
+pub use compression_types::{
+    SK_BROTLI_MAGIC, SK_GZIP_MAGIC, SK_SNAPPY_MAGIC, SKSafetensorsCompression,
+    sk_detect_safetensors_compression,
+};
 pub use header::{SK_SAFETENSORS_FORMAT_VERSION, SK_SAFETENSORS_PADDING_TENSOR_NAME};
 pub use padding_encode::SKAppendOutcome;
 pub use reader::{
@@ -39,6 +45,8 @@ pub use writer_functions::{
     sk_write_model_state_safetensors, sk_write_model_state_safetensors_file,
 };
 
+#[cfg(test)]
+mod safetensors_compression_tests;
 #[cfg(test)]
 mod safetensors_padding_tests;
 #[cfg(test)]

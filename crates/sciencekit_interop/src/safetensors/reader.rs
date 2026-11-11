@@ -11,6 +11,7 @@ use sciencekit_common::{
     builders::{SKBuilder, SKBuilderState},
 };
 
+use super::compression::decompress_safetensors_bytes;
 use super::header::SK_SAFETENSORS_FORMAT_VERSION;
 use super::reader_builder::SKSafetensorsReaderBuilder;
 use super::shard_index::sk_safetensors_index_path;
@@ -72,15 +73,18 @@ impl SKSafetensorsReader {
         result
     }
 
-    /// Parse and validate an in-memory Safetensors byte slice into [`SKModelState`].
+    /// Parse and validate a raw or compressed Safetensors byte slice into [`SKModelState`].
     pub fn read_state_from_bytes<F: SKFloat>(
         &self,
         bytes: &[u8],
     ) -> Result<SKModelState<F>, SKError> {
-        self.run_read_span(|| decode_single_file_bytes(bytes))
+        self.run_read_span(|| {
+            let uncompressed = decompress_safetensors_bytes(None, bytes)?;
+            decode_single_file_bytes(&uncompressed)
+        })
     }
 
-    /// Read and validate a Safetensors stream into [`SKModelState`].
+    /// Read and validate a raw or compressed Safetensors stream into [`SKModelState`].
     pub fn read_state_from_reader<F: SKFloat, R: io::Read>(
         &self,
         mut reader: R,
@@ -88,29 +92,33 @@ impl SKSafetensorsReader {
         self.run_read_span(|| {
             let mut buffer = Vec::new();
             reader.read_to_end(&mut buffer)?;
-            decode_single_file_bytes(&buffer)
+            let uncompressed = decompress_safetensors_bytes(None, &buffer)?;
+            decode_single_file_bytes(&uncompressed)
         })
     }
 
-    /// Read and validate a single Safetensors file or sharded manifest at `path`.
+    /// Read and validate a single (or compressed) Safetensors file or sharded manifest at `path`.
     pub fn read_state_from_path<F: SKFloat>(
         &self,
         path: &Path,
     ) -> Result<SKModelState<F>, SKError> {
         self.run_read_span(|| {
             if path.to_string_lossy().ends_with(".index.json") {
-                return read_sharded_state_from_index(path, |_shard_path, raw| Ok(raw.to_vec()));
+                return read_sharded_state_from_index(path, |shard_path, raw| {
+                    decompress_safetensors_bytes(Some(shard_path), raw)
+                });
             }
             let companion_index = sk_safetensors_index_path(path);
             if companion_index.exists() {
-                return read_sharded_state_from_index(&companion_index, |_shard_path, raw| {
-                    Ok(raw.to_vec())
+                return read_sharded_state_from_index(&companion_index, |shard_path, raw| {
+                    decompress_safetensors_bytes(Some(shard_path), raw)
                 });
             }
             let file = File::open(path)?;
             let mut buffer = Vec::new();
             BufReader::new(file).read_to_end(&mut buffer)?;
-            decode_single_file_bytes(&buffer)
+            let uncompressed = decompress_safetensors_bytes(Some(path), &buffer)?;
+            decode_single_file_bytes(&uncompressed)
         })
     }
 

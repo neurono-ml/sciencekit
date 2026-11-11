@@ -6,14 +6,15 @@ use sciencekit_common::{
 };
 
 use super::SKSafetensorsWriter;
+use super::compression::SKSafetensorsCompression;
 use super::shard_plan::SKShardPlan;
 
 const DEFAULT_HEADER_PADDING_MINIMUM: usize = 1024;
 
 /// Builder configuring an [`SKSafetensorsWriter`].
 ///
-/// Defaults to [`SKBackendKind::Faer`], [`SKExecutionMode::Automatic`], no sharding
-/// and zero padding.
+/// Defaults to [`SKBackendKind::Faer`], [`SKExecutionMode::Automatic`],
+/// [`SKSafetensorsCompression::None`], no sharding and zero padding.
 #[derive(Debug, Clone)]
 pub struct SKSafetensorsWriterBuilder {
     pub(super) state: SKBuilderState,
@@ -22,6 +23,7 @@ pub struct SKSafetensorsWriterBuilder {
     pub(super) pending_maximum_shard_bytes: Option<usize>,
     pub(super) header_padding_bytes: usize,
     pub(super) payload_padding_bytes: usize,
+    pub(super) compression: SKSafetensorsCompression,
 }
 
 impl SKSafetensorsWriterBuilder {
@@ -34,6 +36,7 @@ impl SKSafetensorsWriterBuilder {
             pending_maximum_shard_bytes: None,
             header_padding_bytes: 0,
             payload_padding_bytes: 0,
+            compression: SKSafetensorsCompression::None,
         }
     }
 
@@ -71,6 +74,12 @@ impl SKSafetensorsWriterBuilder {
     /// Override the reserved payload padding capacity in bytes.
     pub fn payload_padding_bytes(mut self, payload_padding_bytes: usize) -> Self {
         self.payload_padding_bytes = payload_padding_bytes;
+        self
+    }
+
+    /// Select an optional whole-file compression wrapper.
+    pub fn compression(mut self, compression: SKSafetensorsCompression) -> Self {
+        self.compression = compression;
         self
     }
 
@@ -123,6 +132,7 @@ impl SKBuilder<SKSafetensorsWriter> for SKSafetensorsWriterBuilder {
             shard_plan: resolved_shard_plan,
             header_padding_bytes: self.header_padding_bytes,
             payload_padding_bytes: self.payload_padding_bytes,
+            compression: self.compression,
         })
     }
 }
