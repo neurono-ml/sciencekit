@@ -96,9 +96,24 @@ impl<F: SKFloat> SKPipelineGraphClassifier<F> {
         self.inner.topological_order()
     }
 
+    /// Identifier of the unique final supervised estimator node.
+    pub fn final_node(&self) -> SKNodeIdentifier {
+        self.inner.final_node()
+    }
+
     /// Fitted per-node feature blocks keyed by node identifier.
     pub fn fitted_node_blocks(&self) -> &BTreeMap<SKNodeIdentifier, SKFeatureBlock<F>> {
         self.inner.fitted_node_blocks()
+    }
+
+    /// Borrow the fitted feature block recorded for `node`, if present.
+    pub fn fitted_node_block(&self, node: SKNodeIdentifier) -> Option<&SKFeatureBlock<F>> {
+        self.inner.fitted_node_block(node)
+    }
+
+    /// Number of features the final estimator was fitted on.
+    pub fn number_of_features(&self) -> usize {
+        self.inner.number_of_features()
     }
 
     /// Fitted final model handle.
