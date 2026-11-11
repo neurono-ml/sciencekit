@@ -7,14 +7,12 @@ use sciencekit_common::SKFloat;
 /// Running sample count, feature mean and centered scatter matrix
 /// `S = Σ (x − mean)(x − mean)ᵀ` across processed batches.
 #[derive(Debug, Clone)]
-#[allow(dead_code)]
 pub(super) struct SKCovarianceAccumulator<F: SKFloat> {
     pub(super) samples_seen: usize,
     pub(super) mean: Array1<F>,
     pub(super) scatter: Array2<F>,
 }
 
-#[allow(dead_code)]
 impl<F: SKFloat> SKCovarianceAccumulator<F> {
     /// Initializes an empty accumulator for `number_of_features` columns.
     pub(super) fn new(number_of_features: usize) -> Self {

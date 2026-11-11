@@ -18,7 +18,6 @@ pub struct SKIncrementalPCAModel<F: SKFloat> {
     pub(super) explained_variance: Array1<F>,
     pub(super) explained_variance_ratio: Array1<F>,
     pub(super) singular_values: Array1<F>,
-    #[allow(dead_code)]
     pub(super) whiten_scale: Array1<F>,
     pub(super) epochs_consumed: usize,
     pub(super) configuration: SKIncrementalPCAConfiguration,

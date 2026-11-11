@@ -16,6 +16,7 @@ mod model;
 mod partial_fit;
 mod sparse;
 mod streaming;
+mod transform;
 mod validation;
 
 pub use builder::SKIncrementalPCABuilder;
@@ -36,3 +37,5 @@ mod incremental_merge_tests;
 mod incremental_sparse_tests;
 #[cfg(test)]
 mod incremental_streaming_tests;
+#[cfg(test)]
+mod incremental_transform_tests;

@@ -14,12 +14,12 @@ mod transform;
 mod validation;
 
 pub use builder::SKPCABuilder;
-pub(crate) use centering::sk_view_dimensions;
+pub(crate) use centering::{sk_center_dense, sk_view_dimensions};
 pub use config::SKPCASolver;
 pub use core_implementation::SKPCA;
 pub use model::SKPCAModel;
 pub(crate) use solvers::{SKPCADecomposition, sk_compute_variance_ratio, sk_orient_components};
-pub(crate) use validation::sk_validate_finiteness;
+pub(crate) use validation::{sk_validate_finiteness, sk_validate_matrix_input};
 
 #[cfg(test)]
 mod pca_builder_tests;

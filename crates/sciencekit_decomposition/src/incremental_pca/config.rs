@@ -10,7 +10,6 @@ pub(super) const DEFAULT_MAXIMUM_NUMBER_OF_EPOCHS: usize = 1;
 
 /// Validated configuration carried by a built incremental PCA estimator.
 #[derive(Debug, Clone, Copy)]
-#[allow(dead_code)]
 pub(super) struct SKIncrementalPCAConfiguration {
     /// Optional component count (`None` retains up to the feature count).
     pub(super) number_of_components: Option<usize>,
@@ -26,7 +25,6 @@ pub(super) struct SKIncrementalPCAConfiguration {
     pub(super) builder_state: SKBuilderState,
 }
 
-#[allow(dead_code)]
 impl SKIncrementalPCAConfiguration {
     /// Constructs configuration with the documented defaults.
     pub(super) fn default_configuration() -> Self {
