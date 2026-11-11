@@ -1,8 +1,7 @@
 //! Extended Safetensors writer over [`sciencekit_common::SKModelState`]
 //! (spec `safetensors-format`).
 
-use std::fs::File;
-use std::io::{self, BufWriter, Write};
+use std::io;
 use std::path::Path;
 use std::time::Instant;
 
@@ -17,6 +16,7 @@ use super::padding_append::append_tensors_to_path;
 use super::padding_encode::{SKAppendOutcome, encode_state_with_padding};
 use super::shard_io::write_sharded_state_to_path;
 use super::shard_plan::{SKShardPlan, state_total_payload_bytes};
+use super::single_file::write_single_file_bytes_to_path;
 use super::writer_builder::SKSafetensorsWriterBuilder;
 
 /// Serializes fitted model states into the extended Safetensors binary format.
@@ -148,10 +148,7 @@ impl SKSafetensorsWriter {
                     }
                 }
                 let encoded = self.encode_single(state)?;
-                let mut buffered = BufWriter::new(File::create(path)?);
-                buffered.write_all(&encoded)?;
-                buffered.flush()?;
-                Ok(())
+                write_single_file_bytes_to_path(path, &encoded)
             },
         )
     }
@@ -172,9 +169,7 @@ impl SKSafetensorsWriter {
         tensors: &[SKTensor<F>],
     ) -> Result<SKAppendOutcome, SKError> {
         self.run_write_span("append", tensors.len(), || {
-            append_tensors_to_path(path, tensors, self.compression.file_extension(), |raw| {
-                compress_safetensors_bytes(raw, self.compression)
-            })
+            append_tensors_to_path(path, tensors, self.compression)
         })
     }
 

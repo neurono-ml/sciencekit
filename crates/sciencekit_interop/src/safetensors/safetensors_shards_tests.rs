@@ -117,3 +117,51 @@ fn safetensors_shards_state_below_threshold_stays_single_file() {
         state
     );
 }
+
+/// Overwriting between sharded and single-file states clears stale companion artifacts in both directions.
+#[test]
+fn safetensors_shards_overwriting_sharded_path_with_single_file_clears_stale_index() {
+    let metadata = SKModelMetadata::new("SKRidge", 1, SKTensorDataType::F64, 4).unwrap();
+    let large_a = SKTensor::floating("a", vec![4], vec![1.0_f64, 2.0, 3.0, 4.0]).unwrap();
+    let large_b = SKTensor::floating("b", vec![4], vec![5.0_f64, 6.0, 7.0, 8.0]).unwrap();
+    let sharded_state = SKModelState::new(metadata.clone(), vec![large_a, large_b]).unwrap();
+
+    let temporary_directory = tempfile::tempdir().unwrap();
+    let model_path = temporary_directory.path().join("overwrite.safetensors");
+    let sharding_writer = SKSafetensorsWriter::builder()
+        .maximum_shard_bytes(32)
+        .build()
+        .unwrap();
+    sharding_writer
+        .write_state_to_path(&sharded_state, &model_path)
+        .unwrap();
+    assert!(sk_safetensors_index_path(&model_path).exists());
+
+    let small_state = SKModelState::new(
+        metadata,
+        vec![SKTensor::floating("small", vec![4], vec![9.0_f64, 8.0, 7.0, 6.0]).unwrap()],
+    )
+    .unwrap();
+    SKSafetensorsWriter::builder()
+        .build()
+        .unwrap()
+        .write_state_to_path(&small_state, &model_path)
+        .unwrap();
+
+    assert!(model_path.exists());
+    assert!(!sk_safetensors_index_path(&model_path).exists());
+    assert_eq!(
+        sk_read_model_state_safetensors_file::<f64>(&model_path).unwrap(),
+        small_state
+    );
+
+    sharding_writer
+        .write_state_to_path(&sharded_state, &model_path)
+        .unwrap();
+    assert!(!model_path.exists());
+    assert!(sk_safetensors_index_path(&model_path).exists());
+    assert_eq!(
+        sk_read_model_state_safetensors_file::<f64>(&model_path).unwrap(),
+        sharded_state
+    );
+}

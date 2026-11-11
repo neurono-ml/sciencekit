@@ -88,11 +88,11 @@ fn safetensors_compression_missing_feature_returns_unsupported_operation_with_gu
             Err(SKError::UnsupportedOperation { .. })
         ));
         let temporary_directory = tempfile::tempdir().unwrap();
-        let gz_file = temporary_directory.path().join("missing.safetensors.gz");
-        std::fs::write(&gz_file, &fake_gzip).unwrap();
+        let gzip_file = temporary_directory.path().join("missing.safetensors.gz");
+        std::fs::write(&gzip_file, &fake_gzip).unwrap();
         let extra = SKTensor::floating("extra", vec![1], vec![3.0_f64]).unwrap();
         assert!(matches!(
-            sk_append_safetensors_tensor(&gz_file, &extra),
+            sk_append_safetensors_tensor(&gzip_file, &extra),
             Err(SKError::UnsupportedOperation { .. })
         ));
     }
@@ -150,15 +150,27 @@ fn safetensors_compression_corrupt_streams_and_compressed_append_behave_cleanly(
 
         let state = tiny_state();
         let temporary_directory = tempfile::tempdir().unwrap();
-        let gz_path = temporary_directory.path().join("appended.safetensors.gz");
+        let gzip_path = temporary_directory.path().join("appended.safetensors.gz");
         let writer = SKSafetensorsWriter::builder()
             .compression(SKSafetensorsCompression::Gzip)
             .build()
             .unwrap();
-        writer.write_state_to_path(&state, &gz_path).unwrap();
+        writer.write_state_to_path(&state, &gzip_path).unwrap();
         let intercept = SKTensor::floating("ridge.intercept", vec![], vec![0.5_f64]).unwrap();
-        writer.append_tensor_to_path(&gz_path, &intercept).unwrap();
-        let merged = sk_read_model_state_safetensors_file::<f64>(&gz_path).unwrap();
+        let outcome = sk_append_safetensors_tensor(&gzip_path, &intercept).unwrap();
+        match outcome {
+            super::SKAppendOutcome::NewShard { shard_file } => {
+                assert!(shard_file.ends_with(".safetensors.gz"));
+                let shard_bytes =
+                    std::fs::read(temporary_directory.path().join(shard_file)).unwrap();
+                assert_eq!(
+                    sk_detect_safetensors_compression(&shard_bytes),
+                    Some(SKSafetensorsCompression::Gzip)
+                );
+            }
+            other => panic!("expected NewShard for compressed append, got {other:?}"),
+        }
+        let merged = sk_read_model_state_safetensors_file::<f64>(&gzip_path).unwrap();
         assert_eq!(merged.number_of_tensors(), 2);
     }
 

@@ -8,7 +8,7 @@ use std::path::Path;
 
 use sciencekit_common::{SKError, SKFloat, SKModelState, SKTensor};
 
-use super::compression::decompress_safetensors_bytes;
+use super::compression::{compress_safetensors_bytes, decompress_safetensors_bytes};
 use super::compression_types::{SKSafetensorsCompression, sk_detect_safetensors_compression};
 use super::header::{
     SK_SAFETENSORS_FORMAT_VERSION, SK_SAFETENSORS_PADDING_TENSOR_NAME, decode_metadata_header,
@@ -29,8 +29,7 @@ use super::wire_validation::validate_wire_safetensors;
 pub(crate) fn append_tensors_to_path<F: SKFloat>(
     path: &Path,
     new_tensors: &[SKTensor<F>],
-    extension: &str,
-    encode_shard: impl Fn(&[u8]) -> Result<Vec<u8>, SKError>,
+    configured_compression: SKSafetensorsCompression,
 ) -> Result<SKAppendOutcome, SKError> {
     if new_tensors.is_empty() {
         return Ok(SKAppendOutcome::InPlace);
@@ -41,15 +40,19 @@ pub(crate) fn append_tensors_to_path<F: SKFloat>(
             path,
             &index_path,
             new_tensors,
-            extension,
+            configured_compression,
             validate_new_tensors,
-            encode_shard,
         );
     }
 
     let raw_file_bytes = fs::read(path)?;
-    let is_compressed = sk_detect_safetensors_compression(&raw_file_bytes).is_some()
-        || SKSafetensorsCompression::from_path(path).is_some();
+    let detected_compression = sk_detect_safetensors_compression(&raw_file_bytes)
+        .or_else(|| SKSafetensorsCompression::from_path(path));
+    let is_compressed = detected_compression.is_some();
+    let effective_compression = match configured_compression {
+        SKSafetensorsCompression::None => detected_compression.unwrap_or_default(),
+        explicit => explicit,
+    };
     let file_bytes = decompress_safetensors_bytes(Some(path), &raw_file_bytes)?;
     let mut metadata_map = validate_wire_safetensors(&file_bytes)?;
     let parsed_metadata = decode_metadata_header::<F>(&metadata_map)?;
@@ -138,12 +141,19 @@ pub(crate) fn append_tensors_to_path<F: SKFloat>(
 
     let base_name = path
         .file_name()
-        .and_then(|os| os.to_str())
+        .and_then(|operating_system_name| operating_system_name.to_str())
         .ok_or_else(|| SKError::Conversion("invalid base Safetensors filename".to_string()))?
         .to_string();
-    let shard_file = next_available_shard_name(path, std::slice::from_ref(&base_name), extension);
+    let shard_file = next_available_shard_name(
+        path,
+        std::slice::from_ref(&base_name),
+        effective_compression.file_extension(),
+    );
     let shard_state = SKModelState::new(parsed_metadata, new_tensors.to_vec())?;
-    let encoded_shard = encode_shard(&encode_single_file_bytes(&shard_state)?)?;
+    let encoded_shard = compress_safetensors_bytes(
+        &encode_single_file_bytes(&shard_state)?,
+        effective_compression,
+    )?;
     fs::write(
         path.parent()
             .unwrap_or_else(|| Path::new("."))

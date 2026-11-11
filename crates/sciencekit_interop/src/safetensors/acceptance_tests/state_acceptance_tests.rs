@@ -20,8 +20,9 @@ use crate::safetensors::{
 /// Tiny zero-tensor and single-element states round-trip for both `f32` and `f64` via inherent `.build()`.
 #[test]
 fn safetensors_acceptance_tiny_states_round_trip_for_both_scalars() {
-    let f32_meta = SKModelMetadata::new("SKDummyTransformer", 1, SKTensorDataType::F32, 1).unwrap();
-    let f32_empty = SKModelState::<f32>::new(f32_meta, Vec::new()).unwrap();
+    let f32_metadata =
+        SKModelMetadata::new("SKDummyTransformer", 1, SKTensorDataType::F32, 1).unwrap();
+    let f32_empty = SKModelState::<f32>::new(f32_metadata, Vec::new()).unwrap();
     let writer = SKSafetensorsWriter::builder().build().unwrap();
     let reader = SKSafetensorsReader::builder().build().unwrap();
     let f32_bytes = writer.write_state_to_bytes(&f32_empty).unwrap();
@@ -30,8 +31,9 @@ fn safetensors_acceptance_tiny_states_round_trip_for_both_scalars() {
         f32_empty
     );
 
-    let f64_meta = SKModelMetadata::new("SKDummyTransformer", 1, SKTensorDataType::F64, 0).unwrap();
-    let f64_empty = SKModelState::<f64>::new(f64_meta, Vec::new()).unwrap();
+    let f64_metadata =
+        SKModelMetadata::new("SKDummyTransformer", 1, SKTensorDataType::F64, 0).unwrap();
+    let f64_empty = SKModelState::<f64>::new(f64_metadata, Vec::new()).unwrap();
     let f64_bytes = sk_write_model_state_safetensors(&f64_empty).unwrap();
     assert_eq!(
         sk_read_model_state_safetensors::<f64>(&f64_bytes).unwrap(),

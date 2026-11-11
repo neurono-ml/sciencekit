@@ -90,10 +90,23 @@ fn safetensors_compression_gzip_round_trips_bytes_files_and_shards() {
     );
 
     let temporary_directory = tempfile::tempdir().unwrap();
-    let gz_path = temporary_directory.path().join("model.safetensors.gz");
-    writer.write_state_to_path(&state, &gz_path).unwrap();
+    let gzip_path = temporary_directory.path().join("model.safetensors.gz");
+    writer.write_state_to_path(&state, &gzip_path).unwrap();
     assert_eq!(
-        sk_read_model_state_safetensors_file::<f64>(&gz_path).unwrap(),
+        sk_read_model_state_safetensors_file::<f64>(&gzip_path).unwrap(),
+        state
+    );
+
+    let sharded_gzip_path = temporary_directory.path().join("sharded.safetensors.gz");
+    SKSafetensorsWriter::builder()
+        .compression(SKSafetensorsCompression::Gzip)
+        .maximum_shard_bytes(4_096)
+        .build()
+        .unwrap()
+        .write_state_to_path(&state, &sharded_gzip_path)
+        .unwrap();
+    assert_eq!(
+        sk_read_model_state_safetensors_file::<f64>(&sharded_gzip_path).unwrap(),
         state
     );
 }

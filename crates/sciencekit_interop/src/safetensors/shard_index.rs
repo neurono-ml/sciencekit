@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 use super::header::SK_SAFETENSORS_FORMAT_VERSION;
 use super::shard_plan::SKShardIndex;
 
-static ATOMIC_TEMP_COUNTER: AtomicUsize = AtomicUsize::new(0);
+static ATOMIC_TEMPORARY_COUNTER: AtomicUsize = AtomicUsize::new(0);
 
 #[derive(Serialize)]
 struct WireShardIndex<'index> {
@@ -74,7 +74,7 @@ pub fn sk_safetensors_index_path(path: &Path) -> PathBuf {
     }
     let mut name = path
         .file_name()
-        .map(|os| os.to_os_string())
+        .map(|operating_system_name| operating_system_name.to_os_string())
         .unwrap_or_default();
     name.push(".index.json");
     path.with_file_name(name)
@@ -87,7 +87,7 @@ pub(crate) fn shard_file_name_for_number(
 ) -> String {
     let raw_name = base_path
         .file_name()
-        .map(|os| os.to_string_lossy().into_owned())
+        .map(|operating_system_name| operating_system_name.to_string_lossy().into_owned())
         .unwrap_or_else(|| "model".to_string());
     let stem = raw_name
         .strip_suffix(".index.json")
@@ -124,9 +124,9 @@ pub(crate) fn write_shard_index_atomic(
     index: &SKShardIndex,
 ) -> Result<(), SKError> {
     let parent = index_path.parent().unwrap_or_else(|| Path::new("."));
-    let sequence = ATOMIC_TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
-    let temp_name = format!(".safetensors-index-{}-{sequence}.tmp", std::process::id());
-    let temp_path = parent.join(temp_name);
+    let sequence = ATOMIC_TEMPORARY_COUNTER.fetch_add(1, Ordering::Relaxed);
+    let temporary_name = format!(".safetensors-index-{}-{sequence}.tmp", std::process::id());
+    let temporary_path = parent.join(temporary_name);
 
     let wire = WireShardIndex {
         format_version: index.format_version,
@@ -134,14 +134,14 @@ pub(crate) fn write_shard_index_atomic(
         shards: &index.shards,
         weight_map: &index.tensor_to_shard,
     };
-    let file = File::create(&temp_path)?;
+    let file = File::create(&temporary_path)?;
     let mut writer = BufWriter::new(file);
     serde_json::to_writer_pretty(&mut writer, &wire).map_err(|error| {
         SKError::Conversion(format!("failed to serialize shard index: {error}"))
     })?;
     writer.flush()?;
     drop(writer);
-    fs::rename(&temp_path, index_path)?;
+    fs::rename(&temporary_path, index_path)?;
     Ok(())
 }
 

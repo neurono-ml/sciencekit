@@ -12,8 +12,8 @@ use super::{
 };
 
 fn extract_header_end_offset(file_bytes: &[u8]) -> usize {
-    let header_len = u64::from_le_bytes(file_bytes[..8].try_into().unwrap()) as usize;
-    8 + header_len
+    let header_length = u64::from_le_bytes(file_bytes[..8].try_into().unwrap()) as usize;
+    8 + header_length
 }
 
 /// Small appends fit inside reserved header and payload padding without moving existing payloads.
@@ -162,4 +162,39 @@ fn safetensors_padding_overflow_creates_new_shard_and_updates_index() {
     .unwrap();
     let merged = sk_read_model_state_safetensors_file::<f64>(&file_path).unwrap();
     assert_eq!(merged, expected_state);
+}
+
+/// Exhausting JSON header slack while payload padding remains still spills safely to a new shard.
+#[test]
+fn safetensors_padding_header_slack_overflow_spills_to_shard_cleanly() {
+    let metadata = SKModelMetadata::new("SKRidge", 1, SKTensorDataType::F64, 2).unwrap();
+    let base_weights = SKTensor::floating("w", vec![2], vec![1.0_f64, 2.0]).unwrap();
+    let initial = SKModelState::new(metadata.clone(), vec![base_weights.clone()]).unwrap();
+
+    let temporary_directory = tempfile::tempdir().unwrap();
+    let file_path = temporary_directory.path().join("header_tight.safetensors");
+    let writer = SKSafetensorsWriter::builder()
+        .header_padding_bytes(8)
+        .payload_padding_bytes(128)
+        .build()
+        .unwrap();
+    assert_eq!(writer.header_padding_bytes(), 8);
+    writer.write_state_to_path(&initial, &file_path).unwrap();
+
+    let long_named = SKTensor::floating(
+        "adapter.layer_zero.attention.output_projection.low_rank_factor_alpha",
+        vec![],
+        vec![0.25_f64],
+    )
+    .unwrap();
+    let outcome = writer
+        .append_tensor_to_path(&file_path, &long_named)
+        .unwrap();
+    assert!(matches!(outcome, SKAppendOutcome::NewShard { .. }));
+
+    let merged = sk_read_model_state_safetensors_file::<f64>(&file_path).unwrap();
+    assert_eq!(
+        merged,
+        SKModelState::new(metadata, vec![base_weights, long_named]).unwrap()
+    );
 }

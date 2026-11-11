@@ -126,9 +126,12 @@ impl<'de> Deserialize<'de> for RawParameter {
                 Ok(RawParameter::Unsupported("null"))
             }
 
-            fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> Result<Self::Value, A::Error> {
+            fn visit_seq<A: SeqAccess<'de>>(
+                self,
+                mut sequence: A,
+            ) -> Result<Self::Value, A::Error> {
                 let mut items = Vec::new();
-                while let Some(item) = seq.next_element::<RawParameter>()? {
+                while let Some(item) = sequence.next_element::<RawParameter>()? {
                     items.push(item);
                 }
                 Ok(RawParameter::List(items))

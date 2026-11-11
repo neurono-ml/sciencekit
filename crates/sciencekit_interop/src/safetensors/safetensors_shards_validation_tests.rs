@@ -58,22 +58,22 @@ fn safetensors_shards_rejects_missing_shard_and_empty_shard_manifest() {
 #[test]
 fn safetensors_shards_rejects_duplicate_shards_duplicate_tensors_and_mismatched_metadata() {
     let temporary_directory = tempfile::tempdir().unwrap();
-    let dup_shard_index = temporary_directory
+    let duplicate_shard_index = temporary_directory
         .path()
-        .join("dup.safetensors.index.json");
+        .join("duplicate.safetensors.index.json");
     std::fs::write(
-        &dup_shard_index,
+        &duplicate_shard_index,
         r#"{"format_version":1,"metadata":{},"shards":["a.safetensors","a.safetensors"],"weight_map":{}}"#,
     )
     .unwrap();
     assert!(matches!(
-        sk_read_model_state_safetensors_file::<f64>(&dup_shard_index),
+        sk_read_model_state_safetensors_file::<f64>(&duplicate_shard_index),
         Err(SKError::InvalidHyperparameter { name: "shards", .. })
     ));
 
     let traversal_index = temporary_directory
         .path()
-        .join("esc.safetensors.index.json");
+        .join("escape.safetensors.index.json");
     std::fs::write(
         &traversal_index,
         r#"{"format_version":1,"metadata":{},"shards":["../escape.safetensors"],"weight_map":{}}"#,
@@ -84,9 +84,9 @@ fn safetensors_shards_rejects_duplicate_shards_duplicate_tensors_and_mismatched_
         Err(SKError::InvalidHyperparameter { name: "shards", .. })
     ));
 
-    let meta_one = SKModelMetadata::new("SKLasso", 1, SKTensorDataType::F64, 2).unwrap();
+    let metadata_one = SKModelMetadata::new("SKLasso", 1, SKTensorDataType::F64, 2).unwrap();
     let state_one = SKModelState::new(
-        meta_one.clone(),
+        metadata_one,
         vec![SKTensor::floating("lasso.weights", vec![2], vec![1.0_f64, 2.0]).unwrap()],
     )
     .unwrap();
@@ -100,7 +100,9 @@ fn safetensors_shards_rejects_duplicate_shards_duplicate_tensors_and_mismatched_
         .write_state_to_path(&state_one, &shard_b_path)
         .unwrap();
 
-    let duplicate_tensor_index = temporary_directory.path().join("dt.safetensors.index.json");
+    let duplicate_tensor_index = temporary_directory
+        .path()
+        .join("duplicate_tensor.safetensors.index.json");
     std::fs::write(
         &duplicate_tensor_index,
         r#"{
@@ -125,9 +127,9 @@ fn safetensors_shards_rejects_duplicate_shards_duplicate_tensors_and_mismatched_
         })
     ));
 
-    let foreign_meta = SKModelMetadata::new("SKRidge", 1, SKTensorDataType::F64, 2).unwrap();
+    let foreign_metadata = SKModelMetadata::new("SKRidge", 1, SKTensorDataType::F64, 2).unwrap();
     let foreign_state = SKModelState::new(
-        foreign_meta,
+        foreign_metadata,
         vec![SKTensor::floating("ridge.intercept", vec![], vec![0.5_f64]).unwrap()],
     )
     .unwrap();
@@ -136,14 +138,16 @@ fn safetensors_shards_rejects_duplicate_shards_duplicate_tensors_and_mismatched_
         .write_state_to_path(&foreign_state, &shard_c_path)
         .unwrap();
 
-    let mismatched_meta_index = temporary_directory.path().join("mm.safetensors.index.json");
+    let mismatched_metadata_index = temporary_directory
+        .path()
+        .join("mismatched.safetensors.index.json");
     std::fs::write(
-        &mismatched_meta_index,
+        &mismatched_metadata_index,
         r#"{"format_version":1,"metadata":{"sciencekit.format_version":"1","sciencekit.estimator_name":"SKLasso","sciencekit.scalar_data_type":"F64","sciencekit.feature_count":"2","sciencekit.parameters":"{}"},"shards":["s1.safetensors","s3.safetensors"],"weight_map":{"lasso.weights":"s1.safetensors","ridge.intercept":"s3.safetensors"}}"#,
     )
     .unwrap();
     assert!(matches!(
-        sk_read_model_state_safetensors_file::<f64>(&mismatched_meta_index),
+        sk_read_model_state_safetensors_file::<f64>(&mismatched_metadata_index),
         Err(SKError::InvalidHyperparameter { name: "shards", .. })
     ));
 }
@@ -154,17 +158,18 @@ fn safetensors_shards_and_single_files_reject_future_major_versions() {
     let payload: Vec<u8> = [1.0_f64].into_iter().flat_map(f64::to_le_bytes).collect();
     let view =
         safetensors::tensor::TensorView::new(safetensors::Dtype::F64, vec![1], &payload).unwrap();
-    let mut future_meta = HashMap::new();
-    future_meta.insert("sciencekit.format_version".to_string(), "2".to_string());
-    future_meta.insert(
+    let mut future_metadata = HashMap::new();
+    future_metadata.insert("sciencekit.format_version".to_string(), "2".to_string());
+    future_metadata.insert(
         "sciencekit.estimator_name".to_string(),
         "SKLinearRegression".to_string(),
     );
-    future_meta.insert(
+    future_metadata.insert(
         "sciencekit.future_tensor_layout".to_string(),
         "block_sparse".to_string(),
     );
-    let future_bytes = safetensors::tensor::serialize([("w", view)], Some(future_meta)).unwrap();
+    let future_bytes =
+        safetensors::tensor::serialize([("w", view)], Some(future_metadata)).unwrap();
 
     let single_outcome = sk_read_model_state_safetensors::<f64>(&future_bytes);
     match single_outcome {

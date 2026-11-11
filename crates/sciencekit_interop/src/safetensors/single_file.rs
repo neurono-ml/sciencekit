@@ -2,6 +2,9 @@
 //! (spec `safetensors-format`).
 
 use std::collections::HashMap;
+use std::fs::{self, File};
+use std::io::{BufWriter, Write};
+use std::path::Path;
 
 use safetensors::SafeTensors;
 use safetensors::tensor::{TensorView, serialize};
@@ -11,6 +14,7 @@ use super::header::{
     SK_SAFETENSORS_PADDING_TENSOR_NAME, decode_metadata_header, encode_metadata_header,
     expected_scalar_data_type,
 };
+use super::shard_index::sk_safetensors_index_path;
 use super::tensor_codec::{decode_tensor_payload, encode_tensor_payload};
 use super::wire_validation::validate_wire_safetensors;
 
@@ -76,4 +80,18 @@ pub(crate) fn decode_single_file_bytes<F: SKFloat>(
 ) -> Result<SKModelState<F>, SKError> {
     let (metadata, tensors) = decode_single_file_parts::<F>(bytes)?;
     SKModelState::new(metadata, tensors)
+}
+
+/// Write `encoded` bytes to `path` and clear any stale companion `.index.json` manifest.
+pub(crate) fn write_single_file_bytes_to_path(path: &Path, encoded: &[u8]) -> Result<(), SKError> {
+    let mut buffered = BufWriter::new(File::create(path)?);
+    buffered.write_all(encoded)?;
+    buffered.flush()?;
+    drop(buffered);
+
+    let companion_index = sk_safetensors_index_path(path);
+    if companion_index != path && companion_index.exists() {
+        fs::remove_file(companion_index)?;
+    }
+    Ok(())
 }

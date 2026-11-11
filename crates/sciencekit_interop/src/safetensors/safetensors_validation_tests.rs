@@ -52,9 +52,9 @@ fn safetensors_validation_rejects_truncated_files() {
 /// Inconsistent `data_offsets` (inverted, gapped or overlapping) are rejected before constructing state.
 #[test]
 fn safetensors_validation_rejects_inconsistent_offsets() {
-    let meta = valid_metadata_fragment();
+    let metadata = valid_metadata_fragment();
     let inverted_header =
-        format!(r#"{{{meta},"w":{{"dtype":"F64","shape":[1],"data_offsets":[8,0]}}}}"#);
+        format!(r#"{{{metadata},"w":{{"dtype":"F64","shape":[1],"data_offsets":[8,0]}}}}"#);
     let inverted_bytes = build_raw_safetensors_bytes(&inverted_header, &[0_u8; 8]);
     assert!(matches!(
         sk_read_model_state_safetensors::<f64>(&inverted_bytes),
@@ -62,7 +62,7 @@ fn safetensors_validation_rejects_inconsistent_offsets() {
     ));
 
     let gapped_header = format!(
-        r#"{{{meta},"a":{{"dtype":"F64","shape":[1],"data_offsets":[0,8]}},"b":{{"dtype":"F64","shape":[1],"data_offsets":[16,24]}}}}"#
+        r#"{{{metadata},"a":{{"dtype":"F64","shape":[1],"data_offsets":[0,8]}},"b":{{"dtype":"F64","shape":[1],"data_offsets":[16,24]}}}}"#
     );
     let gapped_bytes = build_raw_safetensors_bytes(&gapped_header, &[0_u8; 24]);
     assert!(matches!(
@@ -71,7 +71,7 @@ fn safetensors_validation_rejects_inconsistent_offsets() {
     ));
 
     let overlapping_header = format!(
-        r#"{{{meta},"a":{{"dtype":"F64","shape":[2],"data_offsets":[0,16]}},"b":{{"dtype":"F64","shape":[2],"data_offsets":[8,24]}}}}"#
+        r#"{{{metadata},"a":{{"dtype":"F64","shape":[2],"data_offsets":[0,16]}},"b":{{"dtype":"F64","shape":[2],"data_offsets":[8,24]}}}}"#
     );
     let overlapping_bytes = build_raw_safetensors_bytes(&overlapping_header, &[0_u8; 24]);
     assert!(matches!(
@@ -83,9 +83,9 @@ fn safetensors_validation_rejects_inconsistent_offsets() {
 /// A tensor whose `shape` product disagrees with its byte slice length returns `SKError::ShapeMismatch`.
 #[test]
 fn safetensors_validation_rejects_shape_and_offset_length_mismatch() {
-    let meta = valid_metadata_fragment();
+    let metadata = valid_metadata_fragment();
     let mismatched_header =
-        format!(r#"{{{meta},"w":{{"dtype":"F64","shape":[2,3],"data_offsets":[0,16]}}}}"#);
+        format!(r#"{{{metadata},"w":{{"dtype":"F64","shape":[2,3],"data_offsets":[0,16]}}}}"#);
     let mismatched_bytes = build_raw_safetensors_bytes(&mismatched_header, &[0_u8; 16]);
     assert!(matches!(
         sk_read_model_state_safetensors::<f64>(&mismatched_bytes),
@@ -93,7 +93,7 @@ fn safetensors_validation_rejects_shape_and_offset_length_mismatch() {
     ));
 
     let overflow_header = format!(
-        r#"{{{meta},"w":{{"dtype":"F64","shape":[18446744073709551615,2],"data_offsets":[0,16]}}}}"#
+        r#"{{{metadata},"w":{{"dtype":"F64","shape":[18446744073709551615,2],"data_offsets":[0,16]}}}}"#
     );
     let overflow_bytes = build_raw_safetensors_bytes(&overflow_header, &[0_u8; 16]);
     assert!(matches!(
@@ -105,9 +105,9 @@ fn safetensors_validation_rejects_shape_and_offset_length_mismatch() {
 /// Duplicate tensor names in the raw JSON header are deterministically rejected with `InvalidHyperparameter`.
 #[test]
 fn safetensors_validation_rejects_duplicate_tensor_names_in_header() {
-    let meta = valid_metadata_fragment();
+    let metadata = valid_metadata_fragment();
     let duplicate_header = format!(
-        r#"{{{meta},"w":{{"dtype":"F64","shape":[1],"data_offsets":[0,8]}},"w":{{"dtype":"F64","shape":[1],"data_offsets":[8,16]}}}}"#
+        r#"{{{metadata},"w":{{"dtype":"F64","shape":[1],"data_offsets":[0,8]}},"w":{{"dtype":"F64","shape":[1],"data_offsets":[8,16]}}}}"#
     );
     let duplicate_bytes = build_raw_safetensors_bytes(&duplicate_header, &[0_u8; 16]);
     assert!(matches!(
@@ -122,9 +122,9 @@ fn safetensors_validation_rejects_duplicate_tensor_names_in_header() {
 /// Unsupported Safetensors dtypes (`F16`) and mismatched model scalars (`F32` read as `f64`) are rejected.
 #[test]
 fn safetensors_validation_rejects_unsupported_and_mismatched_dtypes() {
-    let meta = valid_metadata_fragment();
+    let metadata = valid_metadata_fragment();
     let f16_header =
-        format!(r#"{{{meta},"w":{{"dtype":"F16","shape":[2],"data_offsets":[0,4]}}}}"#);
+        format!(r#"{{{metadata},"w":{{"dtype":"F16","shape":[2],"data_offsets":[0,4]}}}}"#);
     let f16_bytes = build_raw_safetensors_bytes(&f16_header, &[0_u8; 4]);
     assert!(matches!(
         sk_read_model_state_safetensors::<f64>(&f16_bytes),
@@ -134,10 +134,10 @@ fn safetensors_validation_rejects_unsupported_and_mismatched_dtypes() {
         })
     ));
 
-    let single_meta =
+    let single_metadata =
         SKModelMetadata::new("SKLinearRegression", 1, SKTensorDataType::F32, 2).unwrap();
     let single_weights = SKTensor::floating("w", vec![2], vec![1.0_f32, 2.0_f32]).unwrap();
-    let single_state = SKModelState::new(single_meta, vec![single_weights]).unwrap();
+    let single_state = SKModelState::new(single_metadata, vec![single_weights]).unwrap();
     let single_bytes = sk_write_model_state_safetensors(&single_state).unwrap();
 
     assert!(matches!(

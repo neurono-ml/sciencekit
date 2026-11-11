@@ -6,6 +6,7 @@ use std::path::Path;
 
 use sciencekit_common::{SKError, SKFloat, SKModelMetadata, SKModelState, SKTensor};
 
+use super::compression::{SKSafetensorsCompression, compress_safetensors_bytes};
 use super::header::{
     SK_SAFETENSORS_FORMAT_VERSION, decode_metadata_header, encode_metadata_header,
 };
@@ -40,19 +41,31 @@ pub(crate) fn append_to_existing_shard_set<F: SKFloat>(
     base_path: &Path,
     index_path: &Path,
     new_tensors: &[SKTensor<F>],
-    extension: &str,
+    configured_compression: SKSafetensorsCompression,
     validate_additions: impl FnOnce(&[SKTensor<F>], &BTreeSet<String>) -> Result<(), SKError>,
-    encode_shard: impl Fn(&[u8]) -> Result<Vec<u8>, SKError>,
 ) -> Result<SKAppendOutcome, SKError> {
     let mut index = sk_read_safetensors_shard_index(index_path)?;
     let metadata: SKModelMetadata = decode_metadata_header::<F>(&index.metadata)?;
     let existing_names: BTreeSet<String> = index.tensor_to_shard.keys().cloned().collect();
     validate_additions(new_tensors, &existing_names)?;
 
-    let shard_file = next_available_shard_name(base_path, &index.shards, extension);
+    let effective_compression = match configured_compression {
+        SKSafetensorsCompression::None => index
+            .shards
+            .last()
+            .and_then(|name| SKSafetensorsCompression::from_path(Path::new(name)))
+            .or_else(|| SKSafetensorsCompression::from_path(base_path))
+            .unwrap_or_default(),
+        explicit => explicit,
+    };
+    let shard_file = next_available_shard_name(
+        base_path,
+        &index.shards,
+        effective_compression.file_extension(),
+    );
     let shard_state = SKModelState::new(metadata, new_tensors.to_vec())?;
     let raw_shard = encode_single_file_bytes(&shard_state)?;
-    let encoded = encode_shard(&raw_shard)?;
+    let encoded = compress_safetensors_bytes(&raw_shard, effective_compression)?;
     let parent = index_path.parent().unwrap_or_else(|| Path::new("."));
     fs::write(parent.join(&shard_file), encoded)?;
 
@@ -114,7 +127,12 @@ pub(crate) fn write_sharded_state_to_path<F: SKFloat>(
         shards,
         tensor_to_shard,
     };
-    write_shard_index_atomic(&sk_safetensors_index_path(base_path), &index)
+    let index_path = sk_safetensors_index_path(base_path);
+    write_shard_index_atomic(&index_path, &index)?;
+    if base_path != index_path && base_path.exists() {
+        fs::remove_file(base_path)?;
+    }
+    Ok(())
 }
 
 /// Read every shard listed in `index_path` and merge them into one [`SKModelState`].
@@ -132,8 +150,8 @@ pub(crate) fn read_sharded_state_from_index<F: SKFloat>(
         let shard_path = parent.join(shard_name);
         let raw_bytes = fs::read(&shard_path)?;
         let uncompressed = decode_bytes(&shard_path, &raw_bytes)?;
-        let (shard_meta, shard_tensors) = decode_single_file_parts::<F>(&uncompressed)?;
-        if shard_meta != metadata {
+        let (shard_metadata, shard_tensors) = decode_single_file_parts::<F>(&uncompressed)?;
+        if shard_metadata != metadata {
             return Err(SKError::InvalidHyperparameter {
                 name: "shards",
                 reason: format!(
