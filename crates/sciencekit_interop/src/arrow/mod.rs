@@ -19,7 +19,12 @@ mod source;
 mod zero_copy;
 
 pub use data_type_mapping::sk_logical_type_from_arrow_data_type;
-pub use export::sk_export_dense_matrix;
+pub use export::{
+    SK_ARROW_NUMBER_OF_COLUMNS_METADATA_KEY, SK_ARROW_NUMBER_OF_ROWS_METADATA_KEY,
+    SKArrowBatchExport, SKArrowCsrExport, SKArrowExportedArray, SKArrowExportedRecordBatch,
+    sk_export_csr_matrix, sk_export_data_batch, sk_export_dense_matrix, sk_export_prediction,
+    sk_export_supervised_batch,
+};
 pub use ffi::{
     SKArrowFfiArray, SKArrowFfiStream, sk_export_array_to_ffi,
     sk_export_record_batch_reader_to_stream, sk_import_array_from_ffi, sk_import_stream,

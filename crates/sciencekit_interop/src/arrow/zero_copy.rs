@@ -27,6 +27,7 @@ pub enum SKArrowBorrowedColumn<'a> {
     Integer64(&'a [i64]),
 }
 
+#[allow(clippy::needless_lifetimes)]
 impl<'a> SKArrowBorrowedColumn<'a> {
     /// The number of rows in the borrowed column.
     pub fn number_of_rows(&self) -> usize {
@@ -68,9 +69,7 @@ impl<'a> SKArrowBorrowedColumn<'a> {
 /// Returns [`SKError::UnsupportedRepresentation`] when the column carries
 /// nulls, is not one of `Float32`/`Float64`/`Int64`, or cannot be downcast, so
 /// the caller materializes through the normal import path instead.
-pub fn sk_arrow_borrowed_column<'a>(
-    array: &'a dyn Array,
-) -> Result<SKArrowBorrowedColumn<'a>, SKError> {
+pub fn sk_arrow_borrowed_column(array: &dyn Array) -> Result<SKArrowBorrowedColumn<'_>, SKError> {
     if array.null_count() > 0 {
         return Err(SKError::UnsupportedRepresentation {
             representation: "arrow_nullable",

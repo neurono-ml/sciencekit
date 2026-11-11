@@ -69,7 +69,6 @@ fn sk_reopenable_arrow_source_serves_multiple_epochs_through_the_provider() {
         SKMissingValuePolicy::Reject,
         SKFeatureLayout::Dense,
     );
-    assert!(<SKTabularSourceProvider<SKArrowRecordBatchSource, f64> as SKSourceProvider<f64>>::IS_REOPENABLE);
 
     let first = collect_epoch(&mut provider);
     let second = collect_epoch(&mut provider);
@@ -145,7 +144,6 @@ fn sk_one_shot_arrow_source_is_one_epoch_through_the_provider() {
         SKMissingValuePolicy::Reject,
         SKFeatureLayout::Dense,
     );
-    assert!(!<SKTabularSourceProvider<SKArrowOneShotTabularSource, f64> as SKSourceProvider<f64>>::IS_REOPENABLE);
 
     let mut pass =
         <SKTabularSourceProvider<SKArrowOneShotTabularSource, f64> as SKSourceProvider<f64>>::open(

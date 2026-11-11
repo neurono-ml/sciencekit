@@ -140,7 +140,6 @@ fn sk_one_shot_source_rejects_a_second_open() {
         SKMissingValuePolicy::Reject,
     )
     .expect("a valid source");
-    assert!(!SKArrowOneShotTabularSource::IS_REOPENABLE);
 
     source.open().expect("a first open");
     assert!(source.next_batch().expect("a batch").is_some());

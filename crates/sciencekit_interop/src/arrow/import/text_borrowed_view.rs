@@ -14,6 +14,7 @@ pub struct SKArrowTextBorrowedView<'a> {
     values: Vec<Option<&'a str>>,
 }
 
+#[allow(clippy::needless_lifetimes)]
 impl<'a> SKArrowTextBorrowedView<'a> {
     /// The number of rows.
     pub fn number_of_rows(&self) -> usize {
@@ -35,9 +36,7 @@ impl<'a> SKArrowTextBorrowedView<'a> {
 ///
 /// # Errors
 /// Returns [`SKError::UnsupportedRepresentation`] for a non-text column.
-pub fn sk_text_borrowed_view<'a>(
-    array: &'a dyn Array,
-) -> Result<SKArrowTextBorrowedView<'a>, SKError> {
+pub fn sk_text_borrowed_view(array: &dyn Array) -> Result<SKArrowTextBorrowedView<'_>, SKError> {
     let values = match array.data_type() {
         DataType::Utf8 => array
             .as_any()
