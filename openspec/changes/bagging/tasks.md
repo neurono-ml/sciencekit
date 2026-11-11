@@ -29,7 +29,7 @@
 - [x] 3.1 Implement feature-subset routing for prediction and a test that an estimator
   fitted on features `[0, 2]` receives only those columns; verify with
   `cargo test -p sciencekit_ensemble bagging_routing`.
-- [ ] 3.2 Implement classifier probability averaging and label prediction with canonical
+- [x] 3.2 Implement classifier probability averaging and label prediction with canonical
   tie-breaking; verify a hand-computed ensemble; verify with
   `cargo test -p sciencekit_ensemble bagging_classifier`.
 - [ ] 3.3 Implement regressor response averaging; verify a hand-computed ensemble; verify
