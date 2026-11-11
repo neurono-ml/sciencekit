@@ -28,6 +28,7 @@ pub mod arrow;
 pub mod batch;
 pub mod bridge;
 pub mod columns;
+pub mod json;
 pub mod missing;
 pub mod observability;
 pub mod schema;
