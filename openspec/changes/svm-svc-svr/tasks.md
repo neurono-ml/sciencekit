@@ -57,7 +57,7 @@
 - [x] 3.2 Implement binary `SKSVC::fit` producing a model with support vectors, dual
   coefficients and bias, and verify the separable and overlapping fixtures; verify with
   `cargo test -p sciencekit_svm svc_fit`.
-- [ ] 3.3 Implement one-vs-one multiclass fitting with pairwise classifiers and
+- [x] 3.3 Implement one-vs-one multiclass fitting with pairwise classifiers and
   deterministic pair ordering; verify a three-class problem produces three binary models
   and each pair uses only its two classes; verify with `cargo test -p sciencekit_svm svc`.
 - [ ] 3.4 Implement `predict_labels` by vote with smallest-index tie-breaking, and verify
