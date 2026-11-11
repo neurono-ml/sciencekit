@@ -11,7 +11,7 @@
 
 - [x] 2.1 Implement reading back into `SKModelState` and a round-trip test; verify with
   `cargo test -p sciencekit_interop json_round_trip`.
-- [ ] 2.2 Add malformed JSON, unknown major version, duplicate name, dtype and shape
+- [x] 2.2 Add malformed JSON, unknown major version, duplicate name, dtype and shape
   mismatch tests; verify with `cargo test -p sciencekit_interop json_validation`.
 - [ ] 2.3 Add pretty-vs-compact equivalence, large-tensor and concurrent-read tests; verify
   with `cargo test -p sciencekit_interop json_concurrency`.
