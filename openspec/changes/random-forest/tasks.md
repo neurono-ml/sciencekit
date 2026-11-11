@@ -27,7 +27,7 @@
 
 ## 3. OOB, importances and representation
 
-- [ ] 3.1 Implement OOB scoring (accuracy / R²) over rows excluded from each tree's
+- [x] 3.1 Implement OOB scoring (accuracy / R²) over rows excluded from each tree's
   bootstrap, with tests for a fully covered OOB row, no scored rows and the disabled
   case; verify with `cargo test -p sciencekit_ensemble forest_oob`.
 - [ ] 3.2 Implement mean forest feature importances with normalization and a test on a
