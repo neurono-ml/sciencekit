@@ -32,6 +32,8 @@ mod bagging_error_tests;
 #[cfg(test)]
 mod bagging_fit_tests;
 #[cfg(test)]
+mod bagging_regressor_tests;
+#[cfg(test)]
 mod bagging_routing_tests;
 #[cfg(test)]
 mod bagging_sampling_tests;

@@ -5,6 +5,7 @@
 
 mod classifier_predict;
 mod classifier_routing;
+mod regressor_predict;
 mod regressor_routing;
 
 #[allow(unused_imports)]
