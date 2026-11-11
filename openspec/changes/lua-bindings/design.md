@@ -4,7 +4,8 @@
 
 See `proposal.md` — Why. `ffi-core` provides the stable C ABI; `mlua 0.10` (MSRV 1.79)
 provides safe Lua userdata and module loading. Lua tables are not a zero-copy numeric
-buffer, so conversion copies are explicit and documented.
+buffer, so conversion copies are explicit and documented. The Lua crate lives in its own
+repository (`neurono-ml/sciencekit-lua`), outside this Cargo workspace.
 
 ## Goals / Non-Goals
 
@@ -43,13 +44,19 @@ test command. Tests use `busted` or a plain Lua script.
 
 ### Decision 5 — File layout
 
+The Lua crate lives in its own repository, `neurono-ml/sciencekit-lua`, as a standalone
+Cargo project (its own `[workspace]`) at the repository root:
+
 ```
-crates/sciencekit_lua/
+sciencekit-lua/
   Cargo.toml
   sciencekit-*.rockspec
   src/{lib.rs, userdata.rs, convert.rs, error.rs}
   tests/*.lua
 ```
+
+The crate depends on `sciencekit_ffi` through a git dependency on the main repository, so
+it is built and released independently of this workspace.
 
 ## Risks / Trade-offs
 
@@ -60,7 +67,7 @@ crates/sciencekit_lua/
 
 ## Migration Plan
 
-Additive: new crate and Lua package. No existing API changes.
+Additive: new crate and Lua package in their own repository. No existing API changes.
 
 ## Open Questions
 

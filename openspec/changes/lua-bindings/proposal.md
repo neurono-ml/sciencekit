@@ -32,7 +32,9 @@ None.
 
 ## Impact
 
-- **Code:** new `crates/sciencekit_lua` workspace member plus Lua package files.
+- **Code:** new `sciencekit_lua` crate in its own repository
+  (`neurono-ml/sciencekit-lua`), a standalone Cargo project that depends on
+  `sciencekit_ffi` through a git dependency, plus Lua package files.
 - **APIs:** additive Lua module.
 - **Dependencies:** `mlua 0.10` with Lua 5.4; optional.
 - **Downstream:** exposes the library to Lua tooling.

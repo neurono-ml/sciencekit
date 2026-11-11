@@ -10,7 +10,8 @@ repository = "https://github.com/neurono-ml/sciencekit"
 [lib]
 name = "sciencekit_ffi"
 # `rlib` exposes the same entry points to in-process bindings (the Lua module
-# calls them directly instead of re-declaring the C ABI).
+# in `neurono-ml/sciencekit-lua` calls them directly instead of re-declaring
+# the C ABI).
 crate-type = ["cdylib", "staticlib", "rlib"]
 
 [dependencies]

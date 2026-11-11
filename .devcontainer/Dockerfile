@@ -7,6 +7,11 @@
 # so no system interpreter is required at runtime), and the OpenCL headers for
 # the GPU backend.
 #
+# The Go and Lua toolchains also serve the extracted language bindings, which
+# live in their own repositories (`neurono-ml/sciencekit-go` and
+# `neurono-ml/sciencekit-lua`) and consume the `sciencekit_ffi` C ABI built
+# here.
+#
 # ROCm is *not* installed here: it needs a kernel driver and a device that only
 # the GPU node provides. Run the GPU lane on that node with
 # `rocm/dev-ubuntu-22.04` (see docs/src/contribute.md) and pass the device
