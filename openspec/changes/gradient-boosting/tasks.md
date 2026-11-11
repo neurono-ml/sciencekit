@@ -39,7 +39,7 @@
 - [x] 4.1 Implement `SKGradientBoostingClassifierBuilder` with the documented defaults and
   invalid-value tests; verify with
   `cargo test -p sciencekit_ensemble gb_classifier_builder`.
-- [ ] 4.2 Implement binary fit and probability/label prediction; verify a hand-computed
+- [x] 4.2 Implement binary fit and probability/label prediction; verify a hand-computed
   score and a separable fixture; verify with
   `cargo test -p sciencekit_ensemble gb_classifier`.
 - [ ] 4.3 Implement multiclass fit (one tree per class per stage), softmax probabilities
