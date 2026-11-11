@@ -16,7 +16,7 @@
 - [x] 2.2 Implement the randomized solver using `sk_randomized_svd`, with full-vs-randomized
   agreement and reproducibility tests; verify with
   `cargo test -p sciencekit_decomposition pca_randomized`.
-- [ ] 2.3 Implement the covariance-eigh solver with sorting and full-SVD agreement tests;
+- [x] 2.3 Implement the covariance-eigh solver with sorting and full-SVD agreement tests;
   verify with `cargo test -p sciencekit_decomposition pca_covariance`.
 - [ ] 2.4 Implement the `Auto` resolution and expose the resolved solver, with the small/
   large/covariance branches tested; verify with
