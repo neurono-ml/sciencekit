@@ -1,8 +1,8 @@
 //! The result container of the randomized singular-value decomposition and the
 //! deterministic sign convention applied to its singular vectors.
 
-use ndarray::Array2;
-use sciencekit_common::SKFloat;
+use ndarray::{Array2, ArrayView2};
+use sciencekit_common::{SKError, SKFloat};
 
 /// The truncated singular-value decomposition produced by the randomized kernel.
 ///
@@ -23,6 +23,41 @@ impl<F: SKFloat> SKRandomizedSvdResult<F> {
     /// The number of retained components.
     pub fn number_of_components(&self) -> usize {
         self.singular_values.len()
+    }
+
+    /// The relative Frobenius error of the truncated approximation against a
+    /// reference matrix.
+    ///
+    /// The metric is `‖X − U Σ Vᵀ‖_F / ‖X‖_F`; a zero reference reports a
+    /// zero error. A reference whose shape differs from the factorized matrix
+    /// is rejected with a shape mismatch.
+    pub fn relative_frobenius_error(
+        &self,
+        reference: &ArrayView2<'_, F>,
+    ) -> Result<F, SKError> {
+        let (rows, columns) = reference.dim();
+        if rows != self.u.nrows() || columns != self.v.nrows() {
+            return Err(SKError::shape_mismatch_2d(
+                self.u.nrows(),
+                self.v.nrows(),
+                rows,
+                columns,
+            ));
+        }
+        let reconstruction = self.reconstruct();
+        let mut numerator = F::zero();
+        let mut denominator = F::zero();
+        for row in 0..rows {
+            for column in 0..columns {
+                let difference = reference[(row, column)] - reconstruction[(row, column)];
+                numerator = numerator + difference * difference;
+                denominator = denominator + reference[(row, column)] * reference[(row, column)];
+            }
+        }
+        if denominator <= F::zero() {
+            return Ok(F::zero());
+        }
+        Ok(numerator.sqrt() / denominator.sqrt())
     }
 
     /// Reconstructs the rank-`k` approximation `U Σ Vᵀ`.

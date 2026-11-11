@@ -22,6 +22,8 @@ pub use randomized::{SKRandomizedSvdBuilder, sk_randomized_svd};
 pub use result::SKRandomizedSvdResult;
 
 #[cfg(test)]
+mod acceptance_tests;
+#[cfg(test)]
 mod centered_tests;
 #[cfg(test)]
 mod concurrency_tests;
