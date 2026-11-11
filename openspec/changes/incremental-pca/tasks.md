@@ -32,7 +32,7 @@
 - [x] 3.1 Add validation tests for empty batches, component count, batch-size restriction,
   feature-count mismatch and non-finite values; verify with
   `cargo test -p sciencekit_decomposition incremental_validation`.
-- [ ] 3.2 Add repeated-fit determinism, batch-size invariance, concurrent transform and
+- [x] 3.2 Add repeated-fit determinism, batch-size invariance, concurrent transform and
   `Send + Sync` tests; verify with
   `cargo test -p sciencekit_decomposition incremental_concurrency`.
 
