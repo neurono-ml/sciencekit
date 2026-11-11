@@ -97,7 +97,6 @@ pub(super) fn sk_fit_graph<F: SKFloat>(
 
 /// Transform `input_block` through every fitted non-final node in
 /// `topological_order` and return the block entering `final_node`.
-#[allow(dead_code)]
 pub(super) fn sk_transform_graph<F: SKFloat>(
     graph: &DiGraph<GraphNodePayload<F>, usize>,
     topological_order: &[SKNodeIdentifier],

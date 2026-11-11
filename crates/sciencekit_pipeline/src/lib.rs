@@ -57,7 +57,8 @@ pub use feature_union::{
 };
 pub use graph::{
     SKBoxedFinalModel, SKNodeBlockStore, SKNodeIdentifier, SKPipelineGraph, SKPipelineGraphBuilder,
-    SKPipelineGraphModel, SKPipelineGraphNodeError, SKPipelineGraphNodeKind,
+    SKPipelineGraphClassifier, SKPipelineGraphModel, SKPipelineGraphNodeError,
+    SKPipelineGraphNodeKind, SKPipelineGraphRegressor,
 };
 pub use pipeline::{
     SKPipeline, SKPipelineBuilder, SKPipelineClassifier, SKPipelineClassifierBuilder,

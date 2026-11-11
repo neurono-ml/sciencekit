@@ -47,7 +47,6 @@ impl<F: SKFloat> SKBoxedFinalModel<F> {
         matches!(self.predictor, FinalPredictorKind::Regressor(_))
     }
 
-    #[allow(dead_code)]
     pub(super) fn predict_labels(&self, block: &SKFeatureBlock<F>) -> Result<Array1<i64>, SKError> {
         match &self.predictor {
             FinalPredictorKind::Classifier(classifier) => classifier.predict_labels_block(block),
@@ -58,7 +57,6 @@ impl<F: SKFloat> SKBoxedFinalModel<F> {
         }
     }
 
-    #[allow(dead_code)]
     pub(super) fn predict_probabilities(
         &self,
         block: &SKFeatureBlock<F>,
@@ -74,7 +72,6 @@ impl<F: SKFloat> SKBoxedFinalModel<F> {
         }
     }
 
-    #[allow(dead_code)]
     pub(super) fn predict(&self, block: &SKFeatureBlock<F>) -> Result<Array1<F>, SKError> {
         match &self.predictor {
             FinalPredictorKind::Regressor(regressor) => regressor.predict_block(block),

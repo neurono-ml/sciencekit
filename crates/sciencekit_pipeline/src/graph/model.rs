@@ -25,9 +25,7 @@ pub struct SKPipelineGraphModel<F: SKFloat> {
     pub(super) graph: Arc<DiGraph<GraphNodePayload<F>, usize>>,
     pub(super) topological_order: Vec<SKNodeIdentifier>,
     pub(super) final_node: SKNodeIdentifier,
-    #[allow(dead_code)]
     pub(super) fitted_stages: BTreeMap<SKNodeIdentifier, SKBoxedFittedStage>,
-    #[allow(dead_code)]
     pub(super) incoming_widths: BTreeMap<SKNodeIdentifier, Vec<usize>>,
     pub(super) fitted_node_blocks: SKNodeBlockStore<F>,
     pub(super) final_model: SKBoxedFinalModel<F>,
