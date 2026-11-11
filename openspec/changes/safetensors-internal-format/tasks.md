@@ -15,7 +15,7 @@
 
 - [x] 2.1 Implement `SKShardPlan`, shard writing and the index reader, with a
   large-state round-trip; verify with `cargo test -p sciencekit_interop safetensors_shards`.
-- [ ] 2.2 Implement header padding, in-place append and the overflow-to-new-shard path;
+- [x] 2.2 Implement header padding, in-place append and the overflow-to-new-shard path;
   verify with `cargo test -p sciencekit_interop safetensors_padding`.
 - [ ] 2.3 Add missing-shard, duplicate-shard and future-version tests; verify with
   `cargo test -p sciencekit_interop safetensors_shards`.
