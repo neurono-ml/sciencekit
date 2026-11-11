@@ -24,7 +24,7 @@
   `cargo test -p sciencekit_model_selection halving_builder`.
 - [x] 3.2 Implement refit, best-model accessors and classifier/regressor prediction
   delegation; verify with `cargo test -p sciencekit_model_selection halving_refit`.
-- [ ] 3.3 Add prediction-without-refit, dense/sparse and concurrency tests; verify with
+- [x] 3.3 Add prediction-without-refit, dense/sparse and concurrency tests; verify with
   `cargo test -p sciencekit_model_selection halving_concurrency`.
 
 ## 4. Acceptance and review
