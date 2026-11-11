@@ -1,43 +1,42 @@
 ## Why
 
-Julia's scientific stack is built around the Tables.jl ecosystem: `DataFrames.jl`, `Arrow.jl`,
-`CSV.jl`, `TypedTables.jl`, `JuliaDB.jl`, and many others all implement the same column-access
-interface. A sciencekit Julia binding should accept **any Tables.jl source** plus native
-`AbstractMatrix` and `SparseMatrixCSC` values, instead of supporting each package individually.
-
-Julia also has `CategoricalArray` and `Union{T, Missing}` columns, which need the same missing-value
-and label semantics as the Rust and Python paths.
+Julia's scientific stack is built around column-accessible tables (`NamedTuple` columns,
+`DataFrames.jl`, `Arrow.jl`, `CSV.File`, `TypedTables.Table`) and column-major dense arrays
+(`Matrix{Float64}`, `Matrix{Float32}`). Following ADR #285 and ADR #306, non-Rust language
+bindings live in dedicated repositories under `neurono-ml` and call the shared `sciencekit_ffi`
+C ABI rather than introducing a second toolchain or a language-specific ABI crate into the main
+`neurono-ml/sciencekit` Cargo workspace.
 
 ## What Changes
 
-- **New Julia package `ScienceKit.jl`** and the Rust cdylib it calls through a C ABI.
-- **Tables.jl ingestion**: any source implementing `Tables.istable` is accepted by calling
-  `Tables.columns`, reading column names and types, and converting to the neutral tabular batch;
-  this covers `DataFrames.jl`, `Arrow.Table`, `CSV.File`, `TypedTables.Table`, and `JuliaDB`.
-- **Native arrays**: `AbstractMatrix{<:Real}` is accepted, with `Matrix{Float32}`/`Matrix{Float64}`
-  borrowed zero-copy when column-major layout permits a row view (Julia is column-major, so a
-  row-major sciencekit view requires a transpose or a copy; the binding documents and reports this).
-- **Sparse arrays**: `SparseMatrixCSC` is converted to CSR explicitly or exposed through a CSR view
-  by transposing index arrays; stored zeros are preserved.
-- **Categorical arrays**: `CategoricalArray`/`CategoricalVector` map to the label table and
-  category codes; `missing` maps to the missing-value policy.
-- **Arrow C Data Interface**: `Arrow.Table` and `Arrow.Stream` are transferred through the C stream
-  when the Julia Arrow version supports it; otherwise through Arrow IPC bytes, with a documented
-  fallback and no silent full-table copies.
-- **Return values**: results return as Julia `Matrix`, `SparseMatrixCSC`, `Vector`, `DataFrame`, or
-  any Tables.jl table, selectable by the caller.
-- **Errors**: structured Julia exceptions (`ArgumentError`, `DimensionMismatch`, `KeyError`) with
-  the column name and a suggested conversion.
-- **Tests**: Tables.jl sources, matrices, sparse, categorical/missing, large and small data,
-  threading through `Threads.@threads`, `f32`/`f64`.
+- **External Julia package `ScienceKit.jl` in [`neurono-ml/sciencekit-jl`](https://github.com/neurono-ml/sciencekit-jl)**
+  calling the shared `crates/sciencekit_ffi` C ABI (`1.x`) via `Libdl` and `ccall`. No Julia
+  code is stored in `neurono-ml/sciencekit`.
+- **Vendored C ABI header + native build script**: `include/sciencekit.h` is synced from
+  `crates/sciencekit_ffi/include/sciencekit.h` (`scripts/sync-header.sh --check` in CI) and
+  `scripts/build-native-library.sh` builds `libsciencekit_ffi` from a `neurono-ml/sciencekit`
+  checkout.
+- **Dense matrices and vectors**: `AbstractMatrix{Float64}`/`AbstractMatrix{Float32}` and
+  `AbstractVector{Float64}`/`AbstractVector{Float32}` are validated and converted for the
+  row-major ABI with explicit `ConversionReport` layout reporting (`:borrowed_contiguous` for
+  1-row, 1-column, and `transpose(::Matrix)` inputs; `:transposed_copy` for general
+  column-major matrices) under `GC.@preserve`.
+- **Columnar table ingestion**: `extract_table` and `fit_table` accept any column-accessible
+  table (`NamedTuple` columns, `Vector{<:NamedTuple}`, `Dict`, `DataFrame`, `CSV.File`,
+  `TypedTables.Table`) with `:reject`, `:nan`, and `:fill => value` missingness policies.
+- **Handle lifecycle and structured errors**: `Builder` and `Model` wrap opaque handles with a
+  non-yielding `Threads.SpinLock` lease counter, idempotent `close!`, GC finalizers, `save`/`load`
+  persistence, and `ScienceKitError(status, code, message)`.
+- **Documentation site**: English mdBook on branch `docs/documentations` published to
+  <https://neurono-ml.github.io/sciencekit-jl/> with generated `sitemap.xml`.
 
 ## Capabilities
 
 ### New Capabilities
 
-- `julia-dataset-interop`: Julia table and array representations (Tables.jl, DataFrames, Arrow.jl,
-  matrices, sparse, categorical) as sciencekit inputs and outputs, with layout-aware zero-copy and
-  missing-value semantics.
+- `julia-dataset-interop`: Julia package, dense array and columnar table conversions, layout
+  reporting, handle lifecycle, persistence, and structured error mapping in
+  `neurono-ml/sciencekit-jl` over `sciencekit_ffi`.
 
 ### Modified Capabilities
 
@@ -45,12 +44,11 @@ and label semantics as the Rust and Python paths.
 
 ## Impact
 
-- **New code:** `julia/ScienceKit.jl` package (Project.toml, src, test) and
-  `crates/sciencekit_julia_abi` (C ABI cdylib) or an extension of the existing bridge crate.
-- **Dependencies (Julia):** `Tables`, `DataFrames`, `Arrow`, `SparseArrays`, `CategoricalArrays`;
-  test-only `CSV`, `TypedTables`.
-- **Dependencies (Rust):** `sciencekit_interop` with `arrow`; the C ABI uses Arrow C Data Interface.
-- **Sequencing:** depends on `interop-foundation`, `arrow-interop`, and the binding ABI. The PRD
-  currently lists only Python bindings; this change also updates the PRD's binding roadmap.
-- **Acceptance (PRD §8.7/§10.3):** every representation fits the same estimator with equal results;
-  large and small data; threaded calls; `f32`/`f64`; model export and metrics unaffected.
+- **Code location:** External repository `neurono-ml/sciencekit-jl` (`Project.toml`, `src/`,
+  `test/`, `include/sciencekit.h`, `scripts/`, `docs/`, `.github/workflows/`); zero Rust
+  workspace changes in `neurono-ml/sciencekit`.
+- **Dependencies (Julia):** `Libdl` (stdlib); `Test` (stdlib, test-only).
+- **Dependencies (Rust):** Existing `crates/sciencekit_ffi` (`cdylib`) in `neurono-ml/sciencekit`.
+- **Acceptance (PRD §8.7/§10.3):** Verified in `sciencekit-devcontainer:latest` (Julia 1.10.5)
+  and GitHub Actions CI across small and large fixtures, `Float32`/`Float64`, concurrent
+  `Threads.@spawn` tasks, persistence round-trip, and repeated-failure leak checks.

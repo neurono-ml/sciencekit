@@ -2,104 +2,67 @@
 
 ## Context
 
-See `proposal.md` — Why. Rust and Julia can meet in two ways: embed Julia (`jlrs`) or call a Rust
-cdylib from Julia through a C ABI. Binding users want a normal Julia package, so this design uses a
-**C ABI cdylib** called from `ScienceKit.jl`; Julia owns the process and Rust is a library.
+See `proposal.md` — Why, ADR #285, and ADR #306. Keeping `ScienceKit.jl` in its own repository
+(`neurono-ml/sciencekit-jl`) preserves `neurono-ml/sciencekit` as a pure Rust Cargo workspace
+while letting Julia users consume a standard `Project.toml` package over the shared
+`crates/sciencekit_ffi` C ABI.
 
-Julia tables implement Tables.jl (`Tables.istable`, `Tables.columns`, `Tables.columnnames`,
-`Tables.getcolumn`). Julia matrices are column-major. `SparseMatrixCSC` stores column pointers,
-row indices, and values. `CategoricalArray` stores levels plus integer references; `missing` is a
-value of the element type (`Union{T, Missing}`).
-
-The Arrow C Data Interface (`ArrowArrayStream`) is the shared zero-copy ABI; `Arrow.jl` support for
-it is still maturing, so the design includes an Arrow IPC fallback.
+Julia matrices are column-major, whereas `SKFfiArray` descriptors in `sciencekit_ffi` require
+row-major layout. Julia also forbids task switches (`ReentrantLock`) inside garbage-collector
+finalizers, while multi-threaded callers may invoke `predict` concurrently or race with `close!`.
 
 ## Goals / Non-Goals
 
 **Goals**
 
-- One Tables.jl path, no per-package adapters.
-- Layout-honest conversions: report transpose/copy rather than pretending.
-- Categorical and missing semantics shared with Rust and Python.
-- Bounded memory for large Arrow tables.
+- External repository `neurono-ml/sciencekit-jl` with zero non-stdlib runtime dependencies (`Libdl` only).
+- Layout-honest conversions (`ConversionReport`) and `GC.@preserve` safety across every `ccall`.
+- Column-accessible table ingestion (`extract_table`, `fit_table`) with `:reject`, `:nan`, and `:fill => value` policies.
+- Deterministic `close!` + GC-safe finalizers with zero use-after-free and zero handle leaks.
+- Dedicated English mdBook documentation site on GitHub Pages (`https://neurono-ml.github.io/sciencekit-jl/`).
 
 **Non-Goals**
 
-- No Julia package for every algorithm in this change; it adds the dataset surface to the binding.
-- No automatic conversion of nested columns or arbitrary Julia structs.
-- No Julia-side model training; Rust owns computation.
-- No `jlrs` embedding; the C ABI keeps the dependency surface small.
-- No zero-copy for column-major → row-major without a transpose, which is a copy.
+- No Julia code or separate `sciencekit_julia_abi` crate in `neurono-ml/sciencekit`.
+- No `jlrs` embedding.
+- Sparse CSC↔CSR and Arrow C Data Interface streaming entry points are deferred until `sciencekit_ffi` exposes sparse and Arrow stream descriptors on the shared C ABI.
 
 ## Decisions
 
-### C ABI over Arrow C Data Interface
+### Decision 1 — External repository + vendored C header + `Libdl` discovery
 
-The cdylib exposes `sk_julia_*` functions that accept an `ArrowArrayStream` plus a selection
-descriptor and return an `ArrowArrayStream` of results. `ScienceKit.jl` builds the input stream from
-Tables.jl data using `Arrow.jl` or a small Julia-side Arrow writer when the C interface is
-unavailable. Strings and error messages cross as C strings.
+`neurono-ml/sciencekit-jl` vendors `include/sciencekit.h` (checked against `crates/sciencekit_ffi/include/sciencekit.h`
+in CI with `scripts/sync-header.sh --check`) and provides `scripts/build-native-library.sh` to
+compile `cargo build -p sciencekit_ffi --release` into `lib/`. At runtime, `ScienceKit.__init__()`
+discovers `libsciencekit_ffi` (`SCIENCEKIT_FFI_LIB`, `SCIENCEKIT_LIB_DIR`, `lib/`, system loader),
+caches function pointers with `Libdl.dlsym`, and checks `abi_version().major == 1`.
 
-Alternative: `jlrs` embedding from Rust. Rejected because it inverts ownership and makes packaging
-harder for Julia users.
+### Decision 2 — Non-yielding `Threads.SpinLock` lease lifecycle
 
-### Tables.jl → Arrow columns
+`Builder` and `Model` wrap opaque `Ptr{Cvoid}` handles guarded by a `Threads.SpinLock` and an
+`in_flight` lease counter:
+- Active `ccall` operations increment `in_flight` before reading the pointer and decrement it in `finally`.
+- `close!` is idempotent: if `in_flight == 0`, it frees the native handle immediately; if `in_flight > 0`, it marks `closed = true` and the last exiting operation frees the handle.
+- Because `SpinLock` never yields tasks, GC finalizers safely invoke the same close path without triggering Julia's finalizer task-switch error.
 
-`Tables.columns(table)` yields column objects. For each selected column, the Julia side builds an
-Arrow array: numeric columns directly, `Union{T,Missing}` with a validity bitmap, strings as
-`String`/dictionary, categoricals as dictionary with levels. This keeps the Rust path identical to
-the Arrow adapter.
+### Decision 3 — Layout-aware dense array and table conversion
 
-For matrices, Julia's column-major layout maps naturally to Arrow columns (each column is
-contiguous), so a `Matrix{Float64}` can be exported as `n` Arrow columns with zero copy per column.
-The Rust side then materializes row-major per batch, which is the documented copy for the dense
-view. For inference with a single feature, a column can be borrowed directly.
+- 1-row `Matrix{T}`, 1-column `Matrix{T}`, and `transpose(::Matrix{T})` wrappers whose parent has shape `(cols, rows)` are borrowed zero-copy (`:borrowed_contiguous`).
+- General multi-column column-major `AbstractMatrix{T}` inputs transpose into a row-major buffer via `permutedims` (`:transposed_copy`).
+- Native output descriptors (`SKFfiArray`) are copied into Julia `Vector{T}` or column-major `Matrix{T}` inside `try ... finally sk_ffi_array_free(...) end`.
+- `extract_table` reads column-accessible tables (`NamedTuple`, row vectors, `Dict`, `DataFrame`, `CSV.File`, `TypedTables.Table`) and enforces column selection and missingness policies.
 
-### Sparse conversion
+### Decision 4 — Structured `ScienceKitError`
 
-`SparseMatrixCSC` → Arrow struct columns (`indptr`, `indices`, `data`, shape) or a direct C ABI
-form. The Rust side builds `sprs::CsMat` in CSR by transposing: CSC of matrix A equals CSR of Aᵀ, so
-the adapter either transposes the logical matrix or builds CSR with row pointers derived from CSC
-column pointers after a transpose. The design states: the binding accepts CSC and converts to CSR
-explicitly, preserving stored zeros; for a transposed interpretation, rows and columns swap and the
-caller is told.
-
-### Missing and categorical
-
-`missing` → validity bitmap → neutral policy. `CategoricalArray` levels → Arrow dictionary →
-label table. The Julia binding returns predicted categories by indexing the levels, matching the
-Python behavior.
-
-### Result return
-
-Rust returns an `ArrowArrayStream`; Julia imports it with `Arrow.Table` and converts to `Matrix`,
-`Vector`, `DataFrame` (`DataFrame(arrow_table)`), or keeps the Arrow table. Sparse results return
-as CSC reconstructed from CSR (transpose again).
-
-### Threading
-
-The cdylib functions are stateless; each call owns its Rust state. Julia threads calling
-concurrently use independent handles. Rust's rayon pool is per-process; nested threading is
-bounded by the execution plan.
+`ScienceKitError <: Exception` carries `status::Status`, numeric `code::Int32`, and the copied
+thread-local `sk_ffi_last_error` `message::String`. Table lookup and shape mismatches raise
+`KeyError`, `DimensionMismatch`, or `ScienceKitError(STATUS_SHAPE | STATUS_INVALID_ARGUMENT, ...)`.
 
 ## Risks / Trade-offs
 
-- **Arrow.jl C Data Interface maturity** → Mitigation: version-gated feature detection and an IPC
-  fallback; tests run both paths when available.
-- **Column-major → row-major copy** → Mitigation: document and report; per-batch copies are
-  bounded by the streaming block size.
-- **CSC↔CSR transpose bugs** → Mitigation: property tests comparing against dense multiplication
-  and shape checks.
-- **C ABI error handling** → Mitigation: every function returns a status code and a message pointer;
-  no Rust panic crosses the boundary (`catch_unwind`).
-- **Julia GC moving data** → Mitigation: Julia arrays are not moved once allocated; the binding
-  keeps references alive for the call and copies anything that must outlive it.
+- **Native build prerequisite** → Mitigated by `scripts/build-native-library.sh`, `SCIENCEKIT_FFI_LIB`, and automated GitHub Actions CI building `sciencekit_ffi` from `neurono-ml/sciencekit`.
+- **Column-major → row-major copy** → Mitigated by zero-copy detection for `transpose(::Matrix)` and single-row/single-column matrices plus explicit reporting via `inspect_matrix_conversion`.
 
 ## Migration Plan
 
-New package and cdylib; additive. Documentation states supported Julia and Arrow.jl versions.
-
-## Open Questions
-
-- Whether to ship prebuilt cdylibs through Julia's artifact system in the first release. Deferred;
-  source builds with `cargo` are the initial path.
+Additive external repository (`neurono-ml/sciencekit-jl`) and documentation site; no breaking changes to `neurono-ml/sciencekit`.

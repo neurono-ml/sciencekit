@@ -2,122 +2,86 @@
 
 ## Purpose
 
-Defines which Julia table and array representations the sciencekit binding accepts and returns, how
-Tables.jl sources, matrices, sparse matrices, and categorical/missing columns are converted, and
-where zero-copy is possible given Julia's column-major layout.
+Defines the external `ScienceKit.jl` package (`neurono-ml/sciencekit-jl`) over the shared
+`sciencekit_ffi` C ABI: module initialization, dense matrix and columnar table conversions,
+layout reporting, estimator operations, model persistence, handle lifecycle, threading, and
+structured error mapping.
 
 ## ADDED Requirements
 
-### Requirement: Any Tables.jl source is accepted
+### Requirement: Package loads `sciencekit_ffi` and verifies ABI major version
 
-The binding SHALL accept any object implementing the Tables.jl interface by reading its columns,
-names, and element types, converting it to the neutral tabular batch, and applying feature/target
-selection by name.
+The Julia package in `neurono-ml/sciencekit-jl` SHALL load `libsciencekit_ffi` during
+`__init__()`, verify ABI major-version compatibility, and expose version and feature queries.
 
-#### Scenario: DataFrames.jl frame is accepted
-- **WHEN** a `DataFrame` with numeric and string columns is passed
-- **THEN** the binding sees the same names, rows, and values
-
-#### Scenario: CSV.File and TypedTables are accepted
-- **WHEN** a `CSV.File` or `TypedTables.Table` is passed
-- **THEN** it is accepted without a package-specific code path
+#### Scenario: Module initialization and version check
+- **WHEN** Julia executes `using ScienceKit` with `libsciencekit_ffi` available
+- **THEN** `abi_version().major == 1` and `features()` advertises the compiled estimator and precision flags
 
 ### Requirement: Native matrices are accepted with documented layout behavior
 
-The binding SHALL accept `AbstractMatrix{<:Real}` of `Float32` and `Float64`. Because Julia stores
-matrices column-major, the binding SHALL either transpose into a row-major owned block or expose a
-field-transposed view, and SHALL report which path was taken.
+The binding SHALL accept `AbstractMatrix` and `AbstractVector` of `Float32` and `Float64`,
+convert or borrow buffers safely under `GC.@preserve` for `sciencekit_ffi`'s row-major ABI,
+report the conversion path via `ConversionReport`, and reject unsupported dtypes or empty shapes.
 
-#### Scenario: Column-major matrix is accepted
-- **WHEN** a `Matrix{Float64}` is passed as features
-- **THEN** the values are interpreted as rows of samples and columns of features, and the conversion path is reported
+#### Scenario: Column-major matrix is accepted and reported
+- **WHEN** a multi-column `Matrix{Float64}` is passed as features
+- **THEN** rows map to samples, columns map to features, and `inspect_matrix_conversion` reports `:transposed_copy`
 
-#### Scenario: Wrong element type
-- **WHEN** a `Matrix{Int64}` is passed without an explicit cast
-- **THEN** the binding raises an `ArgumentError` suggesting a float conversion
+#### Scenario: Transposed matrix wrapper is borrowed zero-copy
+- **WHEN** `transpose(parent)` of a dense `(cols, rows)` `Matrix{Float64}` is passed
+- **THEN** `inspect_matrix_conversion` reports `:borrowed_contiguous` with `copied == false`
 
-### Requirement: Sparse matrices map to CSR
+#### Scenario: Wrong element type is rejected
+- **WHEN** a `Matrix{Int64}` is passed without an explicit float conversion
+- **THEN** the binding raises `ScienceKitError` with `STATUS_INVALID_ARGUMENT` suggesting `Float64.(x)` or `Float32.(x)`
 
-The binding SHALL accept `SparseMatrixCSC` and convert it to CSR by transposing index arrays,
-preserving stored zeros; it SHALL report the conversion and reject unsupported element types.
+### Requirement: Column-accessible tables and missing-value policies are supported
 
-#### Scenario: CSC to CSR preserves values
-- **WHEN** a `SparseMatrixCSC{Float64}` is passed
-- **THEN** the resulting CSR matrix has the same logical values and shape
+The binding SHALL extract numeric feature matrices and target vectors from column-accessible
+tables (`NamedTuple`, row tables, `Dict`, and property-exposing tables such as `DataFrame`,
+`CSV.File`, and `TypedTables.Table`) and apply `:reject`, `:nan`, or `:fill => value` policies
+to `missing` entries.
 
-#### Scenario: Stored zero is preserved
-- **WHEN** the sparse matrix stores an explicit zero
-- **THEN** the converted matrix keeps that entry
+#### Scenario: Named columns and ignored non-numeric columns
+- **WHEN** `extract_table` or `fit_table` is called with explicit `features` and `target` names on a table that also has string columns
+- **THEN** the selected numeric columns produce the expected `Matrix` and `Vector` values
 
-### Requirement: Missing and categorical values follow the shared policy
+#### Scenario: Missing value under reject policy
+- **WHEN** a selected column contains `missing` under `missing_policy=:reject`
+- **THEN** the call raises `ScienceKitError` with `STATUS_INVALID_ARGUMENT` naming the column
 
-The binding SHALL map `missing` in Tables.jl columns and matrices through the declared
-missing-value policy, and SHALL map `CategoricalArray`/`CategoricalVector` to category codes and a
-reversible label table.
+#### Scenario: Unknown column or uneven column lengths
+- **WHEN** an absent column name is requested or column lengths disagree
+- **THEN** the binding raises `KeyError` for unknown columns and `DimensionMismatch` for uneven lengths
 
-#### Scenario: missing under reject
-- **WHEN** a column contains `missing` under the reject policy
-- **THEN** the call raises an error naming the column
+### Requirement: Operations and persistence round-trip across the C ABI
 
-#### Scenario: Categorical target round-trips
-- **WHEN** a `CategoricalVector` target is used to fit a classifier
-- **THEN** predictions map back to the original category values
+Builders and fitted models SHALL expose `fit`, `fit_table`, `predict`, `transform`, `score`,
+`save`, and `load` for `Float64` and `Float32` configurations supported by `sciencekit_ffi`.
 
-### Requirement: Arrow.jl tables use the Arrow interchange
+#### Scenario: Linear regression fit, predict, score, and persistence round-trip
+- **WHEN** a `Float64` linear regression builder is fitted on a linear fixture, saved to disk, and reloaded via `load`
+- **THEN** `predict` returns `Vector{Float64}` matching targets, `score` returns `1.0`, and the reloaded model reproduces predictions after the original handles are closed
 
-The binding SHALL accept `Arrow.Table` and `Arrow.Stream` through the Arrow C Data Interface when
-the installed Arrow.jl supports it, and otherwise through Arrow IPC bytes, reporting which path was
-used and never silently materializing the whole table.
+#### Scenario: Standard scaler transform preserves matrix geometry
+- **WHEN** a `StandardScaler` builder is fitted and `transform` is called on a `(rows, cols)` matrix
+- **THEN** `transform` returns a column-major `Matrix` of shape `(rows, cols)` with centered, unit-variance columns
 
-#### Scenario: Arrow.Table is transferred without a full copy
-- **WHEN** an `Arrow.Table` over a large file is passed
-- **THEN** the binding consumes it batch by batch and resident memory stays bounded
+### Requirement: Lifecycle safety, structured errors, and concurrency
 
-#### Scenario: Fallback is reported
-- **WHEN** the installed Arrow.jl lacks C Data Interface support
-- **THEN** the binding uses the IPC fallback and reports it
+Handles SHALL release native resources deterministically via idempotent `close!` and GC
+finalizers without use-after-free or handle leaks, map ABI failures to `ScienceKitError(status, code, message)`,
+and support concurrent multi-threaded calls.
 
-### Requirement: Results return in the requested Julia representation
+#### Scenario: Idempotent close and closed-handle protection
+- **WHEN** `close!` is called multiple times on a `Builder` or `Model` and an operation is then invoked on it
+- **THEN** repeated `close!` calls succeed as no-ops and the subsequent operation raises `ScienceKitError` with `STATUS_INVALID_HANDLE`
 
-The binding SHALL return predictions and transforms as Julia vectors or matrices by default, and
-SHALL offer `DataFrame` and generic Tables.jl outputs; values SHALL round-trip without loss.
+#### Scenario: Repeated failures leak zero handles
+- **WHEN** invalid operations (`fit`, `predict`, `transform`, `score`, `load`, closed handles) fail repeatedly across hundreds of iterations
+- **THEN** `live_handle_count()` returns to its baseline with zero leaked handles
 
-#### Scenario: Default prediction type
-- **WHEN** `predict` is called with no format option
-- **THEN** the result is a `Vector{Float32}` or `Vector{Float64}`
-
-#### Scenario: DataFrame result
-- **WHEN** a DataFrame result is requested
-- **THEN** columns have the expected names and values
-
-### Requirement: Threaded calls are safe
-
-The binding SHALL be safe to call from multiple Julia threads on independent data, with no shared
-mutable conversion state.
-
-#### Scenario: Threaded fits
-- **WHEN** `Threads.@threads` runs two fits on separate matrices
-- **THEN** both produce correct independent models without races
-
-### Requirement: Errors are structured Julia exceptions
-
-Every conversion failure SHALL raise a Julia exception with the column or array name and a
-suggested conversion: `KeyError` for unknown columns, `DimensionMismatch` for shape errors, and
-`ArgumentError` for unsupported types.
-
-#### Scenario: Unknown column
-- **WHEN** a feature name absent from the table is requested
-- **THEN** the binding raises `KeyError` naming it
-
-#### Scenario: Shape mismatch
-- **WHEN** a target length differs from the feature row count
-- **THEN** the binding raises `DimensionMismatch`
-
-### Requirement: Both scalar precisions are supported
-
-Every Julia conversion SHALL support `Float32` and `Float64` models, casting explicitly when the
-element type differs and reporting the cast.
-
-#### Scenario: Float32 table with Float64 model
-- **WHEN** a `Float32` table is passed to an `f64` estimator
-- **THEN** values are promoted and the conversion reports a cast
+#### Scenario: Concurrent multi-threaded predictions and fits
+- **WHEN** multiple Julia tasks (`Threads.@spawn`) run `predict` on a shared `Model` and `fit` on independent `Builder` instances
+- **THEN** every task produces accurate results without data races or handle corruption

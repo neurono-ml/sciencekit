@@ -1,32 +1,31 @@
-## 1. ABI and package skeleton
+> **Implementation repository:** [`neurono-ml/sciencekit-jl`](https://github.com/neurono-ml/sciencekit-jl)
+> (documentation: <https://neurono-ml.github.io/sciencekit-jl/>, ADR: #306). Per ADR #285, no Julia
+> source files live in `neurono-ml/sciencekit`; the package consumes `crates/sciencekit_ffi` over the
+> stable C ABI.
 
-- [ ] 1.1 Create `crates/sciencekit_julia_abi` (cdylib) exposing status-code functions and Arrow C stream import/export; panic containment with `catch_unwind`.
-- [ ] 1.2 Create `julia/ScienceKit.jl` with `Project.toml`, module layout, and a minimal `fit`/`predict`/`transform` calling the ABI.
-- [ ] 1.3 TDD ABI error path: Rust errors cross as status + message and become Julia exceptions.
-- [ ] 1.4 TDD ABI ownership: input/output Arrow streams released exactly once; no leak under repeated calls.
+## 1. ABI consumption and package skeleton (`neurono-ml/sciencekit-jl`)
 
-## 2. Tables.jl ingestion
+- [x] 1.1 Vendor `include/sciencekit.h` from `crates/sciencekit_ffi/include/sciencekit.h` with `scripts/sync-header.sh` and `scripts/build-native-library.sh`.
+- [x] 1.2 Create `ScienceKit.jl` (`Project.toml`, `src/ScienceKit.jl`, `__init__()`, `Libdl` symbol resolution, ABI version check).
+- [x] 1.3 TDD ABI error path: status codes + thread-local `sk_ffi_last_error` map to `ScienceKitError(status, code, message)`.
+- [x] 1.4 TDD handle and output-array ownership: non-yielding `Threads.SpinLock` lease counter, idempotent `close!`, GC finalizers, `sk_ffi_array_free` in `finally`, and zero leaks across repeated failures.
 
-- [ ] 2.1 TDD a generic Tables.jl source: names, column types, values, selection by name.
-- [ ] 2.2 TDD DataFrames.jl source and CSV.File/TypedTables sources (test-only dependencies).
-- [ ] 2.3 TDD `Union{T,Missing}` columns under reject/NaN/fill policies.
-- [ ] 2.4 TDD string columns as nominal features/targets and as categorical dictionaries.
+## 2. Columnar table ingestion
 
-## 3. Native and sparse arrays
+- [x] 2.1 TDD `extract_table` and `fit_table` for column-accessible tables (`NamedTuple`, row tables, `Dict`, and property-exposing tables): column names, numeric conversion, and feature/target selection.
+- [x] 2.2 TDD `KeyError` on unknown columns and `DimensionMismatch` on uneven column lengths.
+- [x] 2.3 TDD `Union{T, Missing}` columns under `:reject`, `:nan`, and `:fill => value` policies.
 
-- [ ] 3.1 TDD `Matrix{Float32}`/`Matrix{Float64}`: row/column interpretation, conversion path reporting, transpose correctness.
-- [ ] 3.2 TDD wrong element type (`Matrix{Int}`) raises `ArgumentError`; explicit cast path works.
-- [ ] 3.3 TDD `SparseMatrixCSC` → CSR: shape, values, stored zeros; conversion reporting.
-- [ ] 3.4 TDD sparse fit/transform and CSC result reconstruction.
+## 3. Native dense arrays and estimator operations
 
-## 4. Categorical, Arrow, results, threading
+- [x] 3.1 TDD `Matrix{Float32}`/`Matrix{Float64}` and `SubArray`/`transpose` views: row/column layout semantics, `ConversionReport` (`:borrowed_contiguous` vs `:transposed_copy`), and `GC.@preserve`.
+- [x] 3.2 TDD wrong element type (`Matrix{Int64}`) raises `ScienceKitError(STATUS_INVALID_ARGUMENT, ...)` with float conversion hint; empty dimensions raise `STATUS_SHAPE`.
+- [x] 3.3 TDD `fit`, `predict`, `score` (`LinearRegression` in `Float64` and `Float32`), `transform` (`StandardScaler`), and `save`/`load` persistence round-trip.
 
-- [ ] 4.1 TDD `CategoricalVector`/`CategoricalArray` target: label table and prediction round-trip.
-- [ ] 4.2 TDD `Arrow.Table` through the C Data Interface when supported; assert bounded memory.
-- [ ] 4.3 TDD Arrow IPC fallback path and its reporting.
-- [ ] 4.4 TDD result formats: `Vector`, `Matrix`, `SparseMatrixCSC`, `DataFrame`, generic Tables.jl.
-- [ ] 4.5 TDD `Threads.@threads` concurrent fits on independent data.
-- [ ] 4.6 TDD `Float32`/`Float64` and large/small data across all representations.
-- [ ] 4.7 Run Rust CI gates plus `julia --project -e 'using Pkg; Pkg.test()'`.
-- [ ] 4.8 Add the Julia interop book chapter and the `Development Explained` chapter on the C ABI; register in `SUMMARY.md`; add Julia docs.
-- [ ] 4.9 Update the PRD binding roadmap and `CHANGELOG.md`; open the ADR issue for this change.
+## 4. Concurrency, CI, documentation, and bookkeeping
+
+- [x] 4.1 TDD concurrent `Threads.@spawn` predictions on a shared `Model` and concurrent fits on independent `Builder`s, plus `4_000 x 8` large-array verification.
+- [x] 4.2 Add GitHub Actions CI (`.github/workflows/ci.yml`) installing Julia 1.10.5 from the official tarball, building `sciencekit_ffi` from `neurono-ml/sciencekit`, checking header sync, and running `Pkg.test()`; verify in `sciencekit-devcontainer:latest`.
+- [x] 4.3 Publish the English mdBook documentation site on `docs/documentations` to GitHub Pages (`https://neurono-ml.github.io/sciencekit-jl/`) with `sitemap.xml` (`docs/scripts/postbuild.mjs`).
+- [x] 4.4 Create ADR issue #306 and record external repository status on `feat/dataset-interop-openspec` (PR #221).
+- [ ] 4.5 Follow-up (deferred until `sciencekit_ffi` adds sparse CSR and `ArrowArrayStream` C ABI entry points): native `SparseMatrixCSC` CSR bridge and zero-copy `Arrow.Table` C stream ingestion.
