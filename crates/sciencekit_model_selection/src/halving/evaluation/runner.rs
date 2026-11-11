@@ -1,4 +1,4 @@
-//! Successive-halving round evaluation over subsampled folds
+//! Successive-halving round loop over subsampled folds
 //! (spec `halving-grid-search`, requirements `Successive halving loop` and
 //! `Resource subsampling`).
 
@@ -8,13 +8,12 @@ use sciencekit_common::{SKDataView, SKError, SKFloat, SKSupervisedFit, SKTargetV
 use crate::SKSplitter;
 use crate::grid_search::SKErrorScore;
 use crate::grid_search::evaluation::{SKFoldScorer, sk_evaluate_candidates};
-use crate::grid_search::observation::sk_view_dimensions;
-use crate::split::validation::{sk_validate_finite_features, sk_validate_finite_targets};
+use crate::halving::scheduler::{sk_halving_resource_schedule, sk_surviving_candidate_count};
+use crate::halving::subsample::sk_gather_round_subsample;
+use crate::halving::trace::sk_build_round_trace;
+use crate::halving::{SKHalvingResource, SKHalvingRound};
 
-use super::scheduler::{sk_halving_resource_schedule, sk_surviving_candidate_count};
-use super::subsample::sk_gather_round_subsample;
-use super::trace::sk_build_round_trace;
-use super::{SKHalvingResource, SKHalvingRound};
+use super::validation::sk_validate_fit_inputs;
 
 /// Input bundle for executing a successive-halving search.
 pub(crate) struct SKHalvingEvaluationRequest<'s, 'd, F: SKFloat, E> {
@@ -26,7 +25,6 @@ pub(crate) struct SKHalvingEvaluationRequest<'s, 'd, F: SKFloat, E> {
     pub(crate) factor: usize,
     pub(crate) minimum_resource: usize,
     pub(crate) maximum_resource: Option<usize>,
-    #[allow(dead_code)]
     pub(crate) resource: SKHalvingResource,
     pub(crate) aggressive_elimination: bool,
     pub(crate) random_seed: u64,
@@ -34,7 +32,6 @@ pub(crate) struct SKHalvingEvaluationRequest<'s, 'd, F: SKFloat, E> {
 }
 
 /// Complete trace and winning candidate of a successive-halving search.
-#[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct SKHalvingSearchOutcome<F: SKFloat> {
     pub(crate) rounds: Vec<SKHalvingRound<F>>,
@@ -58,7 +55,6 @@ impl<F: SKFloat, E: SKSupervisedFit<F>> SKSupervisedFit<F> for SKCandidateRefere
 }
 
 /// Runs the successive-halving tournament across subsampled rounds.
-#[allow(dead_code)]
 pub(crate) fn sk_run_halving_search<F, E, S>(
     request: SKHalvingEvaluationRequest<'_, '_, F, E>,
     scoring: &S,
@@ -115,63 +111,6 @@ where
     })
 }
 
-fn sk_validate_fit_inputs<F: SKFloat, E>(
-    request: &SKHalvingEvaluationRequest<'_, '_, F, E>,
-) -> Result<usize, SKError> {
-    if request.candidates.is_empty() {
-        return Err(SKError::InvalidHyperparameter {
-            name: "candidates",
-            reason: "at least one configured candidate is required".to_owned(),
-        });
-    }
-    let (total_rows, _) = sk_view_dimensions(request.features);
-    if total_rows == 0 {
-        return Err(SKError::EmptyInput {
-            operation: "halving_grid_search",
-        });
-    }
-    if request.targets.len() != total_rows {
-        return Err(SKError::ShapeMismatch {
-            expected: vec![total_rows],
-            found: vec![request.targets.len()],
-        });
-    }
-    sk_validate_finite_features(&request.features)?;
-    sk_validate_finite_targets(Some(request.targets))?;
-    if let Some(group_values) = request.groups {
-        if group_values.len() != total_rows {
-            return Err(SKError::ShapeMismatch {
-                expected: vec![total_rows],
-                found: vec![group_values.len()],
-            });
-        }
-    }
-
-    let effective_maximum_resource = match request.maximum_resource {
-        Some(bound) if bound == 0 || bound > total_rows => {
-            return Err(SKError::InvalidHyperparameter {
-                name: "maximum_resource",
-                reason: format!(
-                    "maximum_resource ({bound}) must be within 1..={total_rows} for this dataset"
-                ),
-            });
-        }
-        Some(bound) => bound,
-        None => total_rows,
-    };
-
-    if request.minimum_resource == 0 || request.minimum_resource > effective_maximum_resource {
-        return Err(SKError::InvalidHyperparameter {
-            name: "minimum_resource",
-            reason: format!(
-                "minimum_resource ({}) must lie within 1..={effective_maximum_resource}",
-                request.minimum_resource
-            ),
-        });
-    }
-    Ok(effective_maximum_resource)
-}
-
 fn sk_evaluate_single_round<F, E, S>(
     request: &SKHalvingEvaluationRequest<'_, '_, F, E>,
     scoring: &S,
@@ -194,15 +133,17 @@ where
     );
     let _entered = span.enter();
 
-    let subsample = sk_gather_round_subsample(
-        request.features,
-        request.targets,
-        request.groups,
-        current_resource,
-        request.random_seed,
-        round_index,
-        request.splitter.requires_stratification(),
-    )?;
+    let subsample = match request.resource {
+        SKHalvingResource::NumberOfSamples => sk_gather_round_subsample(
+            request.features,
+            request.targets,
+            request.groups,
+            current_resource,
+            request.random_seed,
+            round_index,
+            request.splitter.requires_stratification(),
+        )?,
+    };
     let round_candidates: Vec<SKCandidateReference<'_, E>> = alive
         .iter()
         .map(|&index| SKCandidateReference(&request.candidates[index]))

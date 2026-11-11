@@ -6,10 +6,11 @@ use ndarray::array;
 use sciencekit_common::{SKBackendKind, SKBuilder, SKError, SKExecutionMode};
 
 use crate::grid_search::mock_estimators::{SKMockConstantRegressor, SKMockThresholdClassifier};
-use crate::grid_search::{SKClassifierScoring, SKErrorScore, SKRegressorScoring};
+use crate::grid_search::{SKClassifierScoring, SKErrorScore, SKRegressorScoring, SKScoringFamily};
 use crate::halving::{
     SKHalvingGridSearchClassifier, SKHalvingGridSearchClassifierBuilder,
     SKHalvingGridSearchRegressor, SKHalvingGridSearchRegressorBuilder, SKHalvingResource,
+    SKHalvingScoring,
 };
 use crate::split::kfold::SKKFold;
 
@@ -50,116 +51,109 @@ fn halving_builder_classifier_and_regressor_defaults_match_specification() {
     assert_eq!(regressor.factor(), 3);
     assert_eq!(regressor.minimum_resource(), 1);
     assert_eq!(regressor.maximum_resource(), None);
+    assert_eq!(regressor.backend(), SKBackendKind::Faer);
     assert_eq!(
         regressor.scoring(),
         SKRegressorScoring::NegativeMeanSquaredError
+    );
+    assert_eq!(
+        SKHalvingScoring::from(SKClassifierScoring::Accuracy).family(),
+        SKScoringFamily::Classifier
+    );
+    assert_eq!(
+        SKHalvingScoring::from(SKRegressorScoring::R2).family(),
+        SKScoringFamily::Regressor
     );
 }
 
 #[test]
 fn halving_builder_rejects_factor_below_two() {
     for invalid_factor in [0, 1] {
-        let Err(error) = classifier_builder().factor(invalid_factor).build() else {
-            panic!("factor {invalid_factor} must be rejected");
-        };
+        let error = classifier_builder().factor(invalid_factor).build().err();
         assert!(matches!(
             error,
-            SKError::InvalidHyperparameter { name: "factor", .. }
+            Some(SKError::InvalidHyperparameter { name: "factor", .. })
         ));
     }
 }
 
 #[test]
 fn halving_builder_rejects_invalid_resource_bounds() {
-    let Err(zero_min) = classifier_builder().minimum_resource(0).build() else {
-        panic!("minimum_resource 0 must be rejected");
-    };
     assert!(matches!(
-        zero_min,
-        SKError::InvalidHyperparameter {
+        classifier_builder().minimum_resource(0).build().err(),
+        Some(SKError::InvalidHyperparameter {
             name: "minimum_resource",
             ..
-        }
+        })
     ));
-
-    let Err(zero_max) = regressor_builder().maximum_resource(0).build() else {
-        panic!("maximum_resource 0 must be rejected");
-    };
     assert!(matches!(
-        zero_max,
-        SKError::InvalidHyperparameter {
+        regressor_builder().maximum_resource(0).build().err(),
+        Some(SKError::InvalidHyperparameter {
             name: "maximum_resource",
             ..
-        }
+        })
     ));
-
-    let Err(inverted) = regressor_builder()
-        .minimum_resource(50)
-        .maximum_resource(20)
-        .build()
-    else {
-        panic!("minimum_resource > maximum_resource must be rejected");
-    };
-    assert!(matches!(inverted, SKError::InvalidHyperparameter { .. }));
+    assert!(matches!(
+        regressor_builder()
+            .minimum_resource(50)
+            .maximum_resource(20)
+            .build()
+            .err(),
+        Some(SKError::InvalidHyperparameter {
+            name: "minimum_resource",
+            ..
+        })
+    ));
 }
 
 #[test]
 fn halving_builder_rejects_empty_candidates_and_missing_splitter() {
-    let Err(empty_candidates) =
-        SKHalvingGridSearchClassifier::<f64, SKMockThresholdClassifier>::build()
-            .splitter(three_folds())
-            .build()
-    else {
-        panic!("empty candidates must be rejected");
-    };
+    let empty_error = SKHalvingGridSearchClassifier::<f64, SKMockThresholdClassifier>::build()
+        .splitter(three_folds())
+        .build()
+        .err();
     assert!(matches!(
-        empty_candidates,
-        SKError::InvalidHyperparameter {
+        empty_error,
+        Some(SKError::InvalidHyperparameter {
             name: "candidates",
             ..
-        }
+        })
     ));
 
-    let Err(missing_splitter) = SKHalvingGridSearchRegressor::<f64, _>::build()
+    let splitter_error = SKHalvingGridSearchRegressor::<f64, _>::build()
         .candidates(vec![SKMockConstantRegressor::new(0.0)])
         .build()
-    else {
-        panic!("missing splitter must be rejected");
-    };
+        .err();
     assert!(matches!(
-        missing_splitter,
-        SKError::InvalidHyperparameter {
+        splitter_error,
+        Some(SKError::InvalidHyperparameter {
             name: "splitter",
             ..
-        }
+        })
     ));
 }
 
 #[test]
 fn halving_builder_rejects_incompatible_scoring_policy_on_both_families() {
-    let Err(classifier_error) = classifier_builder().scoring(SKRegressorScoring::R2).build() else {
-        panic!("regressor scorer on classifier halving search must fail");
-    };
     assert!(matches!(
-        classifier_error,
-        SKError::InvalidHyperparameter {
+        classifier_builder()
+            .scoring(SKRegressorScoring::R2)
+            .build()
+            .err(),
+        Some(SKError::InvalidHyperparameter {
             name: "scoring",
             ..
-        }
+        })
     ));
-
-    let Err(regressor_error) = regressor_builder()
-        .scoring(SKClassifierScoring::BalancedAccuracy)
-        .build()
-    else {
-        panic!("classifier scorer on regressor halving search must fail");
-    };
     assert!(matches!(
-        regressor_error,
-        SKError::InvalidHyperparameter {
+        regressor_builder()
+            .scoring(SKClassifierScoring::BalancedAccuracy)
+            .build()
+            .err(),
+        Some(SKError::InvalidHyperparameter {
             name: "scoring",
             ..
-        }
+        })
     ));
 }
 
@@ -178,12 +172,10 @@ fn halving_builder_honors_every_optional_setter_and_trait_dispatch() {
         .groups(array![0, 0, 1, 1, 2, 2])
         .backend(SKBackendKind::MatrixMultiply)
         .execution_mode(SKExecutionMode::InProcessSynchronous);
-
     <SKHalvingGridSearchClassifierBuilder<_, _> as SKBuilder<_>>::execution_mode(
         &mut builder,
         SKExecutionMode::InProcessAsynchronous,
     );
-
     let estimator = builder.build().unwrap();
     assert_eq!(estimator.scoring(), SKClassifierScoring::BalancedAccuracy);
     assert_eq!(estimator.factor(), 4);

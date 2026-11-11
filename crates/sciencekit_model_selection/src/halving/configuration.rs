@@ -63,7 +63,6 @@ impl From<SKRegressorScoring> for SKHalvingScoring {
 }
 
 /// Family-independent configuration frozen by the halving search builders.
-#[allow(dead_code)]
 pub(crate) struct SKHalvingGridSearchConfiguration<F: SKFloat, E> {
     pub(crate) candidates: Vec<E>,
     pub(crate) splitter: Box<dyn SKSplitter<F> + Send + Sync>,

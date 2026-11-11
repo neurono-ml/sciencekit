@@ -97,7 +97,6 @@ pub(crate) fn sk_rank_candidate_indices<F: SKFloat>(
 }
 
 /// Builds the round trace entry from the evaluated candidates and their fold results.
-#[allow(dead_code)]
 pub(crate) fn sk_build_round_trace<F: SKFloat>(
     round: usize,
     resource: usize,

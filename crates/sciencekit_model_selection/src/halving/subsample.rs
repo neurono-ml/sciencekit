@@ -15,8 +15,8 @@ use crate::train_test_split::sk_allocate_class_counts;
 use crate::{SKTargetPartition, sk_gather_rows};
 
 /// Owned subset of features, targets and optional groups gathered for a single round.
-#[allow(dead_code)]
 pub(crate) struct SKRoundSubsample<F: SKFloat> {
+    #[cfg_attr(not(test), allow(dead_code))]
     pub(crate) row_indices: Vec<usize>,
     pub(crate) features: SKFeatureBlock<F>,
     pub(crate) targets: SKTargetPartition<F>,
@@ -68,7 +68,6 @@ pub(crate) fn sk_select_subsample_indices<F: SKFloat>(
 
 /// Gathers the subsampled features, targets and optional groups for a halving round
 /// without densifying sparse CSR inputs.
-#[allow(dead_code)]
 pub(crate) fn sk_gather_round_subsample<F: SKFloat>(
     features: SKDataView<'_, F>,
     targets: SKTargetView<'_, F>,
