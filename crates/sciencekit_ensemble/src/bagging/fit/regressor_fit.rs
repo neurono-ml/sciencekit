@@ -11,7 +11,8 @@ use sciencekit_common::{
 use crate::bootstrap::sk_out_of_bag_rows;
 
 use super::super::error::SKBaggingError;
-use super::super::model::{SKBaggingOobState, SKBaggingRegressorModel};
+use super::super::model::SKBaggingRegressorModel;
+use super::super::oob::sk_compute_regressor_oob_state;
 use super::super::regressor::SKBaggingRegressor;
 use super::super::sampling::{
     sk_bagging_feature_indices, sk_bagging_row_indices, sk_gather_dense_submatrix,
@@ -36,7 +37,7 @@ where
     F: SKFloat,
     B: SKSupervisedFit<F> + Clone + Send + Sync,
     B::Model: SKRegressorPredictor<F> + Send + Sync,
-    B::Error: Error + Send + 'static,
+    B::Error: Error + Send + 'static + From<<B::Model as SKRegressorPredictor<F>>::Error>,
     <B::Model as SKRegressorPredictor<F>>::Error: Error + Send + 'static,
 {
     let (rows_count, columns_count) = sk_bagging_fit_dimensions(&features)?;
@@ -96,11 +97,19 @@ where
             }
         });
 
+        let oob_state = sk_compute_regressor_oob_state(
+            &features,
+            &responses_view,
+            &estimators,
+            &feature_subsets,
+            out_of_bag_rows.as_deref(),
+        )?;
+
         Ok(SKBaggingRegressorModel {
             estimators,
             feature_subsets,
             out_of_bag_rows,
-            oob_state: SKBaggingOobState::Disabled,
+            oob_state,
             feature_count: columns_count,
             backend: estimator.backend(),
             execution_intent: estimator.execution_intent(),

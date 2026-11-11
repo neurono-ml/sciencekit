@@ -12,7 +12,8 @@ use crate::bootstrap::sk_out_of_bag_rows;
 
 use super::super::classifier::SKBaggingClassifier;
 use super::super::error::SKBaggingError;
-use super::super::model::{SKBaggingClassifierMember, SKBaggingClassifierModel, SKBaggingOobState};
+use super::super::model::{SKBaggingClassifierMember, SKBaggingClassifierModel};
+use super::super::oob::sk_compute_classifier_oob_state;
 use super::super::sampling::{
     sk_bagging_feature_indices, sk_bagging_row_indices, sk_gather_dense_submatrix,
     sk_gather_sparse_submatrix,
@@ -39,7 +40,7 @@ where
     F: SKFloat,
     B: SKSupervisedFit<F> + Clone + Send + Sync,
     B::Model: SKClassifierPredictor<F> + Send + Sync,
-    B::Error: Error + Send + 'static,
+    B::Error: Error + Send + 'static + From<<B::Model as SKClassifierPredictor<F>>::Error>,
     <B::Model as SKClassifierPredictor<F>>::Error: Error + Send + 'static,
 {
     let (rows_count, columns_count) = sk_bagging_fit_dimensions(&features)?;
@@ -79,14 +80,14 @@ where
             configuration.number_of_estimators,
             sample_size,
             estimator.execution_intent(),
-            |estimator_index| {
+            |index| {
                 sk_fit_classifier_slot(
                     estimator,
                     &features,
                     &class_indices,
                     [0usize, second_row],
                     (rows_count, columns_count),
-                    estimator_index,
+                    index,
                 )
             },
         )?;
@@ -104,11 +105,20 @@ where
             }
         });
 
+        let oob_state = sk_compute_classifier_oob_state(
+            &features,
+            &class_indices,
+            number_of_classes,
+            &members,
+            &feature_subsets,
+            out_of_bag_rows.as_deref(),
+        )?;
+
         Ok(SKBaggingClassifierModel {
             members,
             feature_subsets,
             out_of_bag_rows,
-            oob_state: SKBaggingOobState::Disabled,
+            oob_state,
             classes,
             number_of_classes,
             feature_count: columns_count,
@@ -131,7 +141,7 @@ where
     B: SKSupervisedFit<F> + Clone + Send + Sync,
 {
     let configuration = &estimator.configuration;
-    let drawn_rows = sk_bagging_row_indices(
+    let drawn = sk_bagging_row_indices(
         rows_count,
         &configuration.maximum_samples,
         configuration.bootstrap,
@@ -147,34 +157,34 @@ where
     );
     let out_of_bag_rows = configuration
         .oob_score
-        .then(|| sk_out_of_bag_rows(rows_count, &drawn_rows));
-    let sampled_classes: Vec<usize> = drawn_rows.iter().map(|&row| class_indices[row]).collect();
+        .then(|| sk_out_of_bag_rows(rows_count, &drawn));
+    let sampled_classes: Vec<usize> = drawn.iter().map(|&row| class_indices[row]).collect();
     let local_to_ensemble = sk_first_occurrence_classes(&sampled_classes);
-    let sampled_labels = Array1::from_iter(
+    let labels = Array1::from_iter(
         sampled_classes
             .iter()
             .map(|&class_index| class_index as i64),
     );
 
-    let member = match sk_fit_base_on_subset(
+    let member = match sk_fit_base(
         &estimator.base_estimator,
         features,
-        &drawn_rows,
+        &drawn,
         &feature_subset,
-        &sampled_labels,
+        &labels,
     ) {
         Ok(model) => SKBaggingClassifierMember::Fitted {
             model,
             local_to_ensemble,
         },
         Err(_) if local_to_ensemble.len() < 2 => {
-            let probe_labels = Array1::from_vec(vec![0_i64, 1]);
-            sk_fit_base_on_subset(
+            let probe = Array1::from_vec(vec![0_i64, 1]);
+            sk_fit_base(
                 &estimator.base_estimator,
                 features,
                 &two_class_pair,
                 &feature_subset,
-                &probe_labels,
+                &probe,
             )
             .map_err(SKBaggingError::Base)?;
             SKBaggingClassifierMember::ConstantClass {
@@ -191,24 +201,20 @@ where
     })
 }
 
-fn sk_fit_base_on_subset<F, B>(
-    base_estimator: &B,
+fn sk_fit_base<F: SKFloat, B: SKSupervisedFit<F>>(
+    base: &B,
     features: &SKDataView<'_, F>,
     rows: &[usize],
-    feature_subset: &[usize],
+    subset: &[usize],
     labels: &Array1<i64>,
-) -> Result<B::Model, B::Error>
-where
-    F: SKFloat,
-    B: SKSupervisedFit<F>,
-{
+) -> Result<B::Model, B::Error> {
     match features {
-        SKDataView::Dense(dense) => base_estimator.fit(
-            sk_gather_dense_submatrix(dense, rows, feature_subset).view(),
+        SKDataView::Dense(dense) => base.fit(
+            sk_gather_dense_submatrix(dense, rows, subset).view(),
             labels.view(),
         ),
-        SKDataView::Sparse(sparse) => base_estimator.fit(
-            sk_gather_sparse_submatrix(sparse, rows, feature_subset).view(),
+        SKDataView::Sparse(sparse) => base.fit(
+            sk_gather_sparse_submatrix(sparse, rows, subset).view(),
             labels.view(),
         ),
         _ => unreachable!("dimensions already validated"),

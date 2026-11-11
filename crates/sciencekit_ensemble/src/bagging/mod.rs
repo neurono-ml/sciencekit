@@ -10,6 +10,7 @@ mod config;
 mod error;
 mod fit;
 mod model;
+mod oob;
 mod predict;
 mod regressor;
 mod sampling;
@@ -31,6 +32,8 @@ mod bagging_classifier_tests;
 mod bagging_error_tests;
 #[cfg(test)]
 mod bagging_fit_tests;
+#[cfg(test)]
+mod bagging_oob_tests;
 #[cfg(test)]
 mod bagging_regressor_tests;
 #[cfg(test)]

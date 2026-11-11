@@ -106,7 +106,7 @@ where
     F: SKFloat,
     B: SKSupervisedFit<F> + Clone + Send + Sync,
     B::Model: SKClassifierPredictor<F> + Send + Sync,
-    B::Error: Error + Send + 'static,
+    B::Error: Error + Send + 'static + From<<B::Model as SKClassifierPredictor<F>>::Error>,
     <B::Model as SKClassifierPredictor<F>>::Error: Error + Send + 'static,
 {
     type Model = SKBaggingClassifierModel<F, B::Model>;
