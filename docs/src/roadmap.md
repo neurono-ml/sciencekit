@@ -92,9 +92,9 @@ No stage may be skipped — each algorithm walks the full path:
 </div>
 </div>
 
-<div class="sk-timeline__item reveal">
+<div class="sk-timeline__item is-active reveal">
 <div class="sk-timeline__card">
-<div class="sk-timeline__head"><span class="sk-timeline__title">Phase 5 — Unsupervised</span><span class="sk-pill sk-pill--neutral">Planned</span></div>
+<div class="sk-timeline__head"><span class="sk-timeline__title">Phase 5 — Unsupervised</span><span class="sk-pill sk-pill--amber">In progress</span></div>
 <p style="margin:0.2rem 0 0;font-size:0.9rem;color:#52525c">KMeans, MiniBatchKMeans (streaming), DBSCAN; PCA, TruncatedSVD; anomaly detection.</p>
 </div>
 </div>

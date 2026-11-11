@@ -108,7 +108,7 @@ and receives a Python binding as soon as it is validated on CPU.
 | `SKKMeans` | Lloyd + Elkan k-means with seeded k-means++ (memmap indexes remain Phase 7) | <span class="sk-pill sk-pill--ok">Implemented</span> |
 | `SKMiniBatchKMeans` | Mini-batch k-means with streaming (`SKLazySource`) | <span class="sk-pill sk-pill--neutral">Planned</span> |
 | `SKDBSCAN` | Density-based clustering | <span class="sk-pill sk-pill--neutral">Planned</span> |
-| `SKPCA` | Principal component analysis | <span class="sk-pill sk-pill--neutral">Planned</span> |
+| `SKPCA` | Principal component analysis (full SVD · covariance eigh · sparse randomized SVD) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKTruncatedSVD` | Truncated SVD for sparse data | <span class="sk-pill sk-pill--neutral">Planned</span> |
 | Anomaly detection | Outlier estimators from the scikit-learn family | <span class="sk-pill sk-pill--neutral">Planned</span> |
 
