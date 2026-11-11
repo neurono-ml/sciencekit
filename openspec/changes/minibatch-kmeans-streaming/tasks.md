@@ -2,7 +2,7 @@
 
 ## 1. Module and state
 
-- [ ] 1.1 Create `crates/sciencekit_cluster/src/minibatch_kmeans/` with dispatcher
+- [x] 1.1 Create `crates/sciencekit_cluster/src/minibatch_kmeans/` with dispatcher
   `mod.rs`, config, state and model; verify `cargo test -p sciencekit_cluster minibatch`
   compiles.
 - [ ] 1.2 Implement the per-center update and count bookkeeping, with the one-center
