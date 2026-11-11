@@ -9,7 +9,10 @@ pointers into Go memory, and without hiding the status codes that the ABI was bu
 This chapter builds the Go module: a typed layer over `sciencekit_ffi` with builders, models,
 matrices, structured errors and a lifecycle that survives a garbage collector.
 
-The capability is `go-bindings`; the code lives in `go/` at the repository root.
+The capability is `go-bindings`; the code lives in its own repository,
+[`neurono-ml/sciencekit-go`](https://github.com/neurono-ml/sciencekit-go), as the module
+`github.com/neurono-ml/sciencekit-go`. The main repository keeps the Rust core and the
+shared C ABI (`sciencekit_ffi`) that the module links against.
 
 ## 1. The problem, in plain words
 
@@ -139,21 +142,25 @@ round-trips, an unsupported one returns `UNSUPPORTED` rather than writing a brok
 
 ### The devcontainer run
 
-The whole suite runs inside the devcontainer (`go test ./go/...`) against a release cdylib,
-plus `go vet`, `gofmt -l`, `go test -race` and `GOEXPERIMENT=cgocheck2 go test ./go/...`,
+The whole suite runs inside the devcontainer (`go test ./...`) against a release cdylib,
+plus `go vet`, `gofmt -l`, `go test -race` and `GOEXPERIMENT=cgocheck2 go test ./...`,
 which is what the CI job reproduces.
 
 ## 6. Look inside
 
+The files live in the [`neurono-ml/sciencekit-go`](https://github.com/neurono-ml/sciencekit-go)
+repository, at its root:
+
 | File | Responsibility |
 |---|---|
-| `go/cgo.go` | the cgo preamble, native handles and descriptors |
-| `go/builders.go`, `go/models.go` | typed builders and models, `Close` and finalizers |
-| `go/types.go` | `Matrix[T]`, `Float`, `BackendKind` validation |
-| `go/errors.go` | `ScienceKitError`, `Status`, `IsStatus` |
-| `go/version.go` | ABI version and feature introspection |
-| `go/README.md`, `scripts/build-go-library.sh`, `.github/workflows/go-bindings.yml` | build, docs and CI |
-| `go/*_test.go`, `go/examples/` | unit, concurrency, large-array and example coverage |
+| `cgo.go` | the cgo preamble, native handles and descriptors |
+| `builders.go`, `models.go` | typed builders and models, `Close` and finalizers |
+| `types.go` | `Matrix[T]`, `Float`, `BackendKind` validation |
+| `errors.go` | `ScienceKitError`, `Status`, `IsStatus` |
+| `version.go` | ABI version and feature introspection |
+| `include/sciencekit.h` | the vendored copy of the stable C ABI header |
+| `README.md`, `scripts/build-native-library.sh`, `scripts/sync-header.sh`, `.github/workflows/ci.yml` | build, docs and CI |
+| `*_test.go`, `examples/` | unit, concurrency, large-array and example coverage |
 
 ## 7. What this unlocks
 
