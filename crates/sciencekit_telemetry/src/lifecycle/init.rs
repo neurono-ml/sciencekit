@@ -10,8 +10,8 @@ use opentelemetry_sdk::trace::SpanExporter;
 use sciencekit_common::SKError;
 
 use super::global_state::{
-    sk_claim_initialization_slot, sk_install_global_subscriber, sk_is_active_initialized,
-    sk_release_failed_initialization_slot,
+    sk_active_exporter_count, sk_claim_initialization_slot, sk_install_global_subscriber,
+    sk_is_active_initialized, sk_release_failed_initialization_slot,
 };
 use crate::configuration::SKTelemetryConfiguration;
 use crate::pipeline::{SKTelemetryPipeline, sk_build_otlp_pipeline};
@@ -82,6 +82,11 @@ impl SKTelemetry {
     /// Whether an active global telemetry pipeline is currently installed.
     pub fn is_initialized() -> bool {
         sk_is_active_initialized()
+    }
+
+    /// Number of active global telemetry exporters currently installed (`0` when uninitialized).
+    pub fn active_exporter_count() -> usize {
+        sk_active_exporter_count()
     }
 
     /// Access the validated configuration of the active pipeline.

@@ -123,10 +123,16 @@ impl Subscriber for SubscriberProxy {
 
 static EVER_INITIALIZED: AtomicBool = AtomicBool::new(false);
 static ACTIVE_INITIALIZED: AtomicBool = AtomicBool::new(false);
+static ACTIVE_EXPORTER_COUNT: std::sync::atomic::AtomicUsize =
+    std::sync::atomic::AtomicUsize::new(0);
 static GLOBAL_SUBSCRIBER: OnceLock<Arc<SKGlobalTelemetrySubscriber>> = OnceLock::new();
 
 pub(crate) fn sk_is_active_initialized() -> bool {
     ACTIVE_INITIALIZED.load(Ordering::Acquire)
+}
+
+pub(crate) fn sk_active_exporter_count() -> usize {
+    ACTIVE_EXPORTER_COUNT.load(Ordering::Acquire)
 }
 
 pub(crate) fn sk_claim_initialization_slot() -> Result<(), SKError> {
@@ -161,12 +167,14 @@ pub(crate) fn sk_install_global_subscriber(
     };
     slot.swap(Some(Arc::from(subscriber)));
     tracing::callsite::rebuild_interest_cache();
+    ACTIVE_EXPORTER_COUNT.store(3, Ordering::Release);
     ACTIVE_INITIALIZED.store(true, Ordering::Release);
     Ok(())
 }
 
 pub(crate) fn sk_detach_global_subscriber() {
     ACTIVE_INITIALIZED.store(false, Ordering::Release);
+    ACTIVE_EXPORTER_COUNT.store(0, Ordering::Release);
     if let Some(slot) = GLOBAL_SUBSCRIBER.get() {
         slot.swap(None);
         tracing::callsite::rebuild_interest_cache();
