@@ -7,20 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
+### Moved
 
-- Go bindings (spec `go-bindings`): a `sciencekit/go` module under `go/` that
-  loads `sciencekit_ffi` through cgo and exposes typed builders and models for
-  linear regression and the standard scaler (`Fit`, `Predict`, `Transform`,
-  `Score`, `Save`, `LoadLinearRegression`). Dense `Matrix[float32|float64]`
-  values convert with Go-side shape validation and copied outputs; native
-  status codes map to `ScienceKitError` values carrying the code, operation and
-  message; builders and models close explicitly (`Close`) or through
-  `runtime.SetFinalizer`, safely and exactly once; models are safe for
-  concurrent use. Includes examples, a build/link README, a
-  `scripts/build-go-library.sh` helper, a `go test`/`go vet` CI workflow and a
-  test suite covering every family, persistence, errors, lifecycle,
-  concurrency and large arrays.
+- The Go bindings (spec `go-bindings`) now live in their own repository,
+  [`neurono-ml/sciencekit-go`](https://github.com/neurono-ml/sciencekit-go), as
+  the module `github.com/neurono-ml/sciencekit-go`. The binding itself is
+  unchanged: it loads `sciencekit_ffi` through cgo and exposes typed builders
+  and models for linear regression and the standard scaler (`Fit`, `Predict`,
+  `Transform`, `Score`, `Save`, `LoadLinearRegression`). Dense
+  `Matrix[float32|float64]` values convert with Go-side shape validation and
+  copied outputs; native status codes map to `ScienceKitError` values carrying
+  the code, operation and message; builders and models close explicitly
+  (`Close`) or through `runtime.SetFinalizer`, safely and exactly once; models
+  are safe for concurrent use. The new repository carries the examples, the
+  build/link README, a `scripts/build-native-library.sh` helper, a
+  `gofmt`/`go vet`/`go test`/`go test -race`/`GOEXPERIMENT=cgocheck2 go test`
+  CI workflow and the test suite covering every family, persistence, errors,
+  lifecycle, concurrency and large arrays.
+- The Lua bindings (spec `lua-bindings`) now live in their own repository,
+  [`neurono-ml/sciencekit-lua`](https://github.com/neurono-ml/sciencekit-lua).
+  The `sciencekit_lua` crate becomes a standalone Cargo project — no longer a
+  member of this workspace — that depends on `sciencekit_ffi` through a git
+  dependency on this repository. The module is unchanged: a native Lua 5.4
+  module loaded with `require("sciencekit")`, with Lua 5.4 embedded through
+  `mlua` with `lua54` + `vendored` (neither a system `liblua` nor
+  `pkg-config` is required), chainable builder userdata for linear regression
+  and the standard scaler, `fit`/`predict`/`transform`/`score`/`save`/`load`,
+  handles released exactly once by close, the `__close` metamethod or the
+  garbage collector, copy semantics for every numeric table, structured Lua
+  runtime errors headed by the stable status name and code, a LuaRocks 3.0
+  rockspec and the Lua suite.
+- The `go/` module, the `go.work` file, the `crates/sciencekit_lua` crate, the
+  `go-bindings` CI workflow and `scripts/build-go-library.sh` are removed from
+  this repository. The stable C ABI (`sciencekit_ffi`) stays here: it is the
+  shared contract both bindings consume.
 
 ## [0.6.0] — 2026-11-10
 

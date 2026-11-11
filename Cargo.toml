@@ -14,9 +14,10 @@ license = "Apache-2.0"
 rust-version = "1.85"
 description = "Machine Learning library in Rust reimplementing all of scikit-learn — extreme performance, zero-copy and native out-of-core."
 repository = "https://github.com/neurono-ml/sciencekit"
-# The Go binding and the Go workspace live outside the Cargo workspace; keep
-# them out of the published crate tarball.
-exclude = ["go/", "go.work", ".devcontainer/"]
+# The language bindings live in their own repositories
+# (`neurono-ml/sciencekit-go` and `neurono-ml/sciencekit-lua`); only the Rust
+# core and the shared C ABI (`sciencekit_ffi`) stay here.
+exclude = [".devcontainer/"]
 
 [workspace]
 resolver = "3"
@@ -27,7 +28,6 @@ members = [
     "crates/sciencekit_impute",
     "crates/sciencekit_interop",
     "crates/sciencekit_linear_model",
-    "crates/sciencekit_lua",
     "crates/sciencekit_math",
     "crates/sciencekit_metrics",
     "crates/sciencekit_model_selection",
