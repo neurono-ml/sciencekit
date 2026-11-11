@@ -19,7 +19,7 @@
 - [x] 2.2 Implement bootstrap row sampling reusing the shared sampler and, when enabled,
   feature subset sampling; verify row/feature reproducibility and sample shapes; verify
   with `cargo test -p sciencekit_ensemble bagging_sampling`.
-- [ ] 2.3 Implement parallel per-estimator fitting (each estimator on its row and feature
+- [x] 2.3 Implement parallel per-estimator fitting (each estimator on its row and feature
   subset) with deterministic seeds and lock-free slots; verify parallel-equals-sequential
   and repeated-fit determinism; verify with
   `cargo test -p sciencekit_ensemble bagging_fit`.
