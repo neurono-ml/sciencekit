@@ -15,4 +15,4 @@
 
 pub mod pca;
 
-pub use pca::{SKPCA, SKPCABuilder, SKPCASolver};
+pub use pca::{SKPCA, SKPCABuilder, SKPCAModel, SKPCASolver};

@@ -14,3 +14,4 @@ pub(super) use covariance::sk_solve_covariance_eigh;
 pub(super) use full::sk_solve_full_svd;
 pub(super) use randomized::sk_solve_randomized_svd;
 pub(super) use resolution::sk_resolve_pca_solver;
+pub(super) use state::SKPCADecomposition;

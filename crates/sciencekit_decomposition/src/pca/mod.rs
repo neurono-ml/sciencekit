@@ -7,11 +7,15 @@ mod builder;
 mod centering;
 mod config;
 mod core_implementation;
+mod fit;
+mod model;
 mod solvers;
+mod validation;
 
 pub use builder::SKPCABuilder;
 pub use config::SKPCASolver;
 pub use core_implementation::SKPCA;
+pub use model::SKPCAModel;
 
 #[cfg(test)]
 mod pca_builder_tests;
@@ -19,6 +23,8 @@ mod pca_builder_tests;
 mod pca_centering_tests;
 #[cfg(test)]
 mod pca_covariance_tests;
+#[cfg(test)]
+mod pca_fit_tests;
 #[cfg(test)]
 mod pca_full_tests;
 #[cfg(test)]

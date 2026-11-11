@@ -95,7 +95,6 @@ impl PcaCaptureGuard {
         Self { _lock: lock, layer }
     }
 
-    #[allow(dead_code)]
     pub(super) fn spans(&self) -> Vec<(String, HashMap<String, String>)> {
         self.layer
             .spans
