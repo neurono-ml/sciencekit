@@ -13,11 +13,22 @@
 //! submodules; every implementation lives in its own file.
 
 mod format_mode;
+mod parameter_deserialization;
+mod reader;
+mod reader_builder;
 pub(crate) mod schema;
+mod schema_deserialization;
+mod state_decoding;
+mod tensor_decoding;
 mod writer;
 mod writer_builder;
 
 pub use format_mode::{SK_JSON_DEBUG_FORMAT_VERSION, SKJsonFormatMode};
+pub use reader::{
+    SKJsonDebugReader, sk_import_model_json, sk_read_model_state_json,
+    sk_read_model_state_json_file,
+};
+pub use reader_builder::SKJsonDebugReaderBuilder;
 pub use writer::{
     SKJsonDebugWriter, sk_export_model_json, sk_write_model_state_json,
     sk_write_model_state_json_compact, sk_write_model_state_json_file,
@@ -25,6 +36,8 @@ pub use writer::{
 };
 pub use writer_builder::SKJsonDebugWriterBuilder;
 
+#[cfg(test)]
+mod json_round_trip_tests;
 #[cfg(test)]
 mod json_schema_tests;
 #[cfg(test)]
