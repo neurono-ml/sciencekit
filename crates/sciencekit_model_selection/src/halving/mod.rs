@@ -5,6 +5,7 @@
 
 mod resource;
 mod scheduler;
+mod subsample;
 mod trace;
 
 pub use resource::SKHalvingResource;
@@ -13,5 +14,7 @@ pub use trace::SKHalvingRound;
 
 #[cfg(test)]
 mod halving_scheduler_tests;
+#[cfg(test)]
+mod halving_subsample_tests;
 #[cfg(test)]
 mod halving_trace_tests;
