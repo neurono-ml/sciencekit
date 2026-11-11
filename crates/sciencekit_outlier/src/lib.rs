@@ -17,6 +17,6 @@ pub mod isolation_forest;
 
 pub use isolation_forest::{
     SK_ISOLATION_AUTO_OFFSET, SK_ISOLATION_DEFAULT_MAXIMUM_SAMPLES, SKContamination,
-    SKIsolationForest, SKIsolationForestBuilder, SKIsolationMaximumSamples,
+    SKIsolationForest, SKIsolationForestBuilder, SKIsolationForestModel, SKIsolationMaximumSamples,
 };
 pub use sciencekit_common::{SKOutlierLabel, SKOutlierPredictor};

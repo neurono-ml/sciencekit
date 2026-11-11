@@ -1,9 +1,9 @@
-//! Subsample views (dense now, sparse CSC in Task 2.3) for isolation tree growth.
-
-#![cfg_attr(not(test), allow(dead_code))]
+//! Subsample views and seeded per-tree draw helpers for isolation tree growth.
 
 use ndarray::ArrayView2;
-use sciencekit_common::SKFloat;
+use sciencekit_common::{
+    SK_RANDOM_DOMAIN_STAGE, SK_RANDOM_DOMAIN_TREE, SKFloat, SKRandomGenerator, sk_derive_seed,
+};
 
 /// Representation-neutral subsample interface for growing an isolation tree.
 pub(crate) trait IsolationSampleSource<F: SKFloat> {
@@ -77,4 +77,62 @@ impl<F: SKFloat> IsolationSampleSource<F> for DenseSubsample<'_, F> {
             .copied()
             .partition(|&row_index| self.matrix[[row_index, feature_index]] <= threshold)
     }
+}
+
+/// Resolves `maximum_features` in `(0, 1]` to a feature draw count in `1..=columns_count`.
+pub(super) fn sk_resolve_feature_count<F: SKFloat>(
+    maximum_features: F,
+    columns_count: usize,
+) -> usize {
+    let scaled = maximum_features * F::from(columns_count).expect("column count fits scalar");
+    scaled
+        .floor()
+        .to_usize()
+        .unwrap_or(1)
+        .clamp(1, columns_count)
+}
+
+/// Produces `(sampled_rows, candidate_features, split_generator)` from independent sub-seeds.
+pub(super) fn sk_prepare_tree_draws(
+    global_seed: u64,
+    tree_index: usize,
+    rows_count: usize,
+    subsample_size: usize,
+    bootstrap: bool,
+    columns_count: usize,
+    feature_draw_count: usize,
+) -> (Vec<usize>, Vec<usize>, SKRandomGenerator) {
+    let tree_seed = sk_derive_seed(global_seed, SK_RANDOM_DOMAIN_TREE, tree_index as u64);
+    let subsample_seed = sk_derive_seed(tree_seed, SK_RANDOM_DOMAIN_STAGE, 0);
+    let feature_seed = sk_derive_seed(tree_seed, SK_RANDOM_DOMAIN_STAGE, 1);
+    let split_seed = sk_derive_seed(tree_seed, SK_RANDOM_DOMAIN_STAGE, 2);
+
+    let sampled_rows = if !bootstrap {
+        if subsample_size >= rows_count {
+            (0..rows_count).collect()
+        } else {
+            SKRandomGenerator::new(subsample_seed)
+                .sample_indices_without_replacement(rows_count, subsample_size)
+        }
+    } else {
+        let mut row_generator = SKRandomGenerator::new(subsample_seed);
+        (0..subsample_size)
+            .map(|_| row_generator.next_index(rows_count))
+            .collect()
+    };
+
+    let candidate_features = if feature_draw_count >= columns_count {
+        (0..columns_count).collect()
+    } else {
+        let mut chosen = SKRandomGenerator::new(feature_seed)
+            .sample_indices_without_replacement(columns_count, feature_draw_count);
+        chosen.sort_unstable();
+        chosen
+    };
+
+    (
+        sampled_rows,
+        candidate_features,
+        SKRandomGenerator::new(split_seed),
+    )
 }

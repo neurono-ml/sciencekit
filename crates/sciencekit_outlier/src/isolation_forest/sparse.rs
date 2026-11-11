@@ -1,7 +1,5 @@
 //! Sparse CSR gathering into CSC subsamples and zero-copy sparse row lookup.
 
-#![cfg_attr(not(test), allow(dead_code))]
-
 use ndarray::{Array2, ArrayView2};
 use sciencekit_common::SKFloat;
 use sprs::{CsMat, CsMatView, CsVecView};

@@ -1,7 +1,5 @@
 //! Random isolation tree growth over the shared `SKTree` node array.
 
-#![cfg_attr(not(test), allow(dead_code))]
-
 use ndarray::ArrayView2;
 use sciencekit_common::{SKFloat, SKRandomGenerator};
 use sciencekit_tree::{SKTree, SKTreeNode};

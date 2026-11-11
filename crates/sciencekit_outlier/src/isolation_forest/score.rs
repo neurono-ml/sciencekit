@@ -1,9 +1,10 @@
-//! Path-length correction `c(n)`, expected depth reduction and anomaly score.
+//! Path-length correction `c(n)`, expected depth reduction, anomaly score and quantiles.
 
-#![cfg_attr(not(test), allow(dead_code))]
-
-use sciencekit_common::SKFloat;
+use sciencekit_common::{SKDataView, SKError, SKExecutionMode, SKFloat};
 use sciencekit_tree::SKTree;
+
+use super::execution::sk_map_rows;
+use super::sparse::sk_sparse_row_value;
 
 /// Euler-Mascheroni constant used in the large-`n` harmonic expansion.
 const EULER_MASCHERONI: f64 = 0.577_215_664_901_532_9;
@@ -73,4 +74,57 @@ pub(crate) fn sk_anomaly_score_from_expected_depth(
         return 0.5;
     }
     2.0_f64.powf(-expected_depth / normalizer).clamp(0.0, 1.0)
+}
+
+/// Computes positive anomaly scores `s(x, n) in [0, 1]` across all rows of a validated view.
+///
+/// Dispatches on the representation once before row evaluation and never densifies CSR views.
+pub(super) fn sk_compute_anomaly_scores<F: SKFloat>(
+    trees: &[SKTree<F>],
+    subsample_size: usize,
+    features: &SKDataView<'_, F>,
+    execution_mode: SKExecutionMode,
+) -> Result<Vec<F>, SKError> {
+    match features {
+        SKDataView::Dense(dense) => {
+            sk_map_rows(dense.nrows(), trees.len(), execution_mode, |row_index| {
+                let depth = sk_expected_path_length(trees, |feature| dense[[row_index, feature]]);
+                let anomaly = sk_anomaly_score_from_expected_depth(depth, subsample_size);
+                F::from(anomaly).expect("anomaly score fits scalar")
+            })
+        }
+        SKDataView::Sparse(sparse) => {
+            sk_map_rows(sparse.rows(), trees.len(), execution_mode, |row_index| {
+                let row = sparse.outer_view(row_index).expect("row within bounds");
+                let depth =
+                    sk_expected_path_length(trees, |feature| sk_sparse_row_value(row, feature));
+                let anomaly = sk_anomaly_score_from_expected_depth(depth, subsample_size);
+                F::from(anomaly).expect("anomaly score fits scalar")
+            })
+        }
+        _ => Err(SKError::UnsupportedRepresentation {
+            representation: features.representation(),
+            suggestion: "convert the input to a dense matrix or a CSR matrix",
+        }),
+    }
+}
+
+/// Exact linear-interpolated quantile at `probability in [0, 1]` over an ascending slice.
+pub(super) fn sk_exact_quantile<F: SKFloat>(sorted_values: &[F], probability: F) -> F {
+    let count = sorted_values.len();
+    if count == 0 {
+        return F::zero();
+    }
+    if count == 1 {
+        return sorted_values[0];
+    }
+    let position = probability * F::from(count - 1).expect("index fits scalar");
+    let lower = position.floor().to_usize().unwrap_or(0);
+    let upper = position.ceil().to_usize().unwrap_or(lower);
+    if lower == upper {
+        sorted_values[lower]
+    } else {
+        let fraction = position - F::from(lower).expect("index fits scalar");
+        sorted_values[lower] + (sorted_values[upper] - sorted_values[lower]) * fraction
+    }
 }

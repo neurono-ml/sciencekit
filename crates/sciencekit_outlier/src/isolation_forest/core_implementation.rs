@@ -1,7 +1,5 @@
 //! Configured `SKIsolationForest` estimator type.
 
-#![cfg_attr(not(test), allow(dead_code))]
-
 use sciencekit_common::{SKBackendKind, SKBuilderState, SKExecutionMode, SKFloat};
 
 use super::builder::SKIsolationForestBuilder;

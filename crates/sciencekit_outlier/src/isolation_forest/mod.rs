@@ -3,10 +3,14 @@
 mod builder;
 mod config;
 mod core_implementation;
+mod execution;
+mod fit;
+mod model;
 mod score;
 mod sparse;
 mod subsample;
 mod tree;
+mod validation;
 
 pub use builder::SKIsolationForestBuilder;
 pub use config::{
@@ -14,11 +18,14 @@ pub use config::{
     SKIsolationMaximumSamples,
 };
 pub use core_implementation::SKIsolationForest;
+pub use model::SKIsolationForestModel;
 
 #[cfg(test)]
 mod config_tests;
 #[cfg(test)]
 mod isolation_builder_tests;
+#[cfg(test)]
+mod isolation_fit_tests;
 #[cfg(test)]
 mod isolation_path_tests;
 #[cfg(test)]
