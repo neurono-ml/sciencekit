@@ -37,6 +37,8 @@ pub use writer::{
 pub use writer_builder::SKJsonDebugWriterBuilder;
 
 #[cfg(test)]
+mod acceptance_tests;
+#[cfg(test)]
 mod json_concurrency_tests;
 #[cfg(test)]
 mod json_round_trip_tests;
