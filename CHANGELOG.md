@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `sciencekit_pipeline` gains parallel feature branching and column-wise
+  concatenation (spec `feature-union`): `SKFeatureUnion` and
+  `SKFeatureUnionBuilder` (`build`/`start` for compile-time tuples up to eight
+  heterogeneous members via `SKFeatureUnionStages`, plus `boxed` with
+  `Vec<Box<dyn SKBlockTransformer<F>>>` for dynamic construction),
+  `SKFeatureUnionModel` exposing `number_of_members`, `member_widths`,
+  `number_of_features`, `number_of_output_features`,
+  `number_of_input_features`, `stages`, `fitted_stages`, `backend` and
+  `execution_mode`, CSR-preserving horizontal concatenation (all-dense outputs
+  stay dense; any sparse member promotes the union output to CSR without
+  densifying sparse inputs), member-indexed error context via
+  `SKFeatureUnionMemberError` (`fit_checked`/`transform_checked`), and direct
+  `SKPipelineTransformer` integration for both `SKFeatureUnion` and nested
+  `SKPipelineBuilder` branches.
+
 - `sciencekit_decomposition` sub-crate (spec `principal-component-analysis`):
   `SKPCA<F>`, a builder-only Principal Component Analysis estimator with
   `number_of_components` (default `None`, meaning `min(n_samples, n_features)`),

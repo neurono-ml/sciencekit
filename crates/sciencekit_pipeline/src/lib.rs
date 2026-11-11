@@ -43,11 +43,17 @@
 #![warn(missing_docs)]
 
 mod block;
+pub mod feature_union;
 pub mod pipeline;
 mod stage;
 mod stages;
 
 pub use block::{SKFeatureBlock, SKIntoFeatureBlock};
+pub use feature_union::{
+    SKAppendUnionStage, SKBlockTransformer, SKBoxedFittedStage, SKFeatureUnion,
+    SKFeatureUnionArity, SKFeatureUnionBuilder, SKFeatureUnionMemberError, SKFeatureUnionModel,
+    SKFeatureUnionStages,
+};
 pub use pipeline::{
     SKPipeline, SKPipelineBuilder, SKPipelineClassifier, SKPipelineClassifierBuilder,
     SKPipelineRegressor, SKPipelineRegressorBuilder,
