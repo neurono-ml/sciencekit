@@ -9,7 +9,7 @@
 
 ## 2. Pipelines
 
-- [ ] 2.1 Implement the trace bridge and in-memory exporter test for span names/attributes/
+- [x] 2.1 Implement the trace bridge and in-memory exporter test for span names/attributes/
   errors; verify with `cargo test -p sciencekit_telemetry traces`.
 - [ ] 2.2 Implement the log bridge and capture structured events; verify with
   `cargo test -p sciencekit_telemetry logs`.
