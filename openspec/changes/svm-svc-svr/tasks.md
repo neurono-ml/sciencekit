@@ -41,7 +41,7 @@
 - [x] 2.4 Implement the bounded LRU kernel-row cache over dense and CSR training views,
   with tests for hit/miss, eviction, row recomputation and cache-size zero; verify with
   `cargo test -p sciencekit_svm cache`.
-- [ ] 2.5 Implement the binary C-SVC SMO loop with clipping and bias recovery, and verify
+- [x] 2.5 Implement the binary C-SVC SMO loop with clipping and bias recovery, and verify
   it separates a small separable data set and matches a hand-computed dual solution on a
   two-point problem; verify with `cargo test -p sciencekit_svm svc`.
 - [ ] 2.6 Implement the epsilon-SVR SMO loop over the `2n` formulation, and verify a
