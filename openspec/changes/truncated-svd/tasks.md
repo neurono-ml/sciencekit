@@ -24,7 +24,7 @@
 - [x] 2.4 Add validation tests for empty input, zero/excessive components, invalid
   iterations/tolerance/algorithm and feature-count mismatch; verify with
   `cargo test -p sciencekit_decomposition truncated_validation`.
-- [ ] 2.5 Add repeated-fit determinism, concurrent transform and `Send + Sync` tests;
+- [x] 2.5 Add repeated-fit determinism, concurrent transform and `Send + Sync` tests;
   verify with `cargo test -p sciencekit_decomposition truncated_concurrency`.
 
 ## 3. Acceptance and review
