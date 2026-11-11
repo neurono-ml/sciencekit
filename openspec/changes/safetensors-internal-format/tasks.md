@@ -30,7 +30,7 @@
 
 ## 4. Acceptance and review
 
-- [ ] 4.1 Add `acceptance_tests/` covering tiny and large models, sharded and padded
+- [x] 4.1 Add `acceptance_tests/` covering tiny and large models, sharded and padded
   files, every compression feature, concurrent reads and corruption cases; verify with
   `cargo test -p sciencekit_interop`.
 - [ ] 4.2 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
