@@ -4,7 +4,7 @@
 #[cfg(test)]
 use std::cell::Cell;
 
-use ndarray::{Array2, ArrayView2, Axis};
+use ndarray::{Array2, ArrayView2, Axis, azip};
 use rayon::prelude::*;
 use sciencekit_common::{SKBackendKind, SKDataView, SKError};
 use sciencekit_math::backend::{SKBackendSelection, sk_math_backend_for_kind};
@@ -72,7 +72,32 @@ pub(super) fn sk_multiply_view_by_dense<F: SKBackendSelection>(
             Ok(output)
         }
         SKDataView::Sparse(sparse) => {
-            let output = sk_csr_dense_product(&sparse, &right_factor);
+            let rows_count = sparse.rows();
+            let output = if parallelism > 1 && rows_count > ROW_BLOCK_SIZE {
+                let mut buffer = Array2::<F>::zeros((rows_count, right_factor.ncols()));
+                buffer
+                    .axis_chunks_iter_mut(Axis(0), ROW_BLOCK_SIZE)
+                    .enumerate()
+                    .par_bridge()
+                    .for_each(|(chunk_index, mut output_chunk)| {
+                        let start_row = chunk_index * ROW_BLOCK_SIZE;
+                        for (offset, mut output_row) in
+                            output_chunk.rows_mut().into_iter().enumerate()
+                        {
+                            if let Some(sparse_row) = sparse.outer_view(start_row + offset) {
+                                for (column, &value) in sparse_row.iter() {
+                                    let dense_row = right_factor.row(column);
+                                    azip!((accumulator in &mut output_row, &factor in dense_row) {
+                                        *accumulator = *accumulator + value * factor;
+                                    });
+                                }
+                            }
+                        }
+                    });
+                buffer
+            } else {
+                sk_csr_dense_product(&sparse, &right_factor)
+            };
             #[cfg(test)]
             sk_record_materialized_elements(output.len());
             Ok(output)

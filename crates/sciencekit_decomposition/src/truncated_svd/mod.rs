@@ -22,6 +22,8 @@ pub use model::SKTruncatedSVDModel;
 #[cfg(test)]
 mod truncated_builder_tests;
 #[cfg(test)]
+mod truncated_concurrency_tests;
+#[cfg(test)]
 mod truncated_fit_tests;
 #[cfg(test)]
 mod truncated_model_tests;
