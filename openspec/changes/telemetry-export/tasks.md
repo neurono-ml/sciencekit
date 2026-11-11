@@ -13,7 +13,7 @@
   errors; verify with `cargo test -p sciencekit_telemetry traces`.
 - [x] 2.2 Implement the log bridge and capture structured events; verify with
   `cargo test -p sciencekit_telemetry logs`.
-- [ ] 2.3 Implement the metric bridge (duration/count/rows/columns/errors) and capture
+- [x] 2.3 Implement the metric bridge (duration/count/rows/columns/errors) and capture
   observations; verify with `cargo test -p sciencekit_telemetry metrics`.
 - [ ] 2.4 Add resource-attribute, sampler and batch configuration tests; verify with
   `cargo test -p sciencekit_telemetry pipeline`.
