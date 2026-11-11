@@ -22,7 +22,6 @@ pub enum SKTruncatedSVDAlgorithm {
 
 /// Validated configuration carried by a built `SKTruncatedSVD` estimator.
 #[derive(Debug, Clone, Copy)]
-#[allow(dead_code)]
 pub(super) struct SKTruncatedSVDConfiguration<F: SKFloat> {
     /// Number of retained singular components `k` (default `2`).
     pub(super) number_of_components: usize,
@@ -40,7 +39,6 @@ pub(super) struct SKTruncatedSVDConfiguration<F: SKFloat> {
     pub(super) builder_state: SKBuilderState,
 }
 
-#[allow(dead_code)]
 impl<F: SKFloat> SKTruncatedSVDConfiguration<F> {
     /// Returns the configured execution mode.
     pub(super) fn execution_mode(&self) -> SKExecutionMode {
