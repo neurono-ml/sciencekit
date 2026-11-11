@@ -7,5 +7,6 @@
 pub mod loss;
 
 pub use loss::{
-    SKAbsoluteErrorLoss, SKGradientLoss, SKHuberLoss, SKHuberLossBuilder, SKSquaredErrorLoss,
+    SKAbsoluteErrorLoss, SKBinaryLogLoss, SKGradientLoss, SKHuberLoss, SKHuberLossBuilder,
+    SKMulticlassLogLoss, SKMulticlassLogLossBuilder, SKSquaredErrorLoss,
 };
