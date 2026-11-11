@@ -31,6 +31,7 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+pub mod incremental_pca;
 pub mod pca;
 
 pub use pca::{SKPCA, SKPCABuilder, SKPCAModel, SKPCASolver};
