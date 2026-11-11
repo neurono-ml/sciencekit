@@ -6,6 +6,7 @@ use sciencekit_common::SKDataView;
 use sprs::CsMat;
 
 use super::dense_tests::{fixture_low_rank_matrix, relative_error};
+use super::instrumentation::{sk_largest_dense_intermediate, sk_reset_dense_intermediate};
 use super::randomized::sk_randomized_svd;
 
 /// Builds the CSR matrix of a dense fixture.
@@ -73,4 +74,47 @@ fn randomized_sparse_reconstructs_a_low_rank_matrix() {
         .expect("the sparse decomposition must succeed");
     let error = relative_error(&matrix, &result.reconstruct());
     assert!(error < 1e-8, "reconstruction error {error} is too large");
+}
+
+#[test]
+fn randomized_sparse_keeps_the_dense_intermediates_small_on_a_large_matrix() {
+    let (rows, columns) = (4_000usize, 20_000usize);
+    let mut indptr = vec![0usize];
+    let mut indices = Vec::new();
+    let mut data = Vec::new();
+    for row in 0..rows {
+        for offset in 0..5usize {
+            indices.push((row * 5 + offset) % columns);
+            data.push(1.0 + offset as f64);
+        }
+        indptr.push(indices.len());
+    }
+    let sparse = CsMat::new((rows, columns), indptr, indices, data);
+
+    sk_reset_dense_intermediate();
+    let components = 5usize;
+    let oversampling = 10usize;
+    let result = sk_randomized_svd(
+        SKDataView::Sparse(sparse.view()),
+        components,
+        2,
+        oversampling,
+        13,
+        None,
+    )
+    .expect("the sparse decomposition must succeed");
+
+    let basis_size = components + oversampling;
+    let largest = sk_largest_dense_intermediate();
+    let allowed = basis_size * rows.max(columns);
+    assert!(
+        largest <= allowed,
+        "the dense intermediate reached {largest} cells, above the allowed {allowed}"
+    );
+    assert!(
+        largest < rows * columns,
+        "a dense copy of the input was materialized: {largest} cells"
+    );
+    assert_eq!(result.u.dim(), (rows, components));
+    assert_eq!(result.v.dim(), (columns, components));
 }

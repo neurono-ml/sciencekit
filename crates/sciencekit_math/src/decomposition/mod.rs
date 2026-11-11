@@ -6,11 +6,15 @@
 //! This is a **pure dispatcher** module: `mod.rs` only declares and re-exports
 //! submodules; every implementation lives in its own file.
 
+#[cfg(test)]
+mod instrumentation;
 mod kernel;
 mod operator;
 mod projection;
+mod qr;
 mod randomized;
 mod result;
+mod small_svd;
 
 pub use projection::sk_seeded_projection;
 pub use randomized::{SKRandomizedSvdBuilder, sk_randomized_svd};

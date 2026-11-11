@@ -9,6 +9,9 @@ use sciencekit_common::{SKDataView, SKError, SKFloat};
 use sprs::CsMatView;
 
 use crate::backend::SKMathBackend;
+
+#[cfg(test)]
+use super::instrumentation::sk_record_dense_intermediate;
 use crate::sparse_ops::sk_csr_dense_product;
 
 /// A matrix operand that keeps its dense or sparse representation.
@@ -62,8 +65,18 @@ impl<'a, F: SKFloat> SKMatrixOperator<'a, F> {
         right: &ArrayView2<'_, F>,
     ) -> Array2<F> {
         match self {
-            SKMatrixOperator::Dense(dense) => backend.gemm(*dense, *right, F::one(), 1),
-            SKMatrixOperator::Sparse(sparse) => sk_csr_dense_product(sparse, right),
+            SKMatrixOperator::Dense(dense) => {
+                let output = backend.gemm(*dense, *right, F::one(), 1);
+                #[cfg(test)]
+                sk_record_dense_intermediate(output.len());
+                output
+            }
+            SKMatrixOperator::Sparse(sparse) => {
+                let output = sk_csr_dense_product(sparse, right);
+                #[cfg(test)]
+                sk_record_dense_intermediate(output.len());
+                output
+            }
         }
     }
 
@@ -79,7 +92,10 @@ impl<'a, F: SKFloat> SKMatrixOperator<'a, F> {
         match self {
             SKMatrixOperator::Dense(dense) => {
                 let transposed = dense.t().to_owned();
-                backend.gemm(transposed.view(), *right, F::one(), 1)
+                let output = backend.gemm(transposed.view(), *right, F::one(), 1);
+                #[cfg(test)]
+                sk_record_dense_intermediate(output.len());
+                output
             }
             SKMatrixOperator::Sparse(sparse) => {
                 let mut output = Array2::<F>::zeros((sparse.cols(), right.ncols()));
@@ -94,6 +110,8 @@ impl<'a, F: SKFloat> SKMatrixOperator<'a, F> {
                         }
                     }
                 }
+                #[cfg(test)]
+                sk_record_dense_intermediate(output.len());
                 output
             }
         }
