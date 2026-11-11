@@ -20,9 +20,9 @@
 
 - [x] 3.1 Add `acceptance_tests/` covering tiny and large states, all dtypes, class tables,
   metadata and corrupt inputs; verify with `cargo test -p sciencekit_interop`.
-- [ ] 3.2 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
+- [x] 3.2 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
   warnings` and `cargo test --workspace`; fix every failure before pushing.
-- [ ] 3.3 Update `CHANGELOG.md` and the companion mdBook chapter (including a
+- [x] 3.3 Update `CHANGELOG.md` and the companion mdBook chapter (including a
   `Development Explained` subsection on the JSON schema and its debug purpose); verify with
   `mdbook build docs`.
 - [ ] 3.4 Independent review by a separate agent validating every scenario in
