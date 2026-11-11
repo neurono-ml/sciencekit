@@ -67,4 +67,5 @@
   - [Go bindings: cgo over a stable C ABI](development-explained/ch36-go-bindings.md)
   - [Arrow interop: one memory model for every engine](development-explained/ch37-arrow-interop.md)
   - [GPU compute contracts: devices, buffers and honest fallbacks](development-explained/ch38-gpu-compute-contracts.md)
+  - [Feature unions: parallel branches and honest concatenation](development-explained/ch43-feature-union.md)
   - [Maintaining this book](development-explained/maintaining.md)

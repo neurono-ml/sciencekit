@@ -247,4 +247,7 @@ Interface in both directions and the columnar file sources with projection pushd
 [GPU compute contracts chapter](./ch38-gpu-compute-contracts.html) adds the device
 inventory and capabilities, the deterministic selection rule, the validated device
 buffers, the closed kernel catalogue and the execution plan that records a backend and a
-fallback reason.
+fallback reason. The
+[feature union chapter](./ch43-feature-union.html) adds parallel transformer fan-out inside
+`sciencekit_pipeline`: tuple and boxed member collections, CSR-preserving horizontal
+concatenation, member-indexed error context and nested pipeline composition.
