@@ -15,6 +15,12 @@ where
     T: Send,
     F: Fn(usize) -> Result<T, SKError> + Sync + Send,
 {
+    if execution_intent == SKExecutionMode::OutOfCoreStreaming {
+        return Err(SKError::ExecutionModeIncompatible {
+            mode: "out-of-core-streaming",
+            pattern: "random-access",
+        });
+    }
     if execution_intent == SKExecutionMode::InProcessSynchronous || number_of_trees <= 1 {
         return (0..number_of_trees).map(fit_slot).collect();
     }

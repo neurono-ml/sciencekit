@@ -42,3 +42,5 @@ mod forest_oob_tests;
 mod forest_regressor_tests;
 #[cfg(test)]
 mod forest_representation_tests;
+#[cfg(test)]
+mod forest_validation_tests;
