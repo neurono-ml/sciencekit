@@ -34,6 +34,8 @@ mod gb_classifier_multiclass_tests;
 #[cfg(test)]
 mod gb_classifier_tests;
 #[cfg(test)]
+mod gb_determinism_tests;
+#[cfg(test)]
 mod gb_importances_tests;
 #[cfg(test)]
 mod gb_regressor_builder_tests;
