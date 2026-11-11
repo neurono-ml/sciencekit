@@ -98,7 +98,6 @@ impl SKDBSCANSearchStrategy {
 /// The values are checked by the builder before an estimator exists, so every
 /// estimator in circulation holds a configuration that can be fitted.
 #[derive(Debug, Clone, Copy)]
-#[allow(dead_code)]
 pub(crate) struct SKDBSCANConfiguration<F: SKFloat> {
     /// The neighbourhood radius, strictly positive and finite.
     pub(crate) eps: F,

@@ -3,7 +3,11 @@
 use std::collections::VecDeque;
 
 use ndarray::Array1;
-use sciencekit_common::{SKClusterIdentifier, SKClusterLabel, SKError};
+use sciencekit_common::{SKClusterIdentifier, SKClusterLabel, SKError, SKFloat};
+use sciencekit_neighbors::SKTrainingData;
+
+use super::config::{SKDBSCANConfiguration, SKDBSCANSearchStrategy};
+use super::region_query::{sk_build_index, sk_radius_neighborhoods, sk_resolve_strategy};
 
 /// The learned cluster partition produced by DBSCAN expansion.
 #[derive(Debug, Clone)]
@@ -14,6 +18,25 @@ pub(crate) struct SKDBSCANExpansion {
     pub(crate) core_sample_indices: Array1<usize>,
     /// Number of distinct clusters discovered (excluding noise).
     pub(crate) number_of_clusters: usize,
+    /// Search strategy resolved for the region query (never `Auto`).
+    pub(crate) strategy: SKDBSCANSearchStrategy,
+}
+
+/// Resolve the search strategy, run the inclusive `eps` region query and expand
+/// the density-connected components deterministically.
+pub(crate) fn sk_run_dbscan_partition<F: SKFloat>(
+    configuration: &SKDBSCANConfiguration<F>,
+    training: &SKTrainingData<F>,
+) -> Result<SKDBSCANExpansion, SKError> {
+    let strategy = sk_resolve_strategy(
+        configuration.algorithm,
+        configuration.metric,
+        training.is_dense(),
+        training.columns(),
+    )?;
+    let index = sk_build_index(configuration, training, strategy)?;
+    let neighborhoods = sk_radius_neighborhoods(&index, training, configuration.eps)?;
+    sk_expand_clusters(&neighborhoods, configuration.minimum_samples, strategy)
 }
 
 /// Expand density-connected components from pre-computed `eps` neighbourhoods.
@@ -25,6 +48,7 @@ pub(crate) struct SKDBSCANExpansion {
 pub(crate) fn sk_expand_clusters(
     neighborhoods: &[Vec<usize>],
     minimum_samples: usize,
+    strategy: SKDBSCANSearchStrategy,
 ) -> Result<SKDBSCANExpansion, SKError> {
     let is_core: Vec<bool> = neighborhoods
         .iter()
@@ -72,5 +96,6 @@ pub(crate) fn sk_expand_clusters(
         labels: Array1::from_vec(labels),
         core_sample_indices,
         number_of_clusters: next_cluster_id,
+        strategy,
     })
 }
