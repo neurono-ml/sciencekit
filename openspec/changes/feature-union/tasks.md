@@ -6,7 +6,7 @@
   two-member scalar chain; verify `cargo test -p sciencekit_pipeline union` compiles.
 - [x] 1.2 Implement fit/transform over the tuple and a hand-checkable two-member
   concatenation; verify with `cargo test -p sciencekit_pipeline union_fit`.
-- [ ] 1.3 Implement dense and sparse concatenation, including the mixed policy and column
+- [x] 1.3 Implement dense and sparse concatenation, including the mixed policy and column
   offsets, with dense/sparse/mixed tests; verify with
   `cargo test -p sciencekit_pipeline union_concat`.
 
