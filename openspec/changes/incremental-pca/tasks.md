@@ -5,7 +5,7 @@
 - [x] 1.1 Create `crates/sciencekit_decomposition/src/incremental_pca/` with dispatcher
   `mod.rs`, config and accumulator; verify `cargo test -p sciencekit_decomposition
   incremental` compiles.
-- [ ] 1.2 Implement the Chan-Golub-LeVeque merge and test two-batches-equal-one-batch,
+- [x] 1.2 Implement the Chan-Golub-LeVeque merge and test two-batches-equal-one-batch,
   mean correctness and state persistence; verify with
   `cargo test -p sciencekit_decomposition incremental_merge`.
 - [ ] 1.3 Implement the sparse Gram-based accumulation and dense-vs-sparse equality without
