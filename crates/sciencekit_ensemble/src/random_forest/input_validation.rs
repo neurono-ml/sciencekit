@@ -11,7 +11,15 @@ use sprs::{CsMatView, CsVecView};
 pub(super) fn sk_fit_dimensions<F>(features: &SKDataView<'_, F>) -> Result<(usize, usize), SKError> {
     let (rows, columns) = match features {
         SKDataView::Dense(dense) => (dense.nrows(), dense.ncols()),
-        SKDataView::Sparse(sparse) => (sparse.rows(), sparse.cols()),
+        SKDataView::Sparse(sparse) => {
+            if !sparse.is_csr() {
+                return Err(SKError::UnsupportedRepresentation {
+                    representation: "csc",
+                    suggestion: "convert the sparse matrix to CSR with to_csr",
+                });
+            }
+            (sparse.rows(), sparse.cols())
+        }
         _ => {
             return Err(SKError::UnsupportedRepresentation {
                 representation: "unknown",
@@ -36,7 +44,15 @@ pub(super) fn sk_predict_dimensions<F>(
 ) -> Result<(usize, usize), SKError> {
     let (rows, columns) = match features {
         SKDataView::Dense(dense) => (dense.nrows(), dense.ncols()),
-        SKDataView::Sparse(sparse) => (sparse.rows(), sparse.cols()),
+        SKDataView::Sparse(sparse) => {
+            if !sparse.is_csr() {
+                return Err(SKError::UnsupportedRepresentation {
+                    representation: "csc",
+                    suggestion: "convert the sparse matrix to CSR with to_csr",
+                });
+            }
+            (sparse.rows(), sparse.cols())
+        }
         _ => {
             return Err(SKError::UnsupportedRepresentation {
                 representation: "unknown",

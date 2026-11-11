@@ -40,3 +40,5 @@ mod forest_importances_tests;
 mod forest_oob_tests;
 #[cfg(test)]
 mod forest_regressor_tests;
+#[cfg(test)]
+mod forest_representation_tests;
