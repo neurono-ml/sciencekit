@@ -49,16 +49,20 @@ fn truncated_validation_rejects_empty_dense_and_sparse_inputs() {
         .build()
         .unwrap();
 
-    assert_empty_input(
-        estimator.fit(&Array2::<f64>::zeros((0, 3))).unwrap_err(),
-        "fit",
-    );
-    assert_empty_input(
-        estimator.fit(&Array2::<f64>::zeros((3, 0))).unwrap_err(),
-        "fit",
-    );
-    assert_empty_input(estimator.fit(sample_csr(0, 3).view()).unwrap_err(), "fit");
-    assert_empty_input(estimator.fit(sample_csr(3, 0).view()).unwrap_err(), "fit");
+    for (zero_rows, zero_columns) in [(0, 3), (3, 0)] {
+        assert_empty_input(
+            estimator
+                .fit(&Array2::<f64>::zeros((zero_rows, zero_columns)))
+                .unwrap_err(),
+            "fit",
+        );
+        assert_empty_input(
+            estimator
+                .fit(sample_csr(zero_rows, zero_columns).view())
+                .unwrap_err(),
+            "fit",
+        );
+    }
     assert_empty_input(
         estimator
             .fit_transform(&Array2::<f64>::zeros((0, 3)))
@@ -142,35 +146,29 @@ fn truncated_validation_rejects_feature_count_mismatch_non_finite_and_csc_views(
         .unwrap();
     let fitted = estimator.fit(&training).unwrap();
 
-    assert_shape_mismatch(
-        fitted.transform(&Array2::<f64>::zeros((2, 5))).unwrap_err(),
-        [2, 4],
-        [2, 5],
-    );
-    assert_shape_mismatch(
-        fitted.transform(&Array2::<f64>::zeros((2, 0))).unwrap_err(),
-        [2, 4],
-        [2, 0],
-    );
+    for wrong_columns in [5usize, 0] {
+        assert_shape_mismatch(
+            fitted
+                .transform(&Array2::<f64>::zeros((2, wrong_columns)))
+                .unwrap_err(),
+            [2, 4],
+            [2, wrong_columns],
+        );
+    }
     assert_shape_mismatch(
         fitted.transform(sample_csr(2, 5).view()).unwrap_err(),
         [2, 4],
         [2, 5],
     );
-    assert_shape_mismatch(
-        fitted
-            .inverse_transform(&Array2::<f64>::zeros((2, 3)))
-            .unwrap_err(),
-        [2, 2],
-        [2, 3],
-    );
-    assert_shape_mismatch(
-        fitted
-            .inverse_transform(&Array2::<f64>::zeros((2, 0)))
-            .unwrap_err(),
-        [2, 2],
-        [2, 0],
-    );
+    for wrong_components in [3usize, 0] {
+        assert_shape_mismatch(
+            fitted
+                .inverse_transform(&Array2::<f64>::zeros((2, wrong_components)))
+                .unwrap_err(),
+            [2, 2],
+            [2, wrong_components],
+        );
+    }
     assert_shape_mismatch(
         fitted
             .inverse_transform(sample_csr(2, 3).view())
