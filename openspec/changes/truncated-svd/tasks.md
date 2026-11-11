@@ -32,7 +32,7 @@
 - [x] 3.1 Add `acceptance_tests/` covering tiny and large dense/sparse matrices, every
   component boundary, determinism, concurrency and metric production; verify with
   `cargo test -p sciencekit_decomposition`.
-- [ ] 3.2 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
+- [x] 3.2 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
   warnings` and `cargo test --workspace`; fix every failure before pushing.
 - [ ] 3.3 Update `CHANGELOG.md` and the companion mdBook chapter (including a
   `Development Explained` chapter on uncentered low-rank factorization and the sparse
