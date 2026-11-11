@@ -101,9 +101,11 @@ impl SKRandomizedSvdBuilder {
 /// The kernel is a randomized range finder: a seeded Gaussian test basis is
 /// projected onto the matrix, the projection is orthonormalized with a QR
 /// decomposition and refined by `number_of_power_iterations` power
-/// iterations. The small projected matrix is then decomposed with the
-/// backend's full SVD and the result is truncated to
-/// `number_of_components`.
+/// iterations. The small projected matrix is then decomposed with a small
+/// dense SVD of its `(k + oversampling) × (k + oversampling)` Gram matrix and
+/// the result is truncated to `number_of_components`. The backend's full QR
+/// and SVD are never used, so the intermediates stay thin: at most
+/// `(k + oversampling) · max(rows, columns)` values are materialized.
 ///
 /// The same `random_seed` always yields the same basis, therefore the same
 /// factorization, independently of the thread count. An optional `centering`
