@@ -7,6 +7,9 @@
 
 mod accumulator;
 mod config;
+mod merge;
 
 #[cfg(test)]
 mod incremental_accumulator_tests;
+#[cfg(test)]
+mod incremental_merge_tests;
