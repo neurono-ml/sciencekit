@@ -12,8 +12,10 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+pub mod dbscan;
 pub mod kmeans;
 
+pub use dbscan::{SKDBSCANAlgorithm, SKDBSCANMetric, SKDBSCANSearchStrategy};
 pub use kmeans::{
     SKKMeans, SKKMeansAlgorithm, SKKMeansBuilder, SKKMeansInitialization, SKKMeansModel,
 };
