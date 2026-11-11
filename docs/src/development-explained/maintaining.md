@@ -237,7 +237,10 @@ deterministic best selection, error policies and the refit. The
 [Lua bindings chapter](./ch35-lua-bindings.html) adds the embedded interpreter, userdata
 lifecycle, table conversion and the packaged module. The
 [Go bindings chapter](./ch36-go-bindings.html) adds the cgo boundary, C-owned copies,
-finalizers, structured errors and the build/CI story. The
+finalizers, structured errors and the build/CI story. Both bindings now live in their own
+repositories — [`neurono-ml/sciencekit-go`](https://github.com/neurono-ml/sciencekit-go) and
+[`neurono-ml/sciencekit-lua`](https://github.com/neurono-ml/sciencekit-lua) — and consume
+the `sciencekit_ffi` C ABI that this repository keeps. The
 [Arrow interop chapter](./ch37-arrow-interop.html) adds the neutral schema mapping, the
 borrowed primitive columns, the missing-value policies over Arrow nulls, the C Data
 Interface in both directions and the columnar file sources with projection pushdown.
