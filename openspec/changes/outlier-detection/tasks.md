@@ -6,7 +6,7 @@
   `to_i64`/`from_i64` conversions, plus `SKOutlierPredictor<F>` (`predict`,
   `decision_function`, `score_samples`), with a constant detector test; re-export both and
   verify with `cargo test -p sciencekit_common outlier`.
-- [ ] 1.2 Create `crates/sciencekit_outlier` with `Cargo.toml`, `lib.rs` and the
+- [x] 1.2 Create `crates/sciencekit_outlier` with `Cargo.toml`, `lib.rs` and the
   `isolation_forest` dispatcher; add it to `[workspace.members]`; verify
   `cargo test -p sciencekit_outlier` compiles.
 
