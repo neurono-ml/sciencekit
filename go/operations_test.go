@@ -152,6 +152,61 @@ func TestFitRejectsMismatchedTargets(t *testing.T) {
 	}
 }
 
+// namedFloat32 and namedFloat64 prove the binding honors named float types.
+type namedFloat32 float32
+type namedFloat64 float64
+
+// TestNamedFloatTypes proves dtype detection and output conversion follow the
+// underlying kind instead of exact type identity.
+func TestNamedFloatTypes(t *testing.T) {
+	if dtypeOf[namedFloat32]() != dtypeF32 {
+		t.Fatalf("expected a named float32 to map to dtype F32, got %d", dtypeOf[namedFloat32]())
+	}
+	if dtypeOf[namedFloat64]() != dtypeF64 {
+		t.Fatalf("expected a named float64 to map to dtype F64, got %d", dtypeOf[namedFloat64]())
+	}
+
+	floatFeatures := mustMatrix[namedFloat32](t, 4, 1, []namedFloat32{0, 1, 2, 3})
+	floatBuilder, err := NewLinearRegressionBuilder[namedFloat32]()
+	if err != nil {
+		t.Fatalf("NewLinearRegressionBuilder[namedFloat32]: %v", err)
+	}
+	defer floatBuilder.Close()
+	floatModel, err := floatBuilder.Fit(floatFeatures, []namedFloat32{1, 3, 5, 7})
+	if err != nil {
+		t.Fatalf("Fit[namedFloat32]: %v", err)
+	}
+	defer floatModel.Close()
+	floatPredictions, err := floatModel.Predict(floatFeatures)
+	if err != nil {
+		t.Fatalf("Predict[namedFloat32]: %v", err)
+	}
+	for index, expected := range []namedFloat32{1, 3, 5, 7} {
+		if diff := float32(floatPredictions[index] - expected); diff > 1e-4 || diff < -1e-4 {
+			t.Fatalf("named float32 prediction %d: expected %v, got %v", index, expected, floatPredictions[index])
+		}
+	}
+
+	doubleFeatures := mustMatrix[namedFloat64](t, 4, 1, []namedFloat64{0, 1, 2, 3})
+	scalerBuilder, err := NewStandardScalerBuilder[namedFloat64]()
+	if err != nil {
+		t.Fatalf("NewStandardScalerBuilder[namedFloat64]: %v", err)
+	}
+	defer scalerBuilder.Close()
+	scaler, err := scalerBuilder.Fit(doubleFeatures)
+	if err != nil {
+		t.Fatalf("Fit[namedFloat64]: %v", err)
+	}
+	defer scaler.Close()
+	transformed, err := scaler.Transform(doubleFeatures)
+	if err != nil {
+		t.Fatalf("Transform[namedFloat64]: %v", err)
+	}
+	if diff := float64(transformed.Data[0] + transformed.Data[3]); diff > 1e-8 || diff < -1e-8 {
+		t.Fatalf("expected a centered named-float64 column, got %v", transformed.Data)
+	}
+}
+
 // mustMatrix builds a matrix or fails the test.
 func mustMatrix[T Float](t *testing.T, rows, columns int, data []T) Matrix[T] {
 	t.Helper()

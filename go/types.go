@@ -1,6 +1,9 @@
 package sciencekit
 
-import "fmt"
+import (
+	"fmt"
+	"reflect"
+)
 
 // BackendKind selects the math backend the native library uses for an
 // operation.
@@ -85,13 +88,24 @@ func (matrix Matrix[T]) validate() error {
 	return nil
 }
 
-// dtypeOf maps a Go scalar type onto the ABI dtype code.
+// dtypeOf maps a Go scalar type onto the ABI dtype code. Named types are
+// accepted: the underlying kind decides the ABI dtype.
 func dtypeOf[T Float]() int32 {
 	var zero T
-	if any(zero) == any(float32(0)) {
+	if reflect.TypeOf(zero).Kind() == reflect.Float32 {
 		return dtypeF32
 	}
 	return dtypeF64
+}
+
+// convertFloatSlice converts a native payload into the caller's scalar type,
+// including named float types.
+func convertFloatSlice[T Float, S Float](values []S) []T {
+	converted := make([]T, len(values))
+	for index, value := range values {
+		converted[index] = T(value)
+	}
+	return converted
 }
 
 // validate rejects a backend code the ABI does not define.

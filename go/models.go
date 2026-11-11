@@ -184,18 +184,18 @@ func (model *StandardScalerModel[T]) finalize() {
 func nativePredict[T Float](model *nativeModel, features *descriptor) ([]T, []int64, error) {
 	if dtypeOf[T]() == dtypeF32 {
 		values, shape, err := model.predictF32(features)
-		return any(values).([]T), shape, err
+		return convertFloatSlice[T](values), shape, err
 	}
 	values, shape, err := model.predictF64(features)
-	return any(values).([]T), shape, err
+	return convertFloatSlice[T](values), shape, err
 }
 
 // nativeTransform dispatches one transform on the model's scalar type.
 func nativeTransform[T Float](model *nativeModel, features *descriptor) ([]T, []int64, error) {
 	if dtypeOf[T]() == dtypeF32 {
 		values, shape, err := model.transformF32(features)
-		return any(values).([]T), shape, err
+		return convertFloatSlice[T](values), shape, err
 	}
 	values, shape, err := model.transformF64(features)
-	return any(values).([]T), shape, err
+	return convertFloatSlice[T](values), shape, err
 }
