@@ -56,7 +56,7 @@
   `docs/documentations`): add the random-forest chapter, register it in `SUMMARY.md`, add
   a `Development Explained` chapter covering bagging, feature subsampling, OOB and
   parallel aggregation, update `maintaining.md`, and verify with `mdbook build docs`.
-- [ ] 5.3 Record the deferred missing-value routing, streaming, `memmap2` and export work
+- [x] 5.3 Record the deferred missing-value routing, streaming, `memmap2` and export work
   in `docs/PRD.md`; verify the amended paragraphs render.
 - [ ] 5.4 Independent review by a separate agent validating every scenario in
   `random-forests` against the code and tests; address every finding and re-run the gates.
