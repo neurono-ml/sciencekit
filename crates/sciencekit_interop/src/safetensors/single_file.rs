@@ -1,7 +1,7 @@
 //! Single-file Safetensors encoding and decoding over [`sciencekit_common::SKModelState`]
 //! (spec `safetensors-format`).
 
-use std::collections::{BTreeMap, HashMap};
+use std::collections::HashMap;
 
 use safetensors::SafeTensors;
 use safetensors::tensor::{TensorView, serialize};
@@ -12,6 +12,7 @@ use super::header::{
     expected_scalar_data_type,
 };
 use super::tensor_codec::{decode_tensor_payload, encode_tensor_payload};
+use super::wire_validation::validate_wire_safetensors;
 
 /// Serialize an [`SKModelState`] into standard single-file Safetensors bytes.
 pub(crate) fn encode_single_file_bytes<F: SKFloat>(
@@ -44,20 +45,7 @@ pub(crate) fn encode_single_file_bytes<F: SKFloat>(
 pub(crate) fn decode_single_file_parts<F: SKFloat>(
     bytes: &[u8],
 ) -> Result<(SKModelMetadata, Vec<SKTensor<F>>), SKError> {
-    let (_header_size, raw_metadata) = SafeTensors::read_metadata(bytes)
-        .map_err(|error| SKError::Conversion(format!("invalid Safetensors header: {error}")))?;
-    let metadata_entries: BTreeMap<String, String> = raw_metadata
-        .metadata()
-        .as_ref()
-        .map(|map| {
-            map.iter()
-                .map(|(key, value)| (key.clone(), value.clone()))
-                .collect()
-        })
-        .ok_or_else(|| {
-            SKError::Conversion("Safetensors header is missing `__metadata__`".to_string())
-        })?;
-
+    let metadata_entries = validate_wire_safetensors(bytes)?;
     let metadata = decode_metadata_header::<F>(&metadata_entries)?;
     let expected_scalar = expected_scalar_data_type::<F>();
 

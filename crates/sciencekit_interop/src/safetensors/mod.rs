@@ -10,6 +10,8 @@ mod reader;
 mod reader_builder;
 mod single_file;
 mod tensor_codec;
+mod wire_header_deserialization;
+mod wire_validation;
 mod writer;
 mod writer_builder;
 
@@ -26,6 +28,10 @@ pub use writer::{
 pub use writer_builder::SKSafetensorsWriterBuilder;
 
 #[cfg(test)]
+mod safetensors_round_trip_io_tests;
+#[cfg(test)]
 mod safetensors_round_trip_tests;
+#[cfg(test)]
+mod safetensors_validation_tests;
 #[cfg(test)]
 mod safetensors_wiring_tests;
