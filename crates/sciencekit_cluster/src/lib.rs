@@ -16,6 +16,7 @@
 
 pub mod dbscan;
 pub mod kmeans;
+pub mod minibatch_kmeans;
 
 pub use dbscan::{
     SKDBSCAN, SKDBSCANAlgorithm, SKDBSCANBuilder, SKDBSCANMetric, SKDBSCANModel,
@@ -24,6 +25,7 @@ pub use dbscan::{
 pub use kmeans::{
     SKKMeans, SKKMeansAlgorithm, SKKMeansBuilder, SKKMeansInitialization, SKKMeansModel,
 };
+pub use minibatch_kmeans::{SKMiniBatchKMeans, SKMiniBatchKMeansBuilder, SKMiniBatchKMeansModel};
 
 #[cfg(test)]
 mod acceptance_tests;
