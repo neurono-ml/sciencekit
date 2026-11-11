@@ -8,11 +8,14 @@ mod assign;
 mod builder;
 mod config;
 mod core_implementation;
+mod fit;
 mod init;
 mod model;
+mod partial_fit;
 mod reassign;
 mod state;
 mod update;
+mod validation;
 
 pub use crate::kmeans::SKKMeansInitialization;
 pub use builder::SKMiniBatchKMeansBuilder;
@@ -21,6 +24,8 @@ pub use model::SKMiniBatchKMeansModel;
 
 #[cfg(test)]
 mod minibatch_init_tests;
+#[cfg(test)]
+mod minibatch_partial_tests;
 #[cfg(test)]
 mod minibatch_reassign_tests;
 #[cfg(test)]

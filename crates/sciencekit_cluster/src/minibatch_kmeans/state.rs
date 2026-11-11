@@ -2,9 +2,12 @@
 //! `fit_streaming` (spec `mini-batch-k-means`, decisions 3–6).
 
 use ndarray::{Array1, Array2};
-use sciencekit_common::SKFloat;
+use sciencekit_common::{SKDataView, SKError, SKFloat};
 
+use super::assign::sk_assign_batch_rows;
 use super::config::SKMiniBatchKMeansConfiguration;
+use super::reassign::sk_reassign_low_count_centers;
+use super::update::sk_update_centers_and_counts;
 
 /// Running centers, per-center sample counts and batch/convergence progress.
 #[derive(Debug, Clone)]
@@ -38,5 +41,37 @@ impl<F: SKFloat> SKMiniBatchState<F> {
             last_batch_inertia: F::zero(),
             configuration,
         }
+    }
+
+    /// Processes one validated mini-batch: parallel assignment, per-center
+    /// learning-rate update, deterministic low-count reassignment and
+    /// convergence check. Returns `true` when positive-tolerance convergence is
+    /// reached.
+    pub(crate) fn apply_batch(&mut self, features: SKDataView<'_, F>) -> Result<bool, SKError> {
+        let (assignments, squared_distances) =
+            sk_assign_batch_rows(features, &self.centers.view())?;
+        self.last_batch_inertia = squared_distances
+            .iter()
+            .fold(F::zero(), |accumulator, &value| accumulator + value);
+
+        let maximum_shift = sk_update_centers_and_counts(
+            &mut self.centers,
+            &mut self.counts,
+            features,
+            &assignments,
+        )?;
+        let reassigned = sk_reassign_low_count_centers(
+            &mut self.centers,
+            &mut self.counts,
+            features,
+            &assignments,
+            self.configuration.reassignment_ratio,
+        )?;
+
+        self.batches_processed += 1;
+        self.converged = self.configuration.tolerance > F::zero()
+            && reassigned == 0
+            && maximum_shift <= self.configuration.tolerance;
+        Ok(self.converged)
     }
 }
