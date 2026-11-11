@@ -37,7 +37,7 @@
 
 ## 4. OOB, representation and validation
 
-- [ ] 4.1 Implement OOB scoring from the shared masks and test accuracy/R², no-scored-rows
+- [x] 4.1 Implement OOB scoring from the shared masks and test accuracy/R², no-scored-rows
   and the disabled case; verify with `cargo test -p sciencekit_ensemble bagging_oob`.
 - [ ] 4.2 Add representation tests with a sparse-capable base estimator and a dense-only
   base estimator, asserting the base error surfaces through `SKBaggingError::Base`; verify
