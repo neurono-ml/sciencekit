@@ -17,7 +17,7 @@
 - [x] 1.5 Write and implement the radial-basis-function kernel from the squared-distance
   dispatcher, including identical rows, distant rows, the negative-cancellation clamp and
   sparse/mixed equivalence; verify with `cargo test -p sciencekit_math kernel`.
-- [ ] 1.6 Write and implement the sigmoid kernel with gamma and coef0, plus the
+- [x] 1.6 Write and implement the sigmoid kernel with gamma and coef0, plus the
   same-logical-matrix equivalence across representations; verify with
   `cargo test -p sciencekit_math kernel`.
 - [ ] 1.7 Add the precomputed-kernel validation wrapper (square matrix, matching row
