@@ -29,6 +29,29 @@ pub(super) fn sk_validate_fit_input<F: SKFloat>(
     Ok((rows_count, columns_count, resolved_components))
 }
 
+/// Validates a `transform` or `inverse_transform` input against the expected
+/// column count and checks finiteness.
+pub(super) fn sk_validate_matrix_input<F: SKFloat>(
+    features: SKDataView<'_, F>,
+    expected_columns: usize,
+    operation: &'static str,
+) -> Result<(usize, usize), SKError> {
+    let (rows_count, found_columns) = sk_view_dimensions(&features)?;
+    if rows_count == 0 {
+        return Err(SKError::EmptyInput { operation });
+    }
+    if found_columns != expected_columns {
+        return Err(SKError::shape_mismatch_2d(
+            rows_count,
+            expected_columns,
+            rows_count,
+            found_columns,
+        ));
+    }
+    sk_validate_finiteness(features)?;
+    Ok((rows_count, found_columns))
+}
+
 /// Rejects any non-finite value (`NaN` or `±∞`), reporting its flat row-major
 /// position.
 pub(super) fn sk_validate_finiteness<F: SKFloat>(

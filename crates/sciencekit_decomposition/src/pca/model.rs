@@ -16,6 +16,7 @@ pub struct SKPCAModel<F: SKFloat> {
     pub(super) explained_variance_ratio: Array1<F>,
     pub(super) singular_values: Array1<F>,
     pub(super) mean: Array1<F>,
+    pub(super) whiten_scale: Array1<F>,
     pub(super) whiten: bool,
     pub(super) resolved_solver: SKPCASolver,
     pub(super) backend: SKBackendKind,
@@ -34,12 +35,17 @@ impl<F: SKFloat> SKPCAModel<F> {
         backend: SKBackendKind,
         builder_state: SKBuilderState,
     ) -> Self {
+        let floor = F::epsilon();
+        let whiten_scale = decomposition
+            .explained_variance
+            .mapv(|variance| variance.max(floor).sqrt());
         Self {
             components: decomposition.components,
             explained_variance: decomposition.explained_variance,
             explained_variance_ratio: decomposition.explained_variance_ratio,
             singular_values: decomposition.singular_values,
             mean,
+            whiten_scale,
             whiten,
             resolved_solver,
             backend,

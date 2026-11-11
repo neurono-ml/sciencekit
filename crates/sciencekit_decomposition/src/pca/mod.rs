@@ -10,6 +10,7 @@ mod core_implementation;
 mod fit;
 mod model;
 mod solvers;
+mod transform;
 mod validation;
 
 pub use builder::SKPCABuilder;
@@ -31,5 +32,7 @@ mod pca_full_tests;
 mod pca_randomized_tests;
 #[cfg(test)]
 mod pca_solver_tests;
+#[cfg(test)]
+mod pca_transform_tests;
 #[cfg(test)]
 mod test_tracing;
