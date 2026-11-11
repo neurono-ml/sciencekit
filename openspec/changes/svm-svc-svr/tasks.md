@@ -14,7 +14,7 @@
 - [x] 1.4 Write and implement the polynomial kernel (degree, gamma, coef0), including
   degree 1 equal to the linear kernel and a non-finite-input rejection test; verify with
   `cargo test -p sciencekit_math kernel`.
-- [ ] 1.5 Write and implement the radial-basis-function kernel from the squared-distance
+- [x] 1.5 Write and implement the radial-basis-function kernel from the squared-distance
   dispatcher, including identical rows, distant rows, the negative-cancellation clamp and
   sparse/mixed equivalence; verify with `cargo test -p sciencekit_math kernel`.
 - [ ] 1.6 Write and implement the sigmoid kernel with gamma and coef0, plus the
