@@ -15,6 +15,7 @@ mod regressor;
 mod regressor_builder;
 mod regressor_fit;
 mod regressor_model;
+mod regressor_predict;
 mod validation;
 
 pub use crate::bootstrap::SKMaximumSamples;
@@ -31,3 +32,5 @@ mod forest_builder_tests;
 mod forest_classifier_tests;
 #[cfg(test)]
 mod forest_fit_tests;
+#[cfg(test)]
+mod forest_regressor_tests;
