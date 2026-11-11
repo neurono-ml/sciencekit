@@ -14,7 +14,7 @@
   `cargo test -p sciencekit_pipeline graph_order`.
 - [x] 2.2 Implement fit over a diamond graph and compare it with the equivalent linear
   chain; verify with `cargo test -p sciencekit_pipeline graph_fit`.
-- [ ] 2.3 Implement prediction through the fitted graph and classifier/regressor wrappers;
+- [x] 2.3 Implement prediction through the fitted graph and classifier/regressor wrappers;
   verify with `cargo test -p sciencekit_pipeline graph_predict`.
 - [ ] 2.4 Implement merge nodes and document/test edge-order concatenation; verify with
   `cargo test -p sciencekit_pipeline graph_merge`.
