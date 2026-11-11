@@ -11,7 +11,7 @@
 - [x] 1.3 Add sparse×sparse, sparse×dense and dense×sparse linear-kernel paths, with
   same-logical-matrix equivalence tests and a test proving no densification; verify with
   `cargo test -p sciencekit_math kernel`.
-- [ ] 1.4 Write and implement the polynomial kernel (degree, gamma, coef0), including
+- [x] 1.4 Write and implement the polynomial kernel (degree, gamma, coef0), including
   degree 1 equal to the linear kernel and a non-finite-input rejection test; verify with
   `cargo test -p sciencekit_math kernel`.
 - [ ] 1.5 Write and implement the radial-basis-function kernel from the squared-distance
