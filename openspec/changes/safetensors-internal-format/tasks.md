@@ -25,7 +25,7 @@
 - [x] 3.1 Add optional gzip, Brotli and Snappy features and transparent compressed
   round-trips; verify with `cargo test -p sciencekit_interop --features compression-gzip`
   (and the other features).
-- [ ] 3.2 Add a missing-feature error test and magic-byte detection tests; verify with
+- [x] 3.2 Add a missing-feature error test and magic-byte detection tests; verify with
   `cargo test -p sciencekit_interop safetensors_compression`.
 
 ## 4. Acceptance and review
