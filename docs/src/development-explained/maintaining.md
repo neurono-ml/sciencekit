@@ -255,6 +255,9 @@ implicit centering and the accuracy bound against the exact decomposition. The
 seeded per-tree bootstrap sampling, de-correlated `Sqrt` feature subsampling, lock-free
 parallel CART fitting, out-of-bag accuracy and $R^2$ scoring, normalized mean feature
 importances and non-densifying CSR parity.
+The [DBSCAN chapter](./ch42-dbscan.html) adds density reachability over spatial trees and
+sparse brute force, the core/border/noise taxonomy with typed `SKClusterLabel::Noise`,
+deterministic component numbering and the nearest-core `predict_clusters` extension.
 The [JSON debug format chapter](./ch45-json-debug-format.html) adds the deterministic
 human-readable `SKModelState` schema, the pretty and compact writer, the duplicate-aware
 validating reader and the round-trip acceptance guarantees across scalar and tensor types.
