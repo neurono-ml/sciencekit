@@ -50,7 +50,7 @@
 
 ## 5. Acceptance
 
-- [ ] 5.1 Add `acceptance_tests/` covering tiny and large data (at least 10 000 rows),
+- [x] 5.1 Add `acceptance_tests/` covering tiny and large data (at least 10 000 rows),
   tree and non-tree base estimators, feature bootstrap, OOB on/off, dense/sparse, thread-
   count invariance and metric production through `sciencekit_metrics`; verify with
   `cargo test -p sciencekit_ensemble`.
