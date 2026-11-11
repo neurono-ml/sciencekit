@@ -144,8 +144,8 @@ fn sk_total_input_variance<F: SKFloat>(
                 .zip(nonzero_counts)
                 .zip(means.iter())
                 .fold(F::zero(), |accumulator, ((stored, count), &mean)| {
-                    let zero_rows =
-                        F::from(rows_count.saturating_sub(count)).expect("row count fits in scalar");
+                    let zero_rows = F::from(rows_count.saturating_sub(count))
+                        .expect("row count fits in scalar");
                     accumulator + stored + zero_rows * mean * mean
                 });
             Ok(sum_of_squares / rows_scalar)

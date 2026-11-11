@@ -2,7 +2,7 @@
 //! without sparse densification (`spec` `truncated-svd`, decision 2).
 
 #[cfg(test)]
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::cell::Cell;
 
 use ndarray::{Array2, ArrayView2, Axis};
 use rayon::prelude::*;
@@ -13,21 +13,23 @@ use sciencekit_math::sparse_ops::sk_csr_dense_product;
 pub(super) const ROW_BLOCK_SIZE: usize = 256;
 
 #[cfg(test)]
-static PEAK_MATERIALIZED_ELEMENTS: AtomicUsize = AtomicUsize::new(0);
+thread_local! {
+    static PEAK_MATERIALIZED_ELEMENTS: Cell<usize> = const { Cell::new(0) };
+}
 
 #[cfg(test)]
 pub(super) fn sk_reset_peak_materialized_elements() {
-    PEAK_MATERIALIZED_ELEMENTS.store(0, Ordering::SeqCst);
+    PEAK_MATERIALIZED_ELEMENTS.with(|peak| peak.set(0));
 }
 
 #[cfg(test)]
 pub(super) fn sk_peak_materialized_elements() -> usize {
-    PEAK_MATERIALIZED_ELEMENTS.load(Ordering::SeqCst)
+    PEAK_MATERIALIZED_ELEMENTS.with(Cell::get)
 }
 
 #[cfg(test)]
 fn sk_record_materialized_elements(elements: usize) {
-    PEAK_MATERIALIZED_ELEMENTS.fetch_max(elements, Ordering::SeqCst);
+    PEAK_MATERIALIZED_ELEMENTS.with(|peak| peak.set(peak.get().max(elements)));
 }
 
 /// Computes `left · right_factor` with a single representation dispatch per
