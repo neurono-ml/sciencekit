@@ -20,7 +20,7 @@
 - [x] 1.6 Write and implement the sigmoid kernel with gamma and coef0, plus the
   same-logical-matrix equivalence across representations; verify with
   `cargo test -p sciencekit_math kernel`.
-- [ ] 1.7 Add the precomputed-kernel validation wrapper (square matrix, matching row
+- [x] 1.7 Add the precomputed-kernel validation wrapper (square matrix, matching row
   counts) and tests for a valid matrix, a non-square matrix and a row-count mismatch;
   verify with `cargo test -p sciencekit_math kernel`.
 - [ ] 1.8 Add the row-parallel kernel path and a large-input parallel-equals-sequential
