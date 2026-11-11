@@ -10,7 +10,7 @@
 
 ## 2. Subsample and evaluation
 
-- [ ] 2.1 Implement seeded resource subsampling and stratified classification
+- [x] 2.1 Implement seeded resource subsampling and stratified classification
   subsampling; verify with `cargo test -p sciencekit_model_selection halving_subsample`.
 - [ ] 2.2 Reuse the grid-search evaluation over the subsampled folds and store round
   results; verify with `cargo test -p sciencekit_model_selection halving_evaluation`.
