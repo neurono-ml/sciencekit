@@ -37,6 +37,8 @@ mod bagging_oob_tests;
 #[cfg(test)]
 mod bagging_regressor_tests;
 #[cfg(test)]
+mod bagging_representation_tests;
+#[cfg(test)]
 mod bagging_routing_tests;
 #[cfg(test)]
 mod bagging_sampling_tests;

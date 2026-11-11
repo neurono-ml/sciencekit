@@ -29,6 +29,16 @@ impl<E> SKBaggingError<E> {
         Self::Base(error)
     }
 
+    /// Whether this error originated in central bagging validation.
+    pub fn is_central(&self) -> bool {
+        matches!(self, Self::Central(_))
+    }
+
+    /// Whether this error originated in the base estimator or model.
+    pub fn is_base(&self) -> bool {
+        matches!(self, Self::Base(_))
+    }
+
     /// Borrow the central error when this is [`SKBaggingError::Central`].
     pub fn as_central(&self) -> Option<&SKError> {
         match self {
