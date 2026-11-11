@@ -5,7 +5,7 @@
 - [x] 1.1 Implement the round scheduler and resource schedule, with the `9 → 3 → 1` and
   `10, 30, 90` tests; verify with
   `cargo test -p sciencekit_model_selection halving_scheduler`.
-- [ ] 1.2 Implement deterministic candidate ranking, tie-breaking and the elimination
+- [x] 1.2 Implement deterministic candidate ranking, tie-breaking and the elimination
   trace; verify with `cargo test -p sciencekit_model_selection halving_trace`.
 
 ## 2. Subsample and evaluation
