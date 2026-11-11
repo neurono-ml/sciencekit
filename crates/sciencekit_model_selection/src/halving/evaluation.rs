@@ -16,12 +16,12 @@ use super::trace::sk_build_round_trace;
 use super::{SKHalvingResource, SKHalvingRound};
 
 /// Input bundle for executing a successive-halving search.
-pub(crate) struct SKHalvingEvaluationRequest<'a, F: SKFloat, E> {
-    pub(crate) candidates: &'a [E],
-    pub(crate) splitter: &'a dyn SKSplitter<F>,
-    pub(crate) features: SKDataView<'a, F>,
-    pub(crate) targets: SKTargetView<'a, F>,
-    pub(crate) groups: Option<ArrayView1<'a, i64>>,
+pub(crate) struct SKHalvingEvaluationRequest<'s, 'd, F: SKFloat, E> {
+    pub(crate) candidates: &'s [E],
+    pub(crate) splitter: &'s dyn SKSplitter<F>,
+    pub(crate) features: SKDataView<'d, F>,
+    pub(crate) targets: SKTargetView<'d, F>,
+    pub(crate) groups: Option<ArrayView1<'s, i64>>,
     pub(crate) factor: usize,
     pub(crate) minimum_resource: usize,
     pub(crate) maximum_resource: Option<usize>,
@@ -59,7 +59,7 @@ impl<F: SKFloat, E: SKSupervisedFit<F>> SKSupervisedFit<F> for SKCandidateRefere
 /// Runs the successive-halving tournament across subsampled rounds.
 #[allow(dead_code)]
 pub(crate) fn sk_run_halving_search<F, E, S>(
-    request: SKHalvingEvaluationRequest<'_, F, E>,
+    request: SKHalvingEvaluationRequest<'_, '_, F, E>,
     scoring: &S,
 ) -> Result<SKHalvingSearchOutcome<F>, SKError>
 where
@@ -115,7 +115,7 @@ where
 }
 
 fn sk_validate_fit_inputs<F: SKFloat, E>(
-    request: &SKHalvingEvaluationRequest<'_, F, E>,
+    request: &SKHalvingEvaluationRequest<'_, '_, F, E>,
 ) -> Result<usize, SKError> {
     if request.candidates.is_empty() {
         return Err(SKError::InvalidHyperparameter {
@@ -170,7 +170,7 @@ fn sk_validate_fit_inputs<F: SKFloat, E>(
 }
 
 fn sk_evaluate_single_round<F, E, S>(
-    request: &SKHalvingEvaluationRequest<'_, F, E>,
+    request: &SKHalvingEvaluationRequest<'_, '_, F, E>,
     scoring: &S,
     round_index: usize,
     current_resource: usize,

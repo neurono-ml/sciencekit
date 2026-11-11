@@ -14,7 +14,7 @@ mod configuration;
 mod error_score;
 pub(crate) mod evaluation;
 pub(crate) mod observation;
-mod prediction;
+pub(crate) mod prediction;
 mod regressor;
 mod results;
 mod scoring;

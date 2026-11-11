@@ -14,9 +14,9 @@ mod subsample;
 mod trace;
 
 pub use builder::{SKHalvingGridSearchClassifierBuilder, SKHalvingGridSearchRegressorBuilder};
-pub use classifier::SKHalvingGridSearchClassifier;
+pub use classifier::{SKHalvingGridSearchClassifier, SKHalvingGridSearchClassifierModel};
 pub use configuration::SKHalvingScoring;
-pub use regressor::SKHalvingGridSearchRegressor;
+pub use regressor::{SKHalvingGridSearchRegressor, SKHalvingGridSearchRegressorModel};
 pub use resource::SKHalvingResource;
 pub use scheduler::{sk_halving_candidate_schedule, sk_halving_resource_schedule};
 pub use trace::SKHalvingRound;
