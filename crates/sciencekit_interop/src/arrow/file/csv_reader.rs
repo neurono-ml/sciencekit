@@ -1,5 +1,5 @@
-//! CSV file source with inferred or explicit schema and projection (spec
-//! `arrow-columnar-interop`).
+//! CSV file source with inferred or explicit schema and post-decode projection
+//! (spec `arrow-columnar-interop`).
 
 use std::fs::File;
 use std::io::{Seek, SeekFrom};
@@ -12,6 +12,7 @@ use arrow_schema::Schema;
 use sciencekit_common::SKError;
 
 use super::options::SKArrowFileOptions;
+use super::projected_reader::{SKArrowProjectedReader, sk_projected_schema};
 
 fn sk_csv_error(path: &Path, error: impl std::fmt::Display) -> SKError {
     SKError::Conversion(format!(
@@ -20,7 +21,9 @@ fn sk_csv_error(path: &Path, error: impl std::fmt::Display) -> SKError {
     ))
 }
 
-fn sk_csv_schema(path: &Path, options: &SKArrowFileOptions) -> Result<Schema, SKError> {
+/// Resolve the full CSV schema from an explicit override or header/row
+/// inference.
+pub(crate) fn sk_csv_schema(path: &Path, options: &SKArrowFileOptions) -> Result<Schema, SKError> {
     if let Some(schema) = &options.explicit_schema {
         return Ok(schema.clone());
     }
@@ -35,25 +38,36 @@ fn sk_csv_schema(path: &Path, options: &SKArrowFileOptions) -> Result<Schema, SK
     Ok(schema)
 }
 
-/// Open a CSV file as an Arrow reader, reading only the selected columns.
+/// Open a CSV file as an Arrow reader and project decoded batches onto the
+/// resolved column indices.
+///
+/// `arrow-csv` decodes rows eagerly against the file schema; when a column
+/// selection is active, [`SKArrowProjectedReader`] drops unselected columns and
+/// reorders the remaining ones to match `projection`.
 ///
 /// # Errors
 /// Returns [`SKError::Io`] for an unreadable file and
-/// [`SKError::Conversion`] when the schema cannot be inferred or the file is
-/// malformed.
+/// [`SKError::Conversion`] when the file is malformed.
 pub(crate) fn sk_open_csv_reader(
     path: &Path,
+    file_schema: &Schema,
     options: &SKArrowFileOptions,
+    projection: &[usize],
 ) -> Result<Box<dyn RecordBatchReader + Send>, SKError> {
-    let schema = sk_csv_schema(path, options)?;
-    // arrow-csv reports the full schema even when a projection is applied, so
-    // the source cursor owns the projection and CSV columns decode eagerly.
     let file = File::open(path)?;
-    let reader = ReaderBuilder::new(Arc::new(schema))
+    let reader = ReaderBuilder::new(Arc::new(file_schema.clone()))
         .with_header(options.has_csv_header)
         .with_delimiter(options.csv_delimiter)
         .with_batch_size(options.batch_size)
         .build(file)
         .map_err(|error| sk_csv_error(path, error))?;
-    Ok(Box::new(reader))
+    if options.selection.is_none() {
+        return Ok(Box::new(reader));
+    }
+    let projected_schema = sk_projected_schema(file_schema, projection);
+    Ok(Box::new(SKArrowProjectedReader::new(
+        Box::new(reader),
+        projected_schema,
+        Some(projection.to_vec()),
+    )))
 }

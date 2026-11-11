@@ -15,10 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`Vec<ArrayRef>` — Arrow's Rust implementation removed `Table` and
   `ChunkedArray` upstream) and batch readers into the neutral tabular seam,
   preserving column names, order, logical types and row count. Arrow validity
-  bitmaps feed the shared missing-value policy: numeric nulls become the NaN
-  sentinel or the constant fill, nullable integer columns promote to `f64` with
-  an exactness guard, the categorical policy reserves the missing code, and the
-  reject policy names the Arrow field. Primitive `f32`, `f64` and `i64` columns
+  bitmaps feed the shared missing-value policy: floating-point nulls become the
+  NaN sentinel or the constant fill, nullable integer columns retain their
+  64-bit values across import and promote at materialization with an exactness
+  guard for the target scalar (`f32` or `f64`), the categorical policy reserves
+  the missing code, and the reject policy names the Arrow field. Primitive `f32`, `f64` and `i64` columns
   without nulls expose borrowed, pointer-identical views; text columns expose a
   borrowed UTF-8 view; dictionary columns become category codes with a
   deterministic, reversible label table. The Arrow-to-neutral schema mapping and

@@ -6,49 +6,22 @@ use std::path::{Path, PathBuf};
 use arrow_schema::Schema;
 use sciencekit_common::SKError;
 
-use super::csv_reader::sk_open_csv_reader;
 use super::format::SKArrowFileFormat;
-use super::ipc_reader::{sk_open_ipc_file_reader, sk_open_ipc_stream_reader};
-use super::json_reader::sk_open_json_reader;
+use super::opener::{SKArrowFileOpener, sk_read_file_schema};
 use super::options::SKArrowFileOptions;
-use super::parquet_reader::sk_open_parquet_reader;
+use crate::arrow::source::sk_projection_indices;
 use crate::batch::SKTabularBatch;
 use crate::missing::SKMissingValuePolicy;
 use crate::selection::SKColumnSelection;
 use crate::source::SKTabularSource;
 
-/// The plain, shareable state a reader factory captures.
-///
-/// It deliberately excludes the open reader: the factory must be `Send + Sync`
-/// so a source can move across threads, while the reader lives per pass.
-#[derive(Debug, Clone)]
-struct SKArrowFileOpener {
-    path: PathBuf,
-    format: SKArrowFileFormat,
-    options: SKArrowFileOptions,
-}
-
-impl SKArrowFileOpener {
-    fn open(&self) -> Result<Box<dyn arrow_array::RecordBatchReader + Send>, SKError> {
-        let options = &self.options;
-        match self.format {
-            SKArrowFileFormat::Parquet => sk_open_parquet_reader(&self.path, options),
-            SKArrowFileFormat::Csv => sk_open_csv_reader(&self.path, options),
-            SKArrowFileFormat::IpcFile => sk_open_ipc_file_reader(&self.path, options),
-            SKArrowFileFormat::IpcStream => sk_open_ipc_stream_reader(&self.path, options),
-            SKArrowFileFormat::Json | SKArrowFileFormat::NdJson => {
-                sk_open_json_reader(&self.path, options)
-            }
-        }
-    }
-}
-
-/// A reopenable source over one columnar file.
+/// A reopenable source over one columnar or text file.
 ///
 /// Every [`open`](SKTabularSource::open) creates a fresh reader from the path,
 /// so iterative estimators receive the same batches in the same order on every
-/// pass. Only the selected columns are requested from formats that support
-/// projection pushdown (Parquet, CSV, IPC).
+/// pass. Parquet and Arrow IPC push the column projection down into the format
+/// reader so unselected columns are not decoded; CSV and record-oriented
+/// JSON/NDJSON project the selected columns after record decoding.
 pub struct SKArrowFileSource {
     path: PathBuf,
     format: SKArrowFileFormat,
@@ -95,7 +68,12 @@ impl SKArrowFileSource {
         self
     }
 
-    /// Use an explicit schema instead of the file's schema or inference.
+    /// Supply an explicit Arrow schema for text formats (`Csv`, `Json`,
+    /// `NdJson`) instead of header/record inference.
+    ///
+    /// Self-describing binary formats (`Parquet`, `IpcFile`, `IpcStream`) carry
+    /// their own schema and reject an explicit override at
+    /// [`open`](SKTabularSource::open) with [`SKError::UnsupportedOperation`].
     pub fn with_explicit_schema(mut self, schema: Schema) -> Self {
         self.options.explicit_schema = Some(schema);
         self
@@ -118,14 +96,6 @@ impl SKArrowFileSource {
         self.options.infer_json_schema = infer;
         self
     }
-
-    fn opener(&self) -> SKArrowFileOpener {
-        SKArrowFileOpener {
-            path: self.path.clone(),
-            format: self.format,
-            options: self.options.clone(),
-        }
-    }
 }
 
 impl SKTabularSource for SKArrowFileSource {
@@ -138,14 +108,21 @@ impl SKTabularSource for SKArrowFileSource {
                 reason: "a streaming batch must hold at least one row".to_string(),
             });
         }
-        let opener = self.opener();
-        let batch_source = crate::arrow::SKArrowRecordBatchSource::new(
+        let file_schema = sk_read_file_schema(&self.path, self.format, &self.options)?;
+        let projection = sk_projection_indices(&file_schema, self.options.selection.as_ref())?;
+        let opener = SKArrowFileOpener {
+            path: self.path.clone(),
+            format: self.format,
+            options: self.options.clone(),
+            file_schema,
+            projection,
+        };
+        let mut batch_source = crate::arrow::SKArrowRecordBatchSource::new(
             move || opener.open(),
-            self.options.selection.clone(),
+            None,
             self.options.batch_size,
             self.options.policy,
         )?;
-        let mut batch_source = batch_source;
         batch_source.open()?;
         self.inner = Some(batch_source);
         Ok(())

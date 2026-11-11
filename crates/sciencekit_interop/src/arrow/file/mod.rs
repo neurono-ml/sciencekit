@@ -7,13 +7,13 @@ mod csv_reader;
 mod format;
 mod ipc_reader;
 mod json_reader;
+mod opener;
 mod options;
 mod parquet_reader;
 mod projected_reader;
 mod source;
 
 pub use format::SKArrowFileFormat;
-pub use options::SKArrowFileOptions;
 pub use source::SKArrowFileSource;
 
 #[cfg(test)]
@@ -28,5 +28,7 @@ mod json_tests;
 mod large_file_tests;
 #[cfg(test)]
 mod parquet_tests;
+#[cfg(test)]
+mod projection_pushdown_tests;
 #[cfg(test)]
 mod projection_tests;

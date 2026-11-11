@@ -190,16 +190,9 @@ fn sk_trailing_empty_batches_do_not_hide_the_final_marker() {
     )
     .expect("a valid source");
     source.open().expect("an open");
-
-    let first = source
-        .next_batch()
-        .expect("a batch")
-        .expect("the non-empty batch");
+    let first = source.next_batch().expect("a batch").expect("non-empty");
     assert_eq!(first.number_of_rows(), 4);
     assert_eq!(first.position(), 0);
-    assert!(
-        first.is_final(),
-        "trailing zero-row batches must not clear the final flag"
-    );
+    assert!(first.is_final());
     assert!(source.next_batch().expect("the end").is_none());
 }

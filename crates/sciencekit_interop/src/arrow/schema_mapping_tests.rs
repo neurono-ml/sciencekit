@@ -108,8 +108,14 @@ fn sk_roles_come_from_the_request_and_from_field_metadata() {
         ),
     ]);
 
-    let tabular = sk_tabular_schema_from_arrow_schema(&schema, &roles().target("engine_target"))
-        .expect("roles resolve");
+    // `annotated` carries BOTH a `sciencekit:role` field metadata entry
+    // (`ignored`) and a conflicting request entry (`target`); field metadata
+    // takes precedence over the request.
+    let requested_roles = roles()
+        .target("engine_target")
+        .role("annotated", SKColumnRole::Target);
+    let tabular =
+        sk_tabular_schema_from_arrow_schema(&schema, &requested_roles).expect("roles resolve");
 
     assert_eq!(
         tabular.column("feature").expect("column").role(),
@@ -141,4 +147,46 @@ fn sk_round_trip_preserves_names_types_and_roles() {
     let restored =
         sk_tabular_schema_from_arrow_schema(&arrow_schema, &roles()).expect("importable");
     assert_eq!(restored, original);
+}
+
+#[test]
+fn sk_record_batch_import_with_roles_applies_caller_role_assignments() {
+    use std::sync::Arc;
+    let schema = Arc::new(Schema::new(vec![
+        Field::new("single", DataType::Float32, false),
+        Field::new("count", DataType::Int64, false),
+        Field::new("species", DataType::Utf8, false),
+    ]));
+    let batch = arrow_array::RecordBatch::try_new(
+        schema,
+        vec![
+            Arc::new(arrow_array::Float32Array::from(vec![1.5_f32])),
+            Arc::new(arrow_array::Int64Array::from(vec![2_i64])),
+            Arc::new(arrow_array::StringArray::from(vec!["a"])),
+        ],
+    )
+    .expect("a batch");
+    let assigned = roles()
+        .target("count")
+        .role("species", SKColumnRole::Ignored);
+    let tabular = super::import::sk_tabular_batch_from_record_batch_with_roles(
+        &batch,
+        &assigned,
+        crate::missing::SKMissingValuePolicy::Reject,
+        0,
+        true,
+    )
+    .expect("import with explicit roles");
+    assert_eq!(
+        tabular.schema().column("single").unwrap().role(),
+        SKColumnRole::Feature
+    );
+    assert_eq!(
+        tabular.schema().column("count").unwrap().role(),
+        SKColumnRole::Target
+    );
+    assert_eq!(
+        tabular.schema().column("species").unwrap().role(),
+        SKColumnRole::Ignored
+    );
 }

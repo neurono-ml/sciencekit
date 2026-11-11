@@ -1,10 +1,11 @@
-//! JSON and NDJSON sources (spec `arrow-columnar-interop`).
+//! Record-oriented JSON and NDJSON sources (spec `arrow-columnar-interop`).
 //!
 //! Arrow's JSON decoder reads record-oriented JSON: one object per line or a
 //! concatenated sequence of objects, which covers NDJSON and JSON-lines
-//! exports. Projection is applied by the source cursor after decoding. An
-//! explicit schema is required unless inference is opted in, because guessing
-//! types from untyped JSON silently changes a column's meaning.
+//! exports. Projection is applied after decoding onto the resolved selection
+//! indices. An explicit schema is required unless inference is opted in,
+//! because guessing types from untyped JSON silently changes a column's
+//! meaning.
 
 use std::fs::File;
 use std::io::BufReader;
@@ -18,6 +19,7 @@ use arrow_schema::Schema;
 use sciencekit_common::SKError;
 
 use super::options::SKArrowFileOptions;
+use super::projected_reader::{SKArrowProjectedReader, sk_projected_schema};
 
 fn sk_json_error(path: &Path, error: impl std::fmt::Display) -> SKError {
     SKError::Conversion(format!(
@@ -26,7 +28,9 @@ fn sk_json_error(path: &Path, error: impl std::fmt::Display) -> SKError {
     ))
 }
 
-fn sk_json_schema(path: &Path, options: &SKArrowFileOptions) -> Result<Schema, SKError> {
+/// Resolve the full JSON schema from an explicit declaration or opted-in
+/// inference.
+pub(crate) fn sk_json_schema(path: &Path, options: &SKArrowFileOptions) -> Result<Schema, SKError> {
     if let Some(schema) = &options.explicit_schema {
         return Ok(schema.clone());
     }
@@ -42,21 +46,30 @@ fn sk_json_schema(path: &Path, options: &SKArrowFileOptions) -> Result<Schema, S
     Ok(schema)
 }
 
-/// Open a JSON array document or an NDJSON file as an Arrow reader.
+/// Open a record-oriented JSON or NDJSON file as an Arrow reader and project
+/// decoded batches onto the resolved column indices.
 ///
 /// # Errors
-/// Returns [`SKError::UnsupportedOperation`] when no schema is supplied and
-/// inference is off, [`SKError::Io`] for an unreadable file and
+/// Returns [`SKError::Io`] for an unreadable file and
 /// [`SKError::Conversion`] for a malformed document.
 pub(crate) fn sk_open_json_reader(
     path: &Path,
+    file_schema: &Schema,
     options: &SKArrowFileOptions,
+    projection: &[usize],
 ) -> Result<Box<dyn RecordBatchReader + Send>, SKError> {
-    let schema = sk_json_schema(path, options)?;
     let reader = BufReader::new(File::open(path)?);
-    let json_reader = ReaderBuilder::new(Arc::new(schema))
+    let json_reader = ReaderBuilder::new(Arc::new(file_schema.clone()))
         .with_batch_size(options.batch_size)
         .build(reader)
         .map_err(|error| sk_json_error(path, error))?;
-    Ok(Box::new(json_reader))
+    if options.selection.is_none() {
+        return Ok(Box::new(json_reader));
+    }
+    let projected_schema = sk_projected_schema(file_schema, projection);
+    Ok(Box::new(SKArrowProjectedReader::new(
+        Box::new(json_reader),
+        projected_schema,
+        Some(projection.to_vec()),
+    )))
 }

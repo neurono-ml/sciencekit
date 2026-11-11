@@ -8,7 +8,7 @@ use crate::selection::SKColumnSelection;
 
 /// The options every Arrow file source shares.
 #[derive(Debug, Clone)]
-pub struct SKArrowFileOptions {
+pub(crate) struct SKArrowFileOptions {
     pub(crate) batch_size: usize,
     pub(crate) selection: Option<SKColumnSelection>,
     pub(crate) policy: SKMissingValuePolicy,

@@ -1,12 +1,12 @@
-//! Import of Arrow integer columns, including the lossless promotion required
-//! by nulls under a floating-point policy (spec `arrow-columnar-interop`).
+//! Import of Arrow integer columns into the neutral 64-bit integer column
+//! representation (spec `arrow-columnar-interop`).
 
 use arrow_array::{Array, ArrowPrimitiveType, PrimitiveArray};
 use arrow_buffer::ArrowNativeType;
 use sciencekit_common::SKError;
 
-use super::null_mapping::sk_integer_null_fill;
-use crate::columns::{SKColumnData, sk_integer_is_representable};
+use super::null_mapping::sk_validate_constant_fill_policy;
+use crate::columns::SKColumnData;
 use crate::missing::SKMissingValuePolicy;
 
 fn sk_integer_conversion_error(column_name: &str, value: &str) -> SKError {
@@ -24,27 +24,18 @@ where
         .ok_or_else(|| sk_integer_conversion_error(column_name, &format!("{value:?}")))
 }
 
-fn sk_integer_to_f64(value: i64, column_name: &str) -> Result<f64, SKError> {
-    if !sk_integer_is_representable::<f64>(value) {
-        return Err(SKError::Conversion(format!(
-            "column `{column_name}` carries the integer {value}, which cannot be represented exactly after promotion to float64; cast the column to a floating type in the adapter before import"
-        )));
-    }
-    Ok(value as f64)
-}
-
-/// Convert any Arrow integer column into a neutral column.
+/// Convert any supported Arrow integer column into [`SKColumnData::Integer64`].
 ///
-/// Complete columns stay [`SKColumnData::Integer64`]. A column carrying nulls
-/// under [`SKMissingValuePolicy::NumericNaN`] or
-/// [`SKMissingValuePolicy::ConstantFill`] is promoted to
-/// [`SKColumnData::Float64`], because the neutral integer column has no null
-/// placeholder; every value is checked for exact `f64` representation first so
-/// the promotion never truncates.
+/// Both complete and nullable columns remain [`SKColumnData::Integer64`] so the
+/// batch schema never mutates across a stream and exact `i64` magnitudes are
+/// checked against the concrete model scalar (`f32` or `f64`) at
+/// materialization time rather than truncated prematurely.
 ///
 /// # Errors
-/// Returns [`SKError::NullValueInColumn`] under the reject policy and
-/// [`SKError::Conversion`] for a value outside the neutral or promoted range.
+/// Returns [`SKError::NullValueInColumn`] when `policy` is `Reject` and the
+/// column carries nulls, [`SKError::InvalidHyperparameter`] for a non-finite
+/// constant fill, and [`SKError::Conversion`] for a value outside signed
+/// 64-bit range.
 pub(super) fn sk_integer_column<T>(
     name: &str,
     array: &PrimitiveArray<T>,
@@ -54,46 +45,20 @@ where
     T: ArrowPrimitiveType,
     T::Native: ArrowNativeType,
 {
-    if array.null_count() == 0 {
-        let values = array
-            .iter()
-            .map(|value| {
-                value
-                    .map(|value| sk_integer_to_i64::<T>(value, name).map(Some))
-                    .unwrap_or(Ok(None))
-            })
-            .collect::<Result<Vec<_>, SKError>>()?;
-        return Ok(SKColumnData::Integer64(values));
-    }
-
-    match policy {
-        SKMissingValuePolicy::CategoricalMissingCode => Ok(SKColumnData::Integer64(
-            array
-                .iter()
-                .map(|value| {
-                    value
-                        .map(|value| sk_integer_to_i64::<T>(value, name).map(Some))
-                        .unwrap_or(Ok(None))
-                })
-                .collect::<Result<Vec<_>, SKError>>()?,
-        )),
-        SKMissingValuePolicy::Reject => Err(SKError::NullValueInColumn {
+    sk_validate_constant_fill_policy(name, policy)?;
+    if policy.is_reject() && array.null_count() > 0 {
+        return Err(SKError::NullValueInColumn {
             column: name.to_string(),
             policy: policy.name(),
-        }),
-        SKMissingValuePolicy::NumericNaN | SKMissingValuePolicy::ConstantFill(_) => {
-            let fill = sk_integer_null_fill(name, policy)?;
-            let values = array
-                .iter()
-                .map(|value| match value {
-                    Some(value) => {
-                        let integer = sk_integer_to_i64::<T>(value, name)?;
-                        sk_integer_to_f64(integer, name).map(Some)
-                    }
-                    None => Ok(Some(fill)),
-                })
-                .collect::<Result<Vec<_>, SKError>>()?;
-            Ok(SKColumnData::Float64(values))
-        }
+        });
     }
+
+    let values = array
+        .iter()
+        .map(|value| match value {
+            Some(value) => sk_integer_to_i64::<T>(value, name).map(Some),
+            None => Ok(None),
+        })
+        .collect::<Result<Vec<_>, SKError>>()?;
+    Ok(SKColumnData::Integer64(values))
 }

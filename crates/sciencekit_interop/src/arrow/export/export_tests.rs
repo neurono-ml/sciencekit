@@ -1,15 +1,15 @@
 //! TDD suite for exporting predictions, blocks and sparse matrices (tasks
 //! 5.1-5.3).
 
-use arrow_array::Float64Array;
+use arrow_array::{Array, Float64Array};
 use arrow_schema::DataType;
 use ndarray::{Array1, array};
 use sciencekit_common::{SKDataBatch, SKSupervisedBatch};
 
 use super::{
     SK_ARROW_NUMBER_OF_COLUMNS_METADATA_KEY, SK_ARROW_NUMBER_OF_ROWS_METADATA_KEY,
-    SKArrowBatchExport, sk_export_csr_matrix, sk_export_data_batch, sk_export_prediction,
-    sk_export_supervised_batch,
+    SKArrowBatchExport, sk_export_csr_matrix, sk_export_data_batch, sk_export_dense_matrix,
+    sk_export_prediction, sk_export_supervised_batch,
 };
 use crate::arrow::sk_arrow_conversion_report;
 
@@ -149,4 +149,48 @@ fn sk_both_scalar_precisions_export_and_cast_reports_zero_copy_false() {
 
     assert!(!single.is_zero_copy());
     assert!(!double.is_zero_copy());
+}
+
+#[test]
+fn sk_zero_column_and_column_major_dense_matrices_export_cleanly() {
+    let zero_columns = ndarray::Array2::<f64>::zeros((3, 0));
+    let empty_export =
+        sk_export_dense_matrix(zero_columns.view(), "empty").expect("zero-column matrix exports");
+    assert_eq!(empty_export.len(), 3);
+
+    let transposed = array![[1.0_f64, 2.0, 3.0], [4.0, 5.0, 6.0]];
+    let view = transposed.t();
+    assert!(!view.is_standard_layout());
+    let exported = sk_export_dense_matrix(view, "feature").expect("column-major view exports");
+    let structure = exported
+        .as_any()
+        .downcast_ref::<arrow_array::StructArray>()
+        .expect("a struct array");
+    assert_eq!(structure.len(), 3);
+    assert_eq!(structure.num_columns(), 2);
+    let first = structure
+        .column(0)
+        .as_any()
+        .downcast_ref::<Float64Array>()
+        .expect("a float64 column");
+    assert_eq!(first.values().as_ref(), &[1.0, 2.0, 3.0]);
+}
+
+#[test]
+fn sk_sparse_supervised_batch_export_returns_unsupported_representation() {
+    let batch =
+        SKSupervisedBatch::new_sparse(csr_matrix(), Array1::from(vec![10.0, 20.0]), 0, true)
+            .expect("a sparse supervised batch");
+    let error = sk_export_supervised_batch(&batch, "target")
+        .expect_err("sparse supervised blocks have no single rectangular RecordBatch shape");
+    match error {
+        sciencekit_common::SKError::UnsupportedRepresentation {
+            representation,
+            suggestion,
+        } => {
+            assert_eq!(representation, "sparse_supervised");
+            assert!(suggestion.contains("sk_export_data_batch"), "{suggestion}");
+        }
+        other => panic!("expected UnsupportedRepresentation, got {other:?}"),
+    }
 }

@@ -29,11 +29,12 @@ pub use ffi::{
     SKArrowFfiArray, SKArrowFfiStream, sk_export_array_to_ffi,
     sk_export_record_batch_reader_to_stream, sk_import_array_from_ffi, sk_import_stream,
 };
-pub use file::{SKArrowFileFormat, SKArrowFileOptions, SKArrowFileSource};
+pub use file::{SKArrowFileFormat, SKArrowFileSource};
 pub use import::{
     SKArrowTextBorrowedView, sk_boolean_category_codes, sk_column_data_from_arrow_array,
     sk_dictionary_label_table, sk_label_tables_from_record_batch,
-    sk_tabular_batch_from_column_chunks, sk_tabular_batch_from_record_batch, sk_text_borrowed_view,
+    sk_tabular_batch_from_column_chunks, sk_tabular_batch_from_record_batch,
+    sk_tabular_batch_from_record_batch_with_roles, sk_text_borrowed_view,
 };
 pub use schema_mapping::{
     SK_ARROW_LOGICAL_TYPE_METADATA_KEY, SK_ARROW_ROLE_METADATA_KEY, SKArrowColumnRoles,
@@ -53,7 +54,13 @@ mod chunked_import_tests;
 #[cfg(test)]
 mod dictionary_import_tests;
 #[cfg(test)]
+mod dictionary_reversibility_tests;
+#[cfg(test)]
 mod null_policy_tests;
+#[cfg(test)]
+mod null_promotion_tests;
+#[cfg(test)]
+mod observability_import_tests;
 #[cfg(test)]
 mod provider_bridge_tests;
 #[cfg(test)]

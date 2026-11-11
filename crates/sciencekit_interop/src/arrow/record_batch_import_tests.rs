@@ -146,3 +146,27 @@ fn sk_sliced_record_batch_imports_the_logical_window() {
     assert_eq!(tabular.position(), 3);
     assert!(!tabular.is_final());
 }
+
+#[test]
+fn sk_utf8_feature_selected_on_numeric_path_fails_suggesting_categorical_encoding() {
+    let tabular =
+        sk_tabular_batch_from_record_batch(&sample_batch(), SKMissingValuePolicy::Reject, 0, true)
+            .expect("a valid import");
+    let selection = SKColumnSelection::builder()
+        .feature("double")
+        .feature("species")
+        .build()
+        .expect("a selection");
+
+    let error = tabular
+        .to_dense::<f64>(&selection, SKMissingValuePolicy::Reject)
+        .expect_err("nominal column rejected on numeric path");
+    let sciencekit_common::SKError::UnsupportedColumnType {
+        column, suggestion, ..
+    } = error
+    else {
+        panic!("expected UnsupportedColumnType, got {error:?}");
+    };
+    assert_eq!(column, "species");
+    assert!(suggestion.contains("category"), "{suggestion}");
+}

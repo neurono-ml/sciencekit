@@ -1,11 +1,27 @@
 //! Mapping of Arrow validity bitmaps onto the declared missing-value policy
 //! (spec `arrow-columnar-interop`).
 
-use std::num::FpCategory;
-
 use sciencekit_common::SKError;
 
 use crate::missing::SKMissingValuePolicy;
+
+/// Validate that a `ConstantFill` policy carries a finite fill value, guarding
+/// against callers who construct the enum variant directly instead of going
+/// through [`SKMissingValuePolicy::constant_fill`].
+pub(super) fn sk_validate_constant_fill_policy(
+    column_name: &str,
+    policy: SKMissingValuePolicy,
+) -> Result<(), SKError> {
+    if let SKMissingValuePolicy::ConstantFill(value) = policy {
+        if !value.is_finite() {
+            return Err(SKError::InvalidHyperparameter {
+                name: "constant_fill_value",
+                reason: format!("the fill value {value} must be finite for column `{column_name}`"),
+            });
+        }
+    }
+    Ok(())
+}
 
 /// The policy value written into a floating column at a null position.
 ///
@@ -16,6 +32,7 @@ pub(super) fn sk_float_for_null(
     column_name: &str,
     policy: SKMissingValuePolicy,
 ) -> Result<Option<f64>, SKError> {
+    sk_validate_constant_fill_policy(column_name, policy)?;
     match policy {
         SKMissingValuePolicy::Reject => Err(SKError::NullValueInColumn {
             column: column_name.to_string(),
@@ -27,10 +44,10 @@ pub(super) fn sk_float_for_null(
     }
 }
 
-/// Narrow a policy fill value to `f32` without overflowing to infinity.
+/// Narrow a finite policy fill value to `f32` without overflowing to infinity.
 pub(super) fn sk_float32_from_fill(column_name: &str, value: f64) -> Result<f32, SKError> {
     let narrowed = value as f32;
-    if narrowed.classify() == FpCategory::Infinite {
+    if !narrowed.is_finite() {
         return Err(SKError::InvalidHyperparameter {
             name: "constant_fill_value",
             reason: format!(
@@ -39,19 +56,4 @@ pub(super) fn sk_float32_from_fill(column_name: &str, value: f64) -> Result<f32,
         });
     }
     Ok(narrowed)
-}
-
-/// The replacement written into a promoted integer column at a null position.
-pub(super) fn sk_integer_null_fill(
-    column_name: &str,
-    policy: SKMissingValuePolicy,
-) -> Result<f64, SKError> {
-    match policy {
-        SKMissingValuePolicy::NumericNaN => Ok(f64::NAN),
-        SKMissingValuePolicy::ConstantFill(value) => Ok(value),
-        other => Err(SKError::NullValueInColumn {
-            column: column_name.to_string(),
-            policy: other.name(),
-        }),
-    }
 }

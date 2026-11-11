@@ -39,11 +39,14 @@ macro_rules! sk_primitive_integer_column {
 
 /// Convert one Arrow array into neutral column data under the declared policy.
 ///
-/// Arrow validity bitmaps are translated eagerly for numeric columns: a null
-/// under the numeric NaN policy becomes `NaN`, under the constant-fill policy
-/// the fill value, and under the reject policy a structured error naming the
-/// column. Text and boolean columns retain their nulls for the categorical and
-/// target paths, which own the sentinel decisions.
+/// Arrow validity bitmaps are rejected immediately under
+/// [`SKMissingValuePolicy::Reject`]. Floating-point columns materialize
+/// [`SKMissingValuePolicy::NumericNaN`] and
+/// [`SKMissingValuePolicy::ConstantFill`] into the floating buffer at import,
+/// while integer, boolean, text and dictionary columns retain `None` at null
+/// positions so downstream numeric, categorical and target extractions apply
+/// scalar precision guards and sentinel codes without mutating the batch
+/// schema.
 ///
 /// # Errors
 /// Returns [`SKError::UnsupportedColumnType`] for a type the schema mapping

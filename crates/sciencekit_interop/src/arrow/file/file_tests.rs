@@ -83,3 +83,30 @@ fn sk_zero_batch_size_is_rejected_at_open() {
     let error = source.open().expect_err("a zero batch size is invalid");
     assert!(error.to_string().contains("batch_size"), "{error}");
 }
+
+#[test]
+fn sk_self_describing_formats_reject_an_explicit_schema() {
+    let directory = tempfile::tempdir().expect("a temporary directory");
+    let path = directory.path().join("dummy.parquet");
+    let explicit = arrow_schema::Schema::new(vec![arrow_schema::Field::new(
+        "value",
+        arrow_schema::DataType::Float64,
+        false,
+    )]);
+    for format in [
+        SKArrowFileFormat::Parquet,
+        SKArrowFileFormat::IpcFile,
+        SKArrowFileFormat::IpcStream,
+    ] {
+        let mut source =
+            SKArrowFileSource::new(path.clone(), format).with_explicit_schema(explicit.clone());
+        let error = source.open().expect_err("explicit schema rejected");
+        assert!(
+            matches!(
+                error,
+                sciencekit_common::SKError::UnsupportedOperation { .. }
+            ),
+            "{error}"
+        );
+    }
+}
