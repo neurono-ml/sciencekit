@@ -4,12 +4,18 @@
 //! Pure dispatcher module: implementations live in dedicated files.
 
 mod gradient;
+mod stopping;
 mod working_set;
 
 pub use gradient::SKSmoState;
+pub use stopping::{
+    SKSmoSolution, SKSmoTracker, sk_maximal_kkt_violation, sk_recover_smo_bias,
+};
 pub use working_set::{
     SKSmoWorkingPair, sk_select_first_working_index, sk_select_working_pair,
 };
 
+#[cfg(test)]
+mod stopping_tests;
 #[cfg(test)]
 mod working_set_tests;
