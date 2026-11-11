@@ -19,7 +19,7 @@
   `cargo test -p sciencekit_decomposition truncated_transform`.
 - [x] 2.2 Implement the builder with the documented defaults and invalid-value tests;
   verify with `cargo test -p sciencekit_decomposition truncated_builder`.
-- [ ] 2.3 Implement `SKUnsupervisedFit` and the model accessors; verify with
+- [x] 2.3 Implement `SKUnsupervisedFit` and the model accessors; verify with
   `cargo test -p sciencekit_decomposition truncated_fit`.
 - [ ] 2.4 Add validation tests for empty input, zero/excessive components, invalid
   iterations/tolerance/algorithm and feature-count mismatch; verify with
