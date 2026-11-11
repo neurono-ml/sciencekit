@@ -33,6 +33,8 @@ mod forest_builder_tests;
 #[cfg(test)]
 mod forest_classifier_tests;
 #[cfg(test)]
+mod forest_concurrency_tests;
+#[cfg(test)]
 mod forest_fit_tests;
 #[cfg(test)]
 mod forest_importances_tests;
