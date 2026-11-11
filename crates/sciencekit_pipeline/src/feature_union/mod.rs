@@ -4,6 +4,7 @@
 //! Pure dispatcher module: declares and re-exports its submodules; every
 //! implementation lives in its own file.
 
+mod accessors;
 mod append;
 mod boxed;
 mod builder;
@@ -25,6 +26,8 @@ mod union_boxed_tests;
 mod union_concat_tests;
 #[cfg(test)]
 mod union_fit_tests;
+#[cfg(test)]
+mod union_model_tests;
 #[cfg(test)]
 mod union_stages_tests;
 #[cfg(test)]
