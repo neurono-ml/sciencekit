@@ -36,7 +36,7 @@
   `Full`/`CovarianceEigh` sparse rejection with alternatives, the explicit
   `allow_densification(true)` warning path and the feature-count mismatch test; verify
   with `cargo test -p sciencekit_decomposition pca_validation`.
-- [ ] 3.5 Add repeated-fit determinism, concurrent transform and `Send + Sync` tests;
+- [x] 3.5 Add repeated-fit determinism, concurrent transform and `Send + Sync` tests;
   verify with `cargo test -p sciencekit_decomposition pca_concurrency`.
 
 ## 4. Acceptance and review
