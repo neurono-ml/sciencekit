@@ -15,7 +15,7 @@
   `cargo test -p sciencekit_telemetry logs`.
 - [x] 2.3 Implement the metric bridge (duration/count/rows/columns/errors) and capture
   observations; verify with `cargo test -p sciencekit_telemetry metrics`.
-- [ ] 2.4 Add resource-attribute, sampler and batch configuration tests; verify with
+- [x] 2.4 Add resource-attribute, sampler and batch configuration tests; verify with
   `cargo test -p sciencekit_telemetry pipeline`.
 
 ## 3. Lifecycle and acceptance
