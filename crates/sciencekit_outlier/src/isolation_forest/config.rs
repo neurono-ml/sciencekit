@@ -37,10 +37,17 @@ impl<F: SKFloat> SKIsolationMaximumSamples<F> {
     }
 }
 
+impl<F> Default for SKIsolationMaximumSamples<F> {
+    fn default() -> Self {
+        Self::Auto
+    }
+}
+
 /// Contamination prior governing the decision-function threshold offset.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum SKContamination<F> {
     /// Use the fixed paper offset [`SK_ISOLATION_AUTO_OFFSET`] (`-0.5`, default).
+    #[default]
     Auto,
     /// Set the offset to this quantile in `(0, 0.5]` of the training `score_samples`.
     Fraction(F),

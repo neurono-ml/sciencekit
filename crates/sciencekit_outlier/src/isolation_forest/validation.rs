@@ -41,28 +41,38 @@ pub(super) fn sk_validate_finiteness<F: SKFloat>(
     match features {
         SKDataView::Dense(dense) => {
             let columns = dense.ncols();
-            for (row_index, row_values) in dense.rows().into_iter().enumerate() {
-                if let Some(column_index) = row_values.iter().position(|value| !value.is_finite()) {
-                    return Err(SKError::NonFiniteValue {
-                        position: row_index * columns + column_index,
+            let non_finite =
+                dense
+                    .rows()
+                    .into_iter()
+                    .enumerate()
+                    .find_map(|(row_index, row_values)| {
+                        row_values
+                            .iter()
+                            .position(|value| !value.is_finite())
+                            .map(|column_index| row_index * columns + column_index)
                     });
-                }
+            if let Some(position) = non_finite {
+                return Err(SKError::NonFiniteValue { position });
             }
             Ok(())
         }
         SKDataView::Sparse(sparse) => {
             let columns = sparse.cols();
-            for (row_index, stored_row) in sparse.outer_iterator().enumerate() {
-                let bad_entry = stored_row
-                    .indices()
-                    .iter()
-                    .zip(stored_row.data().iter())
-                    .find(|&(_, value)| !value.is_finite());
-                if let Some((&column_index, _)) = bad_entry {
-                    return Err(SKError::NonFiniteValue {
-                        position: row_index * columns + column_index,
+            let non_finite =
+                sparse
+                    .outer_iterator()
+                    .enumerate()
+                    .find_map(|(row_index, stored_row)| {
+                        stored_row
+                            .indices()
+                            .iter()
+                            .zip(stored_row.data().iter())
+                            .find(|&(_, value)| !value.is_finite())
+                            .map(|(&column_index, _)| row_index * columns + column_index)
                     });
-                }
+            if let Some(position) = non_finite {
+                return Err(SKError::NonFiniteValue { position });
             }
             Ok(())
         }

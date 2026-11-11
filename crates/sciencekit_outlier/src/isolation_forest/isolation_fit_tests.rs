@@ -95,7 +95,13 @@ fn isolation_fit_builds_seeded_ensemble_and_transfers_model_state() {
     let subscriber = tracing_subscriber::registry().with(recorder.clone());
     let model = tracing::subscriber::with_default(subscriber, || {
         tracing::callsite::rebuild_interest_cache();
-        SKUnsupervisedFit::fit(&detector, &data).unwrap()
+        let fitted = SKUnsupervisedFit::fit(&detector, &data).unwrap();
+        let _ = detector.fit_predict(&data).unwrap();
+        let _ = fitted.anomaly_scores(&data).unwrap();
+        let _ = fitted.score_samples(&data).unwrap();
+        let _ = fitted.decision_function(&data).unwrap();
+        let _ = fitted.predict(&data).unwrap();
+        fitted
     });
 
     assert_eq!(model.number_of_trees(), 24);
@@ -118,14 +124,22 @@ fn isolation_fit_builds_seeded_ensemble_and_transfers_model_state() {
     assert_ne!(model.tree(0), model.tree(1));
 
     let spans = recorder.spans.lock().unwrap();
-    assert_eq!(spans.len(), 1);
-    assert_eq!(spans[0].get("operation").map(String::as_str), Some("fit"));
-    assert_eq!(spans[0].get("rows").map(String::as_str), Some("6"));
-    assert_eq!(spans[0].get("columns").map(String::as_str), Some("3"));
+    let operations: Vec<_> = spans
+        .iter()
+        .map(|span| span.get("operation").map(String::as_str).unwrap_or(""))
+        .collect();
     assert_eq!(
-        spans[0].get("backend").map(String::as_str),
-        Some("matrixmultiply")
+        operations,
+        vec!["fit", "fit_predict", "score", "score", "predict", "predict"]
     );
+    spans.iter().for_each(|span| {
+        assert_eq!(span.get("rows").map(String::as_str), Some("6"));
+        assert_eq!(span.get("columns").map(String::as_str), Some("3"));
+        assert_eq!(
+            span.get("backend").map(String::as_str),
+            Some("matrixmultiply")
+        );
+    });
 }
 
 #[test]
