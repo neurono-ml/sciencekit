@@ -14,7 +14,7 @@
 
 ## 2. Transforms and estimator
 
-- [ ] 2.1 Implement `transform` and `inverse_transform` for dense and sparse views, with
+- [x] 2.1 Implement `transform` and `inverse_transform` for dense and sparse views, with
   shape and reconstruction tests; verify with
   `cargo test -p sciencekit_decomposition truncated_transform`.
 - [ ] 2.2 Implement the builder with the documented defaults and invalid-value tests;
