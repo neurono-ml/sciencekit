@@ -45,7 +45,7 @@
 - [x] 4.3 Add validation tests for empty input, zero estimator count, invalid fractions,
   feature-count mismatch and non-finite values; verify with
   `cargo test -p sciencekit_ensemble bagging_validation`.
-- [ ] 4.4 Add a `Send + Sync` assertion and a concurrent-prediction test sharing one
+- [x] 4.4 Add a `Send + Sync` assertion and a concurrent-prediction test sharing one
   bagging model; verify with `cargo test -p sciencekit_ensemble bagging_concurrency`.
 
 ## 5. Acceptance
