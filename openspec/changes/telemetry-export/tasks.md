@@ -24,7 +24,7 @@
   verify with `cargo test -p sciencekit_telemetry lifecycle`.
 - [x] 3.2 Add a no-op default test proving no exporter/traffic without initialization;
   verify with `cargo test -p sciencekit_telemetry noop`.
-- [ ] 3.3 Add concurrent operation/export and shutdown tests; verify with
+- [x] 3.3 Add concurrent operation/export and shutdown tests; verify with
   `cargo test -p sciencekit_telemetry concurrency`.
 - [ ] 3.4 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
   warnings` and `cargo test --workspace`; fix every failure before pushing.
