@@ -9,8 +9,8 @@ finalizers and module packaging.
 
 ## What Changes
 
-- New Go module `github.com/neurono-ml/sciencekit/go` (outside the Cargo workspace) over
-  `sciencekit_ffi`.
+- New Go module `github.com/neurono-ml/sciencekit-go`, hosted in its own repository
+  (`neurono-ml/sciencekit-go`), over `sciencekit_ffi`.
 - cgo bindings for status/version/handles/arrays and fit/predict/transform/score/save/load.
 - Go wrapper types for builders/models with `Finalizer` cleanup and explicit `Close`.
 - `[]float64`/`[]float32` matrix conversion with shape validation and output copying.
@@ -31,7 +31,8 @@ None.
 
 ## Impact
 
-- **Code:** new Go module and cgo files; no Rust workspace member.
+- **Code:** new Go module and cgo files in `neurono-ml/sciencekit-go`; no Rust workspace
+  member.
 - **APIs:** additive Go package.
 - **Dependencies:** `sciencekit_ffi` shared library; Go 1.22+.
 - **Downstream:** exposes the library to Go services.

@@ -23,7 +23,11 @@
 - [x] 3.3 Update `CHANGELOG.md` and the companion mdBook chapter (including a
   `Development Explained` subsection on cgo arrays and finalizers); verify with
   `mdbook build docs`.
-- [ ] 3.4 Independent review by a separate agent validating every scenario in
+- [x] 3.4 Extract the module into its own repository (`neurono-ml/sciencekit-go`),
+  renaming the module path to `github.com/neurono-ml/sciencekit-go`; verify by
+  running `gofmt -l`, `go vet`, `go test`, `go test -race` and
+  `GOEXPERIMENT=cgocheck2 go test` in the new repository.
+- [ ] 3.5 Independent review by a separate agent validating every scenario in
   `go-bindings`; address every finding and re-run the gates.
 
 ## Workflow follow-up

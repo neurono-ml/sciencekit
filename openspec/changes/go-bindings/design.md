@@ -3,8 +3,9 @@
 ## Context
 
 See `proposal.md` — Why. `ffi-core` defines the C ABI. Go can call it through cgo; the
-wrapper layer handles handles, arrays, errors and finalizers. The Go module lives outside
-the Cargo workspace and is tested with the native library built from the FFI crate.
+wrapper layer handles handles, arrays, errors and finalizers. The Go module lives in its
+own repository (`neurono-ml/sciencekit-go`), outside this Cargo workspace, and is tested
+with the native library built from the FFI crate.
 
 ## Goals / Non-Goals
 
@@ -38,16 +39,26 @@ on a closed handle return an error.
 
 ### Decision 4 — File layout
 
+The Go module lives in its own repository, `neurono-ml/sciencekit-go`, at the repository
+root (module path `github.com/neurono-ml/sciencekit-go`):
+
 ```
-go/
+sciencekit-go/
   go.mod
-  sciencekit.go
+  include/sciencekit.h   # vendored copy of the stable C ABI header
+  lib/                   # where the built sciencekit_ffi shared library is installed
+  cgo.go
   types.go
   arrays.go
   errors.go
   *_test.go
   examples/
+  scripts/build-native-library.sh
 ```
+
+The cgo directives resolve the header from `include/` and the shared library from `lib/`;
+`CGO_CFLAGS`, `CGO_LDFLAGS` and `LD_LIBRARY_PATH` override both. The binding's CI checks
+out the main repository, builds `sciencekit_ffi` and runs the Go suite against it.
 
 ## Risks / Trade-offs
 
@@ -56,10 +67,12 @@ go/
 - **Pointer passing rules** → use `unsafe.Pointer` only for the call duration with
   a `C.malloc` copy.
 - **ABI changes** → version query at init.
+- **Vendored header drift** → `scripts/sync-header.sh` plus a CI step that re-syncs it
+  from the main repository before the suite runs.
 
 ## Migration Plan
 
-Additive: new Go module. No Rust API changes beyond the shared FFI.
+Additive: new Go module in its own repository. No Rust API changes beyond the shared FFI.
 
 ## Open Questions
 
