@@ -58,6 +58,26 @@ pub(crate) fn sk_validate_continuation_batch<F: SKFloat>(
     sk_validate_finiteness(features)
 }
 
+/// Validates a query batch for `predict`, `predict_clusters` or `transform`.
+pub(crate) fn sk_validate_query_features<F: SKFloat>(
+    features: SKDataView<'_, F>,
+    expected_features: usize,
+    operation: &'static str,
+) -> Result<(), SKError> {
+    sk_validate_supported_representation(&features)?;
+    let (number_of_rows, found_features) = sk_view_dimensions(&features);
+    if number_of_rows == 0 {
+        return Err(SKError::EmptyInput { operation });
+    }
+    if found_features != expected_features {
+        return Err(SKError::ShapeMismatch {
+            expected: vec![number_of_rows, expected_features],
+            found: vec![number_of_rows, found_features],
+        });
+    }
+    sk_validate_finiteness(features)
+}
+
 /// Rejects representations outside Dense and CSR.
 pub(crate) fn sk_validate_supported_representation<F>(
     features: &SKDataView<'_, F>,

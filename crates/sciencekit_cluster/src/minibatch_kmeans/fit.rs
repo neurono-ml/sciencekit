@@ -66,6 +66,28 @@ impl<F: SKFloat> SKMiniBatchKMeans<F> {
             Ok(SKMiniBatchKMeansModel::from_state(state, None, inertia, 1))
         })
     }
+
+    /// Fits the estimator in memory and returns the typed training assignments.
+    pub fn fit_predict<'a, X>(&self, features: X) -> Result<Array1<SKClusterLabel>, SKError>
+    where
+        X: TryInto<SKDataView<'a, F>, Error = SKError>,
+    {
+        let features = features.try_into()?;
+        let (rows_count, columns_count) = sk_view_dimensions(&features);
+        let attributes = SKOperationAttributes {
+            operation: SKOperationKind::FitPredict,
+            rows_count,
+            columns_count,
+            execution_mode: self.configuration.execution_mode,
+            backend: self.configuration.backend,
+        };
+        sk_run_operation(attributes, || {
+            let model = sk_fit_in_memory(self, features)?;
+            Ok(model
+                .labels
+                .expect("in-memory fit always populates training assignments"))
+        })
+    }
 }
 
 pub(crate) fn sk_fit_in_memory<F: SKFloat>(

@@ -8,10 +8,12 @@ mod assign;
 mod builder;
 mod config;
 mod core_implementation;
+mod export;
 mod fit;
 mod init;
 mod model;
 mod partial_fit;
+mod predict;
 mod reassign;
 mod state;
 mod streaming;
@@ -21,12 +23,15 @@ mod validation;
 pub use crate::kmeans::SKKMeansInitialization;
 pub use builder::SKMiniBatchKMeansBuilder;
 pub use core_implementation::SKMiniBatchKMeans;
+pub use export::{SK_MINIBATCH_KMEANS_ESTIMATOR_NAME, SK_MINIBATCH_KMEANS_FORMAT_VERSION};
 pub use model::SKMiniBatchKMeansModel;
 
 #[cfg(test)]
 mod minibatch_builder_tests;
 #[cfg(test)]
 mod minibatch_init_tests;
+#[cfg(test)]
+mod minibatch_model_tests;
 #[cfg(test)]
 mod minibatch_partial_tests;
 #[cfg(test)]
