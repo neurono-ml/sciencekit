@@ -42,3 +42,5 @@ mod bagging_representation_tests;
 mod bagging_routing_tests;
 #[cfg(test)]
 mod bagging_sampling_tests;
+#[cfg(test)]
+mod bagging_validation_tests;

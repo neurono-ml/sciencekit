@@ -58,6 +58,11 @@ where
             1,
         )));
     }
+    if let Some(position) = predictions.iter().position(|value| !value.is_finite()) {
+        return Err(SKBaggingError::Central(SKError::NonFiniteValue {
+            position,
+        }));
+    }
     Ok(predictions)
 }
 

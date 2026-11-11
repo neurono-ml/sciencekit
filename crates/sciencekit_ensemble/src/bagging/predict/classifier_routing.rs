@@ -146,6 +146,22 @@ fn sk_align_member_probabilities<F: SKFloat>(
             found_columns,
         ));
     }
+    local_probabilities
+        .rows()
+        .into_iter()
+        .enumerate()
+        .try_for_each(|(row, values)| {
+            values.iter().enumerate().try_for_each(|(column, &value)| {
+                let position = row * found_columns + column;
+                if !value.is_finite() {
+                    return Err(SKError::NonFiniteValue { position });
+                }
+                if value < F::zero() || value > F::one() {
+                    return Err(SKError::ProbabilityOutOfRange { position });
+                }
+                Ok(())
+            })
+        })?;
     if found_columns == local_to_ensemble.len() {
         let mut aligned = Array2::zeros((expected_rows, number_of_classes));
         local_to_ensemble
