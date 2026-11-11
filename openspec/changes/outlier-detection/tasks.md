@@ -39,7 +39,7 @@
 
 ## 4. Acceptance and review
 
-- [ ] 4.1 Add `acceptance_tests/` covering tiny data, large data (at least 20 000 rows),
+- [x] 4.1 Add `acceptance_tests/` covering tiny data, large data (at least 20 000 rows),
   dense/sparse, contamination Auto/fraction, determinism, concurrency and metric
   production; verify with `cargo test -p sciencekit_outlier`.
 - [ ] 4.2 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
