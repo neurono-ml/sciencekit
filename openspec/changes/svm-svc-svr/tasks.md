@@ -72,7 +72,7 @@
 
 ## 4. Probability calibration
 
-- [ ] 4.1 Implement Platt scaling with deterministic five-fold cross-validated decision
+- [x] 4.1 Implement Platt scaling with deterministic five-fold cross-validated decision
   values and regularized maximum likelihood; verify monotonicity, probability bounds and
   a hand-computed binary fixture; verify with `cargo test -p sciencekit_svm platt`.
 - [ ] 4.2 Implement pairwise coupling from the binary probabilities, with convergence and
