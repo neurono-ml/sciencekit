@@ -12,6 +12,8 @@ use sciencekit_common::{
 };
 
 use super::header::SK_SAFETENSORS_FORMAT_VERSION;
+use super::shard_io::write_sharded_state_to_path;
+use super::shard_plan::{SKShardPlan, state_total_payload_bytes};
 use super::single_file::encode_single_file_bytes;
 use super::writer_builder::SKSafetensorsWriterBuilder;
 
@@ -22,6 +24,7 @@ use super::writer_builder::SKSafetensorsWriterBuilder;
 pub struct SKSafetensorsWriter {
     pub(super) plan: SKBuilderState,
     pub(super) backend: SKBackendKind,
+    pub(super) shard_plan: Option<SKShardPlan>,
 }
 
 impl SKSafetensorsWriter {
@@ -38,6 +41,11 @@ impl SKSafetensorsWriter {
     /// The configured execution intent.
     pub fn execution_mode(&self) -> SKExecutionMode {
         self.plan.execution_intent()
+    }
+
+    /// The optional shard-splitting plan.
+    pub fn shard_plan(&self) -> Option<&SKShardPlan> {
+        self.shard_plan.as_ref()
     }
 
     fn run_write_span<F: SKFloat, T>(
@@ -85,13 +93,20 @@ impl SKSafetensorsWriter {
         })
     }
 
-    /// Write `state` in Safetensors format to `path`.
+    /// Write `state` to `path`, splitting into immutable shards when `shard_plan` is exceeded.
     pub fn write_state_to_path<F: SKFloat>(
         &self,
         state: &SKModelState<F>,
         path: &Path,
     ) -> Result<(), SKError> {
         self.run_write_span(state, || {
+            if let Some(plan) = &self.shard_plan {
+                if state_total_payload_bytes(state) > plan.maximum_shard_bytes() {
+                    return write_sharded_state_to_path(state, path, plan, "safetensors", |raw| {
+                        Ok(raw.to_vec())
+                    });
+                }
+            }
             let encoded = encode_single_file_bytes(state)?;
             let file = File::create(path)?;
             let mut buffered = BufWriter::new(file);

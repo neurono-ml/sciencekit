@@ -13,9 +13,11 @@ use sciencekit_common::{
 
 use super::header::SK_SAFETENSORS_FORMAT_VERSION;
 use super::reader_builder::SKSafetensorsReaderBuilder;
+use super::shard_index::sk_safetensors_index_path;
+use super::shard_io::read_sharded_state_from_index;
 use super::single_file::decode_single_file_bytes;
 
-/// Parses and validates Safetensors files into [`SKModelState`].
+/// Parses and validates Safetensors files and shard sets into [`SKModelState`].
 ///
 /// Construct exclusively via [`SKSafetensorsReader::builder`].
 #[derive(Debug, Clone, Copy)]
@@ -90,12 +92,21 @@ impl SKSafetensorsReader {
         })
     }
 
-    /// Read and validate a Safetensors file at `path` into [`SKModelState`].
+    /// Read and validate a single Safetensors file or sharded manifest at `path`.
     pub fn read_state_from_path<F: SKFloat>(
         &self,
         path: &Path,
     ) -> Result<SKModelState<F>, SKError> {
         self.run_read_span(|| {
+            if path.to_string_lossy().ends_with(".index.json") {
+                return read_sharded_state_from_index(path, |_shard_path, raw| Ok(raw.to_vec()));
+            }
+            let companion_index = sk_safetensors_index_path(path);
+            if companion_index.exists() {
+                return read_sharded_state_from_index(&companion_index, |_shard_path, raw| {
+                    Ok(raw.to_vec())
+                });
+            }
             let file = File::open(path)?;
             let mut buffer = Vec::new();
             BufReader::new(file).read_to_end(&mut buffer)?;
@@ -112,7 +123,7 @@ impl SKSafetensorsReader {
         M::import_state(&state)
     }
 
-    /// Read a Safetensors file at `path` and reconstruct a model through [`SKImportable`].
+    /// Read a Safetensors file or shard set at `path` and reconstruct a model.
     pub fn import_from_path<F: SKFloat, M: SKImportable<F>>(
         &self,
         path: &Path,
@@ -131,7 +142,7 @@ pub fn sk_read_model_state_safetensors<F: SKFloat>(
         .read_state_from_bytes(bytes)
 }
 
-/// Read and validate a Safetensors file at `path` into an [`SKModelState`].
+/// Read and validate a Safetensors file or shard set at `path` into an [`SKModelState`].
 pub fn sk_read_model_state_safetensors_file<F: SKFloat>(
     path: &Path,
 ) -> Result<SKModelState<F>, SKError> {
@@ -149,7 +160,7 @@ pub fn sk_import_model_safetensors<F: SKFloat, M: SKImportable<F>>(
         .import_from_bytes(bytes)
 }
 
-/// Read a Safetensors file at `path` and reconstruct a model through [`SKImportable`].
+/// Read a Safetensors file or shard set at `path` and reconstruct a model through [`SKImportable`].
 pub fn sk_import_model_safetensors_file<F: SKFloat, M: SKImportable<F>>(
     path: &Path,
 ) -> Result<M, SKError> {

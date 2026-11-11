@@ -8,6 +8,9 @@ mod header;
 mod parameter_codec;
 mod reader;
 mod reader_builder;
+mod shard_index;
+mod shard_io;
+mod shard_plan;
 mod single_file;
 mod tensor_codec;
 mod wire_header_deserialization;
@@ -21,6 +24,10 @@ pub use reader::{
     sk_read_model_state_safetensors, sk_read_model_state_safetensors_file,
 };
 pub use reader_builder::SKSafetensorsReaderBuilder;
+pub use shard_index::{sk_read_safetensors_shard_index, sk_safetensors_index_path};
+pub use shard_plan::{
+    SK_DEFAULT_MAXIMUM_SHARD_BYTES, SKShardIndex, SKShardPlan, SKShardPlanBuilder,
+};
 pub use writer::{
     SKSafetensorsWriter, sk_export_model_safetensors, sk_export_model_safetensors_file,
     sk_write_model_state_safetensors, sk_write_model_state_safetensors_file,
@@ -31,6 +38,8 @@ pub use writer_builder::SKSafetensorsWriterBuilder;
 mod safetensors_round_trip_io_tests;
 #[cfg(test)]
 mod safetensors_round_trip_tests;
+#[cfg(test)]
+mod safetensors_shards_tests;
 #[cfg(test)]
 mod safetensors_validation_tests;
 #[cfg(test)]
