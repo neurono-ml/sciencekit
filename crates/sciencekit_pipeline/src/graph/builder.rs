@@ -16,6 +16,7 @@ use super::final_estimator::{
 };
 use super::graph_definition::SKPipelineGraph;
 use super::node::{GraphNodePayload, SKNodeIdentifier};
+use super::order::sk_topological_level_order;
 use super::validate::sk_validate_graph;
 
 /// Mandatory builder for [`SKPipelineGraph`].
@@ -163,9 +164,7 @@ impl<F: SKFloat> SKPipelineGraphBuilder<F> {
     /// Validate and construct a [`SKPipelineGraph`] from this builder.
     pub fn build(self) -> Result<SKPipelineGraph<F>, SKError> {
         let final_node = sk_validate_graph(&self.graph, &self.invalid_endpoints)?;
-        let topological_order = (0..self.graph.node_count())
-            .map(SKNodeIdentifier::new)
-            .collect();
+        let topological_order = sk_topological_level_order(&self.graph)?;
         Ok(SKPipelineGraph {
             graph: Arc::new(self.graph),
             topological_order,

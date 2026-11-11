@@ -56,7 +56,7 @@ pub use feature_union::{
     SKFeatureUnionStages,
 };
 pub use graph::{
-    SKBoxedFinalModel, SKNodeIdentifier, SKPipelineGraph, SKPipelineGraphBuilder,
+    SKBoxedFinalModel, SKNodeBlockStore, SKNodeIdentifier, SKPipelineGraph, SKPipelineGraphBuilder,
     SKPipelineGraphNodeKind,
 };
 pub use pipeline::{
