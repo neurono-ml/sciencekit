@@ -85,6 +85,20 @@ func TestDescriptorFromFloat32Matrix(t *testing.T) {
 	}
 }
 
+// TestOutputShapeMismatchIsStructured proves a native contract violation maps
+// to a ScienceKitError instead of an unclassified fmt error.
+func TestOutputShapeMismatchIsStructured(t *testing.T) {
+	if _, err := vectorFromValues([]float64{1}, []int64{1, 1}); !IsStatus(err, StatusInternal) {
+		t.Fatalf("expected a structured internal error, got %v", err)
+	}
+	if _, err := matrixFromValues([]float64{1}, []int64{1}); !IsStatus(err, StatusInternal) {
+		t.Fatalf("expected a structured internal error, got %v", err)
+	}
+	if _, err := vectorFromValues([]float64{1}, []int64{2}); !IsStatus(err, StatusInternal) {
+		t.Fatalf("expected a structured shape error, got %v", err)
+	}
+}
+
 // TestDescriptorRejectsMalformedMatrix proves shape validation happens in Go,
 // before any native call.
 func TestDescriptorRejectsMalformedMatrix(t *testing.T) {

@@ -71,13 +71,13 @@ type descriptor struct {
 func newDescriptor[T Float](dtype int32, shape []int64, values []T) (*descriptor, error) {
 	raw := (*C.SKFfiArray)(C.calloc(1, C.size_t(C.sizeof_SKFfiArray)))
 	if raw == nil {
-		return nil, errOutOfMemory
+		return nil, allocationError("array")
 	}
 
 	shapeMemory := (*C.int64_t)(C.malloc(C.size_t(len(shape)) * C.size_t(unsafe.Sizeof(C.int64_t(0)))))
 	if shapeMemory == nil {
 		C.free(unsafe.Pointer(raw))
-		return nil, errOutOfMemory
+		return nil, allocationError("array")
 	}
 	copy(unsafe.Slice((*int64)(unsafe.Pointer(shapeMemory)), len(shape)), shape)
 
@@ -86,7 +86,7 @@ func newDescriptor[T Float](dtype int32, shape []int64, values []T) (*descriptor
 	if dataMemory == nil {
 		C.free(unsafe.Pointer(shapeMemory))
 		C.free(unsafe.Pointer(raw))
-		return nil, errOutOfMemory
+		return nil, allocationError("array")
 	}
 	copy(unsafe.Slice((*T)(dataMemory), len(values)), values)
 

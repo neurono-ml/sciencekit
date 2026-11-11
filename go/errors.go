@@ -78,8 +78,10 @@ func closedError(operation string) error {
 	return newError(StatusInvalidHandle, operation, "the handle is closed")
 }
 
-// errOutOfMemory reports a failed native or C-heap allocation.
-var errOutOfMemory = errors.New("cannot allocate the output descriptor")
+// allocationError reports a failed C-heap allocation in the binding.
+func allocationError(operation string) error {
+	return newError(StatusInternal, operation, "cannot allocate the C buffer")
+}
 
 // validationError reports a Go-side shape failure, raised before any native
 // call.

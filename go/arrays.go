@@ -27,7 +27,11 @@ func descriptorFromVector[T Float](values []T) (*descriptor, error) {
 // matrixFromValues copies a native row-major payload back into a Go matrix.
 func matrixFromValues[T Float](values []T, shape []int64) (Matrix[T], error) {
 	if len(shape) != 2 {
-		return Matrix[T]{}, fmt.Errorf("sciencekit: expected a two-dimensional output, got %d dimensions", len(shape))
+		return Matrix[T]{}, newError(
+			StatusInternal,
+			"output_shape",
+			fmt.Sprintf("expected a two-dimensional output, got %d dimensions", len(shape)),
+		)
 	}
 	return NewMatrix(int(shape[0]), int(shape[1]), values)
 }
@@ -36,10 +40,18 @@ func matrixFromValues[T Float](values []T, shape []int64) (Matrix[T], error) {
 // slice.
 func vectorFromValues[T Float](values []T, shape []int64) ([]T, error) {
 	if len(shape) != 1 {
-		return nil, fmt.Errorf("sciencekit: expected a one-dimensional output, got %d dimensions", len(shape))
+		return nil, newError(
+			StatusInternal,
+			"output_shape",
+			fmt.Sprintf("expected a one-dimensional output, got %d dimensions", len(shape)),
+		)
 	}
 	if int(shape[0]) != len(values) {
-		return nil, fmt.Errorf("sciencekit: output shape %d does not match %d values", shape[0], len(values))
+		return nil, newError(
+			StatusInternal,
+			"output_shape",
+			fmt.Sprintf("output shape %d does not match %d values", shape[0], len(values)),
+		)
 	}
 	return values, nil
 }

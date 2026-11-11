@@ -66,7 +66,7 @@ func (model *nativeModel) inferF64(operation string, invoke func(*C.SKFfiArray) 
 	defer runtime.UnlockOSThread()
 	output, err := newOutputDescriptor()
 	if err != nil {
-		return nil, nil, newError(StatusInternal, operation, err.Error())
+		return nil, nil, err
 	}
 	defer C.free(unsafe.Pointer(output))
 	if err := statusError(operation, invoke(output)); err != nil {
@@ -86,7 +86,7 @@ func (model *nativeModel) inferF32(operation string, invoke func(*C.SKFfiArray) 
 	defer runtime.UnlockOSThread()
 	output, err := newOutputDescriptor()
 	if err != nil {
-		return nil, nil, newError(StatusInternal, operation, err.Error())
+		return nil, nil, err
 	}
 	defer C.free(unsafe.Pointer(output))
 	if err := statusError(operation, invoke(output)); err != nil {
@@ -152,7 +152,7 @@ func loadNativeModel(path string) (*nativeModel, error) {
 func newOutputDescriptor() (*C.SKFfiArray, error) {
 	output := (*C.SKFfiArray)(C.calloc(1, C.size_t(C.sizeof_SKFfiArray)))
 	if output == nil {
-		return nil, errOutOfMemory
+		return nil, allocationError("output")
 	}
 	return output, nil
 }
