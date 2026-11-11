@@ -12,7 +12,7 @@
 
 ## 2. Boxed fallback and errors
 
-- [ ] 2.1 Implement the boxed dynamic union and a test that it matches the tuple union;
+- [x] 2.1 Implement the boxed dynamic union and a test that it matches the tuple union;
   verify with `cargo test -p sciencekit_pipeline union_boxed`.
 - [ ] 2.2 Implement member-index error wrapping, row-count mismatch and empty-union
   validation; verify with `cargo test -p sciencekit_pipeline union_validation`.
