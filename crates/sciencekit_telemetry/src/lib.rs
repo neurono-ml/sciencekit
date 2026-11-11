@@ -24,4 +24,6 @@ pub use configuration::{
     SKTelemetryBatchConfiguration, SKTelemetryBatchConfigurationBuilder, SKTelemetryConfiguration,
     SKTelemetryConfigurationBuilder, SKTelemetryResource, SKTelemetrySampler, SKTelemetryTransport,
 };
-pub use pipeline::{sk_build_trace_layer, sk_build_tracer_provider};
+pub use pipeline::{
+    sk_build_log_layer, sk_build_logger_provider, sk_build_trace_layer, sk_build_tracer_provider,
+};
