@@ -5,7 +5,7 @@
 - [x] 1.1 Create `crates/sciencekit_interop` with `Cargo.toml`, `lib.rs` and the
   `safetensors` dispatcher; add it to `[workspace.members]`; verify
   `cargo test -p sciencekit_interop` compiles.
-- [ ] 1.2 Implement metadata header encode/decode and a single-file round-trip for a mock
+- [x] 1.2 Implement metadata header encode/decode and a single-file round-trip for a mock
   state; verify with `cargo test -p sciencekit_interop safetensors_round_trip`.
 - [ ] 1.3 Add dtype/shape/offset validation and corrupt-file tests (truncated, wrong
   offset, duplicate name); verify with
