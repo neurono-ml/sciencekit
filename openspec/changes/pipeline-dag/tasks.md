@@ -21,7 +21,7 @@
 
 ## 3. Representation, concurrency and acceptance
 
-- [ ] 3.1 Add dense/sparse flow tests, a representation rejection with node id and no
+- [x] 3.1 Add dense/sparse flow tests, a representation rejection with node id and no
   implicit densification; verify with `cargo test -p sciencekit_pipeline graph_representation`.
 - [ ] 3.2 Add repeated-fit determinism, concurrent prediction and `Send + Sync` tests;
   verify with `cargo test -p sciencekit_pipeline graph_concurrency`.
