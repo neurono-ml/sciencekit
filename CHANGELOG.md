@@ -13,6 +13,31 @@ Arrow interop, the GPU compute contracts, the randomized SVD kernel and the lang
 
 ### Added
 
+- Human-readable JSON debug model format (spec `json-debug-format`):
+  `sciencekit_interop::json` adds `SKJsonDebugWriter` /
+  `SKJsonDebugWriterBuilder`, `SKJsonDebugReader` / `SKJsonDebugReaderBuilder`,
+  `SKJsonFormatMode` (`Pretty` default, `Compact`),
+  `SK_JSON_DEBUG_FORMAT_VERSION` (`1`) and the convenience entry points
+  `sk_write_model_state_json`, `sk_write_model_state_json_pretty`,
+  `sk_write_model_state_json_compact`, `sk_write_model_state_json_file`,
+  `sk_read_model_state_json`, `sk_read_model_state_json_file`,
+  `sk_export_model_json` and `sk_import_model_json` over
+  `sciencekit_common::SKModelState`. Both builders follow the shared builder
+  contract with `backend` (default `Faer`) and `execution_mode` (default
+  `Automatic`), and every write or read emits a structured `tracing` span. The
+  schema records `format_version`, `estimator`, scalar `dtype` (`"f32"` or
+  `"f64"`), `feature_count`, optional `class_labels`, untagged typed
+  `hyperparameters` and `BTreeMap`-ordered named `tensors` carrying `dtype`
+  (`"F32"`, `"F64"`, `"I64"` or `"Bool"`), `shape` and flat `values` for clean
+  line-oriented diffs and exact `f32`/`f64` round-trips. Unknown fields within
+  major version `1` are ignored for forward compatibility, while malformed JSON
+  (`SKError::Conversion`), unknown major versions
+  (`SKError::UnsupportedRepresentation`), non-finite floats
+  (`SKError::NonFiniteValue`), duplicate tensor or hyperparameter keys, invalid
+  or mismatched dtypes (`SKError::InvalidHyperparameter`) and tensor
+  shape/value-count disagreements (`SKError::ShapeMismatch`) are rejected up
+  front before materializing model state.
+
 - Randomized SVD kernel (spec `randomized-svd`): `sciencekit_math::decomposition`
   gains `sk_randomized_svd` and the builder `SKRandomizedSvdBuilder`, returning
   `SKRandomizedSvdResult` (left singular vectors, non-increasing singular
