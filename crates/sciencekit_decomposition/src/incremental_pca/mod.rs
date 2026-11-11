@@ -28,6 +28,8 @@ mod incremental_accumulator_tests;
 #[cfg(test)]
 mod incremental_builder_tests;
 #[cfg(test)]
+mod incremental_concurrency_tests;
+#[cfg(test)]
 mod incremental_finalize_tests;
 #[cfg(test)]
 mod incremental_fit_tests;
