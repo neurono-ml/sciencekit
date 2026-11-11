@@ -2,7 +2,7 @@
 
 ## 1. Kernel functions in `sciencekit_math`
 
-- [ ] 1.1 Add `kernels` module scaffold (`mod.rs` dispatcher, `config.rs` with `SKKernel`
+- [x] 1.1 Add `kernels` module scaffold (`mod.rs` dispatcher, `config.rs` with `SKKernel`
   and `SKKernelGamma`) and tests for default gamma resolution `Scale`/`Auto`/`Value` and
   invalid parameters; verify with `cargo test -p sciencekit_math kernel`.
 - [ ] 1.2 Write and implement the linear kernel for dense inputs, with known dot products,
