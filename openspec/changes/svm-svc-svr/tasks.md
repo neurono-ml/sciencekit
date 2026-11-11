@@ -23,7 +23,7 @@
 - [x] 1.7 Add the precomputed-kernel validation wrapper (square matrix, matching row
   counts) and tests for a valid matrix, a non-square matrix and a row-count mismatch;
   verify with `cargo test -p sciencekit_math kernel`.
-- [ ] 1.8 Add the row-parallel kernel path and a large-input parallel-equals-sequential
+- [x] 1.8 Add the row-parallel kernel path and a large-input parallel-equals-sequential
   test; verify with `cargo test -p sciencekit_math kernel`.
 
 ## 2. SVM crate scaffold and SMO core
