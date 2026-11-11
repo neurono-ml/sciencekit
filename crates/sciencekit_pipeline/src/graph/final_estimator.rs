@@ -19,7 +19,6 @@ pub struct SKBoxedFinalModel<F: SKFloat> {
     predictor: FinalPredictorKind<F>,
 }
 
-#[allow(dead_code)]
 pub(super) enum FinalPredictorKind<F: SKFloat> {
     Classifier(Box<dyn ErasedClassifierModel<F>>),
     Regressor(Box<dyn ErasedRegressorModel<F>>),
@@ -125,7 +124,6 @@ where
 }
 
 pub(super) trait GraphFinalEstimator<F: SKFloat>: Send + Sync {
-    #[allow(dead_code)]
     fn fit_final_block(
         &self,
         block: &SKFeatureBlock<F>,

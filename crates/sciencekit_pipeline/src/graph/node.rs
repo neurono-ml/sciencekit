@@ -45,7 +45,6 @@ pub enum SKPipelineGraphNodeKind {
 }
 
 impl SKPipelineGraphNodeKind {
-    #[allow(dead_code)]
     pub(super) const fn label(self) -> &'static str {
         match self {
             Self::Transformer => "transformer",
@@ -56,7 +55,6 @@ impl SKPipelineGraphNodeKind {
     }
 }
 
-#[allow(dead_code)]
 pub(super) enum GraphNodePayload<F: SKFloat> {
     Transformer(Box<dyn SKBlockTransformer<F>>),
     FeatureUnion(Box<dyn SKBlockTransformer<F>>),

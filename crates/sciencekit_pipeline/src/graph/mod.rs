@@ -6,20 +6,28 @@
 
 mod builder;
 mod builder_accessors;
+mod errors;
+mod execute;
 mod final_estimator;
 mod graph_definition;
+mod merge;
+mod model;
 mod node;
 mod order;
 mod validate;
 
 pub use builder::SKPipelineGraphBuilder;
+pub use errors::SKPipelineGraphNodeError;
 pub use final_estimator::SKBoxedFinalModel;
 pub use graph_definition::SKPipelineGraph;
+pub use model::SKPipelineGraphModel;
 pub use node::{SKNodeIdentifier, SKPipelineGraphNodeKind};
 pub use order::SKNodeBlockStore;
 
 #[cfg(test)]
 mod graph_builder_tests;
+#[cfg(test)]
+mod graph_fit_tests;
 #[cfg(test)]
 mod graph_order_tests;
 #[cfg(test)]

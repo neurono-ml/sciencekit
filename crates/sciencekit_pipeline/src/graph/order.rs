@@ -18,7 +18,6 @@ pub struct SKNodeBlockStore<F: SKFloat> {
 
 impl<F: SKFloat> SKNodeBlockStore<F> {
     /// Construct an empty per-node block store.
-    #[allow(dead_code)]
     pub(crate) fn new() -> Self {
         Self {
             blocks: BTreeMap::new(),
@@ -26,7 +25,6 @@ impl<F: SKFloat> SKNodeBlockStore<F> {
     }
 
     /// Record `block` as the output associated with `node`.
-    #[allow(dead_code)]
     pub(crate) fn insert(&mut self, node: SKNodeIdentifier, block: SKFeatureBlock<F>) {
         self.blocks.insert(node, block);
     }
