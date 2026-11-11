@@ -23,7 +23,7 @@
 - [x] 2.4 Implement `fit_streaming` over `SKSourceProvider` with one-pass and reopenable
   multi-epoch tests; verify with
   `cargo test -p sciencekit_decomposition incremental_streaming`.
-- [ ] 2.5 Implement `transform`, `inverse_transform` and whitening for dense and sparse
+- [x] 2.5 Implement `transform`, `inverse_transform` and whitening for dense and sparse
   views, with shape and unit-variance tests; verify with
   `cargo test -p sciencekit_decomposition incremental_transform`.
 
