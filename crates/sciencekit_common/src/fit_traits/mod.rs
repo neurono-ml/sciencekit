@@ -16,6 +16,7 @@
 //! submodules; every implementation lives in its own file.
 
 mod clusterer;
+mod outlier;
 mod predictor;
 mod supervised;
 mod transformer;
@@ -24,6 +25,7 @@ mod unsupervised;
 pub use clusterer::{
     SKClusterIdentifier, SKClusterLabel, SKClustererPredictor, sk_validate_cluster_assignments,
 };
+pub use outlier::{SKOutlierLabel, SKOutlierPredictor};
 pub use predictor::{SKClassifierPredictor, SKRegressorPredictor};
 pub use supervised::SKSupervisedFit;
 pub use transformer::SKFeatureTransformer;
@@ -33,3 +35,5 @@ pub use unsupervised::SKUnsupervisedFit;
 mod clusterer_tests;
 #[cfg(test)]
 mod fit_traits_tests;
+#[cfg(test)]
+mod outlier_tests;

@@ -14,7 +14,7 @@ pub struct SKTree<F> {
 
 impl<F: SKFloat> SKTree<F> {
     /// Assemble a finished tree.
-    pub(crate) fn new(nodes: Vec<SKTreeNode<F>>, feature_count: usize) -> Self {
+    pub fn new(nodes: Vec<SKTreeNode<F>>, feature_count: usize) -> Self {
         SKTree {
             nodes,
             root: 0,
@@ -67,7 +67,13 @@ impl<F: SKFloat> SKTree<F> {
     /// A value less than or equal to the node threshold goes left; every value
     /// is expected to be finite (the public operations validate that first).
     pub fn leaf_index_for(&self, feature_value: impl Fn(usize) -> F) -> usize {
+        self.leaf_and_depth_for(feature_value).0
+    }
+
+    /// The `(leaf_index, edge_depth)` pair a sample reaches when traversing from the root.
+    pub fn leaf_and_depth_for(&self, feature_value: impl Fn(usize) -> F) -> (usize, usize) {
         let mut index = self.root;
+        let mut depth = 0usize;
         loop {
             let node = &self.nodes[index];
             match (
@@ -82,8 +88,9 @@ impl<F: SKFloat> SKTree<F> {
                     } else {
                         right
                     };
+                    depth += 1;
                 }
-                _ => return index,
+                _ => return (index, depth),
             }
         }
     }
