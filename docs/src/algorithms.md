@@ -112,7 +112,8 @@ and receives a Python binding as soon as it is validated on CPU.
 | `SKPCA` | Principal component analysis (full SVD · covariance eigh · sparse randomized SVD) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKIncrementalPCA` | Out-of-core incremental PCA (Chan-Golub-LeVeque scatter merge · CSR Gram accumulation · `partial_fit` & `fit_streaming`) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKTruncatedSVD` | Truncated SVD for sparse data | <span class="sk-pill sk-pill--neutral">Planned</span> |
-| Anomaly detection | Outlier estimators from the scikit-learn family | <span class="sk-pill sk-pill--neutral">Planned</span> |
+| `SKIsolationForest` | Non-parametric anomaly detection via random isolation trees, harmonic path-length scoring, `Auto`/quantile contamination offsets and non-densifying CSR parity | <span class="sk-pill sk-pill--emerald">Implemented</span> |
+| Anomaly detection (LOF, One-Class SVM) | Remaining outlier estimators from the scikit-learn family | <span class="sk-pill sk-pill--neutral">Planned</span> |
 
 ## Model selection, pipelines and metrics
 
