@@ -14,3 +14,5 @@
 #![warn(missing_docs)]
 
 pub mod pca;
+
+pub use pca::SKPCASolver;

@@ -4,7 +4,10 @@
 //! its submodules; every implementation lives in its own file.
 
 mod centering;
+mod config;
 mod solvers;
+
+pub use config::SKPCASolver;
 
 #[cfg(test)]
 mod pca_centering_tests;
@@ -14,5 +17,7 @@ mod pca_covariance_tests;
 mod pca_full_tests;
 #[cfg(test)]
 mod pca_randomized_tests;
+#[cfg(test)]
+mod pca_solver_tests;
 #[cfg(test)]
 mod test_tracing;
