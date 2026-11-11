@@ -63,7 +63,7 @@
 - [x] 3.4 Implement `predict_labels` by vote with smallest-index tie-breaking, and verify
   the three-class fixture and a hand-built vote tie; verify with
   `cargo test -p sciencekit_svm svc_predict`.
-- [ ] 3.5 Implement `decision_function` with the documented OvO confidence layout and
+- [x] 3.5 Implement `decision_function` with the documented OvO confidence layout and
   verify its shape, monotonic relation to labels and a binary fixture; verify with
   `cargo test -p sciencekit_svm svc_decision`.
 - [ ] 3.6 Implement class weights, proving the balanced policy changes the fitted boundary
