@@ -13,7 +13,7 @@
 
 ## 2. Initialization and partial fit
 
-- [ ] 2.1 Implement initialization on the bounded sample and the best-of-`n_init` selection;
+- [x] 2.1 Implement initialization on the bounded sample and the best-of-`n_init` selection;
   verify with `cargo test -p sciencekit_cluster minibatch_init`.
 - [ ] 2.2 Implement `partial_fit` preserving centers/counts across calls, with a batched-
   equals-full-fit test; verify with `cargo test -p sciencekit_cluster minibatch_partial`.
