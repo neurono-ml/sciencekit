@@ -1,10 +1,11 @@
 //! Linear inner-product kernel `K(X, Y) = X · Yᵀ`
 //! (spec `kernel-functions`).
 
-use ndarray::{Array2, ArrayView1, ArrayView2, Axis};
+use ndarray::{Array2, ArrayView1, ArrayView2};
 use sciencekit_common::{SKDataView, SKError, SKFloat};
 use sprs::{CsMatView, CsVecView};
 
+use super::parallel::sk_fill_kernel_rows;
 use super::validation::sk_validate_kernel_pair;
 use crate::pairwise::{dot_product_simd, sk_sparse_dot_product};
 
@@ -35,17 +36,17 @@ pub(crate) fn sk_sparse_dense_row_dot<F: SKFloat>(
         })
 }
 
-/// Dense×dense linear kernel matrix filled sequentially row by row.
-pub(crate) fn sk_dense_linear_kernel_sequential<F: SKFloat>(
+fn sk_dense_linear_kernel<F: SKFloat>(
     left: &ArrayView2<'_, F>,
     right: &ArrayView2<'_, F>,
+    allow_parallel: bool,
 ) -> Array2<F> {
-    let mut output = Array2::zeros((left.nrows(), right.nrows()));
     let right_rows: Vec<_> = right.rows().into_iter().collect();
-    output
-        .axis_iter_mut(Axis(0))
-        .enumerate()
-        .for_each(|(row_index, mut output_row)| {
+    sk_fill_kernel_rows(
+        left.nrows(),
+        right.nrows(),
+        allow_parallel,
+        |row_index, mut output_row| {
             let left_row = left.row(row_index);
             output_row
                 .iter_mut()
@@ -53,22 +54,22 @@ pub(crate) fn sk_dense_linear_kernel_sequential<F: SKFloat>(
                 .for_each(|(cell, right_row)| {
                     *cell = sk_dense_row_dot(left_row, *right_row);
                 });
-        });
-    output
+        },
+    )
 }
 
-/// Sparse×sparse linear kernel matrix filled sequentially row by row.
-pub(crate) fn sk_sparse_linear_kernel_sequential<F: SKFloat>(
+fn sk_sparse_linear_kernel<F: SKFloat>(
     left: &CsMatView<'_, F>,
     right: &CsMatView<'_, F>,
+    allow_parallel: bool,
 ) -> Array2<F> {
-    let mut output = Array2::zeros((left.rows(), right.rows()));
     let left_rows: Vec<_> = left.outer_iterator().collect();
     let right_rows: Vec<_> = right.outer_iterator().collect();
-    output
-        .axis_iter_mut(Axis(0))
-        .enumerate()
-        .for_each(|(row_index, mut output_row)| {
+    sk_fill_kernel_rows(
+        left.rows(),
+        right.rows(),
+        allow_parallel,
+        |row_index, mut output_row| {
             let left_row = left_rows[row_index];
             output_row
                 .iter_mut()
@@ -81,22 +82,22 @@ pub(crate) fn sk_sparse_linear_kernel_sequential<F: SKFloat>(
                         right_row.data(),
                     );
                 });
-        });
-    output
+        },
+    )
 }
 
-/// Sparse×dense linear kernel matrix filled sequentially row by row.
-pub(crate) fn sk_sparse_dense_linear_kernel_sequential<F: SKFloat>(
+fn sk_sparse_dense_linear_kernel<F: SKFloat>(
     left: &CsMatView<'_, F>,
     right: &ArrayView2<'_, F>,
+    allow_parallel: bool,
 ) -> Array2<F> {
-    let mut output = Array2::zeros((left.rows(), right.nrows()));
     let left_rows: Vec<_> = left.outer_iterator().collect();
     let right_rows: Vec<_> = right.rows().into_iter().collect();
-    output
-        .axis_iter_mut(Axis(0))
-        .enumerate()
-        .for_each(|(row_index, mut output_row)| {
+    sk_fill_kernel_rows(
+        left.rows(),
+        right.nrows(),
+        allow_parallel,
+        |row_index, mut output_row| {
             let left_row = left_rows[row_index];
             output_row
                 .iter_mut()
@@ -104,21 +105,21 @@ pub(crate) fn sk_sparse_dense_linear_kernel_sequential<F: SKFloat>(
                 .for_each(|(cell, right_row)| {
                     *cell = sk_sparse_dense_row_dot(left_row, *right_row);
                 });
-        });
-    output
+        },
+    )
 }
 
-/// Dense×sparse linear kernel matrix filled sequentially row by row.
-pub(crate) fn sk_dense_sparse_linear_kernel_sequential<F: SKFloat>(
+fn sk_dense_sparse_linear_kernel<F: SKFloat>(
     left: &ArrayView2<'_, F>,
     right: &CsMatView<'_, F>,
+    allow_parallel: bool,
 ) -> Array2<F> {
-    let mut output = Array2::zeros((left.nrows(), right.rows()));
     let right_rows: Vec<_> = right.outer_iterator().collect();
-    output
-        .axis_iter_mut(Axis(0))
-        .enumerate()
-        .for_each(|(row_index, mut output_row)| {
+    sk_fill_kernel_rows(
+        left.nrows(),
+        right.rows(),
+        allow_parallel,
+        |row_index, mut output_row| {
             let left_row = left.row(row_index);
             output_row
                 .iter_mut()
@@ -126,35 +127,41 @@ pub(crate) fn sk_dense_sparse_linear_kernel_sequential<F: SKFloat>(
                 .for_each(|(cell, right_row)| {
                     *cell = sk_sparse_dense_row_dot(*right_row, left_row);
                 });
-        });
-    output
+        },
+    )
 }
 
-/// Compute the linear kernel matrix `K[i, j] = ⟨left[i], right[j]⟩`.
-///
-/// Dispatches on the input representations once and never densifies a sparse
-/// operand.
-pub fn sk_linear_kernel_matrix<F: SKFloat>(
+/// Internal entry point allowing sequential or parallel row evaluation.
+pub(crate) fn sk_linear_kernel_with_mode<F: SKFloat>(
     left: SKDataView<'_, F>,
     right: SKDataView<'_, F>,
+    allow_parallel: bool,
 ) -> Result<Array2<F>, SKError> {
     sk_validate_kernel_pair(&left, &right)?;
     match (left, right) {
         (SKDataView::Dense(left_dense), SKDataView::Dense(right_dense)) => {
-            Ok(sk_dense_linear_kernel_sequential(&left_dense, &right_dense))
+            Ok(sk_dense_linear_kernel(&left_dense, &right_dense, allow_parallel))
         }
         (SKDataView::Sparse(left_sparse), SKDataView::Sparse(right_sparse)) => Ok(
-            sk_sparse_linear_kernel_sequential(&left_sparse, &right_sparse),
+            sk_sparse_linear_kernel(&left_sparse, &right_sparse, allow_parallel),
         ),
         (SKDataView::Sparse(left_sparse), SKDataView::Dense(right_dense)) => Ok(
-            sk_sparse_dense_linear_kernel_sequential(&left_sparse, &right_dense),
+            sk_sparse_dense_linear_kernel(&left_sparse, &right_dense, allow_parallel),
         ),
         (SKDataView::Dense(left_dense), SKDataView::Sparse(right_sparse)) => Ok(
-            sk_dense_sparse_linear_kernel_sequential(&left_dense, &right_sparse),
+            sk_dense_sparse_linear_kernel(&left_dense, &right_sparse, allow_parallel),
         ),
         _ => Err(SKError::UnsupportedRepresentation {
             representation: left.representation(),
             suggestion: "convert the input to a dense matrix or a CSR matrix",
         }),
     }
+}
+
+/// Compute the linear kernel matrix `K[i, j] = ⟨left[i], right[j]⟩`.
+pub fn sk_linear_kernel_matrix<F: SKFloat>(
+    left: SKDataView<'_, F>,
+    right: SKDataView<'_, F>,
+) -> Result<Array2<F>, SKError> {
+    sk_linear_kernel_with_mode(left, right, true)
 }

@@ -14,6 +14,7 @@ mod grain;
 mod gram;
 mod linear;
 mod min_max;
+mod parallel;
 mod polynomial;
 mod precomputed;
 mod radial_basis;
@@ -34,6 +35,9 @@ pub use grain::{
 pub use gram::{sk_gram_matrix, sk_gram_vector};
 pub use linear::sk_linear_kernel_matrix;
 pub use min_max::sk_axis_min_max;
+pub use parallel::{
+    SK_KERNEL_PARALLEL_GRAIN, sk_kernel_matrix, sk_kernel_matrix_sequential,
+};
 pub use polynomial::sk_polynomial_kernel_matrix;
 pub use precomputed::{sk_precomputed_kernel_matrix, sk_validate_precomputed_query_kernel};
 pub use radial_basis::sk_radial_basis_function_kernel_matrix;
@@ -52,6 +56,8 @@ mod gram_tests;
 mod kernels_tests;
 #[cfg(test)]
 mod linear_tests;
+#[cfg(test)]
+mod parallel_tests;
 #[cfg(test)]
 mod polynomial_tests;
 #[cfg(test)]

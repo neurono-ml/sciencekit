@@ -6,6 +6,7 @@ use sciencekit_common::{SKDataView, SKError, SKFloat};
 
 use super::config::{SKKernel, SKKernelGamma, sk_validate_kernel_hyperparameters};
 use super::linear::sk_linear_kernel_matrix;
+use super::parallel::sk_transform_kernel_in_place;
 
 /// Compute the sigmoid kernel matrix
 /// `K[i, j] = tanh(gamma · ⟨left[i], right[j]⟩ + coef0)`.
@@ -22,6 +23,8 @@ pub fn sk_sigmoid_kernel_matrix<F: SKFloat>(
         coef0,
     )?;
     let mut matrix = sk_linear_kernel_matrix(left, right)?;
-    matrix.mapv_inplace(|dot_product| (gamma * dot_product + coef0).tanh());
+    sk_transform_kernel_in_place(&mut matrix, true, |dot_product| {
+        (gamma * dot_product + coef0).tanh()
+    });
     Ok(matrix)
 }

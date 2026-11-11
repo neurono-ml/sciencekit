@@ -6,6 +6,7 @@ use sciencekit_common::{SKDataView, SKError, SKFloat};
 
 use super::config::{SKKernel, SKKernelGamma, sk_validate_kernel_hyperparameters};
 use super::linear::sk_linear_kernel_matrix;
+use super::parallel::sk_transform_kernel_in_place;
 
 /// Fast exponentiation by squaring for a strictly positive integer degree.
 pub(crate) fn sk_integer_power<F: SKFloat>(mut base: F, mut exponent: u32) -> F {
@@ -38,6 +39,8 @@ pub fn sk_polynomial_kernel_matrix<F: SKFloat>(
         coef0,
     )?;
     let mut matrix = sk_linear_kernel_matrix(left, right)?;
-    matrix.mapv_inplace(|dot_product| sk_integer_power(gamma * dot_product + coef0, degree));
+    sk_transform_kernel_in_place(&mut matrix, true, |dot_product| {
+        sk_integer_power(gamma * dot_product + coef0, degree)
+    });
     Ok(matrix)
 }
