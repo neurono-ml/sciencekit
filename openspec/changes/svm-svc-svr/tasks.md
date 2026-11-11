@@ -84,7 +84,7 @@
 
 ## 5. SVR estimator
 
-- [ ] 5.1 Implement `SKSVRBuilder` with `C`, `epsilon`, kernel parameters, `tolerance`,
+- [x] 5.1 Implement `SKSVRBuilder` with `C`, `epsilon`, kernel parameters, `tolerance`,
   `maximum_number_of_iterations`, `cache_size`, `shrinking`, `backend` and
   `execution_mode`; add default and invalid-value tests; verify with
   `cargo test -p sciencekit_svm svr_builder`.
