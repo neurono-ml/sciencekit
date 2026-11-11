@@ -36,6 +36,7 @@ members = [
     "crates/sciencekit_model_selection",
     "crates/sciencekit_neighbors",
     "crates/sciencekit_pipeline",
+    "crates/sciencekit_telemetry",
     "crates/sciencekit_tree",
     "crates/sciencekit_preprocessing",
 ]
@@ -54,6 +55,9 @@ opt-level = 2
 tracing = "0.1"
 tracing-opentelemetry = { version = "0.33", default-features = false }
 opentelemetry = "0.32"
+opentelemetry_sdk = "0.32"
+opentelemetry-otlp = { version = "0.32", default-features = false }
+opentelemetry-appender-tracing = "0.32"
 tracing-subscriber = "0.3"
 tikv-jemallocator = "0.5"
 mimalloc = "0.1"
