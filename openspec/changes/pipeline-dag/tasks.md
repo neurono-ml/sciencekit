@@ -12,7 +12,7 @@
 
 - [x] 2.1 Implement deterministic topological order and per-node block storage; verify with
   `cargo test -p sciencekit_pipeline graph_order`.
-- [ ] 2.2 Implement fit over a diamond graph and compare it with the equivalent linear
+- [x] 2.2 Implement fit over a diamond graph and compare it with the equivalent linear
   chain; verify with `cargo test -p sciencekit_pipeline graph_fit`.
 - [ ] 2.3 Implement prediction through the fitted graph and classifier/regressor wrappers;
   verify with `cargo test -p sciencekit_pipeline graph_predict`.
