@@ -73,4 +73,5 @@
   - [Feature unions: parallel branches and honest concatenation](development-explained/ch43-feature-union.md)
   - [Principal Component Analysis: centering, three solvers and honest sparsity](development-explained/ch44-pca.md)
   - [JSON debug format: reading a fitted model with your eyes](development-explained/ch45-json-debug-format.md)
+  - [Outlier detection: random isolation trees, path length and the contamination offset](development-explained/ch48-outlier-detection.md)
   - [Maintaining this book](development-explained/maintaining.md)

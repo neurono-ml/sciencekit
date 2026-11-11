@@ -269,4 +269,9 @@ concatenation, member-indexed error context and nested pipeline composition.
 The [JSON debug format chapter](./ch45-json-debug-format.html) adds the deterministic
 human-readable `SKModelState` schema, the pretty and compact writer, the duplicate-aware
 validating reader and the round-trip acceptance guarantees across scalar and tensor types.
+The [outlier detection chapter](./ch48-outlier-detection.html) closes Wave 5 in
+`sciencekit_outlier` and `sciencekit_common`: the one-byte `SKOutlierLabel` and
+`SKOutlierPredictor<F>` contract, seeded random isolation trees over `SKTree`, harmonic BST
+path-length scoring, `Auto` and quantile contamination offsets, and non-densifying CSR-to-CSC
+representation parity.
 
