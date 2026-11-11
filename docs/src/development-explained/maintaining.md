@@ -251,3 +251,6 @@ fallback reason.
 The [randomized SVD chapter](./ch39-randomized-svd.html) adds the seeded range finder, the
 thin Householder QR, the small Gram SVD, the sparse products without densification, the
 implicit centering and the accuracy bound against the exact decomposition.
+The [DBSCAN chapter](./ch42-dbscan.html) adds density reachability over spatial trees and
+sparse brute force, the core/border/noise taxonomy with typed `SKClusterLabel::Noise`,
+deterministic component numbering and the nearest-core `predict_clusters` extension.
