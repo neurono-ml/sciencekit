@@ -60,7 +60,7 @@
 - [x] 3.3 Implement one-vs-one multiclass fitting with pairwise classifiers and
   deterministic pair ordering; verify a three-class problem produces three binary models
   and each pair uses only its two classes; verify with `cargo test -p sciencekit_svm svc`.
-- [ ] 3.4 Implement `predict_labels` by vote with smallest-index tie-breaking, and verify
+- [x] 3.4 Implement `predict_labels` by vote with smallest-index tie-breaking, and verify
   the three-class fixture and a hand-built vote tie; verify with
   `cargo test -p sciencekit_svm svc_predict`.
 - [ ] 3.5 Implement `decision_function` with the documented OvO confidence layout and
