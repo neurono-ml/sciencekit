@@ -9,6 +9,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Randomized SVD kernel (spec `randomized-svd`): `sciencekit_math::decomposition`
+  gains `sk_randomized_svd` and the builder `SKRandomizedSvdBuilder`, returning
+  `SKRandomizedSvdResult` (left singular vectors, non-increasing singular
+  values and right singular vectors). The range finder draws a seeded Gaussian
+  test basis from the shared deterministic generator, orthonormalizes the
+  projected basis with a thin Householder QR, refines it with the configured
+  number of power iterations and decomposes the small projected matrix. Dense
+  and CSR inputs are supported and dispatch once per operation; a sparse input
+  is never densified and the dense intermediates stay at
+  `(k + oversampling) × max(rows, columns)` cells. An optional centering vector
+  centers the matrix implicitly, without materializing a centered copy, for
+  dense and sparse inputs alike. The same seed always yields the same
+  factorization, independently of the thread count, and the singular-vector
+  signs follow a fixed convention (the largest-magnitude entry of the left
+  singular vector is positive).
+
+- `sciencekit_interop` gains the Apache Arrow adapter behind the optional,
+  default-off `arrow` feature (spec `arrow-columnar-interop`, change
+  `arrow-interop`). It imports Arrow record batches, chunked columns
+  (`Vec<ArrayRef>` — Arrow's Rust implementation removed `Table` and
+  `ChunkedArray` upstream) and batch readers into the neutral tabular seam,
+  preserving column names, order, logical types and row count. Arrow validity
+  bitmaps feed the shared missing-value policy: floating-point nulls become the
+  NaN sentinel or the constant fill, nullable integer columns retain their
+  64-bit values across import and promote at materialization with an exactness
+  guard for the target scalar (`f32` or `f64`), the categorical policy reserves
+  the missing code, and the reject policy names the Arrow field. Primitive `f32`, `f64` and `i64` columns
+  without nulls expose borrowed, pointer-identical views; text columns expose a
+  borrowed UTF-8 view; dictionary columns become category codes with a
+  deterministic, reversible label table. The Arrow-to-neutral schema mapping and
+  its reverse preserve roles and disambiguate category codes through field
+  metadata, while nested, temporal, binary, decimal, `UInt64` and `Float16`
+  columns are rejected with a structured error naming the field and a conversion
+  suggestion. Reopenable and one-shot tabular sources stream a
+  `RecordBatchReader` in batches of the configured size and mark the final
+  batch, and path-based sources open Parquet (row-group aware, with projection
+  pushdown), CSV (inferred or explicit schema, header and delimiter options),
+  Arrow IPC/Feather files and streams, and record-oriented JSON/NDJSON, all
+  reopenable and yielding structured errors for truncated or malformed files.
+  The Arrow C Data Interface is implemented in both directions for arrays and
+  batch streams with ownership transferred exactly once, release-once tests and
+  dictionary/text round trips. Exports cover predictions as floating arrays,
+  dense and supervised blocks as record batches, and CSR blocks as row pointers,
+  column indices, stored values and shape metadata, for both `f32` and `f64`.
+  Arrow versions are pinned to 58.3, the last release whose MSRV is Rust 1.85.
+
 - `sciencekit_gpu` — the device-compute contracts shared by the OpenCL, CUDA
   and ROCm backends (spec `gpu-compute-contracts`), re-exported at the crate
   root. `SKDeviceInfo` and `SKDeviceCapabilities` describe an enumerated
@@ -41,6 +87,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New structured errors for device work: `DeviceUnavailable` and
   `UnsupportedScalarType` (mapped to `SKFfiStatus::Unsupported` across FFI),
   and `DeviceTransferFailure` (mapped to `SKFfiStatus::Internal`).
+
+### Moved
+
+- The Go bindings (spec `go-bindings`) now live in their own repository,
+  [`neurono-ml/sciencekit-go`](https://github.com/neurono-ml/sciencekit-go), as
+  the module `github.com/neurono-ml/sciencekit-go`. The binding itself is
+  unchanged: it loads `sciencekit_ffi` through cgo and exposes typed builders
+  and models for linear regression and the standard scaler (`Fit`, `Predict`,
+  `Transform`, `Score`, `Save`, `LoadLinearRegression`). Dense
+  `Matrix[float32|float64]` values convert with Go-side shape validation and
+  copied outputs; native status codes map to `ScienceKitError` values carrying
+  the code, operation and message; builders and models close explicitly
+  (`Close`) or through `runtime.SetFinalizer`, safely and exactly once; models
+  are safe for concurrent use. The new repository carries the examples, the
+  build/link README, a `scripts/build-native-library.sh` helper, a
+  `gofmt`/`go vet`/`go test`/`go test -race`/`GOEXPERIMENT=cgocheck2 go test`
+  CI workflow and the test suite covering every family, persistence, errors,
+  lifecycle, concurrency and large arrays.
+- The Lua bindings (spec `lua-bindings`) now live in their own repository,
+  [`neurono-ml/sciencekit-lua`](https://github.com/neurono-ml/sciencekit-lua).
+  The `sciencekit_lua` crate becomes a standalone Cargo project — no longer a
+  member of this workspace — that depends on `sciencekit_ffi` through a git
+  dependency on this repository. The module is unchanged: a native Lua 5.4
+  module loaded with `require("sciencekit")`, with Lua 5.4 embedded through
+  `mlua` with `lua54` + `vendored` (neither a system `liblua` nor
+  `pkg-config` is required), chainable builder userdata for linear regression
+  and the standard scaler, `fit`/`predict`/`transform`/`score`/`save`/`load`,
+  handles released exactly once by close, the `__close` metamethod or the
+  garbage collector, copy semantics for every numeric table, structured Lua
+  runtime errors headed by the stable status name and code, a LuaRocks 3.0
+  rockspec and the Lua suite.
+- The `go/` module, the `go.work` file, the `crates/sciencekit_lua` crate, the
+  `go-bindings` CI workflow and `scripts/build-go-library.sh` are removed from
+  this repository. The stable C ABI (`sciencekit_ffi`) stays here: it is the
+  shared contract both bindings consume.
+
 
 ## [0.6.0] — 2026-11-10
 

@@ -77,6 +77,11 @@ The GPU lane runs on a ROCm host instead: the image ships no driver, so pass the
 device through (`--device=/dev/kfd --device=/dev/dri`) on a machine with ROCm
 installed, or use `rocm/dev-ubuntu-22.04` for the ROCm backend tests.
 
-The Lua binding embeds Lua through `mlua` with the `vendored` feature, so a
-system interpreter is not needed to build or use it; `lua5.4` in the image only
-exists for running `tests/run.lua` directly.
+The image also carries the Go and Lua toolchains used by the language bindings,
+which live in their own repositories —
+[`neurono-ml/sciencekit-go`](https://github.com/neurono-ml/sciencekit-go) and
+[`neurono-ml/sciencekit-lua`](https://github.com/neurono-ml/sciencekit-lua).
+The Go binding links the `sciencekit_ffi` shared library built from this
+repository; the Lua binding embeds Lua through `mlua` with the `vendored`
+feature, so a system interpreter is not needed to build or use it — `lua5.4` in
+the image only exists for running `tests/run.lua` directly.

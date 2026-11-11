@@ -17,12 +17,14 @@
 //! No engine crate is a dependency of the core: `arrow`, `polars`,
 //! `datafusion` and `memmap` are optional features added by later changes.
 
-#![forbid(unsafe_code)]
+#![deny(unsafe_code)]
 #![warn(missing_docs)]
 
 #[cfg(test)]
 mod acceptance;
 
+#[cfg(feature = "arrow")]
+pub mod arrow;
 pub mod batch;
 pub mod bridge;
 pub mod columns;
