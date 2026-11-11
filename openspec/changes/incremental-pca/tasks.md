@@ -20,7 +20,7 @@
   verify with `cargo test -p sciencekit_decomposition incremental_builder`.
 - [x] 2.3 Implement `partial_fit`, `fit` chunking and model accessors; verify with
   `cargo test -p sciencekit_decomposition incremental_fit`.
-- [ ] 2.4 Implement `fit_streaming` over `SKSourceProvider` with one-pass and reopenable
+- [x] 2.4 Implement `fit_streaming` over `SKSourceProvider` with one-pass and reopenable
   multi-epoch tests; verify with
   `cargo test -p sciencekit_decomposition incremental_streaming`.
 - [ ] 2.5 Implement `transform`, `inverse_transform` and whitening for dense and sparse
