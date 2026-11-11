@@ -78,7 +78,7 @@
 - [x] 4.2 Implement pairwise coupling from the binary probabilities, with convergence and
   iteration-cap tests on a three-class fixture; verify with
   `cargo test -p sciencekit_svm coupling`.
-- [ ] 4.3 Wire `predict_probabilities` to Platt plus coupling, verify rows sum to one and
+- [x] 4.3 Wire `predict_probabilities` to Platt plus coupling, verify rows sum to one and
   values lie in `[0, 1]`, and verify `probability(false)` returns
   `UnsupportedOperation`; verify with `cargo test -p sciencekit_svm svc_probability`.
 
