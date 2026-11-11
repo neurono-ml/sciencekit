@@ -9,6 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `sciencekit_telemetry` sub-crate (spec `telemetry-export`): opt-in
+  OpenTelemetry trace, log and metric export pipelines and process-wide
+  lifecycle over `opentelemetry 0.32`, `opentelemetry_sdk 0.32`,
+  `opentelemetry-otlp 0.32`, `opentelemetry-appender-tracing 0.32` and
+  `tracing-opentelemetry 0.33`. Builder-validated `SKTelemetryConfiguration`
+  (`SKTelemetryConfigurationBuilder`), `SKTelemetryBatchConfiguration`
+  (`SKTelemetryBatchConfigurationBuilder`), `SKTelemetryResource`,
+  `SKTelemetryTransport { Grpc, Http }` and
+  `SKTelemetrySampler { AlwaysOn, AlwaysOff, TraceIdRatioBased, ParentBased }`
+  validate service identity, HTTP/HTTPS endpoints, ASCII header tokens, timeouts,
+  sampling ratios and batch queue bounds up front with `SKError::InvalidHyperparameter`.
+  `SKTelemetryPipeline` and `sk_build_otlp_pipeline` (gated behind off-by-default
+  `otlp-grpc`, `otlp-http` and `telemetry` features) bridge `sciencekit.operation`
+  spans with error-status enrichment, structured `tracing` events with trace
+  correlation, and bounded-cardinality operation metrics
+  (`sciencekit.operation.duration`, `sciencekit.operation.count`,
+  `sciencekit.operation.rows`, `sciencekit.operation.columns`,
+  `sciencekit.operation.errors`). `SKTelemetry` manages once-per-process `init` /
+  `init_with_exporters`, mutex-serialized `force_flush` honoring `flush_timeout`,
+  `shutdown` and drop-safe detachment while leaving uninitialized default builds
+  completely silent with zero active exporters and zero network traffic.
+
 - `sciencekit_outlier` sub-crate and `sciencekit_common` outlier prediction
   contract (specs `outlier-prediction` and `isolation-forest`): one-byte typed
   `SKOutlierLabel { Inlier, Outlier }` with explicit external `to_i64` /
