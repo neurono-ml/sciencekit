@@ -10,6 +10,7 @@ mod classifier_fit;
 mod classifier_model;
 mod classifier_predict;
 mod execution;
+mod importances;
 mod input_validation;
 mod oob_scoring;
 mod regressor;
@@ -33,6 +34,8 @@ mod forest_builder_tests;
 mod forest_classifier_tests;
 #[cfg(test)]
 mod forest_fit_tests;
+#[cfg(test)]
+mod forest_importances_tests;
 #[cfg(test)]
 mod forest_oob_tests;
 #[cfg(test)]

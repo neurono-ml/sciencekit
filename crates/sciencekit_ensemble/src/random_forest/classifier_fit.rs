@@ -15,6 +15,7 @@ use crate::bootstrap::{
 use super::classifier::SKRandomForestClassifier;
 use super::classifier_model::{SKClassifierTreeMember, SKRandomForestClassifierModel};
 use super::execution::sk_execute_tree_slots;
+use super::importances::sk_classifier_importances;
 use super::input_validation::{
     sk_canonicalize_targets, sk_fit_dimensions, sk_validate_finite_features,
 };
@@ -95,6 +96,8 @@ pub(super) fn sk_fit_random_forest_classifier<F: SKFloat>(
             oob_per_tree.as_deref(),
         )?;
 
+        let feature_importances = sk_classifier_importances(&members, columns_count);
+
         Ok(SKRandomForestClassifierModel {
             members,
             out_of_bag_rows: oob_per_tree,
@@ -102,7 +105,7 @@ pub(super) fn sk_fit_random_forest_classifier<F: SKFloat>(
             classes,
             number_of_classes,
             feature_count: columns_count,
-            feature_importances: vec![F::zero(); columns_count],
+            feature_importances,
             criterion: estimator.criterion,
             backend: estimator.backend,
             execution_intent: estimator.execution_intent(),
