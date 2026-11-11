@@ -54,7 +54,7 @@
   `tolerance`, `maximum_number_of_iterations`, `cache_size`, `shrinking`, `class_weight`,
   `probability`, `random_seed`, `backend` and `execution_mode`; add default and
   invalid-value tests; verify with `cargo test -p sciencekit_svm svc_builder`.
-- [ ] 3.2 Implement binary `SKSVC::fit` producing a model with support vectors, dual
+- [x] 3.2 Implement binary `SKSVC::fit` producing a model with support vectors, dual
   coefficients and bias, and verify the separable and overlapping fixtures; verify with
   `cargo test -p sciencekit_svm svc_fit`.
 - [ ] 3.3 Implement one-vs-one multiclass fitting with pairwise classifiers and
