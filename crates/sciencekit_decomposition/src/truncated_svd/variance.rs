@@ -1,58 +1,11 @@
-//! Single-dispatch dense/CSR multiplication and non-densifying variance
-//! computation for `SKTruncatedSVD` (spec `truncated-svd`, decisions 2 and 3).
+//! Non-densifying variance and explained-variance ratio computation for
+//! `SKTruncatedSVD` (`spec` `truncated-svd`, decision 3).
 
-use ndarray::{Array1, Array2, ArrayView1, ArrayView2, Axis, azip};
+use ndarray::{Array1, ArrayView1, ArrayView2, Axis, azip};
 use rayon::prelude::*;
-use sciencekit_common::{SKBackendKind, SKDataView, SKError, SKFloat};
-use sciencekit_math::backend::{SKBackendSelection, sk_math_backend_for_kind};
-use sciencekit_math::sparse_ops::sk_csr_dense_product;
+use sciencekit_common::{SKDataView, SKError, SKFloat};
 
-const ROW_BLOCK_SIZE: usize = 256;
-
-/// Computes `left · right_factor` with a single representation dispatch per
-/// call, never materializing a dense copy of a sparse CSR input.
-pub(super) fn sk_multiply_view_by_dense<F: SKBackendSelection>(
-    left: SKDataView<'_, F>,
-    right_factor: ArrayView2<'_, F>,
-    backend_kind: SKBackendKind,
-    parallelism: usize,
-) -> Result<Array2<F>, SKError> {
-    match left {
-        SKDataView::Dense(dense) => {
-            let rows_count = dense.nrows();
-            let backend = sk_math_backend_for_kind::<F>(backend_kind);
-            let mut output = Array2::<F>::zeros((rows_count, right_factor.ncols()));
-            if parallelism > 1 && rows_count > ROW_BLOCK_SIZE {
-                dense
-                    .axis_chunks_iter(Axis(0), ROW_BLOCK_SIZE)
-                    .into_par_iter()
-                    .zip(
-                        output
-                            .axis_chunks_iter_mut(Axis(0), ROW_BLOCK_SIZE)
-                            .into_par_iter(),
-                    )
-                    .for_each(|(input_chunk, mut output_chunk)| {
-                        let block = backend.gemm(input_chunk, right_factor, F::one(), 1);
-                        output_chunk.assign(&block);
-                    });
-            } else {
-                for (input_chunk, mut output_chunk) in dense
-                    .axis_chunks_iter(Axis(0), ROW_BLOCK_SIZE)
-                    .zip(output.axis_chunks_iter_mut(Axis(0), ROW_BLOCK_SIZE))
-                {
-                    let block = backend.gemm(input_chunk, right_factor, F::one(), 1);
-                    output_chunk.assign(&block);
-                }
-            }
-            Ok(output)
-        }
-        SKDataView::Sparse(sparse) => Ok(sk_csr_dense_product(&sparse, &right_factor)),
-        _ => Err(SKError::UnsupportedRepresentation {
-            representation: left.representation(),
-            suggestion: "convert the input to a supported dense or CSR view",
-        }),
-    }
-}
+use super::product::ROW_BLOCK_SIZE;
 
 /// Computes `explained_variance` (population variance of each column of
 /// `projected`) and `explained_variance_ratio` (divided by the sum of the input
@@ -191,7 +144,8 @@ fn sk_total_input_variance<F: SKFloat>(
                 .zip(nonzero_counts)
                 .zip(means.iter())
                 .fold(F::zero(), |accumulator, ((stored, count), &mean)| {
-                    let zero_rows = F::from(rows_count - count).expect("row count fits in scalar");
+                    let zero_rows =
+                        F::from(rows_count.saturating_sub(count)).expect("row count fits in scalar");
                     accumulator + stored + zero_rows * mean * mean
                 });
             Ok(sum_of_squares / rows_scalar)

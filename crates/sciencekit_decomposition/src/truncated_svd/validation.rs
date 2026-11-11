@@ -5,13 +5,22 @@ use sciencekit_common::{SKDataView, SKError, SKFloat, sk_validate_hyperparameter
 
 use super::config::{SKTruncatedSVDAlgorithm, SKTruncatedSVDConfiguration};
 
-/// Returns `(number_of_rows, number_of_columns)` for a supported feature view.
+/// Returns `(number_of_rows, number_of_columns)` for a supported feature view,
+/// rejecting CSC matrices up front before scanning any element.
 pub(super) fn sk_view_dimensions<F>(
     features: &SKDataView<'_, F>,
 ) -> Result<(usize, usize), SKError> {
     match features {
         SKDataView::Dense(dense) => Ok(dense.dim()),
-        SKDataView::Sparse(sparse) => Ok((sparse.rows(), sparse.cols())),
+        SKDataView::Sparse(sparse) => {
+            if !sparse.is_csr() {
+                return Err(SKError::UnsupportedRepresentation {
+                    representation: "csc",
+                    suggestion: "convert the sparse matrix to compressed-row (CSR) format with to_csr()",
+                });
+            }
+            Ok((sparse.rows(), sparse.cols()))
+        }
         _ => Err(SKError::UnsupportedRepresentation {
             representation: features.representation(),
             suggestion: "convert the input to a supported dense or CSR view",

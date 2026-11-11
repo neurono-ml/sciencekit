@@ -3,6 +3,10 @@
 
 use sciencekit_common::{SKBackendKind, SKBuilderState, SKExecutionMode, SKFloat};
 
+/// Documented dense/sparse equivalence and rank-`k` reconstruction tolerance
+/// (`1e-6` in `f64`) inherited from the randomized range-finder kernel.
+pub const SK_TRUNCATED_SVD_PARITY_TOLERANCE: f64 = 1e-6;
+
 /// Solver algorithm for `SKTruncatedSVD`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 #[non_exhaustive]

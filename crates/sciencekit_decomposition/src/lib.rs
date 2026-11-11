@@ -35,7 +35,9 @@ pub mod pca;
 pub mod truncated_svd;
 
 pub use pca::{SKPCA, SKPCABuilder, SKPCAModel, SKPCASolver};
-pub use truncated_svd::{SKTruncatedSVDAlgorithm, SKTruncatedSVDModel};
+pub use truncated_svd::{
+    SK_TRUNCATED_SVD_PARITY_TOLERANCE, SKTruncatedSVDAlgorithm, SKTruncatedSVDModel,
+};
 
 #[cfg(test)]
 mod acceptance_tests;

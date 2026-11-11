@@ -14,8 +14,9 @@ use sciencekit_math::kernels::SK_AXIS_SUM_GRAIN;
 
 use super::config::SKTruncatedSVDConfiguration;
 use super::model::SKTruncatedSVDModel;
+use super::product::sk_multiply_view_by_dense;
 use super::validation::sk_validate_fit_input;
-use super::variance::{sk_multiply_view_by_dense, sk_variance_and_ratio};
+use super::variance::sk_variance_and_ratio;
 
 /// Fits an uncentered truncated SVD model from `configuration` and returns both
 /// the fitted model and the projected training rows (`X · componentsᵀ`).

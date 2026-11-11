@@ -39,4 +39,4 @@ mod pca_transform_tests;
 #[cfg(test)]
 mod pca_validation_tests;
 #[cfg(test)]
-mod test_tracing;
+pub(crate) mod test_tracing;
