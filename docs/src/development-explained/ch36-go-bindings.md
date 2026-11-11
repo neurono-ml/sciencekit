@@ -27,9 +27,9 @@ crossing has four rules:
 ```mermaid
 flowchart LR
     accTitle: A Go model over cgo and the C ABI
-    accDescr: A Go program builds a model through typed builders. cgo marshals a Go matrix into a C descriptor with a pinned, C-allocated buffer. The C ABI performs the operation and returns a status. The binding copies the output back into Go memory, maps the status to a Go error carrying the code and message, and releases handles through Close or a finalizer exactly once.
+    accDescr: A Go program builds a model through typed builders. cgo copies a Go matrix into a C-owned descriptor buffer, because storing a Go pointer in C memory is forbidden. The C ABI performs the operation and returns a status. The binding copies the output back into Go memory, maps the status to a Go error carrying the code and message, and releases handles through Close or a finalizer exactly once.
     A["Go program<br/>Matrix[T], builders"] --> B["cgo boundary"]
-    B --> C["C descriptor<br/>pinned buffer + shape"]
+    B --> C["C descriptor<br/>C-owned copy + shape"]
     C --> D["sciencekit_ffi<br/>status code"]
     D --> E["copy output into Go memory"]
     D --> F["status → ScienceKitError<br/>(code + message)"]
@@ -49,9 +49,9 @@ flowchart LR
 1. **Typed generics, one C surface.** `Matrix[T]` and the builders are generic over `Float`
    (`float32`, `float64`), while the ABI sees a data-type code. Go's type system carries the
    scalar; C never does.
-2. **C-allocated, pinned buffers.** A matrix is copied into a C buffer for the call and released
-   after it; `runtime.KeepAlive` keeps the Go slice alive until the C call returns. No Go
-   pointer is stored in C.
+2. **C-owned copies.** A matrix is copied into a `C.malloc` buffer (shape and data) for the
+   call and freed after it. No Go pointer is ever stored in C memory, which is what the cgo
+   pointer rules require; `GOEXPERIMENT=cgocheck2` enforces it in CI.
 3. **Explicit `Close` plus a finalizer.** Both funnel into one idempotent release guarded by a
    mutex, and a live-handle counter makes double-free and leaks testable.
 4. **Errors carry the ABI code.** `ScienceKitError` exposes `Status` and `Message`, and
