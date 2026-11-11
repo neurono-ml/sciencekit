@@ -274,4 +274,10 @@ The [generic bagging chapter](./ch46-bagging.html) extends `sciencekit_ensemble`
 any base estimator, independent row and feature bootstrap streams, non-densifying CSR
 feature-subset routing, two-tier `SKBaggingError<E>` propagation and out-of-bag accuracy
 and $R^2$ scoring.
+The [extended Safetensors format chapter](./ch54-safetensors-internal-format.html) adds the
+binary `SKModelState` persistence adapter in `sciencekit_interop::safetensors`: standard
+single-file Safetensors compatibility, `sciencekit.*` header metadata, `SKShardPlan`
+multi-shard splitting with atomic `.index.json` manifests, dual-region header and payload
+padding for in-place seek appends with automatic shard overflow, and optional magic-byte
+auto-detected Gzip, Brotli and Snappy compression.
 
