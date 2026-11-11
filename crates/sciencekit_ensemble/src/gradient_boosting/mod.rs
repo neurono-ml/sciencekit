@@ -41,3 +41,5 @@ mod gb_regressor_builder_tests;
 mod gb_regressor_tests;
 #[cfg(test)]
 mod gb_representation_tests;
+#[cfg(test)]
+mod gb_validation_tests;

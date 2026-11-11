@@ -90,6 +90,12 @@ impl<F: SKFloat> SKGradientBoostingClassifierBuilder<F> {
         self
     }
 
+    /// Disable early stopping by clearing `n_iter_no_change`.
+    pub fn without_early_stopping(mut self) -> Self {
+        self.configuration.n_iter_no_change = None;
+        self
+    }
+
     /// Configure the early-stopping loss-improvement tolerance (default `1e-4`).
     pub fn tolerance(mut self, tolerance: F) -> Self {
         self.configuration.tolerance = tolerance;
