@@ -18,8 +18,10 @@
 #![warn(missing_docs)]
 
 pub mod configuration;
+pub mod pipeline;
 
 pub use configuration::{
     SKTelemetryBatchConfiguration, SKTelemetryBatchConfigurationBuilder, SKTelemetryConfiguration,
     SKTelemetryConfigurationBuilder, SKTelemetryResource, SKTelemetrySampler, SKTelemetryTransport,
 };
+pub use pipeline::{sk_build_trace_layer, sk_build_tracer_provider};
