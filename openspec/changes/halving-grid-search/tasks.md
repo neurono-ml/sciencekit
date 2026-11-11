@@ -14,7 +14,7 @@
   subsampling; verify with `cargo test -p sciencekit_model_selection halving_subsample`.
 - [x] 2.2 Reuse the grid-search evaluation over the subsampled folds and store round
   results; verify with `cargo test -p sciencekit_model_selection halving_evaluation`.
-- [ ] 2.3 Implement aggressive elimination and test a round that prunes candidates early;
+- [x] 2.3 Implement aggressive elimination and test a round that prunes candidates early;
   verify with `cargo test -p sciencekit_model_selection halving_aggressive`.
 
 ## 3. Estimators and prediction
