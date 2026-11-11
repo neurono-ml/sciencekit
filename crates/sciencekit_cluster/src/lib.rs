@@ -1,9 +1,11 @@
 //! `sciencekit_cluster` — unsupervised clustering estimators for sciencekit
 //! (PRD §12, Phase 5).
 //!
-//! The crate opens with `SKKMeans`, the Lloyd and Elkan k-means estimator with
-//! seeded k-means++ initialization and typed cluster assignments. Sparse input
-//! is read through the norm-expansion distance without densification.
+//! The crate provides `SKKMeans` (Lloyd and Elkan k-means with seeded
+//! k-means++ initialization) and `SKDBSCAN` (density-based spatial clustering
+//! with spatial-tree and sparse brute-force region queries, explicit
+//! `SKClusterLabel::Noise` labels and nearest-core prediction). Sparse input
+//! is never densified.
 //!
 //! **Naming:** public items follow PRD §3.4 — structs and traits are prefixed
 //! `SK`, free-scope functions use `sk_`, methods carry no prefix. Files stay at
@@ -12,8 +14,13 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+pub mod dbscan;
 pub mod kmeans;
 
+pub use dbscan::{
+    SKDBSCAN, SKDBSCANAlgorithm, SKDBSCANBuilder, SKDBSCANMetric, SKDBSCANModel,
+    SKDBSCANSearchStrategy,
+};
 pub use kmeans::{
     SKKMeans, SKKMeansAlgorithm, SKKMeansBuilder, SKKMeansInitialization, SKKMeansModel,
 };

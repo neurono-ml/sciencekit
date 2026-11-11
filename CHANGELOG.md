@@ -39,6 +39,78 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   concurrent sharing and reconstruction metrics (`sk_mean_squared_error`,
   `sk_r2_score`) via `sciencekit_metrics`.
 
+- `sciencekit_cluster` gains the density-based spatial clusterer (spec
+  `dbscan`): `SKDBSCAN<F>`, builder-only with `eps` (default 0.5),
+  `minimum_samples` (default 5), `metric` (`Euclidean` default, `Manhattan`,
+  `Chebyshev`, `Cosine`), `algorithm` (`Auto` default, `KdTree`, `BallTree`,
+  `BruteForce`), `leaf_size` (default 40), `backend` (default `Faer`) and
+  `execution_mode` (default `Automatic`). Fit obtains each row's inclusive
+  `eps` neighbourhood through `sciencekit_neighbors` (`SKKDTree` or
+  `SKBallTree` for dense tree-compatible metrics, `SKBruteForceSearcher` for
+  sparse CSR or cosine distance, never densifying sparse storage) with the row
+  itself always included, identifies core samples (`>= minimum_samples`
+  neighbours), and expands density-connected components deterministically in
+  ascending training-index order so the smallest core index in each component
+  seeds its sequential cluster identifier and shared border points join the
+  earliest-seeded cluster; unreachable non-core points receive the explicit
+  `SKClusterLabel::Noise` variant. `SKDBSCANModel<F>` is `Send + Sync`, exposes
+  `labels`, `core_sample_indices`, `number_of_clusters`, `number_of_features`,
+  `eps`, `minimum_samples`, `metric`, `search_strategy`,
+  `training_representation`, `backend` and `execution_mode`, and implements
+  `SKClustererPredictor<F>` through a documented nearest-core heuristic that
+  assigns each query row to the cluster of its nearest fitted core sample when
+  within `eps` and `SKClusterLabel::Noise` otherwise across all four dense/CSR
+  combinations. Construction and fit/predict validate empty inputs,
+  non-positive or non-finite `eps`, zero `minimum_samples` or `leaf_size`,
+  feature-count mismatches, non-finite values, CSC views and incompatible
+  tree/metric or tree/representation pairs.
+
+- `sciencekit_ensemble` introduces Breiman random forests (spec
+  `random-forests`): `SKRandomForestClassifier<F>`, `SKRandomForestRegressor<F>`
+  and `SKMaximumSamples<F>`, builder-only with `number_of_trees` (default 100),
+  `criterion` (`Gini` / `Entropy` for classification, `SquaredError` /
+  `AbsoluteError` for regression), `maximum_depth`, `minimum_samples_split`,
+  `minimum_samples_leaf`, `maximum_features` (`Sqrt` default), `bootstrap`
+  (default true), `maximum_samples` (`All` default, `Count`, `Fraction`),
+  `random_seed` (default 0), `class_weight` (classifier), `oob_score` (default
+  false), `backend` (default `Faer`) and `execution_mode` (default `Automatic`).
+  Fit grows one CART tree per bootstrap sample in parallel lock-free slots via
+  rayon, deriving distinct deterministic per-tree split and bootstrap seeds from
+  `random_seed` and the tree index so the fitted forest is identical across
+  repeated fits and rayon thread counts. Prediction averages canonical class
+  probabilities with smallest-index tie-breaking (classifier) or leaf responses
+  (regressor), exposes normalized mean feature importances, and computes
+  out-of-bag accuracy or R² through `sciencekit_metrics` exclusively over rows
+  excluded from each tree's bootstrap sample (`UnsupportedOperation` when
+  disabled or when zero rows fall out of bag). Dense and borrowed CSR designs
+  have full representation parity on fit and prediction without densifying
+  sparse inputs.
+
+- Human-readable JSON debug model format (spec `json-debug-format`):
+  `sciencekit_interop::json` adds `SKJsonDebugWriter` /
+  `SKJsonDebugWriterBuilder`, `SKJsonDebugReader` / `SKJsonDebugReaderBuilder`,
+  `SKJsonFormatMode` (`Pretty` default, `Compact`),
+  `SK_JSON_DEBUG_FORMAT_VERSION` (`1`) and the convenience entry points
+  `sk_write_model_state_json`, `sk_write_model_state_json_pretty`,
+  `sk_write_model_state_json_compact`, `sk_write_model_state_json_file`,
+  `sk_read_model_state_json`, `sk_read_model_state_json_file`,
+  `sk_export_model_json` and `sk_import_model_json` over
+  `sciencekit_common::SKModelState`. Both builders follow the shared builder
+  contract with `backend` (default `Faer`) and `execution_mode` (default
+  `Automatic`), and every write or read emits a structured `tracing` span. The
+  schema records `format_version`, `estimator`, scalar `dtype` (`"f32"` or
+  `"f64"`), `feature_count`, optional `class_labels`, untagged typed
+  `hyperparameters` and `BTreeMap`-ordered named `tensors` carrying `dtype`
+  (`"F32"`, `"F64"`, `"I64"` or `"Bool"`), `shape` and flat `values` for clean
+  line-oriented diffs and exact `f32`/`f64` round-trips. Unknown fields within
+  major version `1` are ignored for forward compatibility, while malformed JSON
+  (`SKError::Conversion`), unknown major versions
+  (`SKError::UnsupportedRepresentation`), non-finite floats
+  (`SKError::NonFiniteValue`), duplicate tensor or hyperparameter keys, invalid
+  or mismatched dtypes (`SKError::InvalidHyperparameter`) and tensor
+  shape/value-count disagreements (`SKError::ShapeMismatch`) are rejected up
+  front before materializing model state.
+
 ## [0.7.0] — 2026-11-11
 
 Arrow interop, the GPU compute contracts, the randomized SVD kernel and the language bindings moving to their own repositories.

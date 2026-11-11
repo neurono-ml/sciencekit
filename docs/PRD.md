@@ -572,6 +572,8 @@ Order faithful to the scikit-learn mapping (from the handoff), respecting depend
     - Representation parity (§4.5.1): the tree estimators accept dense, sparse and mixed inputs without densifying a sparse design. Split search over a borrowed CSR design scans the stored entries column-wise, so this algorithm needs **no** dense-only exception.
     - Tree persistence (`memmap2`-backed node storage and model export) is **out of scope here** and delivered by Phase 7 (interop). Missing-value routing (surrogate splits) and cost-complexity pruning are explicit non-goals of the CART change; a tree fitted with missing values rejects them rather than routing them silently.
 11. `sciencekit_ensemble`: parallel aggregation with rayon (SKRandomForest, SKBagging, SKGradientBoosting).
+    - `SKRandomForestClassifier`/`SKRandomForestRegressor` keep representation parity (§4.5.1) over dense, CSR and mixed fit/predict paths by materializing bootstrap CSR samples without densifying and delegating split search to `sciencekit_tree`.
+    - Missing-value routing, extremely randomized trees, streaming/`partial_fit`, `memmap2`-backed storage and model persistence/export are **out of scope** for the `random-forest` change; persistence, `memmap2` backing and export are delivered by Phase 7 (interop), and missing values are rejected with structured errors rather than routed silently.
 
 ### Phase 5 — Unsupervised
 12. `sciencekit_cluster`: SKKMeans, SKDBSCAN, SKMiniBatchKMeans (streaming).
@@ -580,6 +582,14 @@ Order faithful to the scikit-learn mapping (from the handoff), respecting depend
     - Streaming/`partial_fit` (delivered by the MiniBatchKMeans change), missing
       values, GPU acceleration, `memmap2`-backed sources and model export are
       explicit KMeans non-goals; persistence and export remain Phase 7 work.
+    - DBSCAN (`SKDBSCAN`) serves dense tree-compatible metrics through the
+      `sciencekit_neighbors` KD-tree and ball-tree region queries (`§4.5.2`
+      dense-only geometry exception on the trees) and preserves representation
+      parity over sparse CSR and cosine inputs through `SKBruteForceSearcher`,
+      never densifying sparse storage. HDBSCAN/OPTICS, streaming/`partial_fit`,
+      missing values, GPU acceleration, `memmap2`-backed indexes and model
+      export are explicit non-goals of the `dbscan` change; persistence and
+      export remain Phase 7 work.
     - Clusterers expose typed assignments (`SKClusterLabel`: a cluster identifier or explicit noise) through `SKClustererPredictor`; the unsupervised scorer evaluates those assignments directly and documents whether it excludes or rejects noise.
 13. `sciencekit_decomposition`: SKPCA, SKTruncatedSVD.
     - Representation parity (§4.5.1 / §4.5.2): `SKPCA` supports sparse CSR fitting without densification on `SKPCASolver::Randomized` via implicit centering; `Full` and `CovarianceEigh` invoke the documented dense-only exception because they materialize the centered design or its covariance, rejecting CSR with `UnsupportedRepresentation` (naming `Randomized` and `SKTruncatedSVD`) unless `allow_densification(true)` is explicitly set (with a warning reporting the byte cost).
