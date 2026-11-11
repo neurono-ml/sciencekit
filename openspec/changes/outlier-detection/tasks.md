@@ -30,7 +30,7 @@
 - [x] 3.3 Implement `score_samples`, `decision_function`, typed `predict` and `fit_predict`
   with the contamination offset; verify with
   `cargo test -p sciencekit_outlier isolation_score`.
-- [ ] 3.4 Add validation tests for empty input, zero trees, invalid sample size,
+- [x] 3.4 Add validation tests for empty input, zero trees, invalid sample size,
   contamination range, feature-count mismatch and non-finite values; verify with
   `cargo test -p sciencekit_outlier isolation_validation`.
 - [ ] 3.5 Add repeated-fit determinism, thread-count invariance, concurrent prediction and
