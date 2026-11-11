@@ -18,7 +18,7 @@
 
 ## 3. Acceptance and review
 
-- [ ] 3.1 Add `acceptance_tests/` covering tiny and large states, all dtypes, class tables,
+- [x] 3.1 Add `acceptance_tests/` covering tiny and large states, all dtypes, class tables,
   metadata and corrupt inputs; verify with `cargo test -p sciencekit_interop`.
 - [ ] 3.2 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
   warnings` and `cargo test --workspace`; fix every failure before pushing.
