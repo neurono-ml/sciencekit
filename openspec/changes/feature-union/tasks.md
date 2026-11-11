@@ -31,7 +31,7 @@
 - [x] 3.4 Update `CHANGELOG.md` and the companion mdBook chapter (`ch43-feature-union.md`,
   a `Development Explained` chapter on parallel feature branches and concatenation); verify
   with `mdbook build docs`.
-- [ ] 3.5 Independent review by a separate agent validating every scenario in
+- [x] 3.5 Independent review by a separate agent validating every scenario in
   `feature-union`; address every finding and re-run the gates.
 
 ## Workflow follow-up

@@ -62,7 +62,8 @@ its input is the block medium.
 
 ```
 crates/sciencekit_pipeline/src/feature_union/
-  mod.rs, builder.rs, stages.rs, concatenate.rs, model.rs, boxed.rs, *_tests.rs
+  mod.rs, builder.rs, append.rs, stages.rs, concatenate.rs, errors.rs,
+  model.rs, accessors.rs, boxed.rs, pipeline_stage.rs, *_tests.rs
 ```
 
 `mod.rs` files are pure dispatchers; implementation files stay under 200 lines.
