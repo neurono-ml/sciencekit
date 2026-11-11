@@ -66,14 +66,24 @@ impl SKTelemetryPipeline {
         &self.meter_provider
     }
 
+    /// Build a composite `tracing_subscriber::Layer` bridging traces, logs and metrics.
+    pub fn layer<S>(&self) -> Box<dyn tracing_subscriber::Layer<S> + Send + Sync + 'static>
+    where
+        S: tracing::Subscriber
+            + for<'span> tracing_subscriber::registry::LookupSpan<'span>
+            + Send
+            + Sync,
+    {
+        Box::new(
+            sk_build_trace_layer(&self.tracer_provider)
+                .and_then(sk_build_log_layer(&self.logger_provider))
+                .and_then(sk_build_metrics_layer(&self.meter_provider)),
+        )
+    }
+
     /// Build a composite `tracing::Subscriber` bridging traces, logs and metrics.
     pub fn subscriber(&self) -> Box<dyn tracing::Subscriber + Send + Sync + 'static> {
-        Box::new(
-            tracing_subscriber::registry()
-                .with(sk_build_trace_layer(&self.tracer_provider))
-                .with(sk_build_log_layer(&self.logger_provider))
-                .with(sk_build_metrics_layer(&self.meter_provider)),
-        )
+        Box::new(tracing_subscriber::registry().with(self.layer()))
     }
 
     /// Flush pending traces, logs and metrics across all three providers.

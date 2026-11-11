@@ -6,7 +6,7 @@
 //! SDK or network transport. Downstream applications that want production OTLP
 //! telemetry depend on `sciencekit_telemetry`, build a validated
 //! [`SKTelemetryConfiguration`] and initialize the global pipeline once at
-//! startup.
+//! startup via [`SKTelemetry::init`].
 //!
 //! **Naming:** public items follow PRD §3.4 — structs, enums and traits are
 //! prefixed `SK`, free-scope functions and constants use `sk_`/`SK_`, methods
@@ -18,12 +18,14 @@
 #![warn(missing_docs)]
 
 pub mod configuration;
+pub mod lifecycle;
 pub mod pipeline;
 
 pub use configuration::{
     SKTelemetryBatchConfiguration, SKTelemetryBatchConfigurationBuilder, SKTelemetryConfiguration,
     SKTelemetryConfigurationBuilder, SKTelemetryResource, SKTelemetrySampler, SKTelemetryTransport,
 };
+pub use lifecycle::SKTelemetry;
 pub use pipeline::{
     SK_METRIC_OPERATION_COLUMNS, SK_METRIC_OPERATION_COUNT, SK_METRIC_OPERATION_DURATION,
     SK_METRIC_OPERATION_ERRORS, SK_METRIC_OPERATION_ROWS, SKTelemetryMetricsLayer,
