@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `sciencekit_pipeline` gains parallel feature branching and column-wise
+  concatenation (spec `feature-union`): `SKFeatureUnion` and
+  `SKFeatureUnionBuilder` (`build`/`start` for compile-time tuples up to eight
+  heterogeneous members via `SKFeatureUnionStages`, plus `boxed` with
+  `Vec<Box<dyn SKBlockTransformer<F>>>` for dynamic construction),
+  `SKFeatureUnionModel` exposing `number_of_members`, `member_widths`,
+  `number_of_features`, `number_of_output_features`,
+  `number_of_input_features`, `stages`, `fitted_stages`, `backend` and
+  `execution_mode`, CSR-preserving horizontal concatenation (all-dense outputs
+  stay dense; any sparse member promotes the union output to CSR without
+  densifying sparse inputs), member-indexed error context via
+  `SKFeatureUnionMemberError` (`fit_checked`/`transform_checked`), and direct
+  `SKPipelineTransformer` integration for both `SKFeatureUnion` and nested
+  `SKPipelineBuilder` branches.
+
 ### Moved
 
 - The Go bindings (spec `go-bindings`) now live in their own repository,
