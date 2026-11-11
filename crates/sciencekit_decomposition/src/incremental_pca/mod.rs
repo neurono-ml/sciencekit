@@ -6,13 +6,20 @@
 //! finalization, builder, fitting, streaming and projection.
 
 mod accumulator;
+mod builder;
 mod config;
+mod core_implementation;
 mod finalize;
 mod merge;
 mod sparse;
 
+pub use builder::SKIncrementalPCABuilder;
+pub use core_implementation::SKIncrementalPCA;
+
 #[cfg(test)]
 mod incremental_accumulator_tests;
+#[cfg(test)]
+mod incremental_builder_tests;
 #[cfg(test)]
 mod incremental_finalize_tests;
 #[cfg(test)]

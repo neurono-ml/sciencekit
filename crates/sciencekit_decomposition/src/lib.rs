@@ -34,6 +34,7 @@
 pub mod incremental_pca;
 pub mod pca;
 
+pub use incremental_pca::{SKIncrementalPCA, SKIncrementalPCABuilder};
 pub use pca::{SKPCA, SKPCABuilder, SKPCAModel, SKPCASolver};
 
 #[cfg(test)]
