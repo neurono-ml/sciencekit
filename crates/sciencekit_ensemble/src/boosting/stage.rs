@@ -1,14 +1,15 @@
 //! Stage-wise tree growth, Newton leaf replacement and shrunk raw-score updates.
 
-use ndarray::{Array1, Array2};
+use ndarray::Array2;
 use sciencekit_common::{
     SK_RANDOM_DOMAIN_STAGE, SK_RANDOM_DOMAIN_TREE, SKDataView, SKError, SKFloat, sk_derive_seed,
 };
-use sciencekit_tree::{SKMaximumFeatures, SKStructureConstraints, SKTree, SKTreeStructure};
+use sciencekit_tree::{SKMaximumFeatures, SKStructureConstraints, SKTree};
 
 use super::init::sk_newton_leaf_value_from_negative_gradients;
 use super::loss::{SKGradientLoss, SKMulticlassLogLoss};
 use super::scores::sk_update_raw_scores;
+use super::subsample::sk_build_subsampled_structure;
 
 /// Validated per-stage parameters shared across regression and classification.
 #[derive(Debug, Clone)]
@@ -47,7 +48,6 @@ pub(crate) fn sk_fit_stage_tree<F: SKFloat>(
     stage_index: usize,
     class_index: usize,
 ) -> Result<SKFittedStageTree<F>, SKError> {
-    let _ = parameters.subsample;
     let tree_seed = sk_stage_tree_seed(parameters.random_seed, stage_index, class_index);
     let minimum_samples_split = 2usize.max(parameters.minimum_samples_leaf.saturating_mul(2));
     let constraints = SKStructureConstraints::<F>::build()
@@ -57,29 +57,24 @@ pub(crate) fn sk_fit_stage_tree<F: SKFloat>(
         .maximum_features(parameters.maximum_features.clone())
         .random_seed(tree_seed)
         .build()?;
-    let residual_array = Array1::from_vec(negative_gradients.to_vec());
-    let mut structure = match features {
-        SKDataView::Dense(dense) => {
-            SKTreeStructure::build_structure(*dense, residual_array.view(), &constraints)?
-        }
-        SKDataView::Sparse(sparse) => {
-            SKTreeStructure::build_structure(*sparse, residual_array.view(), &constraints)?
-        }
-        _ => {
-            return Err(SKError::UnsupportedRepresentation {
-                representation: "unknown",
-                suggestion: "convert the features to a dense matrix or a CSR matrix",
-            });
-        }
-    };
+    let (mut structure, sampled_gradients, sampled_hessians) = sk_build_subsampled_structure(
+        features,
+        negative_gradients,
+        hessians,
+        parameters.subsample,
+        &constraints,
+        parameters.random_seed,
+        stage_index,
+        class_index,
+    )?;
     let leaf_values: Vec<F> = (0..structure.leaf_count())
         .map(|ordinal| {
             let rows = structure
                 .leaf_sample_indices(ordinal)
                 .expect("leaf ordinal in bounds");
             let leaf_negative_gradients: Vec<F> =
-                rows.iter().map(|&row| negative_gradients[row]).collect();
-            let leaf_hessians: Vec<F> = rows.iter().map(|&row| hessians[row]).collect();
+                rows.iter().map(|&row| sampled_gradients[row]).collect();
+            let leaf_hessians: Vec<F> = rows.iter().map(|&row| sampled_hessians[row]).collect();
             sk_newton_leaf_value_from_negative_gradients(
                 &leaf_negative_gradients,
                 &leaf_hessians,

@@ -8,6 +8,7 @@ mod init;
 pub mod loss;
 pub(crate) mod scores;
 pub(crate) mod stage;
+pub(crate) mod subsample;
 
 pub use init::{
     sk_initialize_multiclass_scores, sk_initialize_scalar_scores, sk_newton_leaf_value,
@@ -19,3 +20,5 @@ pub use loss::{
 
 #[cfg(test)]
 mod boosting_stage_tests;
+#[cfg(test)]
+mod boosting_subsample_tests;
