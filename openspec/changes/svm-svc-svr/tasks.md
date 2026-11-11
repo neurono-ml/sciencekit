@@ -35,7 +35,7 @@
   `smo/working_set.rs` and `smo/gradient.rs`, with unit tests on a hand-computed toy
   problem and a test that the selected pair maximizes the second-order gain; verify with
   `cargo test -p sciencekit_svm smo`.
-- [ ] 2.3 Implement the KKT stopping criterion and the iteration/effort bookkeeping, with
+- [x] 2.3 Implement the KKT stopping criterion and the iteration/effort bookkeeping, with
   tests for a converged toy problem, an exhausted budget returning `NotConverged` and the
   reported iteration count; verify with `cargo test -p sciencekit_svm smo`.
 - [ ] 2.4 Implement the bounded LRU kernel-row cache over dense and CSR training views,
