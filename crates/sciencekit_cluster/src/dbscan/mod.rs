@@ -5,9 +5,12 @@
 //! submodules; every implementation lives in its own file.
 
 mod config;
+mod expansion;
 mod region_query;
 
 pub use config::{SKDBSCANAlgorithm, SKDBSCANMetric, SKDBSCANSearchStrategy};
 
+#[cfg(test)]
+mod dbscan_fit_tests;
 #[cfg(test)]
 mod dbscan_query_tests;
