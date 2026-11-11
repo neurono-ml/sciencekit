@@ -22,7 +22,7 @@ pub use gradient_boosting::{
     SKGradientBoostingClassificationLoss, SKGradientBoostingClassifier,
     SKGradientBoostingClassifierBuilder, SKGradientBoostingClassifierModel,
     SKGradientBoostingRegressionLoss, SKGradientBoostingRegressor,
-    SKGradientBoostingRegressorBuilder,
+    SKGradientBoostingRegressorBuilder, SKGradientBoostingRegressorModel,
 };
 pub use random_forest::{
     SKRandomForestClassifier, SKRandomForestClassifierBuilder, SKRandomForestClassifierModel,
