@@ -140,4 +140,10 @@ explicit non-goals.
 cargo build -p sciencekit_ffi --release
 go test ./go/...          # unit, example, concurrency and large-array tests
 go test -race ./go/...
+GOEXPERIMENT=cgocheck2 go test ./go/...   # strict cgo pointer checks
 ```
+
+Every matrix and vector crosses the boundary as a **copy into C-owned
+memory**, so the Go garbage collector may move or reclaim the caller's slice
+while the native call runs. `GOEXPERIMENT=cgocheck2` verifies that no Go
+pointer is stored in non-Go memory and is part of CI.

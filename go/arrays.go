@@ -2,27 +2,26 @@ package sciencekit
 
 import (
 	"fmt"
-	"unsafe"
 )
 
-// descriptorFromMatrix validates a dense matrix and builds a row-major
-// descriptor over its backing slice.
+// descriptorFromMatrix validates a dense matrix and builds a descriptor whose
+// values are copied into C-owned memory.
 func descriptorFromMatrix[T Float](matrix Matrix[T]) (*descriptor, error) {
 	if err := matrix.validate(); err != nil {
 		return nil, err
 	}
 	shape := []int64{int64(matrix.Rows), int64(matrix.Columns)}
-	return newDescriptor(dtypeOf[T](), shape, unsafe.Pointer(&matrix.Data[0]), matrix.Data)
+	return newDescriptor(dtypeOf[T](), shape, matrix.Data)
 }
 
-// descriptorFromVector validates a target vector and builds a one-dimensional
-// descriptor over its backing slice.
+// descriptorFromVector validates a target vector and builds a descriptor whose
+// values are copied into C-owned memory.
 func descriptorFromVector[T Float](values []T) (*descriptor, error) {
 	if len(values) == 0 {
 		return nil, validationError("array", "the vector is empty")
 	}
 	shape := []int64{int64(len(values))}
-	return newDescriptor(dtypeOf[T](), shape, unsafe.Pointer(&values[0]), values)
+	return newDescriptor(dtypeOf[T](), shape, values)
 }
 
 // matrixFromValues copies a native row-major payload back into a Go matrix.

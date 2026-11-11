@@ -1,8 +1,39 @@
 package sciencekit
 
 import (
+	"runtime"
 	"testing"
+	"unsafe"
 )
+
+// TestDescriptorCopiesDataIntoCMemory proves the descriptor owns C buffers
+// independent of the Go slice, so the Go garbage collector can move or reclaim
+// the input.
+func TestDescriptorCopiesDataIntoCMemory(t *testing.T) {
+	values := []float64{1, 2, 3, 4, 5, 6}
+	matrix, err := NewMatrix(2, 3, values)
+	if err != nil {
+		t.Fatalf("NewMatrix: %v", err)
+	}
+	descriptor, err := descriptorFromMatrix(matrix)
+	if err != nil {
+		t.Fatalf("descriptorFromMatrix: %v", err)
+	}
+	defer descriptor.freeDescriptor()
+
+	runtime.GC()
+	copied := unsafe.Slice((*float64)(descriptor.raw.data), len(values))
+	for index, expected := range values {
+		if copied[index] != expected {
+			t.Fatalf("descriptor value %d: expected %v, got %v", index, expected, copied[index])
+		}
+	}
+
+	values[0] = 99
+	if copied[0] != 1 {
+		t.Fatalf("expected the descriptor to own a copy, got %v", copied[0])
+	}
+}
 
 // TestDescriptorCarriesMatrixShape proves a Go matrix becomes a two-dimensional
 // descriptor with the right dtype, shape and element count.
@@ -15,7 +46,7 @@ func TestDescriptorCarriesMatrixShape(t *testing.T) {
 	if err != nil {
 		t.Fatalf("descriptorFromMatrix: %v", err)
 	}
-	defer descriptor.free()
+	defer descriptor.freeDescriptor()
 
 	if got := int32(descriptor.raw.dtype); got != dtypeF64 {
 		t.Fatalf("expected dtype F64 (%d), got %d", dtypeF64, got)
@@ -44,7 +75,7 @@ func TestDescriptorFromFloat32Matrix(t *testing.T) {
 	if err != nil {
 		t.Fatalf("descriptorFromMatrix: %v", err)
 	}
-	defer descriptor.free()
+	defer descriptor.freeDescriptor()
 
 	if got := int32(descriptor.raw.dtype); got != dtypeF32 {
 		t.Fatalf("expected dtype F32 (%d), got %d", dtypeF32, got)
@@ -72,7 +103,7 @@ func TestDescriptorFromVector(t *testing.T) {
 	if err != nil {
 		t.Fatalf("descriptorFromVector: %v", err)
 	}
-	defer descriptor.free()
+	defer descriptor.freeDescriptor()
 
 	if got := int32(descriptor.raw.ndim); got != 1 {
 		t.Fatalf("expected ndim 1, got %d", got)

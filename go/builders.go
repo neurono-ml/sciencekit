@@ -84,16 +84,14 @@ func (builder *LinearRegressionBuilder[T]) Fit(features Matrix[T], targets []T) 
 		if err != nil {
 			return err
 		}
-		defer featureDescriptor.free()
+		defer featureDescriptor.freeDescriptor()
 		targetDescriptor, err := descriptorFromVector(targets)
 		if err != nil {
 			return err
 		}
-		defer targetDescriptor.free()
+		defer targetDescriptor.freeDescriptor()
 
 		trained, err = native.fit(featureDescriptor, targetDescriptor)
-		runtime.KeepAlive(featureDescriptor)
-		runtime.KeepAlive(targetDescriptor)
 		return err
 	})
 	if err != nil {
@@ -163,10 +161,9 @@ func (builder *StandardScalerBuilder[T]) Fit(features Matrix[T]) (*StandardScale
 		if err != nil {
 			return err
 		}
-		defer featureDescriptor.free()
+		defer featureDescriptor.freeDescriptor()
 
 		trained, err = native.fit(featureDescriptor, nil)
-		runtime.KeepAlive(featureDescriptor)
 		return err
 	})
 	if err != nil {

@@ -56,43 +56,66 @@ func cString(value string) (*C.char, func()) {
 	return pointer, func() { C.free(unsafe.Pointer(pointer)) }
 }
 
-// descriptor is a C-layout array descriptor plus the Go memory that must stay
-// alive for the duration of one native call.
+// descriptor is a C-layout array descriptor whose shape and data buffers are
+// copied into C-owned memory, so no Go pointer is ever stored in non-Go
+// memory. Release it with freeDescriptor after the call.
 type descriptor struct {
-	raw   *C.SKFfiArray
-	shape []int64
-	data  any
+	raw         *C.SKFfiArray
+	shape       []int64
+	shapeMemory *C.int64_t
+	dataMemory  unsafe.Pointer
 }
 
-// newDescriptor allocates the descriptor struct in C memory so no Go pointer
-// travels inside Go-allocated memory.
-func newDescriptor(dtype int32, shape []int64, data unsafe.Pointer, keep any) (*descriptor, error) {
+// newDescriptor copies the shape and the values into C-owned buffers and
+// builds a row-major descriptor over them.
+func newDescriptor[T Float](dtype int32, shape []int64, values []T) (*descriptor, error) {
 	raw := (*C.SKFfiArray)(C.calloc(1, C.size_t(C.sizeof_SKFfiArray)))
 	if raw == nil {
 		return nil, errOutOfMemory
 	}
+
+	shapeMemory := (*C.int64_t)(C.malloc(C.size_t(len(shape)) * C.size_t(unsafe.Sizeof(C.int64_t(0)))))
+	if shapeMemory == nil {
+		C.free(unsafe.Pointer(raw))
+		return nil, errOutOfMemory
+	}
+	copy(unsafe.Slice((*int64)(unsafe.Pointer(shapeMemory)), len(shape)), shape)
+
+	dataSize := unsafe.Sizeof(values[0]) * uintptr(len(values))
+	dataMemory := C.malloc(C.size_t(dataSize))
+	if dataMemory == nil {
+		C.free(unsafe.Pointer(shapeMemory))
+		C.free(unsafe.Pointer(raw))
+		return nil, errOutOfMemory
+	}
+	copy(unsafe.Slice((*T)(dataMemory), len(values)), values)
+
 	raw.dtype = C.int32_t(dtype)
 	raw.ndim = C.int32_t(len(shape))
-	raw.shape = (*C.int64_t)(unsafe.Pointer(&shape[0]))
+	raw.shape = shapeMemory
 	raw.strides = nil
-	raw.data = data
+	raw.data = dataMemory
 	product := int64(1)
 	for _, dimension := range shape {
 		product *= dimension
 	}
 	raw.len = C.int64_t(product)
-	return &descriptor{raw: raw, shape: shape, data: keep}, nil
+	return &descriptor{raw: raw, shape: shape, shapeMemory: shapeMemory, dataMemory: dataMemory}, nil
 }
 
-// free releases the descriptor struct. Native-owned output buffers are freed
-// through sk_ffi_array_free instead.
-func (descriptor *descriptor) free() {
+// freeDescriptor releases the C-owned shape, data and descriptor buffers.
+// Native-owned output buffers are freed through sk_ffi_array_free instead.
+func (descriptor *descriptor) freeDescriptor() {
 	if descriptor.raw == nil {
 		return
 	}
+	C.free(unsafe.Pointer(descriptor.shapeMemory))
+	C.free(descriptor.dataMemory)
 	C.free(unsafe.Pointer(descriptor.raw))
 	descriptor.raw = nil
-	descriptor.data = nil
+	descriptor.shapeMemory = nil
+	descriptor.dataMemory = nil
+	descriptor.shape = nil
 }
 
 // nativeBuilder wraps one opaque SKFfiBuilder handle.

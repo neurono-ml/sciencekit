@@ -62,10 +62,9 @@ func (model *LinearRegressionModel[T]) Predict(features Matrix[T]) ([]T, error) 
 	if err != nil {
 		return nil, err
 	}
-	defer featureDescriptor.free()
+	defer featureDescriptor.freeDescriptor()
 
 	values, shape, err := nativePredict[T](native, featureDescriptor)
-	runtime.KeepAlive(featureDescriptor)
 	if err != nil {
 		return nil, err
 	}
@@ -90,16 +89,14 @@ func (model *LinearRegressionModel[T]) Score(features Matrix[T], targets []T) (f
 	if err != nil {
 		return 0, err
 	}
-	defer featureDescriptor.free()
+	defer featureDescriptor.freeDescriptor()
 	targetDescriptor, err := descriptorFromVector(targets)
 	if err != nil {
 		return 0, err
 	}
-	defer targetDescriptor.free()
+	defer targetDescriptor.freeDescriptor()
 
 	score, err := native.score(featureDescriptor, targetDescriptor)
-	runtime.KeepAlive(featureDescriptor)
-	runtime.KeepAlive(targetDescriptor)
 	return score, err
 }
 
@@ -151,10 +148,9 @@ func (model *StandardScalerModel[T]) Transform(features Matrix[T]) (Matrix[T], e
 	if err != nil {
 		return Matrix[T]{}, err
 	}
-	defer featureDescriptor.free()
+	defer featureDescriptor.freeDescriptor()
 
 	values, shape, err := nativeTransform[T](native, featureDescriptor)
-	runtime.KeepAlive(featureDescriptor)
 	if err != nil {
 		return Matrix[T]{}, err
 	}
