@@ -19,4 +19,7 @@
 
 pub mod configuration;
 
-pub use configuration::{SKTelemetryResource, SKTelemetrySampler, SKTelemetryTransport};
+pub use configuration::{
+    SKTelemetryBatchConfiguration, SKTelemetryBatchConfigurationBuilder, SKTelemetryConfiguration,
+    SKTelemetryConfigurationBuilder, SKTelemetryResource, SKTelemetrySampler, SKTelemetryTransport,
+};

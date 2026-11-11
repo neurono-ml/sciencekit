@@ -17,7 +17,6 @@ pub struct SKTelemetryResource {
 
 impl SKTelemetryResource {
     /// Construct resource metadata from validated fields.
-    #[cfg_attr(not(test), allow(dead_code))]
     pub(crate) fn from_parts(
         service_name: String,
         service_version: Option<String>,
