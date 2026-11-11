@@ -34,7 +34,7 @@
   `cargo test -p sciencekit_decomposition`.
 - [x] 3.2 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
   warnings` and `cargo test --workspace`; fix every failure before pushing.
-- [ ] 3.3 Update `CHANGELOG.md` and the companion mdBook chapter (including a
+- [x] 3.3 Update `CHANGELOG.md` and the companion mdBook chapter (including a
   `Development Explained` chapter on uncentered low-rank factorization and the sparse
   path); verify with `mdbook build docs`.
 - [ ] 3.4 Record the ARPACK/GPU/memmap/export non-goals in `docs/PRD.md`.
