@@ -17,4 +17,4 @@ pub mod svc;
 pub mod svr;
 
 pub use sciencekit_math::{SKKernel, SKKernelGamma, SKKernelParameters};
-pub use svc::{SKClassWeight, SKSVC, SKSVCBuilder};
+pub use svc::{SKBinarySVCModel, SKClassWeight, SKSVC, SKSVCBuilder, SKSVCModel};

@@ -5,9 +5,14 @@
 
 mod distance;
 mod resolved;
+mod validation;
 
 pub use distance::{sk_evaluate_kernel_diagonal, sk_evaluate_kernel_row};
 pub use resolved::SKOwnedFeatureBlock;
+pub use validation::{
+    sk_svm_view_dimensions, sk_validate_svm_finiteness, sk_validate_svm_query_features,
+    sk_validate_svm_training_features,
+};
 
 #[cfg(test)]
 mod kernel_tests;
