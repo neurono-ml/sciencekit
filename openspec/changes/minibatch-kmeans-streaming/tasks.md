@@ -32,7 +32,7 @@
 
 - [x] 4.1 Implement the builder with the documented defaults and invalid-value tests;
   verify with `cargo test -p sciencekit_cluster minibatch_builder`.
-- [ ] 4.2 Implement `SKUnsupervisedFit`, `SKClustererPredictor`, `transform` and
+- [x] 4.2 Implement `SKUnsupervisedFit`, `SKClustererPredictor`, `transform` and
   `fit_predict`; verify shapes, nearest-center semantics and scalar independence; verify
   with `cargo test -p sciencekit_cluster minibatch_model`.
 - [ ] 4.3 Add validation tests for empty/small batches, zero clusters, invalid
