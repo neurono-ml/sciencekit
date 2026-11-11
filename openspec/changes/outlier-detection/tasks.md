@@ -42,14 +42,14 @@
 - [x] 4.1 Add `acceptance_tests/` covering tiny data, large data (at least 20 000 rows),
   dense/sparse, contamination Auto/fraction, determinism, concurrency and metric
   production; verify with `cargo test -p sciencekit_outlier`.
-- [ ] 4.2 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
+- [x] 4.2 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
   warnings` and `cargo test --workspace`; fix every failure before pushing.
 - [x] 4.3 Update `CHANGELOG.md` and the companion mdBook chapter (including a
   `Development Explained` chapter on isolation trees, path length and the contamination
   offset); verify with `mdbook build docs`.
 - [x] 4.4 Record the LOF/One-Class SVM/missing-value/streaming/GPU/memmap/export non-goals
   in `docs/PRD.md`.
-- [ ] 4.5 Independent review by a separate agent validating every scenario in
+- [x] 4.5 Independent review by a separate agent validating every scenario in
   `outlier-prediction` and `isolation-forest`; address every finding and re-run the gates.
 
 ## Workflow follow-up
