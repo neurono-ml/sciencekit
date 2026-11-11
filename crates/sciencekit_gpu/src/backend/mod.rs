@@ -7,10 +7,10 @@
 mod contract;
 mod discovery;
 
+pub use contract::SKComputeBackend;
+pub use discovery::SKDeviceDiscovery;
+
 #[cfg(test)]
 mod concurrency_tests;
 #[cfg(test)]
 pub(crate) mod mock_device;
-
-pub use contract::SKComputeBackend;
-pub use discovery::SKDeviceDiscovery;

@@ -6,9 +6,10 @@
 //! consumes it — and re-exported here as this crate's public contract.
 
 pub use sciencekit_common::device::{
-    SK_HOST_FALLBACK_BACKEND, SKDevicePreference, SKFallbackReason, sk_select_device,
+    SK_HOST_FALLBACK_BACKEND, SKDeviceCapabilities, SKDeviceContext, SKDeviceInfo,
+    SKDevicePreference, SKFallbackReason, sk_clear_device_inventory, sk_register_device_inventory,
+    sk_registered_device_inventory, sk_resolve_operation_backend, sk_select_device,
 };
-pub use sciencekit_common::device::{SKDeviceCapabilities, SKDeviceInfo};
 
 #[cfg(test)]
 mod device_tests;

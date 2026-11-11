@@ -147,3 +147,27 @@ fn downloading_a_buffer_from_another_backend_is_rejected() {
         other => panic!("expected `DeviceUnavailable`, got {other:?}"),
     }
 }
+
+/// A host backend kind cannot own a device buffer.
+#[test]
+fn a_host_backend_cannot_own_a_device_buffer() {
+    let error = SKDeviceBufferBuilder::<f64>::new(SKBackendKind::Faer, 0)
+        .shape(1, 1)
+        .values(vec![1.0])
+        .build()
+        .expect_err("a host backend must not own a device buffer");
+    match error {
+        SKError::DeviceUnavailable { backend, .. } => assert_eq!(backend, "faer"),
+        other => panic!("expected `DeviceUnavailable`, got {other:?}"),
+    }
+}
+
+/// A `(rows, columns)` product that overflows `usize` is rejected as a shape mismatch.
+#[test]
+fn an_overflowing_shape_returns_shape_mismatch() {
+    let error = SKDeviceBufferBuilder::<f64>::new(SKBackendKind::OpenCl, 0)
+        .shape(usize::MAX, 2)
+        .build()
+        .expect_err("usize::MAX * 2 overflows");
+    assert!(matches!(error, SKError::ShapeMismatch { .. }));
+}

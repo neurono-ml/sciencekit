@@ -2,16 +2,19 @@
 
 /// How a backend moves data between host and device.
 ///
-/// The safe default is an explicit copy: uploads and downloads are visible
-/// costs the caller can reason about. A mapped (zero-copy) view is opt-in and
-/// only available when [`SKDeviceCapabilities::supports_mapped_memory`](sciencekit_common::SKDeviceCapabilities::supports_mapped_memory)
-/// is set for the selected device.
+/// Every [`SKComputeBackend`](crate::SKComputeBackend) declares its policy via
+/// [`SKComputeBackend::transfer_policy`](crate::SKComputeBackend::transfer_policy),
+/// defaulting to [`SKDeviceTransferPolicy::Explicit`]: uploads and downloads are
+/// visible copies the caller can reason about. A backend that returns
+/// [`SKDeviceTransferPolicy::MappedWhenSupported`] maps device storage into the
+/// host address space when the selected device advertises
+/// [`SKDeviceCapabilities::supports_mapped_memory`](sciencekit_common::SKDeviceCapabilities::supports_mapped_memory).
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub enum SKDeviceTransferPolicy {
     /// Copy host data into device storage and back (the default).
     #[default]
     Explicit,
-    /// Map device storage into the host address space when the device supports
-    /// it, falling back to an explicit copy otherwise.
+    /// Use mapped (zero-copy) host↔device storage when the selected device
+    /// advertises mapped-memory support.
     MappedWhenSupported,
 }

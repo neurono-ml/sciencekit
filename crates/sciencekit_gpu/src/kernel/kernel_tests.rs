@@ -159,3 +159,26 @@ fn selection_skips_device_missing_kernel_and_picks_second_device() {
     assert_eq!(device.index, 1);
     assert_eq!(device.name, "Mock OpenCL 1");
 }
+
+/// Dispatching a buffer owned by another backend or device is rejected.
+#[test]
+fn dispatching_a_buffer_from_another_device_is_rejected() {
+    let opencl = backend_with(&[SKGpuKernel::Elementwise]);
+    let input = array![[1.0_f64, 2.0]];
+    let foreign_buffer = opencl.upload(input.view()).expect("upload must succeed");
+
+    let cuda = SKMockComputeBackend::new(vec![SKMockComputeBackend::device(
+        0,
+        SKBackendKind::Cuda,
+        "Mock CUDA 0",
+        1 << 20,
+        capabilities(&[SKGpuKernel::Elementwise]),
+    )]);
+    let error = cuda
+        .dispatch(SKGpuKernel::Elementwise, &[&foreign_buffer])
+        .expect_err("the argument buffer belongs to OpenCL, not CUDA");
+    match error {
+        SKError::DeviceUnavailable { backend, .. } => assert_eq!(backend, "opencl"),
+        other => panic!("expected `DeviceUnavailable`, got {other:?}"),
+    }
+}

@@ -10,7 +10,7 @@ use ndarray::{Array2, ArrayView2};
 use sciencekit_common::{SKBackendKind, SKFloat, SKGpuKernel};
 
 use super::discovery::SKDeviceDiscovery;
-use crate::buffer::SKDeviceBuffer;
+use crate::buffer::{SKDeviceBuffer, SKDeviceTransferPolicy};
 use crate::kernel::SKDeviceBufferRef;
 
 /// A backend that drives one or more devices.
@@ -22,6 +22,14 @@ use crate::kernel::SKDeviceBufferRef;
 pub trait SKComputeBackend<F: SKFloat>: SKDeviceDiscovery {
     /// The backend kind this implementation drives.
     fn backend_kind(&self) -> SKBackendKind;
+
+    /// How this backend moves buffers between host and device memory.
+    ///
+    /// Defaults to [`SKDeviceTransferPolicy::Explicit`]: transfers are explicit
+    /// host↔device copies unless a backend opts into mapped memory.
+    fn transfer_policy(&self) -> SKDeviceTransferPolicy {
+        SKDeviceTransferPolicy::Explicit
+    }
 
     /// Copy a host matrix into device storage.
     fn upload(&self, host: ArrayView2<'_, F>) -> Result<SKDeviceBuffer<F>, Self::Error>;

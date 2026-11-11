@@ -30,7 +30,18 @@ impl<F: SKFloat> SKDeviceBuffer<F> {
         capacity: usize,
         values: Vec<F>,
     ) -> Result<Self, sciencekit_common::SKError> {
-        let elements = shape.0.saturating_mul(shape.1);
+        if !backend_kind.is_device() {
+            return Err(sciencekit_common::SKError::DeviceUnavailable {
+                backend: backend_kind.name(),
+                reason: "a host backend cannot own a device buffer".to_string(),
+            });
+        }
+        let elements = shape.0.checked_mul(shape.1).ok_or_else(|| {
+            sciencekit_common::SKError::ShapeMismatch {
+                expected: vec![capacity],
+                found: vec![shape.0, shape.1],
+            }
+        })?;
         if elements > capacity {
             return Err(sciencekit_common::SKError::ShapeMismatch {
                 expected: vec![capacity],

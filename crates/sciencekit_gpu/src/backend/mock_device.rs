@@ -13,7 +13,7 @@ use sciencekit_common::{
 
 use super::contract::SKComputeBackend;
 use super::discovery::SKDeviceDiscovery;
-use crate::buffer::{SKDeviceBuffer, SKDeviceBufferBuilder};
+use crate::buffer::{SKDeviceBuffer, SKDeviceBufferBuilder, SKDeviceTransferPolicy};
 use crate::kernel::SKDeviceBufferRef;
 
 /// A backend over a caller-supplied inventory.
@@ -22,6 +22,7 @@ pub(crate) struct SKMockComputeBackend {
     discovery_failure: Option<&'static str>,
     transfer_failure: Option<&'static str>,
     capacity_elements: Option<usize>,
+    transfer_policy: SKDeviceTransferPolicy,
 }
 
 impl SKMockComputeBackend {
@@ -32,6 +33,7 @@ impl SKMockComputeBackend {
             discovery_failure: None,
             transfer_failure: None,
             capacity_elements: None,
+            transfer_policy: SKDeviceTransferPolicy::Explicit,
         }
     }
 
@@ -43,10 +45,8 @@ impl SKMockComputeBackend {
     /// A backend whose discovery always fails with `reason`.
     pub(crate) fn failing_discovery(reason: &'static str) -> Self {
         SKMockComputeBackend {
-            devices: Vec::new(),
             discovery_failure: Some(reason),
-            transfer_failure: None,
-            capacity_elements: None,
+            ..SKMockComputeBackend::without_devices()
         }
     }
 
@@ -62,7 +62,12 @@ impl SKMockComputeBackend {
         self
     }
 
-    /// The injected transfer failure, if any.
+    /// Override the transfer policy this mock backend advertises.
+    pub(crate) fn with_transfer_policy(mut self, policy: SKDeviceTransferPolicy) -> Self {
+        self.transfer_policy = policy;
+        self
+    }
+
     fn transfer_failure(&self) -> Option<SKError> {
         self.transfer_failure
             .map(|reason| SKError::DeviceTransferFailure {
@@ -81,7 +86,6 @@ impl SKMockComputeBackend {
         SKDeviceInfo::new(index, kind, name, memory_bytes, capabilities)
     }
 
-    /// The device an upload targets: the first one enumerated.
     fn primary_device(&self) -> Result<&SKDeviceInfo, SKError> {
         self.devices
             .first()
@@ -89,6 +93,17 @@ impl SKMockComputeBackend {
                 backend: "mock",
                 reason: "no device is enumerated; the host fallback runs instead".to_string(),
             })
+    }
+
+    fn check_buffer_owner<F: SKFloat>(&self, buffer: &SKDeviceBuffer<F>) -> Result<(), SKError> {
+        let device = self.primary_device()?;
+        if buffer.backend_kind() != device.kind || buffer.device_index() != device.index {
+            return Err(SKError::DeviceUnavailable {
+                backend: buffer.backend_kind().name(),
+                reason: "the buffer belongs to a different device".to_string(),
+            });
+        }
+        Ok(())
     }
 }
 
@@ -114,6 +129,10 @@ impl<F: SKFloat> SKComputeBackend<F> for SKMockComputeBackend {
             .unwrap_or(SKBackendKind::Faer)
     }
 
+    fn transfer_policy(&self) -> SKDeviceTransferPolicy {
+        self.transfer_policy
+    }
+
     fn upload(&self, host: ArrayView2<'_, F>) -> Result<SKDeviceBuffer<F>, SKError> {
         if let Some(failure) = self.transfer_failure() {
             return Err(failure);
@@ -126,7 +145,13 @@ impl<F: SKFloat> SKComputeBackend<F> for SKMockComputeBackend {
                 scalar_type,
             });
         }
-        let elements = host.nrows().saturating_mul(host.ncols());
+        let elements =
+            host.nrows()
+                .checked_mul(host.ncols())
+                .ok_or_else(|| SKError::ShapeMismatch {
+                    expected: vec![usize::MAX],
+                    found: vec![host.nrows(), host.ncols()],
+                })?;
         if let Some(capacity) = self.capacity_elements {
             if elements > capacity {
                 return Err(SKError::ShapeMismatch {
@@ -145,17 +170,7 @@ impl<F: SKFloat> SKComputeBackend<F> for SKMockComputeBackend {
         if let Some(failure) = self.transfer_failure() {
             return Err(failure);
         }
-        let own_kind = self
-            .devices
-            .first()
-            .map(|device| device.kind)
-            .unwrap_or(SKBackendKind::Faer);
-        if buffer.backend_kind() != own_kind {
-            return Err(SKError::DeviceUnavailable {
-                backend: buffer.backend_kind().name(),
-                reason: "the buffer belongs to a different backend".to_string(),
-            });
-        }
+        self.check_buffer_owner(buffer)?;
         buffer.to_host_matrix()
     }
 
@@ -174,11 +189,12 @@ impl<F: SKFloat> SKComputeBackend<F> for SKMockComputeBackend {
                 ),
             });
         }
+        for argument in arguments {
+            self.check_buffer_owner(argument)?;
+        }
         let input = arguments.first().ok_or_else(|| {
             SKError::Conversion("kernel dispatch requires at least one argument buffer".to_string())
         })?;
-        // The mock passes its input through: the contract under test is the
-        // dispatch surface, not a numerical kernel.
         Ok((*input).clone())
     }
 }

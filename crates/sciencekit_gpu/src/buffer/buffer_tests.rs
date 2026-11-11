@@ -4,9 +4,12 @@
 use ndarray::array;
 use sciencekit_common::SKBackendKind;
 
-use crate::backend::SKComputeBackend;
 use crate::backend::mock_device::SKMockComputeBackend;
-use crate::buffer::{SKDeviceBuffer, SKDeviceTransferPolicy};
+use crate::{
+    SK_HOST_FALLBACK_BACKEND, SKComputeBackend, SKDeviceBuffer, SKDeviceBufferBuilder,
+    SKDeviceBufferRef, SKDeviceCapabilities, SKDeviceContext, SKDeviceDiscovery, SKDeviceInfo,
+    SKDevicePreference, SKDeviceTransferPolicy, SKFallbackReason, SKGpuKernel, sk_select_device,
+};
 
 fn backend() -> SKMockComputeBackend {
     SKMockComputeBackend::new(vec![SKMockComputeBackend::device(
@@ -55,11 +58,47 @@ fn single_precision_buffers_round_trip() {
     assert_eq!(downloaded, host);
 }
 
-/// The safe default transfer policy is an explicit copy.
+/// The safe default transfer policy is an explicit copy, and backends declare theirs.
 #[test]
 fn the_default_transfer_policy_is_explicit() {
     assert_eq!(
         SKDeviceTransferPolicy::default(),
         SKDeviceTransferPolicy::Explicit
     );
+    let explicit_backend = backend();
+    assert_eq!(
+        <SKMockComputeBackend as SKComputeBackend<f64>>::transfer_policy(&explicit_backend),
+        SKDeviceTransferPolicy::Explicit
+    );
+    let mapped_backend =
+        backend().with_transfer_policy(SKDeviceTransferPolicy::MappedWhenSupported);
+    assert_eq!(
+        <SKMockComputeBackend as SKComputeBackend<f64>>::transfer_policy(&mapped_backend),
+        SKDeviceTransferPolicy::MappedWhenSupported
+    );
+}
+
+/// Crate-root re-exports expose the complete public GPU contract surface.
+#[test]
+fn crate_root_re_exports_the_public_contract_surface() {
+    let devices = backend().discover_devices().expect("discovery succeeds");
+    let context = SKDeviceContext::new(SKBackendKind::OpenCl)
+        .with_required_kernel(SKGpuKernel::Gemm)
+        .with_inventory(devices);
+    let selected: Result<SKDeviceInfo, SKFallbackReason> = sk_select_device(
+        &context.device_inventory,
+        SKDevicePreference::AnyDevice,
+        None,
+        Some("f64"),
+    );
+    let selected = selected.expect("one OpenCL device is present");
+    let built = SKDeviceBufferBuilder::<f64>::new(selected.kind, selected.index)
+        .shape(1, 1)
+        .values(vec![1.0])
+        .build()
+        .expect("valid device buffer");
+    let refs: &[SKDeviceBufferRef<'_, f64>] = &[&built];
+    assert_eq!(refs.len(), 1);
+    assert_eq!(SK_HOST_FALLBACK_BACKEND, SKBackendKind::Faer);
+    assert!(SKDeviceCapabilities::new(true, true, true).supports_mapped_memory);
 }

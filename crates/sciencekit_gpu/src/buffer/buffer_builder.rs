@@ -50,7 +50,14 @@ impl<F: SKFloat> SKDeviceBufferBuilder<F> {
 
     /// Validate and build the buffer.
     pub fn build(self) -> Result<SKDeviceBuffer<F>, SKError> {
-        let elements = self.shape.0.saturating_mul(self.shape.1);
+        let elements =
+            self.shape
+                .0
+                .checked_mul(self.shape.1)
+                .ok_or_else(|| SKError::ShapeMismatch {
+                    expected: vec![usize::MAX],
+                    found: vec![self.shape.0, self.shape.1],
+                })?;
         let capacity = self.capacity.unwrap_or(elements);
         SKDeviceBuffer::from_parts(
             self.backend_kind,

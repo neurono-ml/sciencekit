@@ -19,3 +19,12 @@ pub mod backend;
 pub mod buffer;
 pub mod device;
 pub mod kernel;
+
+pub use backend::{SKComputeBackend, SKDeviceDiscovery};
+pub use buffer::{SKDeviceBuffer, SKDeviceBufferBuilder, SKDeviceTransferPolicy};
+pub use device::{
+    SK_HOST_FALLBACK_BACKEND, SKDeviceCapabilities, SKDeviceContext, SKDeviceInfo,
+    SKDevicePreference, SKFallbackReason, sk_clear_device_inventory, sk_register_device_inventory,
+    sk_registered_device_inventory, sk_resolve_operation_backend, sk_select_device,
+};
+pub use kernel::{SKDeviceBufferRef, SKGpuKernel};
