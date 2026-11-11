@@ -57,7 +57,7 @@
 
 ## 6. Documentation, changelog and review
 
-- [ ] 6.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under `Unreleased →
+- [x] 6.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under `Unreleased →
   Added` for the generic bagging estimators, feature routing and OOB scoring.
 - [ ] 6.2 Companion documentation change on its own `docs/*` branch (merged into
   `docs/documentations`): add the bagging chapter, register it in `SUMMARY.md`, add a
