@@ -17,7 +17,7 @@
 - [x] 2.1 Implement per-feature gradient/Hessian/count accumulation over a node's sample
   indices, parallel across features, with a hand-computed test; verify with
   `cargo test -p sciencekit_ensemble hist_accumulate`.
-- [ ] 2.2 Implement the numeric prefix scan and the gain formula with
+- [x] 2.2 Implement the numeric prefix scan and the gain formula with
   `minimum_samples_leaf` and `l2_regularization`, with a hand-computed best split; verify
   with `cargo test -p sciencekit_ensemble hist_gain`.
 - [ ] 2.3 Implement histogram subtraction from the parent and a test comparing subtraction
