@@ -39,6 +39,9 @@ mod fit_tests;
 mod oneshot_tests;
 
 #[cfg(test)]
+mod representation_tests;
+
+#[cfg(test)]
 pub(crate) mod testing;
 
 #[cfg(test)]
