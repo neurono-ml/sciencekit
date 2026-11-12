@@ -28,7 +28,7 @@
 
 ## 3. Estimator
 
-- [ ] 3.1 Implement binary `fit` producing a model with one coefficient vector and one
+- [x] 3.1 Implement binary `fit` producing a model with one coefficient vector and one
   intercept, and verify the separable and overlapping fixtures; verify with
   `cargo test -p sciencekit_svm linear_svc_fit`.
 - [ ] 3.2 Implement one-vs-rest multiclass fitting with parallel heads and deterministic
