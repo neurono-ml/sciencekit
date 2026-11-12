@@ -5,6 +5,7 @@
 //! re-exports their public items.
 
 mod accumulate;
+mod categorical;
 mod gain;
 mod subtract;
 
@@ -12,10 +13,13 @@ pub use accumulate::{SKFeatureHistogram, SKNodeHistogram, sk_accumulate_histogra
 pub use gain::{
     SKHistogramSplit, SKHistogramSplitCandidate, sk_scan_numeric_feature, sk_split_gain,
 };
+pub use categorical::sk_scan_categorical_feature;
 pub use subtract::sk_subtract_histogram;
 
 #[cfg(test)]
 mod accumulate_tests;
+#[cfg(test)]
+mod categorical_tests;
 #[cfg(test)]
 mod gain_tests;
 #[cfg(test)]
