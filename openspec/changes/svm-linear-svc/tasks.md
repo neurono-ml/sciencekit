@@ -37,7 +37,7 @@
 - [x] 3.3 Implement `decision_function` and `predict_labels` with canonical tie-breaking;
   verify shape, argmax consistency and a hand-built tie; verify with
   `cargo test -p sciencekit_svm linear_svc_predict`.
-- [ ] 3.4 Implement `predict_probabilities` returning `UnsupportedOperation` with
+- [x] 3.4 Implement `predict_probabilities` returning `UnsupportedOperation` with
   guidance; verify with `cargo test -p sciencekit_svm linear_svc_probability`.
 - [ ] 3.5 Add class-weight tests proving `Balanced` changes the boundary on an imbalanced
   fixture and explicit weights are honored; verify with
