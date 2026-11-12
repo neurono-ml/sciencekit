@@ -8,7 +8,7 @@ use crate::boosting::loss::SKGradientLoss;
 use crate::boosting::subsample::sk_select_stage_rows;
 use crate::histogram_boosting::binning::SKBinnedDataset;
 use crate::histogram_boosting::growth::{
-    SKHistogramGrowthParameters, SKHistogramTree, sk_grow_histogram_tree,
+    SKHistogramGrowthParameters, SKHistogramGrowthResult, SKHistogramTree, sk_grow_histogram_tree,
 };
 
 /// Per-stage controls of the histogram booster.
@@ -29,7 +29,8 @@ pub(crate) fn sk_fit_histogram_scalar_stage<F: SKFloat, L: SKGradientLoss<F>>(
     raw_scores: &mut [F],
     parameters: &SKHistogramStageParameters<F>,
     stage_index: usize,
-) -> Result<SKHistogramTree<F>, SKError> {
+    training_rows: &[usize],
+) -> Result<SKHistogramGrowthResult<F>, SKError> {
     let negative_gradients: Vec<F> = targets
         .iter()
         .zip(raw_scores.iter())
@@ -41,12 +42,15 @@ pub(crate) fn sk_fit_histogram_scalar_stage<F: SKFloat, L: SKGradientLoss<F>>(
         .map(|(&target, &score)| loss.hessian(target, score))
         .collect();
     let rows = sk_select_stage_rows(
-        targets.len(),
+        training_rows.len(),
         parameters.subsample,
         parameters.random_seed,
         stage_index,
         0,
-    );
+    )
+    .into_iter()
+    .map(|position| training_rows[position])
+    .collect::<Vec<usize>>();
     let result = sk_grow_histogram_tree(
         dataset,
         &negative_gradients,
@@ -60,7 +64,7 @@ pub(crate) fn sk_fit_histogram_scalar_stage<F: SKFloat, L: SKGradientLoss<F>>(
         parameters.learning_rate,
         raw_scores,
     );
-    Ok(result.tree)
+    Ok(result)
 }
 
 /// Add `learning_rate * tree(binned row)` into every raw score.

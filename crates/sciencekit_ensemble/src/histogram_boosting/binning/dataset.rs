@@ -207,6 +207,11 @@ impl<F: SKFloat> SKBinnedDataset<F> {
         &self.feature_binnings[feature_index]
     }
 
+    /// The binning metadata of every feature.
+    pub fn feature_binnings(&self) -> &[SKFeatureBinning<F>] {
+        &self.feature_binnings
+    }
+
     /// The raw column-major bin storage.
     pub fn bins(&self) -> &[u8] {
         &self.bins

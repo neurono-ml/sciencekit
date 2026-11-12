@@ -1,7 +1,7 @@
 //! Deterministic quantile bin edges and the dedicated missing bin (spec
 //! `histogram-gradient-boosting`, design decision 2).
 
-use sciencekit_common::{SKError, SKFloat};
+use sciencekit_common::SKFloat;
 
 /// Maximum number of values sampled per column when deriving quantile edges.
 const SK_BINNING_SAMPLE_LIMIT: usize = 200_000;
@@ -73,17 +73,5 @@ impl<F: SKFloat> SKNumericBinning<F> {
         }
         let boundary = self.edges.partition_point(|edge| *edge <= value);
         (boundary as u8).min(self.number_of_bins() as u8 - 1)
-    }
-}
-
-/// Validate a configured `maximum_bins` in `1..=255`.
-pub(crate) fn sk_validate_maximum_bins(maximum_bins: usize) -> Result<(), SKError> {
-    if (1..=255).contains(&maximum_bins) {
-        Ok(())
-    } else {
-        Err(SKError::InvalidHyperparameter {
-            name: "maximum_bins",
-            reason: "maximum_bins must be in 1..=255".to_string(),
-        })
     }
 }

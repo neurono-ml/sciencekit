@@ -37,9 +37,10 @@ fn hist_stage_applies_a_hand_computed_newton_update() {
         &mut raw_scores,
         &parameters,
         0,
+        &(0..4).collect::<Vec<usize>>(),
     )
     .expect("stage");
-    assert_eq!(tree.node_count(), 3);
+    assert_eq!(tree.tree.node_count(), 3);
     assert!((raw_scores[0] - 0.45).abs() < 1e-12);
     assert!((raw_scores[1] - 0.45).abs() < 1e-12);
     assert!((raw_scores[2] - 0.55).abs() < 1e-12);

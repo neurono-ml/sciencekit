@@ -5,7 +5,7 @@
 //! re-exports their public items.
 
 pub(crate) mod early_stopping;
-mod init;
+pub(crate) mod init;
 pub mod loss;
 pub(crate) mod multiclass_loop;
 pub(crate) mod scalar_loop;

@@ -30,6 +30,12 @@ pub use bagging::{
     SKBaggingRegressor, SKBaggingRegressorBuilder, SKBaggingRegressorModel, SKBaseEstimatorError,
 };
 pub use bootstrap::SKMaximumSamples;
+pub use histogram_boosting::{
+    SKHistGradientBoostingClassifier, SKHistGradientBoostingClassifierBuilder,
+    SKHistGradientBoostingClassifierModel, SKHistGradientBoostingRegressor,
+    SKHistGradientBoostingRegressorBuilder, SKHistGradientBoostingRegressorModel,
+    SKHistGradientBoostingRegressionLoss,
+};
 pub use gradient_boosting::{
     SKGradientBoostingClassificationLoss, SKGradientBoostingClassifier,
     SKGradientBoostingClassifierBuilder, SKGradientBoostingClassifierModel,

@@ -64,25 +64,6 @@ impl<F: SKFloat> SKFeatureHistogram<F> {
         self.gradient_sums.len()
     }
 
-    /// Add `other` cell by cell, keeping the totals consistent.
-    pub(crate) fn add_assign(&mut self, other: &Self) {
-        self.gradient_sums
-            .iter_mut()
-            .zip(other.gradient_sums.iter())
-            .for_each(|(destination, &value)| *destination = *destination + value);
-        self.hessian_sums
-            .iter_mut()
-            .zip(other.hessian_sums.iter())
-            .for_each(|(destination, &value)| *destination = *destination + value);
-        self.counts
-            .iter_mut()
-            .zip(other.counts.iter())
-            .for_each(|(destination, &value)| *destination = *destination + value);
-        self.total_gradient = self.total_gradient + other.total_gradient;
-        self.total_hessian = self.total_hessian + other.total_hessian;
-        self.total_count += other.total_count;
-    }
-
     /// Subtract `subtrahend` cell by cell, keeping the totals consistent.
     pub(crate) fn subtract_assign(&mut self, subtrahend: &Self) {
         self.gradient_sums
