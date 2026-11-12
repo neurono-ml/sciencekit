@@ -11,11 +11,15 @@
 #![warn(missing_docs)]
 
 pub mod kernel;
+pub mod linear_svc;
 pub mod probability;
 pub mod smo;
 pub mod svc;
 pub mod svr;
 
+pub use linear_svc::{
+    SKLinearSVC, SKLinearSVCBuilder, SKLinearSvcLoss, sk_linear_svc_loss_from_code,
+};
 pub use sciencekit_math::{SKKernel, SKKernelGamma, SKKernelParameters};
 pub use svc::{SKBinarySVCModel, SKClassWeight, SKSVC, SKSVCBuilder, SKSVCModel};
 pub use svr::{SKSVR, SKSVRBuilder, SKSVRModel};
