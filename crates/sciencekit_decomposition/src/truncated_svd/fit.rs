@@ -17,7 +17,7 @@ use super::config::SKTruncatedSVDConfiguration;
 use super::core_implementation::SKTruncatedSVD;
 use super::model::SKTruncatedSVDModel;
 use super::product::sk_multiply_view_by_dense;
-use super::validation::{sk_validate_fit_input, sk_view_dimensions};
+use super::validation::{SKTruncatedInput, sk_validate_fit_input};
 use super::variance::sk_variance_and_ratio;
 
 impl<F: SKBackendSelection> SKUnsupervisedFit<F> for SKTruncatedSVD<F> {
@@ -29,7 +29,11 @@ impl<F: SKBackendSelection> SKUnsupervisedFit<F> for SKTruncatedSVD<F> {
         X: TryInto<SKDataView<'a, F>, Error = SKError>,
     {
         let view = features.try_into()?;
-        let (rows_count, columns_count) = sk_view_dimensions(&view).unwrap_or((0, 0));
+        let prepared = SKTruncatedInput::try_from_view(view);
+        let (rows_count, columns_count) = prepared
+            .as_ref()
+            .map(SKTruncatedInput::dimensions)
+            .unwrap_or((0, 0));
         let attributes = SKOperationAttributes {
             operation: SKOperationKind::Fit,
             rows_count,
@@ -38,7 +42,7 @@ impl<F: SKBackendSelection> SKUnsupervisedFit<F> for SKTruncatedSVD<F> {
             backend: self.configuration.backend,
         };
         sk_run_operation(attributes, || {
-            sk_fit_with_projection(&self.configuration, view, "fit").map(|(model, _)| model)
+            sk_fit_with_projection(&self.configuration, prepared?, "fit").map(|(model, _)| model)
         })
     }
 }
@@ -47,15 +51,13 @@ impl<F: SKBackendSelection> SKUnsupervisedFit<F> for SKTruncatedSVD<F> {
 /// the fitted model and the projected training rows (`X · componentsᵀ`).
 pub(super) fn sk_fit_with_projection<F: SKBackendSelection>(
     configuration: &SKTruncatedSVDConfiguration<F>,
-    features: SKDataView<'_, F>,
+    input: SKTruncatedInput<'_, F>,
     operation: &'static str,
 ) -> Result<(SKTruncatedSVDModel<F>, Array2<F>), SKError> {
-    let (rows_count, columns_count) = sk_validate_fit_input(features, configuration, operation)?;
-    let plan = sk_resolve_plan(
+    let (_rows_count, columns_count) = sk_validate_fit_input(input, configuration, operation)?;
+    let plan = sk_resolve_plan::<F>(
         &configuration.builder_state,
-        &features,
-        rows_count,
-        columns_count,
+        input.stored_elements(),
         SKAccessPattern::RandomAccess,
     )?;
 
@@ -64,7 +66,7 @@ pub(super) fn sk_fit_with_projection<F: SKBackendSelection>(
         .number_of_power_iterations(configuration.number_of_iterations)
         .random_seed(configuration.random_seed)
         .backend(configuration.backend)
-        .compute(features, None)?;
+        .compute(input.as_data_view(), None)?;
 
     let mut components = Array2::from_shape_fn(
         (configuration.number_of_components, columns_count),
@@ -81,13 +83,13 @@ pub(super) fn sk_fit_with_projection<F: SKBackendSelection>(
 
     let components_transposed = components.t().to_owned();
     let projected = sk_multiply_view_by_dense(
-        features,
+        input,
         components_transposed.view(),
         configuration.backend,
         plan.parallelism,
-    )?;
+    );
     let (explained_variance, explained_variance_ratio) =
-        sk_variance_and_ratio(projected.view(), features, plan.parallelism)?;
+        sk_variance_and_ratio(projected.view(), input, plan.parallelism);
 
     let model = SKTruncatedSVDModel::from_parts(
         components,
@@ -101,25 +103,18 @@ pub(super) fn sk_fit_with_projection<F: SKBackendSelection>(
     Ok((model, projected))
 }
 
-/// Resolves an execution plan from `builder_state` without materializing sparse
-/// matrices.
+/// Resolves an execution plan from `builder_state` and `stored_elements`
+/// without materializing sparse matrices.
 pub(super) fn sk_resolve_plan<F: SKFloat>(
     builder_state: &SKBuilderState,
-    features: &SKDataView<'_, F>,
-    rows_count: usize,
-    columns_count: usize,
+    stored_elements: u64,
     access_pattern: SKAccessPattern,
 ) -> Result<SKExecutionPlan, SKError> {
-    let elements = match features {
-        SKDataView::Dense(_) => (rows_count as u64).saturating_mul(columns_count as u64),
-        SKDataView::Sparse(sparse) => sparse.nnz() as u64,
-        _ => 0,
-    };
     let mut context = SKExecutionContext::real();
     context.cpu_cores = context.cpu_cores.min(rayon::current_num_threads().max(1));
-    context.dataset_size_bytes = elements.saturating_mul(size_of::<F>() as u64);
+    context.dataset_size_bytes = stored_elements.saturating_mul(size_of::<F>() as u64);
     context.scalar_size_bytes = size_of::<F>() as u64;
-    context.dataset_elements = Some(elements);
+    context.dataset_elements = Some(stored_elements);
     context.access_pattern = access_pattern;
     context.grain = SK_AXIS_SUM_GRAIN;
     builder_state.resolve_plan(&context)
@@ -135,13 +130,13 @@ fn sk_complete_zero_norm_components<F: SKFloat>(components: &mut Array2<F>) {
     let mut completed: Vec<Array1<F>> = Vec::with_capacity(number_of_components);
     let collapsed_threshold = F::from(1e-6).expect("threshold fits in scalar");
 
-    for mut row in components.rows_mut() {
-        for previous in &completed {
+    components.rows_mut().into_iter().for_each(|mut row| {
+        completed.iter().for_each(|previous| {
             let dot = row.dot(previous);
             azip!((entry in &mut row, &basis_value in previous) {
                 *entry = *entry - dot * basis_value;
             });
-        }
+        });
         let norm = row
             .iter()
             .fold(F::zero(), |accumulator, &value| accumulator + value * value)
@@ -156,7 +151,7 @@ fn sk_complete_zero_norm_components<F: SKFloat>(components: &mut Array2<F>) {
             row.assign(&basis_vector);
         }
         completed.push(row.to_owned());
-    }
+    });
 }
 
 fn sk_orthogonal_unit_direction<F: SKFloat>(
@@ -171,12 +166,12 @@ fn sk_orthogonal_unit_direction<F: SKFloat>(
                 F::zero()
             }
         });
-        for previous in existing_rows {
+        existing_rows.iter().for_each(|previous| {
             let dot = candidate.dot(previous);
             azip!((entry in &mut candidate, &basis_value in previous) {
                 *entry = *entry - dot * basis_value;
             });
-        }
+        });
         let norm = candidate
             .iter()
             .fold(F::zero(), |accumulator, &value| accumulator + value * value)

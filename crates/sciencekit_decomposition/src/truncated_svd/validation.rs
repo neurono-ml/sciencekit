@@ -1,30 +1,67 @@
-//! Input and hyperparameter validation for `SKTruncatedSVD` (spec
-//! `truncated-svd`).
+//! Single-dispatch input preparation and hyperparameter validation for
+//! `SKTruncatedSVD` (spec `truncated-svd` and `data-view-boundary`).
 
+use ndarray::ArrayView2;
 use sciencekit_common::{SKDataView, SKError, SKFloat, sk_validate_hyperparameter};
+use sprs::CsMatView;
 
 use super::config::{SKTruncatedSVDAlgorithm, SKTruncatedSVDConfiguration};
 
-/// Returns `(number_of_rows, number_of_columns)` for a supported feature view,
-/// rejecting CSC matrices up front before scanning any element.
-pub(super) fn sk_view_dimensions<F>(
-    features: &SKDataView<'_, F>,
-) -> Result<(usize, usize), SKError> {
-    match features {
-        SKDataView::Dense(dense) => Ok(dense.dim()),
-        SKDataView::Sparse(sparse) => {
-            if !sparse.is_csr() {
-                return Err(SKError::UnsupportedRepresentation {
-                    representation: "csc",
-                    suggestion: "convert the sparse matrix to compressed-row (CSR) format with to_csr()",
-                });
+/// Borrowed dense or compressed-row matrix operand extracted by dispatching on
+/// [`SKDataView`] once at the start of each public operation.
+#[derive(Clone, Copy)]
+pub(super) enum SKTruncatedInput<'a, F: Copy> {
+    Dense(ArrayView2<'a, F>),
+    SparseCsr(CsMatView<'a, F>),
+}
+
+impl<'a, F: Copy> SKTruncatedInput<'a, F> {
+    /// Dispatches on `SKDataView` once per operation, rejecting CSC or unknown
+    /// variants up front before scanning any element.
+    pub(super) fn try_from_view(features: SKDataView<'a, F>) -> Result<Self, SKError> {
+        match features {
+            SKDataView::Dense(dense) => Ok(Self::Dense(dense)),
+            SKDataView::Sparse(sparse) => {
+                if !sparse.is_csr() {
+                    return Err(SKError::UnsupportedRepresentation {
+                        representation: "csc",
+                        suggestion: "convert the sparse matrix to compressed-row (CSR) format with to_csr()",
+                    });
+                }
+                Ok(Self::SparseCsr(sparse))
             }
-            Ok((sparse.rows(), sparse.cols()))
+            _ => Err(SKError::UnsupportedRepresentation {
+                representation: features.representation(),
+                suggestion: "convert the input to a supported dense or CSR view",
+            }),
         }
-        _ => Err(SKError::UnsupportedRepresentation {
-            representation: features.representation(),
-            suggestion: "convert the input to a supported dense or CSR view",
-        }),
+    }
+
+    /// Logical `(number_of_rows, number_of_columns)` dimensions.
+    pub(super) fn dimensions(&self) -> (usize, usize) {
+        match self {
+            Self::Dense(dense) => dense.dim(),
+            Self::SparseCsr(sparse) => (sparse.rows(), sparse.cols()),
+        }
+    }
+
+    /// Number of stored scalar elements (`rows * columns` for dense, `nnz` for CSR).
+    pub(super) fn stored_elements(&self) -> u64 {
+        match self {
+            Self::Dense(dense) => {
+                let (rows, columns) = dense.dim();
+                (rows as u64).saturating_mul(columns as u64)
+            }
+            Self::SparseCsr(sparse) => sparse.nnz() as u64,
+        }
+    }
+
+    /// Re-borrows as an [`SKDataView`] when delegating to `sciencekit_math`.
+    pub(super) fn as_data_view(self) -> SKDataView<'a, F> {
+        match self {
+            Self::Dense(dense) => SKDataView::Dense(dense),
+            Self::SparseCsr(sparse) => SKDataView::Sparse(sparse),
+        }
     }
 }
 
@@ -59,7 +96,7 @@ pub(super) fn sk_validate_configuration<F: SKFloat>(
 
 /// Validates shape, hyperparameters and finiteness before running `fit`.
 pub(super) fn sk_validate_fit_input<F: SKFloat>(
-    features: SKDataView<'_, F>,
+    input: SKTruncatedInput<'_, F>,
     configuration: &SKTruncatedSVDConfiguration<F>,
     operation: &'static str,
 ) -> Result<(usize, usize), SKError> {
@@ -69,7 +106,7 @@ pub(super) fn sk_validate_fit_input<F: SKFloat>(
         configuration.number_of_iterations,
         configuration.tolerance,
     )?;
-    let (rows_count, columns_count) = sk_view_dimensions(&features)?;
+    let (rows_count, columns_count) = input.dimensions();
     if rows_count == 0 || columns_count == 0 {
         return Err(SKError::EmptyInput { operation });
     }
@@ -83,17 +120,17 @@ pub(super) fn sk_validate_fit_input<F: SKFloat>(
             ),
         });
     }
-    sk_validate_finiteness(features)?;
+    sk_validate_finiteness(input)?;
     Ok((rows_count, columns_count))
 }
 
 /// Validates `transform` or `inverse_transform` input shape and finiteness.
 pub(super) fn sk_validate_matrix_input<F: SKFloat>(
-    features: SKDataView<'_, F>,
+    input: SKTruncatedInput<'_, F>,
     expected_columns: usize,
     operation: &'static str,
 ) -> Result<(usize, usize), SKError> {
-    let (rows_count, found_columns) = sk_view_dimensions(&features)?;
+    let (rows_count, found_columns) = input.dimensions();
     if rows_count == 0 {
         return Err(SKError::EmptyInput { operation });
     }
@@ -105,43 +142,36 @@ pub(super) fn sk_validate_matrix_input<F: SKFloat>(
             found_columns,
         ));
     }
-    sk_validate_finiteness(features)?;
+    sk_validate_finiteness(input)?;
     Ok((rows_count, found_columns))
 }
 
 /// Rejects any non-finite value (`NaN` or `±∞`), reporting its flat row-major
 /// position without densifying sparse inputs.
 pub(super) fn sk_validate_finiteness<F: SKFloat>(
-    features: SKDataView<'_, F>,
+    input: SKTruncatedInput<'_, F>,
 ) -> Result<(), SKError> {
-    match features {
-        SKDataView::Dense(dense) => {
+    let non_finite_position = match input {
+        SKTruncatedInput::Dense(dense) => {
             let columns_count = dense.ncols();
-            for ((row, column), &value) in dense.indexed_iter() {
-                if !value.is_finite() {
-                    return Err(SKError::NonFiniteValue {
-                        position: row * columns_count + column,
-                    });
-                }
-            }
-            Ok(())
+            dense.indexed_iter().find_map(|((row, column), &value)| {
+                (!value.is_finite()).then_some(row * columns_count + column)
+            })
         }
-        SKDataView::Sparse(sparse) => {
+        SKTruncatedInput::SparseCsr(sparse) => {
             let columns_count = sparse.cols();
-            for (row, stored_row) in sparse.outer_iterator().enumerate() {
-                for (column, &value) in stored_row.iter() {
-                    if !value.is_finite() {
-                        return Err(SKError::NonFiniteValue {
-                            position: row * columns_count + column,
-                        });
-                    }
-                }
-            }
-            Ok(())
+            sparse
+                .outer_iterator()
+                .enumerate()
+                .find_map(|(row, stored_row)| {
+                    stored_row.iter().find_map(|(column, &value)| {
+                        (!value.is_finite()).then_some(row * columns_count + column)
+                    })
+                })
         }
-        _ => Err(SKError::UnsupportedRepresentation {
-            representation: features.representation(),
-            suggestion: "convert the input to a supported dense or CSR view",
-        }),
+    };
+    match non_finite_position {
+        Some(position) => Err(SKError::NonFiniteValue { position }),
+        None => Ok(()),
     }
 }

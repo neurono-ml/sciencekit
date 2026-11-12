@@ -12,7 +12,7 @@ use super::core_implementation::SKTruncatedSVD;
 use super::fit::{sk_fit_with_projection, sk_resolve_plan};
 use super::model::SKTruncatedSVDModel;
 use super::product::sk_multiply_view_by_dense;
-use super::validation::{sk_validate_matrix_input, sk_view_dimensions};
+use super::validation::{SKTruncatedInput, sk_validate_matrix_input};
 
 impl<F: SKBackendSelection> SKTruncatedSVD<F> {
     /// Fits the estimator on `features` and projects the same input onto the
@@ -23,7 +23,11 @@ impl<F: SKBackendSelection> SKTruncatedSVD<F> {
         X: TryInto<SKDataView<'a, F>, Error = SKError>,
     {
         let view = features.try_into()?;
-        let (rows_count, columns_count) = sk_view_dimensions(&view).unwrap_or((0, 0));
+        let prepared = SKTruncatedInput::try_from_view(view);
+        let (rows_count, columns_count) = prepared
+            .as_ref()
+            .map(SKTruncatedInput::dimensions)
+            .unwrap_or((0, 0));
         let attributes = SKOperationAttributes {
             operation: SKOperationKind::FitTransform,
             rows_count,
@@ -32,7 +36,7 @@ impl<F: SKBackendSelection> SKTruncatedSVD<F> {
             backend: self.configuration.backend,
         };
         sk_run_operation(attributes, || {
-            sk_fit_with_projection(&self.configuration, view, "fit_transform")
+            sk_fit_with_projection(&self.configuration, prepared?, "fit_transform")
                 .map(|(_, projected)| projected)
         })
     }
@@ -46,7 +50,11 @@ impl<F: SKBackendSelection> SKTruncatedSVDModel<F> {
         X: TryInto<SKDataView<'a, F>, Error = SKError>,
     {
         let view = features.try_into()?;
-        let (rows_count, columns_count) = sk_view_dimensions(&view).unwrap_or((0, 0));
+        let prepared = SKTruncatedInput::try_from_view(view);
+        let (rows_count, columns_count) = prepared
+            .as_ref()
+            .map(SKTruncatedInput::dimensions)
+            .unwrap_or((0, 0));
         let attributes = SKOperationAttributes {
             operation: SKOperationKind::Transform,
             rows_count,
@@ -54,7 +62,7 @@ impl<F: SKBackendSelection> SKTruncatedSVDModel<F> {
             execution_mode: self.execution_mode(),
             backend: self.backend,
         };
-        sk_run_operation(attributes, || sk_project_features(self, view))
+        sk_run_operation(attributes, || sk_project_features(self, prepared?))
     }
 
     /// Reconstructs feature-space approximations from projected coordinates
@@ -65,7 +73,11 @@ impl<F: SKBackendSelection> SKTruncatedSVDModel<F> {
         X: TryInto<SKDataView<'a, F>, Error = SKError>,
     {
         let view = projected.try_into()?;
-        let (rows_count, columns_count) = sk_view_dimensions(&view).unwrap_or((0, 0));
+        let prepared = SKTruncatedInput::try_from_view(view);
+        let (rows_count, columns_count) = prepared
+            .as_ref()
+            .map(SKTruncatedInput::dimensions)
+            .unwrap_or((0, 0));
         let attributes = SKOperationAttributes {
             operation: SKOperationKind::Transform,
             rows_count,
@@ -73,7 +85,7 @@ impl<F: SKBackendSelection> SKTruncatedSVDModel<F> {
             execution_mode: self.execution_mode(),
             backend: self.backend,
         };
-        sk_run_operation(attributes, || sk_reconstruct_features(self, view))
+        sk_run_operation(attributes, || sk_reconstruct_features(self, prepared?))
     }
 }
 
@@ -91,44 +103,45 @@ impl<F: SKBackendSelection> SKFeatureTransformer<F> for SKTruncatedSVDModel<F> {
 
 fn sk_project_features<F: SKBackendSelection>(
     model: &SKTruncatedSVDModel<F>,
-    features: SKDataView<'_, F>,
+    input: SKTruncatedInput<'_, F>,
 ) -> Result<Array2<F>, SKError> {
-    let (rows_count, columns_count) =
-        sk_validate_matrix_input(features, model.number_of_features(), "transform")?;
-    let plan = sk_resolve_plan(
+    sk_validate_matrix_input(input, model.number_of_features(), "transform")?;
+    let plan = sk_resolve_plan::<F>(
         &model.builder_state,
-        &features,
-        rows_count,
-        columns_count,
+        input.stored_elements(),
         SKAccessPattern::Sequential,
     )?;
     let components_transposed = model.components.t().to_owned();
-    sk_multiply_view_by_dense(
-        features,
+    Ok(sk_multiply_view_by_dense(
+        input,
         components_transposed.view(),
         model.backend,
         plan.parallelism,
-    )
+    ))
 }
 
 fn sk_reconstruct_features<F: SKBackendSelection>(
     model: &SKTruncatedSVDModel<F>,
-    projected: SKDataView<'_, F>,
+    input: SKTruncatedInput<'_, F>,
 ) -> Result<Array2<F>, SKError> {
     let (rows_count, columns_count) =
-        sk_validate_matrix_input(projected, model.number_of_components(), "inverse_transform")?;
-    let effective_columns = columns_count.max(model.number_of_features());
-    let plan = sk_resolve_plan(
+        sk_validate_matrix_input(input, model.number_of_components(), "inverse_transform")?;
+    let effective_elements = match input {
+        SKTruncatedInput::Dense(_) => {
+            let effective_columns = columns_count.max(model.number_of_features());
+            (rows_count as u64).saturating_mul(effective_columns as u64)
+        }
+        SKTruncatedInput::SparseCsr(_) => input.stored_elements(),
+    };
+    let plan = sk_resolve_plan::<F>(
         &model.builder_state,
-        &projected,
-        rows_count,
-        effective_columns,
+        effective_elements,
         SKAccessPattern::Sequential,
     )?;
-    sk_multiply_view_by_dense(
-        projected,
+    Ok(sk_multiply_view_by_dense(
+        input,
         model.components.view(),
         model.backend,
         plan.parallelism,
-    )
+    ))
 }
