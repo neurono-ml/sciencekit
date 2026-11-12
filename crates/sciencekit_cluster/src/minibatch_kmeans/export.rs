@@ -184,13 +184,12 @@ fn read_integer<F: SKFloat>(
 }
 
 fn parse_backend(name: &str) -> SKBackendKind {
-    name.parse::<SKBackendKind>()
-        .unwrap_or_else(|_| match name {
-            "MatrixMultiply" => SKBackendKind::MatrixMultiply,
-            "NdArrayLinalg" => SKBackendKind::NdArrayLinalg,
-            "OpenCl" => SKBackendKind::OpenCl,
-            "Cuda" => SKBackendKind::Cuda,
-            "Rocm" => SKBackendKind::Rocm,
-            _ => SKBackendKind::Faer,
-        })
+    name.parse::<SKBackendKind>().unwrap_or(match name {
+        "MatrixMultiply" => SKBackendKind::MatrixMultiply,
+        "NdArrayLinalg" => SKBackendKind::NdArrayLinalg,
+        "OpenCl" => SKBackendKind::OpenCl,
+        "Cuda" => SKBackendKind::Cuda,
+        "Rocm" => SKBackendKind::Rocm,
+        _ => SKBackendKind::Faer,
+    })
 }
