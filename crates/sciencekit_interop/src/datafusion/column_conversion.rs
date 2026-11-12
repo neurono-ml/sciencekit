@@ -21,17 +21,7 @@ macro_rules! sk_numeric_column {
                 expected: format!("a {} array", stringify!($array_type)),
                 found: format!("{:?}", $array.data_type()),
             })?;
-        Ok(SKColumnData::$variant(
-            (0..typed.len())
-                .map(|row| {
-                    if typed.is_null(row) {
-                        None
-                    } else {
-                        Some(typed.value(row))
-                    }
-                })
-                .collect(),
-        ))
+        Ok(SKColumnData::$variant(typed.iter().collect()))
     }};
 }
 
@@ -68,111 +58,72 @@ fn sk_integer_column(column_name: &str, array: &ArrayRef) -> Result<SKColumnData
                 .as_any()
                 .downcast_ref::<$array_type>()
                 .ok_or_else(|| sk_array_mismatch::<$array_type>(array))?;
-            (0..typed.len())
-                .map(|row| {
-                    if typed.is_null(row) {
-                        None
-                    } else {
-                        Some(i64::from(typed.value(row)))
-                    }
-                })
-                .collect::<Vec<_>>()
+            typed
+                .iter()
+                .map(|value| value.map(i64::from))
+                .collect::<Vec<Option<i64>>>()
         }};
     }
 
-    let values: Vec<Option<i64>> = match array.data_type() {
-        DataType::Int8 => widened!(Int8Array),
-        DataType::Int16 => widened!(Int16Array),
-        DataType::Int32 => widened!(Int32Array),
-        DataType::Int64 => widened!(Int64Array),
-        DataType::UInt8 => widened!(UInt8Array),
-        DataType::UInt16 => widened!(UInt16Array),
-        DataType::UInt32 => widened!(UInt32Array),
-        DataType::UInt64 => {
-            let typed = array
-                .as_any()
-                .downcast_ref::<UInt64Array>()
-                .ok_or_else(|| sk_array_mismatch::<UInt64Array>(array))?;
-            (0..typed.len())
-                .map(|row| {
-                    if typed.is_null(row) {
-                        Ok(None)
-                    } else {
-                        i64::try_from(typed.value(row)).map(Some).map_err(|_| {
+    let values: Vec<Option<i64>> =
+        match array.data_type() {
+            DataType::Int8 => widened!(Int8Array),
+            DataType::Int16 => widened!(Int16Array),
+            DataType::Int32 => widened!(Int32Array),
+            DataType::Int64 => widened!(Int64Array),
+            DataType::UInt8 => widened!(UInt8Array),
+            DataType::UInt16 => widened!(UInt16Array),
+            DataType::UInt32 => widened!(UInt32Array),
+            DataType::UInt64 => {
+                let typed = array
+                    .as_any()
+                    .downcast_ref::<UInt64Array>()
+                    .ok_or_else(|| sk_array_mismatch::<UInt64Array>(array))?;
+                typed
+                    .iter()
+                    .map(|value| match value {
+                        None => Ok(None),
+                        Some(value) => i64::try_from(value).map(Some).map_err(|_| {
                             SKError::UnsupportedColumnType {
                                 column: column_name.to_string(),
                                 logical_type: "uint64".to_string(),
                                 suggestion: "cast the column to int64 or float64 before import"
                                     .to_string(),
                             }
-                        })
-                    }
-                })
-                .collect::<Result<Vec<_>, SKError>>()?
-        }
-        other => {
-            return Err(SKError::SchemaMismatch {
-                expected: "an integer array".to_string(),
-                found: format!("{other:?}"),
-            });
-        }
-    };
+                        }),
+                    })
+                    .collect::<Result<Vec<_>, SKError>>()?
+            }
+            other => {
+                return Err(SKError::SchemaMismatch {
+                    expected: "an integer array".to_string(),
+                    found: format!("{other:?}"),
+                });
+            }
+        };
     Ok(SKColumnData::Integer64(values))
 }
 
 fn sk_text_column(array: &ArrayRef) -> Result<SKColumnData, SKError> {
+    macro_rules! text_values {
+        ($array_type:ty) => {{
+            let typed = array
+                .as_any()
+                .downcast_ref::<$array_type>()
+                .ok_or_else(|| sk_array_mismatch::<$array_type>(array))?;
+            Ok(SKColumnData::Nominal(
+                typed
+                    .iter()
+                    .map(|value| value.map(str::to_string))
+                    .collect(),
+            ))
+        }};
+    }
+
     match array.data_type() {
-        DataType::Utf8 => {
-            let typed = array
-                .as_any()
-                .downcast_ref::<StringArray>()
-                .ok_or_else(|| sk_array_mismatch::<StringArray>(array))?;
-            Ok(SKColumnData::Nominal(
-                (0..typed.len())
-                    .map(|row| {
-                        if typed.is_null(row) {
-                            None
-                        } else {
-                            Some(typed.value(row).to_string())
-                        }
-                    })
-                    .collect(),
-            ))
-        }
-        DataType::LargeUtf8 => {
-            let typed = array
-                .as_any()
-                .downcast_ref::<LargeStringArray>()
-                .ok_or_else(|| sk_array_mismatch::<LargeStringArray>(array))?;
-            Ok(SKColumnData::Nominal(
-                (0..typed.len())
-                    .map(|row| {
-                        if typed.is_null(row) {
-                            None
-                        } else {
-                            Some(typed.value(row).to_string())
-                        }
-                    })
-                    .collect(),
-            ))
-        }
-        DataType::Utf8View => {
-            let typed = array
-                .as_any()
-                .downcast_ref::<StringViewArray>()
-                .ok_or_else(|| sk_array_mismatch::<StringViewArray>(array))?;
-            Ok(SKColumnData::Nominal(
-                (0..typed.len())
-                    .map(|row| {
-                        if typed.is_null(row) {
-                            None
-                        } else {
-                            Some(typed.value(row).to_string())
-                        }
-                    })
-                    .collect(),
-            ))
-        }
+        DataType::Utf8 => text_values!(StringArray),
+        DataType::LargeUtf8 => text_values!(LargeStringArray),
+        DataType::Utf8View => text_values!(StringViewArray),
         other => Err(SKError::SchemaMismatch {
             expected: "a text array".to_string(),
             found: format!("{other:?}"),
