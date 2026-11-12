@@ -37,13 +37,23 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
-mod block;
+#[cfg(test)]
+mod acceptance_tests;
+#[cfg(test)]
+mod block_tests;
+#[cfg(test)]
+mod stage_tests;
+#[cfg(test)]
+mod streaming_coverage;
+
 pub mod feature_union;
 pub mod graph;
 pub mod pipeline;
+pub mod streaming;
+
+mod block;
 mod stage;
 mod stages;
-
 pub use block::{SKFeatureBlock, SKIntoFeatureBlock};
 pub use feature_union::{
     SKAppendUnionStage, SKBlockTransformer, SKBoxedFittedStage, SKFeatureUnion,
@@ -61,13 +71,7 @@ pub use pipeline::{
 };
 pub use stage::SKPipelineTransformer;
 pub use stages::SKConfiguredStages;
-
-#[cfg(test)]
-mod acceptance_tests;
-#[cfg(test)]
-mod block_tests;
-#[cfg(test)]
-mod stage_tests;
-
-#[cfg(test)]
-mod streaming_coverage;
+pub use streaming::{
+    SKFittedStreamingPipeline, SKStreamingFitReport, SKStreamingPipeline,
+    SKStreamingPipelineBuilder, SKStreamingPipelineConfigured, SKStreamingTransformer,
+};
