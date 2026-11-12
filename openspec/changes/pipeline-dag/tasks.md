@@ -28,7 +28,7 @@
 - [x] 3.3 Add `acceptance_tests/` covering tiny and large graphs, linear-equivalent graphs,
   disconnected/cyclic fixtures, dense/sparse, concurrency and metric production; verify
   with `cargo test -p sciencekit_pipeline`.
-- [ ] 3.4 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
+- [x] 3.4 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
   warnings` and `cargo test --workspace`; fix every failure before pushing.
 - [ ] 3.5 Update `CHANGELOG.md` and the companion mdBook chapter (including a
   `Development Explained` chapter on DAG validation, topological execution and merges);
