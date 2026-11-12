@@ -33,7 +33,7 @@
 
 ## 4. Acceptance and review
 
-- [ ] 4.1 Add `acceptance_tests/` covering tiny and large streams, one/multi-epoch
+- [x] 4.1 Add `acceptance_tests/` covering tiny and large streams, one/multi-epoch
   providers, dense/sparse, chained transformers, finalizer budgets, error propagation and
   metric production; verify with `cargo test -p sciencekit_pipeline`.
 - [ ] 4.2 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
