@@ -57,11 +57,25 @@ Non-finite numeric values outside NaN follow the normal estimator policy.
 
 ### Decision 5 — Version pins and features
 
-Features: `polars`, `datafusion`, `arrow`, `parquet`. The spike pins:
-- `datafusion` 46 (MSRV 1.82) or 44 (MSRV 1.80.1) if 46's transitive deps exceed 1.85;
-- `polars` 0.46/0.48, whichever builds on 1.85;
-- `arrow`/`parquet` matching the DataFusion pin.
+Features: `polars`, `datafusion`, `arrow`, `parquet`. The spike result:
+- `polars` 0.46 with `lazy`, `strings` and `dtype-categorical` builds on Rust
+  1.85 **only** with `psm` pinned to 0.1.28: newer `psm` build-dependencies pull
+  `ar_archive_writer` 0.5.x, which uses let-chains from Rust 1.88;
+- `datafusion` 46 (MSRV 1.82) is the newest release on the toolchain and pins
+  Arrow 54.2 internally;
+- `arrow`/`parquet` stay at the workspace's 58.3.0; the DataFusion adapter
+  translates its own Arrow 54 batches into the neutral column vocabulary rather
+  than mixing two Arrow crates in one public type.
 The default build has no heavy dependency.
+
+### Naming deviation
+
+The existing `crate::source::SKTabularSource` trait already owns the name of the
+reopenable batch supplier. The materialized value described above is therefore
+published as `crate::tabular::SKTabularDataset<F>`; it *is* the tabular source
+in the data sense, while the trait keeps the streaming sense. The owned
+categorical block (`SKNominalMatrixOwned`) is not generic: category codes are
+integers regardless of the model scalar.
 
 ### Decision 6 — File layout
 

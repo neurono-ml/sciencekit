@@ -10,9 +10,9 @@
 
 ## 2. Version spike and Polars
 
-- [ ] 2.1 Spike `polars 0.46/0.48` on MSRV 1.85 and record the chosen pin; verify with a
+- [x] 2.1 Spike `polars 0.46/0.48` on MSRV 1.85 and record the chosen pin; verify with a
   minimal build.
-- [ ] 2.2 Implement `TryFrom<&DataFrame>`/`TryFrom<LazyFrame>` with numeric, categorical,
+- [x] 2.2 Implement `TryFrom<&DataFrame>`/`TryFrom<LazyFrame>` with numeric, categorical,
   missing, column-selection and batch tests; verify with
   `cargo test -p sciencekit_interop --features polars`.
 
