@@ -153,3 +153,28 @@ fn linear_kernel_handles_ultra_wide_csr_without_densifying() {
     assert!((kernel[[2, 1]] - 20.0).abs() < 1e-12);
     assert!((kernel[[3, 0]] - 5.5).abs() < 1e-12);
 }
+
+#[test]
+fn linear_kernel_inputs_stay_borrowed_and_unchanged() {
+    let left = array![[1.0_f64, -2.0, 3.0], [0.5, 4.0, -1.5]];
+    let right = array![[2.0_f64, 1.0, -3.0], [-1.0, 0.5, 2.0]];
+    let left_pointer = left.as_ptr();
+    let right_pointer = right.as_ptr();
+    let left_snapshot = left.clone();
+    let right_snapshot = right.clone();
+
+    let kernel = sk_linear_kernel_matrix(
+        SKDataView::Dense(left.view()),
+        SKDataView::Dense(right.view()),
+    )
+    .unwrap();
+
+    // Computing the kernel only reads the borrowed views: the source buffers keep
+    // their addresses and contents, and the result is an independent dense matrix.
+    assert_eq!(left.as_ptr(), left_pointer);
+    assert_eq!(right.as_ptr(), right_pointer);
+    assert_eq!(left, left_snapshot);
+    assert_eq!(right, right_snapshot);
+    assert_ne!(kernel.as_ptr(), left_pointer);
+    assert_ne!(kernel.as_ptr(), right_pointer);
+}
