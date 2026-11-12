@@ -326,4 +326,10 @@ telemetry in `sciencekit_telemetry`: builder-validated OTLP gRPC and HTTP config
 resource metadata propagation, error-enriched trace spans, trace-correlated structured logs,
 closed-vocabulary operation metrics and the process-wide `SKTelemetry` `init`, `force_flush`,
 `shutdown` and `Drop` lifecycle with a silent zero-traffic default.
+The [streaming pipelines chapter](./ch56-streaming-pipeline.html) extends `sciencekit_pipeline`
+with an out-of-core composition layer: the `SKStreamingTransformer` contract, the
+`SKStreamingPipeline` builder and its chained fitting through the shared prefetch executor,
+one-shot materialization within `memory_budget_bytes`, multi-epoch replay on reopenable providers,
+the bounded `SKFinalizerBuffer` that preserves CSR, stage-indexed error propagation and the
+`Send + Sync` fitted pipeline with its `SKStreamingFitReport`.
 

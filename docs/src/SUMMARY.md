@@ -83,4 +83,5 @@
   - [Successive halving: spend the budget where it pays](development-explained/ch53-halving-grid-search.md)
   - [Extended Safetensors format: safe binary checkpoints, sharding, in-place padding and compression](development-explained/ch54-safetensors-internal-format.md)
   - [OpenTelemetry export: three signals, bounded cardinality and an honest lifecycle](development-explained/ch55-telemetry-export.md)
+  - [Streaming pipelines: epochs, chained stages and a bounded finalizer](development-explained/ch56-streaming-pipeline.md)
   - [Maintaining this book](development-explained/maintaining.md)
