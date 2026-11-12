@@ -2,6 +2,7 @@
 //! (spec `linear-support-vector-classifier`).
 
 use ndarray::Array1;
+use rayon::prelude::*;
 use sciencekit_common::{
     SKDataView, SKError, SKFloat, SKOperationAttributes, SKOperationKind, SKSupervisedFit,
     SKTargetView, sk_run_operation,
@@ -15,7 +16,7 @@ use super::solver::sk_solve_linear_svc_dual;
 use super::validation::{
     sk_canonicalize_linear_svc_targets, sk_validate_linear_svc_training_features,
 };
-use crate::kernel::sk_svm_view_dimensions;
+use crate::kernel::{sk_resolve_svm_execution_plan, sk_svm_view_dimensions};
 use crate::svc::sk_resolve_class_weights;
 
 impl<F: SKFloat> SKSupervisedFit<F> for SKLinearSVC<F> {
@@ -79,6 +80,8 @@ fn sk_fit_linear_svc<F: SKFloat>(
 ) -> Result<SKLinearSVCModel<F>, SKError> {
     let configuration = &estimator.configuration;
     let (rows, columns) = sk_validate_linear_svc_training_features(features, "fit")?;
+    let plan =
+        sk_resolve_svm_execution_plan(&configuration.builder_state, &features, rows, columns)?;
     let (class_indices, classes) = sk_canonicalize_linear_svc_targets(targets, rows)?;
     let number_of_classes = classes.number_of_classes();
     let per_class_weights =
@@ -90,32 +93,60 @@ fn sk_fit_linear_svc<F: SKFloat>(
         .map(|&class_index| per_class_weights[class_index])
         .collect();
 
-    if number_of_classes > 2 {
-        return Err(SKError::UnsupportedOperation {
-            operation: "fit",
-            reason: "one-vs-rest multiclass fitting lands in the next task".to_owned(),
-        });
-    }
-    let signed_labels: Vec<F> = class_indices
-        .iter()
-        .map(|&class_index| {
-            if class_index == 1 {
-                F::one()
-            } else {
-                -F::one()
-            }
-        })
-        .collect();
-    let head = sk_fit_linear_svc_head(
-        &design,
-        &signed_labels,
-        &row_weights,
-        configuration,
-        configuration.maximum_number_of_iterations,
-    )?;
+    let head_labels: Vec<Vec<F>> = if number_of_classes == 2 {
+        // Binary: one head, positive side on the larger canonical class.
+        vec![
+            class_indices
+                .iter()
+                .map(|&class_index| {
+                    if class_index == 1 {
+                        F::one()
+                    } else {
+                        -F::one()
+                    }
+                })
+                .collect(),
+        ]
+    } else {
+        // One-vs-rest: head `c` separates class `c` from the remaining classes.
+        (0..number_of_classes)
+            .map(|head_class| {
+                class_indices
+                    .iter()
+                    .map(|&class_index| {
+                        if class_index == head_class {
+                            F::one()
+                        } else {
+                            -F::one()
+                        }
+                    })
+                    .collect()
+            })
+            .collect()
+    };
+    let fit_head = |signed_labels: &Vec<F>| {
+        sk_fit_linear_svc_head(
+            &design,
+            signed_labels,
+            &row_weights,
+            configuration,
+            configuration.maximum_number_of_iterations,
+        )
+    };
+    let heads = if plan.parallelism > 1 {
+        head_labels
+            .par_iter()
+            .map(fit_head)
+            .collect::<Result<Vec<_>, SKError>>()?
+    } else {
+        head_labels
+            .iter()
+            .map(fit_head)
+            .collect::<Result<Vec<_>, SKError>>()?
+    };
     Ok(SKLinearSVCModel {
         classes,
-        heads: vec![head],
+        heads,
         loss: configuration.loss,
         regularization_c: configuration.regularization_c,
         number_of_features: columns,

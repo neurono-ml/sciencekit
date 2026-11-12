@@ -26,4 +26,6 @@ mod linear_svc_design_tests;
 #[cfg(test)]
 mod linear_svc_fit_tests;
 #[cfg(test)]
+mod linear_svc_multiclass_tests;
+#[cfg(test)]
 mod linear_svc_solver_tests;
