@@ -74,7 +74,7 @@
   `Development Explained` chapter covering the dual formulation, coordinate descent,
   sparse row dots and one-vs-rest, update `maintaining.md`, and verify with
   `mdbook build docs`.
-- [ ] 6.3 Record the deferred `memmap2`/export work and the deliberate absence of
+- [x] 6.3 Record the deferred `memmap2`/export work and the deliberate absence of
   probabilities in `docs/PRD.md`; verify the amended paragraphs render.
 - [ ] 6.4 Independent review by a separate agent validating every scenario in
   `linear-support-vector-classifier` against the code and tests; address every finding
