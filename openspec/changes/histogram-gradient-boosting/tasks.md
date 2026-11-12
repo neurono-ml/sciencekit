@@ -23,7 +23,7 @@
 - [x] 2.3 Implement histogram subtraction from the parent and a test comparing subtraction
   with direct accumulation; verify with
   `cargo test -p sciencekit_ensemble hist_subtract`.
-- [ ] 2.4 Implement categorical category ordering by `G/H`, prefix partitions and the
+- [x] 2.4 Implement categorical category ordering by `G/H`, prefix partitions and the
   `BitVec` membership mask, with a hand-computed partition test; verify with
   `cargo test -p sciencekit_ensemble hist_categorical`.
 
