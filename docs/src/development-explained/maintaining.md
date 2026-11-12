@@ -285,4 +285,10 @@ single-file Safetensors compatibility, `sciencekit.*` header metadata, `SKShardP
 multi-shard splitting with atomic `.index.json` manifests, dual-region header and payload
 padding for in-place seek appends with automatic shard overflow, and optional magic-byte
 auto-detected Gzip, Brotli and Snappy compression.
+The [runtime DAG pipelines chapter](./ch52-pipeline-dag.html) adds `SKPipelineGraph` on top of
+`sciencekit_pipeline`: the mandatory builder and private constructors, cycle/single-sink/reachability
+validation, the deterministic level order with ascending node identifiers, the edge-weight merge
+order that concatenates incoming blocks in exact `connect` order without densifying CSR, the
+node-attributed `SKPipelineGraphNodeError` checked variants and the type-erased `SKBoxedFinalModel`
+behind the typed classifier and regressor wrappers.
 
