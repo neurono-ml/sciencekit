@@ -592,7 +592,7 @@ Order faithful to the scikit-learn mapping (from the handoff), respecting depend
       export are explicit non-goals of the `dbscan` change; persistence and
       export remain Phase 7 work.
     - MiniBatchKMeans (`SKMiniBatchKMeans`) updates dense centers over dense and
-      borrowed CSR batches via per-center learning rates (`1 / count[center]`),
+      borrowed CSR batches via per-center learning rates (`1 / (count[center] + 1)`),
       deterministic low-count center reassignment, `partial_fit` and multi-epoch
       `fit_streaming` without densifying sparse storage. Elkan
       triangle-inequality pruning on streaming batches, missing values, GPU
