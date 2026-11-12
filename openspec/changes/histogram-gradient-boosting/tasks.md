@@ -8,7 +8,7 @@
 - [x] 1.2 Write and implement quantile edge derivation (at most `max_bins`, deterministic
   subsampling for large columns), value-to-bin assignment and the dedicated missing bin;
   verify with `cargo test -p sciencekit_ensemble hist_binning`.
-- [ ] 1.3 Implement the column-major `SKBinnedDataset` store (`u8` bins), category mapping
+- [x] 1.3 Implement the column-major `SKBinnedDataset` store (`u8` bins), category mapping
   and unknown-category bin, with tests for dimensions, layout and no densification of
   sparse input; verify with `cargo test -p sciencekit_ensemble hist_dataset`.
 
