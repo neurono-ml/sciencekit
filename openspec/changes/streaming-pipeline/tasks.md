@@ -15,7 +15,7 @@
   with `cargo test -p sciencekit_pipeline streaming_fit`.
 - [x] 2.2 Implement the one-shot provider restriction and the memory-budget error; verify
   with `cargo test -p sciencekit_pipeline streaming_oneshot`.
-- [ ] 2.3 Implement multi-epoch fitting and epoch reporting; verify with
+- [x] 2.3 Implement multi-epoch fitting and epoch reporting; verify with
   `cargo test -p sciencekit_pipeline streaming_epochs`.
 
 ## 3. Transform and finalizer
