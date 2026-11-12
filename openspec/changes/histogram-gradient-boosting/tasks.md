@@ -58,7 +58,7 @@
   parameters, unknown categorical columns, single-class classification, non-finite values,
   feature-count mismatch and invalid validation fraction; verify with
   `cargo test -p sciencekit_ensemble hist_validation`.
-- [ ] 5.3 Add repeated-fit determinism, thread-count invariance and concurrent prediction
+- [x] 5.3 Add repeated-fit determinism, thread-count invariance and concurrent prediction
   tests, plus a `Send + Sync` assertion; verify with
   `cargo test -p sciencekit_ensemble hist_determinism`.
 
