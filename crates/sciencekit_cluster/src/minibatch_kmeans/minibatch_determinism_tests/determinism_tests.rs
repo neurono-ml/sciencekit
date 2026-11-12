@@ -48,7 +48,9 @@ fn minibatch_determinism_repeated_fits_and_streaming_runs_are_bit_identical() {
         })
     };
     assert_eq!(
-        estimator.fit_streaming(make_provider(data.clone())).unwrap(),
+        estimator
+            .fit_streaming(make_provider(data.clone()))
+            .unwrap(),
         estimator.fit_streaming(make_provider(data)).unwrap()
     );
 }

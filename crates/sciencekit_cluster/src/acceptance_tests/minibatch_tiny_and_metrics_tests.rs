@@ -74,7 +74,13 @@ fn minibatch_acceptance_tiny_random_multi_init_produces_valid_non_noise_labels()
 
     assert_eq!(model.number_of_clusters(), 3);
     assert!(model.inertia().is_finite());
-    assert!(model.labels().unwrap().iter().all(|label| !label.is_noise()));
+    assert!(
+        model
+            .labels()
+            .unwrap()
+            .iter()
+            .all(|label| !label.is_noise())
+    );
 }
 
 #[test]
@@ -106,8 +112,13 @@ fn minibatch_acceptance_agrees_with_full_kmeans_and_produces_clustering_metrics(
 
     let kmeans_i64 = Array1::from_iter(full_kmeans.labels().iter().map(|label| label.to_i64()));
     let minibatch_i64 = Array1::from_iter(minibatch_labels.iter().map(|label| label.to_i64()));
-    assert!((sk_adjusted_rand_score(kmeans_i64.view(), minibatch_i64.view()).unwrap() - 1.0).abs() < 1e-12);
-    assert!((sk_adjusted_rand_score(truth.view(), minibatch_i64.view()).unwrap() - 1.0).abs() < 1e-12);
+    assert!(
+        (sk_adjusted_rand_score(kmeans_i64.view(), minibatch_i64.view()).unwrap() - 1.0).abs()
+            < 1e-12
+    );
+    assert!(
+        (sk_adjusted_rand_score(truth.view(), minibatch_i64.view()).unwrap() - 1.0).abs() < 1e-12
+    );
     assert!((sk_v_measure_score(truth.view(), minibatch_i64.view()).unwrap() - 1.0).abs() < 1e-12);
 
     let direct_silhouette =

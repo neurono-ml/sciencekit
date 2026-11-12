@@ -98,7 +98,9 @@ fn minibatch_acceptance_fifty_thousand_row_one_shot_and_multi_epoch_streaming_pa
     assert_eq!(one_pass_model.counts().sum(), 50_000);
     assert!(one_pass_model.labels().is_none());
 
-    let one_pass_labels = one_pass_model.predict_clusters(shared_data.as_ref()).unwrap();
+    let one_pass_labels = one_pass_model
+        .predict_clusters(shared_data.as_ref())
+        .unwrap();
     assert_eq!(majority_accuracy(&truth, &one_pass_labels, 4), 1.0);
 
     // 2. Sparse one-shot stream over the same 50,000 rows matches the dense stream without densifying.

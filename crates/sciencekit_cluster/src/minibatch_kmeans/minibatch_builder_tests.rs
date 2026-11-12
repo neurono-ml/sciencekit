@@ -1,9 +1,7 @@
 //! Companion tests for [`SKMiniBatchKMeansBuilder`] defaults, overrides and
 //! validation (spec `mini-batch-k-means`, task 4.1).
 
-use sciencekit_common::{
-    SKBackendKind, SKBuilder, SKClusterIdentifier, SKError, SKExecutionMode,
-};
+use sciencekit_common::{SKBackendKind, SKBuilder, SKClusterIdentifier, SKError, SKExecutionMode};
 
 use super::{SKKMeansInitialization, SKMiniBatchKMeans};
 
