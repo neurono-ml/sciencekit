@@ -56,8 +56,7 @@ pub(crate) fn sk_solve_linear_svc_dual<F: SKFloat>(
             let diagonal_shift = match loss {
                 SKLinearSvcLoss::Hinge => F::zero(),
                 SKLinearSvcLoss::SquaredHinge => {
-                    // The squared-hinge path lands in the next task.
-                    F::zero()
+                    F::one() / ((F::one() + F::one()) * class_capacity)
                 }
             };
             let upper_bound = match loss {
