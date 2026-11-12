@@ -21,7 +21,7 @@ impl<F: SKFloat> SKTestColumnScaling<F> {
 /// The learned state of [`SKTestColumnScaling`]: the observed row count.
 pub(crate) struct SKTestColumnScalingModel<F> {
     factor: F,
-    rows_seen: usize,
+    _number_of_rows_seen: usize,
 }
 
 impl<F: SKFloat> SKStreamingTransformer<F> for SKTestColumnScaling<F> {
@@ -54,7 +54,7 @@ impl<F: SKFloat> SKStreamingTransformer<F> for SKTestColumnScaling<F> {
         )?;
         Ok(SKTestColumnScalingModel {
             factor: self.factor,
-            rows_seen,
+            _number_of_rows_seen: rows_seen,
         })
     }
 

@@ -40,7 +40,7 @@ where
     /// replay its source.
     pub fn fit<Provider>(
         &self,
-        provider: &mut Provider,
+        mut provider: Provider,
     ) -> Result<SKFittedStreamingPipeline<F, Estimator::Model>, SKError>
     where
         Provider: SKSourceProvider<F>,
@@ -54,13 +54,13 @@ where
         };
         sk_run_operation(attributes, || {
             if Provider::IS_REOPENABLE {
-                return self.sk_fit_reopenable(provider, 0);
+                return self.sk_fit_reopenable(&mut provider, 0);
             }
             if self.epochs > 1 {
                 return Err(sk_reject_one_shot_multiple_epochs(self.epochs));
             }
             let (mut materialized, materialized_bytes) =
-                sk_materialize(provider, self.memory_budget_bytes)?;
+                sk_materialize(&mut provider, self.memory_budget_bytes)?;
             self.sk_fit_reopenable(&mut materialized, materialized_bytes)
         })
     }
