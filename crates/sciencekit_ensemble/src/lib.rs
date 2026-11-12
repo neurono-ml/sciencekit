@@ -22,6 +22,7 @@ mod bootstrap;
 pub mod bagging;
 pub mod boosting;
 pub mod gradient_boosting;
+pub mod histogram_boosting;
 pub mod random_forest;
 
 pub use bagging::{
