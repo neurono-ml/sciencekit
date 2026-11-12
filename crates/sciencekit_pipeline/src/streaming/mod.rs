@@ -30,6 +30,9 @@ pub use transformer::SKStreamingTransformer;
 mod builder_tests;
 
 #[cfg(test)]
+mod epochs_tests;
+
+#[cfg(test)]
 mod fit_tests;
 
 #[cfg(test)]
