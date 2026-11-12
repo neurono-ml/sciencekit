@@ -2,7 +2,7 @@
 
 ## 1. Configuration and builder
 
-- [ ] 1.1 Create `crates/sciencekit_svm/src/linear_svc/` with dispatcher `mod.rs`,
+- [x] 1.1 Create `crates/sciencekit_svm/src/linear_svc/` with dispatcher `mod.rs`,
   `config.rs` and `builder.rs`; implement the defaults (`C = 1.0`, `SquaredHinge`,
   `None`, intercept on, tolerance, iteration budget, `Faer`, `Automatic`) and
   invalid-value tests; verify with `cargo test -p sciencekit_svm linear_svc_builder`.
