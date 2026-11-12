@@ -30,9 +30,9 @@
 - [x] 4.1 Add feature-gated acceptance tests for tiny/large tables, numeric/categorical/
   missing schemas, streaming batch order, column selection and concurrent reads; verify
   with the matching feature combinations.
-- [ ] 4.2 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
+- [x] 4.2 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
   warnings` and `cargo test --workspace`; fix every failure before pushing.
-- [ ] 4.3 Update `CHANGELOG.md` and the companion mdBook chapter (including a
+- [x] 4.3 Update `CHANGELOG.md` and the companion mdBook chapter (including a
   `Development Explained` chapter on tabular schemas, missing mapping and feature-gated
   integrations); verify with `mdbook build docs`.
 - [ ] 4.4 Independent review by a separate agent validating every scenario in
