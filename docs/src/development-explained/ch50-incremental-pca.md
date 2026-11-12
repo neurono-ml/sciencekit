@@ -48,14 +48,17 @@ impossible — until a clean algebraic identity comes to the rescue.
 | **Exact Chan-Golub-LeVeque $(n, \mu, S)$ covariance state (`SKCovarianceAccumulator<F>`)** | Merging $(n_A, \mu_A, S_A)$ and $(n_B, \mu_B, S_B)$ is algebraically exact, associative across batch boundaries, independent of batch order, and requires $\mathcal{O}(d^2)$ memory with zero row retention. Finalizing via $C = S / (n - 1)$ and `backend.eigh` matches full PCA to machine precision. | Approximate rank-$k$ SVD sketches (Ross et al. / scikit-learn's truncated SVD update) — fast when $d$ is huge, but approximate and sensitive to batch order; kept open as a separate future rank-adaptive change. |
 | **Separate dense and sparse CSR batch paths that meet at `sk_merge_moments`** | Dense batches center 256-row blocks and call `backend.gemm` for cache-friendly BLAS speed. Sparse CSR batches accumulate stored non-zeros into column sums and a $d \times d$ Gram matrix with **Neumaier compensated summation**, then form $S_B = G_B - n_B \mu_B \mu_B^{\top}$ without ever materializing a dense batch. | Densifying each sparse batch before centering — violates representation parity (`data-view-boundary`) and explodes memory on sparse wide streams; or using naive uncompensated $\sum x^2 - n\mu^2$ everywhere — loses precision when means are large. |
 | **Shared `fit`, `partial_fit` and `fit_streaming` over one merge kernel** | `fit` slices an in-memory view into `batch_size` blocks (coalescing any trailing remainder smaller than `number_of_components`); `partial_fit` merges a new batch into `SKIncrementalPCAModel` and refreshes the eigendecomposition; `fit_streaming` drives `SKSourceProvider` through `sk_run_streaming_provider` with `SKStreamingPassPolicy::Iterative`. | Separate code paths for in-memory chunking and streaming — risks drift between `fit`, `partial_fit` and `fit_streaming`. |
-| **Fixed 256-row reduction chunks folded in index order** | Both dense batch moments and dense `transform` / `inverse_transform` split rows into deterministic 256-row blocks (`DENSE_MOMENT_ROW_CHUNK`), evaluate chunks via `rayon` when `plan.parallelism > 1`, and sum chunk partials in strict sequence order. One thread and four threads produce **bit-identical** arrays (`assert_eq!`). | Letting `rayon` fold partials in work-stealing tree order — floating-point addition is non-associative, causing thread-count drift. |
+| **Fixed 256-row reduction chunks folded in index order** | Both dense batch moments and dense `transform` / `inverse_transform` split rows into deterministic 256-row blocks (`DENSE_MOMENT_ROW_CHUNK`, `DENSE_TRANSFORM_ROW_CHUNK` and `DENSE_RECONSTRUCT_ROW_CHUNK`), evaluate chunks via `rayon` when `plan.parallelism > 1`, and sum chunk partials in strict sequence order. One thread and four threads produce **bit-identical** arrays (`assert_eq!`). | Letting `rayon` fold partials in work-stealing tree order — floating-point addition is non-associative, causing thread-count drift. |
 | **Format-agnostic `SKExportable` / `SKImportable` state including the accumulator** | Exporting `components`, `mean`, `scatter`, variances, singular values and sample/epoch counters into `SKModelState<F>` lets an imported `SKIncrementalPCAModel<F>` both `transform` immediately and continue learning via `partial_fit`. | Exporting only `components` and `mean` — would silently break incremental continuation after model reload. |
 
 <div class="sk-box sk-box--info">
   <strong>Explicit non-goals for this change.</strong> Missing-value imputation inside PCA,
-  rank-adaptive component counts, GPU kernels, <code>memmap2</code>-backed storage, and binary
-  ONNX/SafeTensors file persistence (Phase 7) are outside this change and recorded in
-  <code>docs/PRD.md</code>.
+  rank-adaptive component counts, GPU kernels and <code>memmap2</code>-backed storage are outside
+  this change and recorded in <code>docs/PRD.md</code>. Binary file persistence is not
+  reimplemented here either: the model exposes format-agnostic
+  <code>SKExportable</code>/<code>SKImportable</code> state, and the shared
+  <code>sciencekit_interop</code> adapters own the concrete on-disk encodings (JSON debug and the
+  extended Safetensors format).
 </div>
 
 ---
@@ -290,8 +293,8 @@ companion tests under `crates/sciencekit_decomposition/src/`:
 5. **Projection, whitening and validation (`incremental_transform_tests.rs`,
    `incremental_validation_tests.rs`, `incremental_validation_inputs_tests.rs`).**
    `incremental_transform_shape_roundtrip_and_sparse_dense_parity` verifies $(19, 3)$ shapes,
-   `fit_transform` parity, and exact $k = d$ `inverse_transform` reconstruction on both dense and
-   CSR coordinates. `incremental_transform_whitening_normalizes_unit_variance_and_inverts` checks
+   `fit_transform` parity, and full-rank $k = d$ `inverse_transform` reconstruction within
+   $10^{-9}$ on both dense and CSR coordinates. `incremental_transform_whitening_normalizes_unit_variance_and_inverts` checks
    unit sample variance across whitened columns and invertible reconstruction.
    `incremental_validation_rejects_empty_inputs_everywhere`,
    `incremental_validation_rejects_excessive_components_and_small_batches`, and
