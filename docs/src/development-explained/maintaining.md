@@ -292,6 +292,10 @@ The [outlier detection chapter](./ch48-outlier-detection.html) closes Wave 5 in
 `SKOutlierPredictor<F>` contract, seeded random isolation trees over `SKTree`, harmonic BST
 path-length scoring, `Auto` and quantile contamination offsets, and non-densifying CSR-to-CSC
 representation parity.
+The [incremental PCA chapter](./ch50-incremental-pca.html) extends `sciencekit_decomposition`
+out-of-core with `SKIncrementalPCA`: exact Chan-Golub-LeVeque scatter merging, Neumaier-compensated
+sparse CSR Gram updates without densification, symmetric `eigh` finalization matching `SKPCA`,
+chained `partial_fit` updates and reopenable multi-epoch `fit_streaming`.
 The [mini-batch k-means chapter](./ch51-minibatch-kmeans-streaming.html) adds
 `SKMiniBatchKMeans<F>` in `sciencekit_cluster`: the exact per-center learning-rate update in
 closed form over dense and non-densified CSR batches, seeded bounded-sample initialization with
