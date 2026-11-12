@@ -27,5 +27,5 @@
 - [x] 4.2 TDD small and large generated files; a file larger than the configured memory budget streams with bounded batches.
 - [x] 4.3 TDD `f32` and `f64` throughout; cast reporting.
 - [x] 4.4 Run the CI gates: `cargo fmt --all --check`, `cargo clippy --workspace --all-targets`, `cargo test --workspace`.
-- [ ] 4.5 Add the memory-mapped sources book chapter and the `Development Explained` chapter on out-of-core random access; register in `SUMMARY.md`.
+- [x] 4.5 Add the memory-mapped sources book chapter and the `Development Explained` chapter on out-of-core random access; register in `SUMMARY.md`.
 - [ ] 4.6 Update `CHANGELOG.md` and open the ADR issue for this change.
