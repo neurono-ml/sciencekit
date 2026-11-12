@@ -591,6 +591,15 @@ Order faithful to the scikit-learn mapping (from the handoff), respecting depend
       missing values, GPU acceleration, `memmap2`-backed indexes and model
       export are explicit non-goals of the `dbscan` change; persistence and
       export remain Phase 7 work.
+    - MiniBatchKMeans (`SKMiniBatchKMeans`) updates dense centers over dense and
+      borrowed CSR batches via per-center learning rates (`1 / (count[center] + 1)`),
+      deterministic low-count center reassignment, `partial_fit` and multi-epoch
+      `fit_streaming` without densifying sparse storage. Elkan
+      triangle-inequality pruning on streaming batches, missing values, GPU
+      acceleration, `memmap2`-backed sources and file/ONNX model export are
+      explicit non-goals of the `minibatch-kmeans-streaming` change (persistence
+      and `memmap2` remain Phase 7 work; format-agnostic `SKExportable` /
+      `SKImportable` state emission is already provided).
     - Clusterers expose typed assignments (`SKClusterLabel`: a cluster identifier or explicit noise) through `SKClustererPredictor`; the unsupervised scorer evaluates those assignments directly and documents whether it excludes or rejects noise.
 13. `sciencekit_decomposition`: SKPCA, SKIncrementalPCA, SKTruncatedSVD.
     - Representation parity (§4.5.1 / §4.5.2): `SKPCA` supports sparse CSR fitting without densification on `SKPCASolver::Randomized` via implicit centering; `Full` and `CovarianceEigh` invoke the documented dense-only exception because they materialize the centered design or its covariance, rejecting CSR with `UnsupportedRepresentation` (naming `Randomized` and `SKTruncatedSVD`) unless `allow_densification(true)` is explicitly set (with a warning reporting the byte cost). `SKIncrementalPCA` accepts dense and sparse CSR inputs natively on `fit`, `partial_fit`, `fit_streaming`, `transform` and `inverse_transform` without densification via Chan-Golub-LeVeque scatter merging and Neumaier-compensated CSR Gram accumulation.

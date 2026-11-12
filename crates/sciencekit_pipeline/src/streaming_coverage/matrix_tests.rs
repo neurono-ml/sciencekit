@@ -40,6 +40,7 @@ fn every_streaming_implementation_is_in_the_coverage_matrix() {
         "SKSGDClassifier",
         "SKSGDRegressor",
         "SKIncrementalPCA",
+        "SKMiniBatchKMeans",
     ] {
         assert!(
             names.contains(&expected),

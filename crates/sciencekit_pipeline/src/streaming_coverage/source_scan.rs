@@ -105,6 +105,7 @@ fn the_source_scan_reaches_every_streaming_crate() {
         "sciencekit_impute/",
         "sciencekit_linear_model/",
         "sciencekit_decomposition/",
+        "sciencekit_cluster/",
     ] {
         assert!(
             sources
