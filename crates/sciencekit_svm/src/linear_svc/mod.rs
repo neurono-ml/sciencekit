@@ -20,6 +20,8 @@ pub use core_implementation::SKLinearSVC;
 pub use model::{SKLinearSVCModel, SKLinearSvcHead};
 
 #[cfg(test)]
+mod acceptance_tests;
+#[cfg(test)]
 mod linear_svc_builder_tests;
 #[cfg(test)]
 mod linear_svc_concurrency_tests;
