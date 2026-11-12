@@ -277,6 +277,11 @@ concatenation, member-indexed error context and nested pipeline composition.
 The [JSON debug format chapter](./ch45-json-debug-format.html) adds the deterministic
 human-readable `SKModelState` schema, the pretty and compact writer, the duplicate-aware
 validating reader and the round-trip acceptance guarantees across scalar and tensor types.
+
+The [Truncated SVD chapter](./ch49-truncated-svd.html) adds `SKTruncatedSVD` in
+`sciencekit_decomposition`: uncentered randomized low-rank factorization for latent semantic
+analysis, non-densifying CSR `fit`/`transform`/`inverse_transform` parity, two-pass sparse
+variance ratios and thread-count-invariant 256-row chunking.
 The [generic bagging chapter](./ch46-bagging.html) extends `sciencekit_ensemble` with
 `SKBaggingClassifier<B>` and `SKBaggingRegressor<B>`: compile-time supervision bounds over
 any base estimator, independent row and feature bootstrap streams, non-densifying CSR
@@ -287,6 +292,10 @@ The [outlier detection chapter](./ch48-outlier-detection.html) closes Wave 5 in
 `SKOutlierPredictor<F>` contract, seeded random isolation trees over `SKTree`, harmonic BST
 path-length scoring, `Auto` and quantile contamination offsets, and non-densifying CSR-to-CSC
 representation parity.
+The [incremental PCA chapter](./ch50-incremental-pca.html) extends `sciencekit_decomposition`
+out-of-core with `SKIncrementalPCA`: exact Chan-Golub-LeVeque scatter merging, Neumaier-compensated
+sparse CSR Gram updates without densification, symmetric `eigh` finalization matching `SKPCA`,
+chained `partial_fit` updates and reopenable multi-epoch `fit_streaming`.
 The [mini-batch k-means chapter](./ch51-minibatch-kmeans-streaming.html) adds
 `SKMiniBatchKMeans<F>` in `sciencekit_cluster`: the exact per-center learning-rate update in
 closed form over dense and non-densified CSR batches, seeded bounded-sample initialization with
