@@ -17,6 +17,7 @@
 pub mod cross_validation;
 pub mod gather;
 pub mod grid_search;
+pub mod halving;
 pub mod index_split;
 pub mod shuffle;
 pub mod split;
@@ -28,6 +29,12 @@ pub use grid_search::{
     SKClassifierScoring, SKErrorScore, SKGridSearchCVClassifier, SKGridSearchCVClassifierBuilder,
     SKGridSearchCVClassifierModel, SKGridSearchCVRegressor, SKGridSearchCVRegressorBuilder,
     SKGridSearchCVRegressorModel, SKGridSearchResults, SKRegressorScoring, SKScoringFamily,
+};
+pub use halving::{
+    SKHalvingGridSearchClassifier, SKHalvingGridSearchClassifierBuilder,
+    SKHalvingGridSearchClassifierModel, SKHalvingGridSearchRegressor,
+    SKHalvingGridSearchRegressorBuilder, SKHalvingGridSearchRegressorModel, SKHalvingResource,
+    SKHalvingRound, SKHalvingScoring, sk_halving_candidate_schedule, sk_halving_resource_schedule,
 };
 pub use index_split::SKIndexSplit;
 pub use shuffle::sk_shuffle_indices;

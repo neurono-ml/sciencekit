@@ -115,4 +115,8 @@ impl<F: SKFloat> SKSplitter<F> for SKStratifiedKFold {
             .map(|test| sk_split_from_test(number_of_rows, test))
             .collect())
     }
+
+    fn requires_stratification(&self) -> bool {
+        true
+    }
 }
