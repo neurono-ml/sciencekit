@@ -18,7 +18,7 @@
 
 - [x] 3.1 TDD open an Arrow IPC file, read only the footer, and build the batch index; assert the data batches are not decoded on open.
 - [x] 3.2 TDD row lookup by cumulative offsets: first, middle, last rows; no full scan.
-- [ ] 3.3 TDD truncated IPC file: open fails or the affected read fails with a structured error.
+- [x] 3.3 TDD truncated IPC file: open fails or the affected read fails with a structured error.
 - [ ] 3.4 TDD sequential source over the same IPC file; equivalence with random access.
 
 ## 4. Concurrency, acceptance, documentation
