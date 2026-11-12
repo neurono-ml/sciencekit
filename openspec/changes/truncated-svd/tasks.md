@@ -38,7 +38,7 @@
   `Development Explained` chapter on uncentered low-rank factorization and the sparse
   path); verify with `mdbook build docs`.
 - [x] 3.4 Record the ARPACK/GPU/memmap/export non-goals in `docs/PRD.md`.
-- [ ] 3.5 Independent review by a separate agent validating every scenario in
+- [x] 3.5 Independent review by a separate agent validating every scenario in
   `truncated-svd`; address every finding and re-run the gates.
 
 ## Workflow follow-up
