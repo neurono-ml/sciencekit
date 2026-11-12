@@ -66,7 +66,7 @@
 
 ## 6. Documentation, changelog and review
 
-- [ ] 6.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under `Unreleased →
+- [x] 6.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under `Unreleased →
   Added` for `SKLinearSVC`, the dual coordinate-descent solver and the one-vs-rest
   multiclass path.
 - [ ] 6.2 Companion documentation change on its own `docs/*` branch (merged into
