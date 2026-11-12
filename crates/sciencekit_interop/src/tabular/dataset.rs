@@ -4,7 +4,7 @@
 use sciencekit_common::{SKDataView, SKError, SKFeatureBlock, SKFloat};
 
 use super::{SKColumnKind, SKNominalMatrixOwned};
-use crate::schema::SKTabularSchema;
+use crate::schema::{SKLogicalType, SKTabularSchema};
 
 /// A materialized table ready to feed an estimator.
 ///
@@ -88,10 +88,8 @@ impl<F: SKFloat> SKTabularDataset<F> {
     pub fn kind_of(&self, name: &str) -> Option<SKColumnKind> {
         let column = self.schema.column(name)?;
         Some(match column.logical_type() {
-            logical_type if logical_type.is_categorical() => SKColumnKind::Categorical,
-            logical_type if logical_type == crate::schema::SKLogicalType::Boolean => {
-                SKColumnKind::Boolean
-            }
+            SKLogicalType::Nominal | SKLogicalType::CategoryCode => SKColumnKind::Categorical,
+            SKLogicalType::Boolean => SKColumnKind::Boolean,
             _ => SKColumnKind::Numeric,
         })
     }
