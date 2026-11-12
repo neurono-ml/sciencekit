@@ -32,8 +32,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `SKSmoOptions`, `SKKernelRowCache`, `SKBinarySvcSmoResult`,
   `SKEpsilonSvrSmoResult`, `sk_solve_smo_quadratic_program`,
   `sk_solve_binary_c_svc`, `sk_solve_epsilon_svr`), owned dense/CSR
-  support-vector storage (`SKOwnedFeatureBlock`), one-vs-one multiclass fitting
-  and `decision_function` / `pairwise_decision_function` margins, plus
+  support-vector storage (`SKOwnedFeatureBlock`), one-vs-one multiclass fitting,
+  deterministic vote resolution (`sk_resolve_one_vs_one_votes`) and
+  `decision_function` / `pairwise_decision_function` margins, plus
   deterministic five-fold Platt scaling and Wu-Lin-Weng pairwise coupling
   (`SKPlattParameters`, `sk_fit_platt_sigmoid`, `sk_calibrate_binary_platt`,
   `sk_couple_pairwise_probabilities`,
