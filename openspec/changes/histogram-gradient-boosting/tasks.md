@@ -14,7 +14,7 @@
 
 ## 2. Histogram split finding
 
-- [ ] 2.1 Implement per-feature gradient/Hessian/count accumulation over a node's sample
+- [x] 2.1 Implement per-feature gradient/Hessian/count accumulation over a node's sample
   indices, parallel across features, with a hand-computed test; verify with
   `cargo test -p sciencekit_ensemble hist_accumulate`.
 - [ ] 2.2 Implement the numeric prefix scan and the gain formula with
