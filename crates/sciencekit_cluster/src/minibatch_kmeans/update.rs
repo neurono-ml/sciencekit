@@ -107,7 +107,7 @@ pub(crate) fn sk_update_centers_and_counts<F: SKFloat>(
     let maximum_shift = previous_centers
         .rows()
         .into_iter()
-        .zip(centers.rows().into_iter())
+        .zip(centers.rows())
         .fold(F::zero(), |best, (old_row, new_row)| {
             let shift = dense_squared_distance(old_row, new_row).sqrt();
             if shift > best { shift } else { best }
