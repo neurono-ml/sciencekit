@@ -38,8 +38,14 @@ pub use regressor_model::SKHistGradientBoostingRegressorModel;
 #[cfg(test)]
 mod classifier_tests;
 #[cfg(test)]
+mod determinism_tests;
+#[cfg(test)]
 mod early_stopping_tests;
 #[cfg(test)]
 mod regressor_tests;
 #[cfg(test)]
+mod representation_tests;
+#[cfg(test)]
 mod stage_tests;
+#[cfg(test)]
+mod validation_tests;
