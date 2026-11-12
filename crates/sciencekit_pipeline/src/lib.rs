@@ -1,17 +1,12 @@
-//! `sciencekit_pipeline` — compile-time typed linear pipelines (spec
-//! `typed-pipeline`).
+//! `sciencekit_pipeline` — compile-time typed linear pipelines, parallel
+//! feature unions and validated runtime DAG pipelines (specs `typed-pipeline`,
+//! `feature-union`, `pipeline-graph`).
 //!
-//! A pipeline is composed through a builder whose **type** records the composed
-//! stages: [`SKPipeline::start`] opens a [`SKPipelineBuilder`], each `then`
-//! appends a transformer stage (the scalar and the block medium are checked at
-//! compile time), and a classifier or regressor finalizer accepts the supervised
-//! estimator that consumes the last stage's output. Fitting walks the whole
-//! chain once, and the fitted model implements the shared classifier / regressor
-//! prediction contracts.
-//!
-//! Dense and sparse data flow as [`SKFeatureBlock`] values: the representation a
-//! stage produces is the representation the next stage receives, and the
-//! pipeline itself never densifies a sparse block.
+//! A linear pipeline is composed through [`SKPipeline::start`], parallel
+//! feature branches through [`SKFeatureUnion::build`], and arbitrary branching
+//! and merging directed acyclic graphs through [`SKPipelineGraph::start`].
+//! Every composition layer exchanges [`SKFeatureBlock`] values without
+//! densifying sparse CSR blocks.
 //!
 //! # Example
 //!
@@ -44,6 +39,7 @@
 
 mod block;
 pub mod feature_union;
+pub mod graph;
 pub mod pipeline;
 mod stage;
 mod stages;
@@ -53,6 +49,11 @@ pub use feature_union::{
     SKAppendUnionStage, SKBlockTransformer, SKBoxedFittedStage, SKFeatureUnion,
     SKFeatureUnionArity, SKFeatureUnionBuilder, SKFeatureUnionMemberError, SKFeatureUnionModel,
     SKFeatureUnionStages,
+};
+pub use graph::{
+    SKBoxedFinalModel, SKNodeBlockStore, SKNodeIdentifier, SKPipelineGraph, SKPipelineGraphBuilder,
+    SKPipelineGraphClassifier, SKPipelineGraphModel, SKPipelineGraphNodeError,
+    SKPipelineGraphNodeKind, SKPipelineGraphRegressor,
 };
 pub use pipeline::{
     SKPipeline, SKPipelineBuilder, SKPipelineClassifier, SKPipelineClassifierBuilder,

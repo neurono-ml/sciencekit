@@ -4,13 +4,14 @@ version = "0.1.0"
 edition = "2024"
 license = "Apache-2.0"
 rust-version = "1.85"
-description = "Compile-time typed linear pipelines for sciencekit estimators."
+description = "Compile-time typed linear pipelines and validated runtime DAG pipelines for sciencekit estimators."
 repository = "https://github.com/neurono-ml/sciencekit"
 
 [dependencies]
 sciencekit_common = { path = "../sciencekit_common", version = "0.1.0" }
 
 ndarray = { workspace = true }
+petgraph = { workspace = true }
 sprs = { workspace = true }
 tracing = { workspace = true }
 

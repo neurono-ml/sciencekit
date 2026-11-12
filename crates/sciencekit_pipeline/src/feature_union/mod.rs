@@ -17,6 +17,7 @@ mod stages;
 pub use append::SKAppendUnionStage;
 pub use boxed::{SKBlockTransformer, SKBoxedFittedStage};
 pub use builder::{SKFeatureUnion, SKFeatureUnionBuilder};
+pub(crate) use concatenate::sk_concatenate_blocks;
 pub use errors::SKFeatureUnionMemberError;
 pub use model::SKFeatureUnionModel;
 pub use stages::{SKFeatureUnionArity, SKFeatureUnionStages};
