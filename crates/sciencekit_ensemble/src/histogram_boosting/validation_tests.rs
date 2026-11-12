@@ -91,3 +91,25 @@ fn hist_validation_rejects_feature_count_mismatch_and_invalid_fraction() {
         Err(SKError::InvalidHyperparameter { .. })
     ));
 }
+
+#[test]
+fn hist_validation_rejects_csc_and_non_finite_targets() {
+    let dense = Array2::from_shape_vec((4, 2), vec![1.0, 0.0, 0.0, 2.0, 3.0, 0.0, 0.0, 4.0])
+        .expect("data");
+    let csc = sprs::CsMat::new_csc(
+        (4, 2),
+        vec![0, 2, 4],
+        vec![0, 2, 1, 3],
+        vec![1.0, 3.0, 2.0, 4.0],
+    );
+    let responses = ndarray::Array1::from_vec(vec![0.0, 1.0, 2.0, 3.0]);
+    assert!(matches!(
+        regressor().fit(csc.view(), responses.view()),
+        Err(SKError::UnsupportedRepresentation { .. })
+    ));
+    let broken_targets = ndarray::Array1::from_vec(vec![0.0, f64::NAN, 2.0, 3.0]);
+    assert!(matches!(
+        regressor().fit(dense.view(), broken_targets.view()),
+        Err(SKError::NonFiniteValue { .. })
+    ));
+}
