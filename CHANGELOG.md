@@ -9,6 +9,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `sciencekit_math` gains the Mercer and similarity kernel catalogue (spec
+  `kernel-functions`): `SKKernel` (`Linear`, `Polynomial`,
+  `RadialBasisFunction`, `Sigmoid`, `Precomputed`), `SKKernelGamma<F>`
+  (`Scale`, `Auto`, `Value`), `SKKernelParameters<F>`,
+  `SK_KERNEL_PARALLEL_GRAIN`, `sk_validate_kernel_hyperparameters`,
+  `sk_resolve_kernel_gamma`, `sk_resolve_kernel_parameters`,
+  `sk_feature_population_variance`, `sk_linear_kernel_matrix`,
+  `sk_polynomial_kernel_matrix`, `sk_radial_basis_function_kernel_matrix`,
+  `sk_sigmoid_kernel_matrix`, `sk_precomputed_kernel_matrix`,
+  `sk_validate_precomputed_query_kernel`, `sk_kernel_matrix` and
+  `sk_kernel_matrix_sequential`. Every feature kernel dispatches once across all
+  four dense/CSR representation pairs without densifying sparse inputs, clamps
+  floating-point squared-distance cancellation in the RBF path, and evaluates
+  independent rows in parallel with rayon.
+- New crate `sciencekit_svm` delivering kernel support-vector machines (spec
+  `support-vector-machines`): `SKSVC<F>`, `SKSVCBuilder<F>`, `SKSVCModel<F>`,
+  `SKBinarySVCModel<F>`, `SKClassWeight<F>` (`None`, `Balanced`, `Explicit`,
+  `LabelMap` / `from_labels`), `SKSVR<F>`, `SKSVRBuilder<F>` and
+  `SKSVRModel<F>`, backed by a deterministic pure-Rust second-order SMO solver
+  (`SKSmoState`, `SKSmoWorkingPair`, `SKSmoTracker`, `SKSmoSolution`,
+  `SKSmoOptions`, `SKKernelRowCache`, `SKBinarySvcSmoResult`,
+  `SKEpsilonSvrSmoResult`, `sk_solve_smo_quadratic_program`,
+  `sk_solve_binary_c_svc`, `sk_solve_epsilon_svr`), owned dense/CSR
+  support-vector storage (`SKOwnedFeatureBlock`), one-vs-one multiclass fitting,
+  deterministic vote resolution (`sk_resolve_one_vs_one_votes`) and
+  `decision_function` / `pairwise_decision_function` margins, plus
+  deterministic five-fold Platt scaling and Wu-Lin-Weng pairwise coupling
+  (`SKPlattParameters`, `sk_fit_platt_sigmoid`, `sk_calibrate_binary_platt`,
+  `sk_couple_pairwise_probabilities`,
+  `sk_couple_pairwise_probabilities_with_budget`).
 - Stage-wise gradient boosting in `sciencekit_ensemble` (spec `gradient-boosting`):
   builder-only `SKGradientBoostingClassifier<F>` / `SKGradientBoostingRegressor<F>` with
   `number_of_estimators` (default `100`), `learning_rate` (default `0.1`), `maximum_depth`

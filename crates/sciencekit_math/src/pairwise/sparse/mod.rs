@@ -33,6 +33,7 @@ pub(crate) use cosine::{
 pub(crate) use manhattan::{
     sk_dense_sparse_manhattan_distance_matrix, sk_sparse_dense_manhattan_distance_matrix,
 };
+pub(crate) use row_merge::sk_sparse_dot_product;
 pub(crate) use squared_euclidean::{
     sk_dense_sparse_euclidean_distance_matrix, sk_dense_sparse_squared_euclidean_distance_matrix,
     sk_sparse_dense_euclidean_distance_matrix, sk_sparse_dense_squared_euclidean_distance_matrix,
