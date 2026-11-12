@@ -25,6 +25,10 @@
 mod acceptance;
 #[cfg(feature = "arrow")]
 pub mod arrow;
+#[cfg(feature = "datafusion")]
+pub mod datafusion;
+#[cfg(feature = "polars")]
+pub mod polars;
 
 pub mod batch;
 pub mod bridge;
@@ -32,8 +36,6 @@ pub mod columns;
 pub mod json;
 pub mod missing;
 pub mod observability;
-#[cfg(feature = "polars")]
-pub mod polars;
 pub mod safetensors;
 pub mod schema;
 pub mod selection;
