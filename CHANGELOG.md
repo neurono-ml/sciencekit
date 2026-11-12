@@ -9,6 +9,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Runtime directed-acyclic-graph pipelines (spec `pipeline-graph`):
+  `sciencekit_pipeline::graph` adds `SKPipelineGraph` /
+  `SKPipelineGraphBuilder` over the `petgraph` workspace dependency,
+  `SKNodeIdentifier`, `SKPipelineGraphNodeKind`, `SKNodeBlockStore`,
+  `SKPipelineGraphModel`, the `SKPipelineGraphClassifier` /
+  `SKPipelineGraphRegressor` wrappers, the type-erased `SKBoxedFinalModel` and
+  the node-attributed `SKPipelineGraphNodeError`. The builder is the only
+  constructor (`SKPipelineGraph::start` / `SKPipelineGraph::build`) and carries
+  the mandatory `backend` (default `Faer`) and `execution_mode` (default
+  `Automatic`) parameters recorded in every `fit`, `transform` and `predict`
+  span. `build` validates acyclicity (naming the cycle), exactly one final
+  estimator that is a sink, and full input reachability, rejecting violations
+  with `SKError::InvalidHyperparameter`. Fit executes nodes in a deterministic
+  level order (ascending node identifier within a level); nodes at the same
+  level never depend on each other. Nodes with zero incoming edges receive the
+  caller's block, nodes with one incoming edge receive it unchanged, and nodes
+  with several incoming edges concatenate them horizontally in exact
+  `connect(source, target)` insertion order, promoting to CSR without
+  densifying any sparse input. Root, single-edge and final-estimator widths are
+  re-checked during prediction and mismatches surface as node-attributed
+  `SKError::ShapeMismatch` or `SKError::UnsupportedRepresentation`. Every stage
+  runs over `SKFeatureBlock`, so dense, CSR and mixed graphs fit and predict
+  without implicit densification, and the fitted graph is `Send + Sync` for
+  concurrent inference. Scalar compatibility is enforced at compile time: a
+  graph shares one `SKFloat`, so a stage implemented for another scalar cannot
+  be inserted.
+
 - Extended binary Safetensors internal model format (spec `safetensors-format`):
   `sciencekit_interop::safetensors` adds `SKSafetensorsWriter` /
   `SKSafetensorsWriterBuilder`, `SKSafetensorsReader` /
