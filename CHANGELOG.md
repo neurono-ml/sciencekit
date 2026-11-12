@@ -9,6 +9,661 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Extended binary Safetensors internal model format (spec `safetensors-format`):
+  `sciencekit_interop::safetensors` adds `SKSafetensorsWriter` /
+  `SKSafetensorsWriterBuilder`, `SKSafetensorsReader` /
+  `SKSafetensorsReaderBuilder`, `SKShardPlan` / `SKShardPlanBuilder`,
+  `SKShardIndex`, `SKAppendOutcome`, `SKSafetensorsCompression` (`None` default,
+  `Gzip`, `Brotli`, `Snappy`), `SK_SAFETENSORS_FORMAT_VERSION` (`1`),
+  `SK_SAFETENSORS_PADDING_TENSOR_NAME` (`"__padding__"`) and convenience entry
+  points (`sk_write_model_state_safetensors`,
+  `sk_write_model_state_safetensors_file`, `sk_read_model_state_safetensors`,
+  `sk_read_model_state_safetensors_file`, `sk_export_model_safetensors`,
+  `sk_export_model_safetensors_file`, `sk_import_model_safetensors`,
+  `sk_import_model_safetensors_file`, `sk_append_safetensors_tensor`,
+  `sk_read_safetensors_shard_index`, `sk_safetensors_index_path` and
+  `sk_detect_safetensors_compression`) over `sciencekit_common::SKModelState`.
+  Single-file output is standard HuggingFace Safetensors (`8`-byte little-endian
+  header length, UTF-8 JSON header carrying `sciencekit.*` metadata, class
+  labels and typed hyperparameters, plus safe little-endian `F32`, `F64`, `I64`
+  and `BOOL` tensor payloads without `unsafe`). Large states split into
+  immutable shards plus an atomically renamed `.safetensors.index.json` manifest
+  that the reader merges transparently; reserved header (`0x20`) and payload
+  (`__padding__`) space enables in-place seek appends without rewriting existing
+  tensor bytes, spilling automatically to a new shard when exhausted; and
+  optional Cargo features `compression-gzip`, `compression-brotli` and
+  `compression-snappy` wrap whole files (`.safetensors.gz`,
+  `.safetensors.brotli`, `.snappy.safetensors`) with magic-byte auto-detection
+  and explicit `UnsupportedOperation` guidance when disabled.
+
+- `sciencekit_outlier` sub-crate and `sciencekit_common` outlier prediction
+  contract (specs `outlier-prediction` and `isolation-forest`): one-byte typed
+  `SKOutlierLabel { Inlier, Outlier }` with explicit external `to_i64` /
+  `from_i64` conversions (`1` / `-1`), `SKOutlierPredictor<F>` (`offset`,
+  `score_samples`, `decision_function`, `predict`), and builder-only
+  `SKIsolationForest<F>` (`SKIsolationForestBuilder<F>`) with
+  `number_of_trees` (default `100`), `maximum_samples`
+  (`SKIsolationMaximumSamples::Auto` default, meaning `min(256, n_samples)`,
+  plus `Count` and `Fraction`), `contamination` (`SKContamination::Auto`
+  default with fixed offset `-0.5`, or `Fraction` in `(0, 0.5]` selecting the
+  exact linear-interpolated training quantile), `maximum_features` (default
+  `1.0`), `bootstrap` (default `false`), `random_seed` (default `0`), `backend`
+  (default `Faer`) and `execution_mode` (default `Automatic`). Fitting derives
+  independent per-tree SplitMix64 sub-seeds (`SK_RANDOM_DOMAIN_TREE` /
+  `SK_RANDOM_DOMAIN_STAGE`), grows random isolation trees up to
+  `ceil(log2(subsample_size))` over the shared `sciencekit_tree::SKTree` node
+  layout (`SKTree::leaf_and_depth_for`), gathers sparse CSR subsamples directly
+  into compact CSC columns without densification, and returns a `Send + Sync`
+  `SKIsolationForestModel<F>` exposing `anomaly_scores`
+  (`2^(-E[h(x)] / c(n))`), `score_samples` (`-anomaly_score`),
+  `decision_function` (`score_samples - offset`), typed `predict`, `offset`,
+  `subsample_size`, `feature_count`, `number_of_trees`, `tree`, `backend` and
+  `execution_mode`, alongside `SKIsolationForest::fit_predict`. Companion and
+  acceptance suites (up to 20 000 rows) verify hand-computed harmonic path
+  lengths, four-way dense/CSR equivalence, scalar invariance (`f32`/`f64`),
+  thread-count-invariant determinism, lock-free concurrent serving and
+  evaluation metrics (`sk_roc_auc_score`, `sk_average_precision_score`,
+  `sk_accuracy_score`, `sk_f1_score`) via `sciencekit_metrics`.
+
+- `sciencekit_ensemble` gains generic bootstrap-aggregating meta-estimators
+  (spec `bagging-ensembles`): `SKBaggingClassifier<B>` and
+  `SKBaggingRegressor<B>`, builder-only (`SKBaggingClassifierBuilder<B>`,
+  `SKBaggingRegressorBuilder<B>`) over any configured base estimator `B`
+  satisfying `SKSupervisedFit<F>` whose fitted model implements
+  `SKClassifierPredictor<F>` or `SKRegressorPredictor<F>`, with
+  `number_of_estimators` (default `10`), `maximum_samples` (`All` default,
+  `Count`, `Fraction`), `maximum_features` (`All` default, `Count`, `Fraction`,
+  `Sqrt`, `Log2`), `bootstrap` (default `true`), `bootstrap_features` (default
+  `false`), `oob_score` (default `false`), `random_seed` (default `0`),
+  `backend` (default `Faer`) and `execution_mode` (default `Automatic`). Fit
+  reuses the shared seeded bootstrap sampler and derives independent
+  per-estimator feature-subset seeds to train lock-free parallel rayon slots
+  without densifying borrowed CSR matrices, surfaces base estimator rejections
+  through `SKBaggingError<E>` (`Central` vs `Base`), routes inference and
+  out-of-bag accuracy / R² evaluation exclusively through each member's stored
+  feature subset without leaking excluded columns, averages canonical class
+  probabilities with smallest-index tie-breaking or continuous responses across
+  deterministic row chunks, and implements `SKExportable<F>` whenever the base
+  model is exportable.
+
+- `sciencekit_pipeline` gains parallel feature branching and column-wise
+  concatenation (spec `feature-union`): `SKFeatureUnion` and
+  `SKFeatureUnionBuilder` (`build`/`start` for compile-time tuples up to eight
+  heterogeneous members via `SKFeatureUnionStages`, plus `boxed` with
+  `Vec<Box<dyn SKBlockTransformer<F>>>` for dynamic construction),
+  `SKFeatureUnionModel` exposing `number_of_members`, `member_widths`,
+  `number_of_features`, `number_of_output_features`,
+  `number_of_input_features`, `stages`, `fitted_stages`, `backend` and
+  `execution_mode`, CSR-preserving horizontal concatenation (all-dense outputs
+  stay dense; any sparse member promotes the union output to CSR without
+  densifying sparse inputs), member-indexed error context via
+  `SKFeatureUnionMemberError` (`fit_checked`/`transform_checked`), and direct
+  `SKPipelineTransformer` integration for both `SKFeatureUnion` and nested
+  `SKPipelineBuilder` branches.
+
+- `sciencekit_decomposition` sub-crate (spec `principal-component-analysis`):
+  `SKPCA<F>`, a builder-only Principal Component Analysis estimator with
+  `number_of_components` (default `None`, meaning `min(n_samples, n_features)`),
+  `svd_solver` (`Auto` default, `Full`, `Randomized`, `CovarianceEigh`),
+  `whiten` (default `false`), `tolerance` (default `0.0`),
+  `number_of_power_iterations` (default `5`), `allow_densification` (default
+  `false`), `random_seed` (default `0`), `backend` (default `Faer`) and
+  `execution_mode` (default `Automatic`). Fitting computes per-feature empirical
+  means and total unbiased centered variance, resolves `Auto` deterministically
+  (`Full` on high component fractions or small dense designs, `CovarianceEigh`
+  on tall-skinny dense designs where `n_samples > 10 * n_features` and
+  `n_features <= 1000`, and `Randomized` on larger truncated or sparse designs),
+  orients every principal component row so its largest-magnitude coordinate is
+  non-negative, and returns a distinct `SKPCAModel<F>` exposing `components`,
+  `explained_variance`, `explained_variance_ratio`, `singular_values`, `mean`,
+  `resolved_solver`, `number_of_components`, `number_of_features`, `whiten`,
+  `backend` and `execution_mode`. The `Randomized` solver fits sparse CSR views
+  through implicit centering (`SKRandomizedSvdBuilder`) without materializing a
+  dense centered matrix; `Full` and `CovarianceEigh` reject sparse input with
+  `UnsupportedRepresentation` naming `Randomized` and `SKTruncatedSVD` unless
+  `allow_densification(true)` is set, in which case a warning reports the
+  estimated dense byte cost. `SKPCAModel<F>` implements `SKFeatureTransformer<F>`
+  and inherent `transform` and `inverse_transform` over dense and CSR views
+  without densification, with floored whitening scales and row-chunked parallel
+  projection; `SKPCA::fit_transform` runs under a single `FitTransform` span.
+  Companion and acceptance tests cover `f32`/`f64`, all solvers, component
+  boundaries, whitening, validation errors, thread-count-invariant determinism,
+  concurrent sharing and reconstruction metrics (`sk_mean_squared_error`,
+  `sk_r2_score`) via `sciencekit_metrics`.
+
+- `sciencekit_cluster` gains the density-based spatial clusterer (spec
+  `dbscan`): `SKDBSCAN<F>`, builder-only with `eps` (default 0.5),
+  `minimum_samples` (default 5), `metric` (`Euclidean` default, `Manhattan`,
+  `Chebyshev`, `Cosine`), `algorithm` (`Auto` default, `KdTree`, `BallTree`,
+  `BruteForce`), `leaf_size` (default 40), `backend` (default `Faer`) and
+  `execution_mode` (default `Automatic`). Fit obtains each row's inclusive
+  `eps` neighbourhood through `sciencekit_neighbors` (`SKKDTree` or
+  `SKBallTree` for dense tree-compatible metrics, `SKBruteForceSearcher` for
+  sparse CSR or cosine distance, never densifying sparse storage) with the row
+  itself always included, identifies core samples (`>= minimum_samples`
+  neighbours), and expands density-connected components deterministically in
+  ascending training-index order so the smallest core index in each component
+  seeds its sequential cluster identifier and shared border points join the
+  earliest-seeded cluster; unreachable non-core points receive the explicit
+  `SKClusterLabel::Noise` variant. `SKDBSCANModel<F>` is `Send + Sync`, exposes
+  `labels`, `core_sample_indices`, `number_of_clusters`, `number_of_features`,
+  `eps`, `minimum_samples`, `metric`, `search_strategy`,
+  `training_representation`, `backend` and `execution_mode`, and implements
+  `SKClustererPredictor<F>` through a documented nearest-core heuristic that
+  assigns each query row to the cluster of its nearest fitted core sample when
+  within `eps` and `SKClusterLabel::Noise` otherwise across all four dense/CSR
+  combinations. Construction and fit/predict validate empty inputs,
+  non-positive or non-finite `eps`, zero `minimum_samples` or `leaf_size`,
+  feature-count mismatches, non-finite values, CSC views and incompatible
+  tree/metric or tree/representation pairs.
+
+- `sciencekit_ensemble` introduces Breiman random forests (spec
+  `random-forests`): `SKRandomForestClassifier<F>`, `SKRandomForestRegressor<F>`
+  and `SKMaximumSamples<F>`, builder-only with `number_of_trees` (default 100),
+  `criterion` (`Gini` / `Entropy` for classification, `SquaredError` /
+  `AbsoluteError` for regression), `maximum_depth`, `minimum_samples_split`,
+  `minimum_samples_leaf`, `maximum_features` (`Sqrt` default), `bootstrap`
+  (default true), `maximum_samples` (`All` default, `Count`, `Fraction`),
+  `random_seed` (default 0), `class_weight` (classifier), `oob_score` (default
+  false), `backend` (default `Faer`) and `execution_mode` (default `Automatic`).
+  Fit grows one CART tree per bootstrap sample in parallel lock-free slots via
+  rayon, deriving distinct deterministic per-tree split and bootstrap seeds from
+  `random_seed` and the tree index so the fitted forest is identical across
+  repeated fits and rayon thread counts. Prediction averages canonical class
+  probabilities with smallest-index tie-breaking (classifier) or leaf responses
+  (regressor), exposes normalized mean feature importances, and computes
+  out-of-bag accuracy or R² through `sciencekit_metrics` exclusively over rows
+  excluded from each tree's bootstrap sample (`UnsupportedOperation` when
+  disabled or when zero rows fall out of bag). Dense and borrowed CSR designs
+  have full representation parity on fit and prediction without densifying
+  sparse inputs.
+
+- Human-readable JSON debug model format (spec `json-debug-format`):
+  `sciencekit_interop::json` adds `SKJsonDebugWriter` /
+  `SKJsonDebugWriterBuilder`, `SKJsonDebugReader` / `SKJsonDebugReaderBuilder`,
+  `SKJsonFormatMode` (`Pretty` default, `Compact`),
+  `SK_JSON_DEBUG_FORMAT_VERSION` (`1`) and the convenience entry points
+  `sk_write_model_state_json`, `sk_write_model_state_json_pretty`,
+  `sk_write_model_state_json_compact`, `sk_write_model_state_json_file`,
+  `sk_read_model_state_json`, `sk_read_model_state_json_file`,
+  `sk_export_model_json` and `sk_import_model_json` over
+  `sciencekit_common::SKModelState`. Both builders follow the shared builder
+  contract with `backend` (default `Faer`) and `execution_mode` (default
+  `Automatic`), and every write or read emits a structured `tracing` span. The
+  schema records `format_version`, `estimator`, scalar `dtype` (`"f32"` or
+  `"f64"`), `feature_count`, optional `class_labels`, untagged typed
+  `hyperparameters` and `BTreeMap`-ordered named `tensors` carrying `dtype`
+  (`"F32"`, `"F64"`, `"I64"` or `"Bool"`), `shape` and flat `values` for clean
+  line-oriented diffs and exact `f32`/`f64` round-trips. Unknown fields within
+  major version `1` are ignored for forward compatibility, while malformed JSON
+  (`SKError::Conversion`), unknown major versions
+  (`SKError::UnsupportedRepresentation`), non-finite floats
+  (`SKError::NonFiniteValue`), duplicate tensor or hyperparameter keys, invalid
+  or mismatched dtypes (`SKError::InvalidHyperparameter`) and tensor
+  shape/value-count disagreements (`SKError::ShapeMismatch`) are rejected up
+  front before materializing model state.
+
+## [0.7.0] — 2026-11-11
+
+Arrow interop, the GPU compute contracts, the randomized SVD kernel and the language bindings moving to their own repositories.
+
+### Added
+
+- Randomized SVD kernel (spec `randomized-svd`): `sciencekit_math::decomposition`
+  gains `sk_randomized_svd` and the builder `SKRandomizedSvdBuilder`, returning
+  `SKRandomizedSvdResult` (left singular vectors, non-increasing singular
+  values and right singular vectors). The range finder draws a seeded Gaussian
+  test basis from the shared deterministic generator, orthonormalizes the
+  projected basis with a thin Householder QR, refines it with the configured
+  number of power iterations and decomposes the small projected matrix. Dense
+  and CSR inputs are supported and dispatch once per operation; a sparse input
+  is never densified and the dense intermediates stay at
+  `(k + oversampling) × max(rows, columns)` cells. An optional centering vector
+  centers the matrix implicitly, without materializing a centered copy, for
+  dense and sparse inputs alike. The same seed always yields the same
+  factorization, independently of the thread count, and the singular-vector
+  signs follow a fixed convention (the largest-magnitude entry of the left
+  singular vector is positive).
+
+- `sciencekit_interop` gains the Apache Arrow adapter behind the optional,
+  default-off `arrow` feature (spec `arrow-columnar-interop`, change
+  `arrow-interop`). It imports Arrow record batches, chunked columns
+  (`Vec<ArrayRef>` — Arrow's Rust implementation removed `Table` and
+  `ChunkedArray` upstream) and batch readers into the neutral tabular seam,
+  preserving column names, order, logical types and row count. Arrow validity
+  bitmaps feed the shared missing-value policy: floating-point nulls become the
+  NaN sentinel or the constant fill, nullable integer columns retain their
+  64-bit values across import and promote at materialization with an exactness
+  guard for the target scalar (`f32` or `f64`), the categorical policy reserves
+  the missing code, and the reject policy names the Arrow field. Primitive `f32`, `f64` and `i64` columns
+  without nulls expose borrowed, pointer-identical views; text columns expose a
+  borrowed UTF-8 view; dictionary columns become category codes with a
+  deterministic, reversible label table. The Arrow-to-neutral schema mapping and
+  its reverse preserve roles and disambiguate category codes through field
+  metadata, while nested, temporal, binary, decimal, `UInt64` and `Float16`
+  columns are rejected with a structured error naming the field and a conversion
+  suggestion. Reopenable and one-shot tabular sources stream a
+  `RecordBatchReader` in batches of the configured size and mark the final
+  batch, and path-based sources open Parquet (row-group aware, with projection
+  pushdown), CSV (inferred or explicit schema, header and delimiter options),
+  Arrow IPC/Feather files and streams, and record-oriented JSON/NDJSON, all
+  reopenable and yielding structured errors for truncated or malformed files.
+  The Arrow C Data Interface is implemented in both directions for arrays and
+  batch streams with ownership transferred exactly once, release-once tests and
+  dictionary/text round trips. Exports cover predictions as floating arrays,
+  dense and supervised blocks as record batches, and CSR blocks as row pointers,
+  column indices, stored values and shape metadata, for both `f32` and `f64`.
+  Arrow versions are pinned to 58.3, the last release whose MSRV is Rust 1.85.
+
+- `sciencekit_gpu` — the device-compute contracts shared by the OpenCL, CUDA
+  and ROCm backends (spec `gpu-compute-contracts`), re-exported at the crate
+  root. `SKDeviceInfo` and `SKDeviceCapabilities` describe an enumerated
+  device, its memory, scalar types and supported kernels; `SKDeviceDiscovery`
+  is the availability-detection abstraction; `SKComputeBackend<F>` adds
+  `transfer_policy`, `upload`, `download` and `dispatch` over
+  `SKDeviceBuffer<F>`, whose builder validates device ownership, shape,
+  overflow, capacity and payload. The closed `SKGpuKernel` catalogue names
+  pairwise distance, GEMM, elementwise and tree prediction, and an unsupported
+  kernel reports `UnsupportedOperation` naming it. `gpu-opencl`, `gpu-cuda` and
+  `gpu-rocm` are off by default and the foundation crate pulls in no GPU
+  runtime; tests drive a mock backend, so no device is required to build or
+  test.
+- `SKBackendKind` gains the `OpenCl`, `Cuda` and `Rocm` kinds alongside the CPU
+  kinds, with documented display names, `FromStr` parsing, `Default`,
+  host/device predicates and `SKLinearRegressionModel` export/import round-trip
+  support. Every workspace match is updated; the host math dispatch keeps
+  device kinds on the pure-Rust backend until a GPU kernel backend owns them.
+- Deterministic device selection and honest span telemetry: `sk_select_device`
+  filters by the configured kind, the required scalar type and the required
+  kernel, then orders by `(kind priority, device index)`; when nothing matches
+  it returns `SKFallbackReason` (`NoDeviceAvailable`, `ScalarTypeNotSupported`,
+  `KernelNotSupported` or `ExplicitModeDoesNotSelectDevice`).
+  `SKExecutionContext` carries an optional `SKDeviceContext` and threads
+  `scalar_size_bytes` into selection; `SKExecutionPlan` exposes the selected
+  `backend` and `fallback_reason`. Runtimes populate the explicit process-wide
+  inventory via `sk_register_device_inventory`, and `SKOperationObservation`
+  resolves device kinds through `sk_resolve_operation_backend` so spans record
+  the backend that actually served the operation plus any fallback reason.
+- New structured errors for device work: `DeviceUnavailable` and
+  `UnsupportedScalarType` (mapped to `SKFfiStatus::Unsupported` across FFI),
+  and `DeviceTransferFailure` (mapped to `SKFfiStatus::Internal`).
+
+### Moved
+
+- The Go bindings (spec `go-bindings`) now live in their own repository,
+  [`neurono-ml/sciencekit-go`](https://github.com/neurono-ml/sciencekit-go), as
+  the module `github.com/neurono-ml/sciencekit-go`. The binding itself is
+  unchanged: it loads `sciencekit_ffi` through cgo and exposes typed builders
+  and models for linear regression and the standard scaler (`Fit`, `Predict`,
+  `Transform`, `Score`, `Save`, `LoadLinearRegression`). Dense
+  `Matrix[float32|float64]` values convert with Go-side shape validation and
+  copied outputs; native status codes map to `ScienceKitError` values carrying
+  the code, operation and message; builders and models close explicitly
+  (`Close`) or through `runtime.SetFinalizer`, safely and exactly once; models
+  are safe for concurrent use. The new repository carries the examples, the
+  build/link README, a `scripts/build-native-library.sh` helper, a
+  `gofmt`/`go vet`/`go test`/`go test -race`/`GOEXPERIMENT=cgocheck2 go test`
+  CI workflow and the test suite covering every family, persistence, errors,
+  lifecycle, concurrency and large arrays.
+- The Lua bindings (spec `lua-bindings`) now live in their own repository,
+  [`neurono-ml/sciencekit-lua`](https://github.com/neurono-ml/sciencekit-lua).
+  The `sciencekit_lua` crate becomes a standalone Cargo project — no longer a
+  member of this workspace — that depends on `sciencekit_ffi` through a git
+  dependency on this repository. The module is unchanged: a native Lua 5.4
+  module loaded with `require("sciencekit")`, with Lua 5.4 embedded through
+  `mlua` with `lua54` + `vendored` (neither a system `liblua` nor
+  `pkg-config` is required), chainable builder userdata for linear regression
+  and the standard scaler, `fit`/`predict`/`transform`/`score`/`save`/`load`,
+  handles released exactly once by close, the `__close` metamethod or the
+  garbage collector, copy semantics for every numeric table, structured Lua
+  runtime errors headed by the stable status name and code, a LuaRocks 3.0
+  rockspec and the Lua suite.
+- The `go/` module, the `go.work` file, the `crates/sciencekit_lua` crate, the
+  `go-bindings` CI workflow and `scripts/build-go-library.sh` are removed from
+  this repository. The stable C ABI (`sciencekit_ffi`) stays here: it is the
+  shared contract both bindings consume.
+
+## [0.6.0] — 2026-11-10
+
+The k-NN imputer, grid search and the embedded Lua bindings.
+
+[0.2.0]: https://github.com/neurono-ml/sciencekit/compare/v0.1.0...v0.2.0
+[0.3.0]: https://github.com/neurono-ml/sciencekit/compare/v0.2.0...v0.3.0
+[0.4.0]: https://github.com/neurono-ml/sciencekit/compare/v0.3.0...v0.4.0
+[0.5.0]: https://github.com/neurono-ml/sciencekit/compare/v0.4.0...v0.5.0
+[0.6.0]: https://github.com/neurono-ml/sciencekit/compare/v0.5.0...v0.6.0
+[0.7.0]: https://github.com/neurono-ml/sciencekit/compare/v0.6.0...v0.7.0
+
+### Added
+
+- `sciencekit_impute` gains the nearest-neighbor imputer (spec
+  `nearest-neighbor-imputation`): `SKKNNImputer<F>`, builder-only with
+  `missing_values` (default `NaN`), `nearest_neighbors_count` (default 5),
+  `weights` (`Uniform` default, `Distance`), `add_indicator` (default false),
+  `keep_empty_features` (default false), `backend` (default `Faer`) and
+  `execution_mode` (default `Automatic`). Fit retains the training design, its
+  missingness mask, the rows observing every column, the observed column means
+  and the columns with at least one observed value; all-missing columns are
+  dropped by default and kept at zero when `keep_empty_features` is enabled.
+  Transform computes the exact NaN-aware Euclidean distance over the
+  co-observed features in fixed-size blocks, selects the nearest donors per
+  column with partial selection, and fills each cell with the uniform or
+  inverse-distance weighted average of the donors — zero-distance duplicates
+  take the whole weight — falling back to the observed column mean when no
+  donor distance is finite. `add_indicator` stacks the fitted missingness mask
+  after the imputed features and tolerates missingness unseen at fit. A scalar
+  marker is normalized to `NaN` for the distance kernel, so `-999` and similar
+  sentinels behave like `NaN` while a `NaN` under another marker is rejected as
+  a non-finite value. Sparse input is the documented dense-only exception: a
+  CSR implicit zero is an observed zero, so fit and transform return
+  `UnsupportedRepresentation` and point at `SKSimpleImputer`. Empty input, a
+  zero or excessive neighbour count, a feature-count mismatch and non-finite
+  values report structured errors; the fitted model is `Send + Sync`, the
+  transform is deterministic under concurrency and parallel rows equal the
+  sequential result.
+
+- `sciencekit_model_selection` gains the hyperparameter grid search (spec
+  `grid-search`): `SKGridSearchCVClassifier<F, E>` and
+  `SKGridSearchCVRegressor<F, E>`, builder-only with a list of fully configured
+  candidates, a splitter (`SKKFold`, `SKStratifiedKFold` or `SKGroupKFold`), a
+  scoring policy, `refit` (default true), `error_score` (`SKErrorScore::Raise`
+  by default or a numeric value), an optional group vector, `backend` (default
+  `Faer`) and `execution_mode` (default `Automatic`). Fit evaluates every
+  candidate on every fold in parallel, stores the scores by candidate and fold
+  index so results are independent of thread count, aggregates mean and
+  population standard deviation per candidate, and selects the highest mean
+  with ties broken by candidate index. When refit is enabled the winner is
+  retrained on all rows and exposed through `best_model`; otherwise prediction
+  returns `UnsupportedOperation`. The fitted models expose
+  `best_candidate_index`, `best_score`, `best_parameters`, `results`,
+  `mean_scores`, `standard_deviations`, `fold_scores` and
+  `ranked_candidate_indices`, and the classifier/regressor wrappers implement
+  the matching prediction contracts, delegating to the best model while
+  preserving dense and CSR views. Classification policies are accuracy,
+  balanced accuracy, F1/precision/recall with an averaging policy, binary AUC
+  and log loss; regression policies are negative MSE, negative MAE and R². The
+  builder rejects empty candidates, a missing splitter and an incompatible
+  scoring family, and a sparse-only candidate proves no fold is ever densified.
+
+- `sciencekit_lua` (spec `lua-bindings`): a native Lua 5.4 module loaded with
+  `require("sciencekit")`, built on the stable `sciencekit_ffi` entry points so
+  the Lua surface exercises exactly the C ABI. Lua 5.4 is embedded through
+  `mlua` with `lua54` + `vendored`, so neither a system `liblua` nor
+  `pkg-config` is required to build or to run the tests (the crate's Rust tests
+  drive an embedded VM; a plain `tests/run.lua` suite covers the
+  system-interpreter path). It exposes chainable builder userdata for linear
+  regression (`include_intercept`, `backend`) and the standard scaler
+  (`with_mean`, `with_std`) with `fit`, `predict`, `transform`, `score`, `save`,
+  module-level `load`, `close` and the Lua 5.4 `__close` metamethod; handles
+  are released exactly once by close, `__close` or the garbage collector, with
+  `live_handles()` confirming nothing leaked. Numeric tables convert to/from
+  row-major `f64` buffers with rectangularity, emptiness, cell-type and target
+  length checks before any ABI call — every value is copied by design, and no
+  zero-copy path across Lua values is promised. Failures become Lua runtime
+  errors headed by the stable status name and code
+  (`sciencekit shape (2): ...`). Includes a LuaRocks 3.0 rockspec and a Lua
+  suite covering every ABI family, errors and the lifecycle, plus large-fixture
+  and concurrent-use Rust tests.
+  `sciencekit_ffi` now also builds as an `rlib` for in-process bindings.
+
+## [0.5.0] — 2026-11-10
+
+Clustering metrics and the k-nearest-neighbour estimators.
+
+[0.2.0]: https://github.com/neurono-ml/sciencekit/compare/v0.1.0...v0.2.0
+[0.3.0]: https://github.com/neurono-ml/sciencekit/compare/v0.2.0...v0.3.0
+[0.4.0]: https://github.com/neurono-ml/sciencekit/compare/v0.3.0...v0.4.0
+[0.5.0]: https://github.com/neurono-ml/sciencekit/compare/v0.4.0...v0.5.0
+
+### Added
+
+- `sciencekit_metrics` clustering evaluation (spec `clustering-metrics`):
+  per-sample and mean silhouette over chunked Euclidean pairwise distances,
+  with noise rows excluded and fewer than two clusters rejected; the adjusted
+  Rand index; normalized mutual information in arithmetic, geometric and
+  maximum forms; homogeneity, completeness and V-measure; and the
+  Davies-Bouldin (lower is better) and Calinski-Harabasz (higher is better)
+  centroid scores. `SKSilhouetteScorer` is the first concrete
+  `SKUnsupervisedScorer`, delegating to the free function, which excludes the
+  typed `Noise` variant. Dense and CSR features share the pairwise/centroid
+  paths: the representation is dispatched once and a sparse design is never
+  densified. Pairwise labeling metrics treat noise as an ordinary label by
+  design, while silhouette and the centroid scores exclude it. Empty input,
+  length mismatch, single-cluster and noise-only assignments, non-finite
+  values and insufficient degrees of freedom report structured errors, and
+  every score is deterministic under concurrent calls.
+
+- `sciencekit_neighbors` gains the k-nearest-neighbour estimators (spec
+  `nearest-neighbor-estimators`): `SKKNeighborsClassifier<F>` and
+  `SKKNeighborsRegressor<F>`, both builder-only with `nearest_neighbors_count`
+  (default 5), `weights` (`Uniform` default, `Distance`), `algorithm` (`Auto`
+  default, `KdTree`, `BallTree`, `BruteForce`), `metric` (`Euclidean` default,
+  `Manhattan`, `Chebyshev`, `Cosine`), `leaf_size` (default 40), `backend`
+  (default `Faer`) and `execution_mode` (default `Automatic`). `Auto` builds a
+  tree for dense Euclidean, Manhattan or Chebyshev data with at least 64 rows
+  (a ball tree above 20 features) and uses brute force for sparse, mixed or
+  cosine data; an explicit tree request the input cannot serve returns
+  `UnsupportedRepresentation` with the alternative named. Classification takes
+  the weighted majority vote of the `k` nearest rows and reports class
+  probabilities as weighted neighbour fractions over the canonical class table;
+  vote ties go to the smallest canonical class index, distance ties to the
+  smallest training row index. Regression reports the weighted mean of the
+  neighbour responses. `Distance` weights follow the reference convention: when
+  a selected neighbour sits exactly on the query row, only the zero-distance
+  duplicates contribute. Both estimators accept dense and sparse fit inputs and dense, sparse
+  and mixed prediction inputs, dispatch once per operation, never densify sparse input
+  and expose the resolved search strategy, the stored training representation,
+  the carried backend and the execution intent on the fitted model. A new
+  sparse-aware brute-force searcher implements the shared
+  `SKNearestNeighborsSearcher` contract over chunks sized from a fixed memory
+  budget, selects the `k` smallest `(distance, training_index)` pairs with
+  `select_nth_unstable_by` and sorts them deterministically. Fitted models are
+  `Send + Sync`; the companion tests cover validation errors, determinism,
+  concurrency, dense/sparse parity and accuracy/R² production through
+  `sciencekit_metrics`.
+
+## [0.4.0] — 2026-11-10
+
+Model selection and the C ABI: reproducible splits, folds and cross-validation scoring, plus
+the stable C boundary every non-Rust binding wraps.
+
+[0.2.0]: https://github.com/neurono-ml/sciencekit/compare/v0.1.0...v0.2.0
+[0.3.0]: https://github.com/neurono-ml/sciencekit/compare/v0.2.0...v0.3.0
+[0.4.0]: https://github.com/neurono-ml/sciencekit/compare/v0.3.0...v0.4.0
+
+### Added
+
+- `sciencekit_ffi` sub-crate (spec `ffi-abi`): the stable C ABI for the core data
+  types and the first end-to-end path. Opaque builder/model handles are integer
+  tokens resolved through a registry, so null, unknown, wrong-kind and freed
+  handles return `SK_FFI_STATUS_INVALID_HANDLE` without dereferencing memory, and
+  in-flight predictions survive a concurrent free. Every entry point maps the
+  central error taxonomy onto the stable status codes (`OK`, `INVALID_HANDLE`,
+  `SHAPE`, `INVALID_ARGUMENT`, `UNSUPPORTED`, `NOT_FITTED`, `IO`, `INTERNAL`) and
+  exposes a thread-local last-error message that a successful call clears. Array
+  descriptors (`dtype`, `ndim`, `shape`, `strides`, `data`, `len`) are validated
+  (null pointers, dimensions, length-versus-shape, dtype, row-major strides)
+  before any element is read; inputs are borrowed without copying and outputs are
+  library-owned buffers released by `sk_ffi_array_free`. Descriptors whose data
+  pointer is misaligned for its dtype, or whose `shape`/`strides` are misaligned,
+  are rejected before any typed view is built. The ABI exposes builder setters,
+  `fit`, `predict`, `transform` and `score` for `SKLinearRegression` (f32/f64, R²
+  scoring) and `SKStandardScaler` (f32/f64); `save`/`load` currently cover fitted
+  linear regression in f64 only (an f32 model or a scaler returns
+  `SK_FFI_STATUS_UNSUPPORTED`) through the format-agnostic `SKModelState`
+  contract with a documented little-endian file layout. Also `catch_unwind` on
+  every entry point, an ABI version/feature query, a hand-maintained
+  `include/sciencekit.h`, and a compiled `tests/c_smoke.c` that fits, predicts,
+  scores, saves, loads and transforms. `SKLinearRegressionModel` now implements `SKExportable` and
+  `SKImportable`, and the companion tests cover invalid descriptors, use after
+  free, dtype mismatches, concurrent predictions, panic containment and
+  persistence round-trips.
+
+- `sciencekit_cluster` sub-crate (spec `k-means`): `SKKMeans<F>`, a builder-only
+  Lloyd/Elkan k-means estimator with `number_of_clusters` (default 8),
+  `initialization` (`KMeansPlusPlus` default, `Random`), `number_of_initializations`
+  (default 1 for k-means++ and 10 for random), `maximum_number_of_iterations`
+  (default 300), `tolerance` (default `1e-4`), `algorithm` (`Auto` default, `Lloyd`,
+  `Elkan`), `random_seed` (default 0), `backend` (default `Faer`) and
+  `execution_mode` (default `Automatic`). Centroid initialization is deterministic
+  from the seed: k-means++ D² sampling or distinct uniform rows, one derived seed per
+  initialization, with the lowest-inertia run winning and exact ties broken by the
+  earliest index. `Auto` selects Elkan for dense input and Lloyd for sparse input;
+  an explicit Elkan request over sparse data resolves to Lloyd and reports the
+  resolved algorithm. Empty clusters are repaired deterministically by moving the
+  farthest still-claimed point (largest distance, then smallest row index). The
+  fitted `SKKMeansModel<F>` exposes `cluster_centers`, typed `labels`,
+  `inertia`, `iterations_taken`, `converged`, `number_of_clusters`,
+  `number_of_features`, `algorithm` and `backend`, implements `SKUnsupervisedFit`
+  and `SKClustererPredictor` (always `SKClusterLabel::Cluster`, never `Noise`), and
+  offers `transform` distance-to-centers, `fit_predict` and concurrent assignment.
+  Dense and CSR training/assignment share one norm-expansion kernel without
+  densifying sparse input; validation rejects empty input, zero or excessive
+  clusters, non-finite values (naming their flat position), invalid tolerance,
+  iteration, initialization counts and feature-count mismatches. Companion tests
+  cover tiny, large (50 000-row) and wide sparse data, Lloyd/Elkan/Auto equivalence,
+  dense/sparse parity, determinism across repeated fits and thread counts,
+  concurrency, inertia and classification metric production through
+  `sciencekit_metrics`.
+
+- `sciencekit_tree` sub-crate (spec `decision-trees`): the CART estimators
+  `SKDecisionTreeClassifier<F>` and `SKDecisionTreeRegressor<F>`, each builder-only with
+  `criterion` (Gini default and Entropy for classification; SquaredError default and
+  AbsoluteError for regression), `maximum_depth` (default unlimited),
+  `minimum_samples_split` (default 2), `minimum_samples_leaf` (default 1),
+  `maximum_features` (`All` default, plus `Count`, `Fraction`, `Sqrt` and `Log2`),
+  `splitter` (`Best` default or seeded `Random`), `random_seed` (default 0), classifier
+  `class_weight` (`None` default, `Balanced` or explicit), `backend` (default `Faer`) and
+  `execution_mode` (default `Automatic`). Fitting grows a flat, cache-friendly binary tree
+  by recursive partitioning, maximizing the impurity decrease at every node; classification
+  leaves store the normalized class distribution and predict the majority class, while
+  regression leaves store the mean (squared error) or median (absolute error). The fitted
+  models expose node count, depth, feature count, normalized impurity-based feature
+  importances, the canonical class table, criterion, backend and execution intent, and
+  predict labels, probabilities or responses. Dense and borrowed CSR designs share the
+  same boundary and produce identical trees and predictions without densifying sparse
+  input; sparse split search re-indexes CSR to CSC once and merges stored entries with
+  implicit zeros. Validation rejects empty input, non-finite values, feature-count and
+  target-length mismatches, single-class classification targets, unsupported target
+  representations and invalid depth/split/leaf/feature-subsampling/class-weight
+  configurations with structured central errors. Fits are deterministic for a fixed seed,
+  including the random splitter and seeded feature subsampling, and fitted models are
+  `Send + Sync` and serve concurrent prediction.
+
+- `sciencekit_model_selection` sub-crate (spec `model-selection-splits`): reproducible
+  data partitioning through index splits. `sk_gather_rows` gathers dense rows into a dense
+  block and CSR rows into CSR (never densifying) while preserving the target
+  representation; `sk_shuffle_indices` is a seeded Fisher–Yates permutation from the shared
+  deterministic generator. `SKKFold` (builder-only, `number_of_splits` default 5, `shuffle`
+  default false, `random_seed` default 0) produces disjoint, exhaustive folds; the
+  default `shuffle` stays off while an explicit seed makes repeated runs identical.
+  `SKStratifiedKFold` deals each class round-robin so every fold sees every class in
+  proportion, rejecting a class smaller than the fold count; `SKGroupKFold` keeps every
+  group in one fold and defaults the split count to the distinct group count.
+  `sk_train_test_split` accepts test/train sizes as fractions or counts, seeded shuffling,
+  optional stratification and gathers both partitions (surplus rows stay unassigned when
+  both sizes are configured). `sk_cross_val_score_classifier` and
+  `sk_cross_val_score_regressor` fit one model per fold in parallel and return scores in
+  fold order through the shared scorer contracts. Validation rejects empty input, invalid
+  fractions or explicit counts larger than the input, too many splits, class/group cardinality
+  below the split count, feature/target/group length mismatches and non-finite dense or sparse
+  values with structured central errors.
+  Companion tests cover tiny and 10 000-row data, dense/sparse parity, all splitters,
+  stratification and group properties, determinism across threads, concurrency and metric
+  production through `sciencekit_metrics`.
+
+## [0.3.0] — 2026-11-10
+
+The interop, pipeline, spatial-index and streaming-audit batch: format-agnostic model
+export/import contracts, compile-time typed pipelines, exact k-d/ball trees, the
+engine-neutral dataset interop foundation and the workspace streaming coverage audit.
+
+[0.2.0]: https://github.com/neurono-ml/sciencekit/compare/v0.1.0...v0.2.0
+[0.3.0]: https://github.com/neurono-ml/sciencekit/compare/v0.2.0...v0.3.0
+
+### Added
+
+- `sciencekit_neighbors` sub-crate (spec `nearest-neighbor-search`): the exact dense
+  spatial indexes `SKKDTree` (median split over the widest-spread feature) and
+  `SKBallTree` (farthest-pivot split over the node centroid), each builder-only through
+  `SKKDTreeBuilder`/`SKBallTreeBuilder` with `leaf_size` (default 40), `metric` (default
+  Euclidean), `backend` (default `Faer`) and `execution_mode` (default `Automatic`), plus
+  shape and configuration accessors (`training_rows`, `training_features`, `node_count`,
+  `depth`, `backend`, `metric`, `execution_mode`). The shared
+  `SKNearestNeighborsSearcher<F>` contract exposes exact `k_nearest` and inclusive
+  `radius_neighbors` returning the owned `SKNeighborQuery<F>` (row-major distances and
+  indices) and `SKRadiusNeighbors<F>` result types; results are ordered by distance
+  ascending with ties broken by the smallest training row index, and large batches are
+  evaluated row-parallel with rayon while producing the same output as the sequential
+  path. The closed `SKNeighborMetric` catalogue covers Euclidean, squared Euclidean,
+  Manhattan and Chebyshev distances with metric-specific KD box and ball bounds, while
+  `SKRequestedNeighborMetric` registers cosine and NaN-aware Euclidean as rejected at
+  build time. The index is the documented dense-only exception: sparse training or query
+  views return `UnsupportedRepresentation` with a brute-force suggestion and are never
+  densified; empty training sets, zero `leaf_size`, zero or oversized `neighbors_count`,
+  feature-count mismatches, non-finite values and unsupported metrics return structured
+  errors. Both indexes are `Send + Sync` and serve concurrent query batches.
+
+- `sciencekit_interop` sub-crate (spec `dataset-interop-core`): the engine-neutral tabular seam.
+  `SKTabularSchema` / `SKColumnSchema` / `SKColumnRole` / `SKLogicalType` describe ordered, named,
+  typed columns and reject empty or duplicate-name schemas; `SKColumnSelection` resolves ordered
+  features and at most one target by name or position, rejecting unknown, duplicate and multi-target
+  selections before any row is read; `SKMissingValuePolicy` defaults to `Reject` and documents
+  `NumericNaN`, `ConstantFill` and `CategoricalMissingCode`. `SKColumnData` stores nullable `f32`,
+  `f64`, `i64`, `bool`, nominal text and category codes; `SKTabularBatch` validates row alignment and
+  materializes dense `Array2`, CSR, `SKDataBatch`, `SKSupervisedBatch`, `SKTargetView` and
+  `SKCategoricalView` conversions, delegating label canonicalization to `SKLabelTable`. Contiguous
+  row-major matrices and single numeric columns are borrowed (`SKRowMajorFeatureView`,
+  `SKNumericColumnView`); columnar tables are materialized because the layout requires it.
+  `SKTabularSource` is the reopenable, fallible source contract, bridged into
+  `SKSourceProvider` / `SKSupervisedSourceProvider` by `SKTabularSourceProvider`; the
+  `SKAsyncTabularSource` bridge polls async streams on a dedicated reader thread with a bounded
+  channel, backpressure and cancellation. A conversion-span helper records source kind, shape and policy for adapters that use it.
+- `sciencekit_common` interop error variants in the central taxonomy (`UnknownColumn`,
+  `DuplicateColumn`, `UnsupportedColumnType`, `NullValueInColumn`, `UnevenColumnLengths`,
+  `SchemaMismatch`), each naming the offending column where the error is column-oriented.
+
+
+- Streaming coverage audit (spec `sparse-streaming-coverage`): a workspace-level matrix listing every `fit_streaming`/`partial_fit` implementation with the representations it accepts, a completeness test that fails when a streaming estimator is added without an audit row, the documented-exception test proving `SKOneHotEncoder` is the only dense-only streaming path (its input is categorical), and a dense-only guard test showing a streaming estimator rejecting CSR with `UnsupportedRepresentation` before processing any element.
+
+- Streaming coverage audit (spec `sparse-streaming-coverage`): a workspace-level matrix listing every `fit_streaming`/`partial_fit` implementation with the representations it accepts, a completeness test that fails when a streaming estimator is added without an audit row (a source scan counts the actual `fit_streaming`/`partial_fit` definitions), the documented-exception test proving `SKOneHotEncoder` is the only dense-only streaming path (its input is categorical), and a dense-only guard test showing a streaming estimator rejecting CSR with `UnsupportedRepresentation` before processing any element; sparse `partial_fit` is now implemented for the three scalers and OLS, which previously rejected CSR.
+- `sciencekit_common` model export/import contracts (spec `model-export-contracts`): the format-agnostic `SKModelState<F>` (estimator metadata, a deterministically ordered map of named tensors and typed hyperparameters), `SKModelMetadata` (estimator name, format version, scalar dtype, feature count, canonical class labels and a `SKParameterValue` map), `SKTensor<F>` with `SKTensorDType` (`F32`/`F64`/`I64`/`Bool`) and shape/dtype/name validation, and the `SKExportable<F>`/`SKImportable<F>` trait pair with the shared `sk_validate_import_metadata` check — no file format and no `serde` dependency.
+
+- `sciencekit_pipeline` sub-crate (spec `typed-pipeline`): the compile-time typed linear
+  pipeline. `SKPipeline::start` opens a builder whose nested-tuple type records every
+  composed stage; `then` appends a transformer stage and `finalize_classifier` /
+  `finalize_regressor` close the chain with a supervised estimator, rejecting an empty
+  chain with `SKError::InvalidHyperparameter`. The scalar and the stage output are checked
+  by the type system, with `compile_fail` doctests covering a mixed-scalar stage and a
+  regressor used as a classifier finalizer.
+- `sciencekit_pipeline` stage adapter: `SKPipelineTransformer` plus a blanket
+  implementation over every `SKUnsupervisedFit` estimator whose model implements
+  `SKFeatureTransformer` and whose output enters the owned block medium, so every existing
+  transformer (the three scalers, the simple imputer and the missing indicator) composes
+  without changing its trait.
+- `sciencekit_common` pipeline block boundary: `From<Array2>`, `From<CsMat>`,
+  `From<SKDataView>` and `TryFrom<&SKFeatureBlock>` conversions, plus the
+  `SKIntoFeatureBlock` trait implemented for the impute crate's `SKImputedOutput` and
+  `SKIndicatorOutput`, keeping the dense/CSR representation across the boundary.
+- `sciencekit_pipeline` fitted models: `SKPipelineClassifier` / `SKPipelineRegressor`
+  implement the shared classifier and regressor prediction contracts by transforming the
+  input through the fitted stages and delegating to the final model, and expose the
+  configured stages, the fitted stage models, the final model, the stage count and the
+  final feature count. Dense and sparse blocks flow without implicit densification, and
+  the fitted models are `Send + Sync` for concurrent prediction.
+
+## [0.2.0] — 2026-11-10
+
+The first algorithm-and-contract batch after the evaluation foundation: representation
+parity, the Wave 7 scope clarification, shared deterministic randomness, typed cluster
+assignments, sparse pairwise distances and the ranking metrics. See the entries below.
+
+[Unreleased]: https://github.com/neurono-ml/sciencekit/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/neurono-ml/sciencekit/compare/v0.1.0...v0.2.0
+
+### Added
+
+- `sciencekit_common` typed cluster assignments (spec `clustering-contracts`): `SKClusterLabel` (a cluster identifier or the explicit `SKClusterLabel::NOISE`, four bytes per element through a `NonZeroU32` niche), `SKClusterIdentifier`, `SKClustererPredictor<F>` returning one label per row through the shared `SKDataView` seam, the `to_i64`/`from_i64` interop conversions (`Noise ↔ -1`, values below `-1` or above the maximum cluster index rejected with a structured error, never a panic), and `sk_validate_cluster_assignments`, the shared assignment-shape check.
 - `README.md` with project overview, status badges and a validated architecture diagram.
 - Repository workflow rules: keep-a-changelog policy, English-first durable artifacts, ADR issue per branch, Mermaid/SVG documentation standards.
 - `CHANGELOG.md` seeded following Keep a Changelog 1.1.0.
@@ -54,11 +709,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `sciencekit_common` sparse streaming blocks: `SKFeatureBlock<F>` — an owned, non-exhaustive `Dense(Array2<F>)` / `Sparse(CsMat<F>)` block with a zero-copy `view() -> SKDataView`, shape counts, an `is_sparse` flag and a `byte_size` measured from the stored buffers. `SKDataBatch` and `SKSupervisedBatch` now carry a block, so a stream can deliver CSR data without ever densifying it; the prefetch driver passes the representation through untouched and the double-buffer memory guard checks each batch's stored byte size as it is read, before the update sees it.
 - `sciencekit_preprocessing`, `sciencekit_impute` and `sciencekit_linear_model` (sparse streaming): every streaming estimator accepts sparse batches — the scalers accumulate per-column moments/extrema in `O(nnz)` with implicit zeros participating, polynomial features expand sparse input directly and emit sparse output, the simple imputer applies its dense marker semantics over CSR, and every linear model (OLS, ridge, lasso, elastic net, logistic regression, SGD classifier/regressor) reuses its in-memory sparse accumulators so a sparse stream equals the dense stream and the dense `fit` within the documented tolerance.
 - `sciencekit_metrics` sub-crate (evaluation foundation): `SKLabelSpace` (explicit or observed-union label resolution), `SKConfusionMatrix`, accuracy, per-class precision/recall/F1 with `SKAveraging { Macro, Micro, Weighted, Binary { positive_label } }`, mean squared error, root mean squared error, mean absolute error and `R²` with the documented finite policies; scorer adapters (`SKAccuracyScorer`, `SKPrecisionScorer`, `SKRecallScorer`, `SKF1Scorer`, `SKMeanSquaredErrorScorer`, `SKRootMeanSquaredErrorScorer`, `SKMeanAbsoluteErrorScorer`, `SKR2Scorer`) implementing the shared scoring contracts; and mergeable streaming accumulators (`SKClassificationAccumulator`, `SKRegressionAccumulator`) using Neumaier compensated sums and producing the same values as whole-input evaluation.
+- `sciencekit_common` probability scoring contract: `SKProbabilityScorer<F, M>` with a pure form over stored class probabilities and a convenient form that calls `predict_probabilities`, plus `sk_validate_probability_shape` rejecting empty targets, a row mismatch and a matrix without class columns.
+- `sciencekit_metrics` ranking metrics: binary `sk_roc_auc_score` and `sk_roc_curve` with average-rank tie handling; multiclass one-vs-rest `sk_multiclass_roc_auc_score` and `sk_one_versus_rest_roc_auc_scores` with `SKRankingAveraging { Macro, Micro, Weighted }`; `sk_precision_recall_curve` and `sk_average_precision_score` with step interpolation; `sk_log_loss` and `sk_binary_log_loss` with per-scalar epsilon clipping; `sk_balanced_accuracy_score` and `sk_matthews_correlation_coefficient` with a zero-denominator policy of zero; the scorer adapters `SKAucScorer`, `SKAveragePrecisionScorer`, `SKLogLossScorer`, `SKBalancedAccuracyScorer` and `SKMatthewsCorrelationScorer`; the documented `O(n)` mergeable `SKAucAccumulator`; and the new `SKError::ProbabilityOutOfRange { position }` for probabilities outside `[0, 1]`.
 - `sciencekit_math` pairwise catalogue gained the Chebyshev (L∞) distance and the NaN-aware Euclidean distance (co-observed-feature semantics with `total_features / present_features` scaling, NaN for pairs without co-observed features), both with row-parallel rayon paths.
 - `sciencekit_common` central errors gained `EmptyInput { operation }`, `NonFiniteValue { position }` and `UnknownLabel { label }`, plus the `evaluation-metrics`, `pairwise-distances`, `error-model` and `backend-selection` spec deltas that document the metric foundation.
+- `random_seed(u64)` builder parameter (default `0`) and matching estimator/model accessors on every stochastic estimator: `SKLogisticRegression` (the SAGA solver derives one stream per head from `sk_derive_seed`), `SKLasso` and `SKElasticNet` (`SKSelection::Random` derives one stream per `alpha` from its configured position). The same seed, data and configuration reproduce the coefficients, and parallel heads/alphas never share a generator, so results are independent of the thread count and completion order.
+- `sciencekit_common` seeded randomness (spec `deterministic-randomness`): `SKRandomGenerator`, a SplitMix64 stream shared by every stochastic estimator, with `next_u64`, `next_f64`, `uniform`, `normal` (Box–Muller with a cached spare), `next_index`, `shuffle`, `shuffled_indices` and `sample_indices_without_replacement`; `sk_derive_seed(global_seed, domain, index)` with the named domain tags `SK_RANDOM_DOMAIN_TREE`, `SK_RANDOM_DOMAIN_INITIALIZATION`, `SK_RANDOM_DOMAIN_STAGE`, `SK_RANDOM_DOMAIN_FOLD` and `SK_RANDOM_DOMAIN_PROJECTION`, so every component derives an order- and thread-independent sub-seed, plus the cross-cutting rule that every stochastic builder exposes `random_seed(u64)` defaulting to `0` and never reads an ambient RNG. Golden-vector, range, permutation, moment, sub-seed distinctness and thread-count invariance tests pin the contract. `sciencekit_linear_model`'s SGD substrate now consumes the shared generator and its private SplitMix64 copy is gone, with the seeded behavior unchanged.
+
+- `sciencekit_math` sparse pairwise distances (spec `pairwise-distances`): `sk_sparse_squared_euclidean_distance_matrix`, `sk_sparse_euclidean_distance_matrix`, `sk_sparse_manhattan_distance_matrix`, `sk_sparse_chebyshev_distance_matrix` and `sk_sparse_cosine_distance_matrix` over borrowed `sprs` CSR views, covering sparse×sparse, sparse×dense and dense×sparse inputs without ever densifying; the closed `SKPairwiseMetric` enum and `sk_pairwise_distance_matrix` dispatch once per operation to the dense or the sparse kernel, return a dense matrix, validate feature counts with `ShapeMismatch` instead of panicking, and reject a sparse NaN-aware Euclidean request with `UnsupportedRepresentation` (a CSR implicit zero is an observed value, so no missing marker exists); every sparse metric is row-parallel with the dense grain, deterministic and concurrency-safe, and the dense fast paths keep their signatures and behaviour.
 
 ### Changed
 
+- **BREAKING** `sciencekit_common::SKUnsupervisedScorer` now binds its model to `SKClustererPredictor<F>` and its pure form takes `ArrayView1<SKClusterLabel>` instead of `ArrayView1<usize>`: clustering evaluation no longer rounds a regressor response into an index and can represent noise explicitly.
+- Representation parity is now a normative rule (spec `data-view-boundary`, PRD §4.5.1): an algorithm that mathematically tolerates more than one feature representation accepts dense, sparse and mixed inputs on every public operation, dispatches once per operation and never densifies a sparse input. A dense-only exception (§4.5.2) is admissible only when the mathematics requires dense geometry, the kernel rejects a sparse view with `UnsupportedRepresentation`, and the estimator keeps sparse/mixed parity through a documented alternative path.
+- The PRD now states that the `memmap2`-backed indexes and kernel caches, model persistence and model export are Phase 7 (interop) deliverables; the Phase 3 (neighbours/SVM) and Phase 4 (trees) sections carry the corresponding non-goal cross-references, and algorithms consume them through the Phase 0 `SKMappableSource` contract instead of growing private `memmap2` layers.
+
+- `SKLogisticRegression` (SAGA), `SKLasso` and `SKElasticNet` (`SKSelection::Random`) no longer carry private xorshift64* streams with hard-coded seeds: they draw from the shared `SKRandomGenerator`, seeded through `random_seed(u64)`. Default (`0`) results can differ from the previous hard-coded stream, while determinism for a fixed seed is preserved.
 - **BREAKING** `sciencekit_common` streaming batch accessors: `SKDataBatch::data()` and `SKSupervisedBatch::features()` are replaced by representation-aware accessors (`view()`, `number_of_rows()`, `number_of_columns()`, `is_sparse()`, `byte_size()`), and the supervised constructors become fallible (`Result<Self, SKError>`) to reject a target count that disagrees with the block's rows. The dense constructors keep their meaning; the compiler catches every old call site.
 - **BREAKING** `sciencekit_common` execution surface: `SKExecutionContext` gains `batch_byte_size_hint` and `SKExecutionPlan` gains `available_memory_bytes`, so external struct literals must set both fields. The provider entry points now enforce the double-buffer guard on every batch they read.
 - `SKOperationAttributes` shape fields renamed to `rows_count`/`columns_count` (they are counts); the tracing span field names stay `rows`/`columns`.

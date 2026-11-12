@@ -1,0 +1,25 @@
+{
+  "name": "sciencekit",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "."
+  },
+  "workspaceFolder": "/workspace",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+  "mounts": [
+    "source=sciencekit-cargo-registry,target=/root/.cargo/registry,type=volume",
+    "source=sciencekit-cargo-target,target=/workspace/target,type=volume",
+    "source=sciencekit-go-cache,target=/root/.cache/go-build,type=volume"
+  ],
+  "containerEnv": {
+    "CARGO_TERM_COLOR": "always",
+    "RUST_BACKTRACE": "1"
+  },
+  "postCreateCommand": "cargo fetch && python3 -c 'import maturin' && go version && julia --version && lua5.4 -v",
+  "customizations": {
+    "vscode": {
+      "extensions": ["rust-lang.rust-analyzer", "tamasfe.even-better-toml"]
+    }
+  },
+  "remoteUser": "root"
+}

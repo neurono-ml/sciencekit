@@ -22,6 +22,7 @@ fn config() -> SKCoordinateDescentConfig<f64> {
         positive: false,
         selection: SKSelection::Cyclic,
         screening: false,
+        random_seed: 0,
     }
 }
 
@@ -160,6 +161,7 @@ fn fits_both_supported_floats() {
         positive: false,
         selection: SKSelection::Cyclic,
         screening: false,
+        random_seed: 0,
     };
     let solution =
         sk_solve_all_alphas(&access, targets.view(), &[1.0f32], 1.0, false, &config).unwrap();

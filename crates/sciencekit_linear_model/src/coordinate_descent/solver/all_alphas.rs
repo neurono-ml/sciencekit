@@ -24,12 +24,32 @@ pub(crate) fn sk_solve_all_alphas<F: SKFloat, A: SKColumnAccess<F> + Sync>(
     include_intercept: bool,
     config: &SKCoordinateDescentConfig<F>,
 ) -> Result<SKCoordinateDescentSolution<F>, SKError> {
-    let solve_one =
-        |alpha: &F| sk_solve_alpha(access, target, *alpha, l1_ratio, include_intercept, config);
+    // Each `alpha` is a component with its own derived generator, indexed by
+    // its position in the configured sequence, so the parallel solve never
+    // shares a stream and cannot depend on completion order.
+    let solve_one = |index: usize, alpha: &F| {
+        sk_solve_alpha(
+            access,
+            target,
+            *alpha,
+            l1_ratio,
+            include_intercept,
+            index as u64,
+            config,
+        )
+    };
     let solutions: Vec<Result<SKCoordinateDescentAlphaSolution<F>, SKError>> = if alphas.len() > 1 {
-        alphas.par_iter().map(solve_one).collect()
+        alphas
+            .par_iter()
+            .enumerate()
+            .map(|(index, alpha)| solve_one(index, alpha))
+            .collect()
     } else {
-        alphas.iter().map(solve_one).collect()
+        alphas
+            .iter()
+            .enumerate()
+            .map(|(index, alpha)| solve_one(index, alpha))
+            .collect()
     };
     let columns = access.columns_count();
     let mut coefficients = Array2::zeros((alphas.len(), columns));

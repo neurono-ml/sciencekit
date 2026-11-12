@@ -8,7 +8,7 @@
 //! parameter vector.
 
 use ndarray::{Array1, ArrayView1, ArrayViewMut1};
-use sciencekit_common::{SKError, SKFloat};
+use sciencekit_common::{SKError, SKFloat, SKRandomGenerator};
 
 use super::lbfgs::sk_max_abs;
 use crate::logistic::config::SKLogisticPenalty;
@@ -58,10 +58,10 @@ where
         table.push(gradient);
     }
     average.mapv_inplace(|value| value * inverse_samples);
-    let mut seed = config.seed;
+    let mut generator = SKRandomGenerator::new(config.seed);
     let mut mapping = Array1::<F>::zeros(dimension);
     for epoch in 0..config.maximum_number_of_epochs {
-        let order = sk_permutation(number_of_samples, &mut seed);
+        let order = generator.shuffled_indices(number_of_samples);
         for &sample in &order {
             let mut new_gradient = Array1::<F>::zeros(dimension);
             sample_gradient(sample, point.view(), new_gradient.view_mut());
@@ -155,17 +155,4 @@ fn sk_gradient_mapping<F, G>(
         };
         mapping[coordinate] = (point[coordinate] - updated) / step;
     }
-}
-
-/// A deterministic Fisher–Yates permutation of `0..length` (xorshift64*).
-fn sk_permutation(length: usize, seed: &mut u64) -> Vec<usize> {
-    let mut order: Vec<usize> = (0..length).collect();
-    for index in (1..length).rev() {
-        *seed ^= *seed << 13;
-        *seed ^= *seed >> 7;
-        *seed ^= *seed << 17;
-        let swap_with = (*seed as usize) % (index + 1);
-        order.swap(index, swap_with);
-    }
-    order
 }

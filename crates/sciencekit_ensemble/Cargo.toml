@@ -1,0 +1,23 @@
+[package]
+name = "sciencekit_ensemble"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+rust-version = "1.85"
+description = "Ensemble estimators for sciencekit: random forests and generic bagging classifiers/regressors with bootstrap sampling, feature routing, out-of-bag estimation and dense/sparse parity."
+repository = "https://github.com/neurono-ml/sciencekit"
+
+[dependencies]
+sciencekit_common = { path = "../sciencekit_common", version = "0.1.0" }
+sciencekit_metrics = { path = "../sciencekit_metrics", version = "0.1.0" }
+sciencekit_tree = { path = "../sciencekit_tree", version = "0.1.0" }
+
+ndarray = { workspace = true }
+rayon = { workspace = true }
+sprs = { workspace = true }
+
+[dev-dependencies]
+sciencekit_linear_model = { path = "../sciencekit_linear_model" }
+sciencekit_neighbors = { path = "../sciencekit_neighbors" }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }

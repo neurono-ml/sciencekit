@@ -37,6 +37,11 @@ impl<F: SKFloat> SKCoordinateDescentModelCore<F> {
         self.config.positive
     }
 
+    /// The seed every stochastic choice in the fit derived from.
+    pub(crate) fn random_seed(&self) -> u64 {
+        self.config.random_seed
+    }
+
     /// The backend kind carried from the estimator that produced this model.
     pub(crate) fn backend(&self) -> SKBackendKind {
         self.backend

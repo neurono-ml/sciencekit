@@ -9,9 +9,14 @@
 //! - [`layout`] — memory-layout helpers (C/F-contiguity detection, forcing
 //!   contiguity before hot loops).
 //! - [`pairwise`] — zero-copy pairwise distance kernels (squared Euclidean,
-//!   Manhattan, Cosine) with a SIMD-friendly hot path.
+//!   Euclidean, Manhattan, Chebyshev, Cosine, NaN-aware Euclidean) with a
+//!   SIMD-friendly dense hot path and sparse kernels behind the
+//!   `sk_pairwise_distance_matrix` dispatcher.
 //! - [`sparse_ops`] — sparse (`sprs`) product kernels (sparse×dense,
 //!   sparse×sparse) over zero-copy views.
+//! - [`decomposition`] — decomposition kernels: the deterministic randomized
+//!   [`sk_randomized_svd`](decomposition::sk_randomized_svd) range finder over
+//!   dense and sparse feature matrices.
 //! - [`solvers`] — iterative linear solvers: the zero-copy
 //!   [`SKLinearOperator`](solvers::SKLinearOperator) abstraction, the
 //!   [`sk_conjugate_gradient`](solvers::sk_conjugate_gradient) SPD solve and the
@@ -33,6 +38,7 @@
 #![warn(missing_docs)]
 
 pub mod backend;
+pub mod decomposition;
 pub mod kernels;
 pub mod layout;
 pub mod pairwise;
@@ -44,6 +50,9 @@ pub use backend::{
     SKMatrixMultiplyBackend, SKNormKind, SKQRDecomposition, SKSingularValueDecomposition,
     sk_default_math_backend, sk_math_backend_for_kind,
 };
+pub use decomposition::{
+    SKRandomizedSvdBuilder, SKRandomizedSvdResult, sk_randomized_svd, sk_seeded_projection,
+};
 pub use kernels::{
     SK_AXIS_SUM_GRAIN, SK_BINARY_COMBINE_GRAIN, SK_ELEMENTWISE_TRANSFORM_GRAIN,
     SK_SCALE_IN_PLACE_GRAIN, sk_axis_min_max, sk_axis_sum, sk_axis_sum_squares, sk_binary_combine,
@@ -51,7 +60,11 @@ pub use kernels::{
 };
 pub use layout::{sk_force_contiguous, sk_is_c_contiguous, sk_is_f_contiguous, sk_memory_layout};
 pub use pairwise::{
-    sk_cosine_distance_matrix, sk_euclidean_distance_matrix, sk_manhattan_distance_matrix,
+    SKPairwiseMetric, sk_chebyshev_distance_matrix, sk_cosine_distance_matrix,
+    sk_euclidean_distance_matrix, sk_manhattan_distance_matrix, sk_nan_euclidean_distance_matrix,
+    sk_pairwise_distance_matrix, sk_sparse_chebyshev_distance_matrix,
+    sk_sparse_cosine_distance_matrix, sk_sparse_euclidean_distance_matrix,
+    sk_sparse_manhattan_distance_matrix, sk_sparse_squared_euclidean_distance_matrix,
     sk_squared_euclidean_distance_matrix,
 };
 pub use solvers::{SKCsrNormalEquationOperator, SKLinearOperator, sk_conjugate_gradient};
@@ -59,6 +72,10 @@ pub use sparse_ops::{sk_csr_dense_product, sk_sparse_product};
 
 pub mod prelude {
     //! Convenience re-exports for downstream algorithm crates.
+
+    pub use crate::decomposition::{
+        SKRandomizedSvdBuilder, SKRandomizedSvdResult, sk_randomized_svd,
+    };
 
     pub use crate::backend::{
         SKFaerBackend, SKMathBackend, SKMatrixMultiplyBackend, SKNormKind, sk_default_math_backend,

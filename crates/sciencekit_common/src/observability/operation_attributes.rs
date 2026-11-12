@@ -42,8 +42,14 @@ impl fmt::Display for SKOperationKind {
     }
 }
 
-/// The bounded set of math backends an operation may route to.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// The bounded set of compute backends an operation may route to.
+///
+/// The first three kinds are host (CPU) backends; `OpenCl`, `Cuda` and `Rocm`
+/// name device backends whose concrete implementations live in the future
+/// `sciencekit_gpu_opencl`, `sciencekit_gpu_cuda` and `sciencekit_gpu_rocm`
+/// crates. The enum is deliberately closed: the compiler forces every
+/// exhaustive match in the workspace to name the device kinds too.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum SKBackendKind {
     /// The pure-Rust default backend backed by `faer`.
     Faer,
@@ -51,16 +57,77 @@ pub enum SKBackendKind {
     MatrixMultiply,
     /// The opt-in `blas-backend` backed by `ndarray-linalg`.
     NdArrayLinalg,
+    /// A device backend driven through OpenCL (vendor-transparent).
+    OpenCl,
+    /// A device backend driven through CUDA.
+    Cuda,
+    /// A device backend driven through ROCm/HIP.
+    Rocm,
+}
+
+impl SKBackendKind {
+    /// Every backend kind, in the documented display order.
+    pub const ALL: [SKBackendKind; 6] = [
+        SKBackendKind::Faer,
+        SKBackendKind::MatrixMultiply,
+        SKBackendKind::NdArrayLinalg,
+        SKBackendKind::OpenCl,
+        SKBackendKind::Cuda,
+        SKBackendKind::Rocm,
+    ];
+
+    /// Whether this kind is a host (CPU) backend.
+    pub fn is_host(self) -> bool {
+        !self.is_device()
+    }
+
+    /// Whether this kind is a device (GPU) backend.
+    pub fn is_device(self) -> bool {
+        matches!(
+            self,
+            SKBackendKind::OpenCl | SKBackendKind::Cuda | SKBackendKind::Rocm
+        )
+    }
+
+    /// The documented static display name of this kind.
+    ///
+    /// Unlike [`Display`](std::fmt::Display), this returns a `&'static str`, so
+    /// structured errors can carry the backend name without allocating.
+    pub fn name(self) -> &'static str {
+        match self {
+            SKBackendKind::Faer => "faer",
+            SKBackendKind::MatrixMultiply => "matrixmultiply",
+            SKBackendKind::NdArrayLinalg => "ndarray-linalg",
+            SKBackendKind::OpenCl => "opencl",
+            SKBackendKind::Cuda => "cuda",
+            SKBackendKind::Rocm => "rocm",
+        }
+    }
+}
+
+impl Default for SKBackendKind {
+    /// The documented default backend ([`SKBackendKind::Faer`], spec
+    /// `backend-selection`).
+    fn default() -> Self {
+        SKBackendKind::Faer
+    }
 }
 
 impl fmt::Display for SKBackendKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let name = match self {
-            SKBackendKind::Faer => "faer",
-            SKBackendKind::MatrixMultiply => "matrixmultiply",
-            SKBackendKind::NdArrayLinalg => "ndarray-linalg",
-        };
-        f.write_str(name)
+        f.write_str(self.name())
+    }
+}
+
+impl std::str::FromStr for SKBackendKind {
+    type Err = crate::SKError;
+
+    /// Parse the documented display name back into its kind.
+    fn from_str(name: &str) -> Result<Self, Self::Err> {
+        SKBackendKind::ALL
+            .into_iter()
+            .find(|kind| kind.name() == name)
+            .ok_or_else(|| crate::SKError::Conversion(format!("unknown backend kind `{name}`")))
     }
 }
 

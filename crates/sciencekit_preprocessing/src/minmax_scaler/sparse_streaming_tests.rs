@@ -112,3 +112,25 @@ fn in_process_intent_accepts_sparse_batches() {
         1e-9,
     );
 }
+
+/// A sparse incremental update learns the same extrema as a dense one.
+#[test]
+fn sparse_streaming_partial_fit_matches_dense() {
+    let features = zeros_rich_features();
+    let reference = default_scaler().fit(&features).expect("fit succeeds");
+    let chunks = chunk_csr(&features, &[2, 3, 3]);
+    let mut model = default_scaler()
+        .fit(&chunks[0].to_dense())
+        .expect("dense fit succeeds");
+    for chunk in &chunks[1..] {
+        model
+            .partial_fit(chunk.view())
+            .expect("sparse partial_fit succeeds");
+    }
+    assert_close_sparse(
+        &model.minimum().to_vec(),
+        &reference.minimum().to_vec(),
+        1e-12,
+    );
+    assert_close_sparse(&model.range().to_vec(), &reference.range().to_vec(), 1e-12);
+}

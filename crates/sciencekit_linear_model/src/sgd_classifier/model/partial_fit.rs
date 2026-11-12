@@ -2,14 +2,13 @@
 //! `stochastic-gradient-classifier`).
 
 use sciencekit_common::{
-    SKDataView, SKError, SKFloat, SKOperationAttributes, SKOperationKind, SKTargetView,
-    sk_run_operation,
+    SKDataView, SKError, SKFloat, SKOperationAttributes, SKOperationKind, SKRandomGenerator,
+    SKTargetView, sk_run_operation,
 };
 
 use super::super::core_implementation::sk_dimensions;
 use super::core_implementation::SKSGDClassifierModel;
 use crate::class_weight::sk_expand_class_weights;
-use crate::sgd::SKRandomGenerator;
 use crate::sgd_classifier::fitting::SKFeatureDesign;
 use crate::sgd_classifier::fitting::{sk_reported_parts, sk_run_head_epoch};
 use crate::sgd_classifier::targets::{

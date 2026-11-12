@@ -3,7 +3,7 @@
 //! `coordinate-descent-solver`).
 
 use ndarray::{Array1, azip};
-use sciencekit_common::SKFloat;
+use sciencekit_common::{SKFloat, SKRandomGenerator};
 
 use super::super::access::SKColumnAccess;
 use super::super::config::{SKCoordinateDescentConfig, SKSelection};
@@ -24,13 +24,13 @@ pub(super) fn sk_run_sweeps<F: SKFloat, A: SKColumnAccess<F>>(
     include_intercept: bool,
     config: &SKCoordinateDescentConfig<F>,
     budget: usize,
-    seed: &mut u64,
+    generator: &mut SKRandomGenerator,
 ) -> (usize, bool) {
     let columns = access.columns_count();
     for iteration in 1..=budget {
         let order = match config.selection {
             SKSelection::Cyclic => (0..columns).collect::<Vec<usize>>(),
-            SKSelection::Random => sk_next_permutation(columns, seed),
+            SKSelection::Random => generator.shuffled_indices(columns),
         };
         let mut maximum_delta = F::zero();
         for column in order {
@@ -80,18 +80,4 @@ pub(super) fn sk_soft_threshold<F: SKFloat>(value: F, threshold: F) -> F {
     } else {
         F::zero()
     }
-}
-
-/// A deterministic pseudo-random permutation of `0..columns` (Fisher–Yates over
-/// an xorshift64* stream), so the random selection is reproducible.
-fn sk_next_permutation(columns: usize, seed: &mut u64) -> Vec<usize> {
-    let mut order: Vec<usize> = (0..columns).collect();
-    for index in (1..columns).rev() {
-        *seed ^= *seed << 13;
-        *seed ^= *seed >> 7;
-        *seed ^= *seed << 17;
-        let swap_with = (*seed as usize) % (index + 1);
-        order.swap(index, swap_with);
-    }
-    order
 }
