@@ -64,7 +64,7 @@
 
 ## 6. Acceptance
 
-- [ ] 6.1 Add `acceptance_tests/` covering tiny and large data (at least 50 000 rows),
+- [x] 6.1 Add `acceptance_tests/` covering tiny and large data (at least 50 000 rows),
   binary/multiclass classification, regression, categorical features, missing values,
   early stopping, dense/sparse and metric production through `sciencekit_metrics`; verify
   with `cargo test -p sciencekit_ensemble`.
