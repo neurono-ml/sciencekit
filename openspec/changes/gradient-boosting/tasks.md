@@ -77,7 +77,7 @@
 
 ## 8. Documentation, changelog and review
 
-- [ ] 8.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under `Unreleased →
+- [x] 8.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under `Unreleased →
   Added` for the gradient-boosting estimators, the loss contract and the tree structure
   surface.
 - [ ] 8.2 Companion documentation change on its own `docs/*` branch (merged into
