@@ -34,7 +34,7 @@
   determinism and metric production; verify with `cargo test -p sciencekit_model_selection`.
 - [ ] 4.2 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
   warnings` and `cargo test --workspace`; fix every failure before pushing.
-- [ ] 4.3 Update `CHANGELOG.md` and the companion mdBook chapter (including a
+- [x] 4.3 Update `CHANGELOG.md` and the companion mdBook chapter (including a
   `Development Explained` chapter on successive halving, resources and elimination);
   verify with `mdbook build docs`.
 - [ ] 4.4 Independent review by a separate agent validating every scenario in
