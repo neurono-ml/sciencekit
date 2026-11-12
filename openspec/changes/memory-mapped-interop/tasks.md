@@ -24,7 +24,7 @@
 ## 4. Concurrency, acceptance, documentation
 
 - [x] 4.1 TDD concurrent readers: eight threads, disjoint rows, values match; `Send + Sync` compile assertions.
-- [ ] 4.2 TDD small and large generated files; a file larger than the configured memory budget streams with bounded batches.
+- [x] 4.2 TDD small and large generated files; a file larger than the configured memory budget streams with bounded batches.
 - [ ] 4.3 TDD `f32` and `f64` throughout; cast reporting.
 - [ ] 4.4 Run the CI gates: `cargo fmt --all --check`, `cargo clippy --workspace --all-targets`, `cargo test --workspace`.
 - [ ] 4.5 Add the memory-mapped sources book chapter and the `Development Explained` chapter on out-of-core random access; register in `SUMMARY.md`.
