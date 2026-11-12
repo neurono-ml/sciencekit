@@ -128,9 +128,8 @@ fn datafusion_missing_values_follow_the_policy() {
     let categorical_batch =
         sk_tabular_batch_from_datafusion_record_batch(&record_batch, &categorical_config, 0, true)
             .unwrap();
-    let categorical_dataset: SKTabularDataset<f64> = categorical_batch
-        .to_tabular_dataset(&categorical_config)
-        .unwrap();
+    let categorical_dataset: SKTabularDataset<f64> =
+        categorical_batch.to_tabular_dataset(&categorical_config).unwrap();
     assert_eq!(
         categorical_dataset.categorical().unwrap().codes()[[1, 0]],
         -1
@@ -295,5 +294,47 @@ fn sk_dense_matrix(dataset: &SKTabularDataset<f64>) -> ndarray::Array2<f64> {
     match dataset.features() {
         SKFeatureBlock::Dense(matrix) => matrix.clone(),
         other => panic!("expected a dense block, found {other:?}"),
+    }
+}
+
+/// A streaming source refuses to nest its own runtime instead of panicking.
+#[test]
+fn datafusion_stream_source_refuses_to_nest_runtimes() {
+    let config = SKTabularSourceConfig::builder()
+        .column("x", SKColumnKind::Numeric)
+        .build()
+        .unwrap();
+    let runtime = tokio::runtime::Builder::new_current_thread()
+        .build()
+        .unwrap();
+
+    let constructor = runtime.block_on(async {
+        let context = SessionContext::new();
+        let dataframe = context.read_batch(mixed_strided_batch()).unwrap();
+        SKDataFusionStreamSource::new(dataframe, config.clone()).map(|_| ())
+    });
+    match constructor {
+        Err(SKError::UnsupportedOperation { operation, .. }) => {
+            assert_eq!(operation, "datafusion_stream_source_new");
+        }
+        other => panic!("expected UnsupportedOperation from `new`, found {other:?}"),
+    }
+
+    let context = SessionContext::new();
+    let dataframe = context.read_batch(mixed_strided_batch()).unwrap();
+    let mut source = SKDataFusionStreamSource::new(dataframe, config).unwrap();
+    let opened = runtime.block_on(async { source.open() });
+    match opened {
+        Err(SKError::UnsupportedOperation { operation, .. }) => {
+            assert_eq!(operation, "datafusion_stream_open");
+        }
+        other => panic!("expected UnsupportedOperation from `open`, found {other:?}"),
+    }
+    let read = runtime.block_on(async { source.next_batch() });
+    match read {
+        Err(SKError::UnsupportedOperation { operation, .. }) => {
+            assert_eq!(operation, "datafusion_stream_next_batch");
+        }
+        other => panic!("expected UnsupportedOperation from `next_batch`, found {other:?}"),
     }
 }

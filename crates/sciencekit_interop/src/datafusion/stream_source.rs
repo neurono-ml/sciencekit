@@ -14,6 +14,23 @@ use crate::batch::SKTabularBatch;
 use crate::source::SKTabularSource;
 use crate::tabular::SKTabularSourceConfig;
 
+/// Reject a call made from inside a Tokio runtime.
+///
+/// The source owns a runtime and blocks on it per batch, which Tokio forbids to
+/// nest. Returning a structured error keeps the public surface panic-free for a
+/// caller that happens to hold the source inside an async task.
+fn sk_reject_nested_runtime(operation: &'static str) -> Result<(), SKError> {
+    if tokio::runtime::Handle::try_current().is_ok() {
+        return Err(SKError::UnsupportedOperation {
+            operation,
+            reason:
+                "the streaming source blocks on its own runtime; drive it outside a Tokio runtime"
+                    .to_string(),
+        });
+    }
+    Ok(())
+}
+
 /// A reopenable source that pulls DataFusion record batches one at a time.
 ///
 /// The physical plan runs as a stream: each [`next_batch`](SKTabularSource::next_batch)
@@ -34,8 +51,11 @@ impl SKDataFusionStreamSource {
     /// Build a source over an unexecuted DataFusion plan.
     ///
     /// # Errors
-    /// Returns [`SKError::Conversion`] when the Tokio runtime cannot be built.
+    /// Returns [`SKError::Conversion`] when the Tokio runtime cannot be built
+    /// and [`SKError::UnsupportedOperation`] when called inside a Tokio runtime,
+    /// where the source's own runtime could neither be driven nor dropped.
     pub fn new(dataframe: DataFrame, config: SKTabularSourceConfig) -> Result<Self, SKError> {
+        sk_reject_nested_runtime("datafusion_stream_source_new")?;
         Ok(SKDataFusionStreamSource {
             dataframe,
             config,
@@ -69,6 +89,7 @@ impl SKTabularSource for SKDataFusionStreamSource {
     const IS_REOPENABLE: bool = true;
 
     fn open(&mut self) -> Result<(), SKError> {
+        sk_reject_nested_runtime("datafusion_stream_open")?;
         let stream = self
             .runtime
             .block_on(self.dataframe.clone().execute_stream())
@@ -83,6 +104,7 @@ impl SKTabularSource for SKDataFusionStreamSource {
     }
 
     fn next_batch(&mut self) -> Result<Option<SKTabularBatch>, SKError> {
+        sk_reject_nested_runtime("datafusion_stream_next_batch")?;
         if !self.opened {
             return Err(SKError::UnsupportedOperation {
                 operation: "datafusion_stream_next_batch",
