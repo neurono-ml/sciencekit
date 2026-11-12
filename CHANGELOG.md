@@ -30,6 +30,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `transform` span records the configured `backend` (default `Faer`) and
   `execution_mode` (default `Automatic`).
 
+- `sciencekit_decomposition` gains uncentered low-rank Singular Value
+  Decomposition (spec `truncated-svd`): `SKTruncatedSVD<F>`, a builder-only
+  estimator with `number_of_components` (default `2`), `algorithm`
+  (`SKTruncatedSVDAlgorithm::Randomized` default; `Arpack` reserved and
+  rejected as an explicit non-goal), `number_of_iterations` (default `5`),
+  `tolerance` (default `0.0`), `random_seed` (default `0`), `backend` (default
+  `Faer`) and `execution_mode` (default `Automatic`). Fitting delegates to the
+  seeded randomized range finder (`SKRandomizedSvdBuilder`) on the uncentered
+  design without subtracting feature means or densifying sparse CSR views,
+  completes rank-deficient singular directions via deterministic Gram-Schmidt
+  so `components` remains row-orthonormal, computes population
+  `explained_variance` over projected training rows and divides by the non-densifying
+  total input column variance for `explained_variance_ratio` (clamping rounding
+  overshoot to `<= 1.0`), and returns `SKTruncatedSVDModel<F>` exposing
+  `components`, `singular_values`, `explained_variance`,
+  `explained_variance_ratio`, `number_of_components`, `number_of_features`,
+  `algorithm`, `backend` and `execution_mode`. `SKTruncatedSVDModel<F>`
+  implements `SKFeatureTransformer<F>` plus inherent `transform` and
+  `inverse_transform` across all dense and CSR combinations using fixed 256-row
+  chunks for thread-count-invariant evaluation, `SKTruncatedSVD::fit_transform`
+  runs under a single `FitTransform` span, and `SK_TRUNCATED_SVD_PARITY_TOLERANCE`
+  (`1e-6`) documents the dense/CSR equivalence and rank-`k` reconstruction
+  bound. Companion and acceptance tests cover `f32`/`f64`, rank-1/rank-2 and
+  constant fixtures, non-densification on wide CSR tables, validation guards,
+  1- vs 4-thread Rayon invariance, `Send + Sync` concurrent sharing, and
+  reconstruction metrics (`sk_mean_squared_error`, `sk_r2_score`) via
+  `sciencekit_metrics`.
+- `sciencekit_telemetry` sub-crate (spec `telemetry-export`): opt-in
+  OpenTelemetry trace, log and metric export pipelines and process-wide
+  lifecycle over `opentelemetry 0.32`, `opentelemetry_sdk 0.32`,
+  `opentelemetry-otlp 0.32`, `opentelemetry-appender-tracing 0.32` and
+  `tracing-opentelemetry 0.33`. Builder-validated `SKTelemetryConfiguration`
+  (`SKTelemetryConfigurationBuilder`), `SKTelemetryBatchConfiguration`
+  (`SKTelemetryBatchConfigurationBuilder`), `SKTelemetryResource`,
+  `SKTelemetryTransport { Grpc, Http }` and
+  `SKTelemetrySampler { AlwaysOn, AlwaysOff, TraceIdRatioBased, ParentBased }`
+  validate service identity, HTTP/HTTPS endpoints, ASCII header tokens, timeouts,
+  sampling ratios and batch queue bounds up front with `SKError::InvalidHyperparameter`.
+  `SKTelemetryPipeline` and `sk_build_otlp_pipeline` (gated behind off-by-default
+  `otlp-grpc`, `otlp-http` and `telemetry` features) bridge `sciencekit.operation`
+  spans with error-status enrichment, structured `tracing` events with trace
+  correlation, and bounded-cardinality operation metrics
+  (`sciencekit.operation.duration`, `sciencekit.operation.count`,
+  `sciencekit.operation.rows`, `sciencekit.operation.columns`,
+  `sciencekit.operation.errors`). `SKTelemetry` manages once-per-process `init` /
+  `init_with_exporters`, mutex-serialized `force_flush` honoring `flush_timeout`,
+  `shutdown` and drop-safe detachment while leaving uninitialized default builds
+  completely silent with zero active exporters and zero network traffic.
 
 - Successive-halving hyperparameter search in `sciencekit_model_selection` (spec
   `halving-grid-search`): builder-only `SKHalvingGridSearchClassifier<F, E>` /
@@ -131,6 +179,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `compression-snappy` wrap whole files (`.safetensors.gz`,
   `.safetensors.brotli`, `.snappy.safetensors`) with magic-byte auto-detection
   and explicit `UnsupportedOperation` guidance when disabled.
+
+- `sciencekit_decomposition` gains out-of-core Principal Component Analysis
+  (spec `incremental-pca`): `SKIncrementalPCA<F>`, `SKIncrementalPCABuilder<F>`
+  and `SKIncrementalPCAModel<F>`, builder-only with `number_of_components`
+  (default `None`, meaning `min(n_samples, n_features)` up to the feature
+  count), `batch_size` (default `1024`), `whiten` (default `false`),
+  `maximum_number_of_epochs` (default `1`), `backend` (default `Faer`) and
+  `execution_mode` (default `Automatic`). Dense batches accumulate exact
+  `(samples_seen, mean, scatter)` statistics via the Chan-Golub-LeVeque merge
+  across fixed 256-row parallel chunks without retaining rows; sparse CSR
+  batches accumulate Neumaier-compensated column sums and Gram products
+  (`Gram - n * mean * mean^T`) without ever densifying sparse storage.
+  Finalization divides the scatter matrix by `n - 1`, runs the configured
+  backend's symmetric eigensolver (`eigh`), sorts eigenvalues non-increasingly
+  and orients principal component rows deterministically to match `SKPCA`.
+  `fit` chunks in-memory dense/CSR matrices into `batch_size` blocks (coalescing
+  undersized trailing remainders), `SKIncrementalPCAModel::partial_fit` chains
+  dense and CSR batch updates, `fit_streaming` drives `SKSourceProvider`
+  through the shared prefetch executor across one pass for one-shot providers
+  and `maximum_number_of_epochs` passes for reopenable providers, and
+  `SKIncrementalPCAModel` implements `SKFeatureTransformer`, `transform`,
+  `inverse_transform` and format-agnostic `SKExportable`/`SKImportable` state
+  round-tripping.
 
 - `sciencekit_outlier` sub-crate and `sciencekit_common` outlier prediction
   contract (specs `outlier-prediction` and `isolation-forest`): one-byte typed

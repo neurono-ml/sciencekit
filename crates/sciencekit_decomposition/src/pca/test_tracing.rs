@@ -72,13 +72,13 @@ where
     }
 }
 
-pub(super) struct PcaCaptureGuard {
+pub(crate) struct PcaCaptureGuard {
     _lock: MutexGuard<'static, ()>,
     layer: &'static PcaTracingLayer,
 }
 
 impl PcaCaptureGuard {
-    pub(super) fn begin() -> Self {
+    pub(crate) fn begin() -> Self {
         let lock = TRACING_TEST_LOCK
             .lock()
             .unwrap_or_else(|poisoned| poisoned.into_inner());
@@ -95,7 +95,7 @@ impl PcaCaptureGuard {
         Self { _lock: lock, layer }
     }
 
-    pub(super) fn spans(&self) -> Vec<(String, HashMap<String, String>)> {
+    pub(crate) fn spans(&self) -> Vec<(String, HashMap<String, String>)> {
         self.layer
             .spans
             .lock()
@@ -111,7 +111,7 @@ impl PcaCaptureGuard {
             .collect()
     }
 
-    pub(super) fn warning_events(&self) -> Vec<HashMap<String, String>> {
+    pub(crate) fn warning_events(&self) -> Vec<HashMap<String, String>> {
         self.layer
             .events
             .lock()

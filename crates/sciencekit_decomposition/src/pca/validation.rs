@@ -3,7 +3,28 @@
 
 use sciencekit_common::{SKDataView, SKError, SKFloat};
 
-use super::centering::sk_view_dimensions;
+/// Returns `(number_of_rows, number_of_columns)` for a supported feature view,
+/// rejecting CSC sparse storage up front.
+pub(crate) fn sk_view_dimensions<F>(
+    features: &SKDataView<'_, F>,
+) -> Result<(usize, usize), SKError> {
+    match features {
+        SKDataView::Dense(dense) => Ok(dense.dim()),
+        SKDataView::Sparse(sparse) => {
+            if !sparse.is_csr() {
+                return Err(SKError::UnsupportedRepresentation {
+                    representation: "csc",
+                    suggestion: "convert the sparse matrix to CSR (compressed sparse row) format",
+                });
+            }
+            Ok((sparse.rows(), sparse.cols()))
+        }
+        _ => Err(SKError::UnsupportedRepresentation {
+            representation: features.representation(),
+            suggestion: "convert the input to a supported dense or CSR view",
+        }),
+    }
+}
 
 /// Validates the shape and requested component count (`None` →
 /// `min(n_samples, n_features)`) before any element or representation scan.
@@ -31,7 +52,7 @@ pub(super) fn sk_validate_fit_shape<F: SKFloat>(
 
 /// Validates a `transform` or `inverse_transform` input against the expected
 /// column count and checks finiteness.
-pub(super) fn sk_validate_matrix_input<F: SKFloat>(
+pub(crate) fn sk_validate_matrix_input<F: SKFloat>(
     features: SKDataView<'_, F>,
     expected_columns: usize,
     operation: &'static str,
@@ -54,7 +75,7 @@ pub(super) fn sk_validate_matrix_input<F: SKFloat>(
 
 /// Rejects any non-finite value (`NaN` or `±∞`), reporting its flat row-major
 /// position.
-pub(super) fn sk_validate_finiteness<F: SKFloat>(
+pub(crate) fn sk_validate_finiteness<F: SKFloat>(
     features: SKDataView<'_, F>,
 ) -> Result<(), SKError> {
     match features {
