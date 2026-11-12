@@ -27,7 +27,7 @@
 
 ## 4. Acceptance and review
 
-- [ ] 4.1 Add feature-gated acceptance tests for tiny/large tables, numeric/categorical/
+- [x] 4.1 Add feature-gated acceptance tests for tiny/large tables, numeric/categorical/
   missing schemas, streaming batch order, column selection and concurrent reads; verify
   with the matching feature combinations.
 - [ ] 4.2 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
