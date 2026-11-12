@@ -223,8 +223,8 @@ impl<'a, F: SKFloat> SKLinearSvcDesign<'a, F> {
 }
 
 /// Hand the solver the active representation without per-row branching.
-pub(crate) fn sk_linear_svc_design_access<'design, 'data, F: SKFloat>(
-    design: &'design SKLinearSvcDesign<'data, F>,
+pub(crate) fn sk_linear_svc_design_access<'design, F: SKFloat>(
+    design: &'design SKLinearSvcDesign<'_, F>,
 ) -> &'design (dyn SKLinearSvcDesignAccess<F> + Sync) {
     match design {
         SKLinearSvcDesign::Dense(dense) => dense,
