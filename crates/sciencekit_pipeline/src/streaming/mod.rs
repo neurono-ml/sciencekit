@@ -42,4 +42,7 @@ mod oneshot_tests;
 pub(crate) mod testing;
 
 #[cfg(test)]
+mod transform_tests;
+
+#[cfg(test)]
 mod transformer_tests;
