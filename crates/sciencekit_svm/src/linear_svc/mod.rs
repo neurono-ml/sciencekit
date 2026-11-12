@@ -13,3 +13,5 @@ pub use core_implementation::SKLinearSVC;
 
 #[cfg(test)]
 mod linear_svc_builder_tests;
+#[cfg(test)]
+mod linear_svc_config_tests;
