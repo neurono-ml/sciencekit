@@ -77,4 +77,5 @@
   - [Outlier detection: random isolation trees, path length and the contamination offset](development-explained/ch48-outlier-detection.md)
   - [Runtime DAG pipelines: topological fitting, deterministic levels and honest merges](development-explained/ch52-pipeline-dag.md)
   - [Extended Safetensors format: safe binary checkpoints, sharding, in-place padding and compression](development-explained/ch54-safetensors-internal-format.md)
+  - [OpenTelemetry export: three signals, bounded cardinality and an honest lifecycle](development-explained/ch55-telemetry-export.md)
   - [Maintaining this book](development-explained/maintaining.md)
