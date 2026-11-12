@@ -38,7 +38,7 @@
 
 ## 4. Boosting and estimators
 
-- [ ] 4.1 Wire the W4.4 loss/gradient/Hessian contract, initial prediction, learning rate
+- [x] 4.1 Wire the W4.4 loss/gradient/Hessian contract, initial prediction, learning rate
   and Newton leaves into the histogram stage loop; verify a single-stage hand-computed
   update; verify with `cargo test -p sciencekit_ensemble hist_stage`.
 - [ ] 4.2 Implement `SKHistGradientBoostingClassifier` builder, binary/multiclass fit and
