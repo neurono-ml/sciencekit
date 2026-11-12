@@ -134,6 +134,7 @@ fn truncated_fit_transfers_configured_backend_and_records_fit_and_fit_transform_
     let model = estimator.fit(&data).unwrap();
     let projected = estimator.fit_transform(&data).unwrap();
     let spans = capture.spans();
+    drop(capture);
 
     assert_eq!(model.backend(), SKBackendKind::NdArrayLinalg);
     assert_eq!(
@@ -159,5 +160,21 @@ fn truncated_fit_transfers_configured_backend_and_records_fit_and_fit_transform_
             recorded.1.get("mode").map(String::as_str),
             Some("InProcessSynchronous")
         );
+    }
+
+    let default_estimator = SKTruncatedSVD::<f64>::build()
+        .number_of_components(1)
+        .build()
+        .unwrap();
+    let default_capture = PcaCaptureGuard::begin();
+    let default_model = default_estimator.fit(&data).unwrap();
+    let _ = default_model.transform(&data).unwrap();
+    let default_spans = default_capture.spans();
+    for expected_operation in ["fit", "transform"] {
+        assert!(default_spans.iter().any(|(name, fields)| {
+            name == "sciencekit.operation"
+                && fields.get("operation").map(String::as_str) == Some(expected_operation)
+                && fields.get("backend").map(String::as_str) == Some("faer")
+        }));
     }
 }

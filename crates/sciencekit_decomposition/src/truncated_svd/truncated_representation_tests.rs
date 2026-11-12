@@ -85,7 +85,7 @@ fn truncated_representation_wide_sparse_matrix_fits_without_densification() {
     // entries and thin k+oversampling factors, emitting zero warnings.
     let (rows, columns) = (1_500usize, 25_000usize);
     let mut triplet = TriMat::with_capacity((rows, columns), rows * 4);
-    for row in 0..rows {
+    (0..rows).for_each(|row| {
         let topic_one = ((row % 13) as f64 + 1.0) * 1.5;
         let topic_two = ((row % 7) as f64 + 0.5) * 0.9;
         let tail_column = 4 + (row * 97) % (columns - 4);
@@ -93,7 +93,7 @@ fn truncated_representation_wide_sparse_matrix_fits_without_densification() {
         triplet.add_triplet(row, 1, topic_one * 1.5);
         triplet.add_triplet(row, 2 + (row % 2), topic_two);
         triplet.add_triplet(row, tail_column, 0.05 * ((row % 5) as f64 + 1.0));
-    }
+    });
     let sparse = triplet.to_csr();
 
     let estimator = SKTruncatedSVD::<f64>::build()
