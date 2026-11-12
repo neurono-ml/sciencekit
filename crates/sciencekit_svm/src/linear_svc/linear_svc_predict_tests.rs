@@ -94,3 +94,53 @@ fn decision_ties_break_by_the_smallest_canonical_class_index() {
     let decisions = model.decision_function(three_features.view()).unwrap();
     assert!((decisions[[0, 0]] - decisions[[0, 1]]).abs() < 1e-12);
 }
+
+#[test]
+fn probabilistic_prediction_is_rejected_with_guidance() {
+    use sciencekit_common::SKError;
+
+    let features = array![[-2.0_f64, -1.0], [-1.0, -0.5], [1.0, 0.5], [2.0, 1.0]];
+    let labels = array![0_i64, 0, 1, 1];
+    let model = SKLinearSVC::<f64>::build()
+        .build()
+        .unwrap()
+        .fit(features.view(), labels.view())
+        .unwrap();
+
+    let error = model.predict_probabilities(features.view()).unwrap_err();
+    assert!(matches!(
+        error,
+        SKError::UnsupportedOperation {
+            operation: "predict_probabilities",
+            ..
+        }
+    ));
+}
+
+#[test]
+fn probabilistic_prediction_is_rejected_for_multiclass_models_too() {
+    use sciencekit_common::SKError;
+
+    let features = array![
+        [-3.0_f64, 0.0],
+        [-2.0, 0.0],
+        [0.0, 3.0],
+        [0.0, 2.0],
+        [3.0, 0.0],
+        [2.0, 0.0]
+    ];
+    let labels = array![0_i64, 0, 1, 1, 2, 2];
+    let model = SKLinearSVC::<f64>::build()
+        .build()
+        .unwrap()
+        .fit(features.view(), labels.view())
+        .unwrap();
+
+    let error = model.predict_probabilities(features.view()).unwrap_err();
+    match error {
+        SKError::UnsupportedOperation { reason, .. } => {
+            assert!(reason.contains("probability"));
+        }
+        other => panic!("expected UnsupportedOperation, got {other:?}"),
+    }
+}
