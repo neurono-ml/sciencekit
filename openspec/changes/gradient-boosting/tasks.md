@@ -80,7 +80,7 @@
 - [x] 8.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under `Unreleased →
   Added` for the gradient-boosting estimators, the loss contract and the tree structure
   surface.
-- [ ] 8.2 Companion documentation change on its own `docs/*` branch (merged into
+- [x] 8.2 Companion documentation change on its own `docs/*` branch (merged into
   `docs/documentations`): add the gradient-boosting chapter, register it in `SUMMARY.md`,
   add a `Development Explained` chapter covering gradients, Hessians, Newton leaves,
   shrinkage and early stopping, update `maintaining.md`, and verify with `mdbook build
