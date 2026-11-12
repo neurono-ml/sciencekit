@@ -36,12 +36,12 @@
 - [x] 4.1 Add `acceptance_tests/` covering tiny and large streams, one/multi-epoch
   providers, dense/sparse, chained transformers, finalizer budgets, error propagation and
   metric production; verify with `cargo test -p sciencekit_pipeline`.
-- [ ] 4.2 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
+- [x] 4.2 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
   warnings` and `cargo test --workspace`; fix every failure before pushing.
 - [x] 4.3 Update `CHANGELOG.md` and the companion mdBook chapter (including a
   `Development Explained` chapter on streaming stages, epochs and finalizers); verify with
   `mdbook build docs`.
-- [ ] 4.4 Independent review by a separate agent validating every scenario in
+- [x] 4.4 Independent review by a separate agent validating every scenario in
   `streaming-pipeline`; address every finding and re-run the gates.
 
 ## Workflow follow-up
