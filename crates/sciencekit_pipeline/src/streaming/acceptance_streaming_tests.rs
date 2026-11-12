@@ -21,7 +21,11 @@ fn generated_blocks(number_of_blocks: usize) -> Vec<SKFeatureBlock<f64>> {
         .collect()
 }
 
-fn fitted_chain(blocks: Vec<SKFeatureBlock<f64>>, epochs: usize) -> crate::streaming::SKFittedStreamingPipeline<f64, crate::streaming::testing::SKTestIdentityModel> {
+fn fitted_chain(
+    blocks: Vec<SKFeatureBlock<f64>>,
+    epochs: usize,
+) -> crate::streaming::SKFittedStreamingPipeline<f64, crate::streaming::testing::SKTestIdentityModel>
+{
     let provider = sk_reopenable_blocks(blocks);
     SKStreamingPipeline::start::<f64>()
         .then(SKTestColumnScaling::new(2.0))
@@ -87,7 +91,8 @@ fn the_finalizer_budget_is_enforced_on_a_large_stream() {
         .finalize_estimator(SKTestIdentityEstimator)
         .unwrap()
         .fit(provider)
-        .err().expect("ten dense blocks do not fit a 64-byte budget");
+        .err()
+        .expect("ten dense blocks do not fit a 64-byte budget");
     assert!(matches!(
         error,
         sciencekit_common::SKError::BatchBufferOversize { .. }

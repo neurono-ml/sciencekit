@@ -6,8 +6,8 @@ use sprs::TriMat;
 
 use crate::streaming::SKStreamingPipeline;
 use crate::streaming::testing::{
-    SKTestColumnScaling, SKTestIdentityEstimator, SKTestMeanCentering,
-    sk_reopenable_blocks, sk_reopenable_failing_blocks, sk_tiny_blocks,
+    SKTestColumnScaling, SKTestIdentityEstimator, SKTestMeanCentering, sk_reopenable_blocks,
+    sk_reopenable_failing_blocks, sk_tiny_blocks,
 };
 
 #[test]
@@ -18,8 +18,13 @@ fn a_mid_stream_source_failure_surfaces_the_central_error() {
         .finalize_estimator(SKTestIdentityEstimator)
         .unwrap()
         .fit(provider)
-        .err().expect("the source fails while the stage reads its first pass");
-    assert!(error.to_string().contains("intentional source failure at batch 1"));
+        .err()
+        .expect("the source fails while the stage reads its first pass");
+    assert!(
+        error
+            .to_string()
+            .contains("intentional source failure at batch 1")
+    );
 }
 
 #[test]
@@ -37,7 +42,7 @@ fn a_stage_failure_names_the_stage_index() {
     let sparse = SKFeatureBlock::Sparse(triplets.to_csr());
     let error = fitted
         .transform_batch(&sparse)
-        .err().expect("the mean-centering stage rejects a sparse batch");
+        .expect_err("the mean-centering stage rejects a sparse batch");
     assert!(matches!(error, SKError::Conversion(_)));
     let message = error.to_string();
     assert!(message.contains("stage 1"), "message was {message}");

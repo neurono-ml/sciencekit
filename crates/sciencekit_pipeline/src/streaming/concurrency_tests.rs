@@ -3,8 +3,8 @@
 
 use sciencekit_common::SKFeatureBlock;
 
-use crate::streaming::SKStreamingPipeline;
 use crate::streaming::SKFittedStreamingPipeline;
+use crate::streaming::SKStreamingPipeline;
 use crate::streaming::testing::{
     SKTestColumnScaling, SKTestIdentityEstimator, SKTestIdentityModel, SKTestMeanCentering,
     sk_reopenable_blocks, sk_single_block, sk_tiny_blocks,

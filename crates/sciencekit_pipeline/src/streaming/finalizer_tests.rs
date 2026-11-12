@@ -31,7 +31,8 @@ fn the_finalizer_rejects_an_accumulation_over_the_budget() {
     let provider = sk_reopenable_blocks(sk_tiny_blocks::<f64>());
     let error = configured_pipeline(95)
         .fit(provider)
-        .err().expect("the third block would exceed the 95-byte budget");
+        .err()
+        .expect("the third block would exceed the 95-byte budget");
     match error {
         SKError::BatchBufferOversize {
             batch_bytes,

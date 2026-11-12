@@ -45,7 +45,8 @@ fn a_one_shot_provider_rejects_multiple_epochs() {
         .finalize_estimator(SKTestIdentityEstimator)
         .unwrap()
         .fit(&mut source)
-        .err().expect("a one-shot provider cannot replay two epochs");
+        .err()
+        .expect("a one-shot provider cannot replay two epochs");
     assert!(matches!(
         error,
         SKError::UnsupportedOperation { operation, .. } if operation == "streaming_pipeline_fit"
@@ -61,6 +62,7 @@ fn a_one_shot_provider_over_budget_returns_a_structured_error() {
         .finalize_estimator(SKTestIdentityEstimator)
         .unwrap()
         .fit(&mut source)
-        .err().expect("96 resident bytes exceed a 32-byte budget");
+        .err()
+        .expect("96 resident bytes exceed a 32-byte budget");
     assert!(matches!(error, SKError::BatchBufferOversize { .. }));
 }

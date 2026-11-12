@@ -55,8 +55,7 @@ fn a_valid_pipeline_is_configured_with_the_default_backend() {
         .then(SKTestMeanCentering::new())
         .finalize_estimator(SKStandardScaler::build().build().unwrap())
         .unwrap();
-    let mut provider = provider;
-    let fitted = configured.fit(&mut provider).unwrap();
+    let fitted = configured.fit(provider).unwrap();
     assert_eq!(fitted.backend(), SKBackendKind::Faer);
     assert_eq!(fitted.number_of_stages(), 1);
     assert_eq!(fitted.report().number_of_epochs(), 1);
