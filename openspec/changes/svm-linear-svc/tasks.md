@@ -39,7 +39,7 @@
   `cargo test -p sciencekit_svm linear_svc_predict`.
 - [x] 3.4 Implement `predict_probabilities` returning `UnsupportedOperation` with
   guidance; verify with `cargo test -p sciencekit_svm linear_svc_probability`.
-- [ ] 3.5 Add class-weight tests proving `Balanced` changes the boundary on an imbalanced
+- [x] 3.5 Add class-weight tests proving `Balanced` changes the boundary on an imbalanced
   fixture and explicit weights are honored; verify with
   `cargo test -p sciencekit_svm linear_svc_weights`.
 
