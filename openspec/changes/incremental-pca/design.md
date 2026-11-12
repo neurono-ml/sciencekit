@@ -93,3 +93,30 @@ Additive: new estimator in `sciencekit_decomposition`. No existing API changes.
 ## Open Questions
 
 None blocking. A rank-adaptive accumulator is a future change.
+
+## Review — scenario to test mapping
+
+Independent review (task 4.5) mapped every scenario in
+`specs/incremental-pca/spec.md` to a named test in the final code. No gaps were found;
+the only correction was the `number_of_components` default wording above (the code
+resolves `min(n_samples, n_features)`, not the bare feature count).
+
+| Spec scenario | Named test |
+| --- | --- |
+| Default configuration | `incremental_builder_carries_documented_defaults` |
+| Two batches equal one batch | `incremental_merge_two_batches_equal_one_batch_and_persist_state`, `incremental_merge_hand_checked_two_batch_mean_and_scatter` |
+| State persists across calls | `incremental_merge_two_batches_equal_one_batch_and_persist_state` |
+| Finalized components are sorted | `incremental_finalize_sorted_components_and_equals_full_pca` |
+| Incremental equals full PCA | `incremental_finalize_sorted_components_and_equals_full_pca`, `incremental_fit_chunks_dense_and_sparse_and_matches_pca` |
+| One-pass streaming | `incremental_streaming_one_shot_provider_consumes_one_pass_and_matches_fit` |
+| Multi-epoch streaming | `incremental_streaming_reopenable_multi_epoch_reopens_and_preserves_subspace` |
+| Batch-size invariance | `incremental_concurrency_batch_size_invariance_holds_for_dense_and_sparse` |
+| Transform shape | `incremental_transform_shape_roundtrip_and_sparse_dense_parity` |
+| Whitening normalizes variance | `incremental_transform_whitening_normalizes_unit_variance_and_inverts` |
+| Sparse equals dense | `incremental_sparse_matches_dense_across_batches_without_densification`, `incremental_sparse_mixed_with_dense_batches_matches_single_dense_pass` |
+| Small batch is rejected | `incremental_validation_rejects_excessive_components_and_small_batches` |
+| Feature-count mismatch is rejected | `incremental_validation_rejects_feature_mismatch_non_finite_and_csc` |
+| Repeated fits agree | `incremental_concurrency_repeated_fits_and_thread_counts_are_bit_identical` |
+| Concurrent transform agrees | `incremental_concurrency_shared_model_transforms_match_sequential` |
+| Acceptance (tiny/large/wide/metrics) | `acceptance_incremental_pca_tiny_f32_large_dense_and_wide_sparse`, `acceptance_incremental_pca_streaming_epochs_export_concurrency_and_metrics` |
+

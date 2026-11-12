@@ -47,8 +47,10 @@
   `Development Explained` chapter on covariance merging and streaming finalization); verify
   with `mdbook build docs`.
 - [x] 4.4 Record the GPU/memmap/export non-goals in `docs/PRD.md`.
-- [ ] 4.5 Independent review by a separate agent validating every scenario in
-  `incremental-pca`; address every finding and re-run the gates.
+- [x] 4.5 Independent review by a separate agent validating every scenario in
+  `incremental-pca`; address every finding and re-run the gates. The
+  scenario-to-test mapping is recorded in `design.md`; the only finding was the
+  `number_of_components` default wording, corrected in the spec delta.
 
 ## Workflow follow-up
 

@@ -11,9 +11,9 @@ representation parity and validation.
 ### Requirement: Builder-only construction with documented defaults
 
 `SKIncrementalPCA` SHALL be constructible only through its builder, exposing
-`number_of_components` (default `None`, meaning the feature count), `batch_size` (default
-1024), `whiten` (default false), `backend` (default `Faer`) and `execution_mode` (default
-`Automatic`).
+`number_of_components` (default `None`, meaning `min(n_samples, n_features)`), `batch_size`
+(default 1024), `whiten` (default false), `maximum_number_of_epochs` (default 1), `backend`
+(default `Faer`) and `execution_mode` (default `Automatic`).
 
 #### Scenario: Default configuration
 
