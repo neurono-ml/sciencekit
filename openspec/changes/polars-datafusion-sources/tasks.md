@@ -18,11 +18,11 @@
 
 ## 3. DataFusion, Arrow and Parquet
 
-- [ ] 3.1 Spike `datafusion 46` (and 44 fallback) plus matching `arrow`/`parquet` on MSRV
+- [x] 3.1 Spike `datafusion 46` (and 44 fallback) plus matching `arrow`/`parquet` on MSRV
   1.85; record the pins.
-- [ ] 3.2 Implement `TryFrom<&DataFrame>`/`RecordBatch` conversions and batch streaming;
+- [x] 3.2 Implement `TryFrom<&DataFrame>`/`RecordBatch` conversions and batch streaming;
   verify with `cargo test -p sciencekit_interop --features datafusion,arrow`.
-- [ ] 3.3 Implement Parquet-through-DataFusion conversion and a fixture test; verify with
+- [x] 3.3 Implement Parquet-through-DataFusion conversion and a fixture test; verify with
   `cargo test -p sciencekit_interop --features datafusion,parquet`.
 
 ## 4. Acceptance and review
