@@ -111,6 +111,7 @@ and receives a Python binding as soon as it is validated on CPU.
 | `SKDBSCAN` | Density-based clustering over KD-tree / ball-tree and sparse brute-force region queries with explicit `SKClusterLabel::Noise` and nearest-core prediction | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKPCA` | Principal component analysis (full SVD · covariance eigh · sparse randomized SVD) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKTruncatedSVD` | Uncentered randomized low-rank SVD for latent semantic analysis and sparse dimensionality reduction (dense · sparse CSR) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
+| `SKIncrementalPCA` | Out-of-core incremental PCA (Chan-Golub-LeVeque scatter merge · CSR Gram accumulation · `partial_fit` & `fit_streaming`) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKIsolationForest` | Non-parametric anomaly detection via random isolation trees, harmonic path-length scoring, `Auto`/quantile contamination offsets and non-densifying CSR parity | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | Anomaly detection (LOF, One-Class SVM) | Remaining outlier estimators from the scikit-learn family | <span class="sk-pill sk-pill--neutral">Planned</span> |
 

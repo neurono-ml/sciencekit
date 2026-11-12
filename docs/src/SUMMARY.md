@@ -77,6 +77,7 @@
   - [Gradient boosting: fitting trees to residuals, one shrinking step at a time](development-explained/ch47-gradient-boosting.md)
   - [Outlier detection: random isolation trees, path length and the contamination offset](development-explained/ch48-outlier-detection.md)
   - [Truncated SVD: uncentered low-rank factorization and the sparse path](development-explained/ch49-truncated-svd.md)
+  - [Incremental PCA: merging covariance across batches and streams](development-explained/ch50-incremental-pca.md)
   - [Mini-batch k-means: learning rates, reassignment and honest streaming](development-explained/ch51-minibatch-kmeans-streaming.md)
   - [Runtime DAG pipelines: topological fitting, deterministic levels and honest merges](development-explained/ch52-pipeline-dag.md)
   - [Successive halving: spend the budget where it pays](development-explained/ch53-halving-grid-search.md)
