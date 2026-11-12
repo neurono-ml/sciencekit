@@ -8,7 +8,7 @@ use super::{
 };
 use crate::missing::SKMissingValuePolicy;
 use crate::source::SKTabularSource;
-use crate::tabular::{SKColumnKind, SKTabularSourceConfig};
+use crate::tabular::{SKColumnKind, SKTabularDataset, SKTabularSourceConfig};
 
 fn mixed_frame() -> ::polars::prelude::DataFrame {
     df!(
@@ -68,6 +68,25 @@ fn polars_dataframe_applies_column_selection() {
     assert_eq!(batch.number_of_columns(), 4);
     assert_eq!(batch.number_of_rows(), 3);
     assert!(batch.is_final());
+}
+
+/// The materialized schema follows the configuration order, not the frame
+/// order, and the borrowed `TryFrom` surface agrees with the free function.
+#[test]
+fn polars_dataframe_projects_the_configured_schema() {
+    let dataset = SKTabularDataset::<f64>::try_from((&mixed_frame(), &mixed_config())).unwrap();
+    assert_eq!(
+        dataset
+            .schema()
+            .columns()
+            .iter()
+            .map(|column| column.name())
+            .collect::<Vec<_>>(),
+        vec!["label", "x", "count", "flag"]
+    );
+    assert_eq!(dataset.kind_of("label"), Some(SKColumnKind::Categorical));
+    assert_eq!(dataset.kind_of("count"), Some(SKColumnKind::Numeric));
+    assert_eq!(dataset.number_of_rows(), 3);
 }
 
 /// Numeric nulls become NaN under the numeric policy.

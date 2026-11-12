@@ -82,16 +82,51 @@ fn tabular_source_categorical_columns_form_owned_block() {
     assert_eq!(categorical.label_table(0).unwrap().index_of("b"), Some(1));
 }
 
-/// The sparse layout reaches the dataset unchanged.
+/// The sparse layout reaches the dataset unchanged and agrees with dense.
 #[test]
 fn tabular_source_honors_sparse_layout() {
-    let config = SKTabularSourceConfig::builder()
+    let sparse_config = SKTabularSourceConfig::builder()
         .column("x", SKColumnKind::Numeric)
+        .column("count", SKColumnKind::Numeric)
+        .column("flag", SKColumnKind::Boolean)
         .layout(SKFeatureLayout::Sparse)
         .build()
         .unwrap();
-    let dataset = mixed_batch().to_tabular_dataset::<f64>(&config).unwrap();
-    assert!(dataset.features().is_sparse());
+    let sparse = mixed_batch()
+        .to_tabular_dataset::<f64>(&sparse_config)
+        .unwrap();
+    assert!(sparse.features().is_sparse());
+
+    let dense_config = SKTabularSourceConfig::builder()
+        .column("x", SKColumnKind::Numeric)
+        .column("count", SKColumnKind::Numeric)
+        .column("flag", SKColumnKind::Boolean)
+        .build()
+        .unwrap();
+    let dense = mixed_batch()
+        .to_tabular_dataset::<f64>(&dense_config)
+        .unwrap();
+    let dense_matrix = match dense.features() {
+        SKFeatureBlock::Dense(matrix) => matrix.clone(),
+        other => panic!("expected a dense block, found {other:?}"),
+    };
+
+    match sparse.features() {
+        SKFeatureBlock::Sparse(matrix) => {
+            assert_eq!((matrix.rows(), matrix.cols()), (3, 3));
+            // The false boolean is a real zero and stays unstored, exactly as
+            // in CSR: eight of nine entries are non-zero.
+            assert_eq!(matrix.nnz(), 8);
+            assert_eq!(matrix.get(1, 2), None);
+            for row in 0..3 {
+                for column in 0..3 {
+                    let value = matrix.get(row, column).copied().unwrap_or(0.0);
+                    assert_eq!(value, dense_matrix[[row, column]]);
+                }
+            }
+        }
+        other => panic!("expected a sparse block, found {other:?}"),
+    }
 }
 
 /// A configured name absent from the source is reported before conversion.
