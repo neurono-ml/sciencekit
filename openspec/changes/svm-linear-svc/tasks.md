@@ -34,7 +34,7 @@
 - [x] 3.2 Implement one-vs-rest multiclass fitting with parallel heads and deterministic
   head order; verify a three-class problem retains three heads; verify with
   `cargo test -p sciencekit_svm linear_svc_multiclass`.
-- [ ] 3.3 Implement `decision_function` and `predict_labels` with canonical tie-breaking;
+- [x] 3.3 Implement `decision_function` and `predict_labels` with canonical tie-breaking;
   verify shape, argmax consistency and a hand-built tie; verify with
   `cargo test -p sciencekit_svm linear_svc_predict`.
 - [ ] 3.4 Implement `predict_probabilities` returning `UnsupportedOperation` with
