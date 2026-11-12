@@ -46,7 +46,7 @@
   `cargo test -p sciencekit_ensemble hist_classifier`.
 - [x] 4.3 Implement `SKHistGradientBoostingRegressor` builder, fit and prediction for
   squared and absolute error; verify with `cargo test -p sciencekit_ensemble hist_regressor`.
-- [ ] 4.4 Implement early stopping with the seeded validation split and fitted-iteration
+- [x] 4.4 Implement early stopping with the seeded validation split and fitted-iteration
   reporting; verify with `cargo test -p sciencekit_ensemble hist_early_stop`.
 
 ## 5. Representation and validation
