@@ -37,6 +37,7 @@ flowchart TD
         PIPELINE[sciencekit_pipeline/<br/>type-safe SKPipeline, DAGs]
         METRICS[sciencekit_metrics/<br/>evaluation metrics]
         INTEROP[sciencekit_interop/<br/>ONNX, Safetensors, I/O traits]
+        TELEMETRY[sciencekit_telemetry/<br/>OTLP traces, logs, metrics]
         GPU[sciencekit_gpu/<br/>SKComputeBackend + OpenCL/CUDA/ROCm]
         PYTHON[sciencekit_python/<br/>PyO3 bindings]
     end

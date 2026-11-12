@@ -306,4 +306,9 @@ validation, the deterministic level order with ascending node identifiers, the e
 order that concatenates incoming blocks in exact `connect` order without densifying CSR, the
 node-attributed `SKPipelineGraphNodeError` checked variants and the type-erased `SKBoxedFinalModel`
 behind the typed classifier and regressor wrappers.
+The [OpenTelemetry export chapter](./ch55-telemetry-export.html) adds production three-signal
+telemetry in `sciencekit_telemetry`: builder-validated OTLP gRPC and HTTP configuration,
+resource metadata propagation, error-enriched trace spans, trace-correlated structured logs,
+closed-vocabulary operation metrics and the process-wide `SKTelemetry` `init`, `force_flush`,
+`shutdown` and `Drop` lifecycle with a silent zero-traffic default.
 
