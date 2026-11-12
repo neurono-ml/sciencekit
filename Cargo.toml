@@ -75,3 +75,7 @@ sprs = "0.11"
 # Online quantile sketch for the robust scaler (spec `robust-scaler`) and for the
 # streaming median of the imputer (spec `simple-imputer`).
 tdigest = "1.0"
+
+# Directed acyclic graph structure for runtime feature pipelines (spec
+# `pipeline-graph`).
+petgraph = "0.7"

@@ -10,7 +10,7 @@ use sciencekit_common::{SKError, SKFloat, SKSupervisedFit, SKTargetView};
 use crate::SKFeatureBlock;
 
 /// Fit the final estimator on `block` with the borrowed targets.
-pub(super) fn sk_fit_final<F, Estimator>(
+pub(crate) fn sk_fit_final<F, Estimator>(
     estimator: &Estimator,
     block: &SKFeatureBlock<F>,
     targets: SKTargetView<'_, F>,
