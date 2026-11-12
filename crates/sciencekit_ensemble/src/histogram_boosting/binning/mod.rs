@@ -1,1 +1,11 @@
-//! Placeholder dispatcher for the binning subsystem.
+//! Binned feature representation (spec `histogram-gradient-boosting`).
+//!
+//! This is a **pure dispatcher** module: `mod.rs` only declares submodules and
+//! re-exports their public items.
+
+mod edges;
+
+pub use edges::SKNumericBinning;
+
+#[cfg(test)]
+mod binning_tests;
