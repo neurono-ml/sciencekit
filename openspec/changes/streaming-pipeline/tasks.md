@@ -5,7 +5,7 @@
 - [x] 1.1 Create the `streaming` module with `SKStreamingTransformer<F>`, the builder and
   the empty-pipeline validation; verify `cargo test -p sciencekit_pipeline streaming`
   compiles.
-- [ ] 1.2 Implement a test streaming transformer that learns a running mean and
+- [x] 1.2 Implement a test streaming transformer that learns a running mean and
   transforms batches, with one-pass and two-epoch tests; verify with
   `cargo test -p sciencekit_pipeline streaming_transformer`.
 
