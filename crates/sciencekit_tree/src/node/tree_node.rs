@@ -20,7 +20,7 @@ pub struct SKTreeNode<F> {
 
 impl<F: SKFloat> SKTreeNode<F> {
     /// Build an internal split node.
-    pub(crate) fn split(
+    pub fn split(
         split_feature: usize,
         threshold: F,
         left_child: usize,
@@ -40,7 +40,7 @@ impl<F: SKFloat> SKTreeNode<F> {
     }
 
     /// Build a leaf node carrying its learned output.
-    pub(crate) fn leaf(sample_count: usize, impurity: F, value: Vec<F>) -> Self {
+    pub fn leaf(sample_count: usize, impurity: F, value: Vec<F>) -> Self {
         SKTreeNode {
             split_feature: None,
             threshold: None,

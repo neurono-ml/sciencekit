@@ -1,10 +1,11 @@
-//! `sciencekit_ensemble` — ensemble estimators for sciencekit (spec
-//! `random-forests`).
+//! `sciencekit_ensemble` — ensemble estimators for sciencekit (specs
+//! `random-forests` and `bagging-ensembles`).
 //!
-//! The crate ships [`SKRandomForestClassifier`] and [`SKRandomForestRegressor`],
-//! constructed only through their builders. A forest grows one CART tree per
-//! bootstrap sample, delegating split search to [`sciencekit_tree`], and
-//! aggregates the trees into a deterministic prediction.
+//! The crate ships [`SKRandomForestClassifier`], [`SKRandomForestRegressor`],
+//! [`SKBaggingClassifier`] and [`SKBaggingRegressor`], constructed only through
+//! their builders. Random forests grow one CART tree per bootstrap sample via
+//! [`sciencekit_tree`], while generic bagging composes any compatible base
+//! estimator over seeded row and feature subsets with strict column routing.
 //!
 //! Each tree derives its own seed from the forest seed and its index, so a
 //! forest is identical across repeated fits and across thread counts. Dense and
@@ -20,8 +21,13 @@
 
 mod bootstrap;
 
+pub mod bagging;
 pub mod random_forest;
 
+pub use bagging::{
+    SKBaggingClassifier, SKBaggingClassifierBuilder, SKBaggingClassifierModel, SKBaggingError,
+    SKBaggingRegressor, SKBaggingRegressorBuilder, SKBaggingRegressorModel, SKBaseEstimatorError,
+};
 pub use bootstrap::SKMaximumSamples;
 pub use random_forest::{
     SKRandomForestClassifier, SKRandomForestClassifierBuilder, SKRandomForestClassifierModel,
