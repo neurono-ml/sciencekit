@@ -51,7 +51,7 @@
 
 ## 5. Representation and validation
 
-- [ ] 5.1 Implement raw dense and sparse prediction binning and traversal, with
+- [x] 5.1 Implement raw dense and sparse prediction binning and traversal, with
   dense-vs-sparse equivalence and no-densification tests; verify with
   `cargo test -p sciencekit_ensemble hist_representation`.
 - [ ] 5.2 Add validation tests for empty input, invalid `max_bins`/leaf/learning
