@@ -1,6 +1,6 @@
 ## 1. Feature, raw binary, validation
 
-- [ ] 1.1 Add the `memmap` feature (`memmap2`, `npyz`) and the CI feature-matrix entry.
+- [x] 1.1 Add the `memmap` feature (`memmap2`, `npyz`) and the CI feature-matrix entry.
 - [ ] 1.2 TDD raw binary descriptor: explicit parameters and sidecar JSON; dtype/row/column parsing; invalid descriptor rejection.
 - [ ] 1.3 TDD raw binary source: `number_of_rows`, O(1) `row`, values; unaligned/misaligned raw layout rejected.
 - [ ] 1.4 TDD length validation: file shorter or longer than declared shape fails with a structured error naming the file.
