@@ -78,9 +78,9 @@ No stage may be skipped — each algorithm walks the full path:
 
 <div class="sk-timeline__item reveal">
 <div class="sk-timeline__card">
-<div class="sk-timeline__head"><span class="sk-timeline__title">Phase 3 — Neighbors &amp; SVM</span><span class="sk-pill sk-pill--neutral">Planned</span></div>
-<p style="margin:0.2rem 0 0;font-size:0.9rem;color:#52525c">k-NN classifier/regressor, KD-tree, Ball-tree; SVC, SVR, LinearSVC.</p>
-<p style="margin:0.35rem 0 0;font-size:0.82rem;color:#71717a">Memory-mapped indexes and kernel caches are Phase 7 deliverables.</p>
+<div class="sk-timeline__head"><span class="sk-timeline__title">Phase 3 — Neighbors &amp; SVM</span><span class="sk-pill sk-pill--sky">In progress</span></div>
+<p style="margin:0.2rem 0 0;font-size:0.9rem;color:#52525c">k-NN classifier/regressor, KD-tree, Ball-tree; <code>SKSVC</code>, <code>SKSVR</code>, LinearSVC.</p>
+<p style="margin:0.35rem 0 0;font-size:0.82rem;color:#71717a"><code>memmap2</code>-backed indexes and SVM kernel caches, model persistence and model export are deferred to Phase 7 (interop).</p>
 </div>
 </div>
 

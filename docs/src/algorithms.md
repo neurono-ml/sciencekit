@@ -87,8 +87,8 @@ and receives a Python binding as soon as it is validated on CPU.
 
 | Estimator | Description | Status |
 |---|---|---|
-| `SKSVC` | Kernel-based support vector classification | <span class="sk-pill sk-pill--neutral">Planned</span> |
-| `SKSVR` | Support vector regression | <span class="sk-pill sk-pill--neutral">Planned</span> |
+| `SKSVC` | Kernel-based C-support-vector classification (SMO, OvO, Platt + coupling, dense and sparse) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
+| `SKSVR` | $\varepsilon$-insensitive support-vector regression (SMO, dense and sparse) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKLinearSVC` | Scalable linear SVM (dense and sparse) | <span class="sk-pill sk-pill--neutral">Planned</span> |
 
 ## Trees and ensembles · `sciencekit_tree` + `sciencekit_ensemble`

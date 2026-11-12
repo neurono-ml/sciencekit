@@ -262,7 +262,11 @@ implicit centering and the accuracy bound against the exact decomposition. The
 [random forest chapter](./ch40-random-forest.html) opens `sciencekit_ensemble` with
 seeded per-tree bootstrap sampling, de-correlated `Sqrt` feature subsampling, lock-free
 parallel CART fitting, out-of-bag accuracy and $R^2$ scoring, normalized mean feature
-importances and non-densifying CSR parity.
+importances and non-densifying CSR parity. The
+[support-vector machines chapter](./ch41-svm.html) adds the Mercer and similarity kernel
+catalogue in `sciencekit_math`, the pure-Rust second-order SMO solver with a bounded LRU
+kernel-row cache, one-vs-one `SKSVC` with Platt scaling and Wu–Lin–Weng pairwise coupling,
+and $\varepsilon$-insensitive `SKSVR` over support-vector-only dense and CSR blocks.
 The [DBSCAN chapter](./ch42-dbscan.html) adds density reachability over spatial trees and
 sparse brute force, the core/border/noise taxonomy with typed `SKClusterLabel::Noise`,
 deterministic component numbering and the nearest-core `predict_clusters` extension.
