@@ -70,8 +70,13 @@ pub(crate) fn sk_select_stage_rows<F: SKFloat>(
         .sample_indices_without_replacement(row_count, sample_count)
 }
 
+/// The fitted structure together with the gradient/Hessian vectors it consumed
+/// (either the full training vectors or the gathered subsample).
+pub(crate) type SKSubsampledStructure<F> = (SKTreeStructure<F>, Vec<F>, Vec<F>);
+
 /// Build a [`SKTreeStructure`] over either the full view (`subsample >= 1`) or
 /// the gathered dense/CSR row subset (`subsample < 1`) without densifying.
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn sk_build_subsampled_structure<F: SKFloat>(
     features: &SKDataView<'_, F>,
     negative_gradients: &[F],
@@ -81,7 +86,7 @@ pub(crate) fn sk_build_subsampled_structure<F: SKFloat>(
     global_seed: u64,
     stage_index: usize,
     class_index: usize,
-) -> Result<(SKTreeStructure<F>, Vec<F>, Vec<F>), SKError> {
+) -> Result<SKSubsampledStructure<F>, SKError> {
     let row_count = negative_gradients.len();
     if subsample >= F::one() {
         let residual_array = Array1::from_vec(negative_gradients.to_vec());
