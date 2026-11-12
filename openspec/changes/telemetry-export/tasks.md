@@ -31,7 +31,7 @@
 - [x] 3.5 Update `CHANGELOG.md` and the companion mdBook chapter (including a
   `Development Explained` chapter on OTLP pipelines and lifecycle); verify with
   `mdbook build docs`.
-- [ ] 3.6 Independent review by a separate agent validating every scenario in
+- [x] 3.6 Independent review by a separate agent validating every scenario in
   `telemetry-export`; address every finding and re-run the gates.
 
 ## Workflow follow-up

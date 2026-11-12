@@ -99,3 +99,33 @@ Additive: new crate and feature. No existing behavior changes; default build sta
 ## Open Questions
 
 None blocking. A Prometheus exporter is a future feature.
+
+## Independent review
+
+An independent agent reviewed the implementation against every scenario in
+`specs/telemetry-export/spec.md` before opening the pull request:
+
+- Trace export — `pipeline/traces.rs` wraps the batch exporter in
+  `SKOperationSpanExporter`; `traces_tests.rs` proves the `fit` span carries rows,
+  columns, backend and execution mode, and that failures surface `Status::Error`
+  with the recorded message.
+- Log export — `pipeline/logs.rs` bridges `tracing` events through
+  `OpenTelemetryTracingBridge`; `logs_tests.rs` proves severity, target, body,
+  structured fields and active-span trace correlation.
+- Metric export — `pipeline/metrics.rs` records the five closed-vocabulary
+  instruments; `metrics_tests.rs` and `metrics_cardinality_tests.rs` prove the
+  labels and the `"unknown"` collapse.
+- Configuration and resource — `configuration/validation*.rs` reject malformed
+  endpoints, header injection, zero durations, invalid ratios and inverted batch
+  bounds; `pipeline_tests.rs` proves resource attributes reach all three signals.
+- No-op default and lifecycle — `lifecycle/noop_tests.rs` proves zero exporters and
+  no loopback traffic without initialization; `lifecycle_tests.rs` and
+  `flush_timeout_tests.rs` prove `force_flush`, `shutdown`, double-init rejection and
+  drop detachment within `flush_timeout`.
+- Concurrency — `lifecycle/concurrency_tests.rs` and `acceptance_tests.rs` race
+  initialization/observation/shutdown and compare dense and CSR operations.
+
+No blocking findings. The local gates (`cargo fmt --all --check`,
+`cargo clippy --workspace --all-targets -- -D warnings`, `cargo test --workspace`)
+are green on the reviewed commit, and `mdbook build docs` succeeds for the companion
+chapter.
