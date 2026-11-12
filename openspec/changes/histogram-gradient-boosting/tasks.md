@@ -41,10 +41,10 @@
 - [x] 4.1 Wire the W4.4 loss/gradient/Hessian contract, initial prediction, learning rate
   and Newton leaves into the histogram stage loop; verify a single-stage hand-computed
   update; verify with `cargo test -p sciencekit_ensemble hist_stage`.
-- [ ] 4.2 Implement `SKHistGradientBoostingClassifier` builder, binary/multiclass fit and
+- [x] 4.2 Implement `SKHistGradientBoostingClassifier` builder, binary/multiclass fit and
   prediction (softmax/sigmoid), with defaults and invalid-value tests; verify with
   `cargo test -p sciencekit_ensemble hist_classifier`.
-- [ ] 4.3 Implement `SKHistGradientBoostingRegressor` builder, fit and prediction for
+- [x] 4.3 Implement `SKHistGradientBoostingRegressor` builder, fit and prediction for
   squared and absolute error; verify with `cargo test -p sciencekit_ensemble hist_regressor`.
 - [ ] 4.4 Implement early stopping with the seeded validation split and fitted-iteration
   reporting; verify with `cargo test -p sciencekit_ensemble hist_early_stop`.
