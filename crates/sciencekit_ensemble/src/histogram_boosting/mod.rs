@@ -8,3 +8,7 @@
 pub mod binning;
 pub mod growth;
 pub mod histogram;
+mod stage;
+
+#[cfg(test)]
+mod stage_tests;
