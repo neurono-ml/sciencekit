@@ -100,7 +100,7 @@ and receives a Python binding as soon as it is validated on CPU.
 | `SKRandomForestClassifier` | Random-forest classification (bootstrap, OOB accuracy, dense and sparse) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKRandomForestRegressor` | Random-forest regression (bootstrap, OOB $R^2$, dense and sparse) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKBaggingClassifier` / `SKBaggingRegressor` | Generic parallel bootstrap and feature-subspace aggregation over any supervised base estimator (OOB accuracy / $R^2$, dense and sparse) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
-| `SKGradientBoosting` | Sequential gradient boosting | <span class="sk-pill sk-pill--neutral">Planned</span> |
+| `SKGradientBoostingClassifier` / `SKGradientBoostingRegressor` | Sequential gradient boosting over negative gradients with Newton leaves, shrinkage, subsampling and early stopping (binary, multiclass, squared/absolute/Huber, dense and sparse) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 
 ## Unsupervised · `sciencekit_cluster`, `sciencekit_decomposition`, `sciencekit_outlier`
 
@@ -111,6 +111,7 @@ and receives a Python binding as soon as it is validated on CPU.
 | `SKDBSCAN` | Density-based clustering over KD-tree / ball-tree and sparse brute-force region queries with explicit `SKClusterLabel::Noise` and nearest-core prediction | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKPCA` | Principal component analysis (full SVD · covariance eigh · sparse randomized SVD) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKTruncatedSVD` | Uncentered randomized low-rank SVD for latent semantic analysis and sparse dimensionality reduction (dense · sparse CSR) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
+| `SKIncrementalPCA` | Out-of-core incremental PCA (Chan-Golub-LeVeque scatter merge · CSR Gram accumulation · `partial_fit` & `fit_streaming`) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKIsolationForest` | Non-parametric anomaly detection via random isolation trees, harmonic path-length scoring, `Auto`/quantile contamination offsets and non-densifying CSR parity | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | Anomaly detection (LOF, One-Class SVM) | Remaining outlier estimators from the scikit-learn family | <span class="sk-pill sk-pill--neutral">Planned</span> |
 
@@ -125,6 +126,7 @@ and receives a Python binding as soon as it is validated on CPU.
 | Halving resource axes beyond sample counts | `sciencekit_model_selection` | Additional `SKHalvingResource` variants (trees, epochs) | <span class="sk-pill sk-pill--neutral">Planned</span> |
 | `SKPipeline` | `sciencekit_pipeline` | Type-safe linear pipeline (compiler-checked composition) | <span class="sk-pill sk-pill--ok">Implemented</span> |
 | `SKPipelineGraph` | `sciencekit_pipeline` | Validated runtime DAG pipeline: topological fit and predict, deterministic level order, edge-order merges without densifying CSR, node-attributed errors and classifier/regressor wrappers | <span class="sk-pill sk-pill--emerald">Implemented</span> |
+| `SKStreamingPipeline` | `sciencekit_pipeline` | Out-of-core linear pipeline over an `SKSourceProvider`: chained `SKStreamingTransformer` fitting through the shared prefetch executor, one-shot materialization within a byte budget, multi-epoch replay, CSR-preserving per-batch transform and a bounded batch finalizer | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | Metrics foundation | `sciencekit_metrics` | Accuracy, precision/recall/F1 with macro/micro/weighted/binary averaging, confusion matrix, MSE/RMSE/MAE, R², scorer adapters and streaming accumulators | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | Full metrics | `sciencekit_metrics` | The remaining sklearn metrics (ROC/AUC, calibration, multilabel, ranking) | <span class="sk-pill sk-pill--neutral">Planned</span> |
 | Extended Safetensors & JSON debug | `sciencekit_interop` | Binary Safetensors persistence (metadata header, `SKShardPlan` sharding, in-place header/payload padding, optional Gzip/Brotli/Snappy compression) and deterministic JSON debug inspection over `SKModelState` | <span class="sk-pill sk-pill--emerald">Implemented</span> |
