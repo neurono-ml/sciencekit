@@ -48,7 +48,7 @@
 - [x] 4.1 Add dense-vs-sparse fit equivalence and sparse prediction tests, asserting
   coefficients/predictions agree and no sparse input is densified; verify with
   `cargo test -p sciencekit_svm linear_svc_representation`.
-- [ ] 4.2 Add tests for empty input, single-class targets, feature-count mismatch,
+- [x] 4.2 Add tests for empty input, single-class targets, feature-count mismatch,
   non-finite values, non-positive `C`, zero tolerance/iteration budget and unsupported
   loss, asserting the exact central error variant; verify with
   `cargo test -p sciencekit_svm linear_svc_validation`.
