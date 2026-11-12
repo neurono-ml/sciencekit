@@ -34,6 +34,19 @@ arrow-schema = { version = "=58.3.0", features = ["ffi"], optional = true }
 arrow-select = { version = "=58.3.0", optional = true }
 parquet = { version = "=58.3.0", features = ["arrow"], default-features = false, optional = true }
 
+# Optional DataFrame adapters (features `polars` and `datafusion`). Polars
+# 0.46 is the last release verified on the Rust 1.85 toolchain; DataFusion 46
+# declares MSRV 1.82 and pins Arrow 54.2, so it is used only inside its own
+# adapter and never on the default build path.
+polars = { version = "=0.46.0", default-features = false, features = ["lazy", "strings", "dtype-categorical"], optional = true }
+# `polars-utils` depends on `stacker`, whose `psm` build dependency resolves to
+# `ar_archive_writer` 0.5.x using let-chains (Rust 1.88) when left to float.
+# Pinning `psm` through a direct optional dependency keeps `--features polars`
+# buildable on the Rust 1.85 toolchain without a committed lockfile.
+psm = { version = "=0.1.28", optional = true }
+datafusion = { version = "=46.0.0", default-features = false, features = ["parquet"], optional = true }
+
+
 [dev-dependencies]
 tracing-subscriber = { workspace = true }
 tempfile = "3"
@@ -54,8 +67,8 @@ arrow = [
     "dep:arrow-select",
     "dep:parquet",
 ]
-polars = []
-datafusion = []
+polars = ["dep:polars", "dep:psm"]
+datafusion = ["dep:datafusion"]
 memmap = []
 compression-gzip = ["dep:flate2"]
 compression-brotli = ["dep:brotli"]
