@@ -135,6 +135,14 @@ Fix every warning. A warning here means the published book could be broken.
 **Step 5 — merge.** Open a PR for branch `docs/sk-decision-tree` into `docs/documentations`.
 When it merges, the deploy workflow rebuilds and publishes the book automatically.
 
+The successive-halving chapter (chapter 53) is the worked example of this path for a new
+algorithm: the search lives in `crates/sciencekit_model_selection/src/halving/`, its companion
+tests (`halving_scheduler_tests.rs`, `halving_trace_tests.rs`, `halving_subsample_tests.rs`,
+`halving_evaluation_tests.rs`, `halving_aggressive_tests.rs`, the per-family `halving_refit_tests.rs`
+modules, the concurrency and representation tests, and `acceptance_tests/halving/`) are cited by
+name in the chapter, and the chapter, its `SUMMARY.md` entry and the halving rows in
+`docs/src/algorithms.md` all landed together on the `docs/halving-grid-search-book` branch.
+
 ### Updating, not forking
 
 If the change is a bug fix or refactor, *replace* the affected part of the existing chapter —
@@ -269,8 +277,43 @@ concatenation, member-indexed error context and nested pipeline composition.
 The [JSON debug format chapter](./ch45-json-debug-format.html) adds the deterministic
 human-readable `SKModelState` schema, the pretty and compact writer, the duplicate-aware
 validating reader and the round-trip acceptance guarantees across scalar and tensor types.
+
 The [Truncated SVD chapter](./ch49-truncated-svd.html) adds `SKTruncatedSVD` in
 `sciencekit_decomposition`: uncentered randomized low-rank factorization for latent semantic
 analysis, non-densifying CSR `fit`/`transform`/`inverse_transform` parity, two-pass sparse
 variance ratios and thread-count-invariant 256-row chunking.
+The [generic bagging chapter](./ch46-bagging.html) extends `sciencekit_ensemble` with
+`SKBaggingClassifier<B>` and `SKBaggingRegressor<B>`: compile-time supervision bounds over
+any base estimator, independent row and feature bootstrap streams, non-densifying CSR
+feature-subset routing, two-tier `SKBaggingError<E>` propagation and out-of-bag accuracy
+and $R^2$ scoring.
+The [outlier detection chapter](./ch48-outlier-detection.html) closes Wave 5 in
+`sciencekit_outlier` and `sciencekit_common`: the one-byte `SKOutlierLabel` and
+`SKOutlierPredictor<F>` contract, seeded random isolation trees over `SKTree`, harmonic BST
+path-length scoring, `Auto` and quantile contamination offsets, and non-densifying CSR-to-CSC
+representation parity.
+The [mini-batch k-means chapter](./ch51-minibatch-kmeans-streaming.html) adds
+`SKMiniBatchKMeans<F>` in `sciencekit_cluster`: the exact per-center learning-rate update in
+closed form over dense and non-densified CSR batches, seeded bounded-sample initialization with
+best-of-`n_init` inertia selection, deterministic low-count center reassignment, incremental
+`partial_fit`, multi-epoch `fit_streaming` over reopenable providers with positive-tolerance
+early stopping, and the typed `SKMiniBatchKMeansModel<F>` prediction, transform and state
+export surface.
+The [extended Safetensors format chapter](./ch54-safetensors-internal-format.html) adds the
+binary `SKModelState` persistence adapter in `sciencekit_interop::safetensors`: standard
+single-file Safetensors compatibility, `sciencekit.*` header metadata, `SKShardPlan`
+multi-shard splitting with atomic `.index.json` manifests, dual-region header and payload
+padding for in-place seek appends with automatic shard overflow, and optional magic-byte
+auto-detected Gzip, Brotli and Snappy compression.
+The [runtime DAG pipelines chapter](./ch52-pipeline-dag.html) adds `SKPipelineGraph` on top of
+`sciencekit_pipeline`: the mandatory builder and private constructors, cycle/single-sink/reachability
+validation, the deterministic level order with ascending node identifiers, the edge-weight merge
+order that concatenates incoming blocks in exact `connect` order without densifying CSR, the
+node-attributed `SKPipelineGraphNodeError` checked variants and the type-erased `SKBoxedFinalModel`
+behind the typed classifier and regressor wrappers.
+The [OpenTelemetry export chapter](./ch55-telemetry-export.html) adds production three-signal
+telemetry in `sciencekit_telemetry`: builder-validated OTLP gRPC and HTTP configuration,
+resource metadata propagation, error-enriched trace spans, trace-correlated structured logs,
+closed-vocabulary operation metrics and the process-wide `SKTelemetry` `init`, `force_flush`,
+`shutdown` and `Drop` lifecycle with a silent zero-traffic default.
 

@@ -59,7 +59,7 @@ vectors** of $X$ itself.
 | **`SKTruncatedSVDAlgorithm` (`Randomized` default, `Arpack` reserved)** | Matches the user-facing solver vocabulary while failing fast with `InvalidHyperparameter` if `Arpack` is selected before an implicitly restarted Lanczos kernel lands. | Silently routing `Arpack` to `Randomized` — hides an approximate randomized run behind an exact iterative solver name. |
 | **Population variance of `Z = X Wᵀ` divided by two-pass sparse column variance** | Because $X$ is uncentered, $\sigma_j^2 / n$ measures squared root-mean-square energy rather than statistical spread! Computing $\operatorname{Var}(Z_{:, c})$ over the projected rows and dividing by $\sum_{j=1}^{d} \operatorname{Var}(X_{:, j})$ measures true variance captured and satisfies $\sum_{c=1}^{k} \text{ratio}_c \le 1$. | Computing $\sigma_j^2 / (n - 1)$ as if $X$ were centered — a constant matrix of $4.0$s has $\sigma_1 > 0$ yet zero variance, which would yield ratios exceeding $1$ or division by zero. |
 | **Modified Gram-Schmidt orthonormal completion (`sk_complete_zero_norm_components`)** | On rank-deficient or constant matrices ($r < k$), trailing singular directions from the small SVD can collapse numerically; completing them with canonical orthogonal unit vectors preserves $W W^{\top} = I_k$ without flipping active kernel signs. | Leaving zero rows in `components` — breaks orthonormality ($W W^{\top} \ne I_k$). |
-| **Single-dispatch 256-row chunked `sk_multiply_view_by_dense`** | Dispatches on `SKDataView` once per call, uses `backend.gemm(..., 1)` on dense 256-row blocks and row-sliced CSR accumulation on sparse blocks, keeping 1-thread and multi-thread `rayon` runs bit-identical and never densifying CSR inputs. | Calling `sparse.to_dense()` before `gemm` — allocates $\mathcal{O}(n \cdot d)$ memory and defeats the estimator's reason to exist. |
+| **Single-dispatch `SKTruncatedInput` plus 256-row chunked `sk_multiply_view_by_dense`** | Each public operation converts its `SKDataView` into a borrowed `SKTruncatedInput` exactly once (`Dense` or `SparseCsr`), rejecting CSC up front; validation, variance and multiplication then receive that prepared operand instead of re-dispatching per helper. The product uses `backend.gemm(..., 1)` on dense 256-row blocks and row-sliced CSR accumulation on sparse blocks, keeping 1-thread and multi-thread `rayon` runs bit-identical and never densifying CSR inputs. | Re-matching `SKDataView` inside every helper — repeated dispatch, duplicated CSC handling, and error-returning arithmetic helpers that can no longer fail once the view is accepted. Calling `sparse.to_dense()` before `gemm` — allocates $\mathcal{O}(n \cdot d)$ memory and defeats the estimator's reason to exist. |
 
 <div class="sk-box sk-box--info">
   <strong>Explicit non-goals recorded in <code>docs/PRD.md</code>.</strong> Feature centering (use
@@ -226,8 +226,9 @@ fit pass under a single `FitTransform` span without projecting a second time.
 
 ### `SKTruncatedSVDModel<F>`
 
-*What it is* — the fitted model (`truncated_svd/model.rs`), `Clone + Debug + Send + Sync`, storing
-no centering vector.
+*What it is* — the fitted model (`truncated_svd/model.rs`), `Clone + Debug + PartialEq + Send + Sync`, storing
+no centering vector. Structural equality compares components, singular values, both variance
+vectors and the transferred builder state, so determinism checks can assert whole models directly.
 
 *Accessors and operations*:
 - `components()` — `ArrayView2<'_, F>` of shape $k \times d$ (rows are orthonormal right singular
@@ -273,7 +274,8 @@ dedicated companion test module:
    and zero variance ratios.
    `truncated_fit_transfers_configured_backend_and_records_fit_and_fit_transform_spans` captures
    `sciencekit.operation` spans to verify `NdArrayLinalg` and `InProcessSynchronous` propagate to
-   both `fit` and `fit_transform`.
+   both `fit` and `fit_transform`, then repeats the check on a default-built estimator to confirm
+   the unconfigured `Faer` backend is recorded rather than a hardcoded kind.
 3. **Dense/sparse CSR parity and the no-densification proof (`truncated_representation_tests.rs`).**
    `truncated_representation_sparse_csr_equals_dense_within_documented_tolerance` builds a CSR view
    including an explicit stored zero and verifies `components`, `singular_values`,
@@ -295,18 +297,22 @@ dedicated companion test module:
    `truncated_transform_and_inverse_transform_record_transferred_backend_in_spans` verifies both
    model operations record `MatrixMultiply` in their spans.
 5. **Input and shape validation (`truncated_validation_tests.rs`).**
-   `truncated_validation_rejects_empty_dense_and_sparse_inputs`,
+   `truncated_validation_rejects_empty_inputs_and_propagates_conversion_failure`,
    `truncated_validation_rejects_zero_and_excessive_components_and_invalid_hyperparameters` and
    `truncated_validation_rejects_feature_count_mismatch_non_finite_and_csc_views` test
    `EmptyInput`, `InvalidHyperparameter` when $k > \min(n, d)$ on tall and wide matrices,
    `ShapeMismatch` on mismatched column counts (including $2 \times 0$ queries), and
-   `NonFiniteValue` with flat row-major positions across dense and CSR inputs.
+   `NonFiniteValue` with flat row-major positions across dense and CSR inputs. They also pin the
+   single-dispatch boundary: a failing `TryInto<SKDataView>` adapter must surface its own
+   `SKError::Conversion` from `fit`, `inverse_transform` must reject non-finite projected
+   coordinates, and CSC views must be refused by `transform` and `inverse_transform` alike.
 6. **Thread-count invariance, concurrency and metrics (`truncated_concurrency_tests.rs`, `acceptance_tests/truncated_svd_acceptance_tests.rs`).**
    `truncated_concurrency_estimator_builder_and_model_are_send_and_sync` checks static `Send + Sync`
    bounds for `f32` and `f64`.
    `truncated_concurrency_repeated_fits_agree_across_runs_and_rayon_thread_counts` runs 1-thread and
    4-thread `rayon` pools on a $4\,096 \times 32$ dense table and a $2\,048 \times 64$ CSR table,
-   asserting exact `assert_eq!` equality on components, variances and projections.
+   asserting exact `assert_eq!` equality on whole models (components, singular values, variances and
+   transferred configuration) and on projections.
    `truncated_concurrency_shared_model_transforms_match_sequential_output` shares an
    `Arc<SKTruncatedSVDModel<f64>>` across eight threads transforming dense and CSR batches.
    `acceptance_truncated_svd_tiny_matrices_f32_and_component_boundaries` and
