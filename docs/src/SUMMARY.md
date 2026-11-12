@@ -74,6 +74,7 @@
   - [Principal Component Analysis: centering, three solvers and honest sparsity](development-explained/ch44-pca.md)
   - [JSON debug format: reading a fitted model with your eyes](development-explained/ch45-json-debug-format.md)
   - [Generic bagging: composing any learner over bootstrap rows, routed subspaces and honest out-of-bag scores](development-explained/ch46-bagging.md)
+  - [Gradient boosting: fitting trees to residuals, one shrinking step at a time](development-explained/ch47-gradient-boosting.md)
   - [Outlier detection: random isolation trees, path length and the contamination offset](development-explained/ch48-outlier-detection.md)
   - [Truncated SVD: uncentered low-rank factorization and the sparse path](development-explained/ch49-truncated-svd.md)
   - [Mini-batch k-means: learning rates, reassignment and honest streaming](development-explained/ch51-minibatch-kmeans-streaming.md)
