@@ -77,6 +77,8 @@
   - [Outlier detection: random isolation trees, path length and the contamination offset](development-explained/ch48-outlier-detection.md)
   - [Mini-batch k-means: learning rates, reassignment and honest streaming](development-explained/ch51-minibatch-kmeans-streaming.md)
   - [Runtime DAG pipelines: topological fitting, deterministic levels and honest merges](development-explained/ch52-pipeline-dag.md)
+  - [Successive halving: spend the budget where it pays](development-explained/ch53-halving-grid-search.md)
   - [Extended Safetensors format: safe binary checkpoints, sharding, in-place padding and compression](development-explained/ch54-safetensors-internal-format.md)
+  - [OpenTelemetry export: three signals, bounded cardinality and an honest lifecycle](development-explained/ch55-telemetry-export.md)
   - [Streaming pipelines: epochs, chained stages and a bounded finalizer](development-explained/ch56-streaming-pipeline.md)
   - [Maintaining this book](development-explained/maintaining.md)

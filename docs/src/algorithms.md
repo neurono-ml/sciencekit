@@ -121,12 +121,15 @@ and receives a Python binding as soon as it is validated on CPU.
 | `sk_train_test_split` | `sciencekit_model_selection` | Deterministic data partitioning | <span class="sk-pill sk-pill--neutral">Planned</span> |
 | `SKKFold` | `sciencekit_model_selection` | k-fold cross-validation | <span class="sk-pill sk-pill--neutral">Planned</span> |
 | `SKGridSearchCVClassifier` / `SKGridSearchCVRegressor` | `sciencekit_model_selection` | Typed grid search over configured candidates with shared folds | <span class="sk-pill sk-pill--emerald">Implemented</span> |
+| `SKHalvingGridSearchClassifier` / `SKHalvingGridSearchRegressor` | `sciencekit_model_selection` | Successive-halving search: geometric resource schedule, seeded and stratified round subsamples, deterministic elimination trace, aggressive early pruning and winner refit | <span class="sk-pill sk-pill--emerald">Implemented</span> |
+| Halving resource axes beyond sample counts | `sciencekit_model_selection` | Additional `SKHalvingResource` variants (trees, epochs) | <span class="sk-pill sk-pill--neutral">Planned</span> |
 | `SKPipeline` | `sciencekit_pipeline` | Type-safe linear pipeline (compiler-checked composition) | <span class="sk-pill sk-pill--ok">Implemented</span> |
 | `SKPipelineGraph` | `sciencekit_pipeline` | Validated runtime DAG pipeline: topological fit and predict, deterministic level order, edge-order merges without densifying CSR, node-attributed errors and classifier/regressor wrappers | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKStreamingPipeline` | `sciencekit_pipeline` | Out-of-core linear pipeline over an `SKSourceProvider`: chained `SKStreamingTransformer` fitting through the shared prefetch executor, one-shot materialization within a byte budget, multi-epoch replay, CSR-preserving per-batch transform and a bounded batch finalizer | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | Metrics foundation | `sciencekit_metrics` | Accuracy, precision/recall/F1 with macro/micro/weighted/binary averaging, confusion matrix, MSE/RMSE/MAE, R², scorer adapters and streaming accumulators | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | Full metrics | `sciencekit_metrics` | The remaining sklearn metrics (ROC/AUC, calibration, multilabel, ranking) | <span class="sk-pill sk-pill--neutral">Planned</span> |
 | Extended Safetensors & JSON debug | `sciencekit_interop` | Binary Safetensors persistence (metadata header, `SKShardPlan` sharding, in-place header/payload padding, optional Gzip/Brotli/Snappy compression) and deterministic JSON debug inspection over `SKModelState` | <span class="sk-pill sk-pill--emerald">Implemented</span> |
+| `SKTelemetry` / `SKTelemetryPipeline` | `sciencekit_telemetry` | Opt-in OTLP trace, log and metric export pipelines, resource attributes, sampling and bounded lifecycle (silent no-op default) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 
 <div class="sk-box sk-box--info">
 <strong>Continuous acceleration:</strong> every completed algorithm receives, in separate changes,
