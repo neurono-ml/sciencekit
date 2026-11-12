@@ -36,6 +36,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   1- vs 4-thread Rayon invariance, `Send + Sync` concurrent sharing, and
   reconstruction metrics (`sk_mean_squared_error`, `sk_r2_score`) via
   `sciencekit_metrics`.
+- `sciencekit_telemetry` sub-crate (spec `telemetry-export`): opt-in
+  OpenTelemetry trace, log and metric export pipelines and process-wide
+  lifecycle over `opentelemetry 0.32`, `opentelemetry_sdk 0.32`,
+  `opentelemetry-otlp 0.32`, `opentelemetry-appender-tracing 0.32` and
+  `tracing-opentelemetry 0.33`. Builder-validated `SKTelemetryConfiguration`
+  (`SKTelemetryConfigurationBuilder`), `SKTelemetryBatchConfiguration`
+  (`SKTelemetryBatchConfigurationBuilder`), `SKTelemetryResource`,
+  `SKTelemetryTransport { Grpc, Http }` and
+  `SKTelemetrySampler { AlwaysOn, AlwaysOff, TraceIdRatioBased, ParentBased }`
+  validate service identity, HTTP/HTTPS endpoints, ASCII header tokens, timeouts,
+  sampling ratios and batch queue bounds up front with `SKError::InvalidHyperparameter`.
+  `SKTelemetryPipeline` and `sk_build_otlp_pipeline` (gated behind off-by-default
+  `otlp-grpc`, `otlp-http` and `telemetry` features) bridge `sciencekit.operation`
+  spans with error-status enrichment, structured `tracing` events with trace
+  correlation, and bounded-cardinality operation metrics
+  (`sciencekit.operation.duration`, `sciencekit.operation.count`,
+  `sciencekit.operation.rows`, `sciencekit.operation.columns`,
+  `sciencekit.operation.errors`). `SKTelemetry` manages once-per-process `init` /
+  `init_with_exporters`, mutex-serialized `force_flush` honoring `flush_timeout`,
+  `shutdown` and drop-safe detachment while leaving uninitialized default builds
+  completely silent with zero active exporters and zero network traffic.
+
 - Successive-halving hyperparameter search in `sciencekit_model_selection` (spec
   `halving-grid-search`): builder-only `SKHalvingGridSearchClassifier<F, E>` /
   `SKHalvingGridSearchRegressor<F, E>` with `candidates`, `splitter`, `scoring`, `factor`
