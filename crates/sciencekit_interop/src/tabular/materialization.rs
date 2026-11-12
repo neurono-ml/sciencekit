@@ -26,6 +26,11 @@ impl SKTabularBatch {
         &self,
         config: &SKTabularSourceConfig,
     ) -> Result<SKTabularDataset<F>, SKError> {
+        if self.number_of_rows() == 0 {
+            return Err(SKError::EmptyInput {
+                operation: "tabular_source_conversion",
+            });
+        }
         let projected = self.project_configuration(config)?;
 
         let feature_selection = sk_selection_of_kind(config, |kind| kind.is_numeric())?;
@@ -46,6 +51,7 @@ impl SKTabularBatch {
             None => None,
         };
 
+        sk_validate_finite_features(&features)?;
         SKTabularDataset::new(projected, features, categorical)
     }
 
@@ -90,6 +96,27 @@ impl SKTabularBatch {
         }
         SKTabularSchema::new(columns)
     }
+}
+
+fn sk_validate_finite_features<F: SKFloat>(features: &SKFeatureBlock<F>) -> Result<(), SKError> {
+    match features {
+        SKFeatureBlock::Dense(matrix) => {
+            for (position, value) in matrix.iter().enumerate() {
+                if value.is_infinite() {
+                    return Err(SKError::NonFiniteValue { position });
+                }
+            }
+        }
+        SKFeatureBlock::Sparse(matrix) => {
+            for (position, value) in matrix.data().iter().enumerate() {
+                if value.is_infinite() {
+                    return Err(SKError::NonFiniteValue { position });
+                }
+            }
+        }
+        _ => {}
+    }
+    Ok(())
 }
 
 fn sk_selection_of_kind(

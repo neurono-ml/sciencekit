@@ -108,3 +108,49 @@ fn tabular_missing_boolean_null_becomes_nan() {
         other => panic!("expected a dense block, found {other:?}"),
     }
 }
+
+/// An empty source is rejected instead of producing a zero-row dataset.
+#[test]
+fn tabular_source_rejects_empty_input() {
+    let batch = SKTabularBatch::new(
+        crate::schema::SKTabularSchema::new(vec![SKColumnSchema::new(
+            "x",
+            SKLogicalType::Float64,
+            SKColumnRole::Feature,
+        )])
+        .unwrap(),
+        vec![SKColumnData::Float64(Vec::new())],
+        0,
+        true,
+    )
+    .unwrap();
+    let config = SKTabularSourceConfig::builder()
+        .column("x", SKColumnKind::Numeric)
+        .build()
+        .unwrap();
+    let error = batch.to_tabular_dataset::<f64>(&config).unwrap_err();
+    assert!(matches!(error, SKError::EmptyInput { .. }));
+}
+
+/// A non-finite value that is not the missing sentinel is rejected.
+#[test]
+fn tabular_source_rejects_infinite_values() {
+    let batch = SKTabularBatch::new(
+        crate::schema::SKTabularSchema::new(vec![SKColumnSchema::new(
+            "x",
+            SKLogicalType::Float64,
+            SKColumnRole::Feature,
+        )])
+        .unwrap(),
+        vec![SKColumnData::Float64(vec![Some(f64::INFINITY)])],
+        0,
+        true,
+    )
+    .unwrap();
+    let config = SKTabularSourceConfig::builder()
+        .column("x", SKColumnKind::Numeric)
+        .build()
+        .unwrap();
+    let error = batch.to_tabular_dataset::<f64>(&config).unwrap_err();
+    assert!(matches!(error, SKError::NonFiniteValue { .. }));
+}

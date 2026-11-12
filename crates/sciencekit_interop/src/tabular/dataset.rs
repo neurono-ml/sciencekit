@@ -3,7 +3,7 @@
 
 use sciencekit_common::{SKDataView, SKError, SKFeatureBlock, SKFloat};
 
-use super::SKNominalMatrixOwned;
+use super::{SKColumnKind, SKNominalMatrixOwned};
 use crate::schema::SKTabularSchema;
 
 /// A materialized table ready to feed an estimator.
@@ -79,6 +79,21 @@ impl<F: SKFloat> SKTabularDataset<F> {
     /// selected.
     pub fn categorical(&self) -> Option<&SKNominalMatrixOwned> {
         self.categorical.as_ref()
+    }
+
+    /// The kind of a projected column, derived from its logical type.
+    ///
+    /// Ignored columns never reach the projected schema, so a name present
+    /// here always has a materialized kind.
+    pub fn kind_of(&self, name: &str) -> Option<SKColumnKind> {
+        let column = self.schema.column(name)?;
+        Some(match column.logical_type() {
+            logical_type if logical_type.is_categorical() => SKColumnKind::Categorical,
+            logical_type if logical_type == crate::schema::SKLogicalType::Boolean => {
+                SKColumnKind::Boolean
+            }
+            _ => SKColumnKind::Numeric,
+        })
     }
 
     /// The number of rows.

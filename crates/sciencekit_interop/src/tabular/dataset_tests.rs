@@ -37,6 +37,12 @@ fn dataset_exposes_schema_features_and_categorical_block() {
         other => panic!("expected a dense view, found {other:?}"),
     }
     assert_eq!(dataset.categorical().unwrap().codes()[[1, 0]], -1);
+    assert_eq!(dataset.kind_of("x"), Some(super::SKColumnKind::Numeric));
+    assert_eq!(
+        dataset.kind_of("label"),
+        Some(super::SKColumnKind::Categorical)
+    );
+    assert_eq!(dataset.kind_of("absent"), None);
 }
 
 /// A categorical block with a different row count is rejected.
