@@ -27,6 +27,9 @@ pub use pipeline::{
 pub use transformer::SKStreamingTransformer;
 
 #[cfg(test)]
+mod acceptance_streaming_tests;
+
+#[cfg(test)]
 mod builder_tests;
 
 #[cfg(test)]
