@@ -2,7 +2,7 @@
 
 ## 1. Contract and builder
 
-- [ ] 1.1 Create the `streaming` module with `SKStreamingTransformer<F>`, the builder and
+- [x] 1.1 Create the `streaming` module with `SKStreamingTransformer<F>`, the builder and
   the empty-pipeline validation; verify `cargo test -p sciencekit_pipeline streaming`
   compiles.
 - [ ] 1.2 Implement a test streaming transformer that learns a running mean and
