@@ -137,3 +137,32 @@ fn hinge_and_squared_hinge_converge_on_the_same_separable_fixture() {
     let squared_slope = squared.coefficients[1] / squared.coefficients[0];
     assert!((hinge_slope - squared_slope).abs() < 0.5);
 }
+
+#[test]
+fn exhausted_iteration_budget_reports_not_converged_with_the_executed_count() {
+    use sciencekit_common::SKError;
+
+    let features = array![
+        [-1.5_f64, -0.5],
+        [-0.5, -1.2],
+        [0.2, 0.3],
+        [1.0, 1.1],
+        [1.4, 0.4],
+        [-0.2, -0.6]
+    ];
+    let labels = [-1.0_f64, -1.0, 1.0, 1.0, 1.0, -1.0];
+    let design = SKDenseLinearSvcDesign::new(features.view(), true);
+    let weights = vec![1.0_f64; labels.len()];
+    let error = sk_solve_linear_svc_dual(
+        &design,
+        &labels,
+        &weights,
+        SKLinearSvcLoss::Hinge,
+        1.0,
+        1e-12,
+        1,
+    )
+    .unwrap_err();
+
+    assert!(matches!(error, SKError::NotConverged { iterations: 1 }));
+}
