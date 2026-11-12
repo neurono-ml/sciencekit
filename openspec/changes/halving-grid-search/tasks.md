@@ -32,7 +32,7 @@
 - [x] 4.1 Add `acceptance_tests/` covering tiny and large data, classifier/regressor,
   factor variations, resource schedules, stratified/group splitters, aggressive mode,
   determinism and metric production; verify with `cargo test -p sciencekit_model_selection`.
-- [ ] 4.2 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
+- [x] 4.2 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
   warnings` and `cargo test --workspace`; fix every failure before pushing.
 - [x] 4.3 Update `CHANGELOG.md` and the companion mdBook chapter (including a
   `Development Explained` chapter on successive halving, resources and elimination);
