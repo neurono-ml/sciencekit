@@ -1,15 +1,14 @@
 //! The in-memory multi-epoch regression fit (spec decision 7).
 
 use ndarray::Array1;
-use sciencekit_common::{SKError, SKFloat};
+use sciencekit_common::{SKError, SKFloat, SKRandomGenerator};
 
 use super::design::{SKRegressorDesign, sk_run_design_epoch, sk_score_rows};
 use super::state::sk_reported_parts;
 use crate::sgd::config::SKSGDConfig;
 use crate::sgd::{
-    SKConvergenceTracker, SKEarlyStopping, SKLearningState, SKRandomGenerator,
-    SKSGDRegressorLossAdapter, sk_finish_epochs, sk_objective_improved,
-    sk_split_validation_indices,
+    SKConvergenceTracker, SKEarlyStopping, SKLearningState, SKSGDRegressorLossAdapter,
+    sk_finish_epochs, sk_objective_improved, sk_split_validation_indices,
 };
 
 /// The outcome of an in-memory fit: the reported iterate, the live state, the

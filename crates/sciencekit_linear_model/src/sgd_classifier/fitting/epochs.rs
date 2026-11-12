@@ -1,7 +1,7 @@
 //! The in-memory multi-epoch one-vs-rest fit (spec decision 7).
 
 use ndarray::{Array1, Array2};
-use sciencekit_common::{SKError, SKFloat};
+use sciencekit_common::{SKError, SKFloat, SKRandomGenerator};
 
 use super::super::targets::{sk_head_targets, sk_positive_classes};
 use super::driver::{SKFeatureDesign, sk_run_head_epoch, sk_score_rows};
@@ -9,8 +9,8 @@ use super::state::sk_reported_parts;
 use crate::class_weight::{SKClassWeight, sk_expand_class_weights};
 use crate::sgd::config::SKSGDConfig;
 use crate::sgd::{
-    SKConvergenceTracker, SKEarlyStopping, SKLearningState, SKRandomGenerator, SKSGDClassifierLoss,
-    sk_finish_epochs, sk_objective_improved, sk_split_validation_indices,
+    SKConvergenceTracker, SKEarlyStopping, SKLearningState, SKSGDClassifierLoss, sk_finish_epochs,
+    sk_objective_improved, sk_split_validation_indices,
 };
 
 /// The outcome of an in-memory fit: the reported iterate, the live states, the

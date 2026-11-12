@@ -242,6 +242,35 @@ Every algorithm supports out-of-core — it is a differentiator of the library. 
 
 Support from day one via **`sprs` + `ndarray`** (CSR/CSC/COO). Essential for Lasso, linear SVMs and text classification. Central traits accept dense or sparse views depending on the algorithm.
 
+#### 4.5.1. Representation parity
+
+An algorithm that **mathematically tolerates more than one representation** accepts
+**dense, sparse and mixed dense/sparse inputs on every public operation**. It dispatches on
+the representation exactly once per operation, never densifies a sparse input, and returns
+the same result (within the documented tolerance) regardless of how the same logical matrix
+is supplied. Two-matrix operations handle all four combinations — dense×dense,
+sparse×sparse, sparse×dense, dense×sparse — after validating shapes and representations.
+
+#### 4.5.2. Dense-only exception
+
+An algorithm whose mathematics genuinely requires **dense geometry** (for example, tree
+indexes whose nodes are axis-aligned boxes or balls) may declare dense-only support. The
+exception is admissible only when:
+
+- the dense-only kernel rejects a sparse view **before processing any element** with
+  `UnsupportedRepresentation` and a conversion/path suggestion; and
+- the **public estimator surface still covers dense, sparse and mixed inputs** through a
+  documented alternative path (typically a brute-force searcher over the stored training
+  features), so estimator-level parity is preserved without densification; and
+- the change's proposal states **why** the mathematics requires dense geometry and **names**
+  the alternative path.
+
+The normative source is the `data-view-boundary` capability
+(`openspec/specs/data-view-boundary/spec.md`). Rejecting a representation whose mathematics
+is **semantically undefined** (for example, a NaN-aware distance over implicit CSR zeros,
+where "present" has no meaning) is governed by the existing precise-rejection requirement
+and does **not** require an alternative path.
+
 ---
 
 ## 5. Threads and Concurrency
@@ -509,22 +538,76 @@ Order faithful to the scikit-learn mapping (from the handoff), respecting depend
 ### Phase 1 — Preprocessing
 5. `sciencekit_preprocessing`: `SKStandardScaler`, `SKMinMaxScaler`, `SKRobustScaler`, `SKOneHotEncoder`, `SKPolynomialFeatures`.
 6. `sciencekit_impute`: simple strategies, `SKKNNImputer`.
+   - `SKKNNImputer` uses the exact `nan_euclidean` donor semantics: it compares only
+     co-observed features and rescales by `total_features / present_features`. That kernel
+     is **not a metric** — the triangle inequality fails once the observed sets differ — so
+     no KD-tree, ball tree or other spatial index can prune it soundly. The transform is
+     therefore a chunked brute-force distance computation sized from a fixed memory budget,
+     not a tree-backed search; a future lattice/pattern index with partial-distance pruning
+     is an accelerator that must keep the same observable result.
+   - Sparse input is rejected by `fit` and `transform` with `UnsupportedRepresentation` and
+     a suggestion to use `SKSimpleImputer`: in CSR an implicit zero is an **observed zero**,
+     so the representation cannot express the configured missing marker. This is the
+     semantically-undefined rejection of §4.5.2 (like the NaN-aware distance over implicit
+     zeros), not a dense-geometry exception with an alternative path; the estimator's
+     public surface does not claim sparse parity.
+   - `partial_fit`/`fit_streaming`, `memmap2` backing and model export are **out of scope
+     here**: the imputer retains its training design by definition, and persistence/export
+     remain Phase 7 (interop) work.
 
 ### Phase 2 — Linear models
 7. `sciencekit_linear_model`: `SKLinearRegression`, `SKRidge`, `SKLasso`, `SKElasticNet`, `SKLogisticRegression`; `SKSGDClassifier`/`SKSGDRegressor` with `SKLazySource`.
 
 ### Phase 3 — Neighborhood and SVM
 8. `sciencekit_metrics` (pairwise already in math) + `sciencekit_neighbors`: SKKNeighborsClassifier/SKKNeighborsRegressor, SKKDTree, SKBallTree.
+   - Representation parity (§4.5.1): the neighbors estimators accept dense, sparse and mixed inputs. The KD-tree and Ball-tree indexes invoke the **dense-only exception** (§4.5.2) because tree geometry is dense by construction; they reject sparse views with `UnsupportedRepresentation`, while the estimators keep parity through the brute-force searcher over the stored training features.
+   - Incremental (`partial_fit`) and out-of-core (`fit_streaming`) index maintenance are **out of scope here**: the fitted models own an immutable training design, and a later out-of-core change can rebuild the index from it. Radius-neighbour estimators and metric learning are also future changes.
+   - `memmap2`-backed tree indexes are **out of scope here** and delivered by Phase 7 (interop), like all persistence and export.
 9. `sciencekit_svm`: SKSVC, SKSVR, SKLinearSVC.
+   - `SKSVC`/`SKSVR` keep representation parity through the sparse-aware kernel and `SKLinearSVC` through the sparse linear path; neither needs the dense-only exception.
+   - SVM kernel caches backed by `memmap2` are **out of scope here** and delivered by Phase 7 (interop).
 
 ### Phase 4 — Trees and ensembles
 10. `sciencekit_tree`: SKDecisionTreeClassifier/SKDecisionTreeRegressor.
+    - Representation parity (§4.5.1): the tree estimators accept dense, sparse and mixed inputs without densifying a sparse design. Split search over a borrowed CSR design scans the stored entries column-wise, so this algorithm needs **no** dense-only exception.
+    - Tree persistence (`memmap2`-backed node storage and model export) is **out of scope here** and delivered by Phase 7 (interop). Missing-value routing (surrogate splits) and cost-complexity pruning are explicit non-goals of the CART change; a tree fitted with missing values rejects them rather than routing them silently.
 11. `sciencekit_ensemble`: parallel aggregation with rayon (SKRandomForest, SKBagging, SKGradientBoosting).
+    - `SKRandomForestClassifier`/`SKRandomForestRegressor` keep representation parity (§4.5.1) over dense, CSR and mixed fit/predict paths by materializing bootstrap CSR samples without densifying and delegating split search to `sciencekit_tree`.
+    - Missing-value routing, extremely randomized trees, streaming/`partial_fit`, `memmap2`-backed storage and model persistence/export are **out of scope** for the `random-forest` change; persistence, `memmap2` backing and export are delivered by Phase 7 (interop), and missing values are rejected with structured errors rather than routed silently.
+    - `SKBaggingClassifier<B>`/`SKBaggingRegressor<B>` pass dense and borrowed CSR views through to the configured base estimator `B` without densifying, surfacing base rejections through `SKBaggingError::Base`, and route inference and out-of-bag scoring strictly through each member's stored feature subset. Heterogeneous runtime trait-object ensembles, stacking/voting, streaming/`partial_fit`, `memmap2`-backed storage and full persistence/import retrofit across non-exportable base models are explicit non-goals of the `bagging` change (persistence and `memmap2` remain Phase 7 work; `SKExportable` state emission is already provided whenever `B::Model` implements `SKExportable`).
 
 ### Phase 5 — Unsupervised
 12. `sciencekit_cluster`: SKKMeans, SKDBSCAN, SKMiniBatchKMeans (streaming).
+    - KMeans supports dense, sparse and mixed fit/assignment through the shared
+      norm-expansion distance, never densifying a sparse design.
+    - Streaming/`partial_fit` (delivered by the MiniBatchKMeans change), missing
+      values, GPU acceleration, `memmap2`-backed sources and model export are
+      explicit KMeans non-goals; persistence and export remain Phase 7 work.
+    - DBSCAN (`SKDBSCAN`) serves dense tree-compatible metrics through the
+      `sciencekit_neighbors` KD-tree and ball-tree region queries (`§4.5.2`
+      dense-only geometry exception on the trees) and preserves representation
+      parity over sparse CSR and cosine inputs through `SKBruteForceSearcher`,
+      never densifying sparse storage. HDBSCAN/OPTICS, streaming/`partial_fit`,
+      missing values, GPU acceleration, `memmap2`-backed indexes and model
+      export are explicit non-goals of the `dbscan` change; persistence and
+      export remain Phase 7 work.
+    - MiniBatchKMeans (`SKMiniBatchKMeans`) updates dense centers over dense and
+      borrowed CSR batches via per-center learning rates (`1 / (count[center] + 1)`),
+      deterministic low-count center reassignment, `partial_fit` and multi-epoch
+      `fit_streaming` without densifying sparse storage. Elkan
+      triangle-inequality pruning on streaming batches, missing values, GPU
+      acceleration, `memmap2`-backed sources and file/ONNX model export are
+      explicit non-goals of the `minibatch-kmeans-streaming` change (persistence
+      and `memmap2` remain Phase 7 work; format-agnostic `SKExportable` /
+      `SKImportable` state emission is already provided).
+    - Clusterers expose typed assignments (`SKClusterLabel`: a cluster identifier or explicit noise) through `SKClustererPredictor`; the unsupervised scorer evaluates those assignments directly and documents whether it excludes or rejects noise.
 13. `sciencekit_decomposition`: SKPCA, SKTruncatedSVD.
-14. `sciencekit_outlier`: anomaly detection.
+    - Representation parity (§4.5.1 / §4.5.2): `SKPCA` supports sparse CSR fitting without densification on `SKPCASolver::Randomized` via implicit centering; `Full` and `CovarianceEigh` invoke the documented dense-only exception because they materialize the centered design or its covariance, rejecting CSR with `UnsupportedRepresentation` (naming `Randomized` and `SKTruncatedSVD`) unless `allow_densification(true)` is explicitly set (with a warning reporting the byte cost).
+    - Sparse exact full/eigh solvers, kernel PCA, streaming/incremental PCA (`SKIncrementalPCA`, delivered by its own change), GPU acceleration, `memmap2`-backed storage and model export (Phase 7) are explicit `SKPCA` non-goals.
+14. `sciencekit_outlier`: anomaly detection (`SKIsolationForest`).
+    - Outlier detectors expose typed one-byte assignments (`SKOutlierLabel { Inlier, Outlier }`) plus `score_samples`, `decision_function` and `offset` through `SKOutlierPredictor<F>`; external `-1`/`1` codes exist only at the explicit `to_i64`/`from_i64` interop boundary.
+    - Representation parity (§4.5.1): `SKIsolationForest` fits and scores both dense views and sparse CSR views without densification (gathering per-tree CSR subsamples directly into compact CSC columns for split scans and walking `SKTree` nodes directly on CSR rows).
+    - Local Outlier Factor (`SKLocalOutlierFactor`), One-Class SVM (`SKOneClassSVM`), missing-value routing in isolation trees, streaming/`partial_fit`, GPU acceleration, `memmap2`-backed tree storage and model export (Phase 7) are explicit non-goals of the `outlier-detection` change.
 
 ### Phase 6 — Selection, pipeline, metrics
 15. `sciencekit_model_selection`: SKKFold, sk_train_test_split, SKGridSearchCV.
@@ -535,6 +618,13 @@ Order faithful to the scikit-learn mapping (from the handoff), respecting depend
 18. `sciencekit_interop`: safetensors (internal, sharding/padding, compression), ONNX export/import, JSON debug, I/O traits + Polars/DataFusion.
 19. `sciencekit` umbrella crate: re-exports and unified documentation.
 20. `sciencekit_python`: complete PyO3 bindings.
+
+**Phase 7 also owns the memory-mapping and persistence implementation.** `memmap2`-backed
+indexes and kernel caches, model persistence and model export are delivered here, not by
+an algorithm phase. Algorithms consume them through the Phase 0 `SKMappableSource` contract
+(§4.4) and through the interop storage contracts introduced here; no algorithm crate grows
+its own private `memmap2` layer. The Phase 3 and Phase 4 sections mark these pieces as
+explicit non-goals where the catalogue mentions them.
 
 ### Cross-cutting (continuous)
 

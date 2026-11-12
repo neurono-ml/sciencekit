@@ -2,15 +2,12 @@
 //! Decision 3).
 
 use ndarray::{Array1, Axis, s};
-use sciencekit_common::{SKError, SKFloat};
+use sciencekit_common::{SK_RANDOM_DOMAIN_STAGE, SKError, SKFloat, sk_derive_seed};
 
 use super::saga::{SKSagaConfig, sk_saga_minimize};
 use crate::logistic::config::SKLogisticConfig;
 use crate::logistic::design::SKLogisticDesign;
 use crate::logistic::objective::sk_sigmoid;
-
-/// The deterministic seed shared by the SAGA fits.
-const SAGA_SEED: u64 = 0x243F_6A88_85A3_08D3;
 
 /// Minimize the binary logistic objective with SAGA, returning the weights, the
 /// intercept and the epochs spent.
@@ -20,6 +17,7 @@ pub(crate) fn sk_solve_binary_head_saga<F, D>(
     weights: &[F],
     initial: Option<Array1<F>>,
     config: &SKLogisticConfig<F>,
+    component_index: u64,
 ) -> Result<(Array1<F>, F, usize), SKError>
 where
     F: SKFloat,
@@ -40,7 +38,7 @@ where
         tolerance: config.tolerance,
         maximum_number_of_epochs: config.maximum_number_of_iterations,
         step,
-        seed: SAGA_SEED,
+        seed: sk_derive_seed(config.random_seed, SK_RANDOM_DOMAIN_STAGE, component_index),
     };
 
     let sample_gradient =

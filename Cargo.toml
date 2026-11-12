@@ -8,21 +8,37 @@
 
 [package]
 name = "sciencekit"
-version = "0.1.0"
+version = "0.7.0"
 edition = "2024"
 license = "Apache-2.0"
 rust-version = "1.85"
 description = "Machine Learning library in Rust reimplementing all of scikit-learn — extreme performance, zero-copy and native out-of-core."
 repository = "https://github.com/neurono-ml/sciencekit"
+# The language bindings live in their own repositories
+# (`neurono-ml/sciencekit-go` and `neurono-ml/sciencekit-lua`); only the Rust
+# core and the shared C ABI (`sciencekit_ffi`) stay here.
+exclude = [".devcontainer/"]
 
 [workspace]
 resolver = "3"
 members = [
+    "crates/sciencekit_cluster",
     "crates/sciencekit_common",
+    "crates/sciencekit_decomposition",
+    "crates/sciencekit_ensemble",
+    "crates/sciencekit_ffi",
+    "crates/sciencekit_gpu",
     "crates/sciencekit_impute",
+    "crates/sciencekit_interop",
     "crates/sciencekit_linear_model",
     "crates/sciencekit_math",
     "crates/sciencekit_metrics",
+    "crates/sciencekit_model_selection",
+    "crates/sciencekit_neighbors",
+    "crates/sciencekit_outlier",
+    "crates/sciencekit_pipeline",
+    "crates/sciencekit_telemetry",
+    "crates/sciencekit_tree",
     "crates/sciencekit_preprocessing",
 ]
 
@@ -40,6 +56,9 @@ opt-level = 2
 tracing = "0.1"
 tracing-opentelemetry = { version = "0.33", default-features = false }
 opentelemetry = "0.32"
+opentelemetry_sdk = "0.32"
+opentelemetry-otlp = { version = "0.32", default-features = false }
+opentelemetry-appender-tracing = "0.32"
 tracing-subscriber = "0.3"
 tikv-jemallocator = "0.5"
 mimalloc = "0.1"
@@ -56,3 +75,7 @@ sprs = "0.11"
 # Online quantile sketch for the robust scaler (spec `robust-scaler`) and for the
 # streaming median of the imputer (spec `simple-imputer`).
 tdigest = "1.0"
+
+# Directed acyclic graph structure for runtime feature pipelines (spec
+# `pipeline-graph`).
+petgraph = "0.7"

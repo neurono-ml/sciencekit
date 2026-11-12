@@ -32,6 +32,7 @@ fn simulated(
         access_pattern: pattern,
         batch_size_hint: batch,
         batch_byte_size_hint: None,
+        device: None,
     }
 }
 
