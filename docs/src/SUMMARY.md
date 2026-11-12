@@ -75,6 +75,7 @@
   - [JSON debug format: reading a fitted model with your eyes](development-explained/ch45-json-debug-format.md)
   - [Generic bagging: composing any learner over bootstrap rows, routed subspaces and honest out-of-bag scores](development-explained/ch46-bagging.md)
   - [Outlier detection: random isolation trees, path length and the contamination offset](development-explained/ch48-outlier-detection.md)
+  - [Truncated SVD: uncentered low-rank factorization and the sparse path](development-explained/ch49-truncated-svd.md)
   - [Mini-batch k-means: learning rates, reassignment and honest streaming](development-explained/ch51-minibatch-kmeans-streaming.md)
   - [Runtime DAG pipelines: topological fitting, deterministic levels and honest merges](development-explained/ch52-pipeline-dag.md)
   - [Successive halving: spend the budget where it pays](development-explained/ch53-halving-grid-search.md)
