@@ -18,6 +18,8 @@ pub enum SKHistogramSplit {
         maximum_bin: u8,
         /// Direction of rows in the missing bin.
         default_left: bool,
+        /// The index of the dedicated missing bin.
+        missing_bin: u8,
     },
     /// Categorical split: the categories whose membership bit is set go left;
     /// categories never observed at fit follow `unknown_left`.
@@ -115,6 +117,7 @@ pub fn sk_scan_numeric_feature<F: SKFloat>(
                     feature_index,
                     maximum_bin: bin,
                     default_left,
+                    missing_bin,
                 },
                 gain,
             };
