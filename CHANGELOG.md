@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Successive-halving hyperparameter search in `sciencekit_model_selection` (spec
+  `halving-grid-search`): builder-only `SKHalvingGridSearchClassifier<F, E>` /
+  `SKHalvingGridSearchRegressor<F, E>` with `candidates`, `splitter`, `scoring`, `factor`
+  (default `3`), `minimum_resource` (default `1`), `maximum_resource` (default all rows),
+  `resource` (`SKHalvingResource::NumberOfSamples` default), `aggressive_elimination`
+  (default `false`), `random_seed` (default `0`), `refit` (default `true`), `error_score`,
+  `groups`, `backend` and `execution_mode`. Fitting evaluates the survivors on a seeded
+  per-round row subsample, keeps the best `ceil(n / factor)`, grows the resource
+  geometrically (`10, 30, 90, …`), and stops at one survivor or the maximum resource;
+  ranking is descending by mean score with ties broken by original candidate index and `NaN`
+  ranked last. Subsamples preserve class proportions when the splitter requires
+  stratification and group proportions when `groups` are supplied, and never densify sparse
+  CSR input. The fitted `SKHalvingGridSearch…Model` exposes `elimination_trace()`,
+  `number_of_rounds()`, `candidate_count_trajectory()`, `resource_schedule()`,
+  `best_candidate_index()`, `best_score()`, `best_parameters()`, `best_model()` and
+  `is_refitted()`, delegates classification/regression prediction and `export_state()` to the
+  winner refitted on all rows, and rejects prediction and export with
+  `UnsupportedOperation` when `refit(false)`. Free functions
+  `sk_halving_resource_schedule` / `sk_halving_candidate_schedule` and the
+  `SKHalvingRound` trace type make the schedule and every elimination step inspectable.
 - Runtime directed-acyclic-graph pipelines (spec `pipeline-graph`):
   `sciencekit_pipeline::graph` adds `SKPipelineGraph` /
   `SKPipelineGraphBuilder` over the `petgraph` workspace dependency,

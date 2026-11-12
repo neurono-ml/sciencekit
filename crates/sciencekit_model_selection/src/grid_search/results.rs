@@ -84,7 +84,7 @@ impl<F: SKFloat> SKGridSearchResults<F> {
     }
 }
 
-fn sk_compare_scores<F: SKFloat>(left: F, right: F) -> Ordering {
+pub(crate) fn sk_compare_scores<F: SKFloat>(left: F, right: F) -> Ordering {
     match (left.is_nan(), right.is_nan()) {
         (true, true) => Ordering::Equal,
         (true, false) => Ordering::Less,
