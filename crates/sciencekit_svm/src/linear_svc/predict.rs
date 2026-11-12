@@ -30,7 +30,9 @@ impl<F: SKFloat> SKLinearSVCModel<F> {
             execution_mode: self.execution_mode(),
             backend: self.backend,
         };
-        sk_run_operation(attributes, || sk_linear_svc_decision_matrix(self, features))
+        sk_run_operation(attributes, || {
+            sk_linear_svc_decision_matrix(self, features, "decision_function")
+        })
     }
 }
 
@@ -51,7 +53,7 @@ impl<F: SKFloat> SKClassifierPredictor<F> for SKLinearSVCModel<F> {
             backend: self.backend,
         };
         sk_run_operation(attributes, || {
-            let decisions = sk_linear_svc_decision_matrix(self, features)?;
+            let decisions = sk_linear_svc_decision_matrix(self, features, "predict")?;
             Ok(sk_linear_svc_labels_from_decisions(&decisions))
         })
     }

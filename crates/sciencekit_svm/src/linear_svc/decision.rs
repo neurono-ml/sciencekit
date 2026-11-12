@@ -29,8 +29,8 @@ fn sk_sparse_head_decision<F: SKFloat>(head: &SKLinearSvcHead<F>, row: CsVecView
 pub(crate) fn sk_linear_svc_decision_matrix<F: SKFloat>(
     model: &SKLinearSVCModel<F>,
     features: SKDataView<'_, F>,
+    operation: &'static str,
 ) -> Result<Array2<F>, SKError> {
-    let operation = "decision_function";
     let (rows, _) =
         sk_validate_linear_svc_query_features(features, model.number_of_features, operation)?;
     let number_of_classes = model.number_of_classes();
