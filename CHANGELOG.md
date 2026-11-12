@@ -9,6 +9,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `SKMiniBatchKMeans<F>` in `sciencekit_cluster` (spec `mini-batch-k-means`):
+  builder-only mini-batch k-means with `number_of_clusters` (default `8`),
+  `initialization` (`KMeansPlusPlus` default, `Random`), `number_of_initializations`
+  (default `3`), `batch_size` (default `1024`), `initialization_batch_size`
+  (default `3 × batch_size`), `maximum_number_of_iterations` (default `100`),
+  `maximum_number_of_epochs` (default `1`), `tolerance` (default `0`, disabling
+  early stopping), `reassignment_ratio` (default `0.01`), `random_seed`
+  (default `0`), `backend` (default `Faer`) and `execution_mode` (default
+  `Automatic`). In-memory `fit`/`fit_batch` and incremental `partial_fit`
+  update dense centers with the exact per-center learning rate
+  `1 / (count[center] + 1)` through a closed form that touches only stored CSR
+  entries, initialize from a deterministic bounded sample with best-of-`n_init`
+  inertia selection, and deterministically reassign the most distant batch point
+  to centers below `reassignment_ratio × mean_count`. `fit_streaming` drives an
+  `SKSourceProvider` through the shared prefetch executor, opening a fresh source
+  per epoch for reopenable providers up to `maximum_number_of_epochs` and
+  stopping early when a positive tolerance is met. The fitted
+  `SKMiniBatchKMeansModel<F>` exposes dense `cluster_centers`, per-center
+  `counts`, typed non-noise training `labels` for in-memory fits, `inertia`,
+  `batches_processed`, `epochs_consumed` and `converged`, implements
+  `SKUnsupervisedFit`, `SKClustererPredictor<F>` (`predict_clusters`/`predict`),
+  Euclidean `transform`, `fit_predict` and format-agnostic
+  `SKExportable`/`SKImportable` state emission. Dense and CSR parity is verified
+  byte-for-byte without densification, along with thread-count-invariant
+  determinism, lock-free concurrent prediction, f32/f64 independence, validation
+  and acceptance suites (50 000-row one-shot and multi-epoch streams, full
+  KMeans comparison and clustering metrics).
+
 - Extended binary Safetensors internal model format (spec `safetensors-format`):
   `sciencekit_interop::safetensors` adds `SKSafetensorsWriter` /
   `SKSafetensorsWriterBuilder`, `SKSafetensorsReader` /
