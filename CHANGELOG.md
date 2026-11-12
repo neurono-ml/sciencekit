@@ -31,6 +31,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `shutdown` and drop-safe detachment while leaving uninitialized default builds
   completely silent with zero active exporters and zero network traffic.
 
+- Extended binary Safetensors internal model format (spec `safetensors-format`):
+  `sciencekit_interop::safetensors` adds `SKSafetensorsWriter` /
+  `SKSafetensorsWriterBuilder`, `SKSafetensorsReader` /
+  `SKSafetensorsReaderBuilder`, `SKShardPlan` / `SKShardPlanBuilder`,
+  `SKShardIndex`, `SKAppendOutcome`, `SKSafetensorsCompression` (`None` default,
+  `Gzip`, `Brotli`, `Snappy`), `SK_SAFETENSORS_FORMAT_VERSION` (`1`),
+  `SK_SAFETENSORS_PADDING_TENSOR_NAME` (`"__padding__"`) and convenience entry
+  points (`sk_write_model_state_safetensors`,
+  `sk_write_model_state_safetensors_file`, `sk_read_model_state_safetensors`,
+  `sk_read_model_state_safetensors_file`, `sk_export_model_safetensors`,
+  `sk_export_model_safetensors_file`, `sk_import_model_safetensors`,
+  `sk_import_model_safetensors_file`, `sk_append_safetensors_tensor`,
+  `sk_read_safetensors_shard_index`, `sk_safetensors_index_path` and
+  `sk_detect_safetensors_compression`) over `sciencekit_common::SKModelState`.
+  Single-file output is standard HuggingFace Safetensors (`8`-byte little-endian
+  header length, UTF-8 JSON header carrying `sciencekit.*` metadata, class
+  labels and typed hyperparameters, plus safe little-endian `F32`, `F64`, `I64`
+  and `BOOL` tensor payloads without `unsafe`). Large states split into
+  immutable shards plus an atomically renamed `.safetensors.index.json` manifest
+  that the reader merges transparently; reserved header (`0x20`) and payload
+  (`__padding__`) space enables in-place seek appends without rewriting existing
+  tensor bytes, spilling automatically to a new shard when exhausted; and
+  optional Cargo features `compression-gzip`, `compression-brotli` and
+  `compression-snappy` wrap whole files (`.safetensors.gz`,
+  `.safetensors.brotli`, `.snappy.safetensors`) with magic-byte auto-detection
+  and explicit `UnsupportedOperation` guidance when disabled.
+
 - `sciencekit_outlier` sub-crate and `sciencekit_common` outlier prediction
   contract (specs `outlier-prediction` and `isolation-forest`): one-byte typed
   `SKOutlierLabel { Inlier, Outlier }` with explicit external `to_i64` /
