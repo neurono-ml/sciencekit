@@ -13,4 +13,3 @@ pub(crate) fn sk_test_execution_plan() -> SKExecutionPlan {
         fallback_reason: None,
     }
 }
-

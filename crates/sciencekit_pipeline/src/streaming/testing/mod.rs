@@ -11,7 +11,9 @@ mod test_mean_centering;
 mod test_sources;
 
 pub(crate) use test_column_scaling::SKTestColumnScaling;
-pub(crate) use test_estimators::{SKTestIdentityEstimator, SKTestIdentityModel, SKTestIdentityOutput};
+pub(crate) use test_estimators::{
+    SKTestIdentityEstimator, SKTestIdentityModel, SKTestIdentityOutput,
+};
 pub(crate) use test_execution_plan::sk_test_execution_plan;
 pub(crate) use test_mean_centering::SKTestMeanCentering;
 pub(crate) use test_sources::{

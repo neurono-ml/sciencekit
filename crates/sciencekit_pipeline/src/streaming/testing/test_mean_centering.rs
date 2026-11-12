@@ -12,9 +12,7 @@ use ndarray::{Array1, Axis};
 use sciencekit_common::execution::{
     SKStreamDecision, SKStreamingPassPolicy, sk_run_streaming_provider,
 };
-use sciencekit_common::{
-    SKDataView, SKError, SKFeatureBlock, SKFloat, SKSourceProvider,
-};
+use sciencekit_common::{SKDataView, SKError, SKFeatureBlock, SKFloat, SKSourceProvider};
 
 use super::test_execution_plan::sk_test_execution_plan;
 use crate::streaming::SKStreamingTransformer;
@@ -156,4 +154,3 @@ impl<F: SKFloat> SKStreamingTransformer<F> for SKTestMeanCentering<F> {
         }
     }
 }
-
