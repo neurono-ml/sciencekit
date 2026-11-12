@@ -2,10 +2,10 @@
 
 ## 1. Tabular contract
 
-- [ ] 1.1 Implement `SKTabularSchema`, `SKTabularSource`, the owned nominal block and the
+- [x] 1.1 Implement `SKTabularSchema`, `SKTabularSource`, the owned nominal block and the
   column-selection config, with hand-built schema/feature/categorical tests; verify with
   `cargo test -p sciencekit_interop tabular_source`.
-- [ ] 1.2 Implement missing-value mapping and unsupported-dtype errors; verify with
+- [x] 1.2 Implement missing-value mapping and unsupported-dtype errors; verify with
   `cargo test -p sciencekit_interop tabular_missing`.
 
 ## 2. Version spike and Polars
