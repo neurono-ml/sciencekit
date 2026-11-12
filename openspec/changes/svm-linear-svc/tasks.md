@@ -12,7 +12,7 @@
 
 ## 2. Design abstraction and solver
 
-- [ ] 2.1 Write tests for the dense design row dot and scaled-row accumulation on a
+- [x] 2.1 Write tests for the dense design row dot and scaled-row accumulation on a
   hand-computed matrix, confirm the failure, then implement `design.rs` for owned dense
   data; verify with `cargo test -p sciencekit_svm linear_svc_design`.
 - [ ] 2.2 Add the borrowed CSR design path with tests proving stored-entry-only row dots
