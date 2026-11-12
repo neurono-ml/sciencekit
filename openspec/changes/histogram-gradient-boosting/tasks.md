@@ -29,7 +29,7 @@
 
 ## 3. Growth and missing routing
 
-- [ ] 3.1 Implement leaf-wise growth with a gain priority queue, `max_leaf_nodes`,
+- [x] 3.1 Implement leaf-wise growth with a gain priority queue, `max_leaf_nodes`,
   `minimum_samples_leaf` and the flat `SKTreeNode` array; verify a hand-computed growth
   sequence; verify with `cargo test -p sciencekit_ensemble hist_growth`.
 - [ ] 3.2 Implement missing-bin routing and the learned `default_left` direction, with
