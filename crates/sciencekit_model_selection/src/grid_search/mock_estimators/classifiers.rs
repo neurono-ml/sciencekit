@@ -2,7 +2,8 @@
 
 use ndarray::{Array1, Array2};
 use sciencekit_common::{
-    SKClassifierPredictor, SKDataView, SKError, SKSupervisedFit, SKTargetView,
+    SKClassifierPredictor, SKDataView, SKError, SKExportable, SKModelMetadata, SKModelState,
+    SKSupervisedFit, SKTargetView, SKTensor, SKTensorDataType,
 };
 
 use super::helpers::{sk_first_column, sk_number_of_rows};
@@ -85,5 +86,14 @@ impl SKClassifierPredictor<f64> for SKMockThresholdClassifierModel {
             probabilities[[row, *label as usize]] = 1.0;
         }
         Ok(probabilities)
+    }
+}
+
+impl SKExportable<f64> for SKMockThresholdClassifierModel {
+    fn export_state(&self) -> Result<SKModelState<f64>, SKError> {
+        let metadata =
+            SKModelMetadata::new("mock.threshold_classifier", 1, SKTensorDataType::F64, 1)?;
+        let threshold = SKTensor::floating("threshold", Vec::new(), vec![self.threshold])?;
+        SKModelState::new(metadata, vec![threshold])
     }
 }
