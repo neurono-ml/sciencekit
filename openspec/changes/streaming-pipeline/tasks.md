@@ -11,7 +11,7 @@
 
 ## 2. Chained fitting
 
-- [ ] 2.1 Implement chained fitting over a reopenable provider and a two-stage test; verify
+- [x] 2.1 Implement chained fitting over a reopenable provider and a two-stage test; verify
   with `cargo test -p sciencekit_pipeline streaming_fit`.
 - [ ] 2.2 Implement the one-shot provider restriction and the memory-budget error; verify
   with `cargo test -p sciencekit_pipeline streaming_oneshot`.
