@@ -6,13 +6,17 @@
 
 mod accumulate;
 mod gain;
+mod subtract;
 
 pub use accumulate::{SKFeatureHistogram, SKNodeHistogram, sk_accumulate_histogram};
 pub use gain::{
     SKHistogramSplit, SKHistogramSplitCandidate, sk_scan_numeric_feature, sk_split_gain,
 };
+pub use subtract::sk_subtract_histogram;
 
 #[cfg(test)]
 mod accumulate_tests;
 #[cfg(test)]
 mod gain_tests;
+#[cfg(test)]
+mod subtract_tests;
