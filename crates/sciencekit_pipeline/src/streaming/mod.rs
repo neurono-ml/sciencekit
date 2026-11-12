@@ -28,3 +28,7 @@ pub use transformer::SKStreamingTransformer;
 
 #[cfg(test)]
 mod builder_tests;
+#[cfg(test)]
+mod testing;
+#[cfg(test)]
+mod transformer_tests;
