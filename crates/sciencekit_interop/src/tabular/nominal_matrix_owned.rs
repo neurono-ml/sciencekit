@@ -1,7 +1,9 @@
 //! The owned nominal block backing a tabular dataset (spec `tabular-sources`).
 
 use ndarray::{Array2, ArrayView2};
-use sciencekit_common::{SKCategoricalView, SKError, SKLabelTable, sk_canonicalize_labels};
+use sciencekit_common::{
+    SK_CATEGORICAL_MISSING_CODE, SKCategoricalView, SKError, SKLabelTable, sk_canonicalize_labels,
+};
 
 use crate::batch::SKCategoricalExtraction;
 
@@ -21,9 +23,9 @@ impl SKNominalMatrixOwned {
     ///
     /// # Errors
     /// Returns [`SKError::SchemaMismatch`] when the number of label tables does
-    /// not match the number of code columns, and
-    /// [`SKError::UnevenColumnLengths`] when a label table's label count does
-    /// not cover the codes it describes.
+    /// not match the number of code columns, or when a code cannot be decoded by
+    /// its column's label table (a code outside `[0, number_of_classes)` other
+    /// than the missing sentinel).
     pub fn new(
         codes: Array2<i64>,
         label_tables: Vec<Option<SKLabelTable>>,
@@ -33,6 +35,24 @@ impl SKNominalMatrixOwned {
                 expected: format!("{} label tables", codes.ncols()),
                 found: format!("{} label tables", label_tables.len()),
             });
+        }
+        for (column, label_table) in label_tables.iter().enumerate() {
+            let Some(label_table) = label_table else {
+                continue;
+            };
+            let number_of_classes = label_table.number_of_classes() as i64;
+            let undecodable = codes.column(column).iter().copied().find(|code| {
+                *code != SK_CATEGORICAL_MISSING_CODE && (*code < 0 || *code >= number_of_classes)
+            });
+            if let Some(code) = undecodable {
+                return Err(SKError::SchemaMismatch {
+                    expected: format!(
+                        "codes within the column's label table (0 to {}) or the missing sentinel",
+                        number_of_classes.saturating_sub(1)
+                    ),
+                    found: format!("code {code}"),
+                });
+            }
         }
         Ok(SKNominalMatrixOwned {
             codes,

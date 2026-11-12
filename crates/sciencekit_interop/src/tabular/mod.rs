@@ -29,3 +29,5 @@ mod dataset_tests;
 mod materialization_tests;
 #[cfg(test)]
 mod missing_tests;
+#[cfg(test)]
+mod nominal_matrix_owned_tests;
