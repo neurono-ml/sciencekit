@@ -11,4 +11,5 @@ mod pipeline_graph_large_tests;
 mod pipeline_graph_small_tests;
 mod pipeline_graph_validation_tests;
 mod small_data_tests;
+mod streaming_pipeline_tests;
 mod transformer_coverage_tests;
