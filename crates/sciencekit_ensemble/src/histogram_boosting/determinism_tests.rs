@@ -74,3 +74,23 @@ fn hist_determinism_model_is_send_and_sync() {
     assert_send_sync::<super::SKHistGradientBoostingRegressorModel<f64>>();
     assert_send_sync::<super::SKHistGradientBoostingClassifierModel<f64>>();
 }
+
+#[test]
+fn hist_determinism_is_thread_count_invariant() {
+    let (features, targets) = data();
+    let baseline = estimator(5).fit(features.view(), targets.view()).expect("fit");
+    let sequential = baseline.predict(features.view()).expect("predict");
+    let parallel = rayon::ThreadPoolBuilder::new()
+        .num_threads(4)
+        .build()
+        .expect("pool")
+        .install(|| estimator(5).fit(features.view(), targets.view()).expect("fit"));
+    let parallel_predictions = parallel.predict(features.view()).expect("predict");
+    assert_eq!(sequential, parallel_predictions);
+    (0..baseline.number_of_stages()).for_each(|stage| {
+        assert_eq!(
+            baseline.stage_tree(stage).expect("tree"),
+            parallel.stage_tree(stage).expect("tree")
+        );
+    });
+}
