@@ -28,7 +28,7 @@
   `cargo test -p sciencekit_telemetry concurrency`.
 - [x] 3.4 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
   warnings` and `cargo test --workspace`; fix every failure before pushing.
-- [ ] 3.5 Update `CHANGELOG.md` and the companion mdBook chapter (including a
+- [x] 3.5 Update `CHANGELOG.md` and the companion mdBook chapter (including a
   `Development Explained` chapter on OTLP pipelines and lifecycle); verify with
   `mdbook build docs`.
 - [ ] 3.6 Independent review by a separate agent validating every scenario in
