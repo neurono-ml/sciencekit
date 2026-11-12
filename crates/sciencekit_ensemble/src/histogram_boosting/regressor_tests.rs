@@ -75,3 +75,24 @@ fn hist_regressor_fits_absolute_error() {
     assert!(predictions.iter().all(|value| value.is_finite()));
     assert_eq!(model.loss(), SKHistGradientBoostingRegressionLoss::AbsoluteError);
 }
+
+#[test]
+fn hist_regressor_reports_regularized_stage_values() {
+    let features = Array2::from_shape_fn((40, 1), |(row, _)| row as f64);
+    let targets = ndarray::Array1::from_elem(40, 3.0);
+    let model = SKHistGradientBoostingRegressor::<f64>::build()
+        .number_of_estimators(3)
+        .learning_rate(0.5)
+        .maximum_leaf_nodes(2)
+        .minimum_samples_leaf(1)
+        .l2_regularization(2.0)
+        .without_early_stopping()
+        .build()
+        .expect("build")
+        .fit(features.view(), targets.view())
+        .expect("fit");
+    assert_eq!(model.initial_prediction(), 3.0);
+    assert!(model.stage_trees().iter().all(|tree| tree.node_count() == 1));
+    let predictions = model.predict(features.view()).expect("predict");
+    assert!(predictions.iter().all(|value| (*value - 3.0).abs() < 1e-12));
+}
