@@ -39,6 +39,156 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`SKPlattParameters`, `sk_fit_platt_sigmoid`, `sk_calibrate_binary_platt`,
   `sk_couple_pairwise_probabilities`,
   `sk_couple_pairwise_probabilities_with_budget`).
+- Successive-halving hyperparameter search in `sciencekit_model_selection` (spec
+  `halving-grid-search`): builder-only `SKHalvingGridSearchClassifier<F, E>` /
+  `SKHalvingGridSearchRegressor<F, E>` with `candidates`, `splitter`, `scoring`, `factor`
+  (default `3`), `minimum_resource` (default `1`), `maximum_resource` (default all rows),
+  `resource` (`SKHalvingResource::NumberOfSamples` default), `aggressive_elimination`
+  (default `false`), `random_seed` (default `0`), `refit` (default `true`), `error_score`,
+  `groups`, `backend` and `execution_mode`. Fitting evaluates the survivors on a seeded
+  per-round row subsample, keeps the best `ceil(n / factor)`, grows the resource
+  geometrically (`10, 30, 90, …`), and stops at one survivor or the maximum resource;
+  ranking is descending by mean score with ties broken by original candidate index and `NaN`
+  ranked last. Subsamples preserve class proportions when the splitter requires
+  stratification and group proportions when `groups` are supplied, and never densify sparse
+  CSR input. The fitted `SKHalvingGridSearch…Model` exposes `elimination_trace()`,
+  `number_of_rounds()`, `candidate_count_trajectory()`, `resource_schedule()`,
+  `best_candidate_index()`, `best_score()`, `best_parameters()`, `best_model()` and
+  `is_refitted()`, delegates classification/regression prediction and `export_state()` to the
+  winner refitted on all rows, and rejects prediction and export with
+  `UnsupportedOperation` when `refit(false)`. Free functions
+  `sk_halving_resource_schedule` / `sk_halving_candidate_schedule` and the
+  `SKHalvingRound` trace type make the schedule and every elimination step inspectable.
+- Runtime directed-acyclic-graph pipelines (spec `pipeline-graph`):
+  `sciencekit_pipeline::graph` adds `SKPipelineGraph` /
+  `SKPipelineGraphBuilder` over the `petgraph` workspace dependency,
+  `SKNodeIdentifier`, `SKPipelineGraphNodeKind`, `SKNodeBlockStore`,
+  `SKPipelineGraphModel`, the `SKPipelineGraphClassifier` /
+  `SKPipelineGraphRegressor` wrappers, the type-erased `SKBoxedFinalModel` and
+  the node-attributed `SKPipelineGraphNodeError`. The builder is the only
+  constructor (`SKPipelineGraph::start` / `SKPipelineGraph::build`) and carries
+  the mandatory `backend` (default `Faer`) and `execution_mode` (default
+  `Automatic`) parameters recorded in every `fit`, `transform` and `predict`
+  span. `build` validates acyclicity (naming the cycle), exactly one final
+  estimator that is a sink, and full input reachability, rejecting violations
+  with `SKError::InvalidHyperparameter`. Fit executes nodes in a deterministic
+  level order (ascending node identifier within a level); nodes at the same
+  level never depend on each other. Nodes with zero incoming edges receive the
+  caller's block, nodes with one incoming edge receive it unchanged, and nodes
+  with several incoming edges concatenate them horizontally in exact
+  `connect(source, target)` insertion order, promoting to CSR without
+  densifying any sparse input. Root, single-edge and final-estimator widths are
+  re-checked during prediction and mismatches surface as node-attributed
+  `SKError::ShapeMismatch` or `SKError::UnsupportedRepresentation`. Every stage
+  runs over `SKFeatureBlock`, so dense, CSR and mixed graphs fit and predict
+  without implicit densification, and the fitted graph is `Send + Sync` for
+  concurrent inference. Scalar compatibility is enforced at compile time: a
+  graph shares one `SKFloat`, so a stage implemented for another scalar cannot
+  be inserted.
+- `SKMiniBatchKMeans<F>` in `sciencekit_cluster` (spec `mini-batch-k-means`):
+  builder-only mini-batch k-means with `number_of_clusters` (default `8`),
+  `initialization` (`KMeansPlusPlus` default, `Random`), `number_of_initializations`
+  (default `3`), `batch_size` (default `1024`), `initialization_batch_size`
+  (default `3 × batch_size`), `maximum_number_of_iterations` (default `100`),
+  `maximum_number_of_epochs` (default `1`), `tolerance` (default `0`, disabling
+  early stopping), `reassignment_ratio` (default `0.01`), `random_seed`
+  (default `0`), `backend` (default `Faer`) and `execution_mode` (default
+  `Automatic`). In-memory `fit`/`fit_batch` and incremental `partial_fit`
+  update dense centers with the exact per-center learning rate
+  `1 / (count[center] + 1)` through a closed form that touches only stored CSR
+  entries, initialize from a deterministic bounded sample with best-of-`n_init`
+  inertia selection, and deterministically reassign the most distant batch point
+  to centers below `reassignment_ratio × mean_count`. `fit_streaming` drives an
+  `SKSourceProvider` through the shared prefetch executor, opening a fresh source
+  per epoch for reopenable providers up to `maximum_number_of_epochs` and
+  stopping early when a positive tolerance is met. The fitted
+  `SKMiniBatchKMeansModel<F>` exposes dense `cluster_centers`, per-center
+  `counts`, typed non-noise training `labels` for in-memory fits, `inertia`,
+  `batches_processed`, `epochs_consumed` and `converged`, implements
+  `SKUnsupervisedFit`, `SKClustererPredictor<F>` (`predict_clusters`/`predict`),
+  Euclidean `transform`, `fit_predict` and format-agnostic
+  `SKExportable`/`SKImportable` state emission. Dense and CSR parity is verified
+  byte-for-byte without densification, along with thread-count-invariant
+  determinism, lock-free concurrent prediction, f32/f64 independence, validation
+  and acceptance suites (50 000-row one-shot and multi-epoch streams, full
+  KMeans comparison and clustering metrics).
+
+- Extended binary Safetensors internal model format (spec `safetensors-format`):
+  `sciencekit_interop::safetensors` adds `SKSafetensorsWriter` /
+  `SKSafetensorsWriterBuilder`, `SKSafetensorsReader` /
+  `SKSafetensorsReaderBuilder`, `SKShardPlan` / `SKShardPlanBuilder`,
+  `SKShardIndex`, `SKAppendOutcome`, `SKSafetensorsCompression` (`None` default,
+  `Gzip`, `Brotli`, `Snappy`), `SK_SAFETENSORS_FORMAT_VERSION` (`1`),
+  `SK_SAFETENSORS_PADDING_TENSOR_NAME` (`"__padding__"`) and convenience entry
+  points (`sk_write_model_state_safetensors`,
+  `sk_write_model_state_safetensors_file`, `sk_read_model_state_safetensors`,
+  `sk_read_model_state_safetensors_file`, `sk_export_model_safetensors`,
+  `sk_export_model_safetensors_file`, `sk_import_model_safetensors`,
+  `sk_import_model_safetensors_file`, `sk_append_safetensors_tensor`,
+  `sk_read_safetensors_shard_index`, `sk_safetensors_index_path` and
+  `sk_detect_safetensors_compression`) over `sciencekit_common::SKModelState`.
+  Single-file output is standard HuggingFace Safetensors (`8`-byte little-endian
+  header length, UTF-8 JSON header carrying `sciencekit.*` metadata, class
+  labels and typed hyperparameters, plus safe little-endian `F32`, `F64`, `I64`
+  and `BOOL` tensor payloads without `unsafe`). Large states split into
+  immutable shards plus an atomically renamed `.safetensors.index.json` manifest
+  that the reader merges transparently; reserved header (`0x20`) and payload
+  (`__padding__`) space enables in-place seek appends without rewriting existing
+  tensor bytes, spilling automatically to a new shard when exhausted; and
+  optional Cargo features `compression-gzip`, `compression-brotli` and
+  `compression-snappy` wrap whole files (`.safetensors.gz`,
+  `.safetensors.brotli`, `.snappy.safetensors`) with magic-byte auto-detection
+  and explicit `UnsupportedOperation` guidance when disabled.
+
+- `sciencekit_outlier` sub-crate and `sciencekit_common` outlier prediction
+  contract (specs `outlier-prediction` and `isolation-forest`): one-byte typed
+  `SKOutlierLabel { Inlier, Outlier }` with explicit external `to_i64` /
+  `from_i64` conversions (`1` / `-1`), `SKOutlierPredictor<F>` (`offset`,
+  `score_samples`, `decision_function`, `predict`), and builder-only
+  `SKIsolationForest<F>` (`SKIsolationForestBuilder<F>`) with
+  `number_of_trees` (default `100`), `maximum_samples`
+  (`SKIsolationMaximumSamples::Auto` default, meaning `min(256, n_samples)`,
+  plus `Count` and `Fraction`), `contamination` (`SKContamination::Auto`
+  default with fixed offset `-0.5`, or `Fraction` in `(0, 0.5]` selecting the
+  exact linear-interpolated training quantile), `maximum_features` (default
+  `1.0`), `bootstrap` (default `false`), `random_seed` (default `0`), `backend`
+  (default `Faer`) and `execution_mode` (default `Automatic`). Fitting derives
+  independent per-tree SplitMix64 sub-seeds (`SK_RANDOM_DOMAIN_TREE` /
+  `SK_RANDOM_DOMAIN_STAGE`), grows random isolation trees up to
+  `ceil(log2(subsample_size))` over the shared `sciencekit_tree::SKTree` node
+  layout (`SKTree::leaf_and_depth_for`), gathers sparse CSR subsamples directly
+  into compact CSC columns without densification, and returns a `Send + Sync`
+  `SKIsolationForestModel<F>` exposing `anomaly_scores`
+  (`2^(-E[h(x)] / c(n))`), `score_samples` (`-anomaly_score`),
+  `decision_function` (`score_samples - offset`), typed `predict`, `offset`,
+  `subsample_size`, `feature_count`, `number_of_trees`, `tree`, `backend` and
+  `execution_mode`, alongside `SKIsolationForest::fit_predict`. Companion and
+  acceptance suites (up to 20 000 rows) verify hand-computed harmonic path
+  lengths, four-way dense/CSR equivalence, scalar invariance (`f32`/`f64`),
+  thread-count-invariant determinism, lock-free concurrent serving and
+  evaluation metrics (`sk_roc_auc_score`, `sk_average_precision_score`,
+  `sk_accuracy_score`, `sk_f1_score`) via `sciencekit_metrics`.
+
+- `sciencekit_ensemble` gains generic bootstrap-aggregating meta-estimators
+  (spec `bagging-ensembles`): `SKBaggingClassifier<B>` and
+  `SKBaggingRegressor<B>`, builder-only (`SKBaggingClassifierBuilder<B>`,
+  `SKBaggingRegressorBuilder<B>`) over any configured base estimator `B`
+  satisfying `SKSupervisedFit<F>` whose fitted model implements
+  `SKClassifierPredictor<F>` or `SKRegressorPredictor<F>`, with
+  `number_of_estimators` (default `10`), `maximum_samples` (`All` default,
+  `Count`, `Fraction`), `maximum_features` (`All` default, `Count`, `Fraction`,
+  `Sqrt`, `Log2`), `bootstrap` (default `true`), `bootstrap_features` (default
+  `false`), `oob_score` (default `false`), `random_seed` (default `0`),
+  `backend` (default `Faer`) and `execution_mode` (default `Automatic`). Fit
+  reuses the shared seeded bootstrap sampler and derives independent
+  per-estimator feature-subset seeds to train lock-free parallel rayon slots
+  without densifying borrowed CSR matrices, surfaces base estimator rejections
+  through `SKBaggingError<E>` (`Central` vs `Base`), routes inference and
+  out-of-bag accuracy / R² evaluation exclusively through each member's stored
+  feature subset without leaking excluded columns, averages canonical class
+  probabilities with smallest-index tie-breaking or continuous responses across
+  deterministic row chunks, and implements `SKExportable<F>` whenever the base
+  model is exportable.
 
 - `sciencekit_pipeline` gains parallel feature branching and column-wise
   concatenation (spec `feature-union`): `SKFeatureUnion` and

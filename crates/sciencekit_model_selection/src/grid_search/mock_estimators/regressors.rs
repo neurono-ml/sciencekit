@@ -1,7 +1,10 @@
 //! Constant and sparse-only mock regressors.
 
 use ndarray::Array1;
-use sciencekit_common::{SKDataView, SKError, SKRegressorPredictor, SKSupervisedFit, SKTargetView};
+use sciencekit_common::{
+    SKDataView, SKError, SKExportable, SKModelMetadata, SKModelState, SKRegressorPredictor,
+    SKSupervisedFit, SKTargetView, SKTensor, SKTensorDataType,
+};
 
 use super::helpers::sk_number_of_rows;
 
@@ -85,6 +88,15 @@ impl SKRegressorPredictor<f64> for SKMockConstantRegressorModel {
     {
         let features = features.try_into()?;
         Ok(Array1::from_elem(sk_number_of_rows(features), self.value))
+    }
+}
+
+impl SKExportable<f64> for SKMockConstantRegressorModel {
+    fn export_state(&self) -> Result<SKModelState<f64>, SKError> {
+        let metadata =
+            SKModelMetadata::new("mock.constant_regressor", 1, SKTensorDataType::F64, 1)?;
+        let constant = SKTensor::floating("constant", Vec::new(), vec![self.value])?;
+        SKModelState::new(metadata, vec![constant])
     }
 }
 

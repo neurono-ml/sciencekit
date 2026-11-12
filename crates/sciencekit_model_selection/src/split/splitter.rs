@@ -20,4 +20,9 @@ pub trait SKSplitter<F: SKFloat> {
         targets: Option<SKTargetView<'_, F>>,
         groups: Option<ArrayView1<'_, i64>>,
     ) -> Result<Vec<SKIndexSplit>, SKError>;
+
+    /// Whether subsampling ahead of this splitter should preserve target class proportions.
+    fn requires_stratification(&self) -> bool {
+        false
+    }
 }
