@@ -316,4 +316,10 @@ telemetry in `sciencekit_telemetry`: builder-validated OTLP gRPC and HTTP config
 resource metadata propagation, error-enriched trace spans, trace-correlated structured logs,
 closed-vocabulary operation metrics and the process-wide `SKTelemetry` `init`, `force_flush`,
 `shutdown` and `Drop` lifecycle with a silent zero-traffic default.
-
+The [Polars and DataFusion sources chapter](./ch57-polars-datafusion-sources.html) adds the
+feature-gated tabular sources in `sciencekit_interop`: the materialized
+`SKTabularDataset<F>` with `SKColumnKind`, `SKTabularSourceConfig` and the owned
+`SKNominalMatrixOwned`; Polars `DataFrame`/`LazyFrame` conversion with categorical labels read
+from their strings; DataFusion 46 `DataFrame`/`RecordBatch` conversion plus a true
+record-batch stream and Parquet-through-DataFusion; and the missing-value mapping shared by
+both engines.
