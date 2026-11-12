@@ -17,6 +17,7 @@ pub use partition_size::SKPartitionSize;
 pub use sk_train_test_split::sk_train_test_split;
 pub use split::SKTrainTestSplit;
 pub use splitter::SKTrainTestSplitter;
+pub(crate) use stratification::sk_allocate_class_counts;
 
 #[cfg(test)]
 mod stratified_tests;
