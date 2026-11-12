@@ -28,4 +28,4 @@
 - [x] 4.3 TDD `f32` and `f64` throughout; cast reporting.
 - [x] 4.4 Run the CI gates: `cargo fmt --all --check`, `cargo clippy --workspace --all-targets`, `cargo test --workspace`.
 - [x] 4.5 Add the memory-mapped sources book chapter and the `Development Explained` chapter on out-of-core random access; register in `SUMMARY.md`.
-- [ ] 4.6 Update `CHANGELOG.md` and open the ADR issue for this change.
+- [x] 4.6 Update `CHANGELOG.md` and open the ADR issue for this change.
