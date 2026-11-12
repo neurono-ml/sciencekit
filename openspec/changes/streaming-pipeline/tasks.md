@@ -28,7 +28,7 @@
   `cargo test -p sciencekit_pipeline streaming_finalizer`.
 - [x] 3.4 Add source-error and stage-error propagation tests; verify with
   `cargo test -p sciencekit_pipeline streaming_errors`.
-- [ ] 3.5 Add repeated-fit determinism, concurrent transform and `Send + Sync` tests;
+- [x] 3.5 Add repeated-fit determinism, concurrent transform and `Send + Sync` tests;
   verify with `cargo test -p sciencekit_pipeline streaming_concurrency`.
 
 ## 4. Acceptance and review
