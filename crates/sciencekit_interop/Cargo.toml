@@ -72,6 +72,11 @@ arrow = [
     "dep:arrow-select",
     "dep:parquet",
 ]
+# The Parquet file path is part of the Arrow adapter (`arrow`), which owns the
+# `parquet` 58 dependency. The alias exists because the proposal and the task
+# book document `--features parquet` as a selectable capability; it enables the
+# Arrow/Parquet reader rather than a second, duplicate dependency.
+parquet = ["arrow"]
 polars = ["dep:polars", "dep:psm"]
 datafusion = ["dep:datafusion", "dep:comfy-table", "dep:futures"]
 memmap = []
