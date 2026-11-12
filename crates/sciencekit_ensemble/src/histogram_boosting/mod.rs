@@ -49,3 +49,6 @@ mod representation_tests;
 mod stage_tests;
 #[cfg(test)]
 mod validation_tests;
+
+#[cfg(test)]
+mod acceptance_tests;

@@ -24,13 +24,11 @@ pub fn sk_scan_categorical_feature<F: SKFloat>(
     }
     let mut ordering: Vec<usize> = (0..number_of_categories).collect();
     ordering.sort_by(|&left, &right| {
-        let left_ratio = histogram.gradient_sum(left as u8)
-            / (histogram.hessian_sum(left as u8) + l2_regularization);
-        let right_ratio = histogram.gradient_sum(right as u8)
-            / (histogram.hessian_sum(right as u8) + l2_regularization);
+        let left_ratio = sk_gradient_ratio(histogram, left as u8, l2_regularization);
+        let right_ratio = sk_gradient_ratio(histogram, right as u8, l2_regularization);
         right_ratio
             .partial_cmp(&left_ratio)
-            .expect("finite ratios")
+            .unwrap_or(std::cmp::Ordering::Equal)
     });
     let (total_gradient, total_hessian) =
         (histogram.total_gradient(), histogram.total_hessian());
@@ -79,4 +77,23 @@ pub fn sk_scan_categorical_feature<F: SKFloat>(
         }
     });
     best
+}
+
+/// Gradient-to-Hessian ratio of one category bin, with a deterministic
+/// infinity when the damped Hessian is zero.
+fn sk_gradient_ratio<F: SKFloat>(
+    histogram: &SKFeatureHistogram<F>,
+    bin: u8,
+    l2_regularization: F,
+) -> F {
+    let denominator = histogram.hessian_sum(bin) + l2_regularization;
+    if denominator > F::zero() {
+        histogram.gradient_sum(bin) / denominator
+    } else if histogram.gradient_sum(bin) > F::zero() {
+        F::infinity()
+    } else if histogram.gradient_sum(bin) < F::zero() {
+        F::neg_infinity()
+    } else {
+        F::zero()
+    }
 }
