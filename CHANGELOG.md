@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Feature-gated tabular sources in `sciencekit_interop` (spec
+  `tabular-sources`): the materialized `SKTabularDataset<F>` with a projected
+  `SKTabularSchema`, a dense or sparse `SKFeatureBlock` and an owned
+  `SKNominalMatrixOwned` categorical block; `SKColumnKind` (`Numeric`,
+  `Categorical`, `Boolean`, `Ignored`) and the builder-validated
+  `SKTabularSourceConfig`; `SKTabularBatch::to_tabular_dataset` applying one
+  missing-value policy (numeric nulls to `NaN`, categorical nulls to
+  `SK_CATEGORICAL_MISSING_CODE`) and rejecting unsupported dtypes by column.
+  The optional `polars` feature converts Polars 0.46 `DataFrame` values and
+  exposes a reopenable sliced `LazyFrame` batch source; the optional
+  `datafusion` feature converts DataFusion 46 `DataFrame`/`RecordBatch` values,
+  streams a physical plan as record batches, and reads Parquet files through a
+  temporary session. Both engines keep their own Arrow vocabulary behind the
+  neutral column contract, and the default build resolves neither dependency.
+
 - `sciencekit_telemetry` sub-crate (spec `telemetry-export`): opt-in
   OpenTelemetry trace, log and metric export pipelines and process-wide
   lifecycle over `opentelemetry 0.32`, `opentelemetry_sdk 0.32`,
