@@ -279,6 +279,13 @@ The [outlier detection chapter](./ch48-outlier-detection.html) closes Wave 5 in
 `SKOutlierPredictor<F>` contract, seeded random isolation trees over `SKTree`, harmonic BST
 path-length scoring, `Auto` and quantile contamination offsets, and non-densifying CSR-to-CSC
 representation parity.
+The [mini-batch k-means chapter](./ch51-minibatch-kmeans-streaming.html) adds
+`SKMiniBatchKMeans<F>` in `sciencekit_cluster`: the exact per-center learning-rate update in
+closed form over dense and non-densified CSR batches, seeded bounded-sample initialization with
+best-of-`n_init` inertia selection, deterministic low-count center reassignment, incremental
+`partial_fit`, multi-epoch `fit_streaming` over reopenable providers with positive-tolerance
+early stopping, and the typed `SKMiniBatchKMeansModel<F>` prediction, transform and state
+export surface.
 The [extended Safetensors format chapter](./ch54-safetensors-internal-format.html) adds the
 binary `SKModelState` persistence adapter in `sciencekit_interop::safetensors`: standard
 single-file Safetensors compatibility, `sciencekit.*` header metadata, `SKShardPlan`
