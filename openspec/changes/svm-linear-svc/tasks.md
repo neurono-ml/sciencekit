@@ -15,7 +15,7 @@
 - [x] 2.1 Write tests for the dense design row dot and scaled-row accumulation on a
   hand-computed matrix, confirm the failure, then implement `design.rs` for owned dense
   data; verify with `cargo test -p sciencekit_svm linear_svc_design`.
-- [ ] 2.2 Add the borrowed CSR design path with tests proving stored-entry-only row dots
+- [x] 2.2 Add the borrowed CSR design path with tests proving stored-entry-only row dots
   and no densification; verify with `cargo test -p sciencekit_svm linear_svc_design`.
 - [ ] 2.3 Write tests for the dual coordinate update on a two-point problem and for the
   projected gradient stopping rule, then implement `solver.rs` for the L1-hinge loss;
