@@ -2,7 +2,7 @@
 
 ## 1. Scaffold and binned dataset
 
-- [ ] 1.1 Add `bitvec` to the workspace dependencies and create the
+- [x] 1.1 Add `bitvec` to the workspace dependencies and create the
   `histogram_boosting` module scaffold (`mod.rs`, `binning`, `histogram`, `growth`);
   verify `cargo test -p sciencekit_ensemble` compiles.
 - [ ] 1.2 Write and implement quantile edge derivation (at most `max_bins`, deterministic
