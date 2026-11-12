@@ -68,9 +68,13 @@ fn sk_consider(root: &Path, path: &Path, sources: &mut Vec<StreamingSource>) {
         .unwrap_or(path)
         .to_string_lossy()
         .replace('\\', "/");
-    if relative.starts_with("sciencekit_pipeline/src/streaming_coverage/") {
+    if relative.starts_with("sciencekit_pipeline/src/streaming_coverage/")
+        || relative.starts_with("sciencekit_pipeline/src/streaming/")
+    {
         // The audit module's own source mentions the method names it searches
-        // for; other files in the crate are still scanned.
+        // for, and the streaming-pipeline contract plus its fixtures are
+        // pipeline stages rather than estimator streaming entry points; other
+        // files in the crate are still scanned.
         return;
     }
     sources.push(StreamingSource {
@@ -104,6 +108,7 @@ fn the_source_scan_reaches_every_streaming_crate() {
         "sciencekit_preprocessing/",
         "sciencekit_impute/",
         "sciencekit_linear_model/",
+        "sciencekit_decomposition/",
         "sciencekit_cluster/",
     ] {
         assert!(

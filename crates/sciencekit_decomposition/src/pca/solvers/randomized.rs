@@ -7,7 +7,7 @@ use sciencekit_math::backend::SKBackendSelection;
 use sciencekit_math::decomposition::SKRandomizedSvdBuilder;
 
 use super::state::{SKPCADecomposition, sk_from_singular_values};
-use crate::pca::centering::sk_view_dimensions;
+use crate::pca::validation::sk_view_dimensions;
 
 /// Fits PCA via the deterministic randomized SVD kernel (`SKRandomizedSvdBuilder`
 /// / `sk_randomized_svd`) using implicit centering so sparse CSR inputs never
