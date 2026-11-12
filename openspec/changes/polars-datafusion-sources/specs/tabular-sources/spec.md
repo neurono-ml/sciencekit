@@ -62,7 +62,8 @@ behind their features, preserving schema and row order.
 ### Requirement: Missing values
 
 Numeric missing values SHALL map to NaN; categorical missing values SHALL map to the
-documented missing sentinel; nulls in unsupported columns SHALL be rejected.
+documented missing sentinel; nulls in unsupported columns SHALL be rejected with
+`NullValueInColumn` under the reject policy.
 
 #### Scenario: Numeric null
 
@@ -76,14 +77,15 @@ documented missing sentinel; nulls in unsupported columns SHALL be rejected.
 
 ### Requirement: Validation and concurrency
 
-Conversions SHALL reject empty tables, missing selected columns, unsupported dtypes,
-schema/row mismatches and non-finite values outside the missing policy; converted sources
-SHALL be safely shareable.
+Conversions SHALL reject empty tables with `EmptyInput`, missing selected columns with
+`UnknownColumn`, unsupported dtypes with `UnsupportedColumnType`, schema/row mismatches with
+`SchemaMismatch`/`UnevenColumnLengths`, and infinite values outside the missing policy with
+`NonFiniteValue`; converted sources SHALL be safely shareable.
 
 #### Scenario: Unsupported dtype
 
 - **WHEN** a selected column has an unsupported dtype
-- **THEN** conversion returns `UnsupportedRepresentation` naming the column
+- **THEN** conversion returns `UnsupportedColumnType` naming the column
 
 #### Scenario: Concurrent reads agree
 

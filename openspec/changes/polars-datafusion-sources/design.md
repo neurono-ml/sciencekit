@@ -52,7 +52,8 @@ streaming path never collects the whole dataset.
 ### Decision 4 — Missing values
 
 Numeric nulls → NaN. Categorical nulls → `SK_CATEGORICAL_MISSING_CODE`. Nulls in ignored
-columns are fine; nulls in unsupported selected columns return `UnsupportedRepresentation`.
+columns are fine; nulls in unsupported selected columns return `NullValueInColumn` under
+the reject policy, and infinite values return `NonFiniteValue`.
 Non-finite numeric values outside NaN follow the normal estimator policy.
 
 ### Decision 5 — Version pins and features
