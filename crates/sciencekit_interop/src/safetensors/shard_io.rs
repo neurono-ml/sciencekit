@@ -1,0 +1,189 @@
+//! Shard file writing, shard append and sharded state merging (spec `safetensors-format`).
+
+use std::collections::{BTreeMap, BTreeSet};
+use std::fs;
+use std::path::Path;
+
+use sciencekit_common::{SKError, SKFloat, SKModelMetadata, SKModelState, SKTensor};
+
+use super::compression::{SKSafetensorsCompression, compress_safetensors_bytes};
+use super::header::{
+    SK_SAFETENSORS_FORMAT_VERSION, decode_metadata_header, encode_metadata_header,
+};
+use super::padding_encode::SKAppendOutcome;
+use super::shard_index::{
+    shard_file_name_for_number, sk_read_safetensors_shard_index, sk_safetensors_index_path,
+    write_shard_index_atomic,
+};
+use super::shard_plan::{
+    SKShardIndex, SKShardPlan, state_total_payload_bytes, tensor_payload_bytes,
+};
+use super::single_file::{decode_single_file_parts, encode_single_file_bytes};
+
+pub(crate) fn next_available_shard_name(
+    base_path: &Path,
+    existing_shards: &[String],
+    extension: &str,
+) -> String {
+    let taken: BTreeSet<&str> = existing_shards.iter().map(String::as_str).collect();
+    let mut number = 1_usize;
+    loop {
+        let candidate = shard_file_name_for_number(base_path, number, extension);
+        if !taken.contains(candidate.as_str()) {
+            return candidate;
+        }
+        number += 1;
+    }
+}
+
+/// Append `new_tensors` as a new immutable shard on an already-sharded model.
+pub(crate) fn append_to_existing_shard_set<F: SKFloat>(
+    base_path: &Path,
+    index_path: &Path,
+    new_tensors: &[SKTensor<F>],
+    configured_compression: SKSafetensorsCompression,
+    validate_additions: impl FnOnce(&[SKTensor<F>], &BTreeSet<String>) -> Result<(), SKError>,
+) -> Result<SKAppendOutcome, SKError> {
+    let mut index = sk_read_safetensors_shard_index(index_path)?;
+    let metadata: SKModelMetadata = decode_metadata_header::<F>(&index.metadata)?;
+    let existing_names: BTreeSet<String> = index.tensor_to_shard.keys().cloned().collect();
+    validate_additions(new_tensors, &existing_names)?;
+
+    let effective_compression = match configured_compression {
+        SKSafetensorsCompression::None => index
+            .shards
+            .last()
+            .and_then(|name| SKSafetensorsCompression::from_path(Path::new(name)))
+            .or_else(|| SKSafetensorsCompression::from_path(base_path))
+            .unwrap_or_default(),
+        explicit => explicit,
+    };
+    let shard_file = next_available_shard_name(
+        base_path,
+        &index.shards,
+        effective_compression.file_extension(),
+    );
+    let shard_state = SKModelState::new(metadata, new_tensors.to_vec())?;
+    let raw_shard = encode_single_file_bytes(&shard_state)?;
+    let encoded = compress_safetensors_bytes(&raw_shard, effective_compression)?;
+    let parent = index_path.parent().unwrap_or_else(|| Path::new("."));
+    fs::write(parent.join(&shard_file), encoded)?;
+
+    let added_bytes: usize = new_tensors.iter().map(tensor_payload_bytes).sum();
+    let previous_total = index
+        .metadata
+        .get("total_size")
+        .and_then(|value| value.parse::<usize>().ok())
+        .unwrap_or(0);
+    index.metadata.insert(
+        "total_size".to_string(),
+        previous_total.saturating_add(added_bytes).to_string(),
+    );
+    index.shards.push(shard_file.clone());
+    for tensor in new_tensors {
+        index
+            .tensor_to_shard
+            .insert(tensor.name().to_string(), shard_file.clone());
+    }
+    write_shard_index_atomic(index_path, &index)?;
+    Ok(SKAppendOutcome::NewShard { shard_file })
+}
+
+/// Split `state` according to `plan`, writing immutable shards and an atomic index.
+pub(crate) fn write_sharded_state_to_path<F: SKFloat>(
+    state: &SKModelState<F>,
+    base_path: &Path,
+    plan: &SKShardPlan,
+    extension: &str,
+    encode_bytes: impl Fn(&[u8]) -> Result<Vec<u8>, SKError>,
+) -> Result<(), SKError> {
+    let parent = base_path.parent().unwrap_or_else(|| Path::new("."));
+    let groups = plan.partition_state(state);
+    let mut metadata_map = encode_metadata_header::<F>(state.metadata())?;
+    metadata_map.insert(
+        "total_size".to_string(),
+        state_total_payload_bytes(state).to_string(),
+    );
+
+    let mut shards = Vec::with_capacity(groups.len());
+    let mut tensor_to_shard = BTreeMap::new();
+
+    for (zero_based, group) in groups.into_iter().enumerate() {
+        let shard_name = shard_file_name_for_number(base_path, zero_based + 1, extension);
+        let owned_group: Vec<SKTensor<F>> = group.into_iter().cloned().collect();
+        for tensor in &owned_group {
+            tensor_to_shard.insert(tensor.name().to_string(), shard_name.clone());
+        }
+        let shard_state = SKModelState::new(state.metadata().clone(), owned_group)?;
+        let raw_shard = encode_single_file_bytes(&shard_state)?;
+        let final_bytes = encode_bytes(&raw_shard)?;
+        fs::write(parent.join(&shard_name), final_bytes)?;
+        shards.push(shard_name);
+    }
+
+    let index = SKShardIndex {
+        format_version: SK_SAFETENSORS_FORMAT_VERSION,
+        metadata: metadata_map,
+        shards,
+        tensor_to_shard,
+    };
+    let index_path = sk_safetensors_index_path(base_path);
+    write_shard_index_atomic(&index_path, &index)?;
+    if base_path != index_path && base_path.exists() {
+        fs::remove_file(base_path)?;
+    }
+    Ok(())
+}
+
+/// Read every shard listed in `index_path` and merge them into one [`SKModelState`].
+pub(crate) fn read_sharded_state_from_index<F: SKFloat>(
+    index_path: &Path,
+    decode_bytes: impl Fn(&Path, &[u8]) -> Result<Vec<u8>, SKError>,
+) -> Result<SKModelState<F>, SKError> {
+    let index = sk_read_safetensors_shard_index(index_path)?;
+    let metadata = decode_metadata_header::<F>(&index.metadata)?;
+    let parent = index_path.parent().unwrap_or_else(|| Path::new("."));
+
+    let mut merged_tensors = Vec::with_capacity(index.tensor_to_shard.len());
+    let mut seen_tensors = BTreeSet::new();
+    for shard_name in &index.shards {
+        let shard_path = parent.join(shard_name);
+        let raw_bytes = fs::read(&shard_path)?;
+        let uncompressed = decode_bytes(&shard_path, &raw_bytes)?;
+        let (shard_metadata, shard_tensors) = decode_single_file_parts::<F>(&uncompressed)?;
+        if shard_metadata != metadata {
+            return Err(SKError::InvalidHyperparameter {
+                name: "shards",
+                reason: format!(
+                    "shard `{shard_name}` metadata disagrees with shard index metadata"
+                ),
+            });
+        }
+        for tensor in shard_tensors {
+            if !seen_tensors.insert(tensor.name().to_string()) {
+                return Err(SKError::InvalidHyperparameter {
+                    name: "tensor_names",
+                    reason: format!("duplicate tensor `{}` across shards", tensor.name()),
+                });
+            }
+            let expected_shard = index.tensor_to_shard.get(tensor.name());
+            if expected_shard.map(String::as_str) != Some(shard_name.as_str()) {
+                return Err(SKError::InvalidHyperparameter {
+                    name: "weight_map",
+                    reason: format!(
+                        "shard `{shard_name}` carries tensor `{}` not mapped to it in index",
+                        tensor.name()
+                    ),
+                });
+            }
+            merged_tensors.push(tensor);
+        }
+    }
+    if seen_tensors.len() != index.tensor_to_shard.len() {
+        return Err(SKError::InvalidHyperparameter {
+            name: "weight_map",
+            reason: "shard index declares tensors missing from the shard files".to_string(),
+        });
+    }
+    SKModelState::new(metadata, merged_tensors)
+}

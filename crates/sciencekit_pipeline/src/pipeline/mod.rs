@@ -13,6 +13,7 @@ mod regressor;
 
 pub use builder::{SKPipeline, SKPipelineBuilder};
 pub use classifier::SKPipelineClassifierBuilder;
+pub(crate) use fit::sk_fit_final;
 pub use model::{SKPipelineClassifier, SKPipelineRegressor};
 pub use regressor::SKPipelineRegressorBuilder;
 

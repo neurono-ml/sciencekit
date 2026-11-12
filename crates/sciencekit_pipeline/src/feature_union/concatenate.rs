@@ -14,7 +14,7 @@ use super::errors::{SKFeatureUnionMemberError, sk_validate_probe_output};
 /// All-dense outputs produce a dense block; if any member produces a CSR sparse
 /// block, the union produces a CSR sparse block with dense members converted
 /// locally and sparse members shifted by their cumulative column offset.
-pub(super) fn sk_concatenate_blocks<F: SKFloat>(
+pub(crate) fn sk_concatenate_blocks<F: SKFloat>(
     outputs: &[SKFeatureBlock<F>],
     expected_rows: usize,
     expected_widths: &[usize],
