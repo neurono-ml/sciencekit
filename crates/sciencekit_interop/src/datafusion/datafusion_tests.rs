@@ -104,15 +104,63 @@ fn datafusion_missing_values_follow_the_policy() {
         Arc::new(StringArray::from(vec![Some("a"), None])),
     ];
     let record_batch = RecordBatch::try_new(schema, columns).unwrap();
-    let config = SKTabularSourceConfig::builder()
+
+    let numeric_config = SKTabularSourceConfig::builder()
         .column("x", SKColumnKind::Numeric)
-        .column("label", SKColumnKind::Categorical)
         .missing_value_policy(SKMissingValuePolicy::NumericNaN)
         .build()
         .unwrap();
+    let numeric_batch =
+        sk_tabular_batch_from_datafusion_record_batch(&record_batch, &numeric_config, 0, true)
+            .unwrap();
+    let numeric_dataset: SKTabularDataset<f64> =
+        numeric_batch.to_tabular_dataset(&numeric_config).unwrap();
+    match numeric_dataset.features() {
+        SKFeatureBlock::Dense(matrix) => assert!(matrix[[1, 0]].is_nan()),
+        other => panic!("expected a dense block, found {other:?}"),
+    }
+
+    let categorical_config = SKTabularSourceConfig::builder()
+        .column("label", SKColumnKind::Categorical)
+        .missing_value_policy(SKMissingValuePolicy::CategoricalMissingCode)
+        .build()
+        .unwrap();
+    let categorical_batch =
+        sk_tabular_batch_from_datafusion_record_batch(&record_batch, &categorical_config, 0, true)
+            .unwrap();
+    let categorical_dataset: SKTabularDataset<f64> = categorical_batch
+        .to_tabular_dataset(&categorical_config)
+        .unwrap();
+    assert_eq!(
+        categorical_dataset.categorical().unwrap().codes()[[1, 0]],
+        -1
+    );
+}
+
+/// A record batch materializes into the same schema and outputs as a DataFrame.
+#[test]
+fn datafusion_record_batch_matches_the_dataframe_outputs() {
+    let config = mixed_config();
     let batch =
-        sk_tabular_batch_from_datafusion_record_batch(&record_batch, &config, 0, true).unwrap();
-    assert_eq!(batch.number_of_rows(), 2);
+        sk_tabular_batch_from_datafusion_record_batch(&mixed_record_batch(), &config, 0, true)
+            .unwrap();
+    let from_batch: SKTabularDataset<f64> = batch.to_tabular_dataset(&config).unwrap();
+
+    let context = SessionContext::new();
+    let dataframe = context.read_batch(mixed_record_batch()).unwrap();
+    let from_frame: SKTabularDataset<f64> =
+        sk_tabular_dataset_from_dataframe_blocking(dataframe, &config).unwrap();
+
+    assert_eq!(from_batch.schema(), from_frame.schema());
+    assert_eq!(sk_dense_matrix(&from_batch), sk_dense_matrix(&from_frame));
+    assert_eq!(
+        from_batch.categorical().unwrap().codes(),
+        from_frame.categorical().unwrap().codes()
+    );
+    assert_eq!(
+        from_batch.categorical().unwrap().label_table(0),
+        from_frame.categorical().unwrap().label_table(0)
+    );
 }
 
 /// A configured column absent from the batch is a structured error.
@@ -211,6 +259,15 @@ fn datafusion_parquet_converts_with_the_same_rules() {
         sk_tabular_dataset_from_parquet_blocking(&path, &mixed_config()).unwrap();
     assert_eq!(dataset.number_of_rows(), 3);
     assert_eq!(dataset.number_of_categorical_columns(), 1);
+    assert_eq!(
+        sk_dense_matrix(&dataset),
+        ndarray::array![[1.0, 10.0, 1.0], [2.0, 20.0, 0.0], [3.0, 30.0, 1.0]]
+    );
+    assert_eq!(
+        dataset.categorical().unwrap().codes().column(0).to_vec(),
+        vec![0, 1, 0]
+    );
+    assert_eq!(dataset.schema().len(), 4);
 }
 
 /// A materialized dataset is shareable across threads and reads agree.
