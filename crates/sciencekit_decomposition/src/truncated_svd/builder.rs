@@ -9,7 +9,7 @@ use super::core_implementation::SKTruncatedSVD;
 use super::validation::sk_validate_configuration;
 
 /// Builder-only construction surface for [`SKTruncatedSVD`].
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct SKTruncatedSVDBuilder<F: SKFloat> {
     pub(super) state: SKBuilderState,
     pub(super) number_of_components: usize,
@@ -57,7 +57,8 @@ impl<F: SKFloat> SKTruncatedSVDBuilder<F> {
         self
     }
 
-    /// Sets the singular-value tolerance (must be finite and non-negative).
+    /// Sets the solver convergence tolerance (must be finite and non-negative;
+    /// reserved for iterative solvers and ignored by `Randomized`).
     pub fn tolerance(mut self, value: F) -> Self {
         self.tolerance = value;
         self

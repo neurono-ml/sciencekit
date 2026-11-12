@@ -8,7 +8,7 @@ use super::config::SKTruncatedSVDAlgorithm;
 /// Fitted uncentered low-rank factorization state: right singular vectors
 /// (`components`), singular values, explained variance and explained-variance
 /// ratio. Stores no centering vector.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct SKTruncatedSVDModel<F: SKFloat> {
     pub(super) components: Array2<F>,
     pub(super) singular_values: Array1<F>,
@@ -51,7 +51,8 @@ impl<F: SKFloat> SKTruncatedSVDModel<F> {
         self.singular_values.view()
     }
 
-    /// Population variance of each projected component over the training rows.
+    /// Population variance of each projected component over the training rows
+    /// (ordered by the corresponding non-increasing `singular_values`).
     pub fn explained_variance(&self) -> ArrayView1<'_, F> {
         self.explained_variance.view()
     }

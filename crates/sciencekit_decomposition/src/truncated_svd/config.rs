@@ -21,7 +21,7 @@ pub enum SKTruncatedSVDAlgorithm {
 }
 
 /// Validated configuration carried by a built `SKTruncatedSVD` estimator.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub(super) struct SKTruncatedSVDConfiguration<F: SKFloat> {
     /// Number of retained singular components `k` (default `2`).
     pub(super) number_of_components: usize,
@@ -29,7 +29,8 @@ pub(super) struct SKTruncatedSVDConfiguration<F: SKFloat> {
     pub(super) algorithm: SKTruncatedSVDAlgorithm,
     /// Number of power iterations for the randomized range finder (default `5`).
     pub(super) number_of_iterations: usize,
-    /// Solver singular-value tolerance (default `0.0`, finite and non-negative).
+    /// Convergence tolerance for iterative solvers such as ARPACK (default
+    /// `0.0`, finite and non-negative; ignored by `Randomized`).
     pub(super) tolerance: F,
     /// Deterministic seed for the randomized projection (default `0`).
     pub(super) random_seed: u64,

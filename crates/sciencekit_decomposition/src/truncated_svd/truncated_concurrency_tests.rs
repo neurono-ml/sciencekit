@@ -33,7 +33,7 @@ fn deterministic_design(rows: usize, columns: usize) -> Array2<f64> {
 
 fn deterministic_wide_csr(rows: usize, columns: usize) -> CsMat<f64> {
     let mut triplet = TriMat::with_capacity((rows, columns), rows * 4);
-    for row in 0..rows {
+    (0..rows).for_each(|row| {
         triplet.add_triplet(row, row % columns, (row as f64 + 1.0) * 0.75);
         triplet.add_triplet(row, (row * 5 + 3) % columns, -((row % 9) as f64 + 1.25));
         triplet.add_triplet(
@@ -41,7 +41,7 @@ fn deterministic_wide_csr(rows: usize, columns: usize) -> CsMat<f64> {
             (row * 11 + 7) % columns,
             ((row % 4) as f64 + 0.5) * 0.4,
         );
-    }
+    });
     triplet.to_csr()
 }
 
@@ -81,16 +81,7 @@ fn truncated_concurrency_repeated_fits_agree_across_runs_and_rayon_thread_counts
     // Repeated fits on the same thread pool agree bit-for-bit.
     let repeated_a = estimator.fit(&dense).unwrap();
     let repeated_b = estimator.fit(&dense).unwrap();
-    assert_eq!(repeated_a.components(), repeated_b.components());
-    assert_eq!(repeated_a.singular_values(), repeated_b.singular_values());
-    assert_eq!(
-        repeated_a.explained_variance(),
-        repeated_b.explained_variance()
-    );
-    assert_eq!(
-        repeated_a.explained_variance_ratio(),
-        repeated_b.explained_variance_ratio()
-    );
+    assert_eq!(repeated_a, repeated_b);
     assert_eq!(
         repeated_a.transform(&dense).unwrap(),
         repeated_b.transform(&dense).unwrap()
@@ -99,16 +90,7 @@ fn truncated_concurrency_repeated_fits_agree_across_runs_and_rayon_thread_counts
     // 1-thread and 4-thread Rayon pools produce identical models and projections.
     let dense_one = pool_one.install(|| estimator.fit(&dense).unwrap());
     let dense_four = pool_four.install(|| estimator.fit(&dense).unwrap());
-    assert_eq!(dense_one.components(), dense_four.components());
-    assert_eq!(dense_one.singular_values(), dense_four.singular_values());
-    assert_eq!(
-        dense_one.explained_variance(),
-        dense_four.explained_variance()
-    );
-    assert_eq!(
-        dense_one.explained_variance_ratio(),
-        dense_four.explained_variance_ratio()
-    );
+    assert_eq!(dense_one, dense_four);
     let projected_one = pool_one.install(|| dense_one.transform(&dense).unwrap());
     let projected_four = pool_four.install(|| dense_four.transform(&dense).unwrap());
     assert_eq!(projected_one, projected_four);

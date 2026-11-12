@@ -15,7 +15,7 @@ use super::config::{SKTruncatedSVDAlgorithm, SKTruncatedSVDConfiguration};
 /// densifying sparse inputs. Fitting produces a distinct
 /// [`super::SKTruncatedSVDModel`] holding the right singular vectors, singular
 /// values, explained variance and explained-variance ratio.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct SKTruncatedSVD<F: SKFloat> {
     pub(super) configuration: SKTruncatedSVDConfiguration<F>,
 }
@@ -42,7 +42,8 @@ impl<F: SKFloat> SKTruncatedSVD<F> {
         self.configuration.number_of_iterations
     }
 
-    /// Configured singular-value tolerance (default `0.0`).
+    /// Configured solver convergence tolerance (default `0.0`; ignored by
+    /// `Randomized`).
     pub fn tolerance(&self) -> F {
         self.configuration.tolerance
     }
