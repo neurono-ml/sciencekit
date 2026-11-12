@@ -22,6 +22,8 @@ pub use model::{SKLinearSVCModel, SKLinearSvcHead};
 #[cfg(test)]
 mod linear_svc_builder_tests;
 #[cfg(test)]
+mod linear_svc_concurrency_tests;
+#[cfg(test)]
 mod linear_svc_config_tests;
 #[cfg(test)]
 mod linear_svc_design_tests;
