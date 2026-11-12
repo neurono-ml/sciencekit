@@ -7,9 +7,7 @@ use ::datafusion::dataframe::DataFrame;
 use ::datafusion::prelude::{ParquetReadOptions, SessionContext};
 use sciencekit_common::{SKError, SKFloat};
 
-use super::dataframe_conversion::{
-    sk_datafusion_runtime, sk_tabular_dataset_from_dataframe,
-};
+use super::dataframe_conversion::{sk_datafusion_runtime, sk_tabular_dataset_from_dataframe};
 use crate::tabular::{SKTabularDataset, SKTabularSourceConfig};
 
 /// The alias a Parquet file receives inside the temporary DataFusion session.
@@ -29,7 +27,9 @@ pub async fn sk_dataframe_from_parquet(path: &Path) -> Result<DataFrame, SKError
             ParquetReadOptions::default(),
         )
         .await
-        .map_err(|error| SKError::Conversion(format!("registering the Parquet file failed: {error}")))?;
+        .map_err(|error| {
+            SKError::Conversion(format!("registering the Parquet file failed: {error}"))
+        })?;
     context
         .table(SK_PARQUET_TABLE_ALIAS)
         .await

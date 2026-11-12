@@ -31,13 +31,15 @@ pub fn sk_tabular_batch_from_dataframe(
     let mut schema_columns = Vec::with_capacity(selected.len());
     let mut columns = Vec::with_capacity(selected.len());
     for (name, _) in selected {
-        let column = frame.column(name.as_str()).map_err(|_| SKError::UnknownColumn {
-            column: name.clone(),
-            suggestion: format!(
-                "the frame carries: {}",
-                frame.get_column_names_str().join(", ")
-            ),
-        })?;
+        let column = frame
+            .column(name.as_str())
+            .map_err(|_| SKError::UnknownColumn {
+                column: name.clone(),
+                suggestion: format!(
+                    "the frame carries: {}",
+                    frame.get_column_names_str().join(", ")
+                ),
+            })?;
         let series = column.as_materialized_series();
         let logical_type = sk_logical_type_from_polars_data_type(series.dtype(), &name)?;
         schema_columns.push(SKColumnSchema::new(

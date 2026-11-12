@@ -1,10 +1,13 @@
 //! Acceptance tests for the feature-gated tabular engines (spec
 //! `tabular-sources`).
 
+#[cfg(any(feature = "polars", feature = "datafusion"))]
 use sciencekit_common::SKFeatureBlock;
 
+#[cfg(any(feature = "polars", feature = "datafusion"))]
 use crate::tabular::{SKColumnKind, SKTabularDataset, SKTabularSourceConfig};
 
+#[cfg(any(feature = "polars", feature = "datafusion"))]
 fn sk_engine_config() -> SKTabularSourceConfig {
     SKTabularSourceConfig::builder()
         .column("x", SKColumnKind::Numeric)
@@ -14,6 +17,7 @@ fn sk_engine_config() -> SKTabularSourceConfig {
         .unwrap()
 }
 
+#[cfg(any(feature = "polars", feature = "datafusion"))]
 fn sk_dense(dataset: &SKTabularDataset<f64>) -> ndarray::Array2<f64> {
     match dataset.features() {
         SKFeatureBlock::Dense(matrix) => {
@@ -33,7 +37,13 @@ mod polars_acceptance {
 
     fn frame(rows: usize) -> ::polars::prelude::DataFrame {
         let x: Vec<Option<f64>> = (0..rows)
-            .map(|row| if row % 97 == 0 { None } else { Some(row as f64) })
+            .map(|row| {
+                if row % 97 == 0 {
+                    None
+                } else {
+                    Some(row as f64)
+                }
+            })
             .collect();
         let label: Vec<String> = (0..rows).map(|row| format!("label_{}", row % 4)).collect();
         df!(
@@ -49,7 +59,8 @@ mod polars_acceptance {
     fn polars_acceptance_large_table_and_concurrent_reads() {
         for rows in [1_usize, 2_000] {
             let dataset =
-                sk_tabular_dataset_from_dataframe::<f64>(&frame(rows), &sk_engine_config()).unwrap();
+                sk_tabular_dataset_from_dataframe::<f64>(&frame(rows), &sk_engine_config())
+                    .unwrap();
             assert_eq!(dataset.number_of_rows(), rows);
             assert_eq!(dataset.number_of_categorical_columns(), 1);
             let expected = sk_dense(&dataset);
@@ -70,7 +81,8 @@ mod polars_acceptance {
     #[test]
     fn polars_acceptance_lazy_batches_keep_order() {
         let rows = 1_000;
-        let mut source = SKPolarsLazySource::new(frame(rows).lazy(), sk_engine_config(), 128).unwrap();
+        let mut source =
+            SKPolarsLazySource::new(frame(rows).lazy(), sk_engine_config(), 128).unwrap();
         source.open().unwrap();
         let mut position = 0;
         let mut total_rows = 0;
@@ -103,10 +115,17 @@ mod datafusion_acceptance {
             Field::new("ignored", DataType::Int64, true),
         ]));
         let x: Vec<Option<f64>> = (0..rows)
-            .map(|row| if row % 97 == 0 { None } else { Some(row as f64) })
+            .map(|row| {
+                if row % 97 == 0 {
+                    None
+                } else {
+                    Some(row as f64)
+                }
+            })
             .collect();
-        let label: Vec<Option<String>> =
-            (0..rows).map(|row| Some(format!("label_{}", row % 4))).collect();
+        let label: Vec<Option<String>> = (0..rows)
+            .map(|row| Some(format!("label_{}", row % 4)))
+            .collect();
         let ignored: Vec<Option<i64>> = (0..rows).map(|_| Some(0)).collect();
         RecordBatch::try_new(
             schema,

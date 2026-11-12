@@ -76,9 +76,7 @@ pub fn sk_tabular_dataset_from_dataframe_blocking<F: SKFloat>(
             reason: "use the async conversion inside a Tokio runtime".to_string(),
         });
     }
-    sk_datafusion_runtime()?.block_on(sk_tabular_dataset_from_dataframe::<F>(
-        dataframe, config,
-    ))
+    sk_datafusion_runtime()?.block_on(sk_tabular_dataset_from_dataframe::<F>(dataframe, config))
 }
 
 impl<F: SKFloat> TryFrom<(&DataFrame, &SKTabularSourceConfig)> for SKTabularDataset<F> {

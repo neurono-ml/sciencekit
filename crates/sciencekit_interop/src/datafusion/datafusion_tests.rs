@@ -27,7 +27,11 @@ fn mixed_record_batch() -> RecordBatch {
     let columns: Vec<ArrayRef> = vec![
         Arc::new(Float64Array::from(vec![Some(1.0), Some(2.0), Some(3.0)])),
         Arc::new(Int64Array::from(vec![Some(10), Some(20), Some(30)])),
-        Arc::new(BooleanArray::from(vec![Some(true), Some(false), Some(true)])),
+        Arc::new(BooleanArray::from(vec![
+            Some(true),
+            Some(false),
+            Some(true),
+        ])),
         Arc::new(StringArray::from(vec![Some("a"), Some("b"), Some("a")])),
         Arc::new(Float64Array::from(vec![Some(9.0), Some(9.0), Some(9.0)])),
     ];
@@ -48,9 +52,13 @@ fn mixed_config() -> SKTabularSourceConfig {
 /// Record batches map numeric, integer, boolean and text columns in order.
 #[test]
 fn datafusion_record_batch_maps_columns_in_config_order() {
-    let batch =
-        sk_tabular_batch_from_datafusion_record_batch(&mixed_record_batch(), &mixed_config(), 0, true)
-            .unwrap();
+    let batch = sk_tabular_batch_from_datafusion_record_batch(
+        &mixed_record_batch(),
+        &mixed_config(),
+        0,
+        true,
+    )
+    .unwrap();
     assert_eq!(batch.number_of_rows(), 3);
     assert_eq!(batch.number_of_columns(), 4);
     assert!(batch.schema().column("note").is_none());
@@ -123,9 +131,16 @@ fn datafusion_record_batch_rejects_an_unknown_column() {
 /// An unsupported dtype is rejected by column name.
 #[test]
 fn datafusion_record_batch_rejects_an_unsupported_dtype() {
-    let schema = Arc::new(Schema::new(vec![Field::new("when", DataType::Date32, true)]));
-    let record_batch =
-        RecordBatch::try_new(schema, vec![Arc::new(Date32Array::from(vec![1])) as ArrayRef]).unwrap();
+    let schema = Arc::new(Schema::new(vec![Field::new(
+        "when",
+        DataType::Date32,
+        true,
+    )]));
+    let record_batch = RecordBatch::try_new(
+        schema,
+        vec![Arc::new(Date32Array::from(vec![1])) as ArrayRef],
+    )
+    .unwrap();
     let config = SKTabularSourceConfig::builder()
         .column("when", SKColumnKind::Numeric)
         .build()
@@ -169,7 +184,9 @@ fn mixed_strided_batch() -> RecordBatch {
     let schema = Arc::new(Schema::new(vec![Field::new("x", DataType::Float64, true)]));
     RecordBatch::try_new(
         schema,
-        vec![Arc::new(Float64Array::from((0..6).map(|v| v as f64).collect::<Vec<_>>())) as ArrayRef],
+        vec![Arc::new(Float64Array::from(
+            (0..6).map(|v| v as f64).collect::<Vec<_>>(),
+        )) as ArrayRef],
     )
     .unwrap()
 }
@@ -181,9 +198,12 @@ fn datafusion_parquet_converts_with_the_same_rules() {
     let path = directory.path().join("fixture.parquet");
     {
         let file = std::fs::File::create(&path).unwrap();
-        let mut writer =
-            ::datafusion::parquet::arrow::ArrowWriter::try_new(file, mixed_record_batch().schema(), None)
-                .unwrap();
+        let mut writer = ::datafusion::parquet::arrow::ArrowWriter::try_new(
+            file,
+            mixed_record_batch().schema(),
+            None,
+        )
+        .unwrap();
         writer.write(&mixed_record_batch()).unwrap();
         writer.close().unwrap();
     }

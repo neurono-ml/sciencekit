@@ -19,8 +19,8 @@ mod stream_source;
 pub use batch_conversion::sk_tabular_batch_from_datafusion_record_batch;
 pub use column_conversion::sk_column_data_from_datafusion_array;
 pub use dataframe_conversion::{
-    sk_datafusion_runtime, sk_tabular_batches_from_dataframe,
-    sk_tabular_dataset_from_dataframe, sk_tabular_dataset_from_dataframe_blocking,
+    sk_datafusion_runtime, sk_tabular_batches_from_dataframe, sk_tabular_dataset_from_dataframe,
+    sk_tabular_dataset_from_dataframe_blocking,
 };
 pub use dtype_mapping::sk_logical_type_from_datafusion_data_type;
 pub use parquet_conversion::{

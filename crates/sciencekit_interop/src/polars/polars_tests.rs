@@ -106,8 +106,7 @@ fn polars_dataframe_rejects_an_unknown_column() {
         .column("absent", SKColumnKind::Numeric)
         .build()
         .unwrap();
-    let error =
-        sk_tabular_batch_from_dataframe(&mixed_frame(), &config, 0, true).unwrap_err();
+    let error = sk_tabular_batch_from_dataframe(&mixed_frame(), &config, 0, true).unwrap_err();
     assert!(matches!(error, SKError::UnknownColumn { .. }));
 }
 
@@ -119,8 +118,7 @@ fn polars_dataframe_rejects_an_unsupported_dtype() {
         .column("blob", SKColumnKind::Numeric)
         .build()
         .unwrap();
-    let error =
-        sk_tabular_batch_from_dataframe(&frame, &config, 0, true).unwrap_err();
+    let error = sk_tabular_batch_from_dataframe(&frame, &config, 0, true).unwrap_err();
     match error {
         SKError::UnsupportedColumnType { column, .. } => assert_eq!(column, "blob"),
         other => panic!("expected UnsupportedColumnType, found {other:?}"),

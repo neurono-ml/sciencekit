@@ -40,14 +40,13 @@ pub fn sk_logical_type_from_polars_data_type(
             "null",
             "drop all-null columns or cast them to a concrete type before import",
         )),
-        DataType::Date
-        | DataType::Datetime(_, _)
-        | DataType::Duration(_)
-        | DataType::Time => Err(sk_unsupported(
-            column_name,
-            "temporal",
-            "convert the temporal column to a numeric epoch column before import",
-        )),
+        DataType::Date | DataType::Datetime(_, _) | DataType::Duration(_) | DataType::Time => {
+            Err(sk_unsupported(
+                column_name,
+                "temporal",
+                "convert the temporal column to a numeric epoch column before import",
+            ))
+        }
         DataType::List(_) => Err(sk_unsupported(
             column_name,
             "nested",

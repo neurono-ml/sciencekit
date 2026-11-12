@@ -91,13 +91,13 @@ fn sk_integer_value(column_name: &str, value: AnyValue<'_>) -> Result<Option<i64
         AnyValue::UInt8(value) => i64::from(value),
         AnyValue::UInt16(value) => i64::from(value),
         AnyValue::UInt32(value) => i64::from(value),
-        AnyValue::UInt64(value) => i64::try_from(value).map_err(|_| {
-            SKError::UnsupportedColumnType {
+        AnyValue::UInt64(value) => {
+            i64::try_from(value).map_err(|_| SKError::UnsupportedColumnType {
                 column: column_name.to_string(),
                 logical_type: "uint64".to_string(),
                 suggestion: "cast the column to int64 or float64 before import".to_string(),
-            }
-        })?,
+            })?
+        }
         _ => return Ok(None),
     };
     Ok(Some(integer))

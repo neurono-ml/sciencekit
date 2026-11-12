@@ -49,6 +49,7 @@ datafusion = { version = "=46.0.0", default-features = false, features = ["parqu
 # 7.2, whose source uses let-chains from Rust 1.88. Pin the last 1.64-compatible
 # release, the same way `psm` is pinned for Polars.
 comfy-table = { version = "=7.1.4", optional = true }
+futures = { version = "0.3", optional = true }
 
 
 [dev-dependencies]
@@ -72,7 +73,7 @@ arrow = [
     "dep:parquet",
 ]
 polars = ["dep:polars", "dep:psm"]
-datafusion = ["dep:datafusion", "dep:comfy-table"]
+datafusion = ["dep:datafusion", "dep:comfy-table", "dep:futures"]
 memmap = []
 compression-gzip = ["dep:flate2"]
 compression-brotli = ["dep:brotli"]
