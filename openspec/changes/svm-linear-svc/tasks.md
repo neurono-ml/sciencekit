@@ -52,7 +52,7 @@
   non-finite values, non-positive `C`, zero tolerance/iteration budget and unsupported
   loss, asserting the exact central error variant; verify with
   `cargo test -p sciencekit_svm linear_svc_validation`.
-- [ ] 4.3 Add repeated-fit determinism and concurrent-prediction tests, plus a
+- [x] 4.3 Add repeated-fit determinism and concurrent-prediction tests, plus a
   `Send + Sync` assertion; verify with `cargo test -p sciencekit_svm linear_svc_concurrency`.
 
 ## 5. Acceptance
