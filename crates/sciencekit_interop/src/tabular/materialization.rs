@@ -55,6 +55,11 @@ impl SKTabularBatch {
     ) -> Result<SKTabularSchema, SKError> {
         let mut columns: Vec<SKColumnSchema> = Vec::new();
         for (name, kind) in config.columns() {
+            if *kind == SKColumnKind::Ignored {
+                // An ignored column may have been dropped by the adapter; it
+                // contributes nothing either way.
+                continue;
+            }
             let index = self
                 .schema()
                 .column_index(name)
@@ -81,9 +86,7 @@ impl SKTabularBatch {
                     ),
                 });
             }
-            if *kind != SKColumnKind::Ignored {
-                columns.push(column.clone());
-            }
+            columns.push(column.clone());
         }
         SKTabularSchema::new(columns)
     }

@@ -21,18 +21,19 @@
 
 #![deny(unsafe_code)]
 #![warn(missing_docs)]
-
 #[cfg(test)]
 mod acceptance;
-
 #[cfg(feature = "arrow")]
 pub mod arrow;
+
 pub mod batch;
 pub mod bridge;
 pub mod columns;
 pub mod json;
 pub mod missing;
 pub mod observability;
+#[cfg(feature = "polars")]
+pub mod polars;
 pub mod safetensors;
 pub mod schema;
 pub mod selection;
