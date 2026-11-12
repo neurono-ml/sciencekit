@@ -32,6 +32,8 @@ mod linear_svc_multiclass_tests;
 #[cfg(test)]
 mod linear_svc_predict_tests;
 #[cfg(test)]
+mod linear_svc_representation_tests;
+#[cfg(test)]
 mod linear_svc_solver_tests;
 #[cfg(test)]
 mod linear_svc_weights_tests;
