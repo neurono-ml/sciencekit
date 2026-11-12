@@ -24,7 +24,7 @@
   equivalent batch pipeline; verify with `cargo test -p sciencekit_pipeline streaming_transform`.
 - [x] 3.2 Add dense/sparse flow and no-densification tests; verify with
   `cargo test -p sciencekit_pipeline streaming_representation`.
-- [ ] 3.3 Implement the bounded batch finalizer and the budget-exceeded error; verify with
+- [x] 3.3 Implement the bounded batch finalizer and the budget-exceeded error; verify with
   `cargo test -p sciencekit_pipeline streaming_finalizer`.
 - [ ] 3.4 Add source-error and stage-error propagation tests; verify with
   `cargo test -p sciencekit_pipeline streaming_errors`.
