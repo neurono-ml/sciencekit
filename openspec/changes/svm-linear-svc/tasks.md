@@ -20,7 +20,7 @@
 - [x] 2.3 Write tests for the dual coordinate update on a two-point problem and for the
   projected gradient stopping rule, then implement `solver.rs` for the L1-hinge loss;
   verify with `cargo test -p sciencekit_svm linear_svc_solver`.
-- [ ] 2.4 Add the L2-squared-hinge loss path (`U = ∞`, diagonal shift `1/(2C)`) and a
+- [x] 2.4 Add the L2-squared-hinge loss path (`U = ∞`, diagonal shift `1/(2C)`) and a
   comparison test proving both losses converge on the same separable fixture; verify with
   `cargo test -p sciencekit_svm linear_svc_solver`.
 - [ ] 2.5 Add the iteration budget and `NotConverged { iterations }` test; verify with
