@@ -6,6 +6,8 @@ use sciencekit_common::{SKDataView, SKError, SKFloat};
 use sciencekit_math::{SKKernel, SKKernelParameters, sk_kernel_matrix};
 use sprs::{CompressedStorage, CsMatView};
 
+use super::validation::sk_svm_view_dimensions;
+
 /// Compute the kernel diagonal `K(x_i, x_i)` for every row of `features`
 /// without materializing the `n × n` matrix.
 pub fn sk_evaluate_kernel_diagonal<F: SKFloat>(
@@ -14,21 +16,22 @@ pub fn sk_evaluate_kernel_diagonal<F: SKFloat>(
 ) -> Result<Vec<F>, SKError> {
     if parameters.kernel == SKKernel::Precomputed {
         let dense = features.as_dense()?;
-        return Ok((0..dense.nrows()).map(|i| dense[[i, i]]).collect());
+        return Ok((0..dense.nrows())
+            .map(|row_index| dense[[row_index, row_index]])
+            .collect());
     }
     if parameters.kernel == SKKernel::RadialBasisFunction {
-        let rows = match features {
-            SKDataView::Dense(dense) => dense.nrows(),
-            SKDataView::Sparse(sparse) => sparse.rows(),
-            _ => 0,
-        };
+        let (rows, _) = sk_svm_view_dimensions(&features)?;
         return Ok(vec![F::one(); rows]);
     }
     let squared_norms: Vec<F> = match features {
         SKDataView::Dense(dense) => dense
             .rows()
             .into_iter()
-            .map(|row| row.iter().fold(F::zero(), |acc, &v| acc + v * v))
+            .map(|row| {
+                row.iter()
+                    .fold(F::zero(), |accumulator, &value| accumulator + value * value)
+            })
             .collect(),
         SKDataView::Sparse(sparse) => {
             if sparse.storage() != CompressedStorage::CSR {
@@ -39,7 +42,11 @@ pub fn sk_evaluate_kernel_diagonal<F: SKFloat>(
             }
             sparse
                 .outer_iterator()
-                .map(|row| row.data().iter().fold(F::zero(), |acc, &v| acc + v * v))
+                .map(|row| {
+                    row.data()
+                        .iter()
+                        .fold(F::zero(), |accumulator, &value| accumulator + value * value)
+                })
                 .collect()
         }
         _ => {
@@ -51,12 +58,12 @@ pub fn sk_evaluate_kernel_diagonal<F: SKFloat>(
     };
     Ok(squared_norms
         .into_iter()
-        .map(|norm_sq| match parameters.kernel {
-            SKKernel::Linear => norm_sq,
+        .map(|squared_norm| match parameters.kernel {
+            SKKernel::Linear => squared_norm,
             SKKernel::Polynomial => {
-                (parameters.gamma * norm_sq + parameters.coef0).powi(parameters.degree as i32)
+                (parameters.gamma * squared_norm + parameters.coef0).powi(parameters.degree as i32)
             }
-            SKKernel::Sigmoid => (parameters.gamma * norm_sq + parameters.coef0).tanh(),
+            SKKernel::Sigmoid => (parameters.gamma * squared_norm + parameters.coef0).tanh(),
             SKKernel::RadialBasisFunction | SKKernel::Precomputed => F::one(),
         })
         .collect())

@@ -1,8 +1,18 @@
 //! Input validation shared by `SKSVC` and `SKSVR`
 //! (spec `support-vector-machines`).
 
-use sciencekit_common::{SKDataView, SKError, SKFloat};
-use sciencekit_math::{SKKernel, sk_precomputed_kernel_matrix};
+use std::mem::size_of;
+use std::sync::OnceLock;
+
+use sciencekit_common::execution::SKAccessPattern;
+use sciencekit_common::{
+    SKBuilderState, SKDataView, SKError, SKExecutionContext, SKExecutionMode, SKExecutionPlan,
+    SKFloat,
+};
+use sciencekit_math::{
+    SK_KERNEL_PARALLEL_GRAIN, SKKernel, sk_precomputed_kernel_matrix,
+    sk_validate_precomputed_query_kernel,
+};
 use sprs::CompressedStorage;
 
 /// Dimensions `(rows, columns)` of a dense or CSR feature view.
@@ -63,23 +73,39 @@ pub fn sk_validate_svm_training_features<F: SKFloat>(
     kernel: SKKernel,
     operation: &'static str,
 ) -> Result<(usize, usize), SKError> {
+    if kernel == SKKernel::Precomputed {
+        let dense = features.as_dense()?;
+        let (rows, columns) = dense.dim();
+        if rows == 0 || columns == 0 {
+            return Err(SKError::EmptyInput { operation });
+        }
+        sk_precomputed_kernel_matrix(features, rows)?;
+        return Ok((rows, columns));
+    }
     let (rows, columns) = sk_svm_view_dimensions(&features)?;
     if rows == 0 || columns == 0 {
         return Err(SKError::EmptyInput { operation });
     }
     sk_validate_svm_finiteness(&features)?;
-    if kernel == SKKernel::Precomputed {
-        sk_precomputed_kernel_matrix(features, rows)?;
-    }
     Ok((rows, columns))
 }
 
-/// Validate query features against the fitted feature count.
+/// Validate query features against the fitted feature count and kernel kind.
 pub fn sk_validate_svm_query_features<F: SKFloat>(
     features: SKDataView<'_, F>,
+    kernel: SKKernel,
     expected_columns: usize,
     operation: &'static str,
 ) -> Result<(usize, usize), SKError> {
+    if kernel == SKKernel::Precomputed {
+        let dense = features.as_dense()?;
+        let (rows, columns) = dense.dim();
+        if rows == 0 {
+            return Err(SKError::EmptyInput { operation });
+        }
+        sk_validate_precomputed_query_kernel(features, expected_columns)?;
+        return Ok((rows, columns));
+    }
     let (rows, columns) = sk_svm_view_dimensions(&features)?;
     if rows == 0 {
         return Err(SKError::EmptyInput { operation });
@@ -94,4 +120,41 @@ pub fn sk_validate_svm_query_features<F: SKFloat>(
     }
     sk_validate_svm_finiteness(&features)?;
     Ok((rows, columns))
+}
+
+fn sk_cached_host_probe() -> (u64, usize) {
+    static HOST_PROBE: OnceLock<(u64, usize)> = OnceLock::new();
+    *HOST_PROBE.get_or_init(|| {
+        let probe = SKExecutionContext::real();
+        (probe.available_memory_bytes, probe.cpu_cores)
+    })
+}
+
+/// Resolve an in-memory random-access execution plan for SVM fit/predict.
+pub fn sk_resolve_svm_execution_plan<F: SKFloat>(
+    builder_state: &SKBuilderState,
+    features: &SKDataView<'_, F>,
+    rows_count: usize,
+    columns_count: usize,
+) -> Result<SKExecutionPlan, SKError> {
+    let elements = match features {
+        SKDataView::Dense(_) => (rows_count as u64).saturating_mul(columns_count as u64),
+        SKDataView::Sparse(sparse) => sparse.nnz() as u64,
+        _ => 0,
+    };
+    let (available_memory_bytes, host_cores) = sk_cached_host_probe();
+    let context = SKExecutionContext {
+        available_memory_bytes,
+        cpu_cores: host_cores.min(rayon::current_num_threads().max(1)),
+        dataset_size_bytes: elements.saturating_mul(size_of::<F>() as u64),
+        dataset_elements: Some(elements),
+        scalar_size_bytes: size_of::<F>() as u64,
+        grain: SK_KERNEL_PARALLEL_GRAIN,
+        access_pattern: SKAccessPattern::RandomAccess,
+        batch_size_hint: None,
+        batch_byte_size_hint: None,
+        device: None,
+    };
+    let _ = SKExecutionMode::Automatic;
+    builder_state.resolve_plan(&context)
 }

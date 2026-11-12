@@ -3,20 +3,21 @@
 //!
 //! Pure dispatcher module: implementations live in dedicated files.
 
-pub(crate) mod fit;
-
+mod binary_fit;
 mod builder;
 mod core_implementation;
 mod decision;
+mod fit;
 mod model;
 mod predict;
 mod targets;
 mod weights;
 
+pub(crate) use binary_fit::sk_extract_subset_features;
 pub use builder::SKSVCBuilder;
 pub use core_implementation::SKSVC;
 pub use model::{SKBinarySVCModel, SKSVCModel};
-pub use predict::sk_resolve_ovo_votes;
+pub use predict::sk_resolve_one_vs_one_votes;
 pub use weights::{SKClassWeight, sk_resolve_class_weights, sk_validate_static_class_weight};
 
 #[cfg(test)]

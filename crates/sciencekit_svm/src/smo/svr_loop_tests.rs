@@ -17,7 +17,7 @@ fn svr_smo_fits_smooth_one_dimensional_response_and_widening_epsilon_reduces_sup
     let options = SKSmoOptions {
         tolerance: 1e-6,
         maximum_number_of_iterations: 4_000,
-        cache_size_mib: 1,
+        cache_size: 1,
         shrinking: true,
     };
 

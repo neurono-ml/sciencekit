@@ -19,7 +19,7 @@ fn svc_smo_matches_hand_computed_two_point_dual_solution() {
     let options = SKSmoOptions {
         tolerance: 1e-8,
         maximum_number_of_iterations: 100,
-        cache_size_mib: 1,
+        cache_size: 1,
         shrinking: true,
     };
 
@@ -56,7 +56,7 @@ fn svc_smo_separates_small_separable_dataset_with_clipping_and_shrinking() {
         let options = SKSmoOptions {
             tolerance: 1e-6,
             maximum_number_of_iterations: 500,
-            cache_size_mib: 1,
+            cache_size: 1,
             shrinking,
         };
         let result = sk_solve_binary_c_svc(

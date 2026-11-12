@@ -2,7 +2,7 @@
 //! (spec `support-vector-machines`).
 
 use ndarray::Array1;
-use sciencekit_common::{SKBackendKind, SKExecutionMode, SKFloat, SKLabelTable};
+use sciencekit_common::{SKBackendKind, SKBuilderState, SKExecutionMode, SKFloat, SKLabelTable};
 use sciencekit_math::SKKernelParameters;
 
 use crate::kernel::SKOwnedFeatureBlock;
@@ -74,7 +74,7 @@ pub struct SKSVCModel<F: SKFloat> {
     pub(crate) kernel_parameters: SKKernelParameters<F>,
     pub(crate) number_of_features: usize,
     pub(crate) backend: SKBackendKind,
-    pub(crate) execution_mode: SKExecutionMode,
+    pub(crate) builder_state: SKBuilderState,
     pub(crate) probability_enabled: bool,
 }
 
@@ -125,7 +125,7 @@ impl<F: SKFloat> SKSVCModel<F> {
 
     /// Configured execution mode transferred from the estimator.
     pub fn execution_mode(&self) -> SKExecutionMode {
-        self.execution_mode
+        self.builder_state.execution_intent()
     }
 
     /// Whether probability calibration was enabled at fit time.

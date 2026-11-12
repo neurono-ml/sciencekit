@@ -10,9 +10,11 @@ fn linear_kernel_computes_known_dense_dot_products_and_shape() {
     let left = array![[1.0_f64, 2.0, 3.0], [4.0, -1.0, 0.5]];
     let right = array![[2.0_f64, 0.0, -1.0], [1.0, 3.0, 2.0], [0.0, 1.0, 4.0]];
 
-    let kernel =
-        sk_linear_kernel_matrix(SKDataView::Dense(left.view()), SKDataView::Dense(right.view()))
-            .unwrap();
+    let kernel = sk_linear_kernel_matrix(
+        SKDataView::Dense(left.view()),
+        SKDataView::Dense(right.view()),
+    )
+    .unwrap();
 
     assert_eq!(kernel.dim(), (2, 3));
     // Row 0: [2 - 3, 1 + 6 + 6, 2 + 12] = [-1, 13, 14]
@@ -49,11 +51,15 @@ fn linear_kernel_self_matrix_is_symmetric_and_rejects_feature_mismatch() {
 #[test]
 fn linear_kernel_handles_large_dense_inputs() {
     let left = Array2::from_shape_fn((256, 32), |(r, c)| ((r + 1) * (c + 1)) as f64 * 0.01);
-    let right = Array2::from_shape_fn((192, 32), |(r, c)| ((r + 2) as f64) * 0.05 - c as f64 * 0.01);
+    let right = Array2::from_shape_fn((192, 32), |(r, c)| {
+        ((r + 2) as f64) * 0.05 - c as f64 * 0.01
+    });
 
-    let kernel =
-        sk_linear_kernel_matrix(SKDataView::Dense(left.view()), SKDataView::Dense(right.view()))
-            .unwrap();
+    let kernel = sk_linear_kernel_matrix(
+        SKDataView::Dense(left.view()),
+        SKDataView::Dense(right.view()),
+    )
+    .unwrap();
 
     assert_eq!(kernel.dim(), (256, 192));
     let reference_cell: f64 = left

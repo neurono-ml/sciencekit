@@ -12,27 +12,26 @@ pub(crate) fn sk_clipped_pair_step<F: SKFloat>(
     second: usize,
     curvature: F,
 ) -> (F, F) {
-    let linear_gap =
-        state.negative_signed_gradient(first) - state.negative_signed_gradient(second);
+    let linear_gap = state.negative_signed_gradient(first) - state.negative_signed_gradient(second);
     let raw_delta = (linear_gap / curvature).max(F::zero());
     let alpha_first = state.alphas[first];
     let alpha_second = state.alphas[second];
     let upper_first = state.upper_bounds[first];
     let upper_second = state.upper_bounds[second];
 
-    let max_delta_first = if state.signs[first] > 0 {
+    let maximum_delta_first = if state.signs[first] > 0 {
         upper_first - alpha_first
     } else {
         alpha_first
     };
-    let max_delta_second = if state.signs[second] > 0 {
+    let maximum_delta_second = if state.signs[second] > 0 {
         alpha_second
     } else {
         upper_second - alpha_second
     };
 
-    let delta = raw_delta.min(max_delta_first).min(max_delta_second);
-    let new_first = if delta >= max_delta_first {
+    let delta = raw_delta.min(maximum_delta_first).min(maximum_delta_second);
+    let new_first = if delta >= maximum_delta_first {
         if state.signs[first] > 0 {
             upper_first
         } else {
@@ -44,7 +43,7 @@ pub(crate) fn sk_clipped_pair_step<F: SKFloat>(
             .min(upper_first)
     };
 
-    let new_second = if delta >= max_delta_second {
+    let new_second = if delta >= maximum_delta_second {
         if state.signs[second] > 0 {
             F::zero()
         } else {

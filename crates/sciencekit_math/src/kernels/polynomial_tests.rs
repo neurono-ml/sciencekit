@@ -54,9 +54,11 @@ fn polynomial_kernel_degree_one_with_unit_gamma_and_zero_offset_equals_linear() 
     let left = array![[1.0_f64, -2.0, 3.5], [0.5, 4.0, -1.0]];
     let right = array![[2.0_f64, 1.0, 0.0], [-3.0, 0.5, 2.0]];
 
-    let linear =
-        sk_linear_kernel_matrix(SKDataView::Dense(left.view()), SKDataView::Dense(right.view()))
-            .unwrap();
+    let linear = sk_linear_kernel_matrix(
+        SKDataView::Dense(left.view()),
+        SKDataView::Dense(right.view()),
+    )
+    .unwrap();
     let polynomial = sk_polynomial_kernel_matrix(
         SKDataView::Dense(left.view()),
         SKDataView::Dense(right.view()),

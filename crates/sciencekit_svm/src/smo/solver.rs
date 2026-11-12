@@ -7,9 +7,7 @@ use super::cache::SKKernelRowCache;
 use super::gradient::SKSmoState;
 use super::shrinking::{sk_reconstruct_full_gradients, sk_shrink_active_set};
 use super::step::sk_clipped_pair_step;
-use super::stopping::{
-    SKSmoSolution, SKSmoTracker, sk_maximal_kkt_violation, sk_recover_smo_bias,
-};
+use super::stopping::{SKSmoSolution, SKSmoTracker, sk_maximal_kkt_violation, sk_recover_smo_bias};
 use super::working_set::{
     sk_curvature_floor, sk_select_first_working_index, sk_select_working_pair,
 };
@@ -22,7 +20,7 @@ pub struct SKSmoOptions<F: SKFloat> {
     /// Maximum number of SMO iterations before returning [`SKError::NotConverged`].
     pub maximum_number_of_iterations: usize,
     /// Kernel row cache budget in MiB (`0` disables caching).
-    pub cache_size_mib: usize,
+    pub cache_size: usize,
     /// Whether active-set shrinking is enabled.
     pub shrinking: bool,
 }
@@ -46,8 +44,7 @@ pub fn sk_solve_smo_quadratic_program<F: SKFloat>(
     parameters: SKKernelParameters<F>,
     options: SKSmoOptions<F>,
 ) -> Result<SKSmoSolution<F>, SKError> {
-    let mut cache =
-        SKKernelRowCache::from_megabytes(features, parameters, options.cache_size_mib)?;
+    let mut cache = SKKernelRowCache::from_megabytes(features, parameters, options.cache_size)?;
     let row_modulus = cache.diagonal().len();
     let mut state = SKSmoState::new(signs, upper_bounds, linear_terms);
     let mut tracker = SKSmoTracker::new(options.tolerance, options.maximum_number_of_iterations);
@@ -106,8 +103,9 @@ pub fn sk_solve_smo_quadratic_program<F: SKFloat>(
         tracker.check_or_advance(pair.violation)?;
 
         let row_second = cache.row(pair.second % row_modulus)?;
-        let diag = cache.diagonal();
-        let raw_curvature = diag[pair.first % row_modulus] + diag[pair.second % row_modulus]
+        let diagonal = cache.diagonal();
+        let raw_curvature = diagonal[pair.first % row_modulus]
+            + diagonal[pair.second % row_modulus]
             - two * row_first[pair.second % row_modulus];
         let curvature = if raw_curvature > F::zero() {
             raw_curvature

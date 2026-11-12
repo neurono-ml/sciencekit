@@ -27,13 +27,13 @@ pub use cosine::sk_cosine_distance_matrix;
 pub use dispatcher::{SKPairwiseMetric, sk_pairwise_distance_matrix};
 pub use manhattan::sk_manhattan_distance_matrix;
 pub use nan_euclidean::sk_nan_euclidean_distance_matrix;
+pub(crate) use simd_dot::dot_product_simd;
+pub(crate) use sparse::sk_sparse_dot_product;
 pub use sparse::{
     sk_sparse_chebyshev_distance_matrix, sk_sparse_cosine_distance_matrix,
     sk_sparse_euclidean_distance_matrix, sk_sparse_manhattan_distance_matrix,
     sk_sparse_squared_euclidean_distance_matrix,
 };
-pub(crate) use simd_dot::dot_product_simd;
-pub(crate) use sparse::sk_sparse_dot_product;
 pub use squared_euclidean::{sk_euclidean_distance_matrix, sk_squared_euclidean_distance_matrix};
 
 #[cfg(test)]

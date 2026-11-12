@@ -1,7 +1,7 @@
 //! Configured `SKSVC` estimator and hyperparameter accessors
 //! (spec `support-vector-machines`).
 
-use sciencekit_common::{SKBackendKind, SKExecutionMode, SKFloat};
+use sciencekit_common::{SKBackendKind, SKBuilderState, SKExecutionMode, SKFloat};
 use sciencekit_math::{SKKernel, SKKernelGamma};
 
 use super::builder::SKSVCBuilder;
@@ -23,7 +23,7 @@ pub(crate) struct SKSVCConfiguration<F: SKFloat> {
     pub(crate) probability: bool,
     pub(crate) random_seed: u64,
     pub(crate) backend: SKBackendKind,
-    pub(crate) execution_mode: SKExecutionMode,
+    pub(crate) builder_state: SKBuilderState,
 }
 
 /// Configured C-Support-Vector Classifier (`SKSVC`).
@@ -112,6 +112,6 @@ impl<F: SKFloat> SKSVC<F> {
 
     /// Configured execution mode.
     pub fn execution_mode(&self) -> SKExecutionMode {
-        self.configuration.execution_mode
+        self.configuration.builder_state.execution_intent()
     }
 }

@@ -1,7 +1,7 @@
 //! Configured `SKSVR` estimator and hyperparameter accessors
 //! (spec `support-vector-machines`).
 
-use sciencekit_common::{SKBackendKind, SKExecutionMode, SKFloat};
+use sciencekit_common::{SKBackendKind, SKBuilderState, SKExecutionMode, SKFloat};
 use sciencekit_math::{SKKernel, SKKernelGamma};
 
 use super::builder::SKSVRBuilder;
@@ -20,7 +20,7 @@ pub(crate) struct SKSVRConfiguration<F: SKFloat> {
     pub(crate) cache_size: usize,
     pub(crate) shrinking: bool,
     pub(crate) backend: SKBackendKind,
-    pub(crate) execution_mode: SKExecutionMode,
+    pub(crate) builder_state: SKBuilderState,
 }
 
 /// Configured Epsilon-Support-Vector Regressor (`SKSVR`).
@@ -99,6 +99,6 @@ impl<F: SKFloat> SKSVR<F> {
 
     /// Configured execution mode.
     pub fn execution_mode(&self) -> SKExecutionMode {
-        self.configuration.execution_mode
+        self.configuration.builder_state.execution_intent()
     }
 }

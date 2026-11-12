@@ -51,21 +51,25 @@ pub fn sk_reconstruct_full_gradients<F: SKFloat>(
     state.active_indices = (0..count).collect();
     state.gradients.clone_from(&state.linear_terms);
 
-    for source in 0..count {
-        let alpha = state.alphas[source];
+    for (source, alpha) in state.alphas.iter().copied().enumerate() {
         if alpha == F::zero() {
             continue;
         }
         let signed_alpha = state.sign_scalar(source) * alpha;
         let kernel_row = cache.row(source % row_modulus)?;
-        for target in 0..count {
-            let increment = signed_alpha * kernel_row[target % row_modulus];
-            if state.signs[target] > 0 {
-                state.gradients[target] = state.gradients[target] + increment;
-            } else {
-                state.gradients[target] = state.gradients[target] - increment;
-            }
-        }
+        state
+            .gradients
+            .iter_mut()
+            .zip(state.signs.iter())
+            .enumerate()
+            .for_each(|(target, (gradient, &sign))| {
+                let increment = signed_alpha * kernel_row[target % row_modulus];
+                if sign > 0 {
+                    *gradient = *gradient + increment;
+                } else {
+                    *gradient = *gradient - increment;
+                }
+            });
     }
     Ok(())
 }

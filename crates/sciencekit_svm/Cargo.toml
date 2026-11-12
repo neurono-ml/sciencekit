@@ -17,3 +17,4 @@ tracing = { workspace = true }
 
 [dev-dependencies]
 sciencekit_metrics = { path = "../sciencekit_metrics", version = "0.1.0" }
+tracing-subscriber = { workspace = true }

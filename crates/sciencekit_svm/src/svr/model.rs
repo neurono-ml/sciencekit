@@ -2,7 +2,7 @@
 //! (spec `support-vector-machines`).
 
 use ndarray::Array1;
-use sciencekit_common::{SKBackendKind, SKExecutionMode, SKFloat};
+use sciencekit_common::{SKBackendKind, SKBuilderState, SKExecutionMode, SKFloat};
 use sciencekit_math::SKKernelParameters;
 
 use crate::kernel::SKOwnedFeatureBlock;
@@ -18,7 +18,7 @@ pub struct SKSVRModel<F: SKFloat> {
     pub(crate) kernel_parameters: SKKernelParameters<F>,
     pub(crate) number_of_features: usize,
     pub(crate) backend: SKBackendKind,
-    pub(crate) execution_mode: SKExecutionMode,
+    pub(crate) builder_state: SKBuilderState,
 }
 
 impl<F: SKFloat> SKSVRModel<F> {
@@ -69,6 +69,6 @@ impl<F: SKFloat> SKSVRModel<F> {
 
     /// Configured execution mode transferred from the estimator.
     pub fn execution_mode(&self) -> SKExecutionMode {
-        self.execution_mode
+        self.builder_state.execution_intent()
     }
 }

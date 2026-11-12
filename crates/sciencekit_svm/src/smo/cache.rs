@@ -18,7 +18,7 @@ pub struct SKKernelRowCache<'a, F: SKFloat> {
     features: SKDataView<'a, F>,
     parameters: SKKernelParameters<F>,
     diagonal: Vec<F>,
-    max_cached_rows: usize,
+    maximum_cached_rows: usize,
     entries: HashMap<usize, (Rc<Vec<F>>, u64)>,
     recency: BTreeMap<u64, usize>,
     next_tick: u64,
@@ -27,13 +27,13 @@ pub struct SKKernelRowCache<'a, F: SKFloat> {
 }
 
 impl<'a, F: SKFloat> SKKernelRowCache<'a, F> {
-    /// Construct a cache bounded by `cache_size_mib` MiB.
+    /// Construct a cache bounded by `cache_size` MiB.
     pub fn from_megabytes(
         features: SKDataView<'a, F>,
         parameters: SKKernelParameters<F>,
-        cache_size_mib: usize,
+        cache_size: usize,
     ) -> Result<Self, SKError> {
-        let capacity_bytes = cache_size_mib.saturating_mul(BYTES_PER_MEBIBYTE);
+        let capacity_bytes = cache_size.saturating_mul(BYTES_PER_MEBIBYTE);
         Self::with_capacity_bytes(features, parameters, capacity_bytes)
     }
 
@@ -45,7 +45,7 @@ impl<'a, F: SKFloat> SKKernelRowCache<'a, F> {
     ) -> Result<Self, SKError> {
         let diagonal = sk_evaluate_kernel_diagonal(features, &parameters)?;
         let bytes_per_row = diagonal.len().saturating_mul(size_of::<F>());
-        let max_cached_rows = if bytes_per_row == 0 {
+        let maximum_cached_rows = if bytes_per_row == 0 {
             0
         } else {
             (capacity_bytes / bytes_per_row).min(diagonal.len())
@@ -54,8 +54,8 @@ impl<'a, F: SKFloat> SKKernelRowCache<'a, F> {
             features,
             parameters,
             diagonal,
-            max_cached_rows,
-            entries: HashMap::with_capacity(max_cached_rows),
+            maximum_cached_rows,
+            entries: HashMap::with_capacity(maximum_cached_rows),
             recency: BTreeMap::new(),
             next_tick: 0,
             hits: 0,
@@ -69,8 +69,8 @@ impl<'a, F: SKFloat> SKKernelRowCache<'a, F> {
     }
 
     /// Maximum number of rows the cache retains simultaneously.
-    pub fn max_cached_rows(&self) -> usize {
-        self.max_cached_rows
+    pub fn maximum_cached_rows(&self) -> usize {
+        self.maximum_cached_rows
     }
 
     /// Number of rows currently resident in the cache.
@@ -105,10 +105,10 @@ impl<'a, F: SKFloat> SKKernelRowCache<'a, F> {
             row_index,
             &self.parameters,
         )?);
-        if self.max_cached_rows == 0 {
+        if self.maximum_cached_rows == 0 {
             return Ok(computed);
         }
-        if self.entries.len() >= self.max_cached_rows {
+        if self.entries.len() >= self.maximum_cached_rows {
             if let Some((oldest_tick, oldest_row)) = self.recency.pop_first() {
                 let _ = oldest_tick;
                 self.entries.remove(&oldest_row);

@@ -10,7 +10,7 @@ use sciencekit_math::{SKKernel, SKKernelParameters, sk_kernel_matrix};
 use super::platt::{SKPlattParameters, sk_fit_platt_sigmoid};
 use crate::kernel::SKOwnedFeatureBlock;
 use crate::smo::{SKBinarySvcSmoResult, SKSmoOptions, sk_solve_binary_c_svc};
-use crate::svc::fit::sk_extract_subset_features;
+use crate::svc::sk_extract_subset_features;
 
 fn sk_score_fold_rows<F: SKFloat>(
     pair_features: SKDataView<'_, F>,
@@ -28,22 +28,21 @@ fn sk_score_fold_rows<F: SKFloat>(
         return Ok(test_indices
             .iter()
             .map(|&test_row| {
-                solved
-                    .support_indices
-                    .iter()
-                    .zip(dual.iter())
-                    .fold(solved.bias, |acc, (&sv_local, &coef)| {
-                        acc + coef * dense[[test_row, train_indices[sv_local]]]
-                    })
+                solved.support_indices.iter().zip(dual.iter()).fold(
+                    solved.bias,
+                    |accumulator, (&support_local, &coefficient)| {
+                        accumulator + coefficient * dense[[test_row, train_indices[support_local]]]
+                    },
+                )
             })
             .collect());
     }
-    let sv_rows: Vec<usize> = solved
+    let support_rows: Vec<usize> = solved
         .support_indices
         .iter()
         .map(|&local| train_indices[local])
         .collect();
-    let support_block = SKOwnedFeatureBlock::select_rows(pair_features, &sv_rows)?;
+    let support_block = SKOwnedFeatureBlock::select_rows(pair_features, &support_rows)?;
     let test_block = SKOwnedFeatureBlock::select_rows(pair_features, test_indices)?;
     let gram = sk_kernel_matrix(&kernel_parameters, test_block.view(), support_block.view())?;
     Ok((0..test_indices.len())
@@ -74,14 +73,15 @@ pub fn sk_calibrate_binary_platt<F: SKFloat>(
         .filter_map(|(i, &s)| (s < 0).then_some(i))
         .collect();
 
-    let mut generator =
-        SKRandomGenerator::new(sk_derive_seed(random_seed, SK_RANDOM_DOMAIN_FOLD, pair_index));
+    let mut generator = SKRandomGenerator::new(sk_derive_seed(
+        random_seed,
+        SK_RANDOM_DOMAIN_FOLD,
+        pair_index,
+    ));
     generator.shuffle(&mut positive_indices);
     generator.shuffle(&mut negative_indices);
 
-    let fold_count = 5
-        .min(positive_indices.len())
-        .min(negative_indices.len());
+    let fold_count = 5.min(positive_indices.len()).min(negative_indices.len());
     let total_rows = signs.len();
 
     if fold_count < 2 {

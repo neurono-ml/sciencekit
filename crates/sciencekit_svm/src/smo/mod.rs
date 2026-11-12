@@ -19,12 +19,8 @@ pub use problems::{
 };
 pub use shrinking::{sk_reconstruct_full_gradients, sk_shrink_active_set};
 pub use solver::{SKSmoOptions, sk_solve_smo_quadratic_program};
-pub use stopping::{
-    SKSmoSolution, SKSmoTracker, sk_maximal_kkt_violation, sk_recover_smo_bias,
-};
-pub use working_set::{
-    SKSmoWorkingPair, sk_select_first_working_index, sk_select_working_pair,
-};
+pub use stopping::{SKSmoSolution, SKSmoTracker, sk_maximal_kkt_violation, sk_recover_smo_bias};
+pub use working_set::{SKSmoWorkingPair, sk_select_first_working_index, sk_select_working_pair};
 
 #[cfg(test)]
 mod cache_tests;

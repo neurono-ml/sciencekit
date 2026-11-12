@@ -1,23 +1,21 @@
 //! `SKSupervisedFit` implementation for `SKSVC`
 //! (spec `support-vector-machines`).
 
-use ndarray::{Array1, Array2};
 use rayon::prelude::*;
 use sciencekit_common::{
     SKDataView, SKError, SKFloat, SKOperationAttributes, SKOperationKind, SKSupervisedFit,
     SKTargetView, sk_run_operation,
 };
-use sciencekit_math::{SKKernel, SKKernelParameters, sk_resolve_kernel_parameters};
+use sciencekit_math::sk_resolve_kernel_parameters;
 
-use super::core_implementation::{SKSVC, SKSVCConfiguration};
-use super::model::{SKBinarySVCModel, SKSVCModel};
+use super::binary_fit::sk_fit_binary_pair;
+use super::core_implementation::SKSVC;
+use super::model::SKSVCModel;
 use super::targets::sk_canonicalize_svc_targets;
 use super::weights::sk_resolve_class_weights;
 use crate::kernel::{
-    SKOwnedFeatureBlock, sk_svm_view_dimensions, sk_validate_svm_training_features,
+    sk_resolve_svm_execution_plan, sk_svm_view_dimensions, sk_validate_svm_training_features,
 };
-use crate::probability::sk_calibrate_binary_platt;
-use crate::smo::{SKSmoOptions, sk_solve_binary_c_svc};
 
 impl<F: SKFloat> SKSupervisedFit<F> for SKSVC<F> {
     type Model = SKSVCModel<F>;
@@ -30,113 +28,16 @@ impl<F: SKFloat> SKSupervisedFit<F> for SKSVC<F> {
     {
         let features = features.try_into()?;
         let targets = targets.try_into()?;
-        let (rows_count, columns_count) =
-            sk_svm_view_dimensions(&features).unwrap_or((0, 0));
+        let (rows_count, columns_count) = sk_svm_view_dimensions(&features).unwrap_or((0, 0));
         let attributes = SKOperationAttributes {
             operation: SKOperationKind::Fit,
             rows_count,
             columns_count,
-            execution_mode: self.configuration.execution_mode,
+            execution_mode: self.execution_mode(),
             backend: self.configuration.backend,
         };
         sk_run_operation(attributes, || sk_fit_svc(self, features, &targets))
     }
-}
-
-/// Extract a square sub-Gram matrix when `kernel == Precomputed`, or select
-/// the subset of rows in their native dense/CSR representation.
-pub(crate) fn sk_extract_subset_features<F: SKFloat>(
-    features: SKDataView<'_, F>,
-    kernel: SKKernel,
-    subset_indices: &[usize],
-) -> Result<SKOwnedFeatureBlock<F>, SKError> {
-    if kernel == SKKernel::Precomputed {
-        let dense = features.as_dense()?;
-        let count = subset_indices.len();
-        let sub_gram =
-            Array2::from_shape_fn((count, count), |(r, c)| dense[[subset_indices[r], subset_indices[c]]]);
-        return Ok(SKOwnedFeatureBlock::Dense(sub_gram));
-    }
-    SKOwnedFeatureBlock::select_rows(features, subset_indices)
-}
-
-/// Fit one binary `(class_negative, class_positive)` C-SVC problem.
-#[allow(clippy::too_many_arguments)]
-pub(crate) fn sk_fit_binary_pair<F: SKFloat>(
-    configuration: &SKSVCConfiguration<F>,
-    features: SKDataView<'_, F>,
-    class_indices: &[usize],
-    per_class_weights: &[F],
-    kernel_parameters: SKKernelParameters<F>,
-    class_negative: usize,
-    class_positive: usize,
-    pair_index: u64,
-) -> Result<SKBinarySVCModel<F>, SKError> {
-    let mut pair_rows = Vec::new();
-    let mut signs = Vec::new();
-    let mut upper_bounds = Vec::new();
-    for (row_index, &label) in class_indices.iter().enumerate() {
-        if label == class_negative {
-            pair_rows.push(row_index);
-            signs.push(-1_i8);
-            upper_bounds.push(configuration.regularization_c * per_class_weights[class_negative]);
-        } else if label == class_positive {
-            pair_rows.push(row_index);
-            signs.push(1_i8);
-            upper_bounds.push(configuration.regularization_c * per_class_weights[class_positive]);
-        }
-    }
-
-    let subset = sk_extract_subset_features(features, kernel_parameters.kernel, &pair_rows)?;
-    let options = SKSmoOptions {
-        tolerance: configuration.tolerance,
-        maximum_number_of_iterations: configuration.maximum_number_of_iterations,
-        cache_size_mib: configuration.cache_size,
-        shrinking: configuration.shrinking,
-    };
-    let solved = sk_solve_binary_c_svc(
-        &signs,
-        &upper_bounds,
-        subset.view(),
-        kernel_parameters,
-        options,
-    )?;
-
-    let platt_parameters = if configuration.probability {
-        Some(sk_calibrate_binary_platt(
-            subset.view(),
-            &signs,
-            &upper_bounds,
-            kernel_parameters,
-            options,
-            configuration.random_seed,
-            pair_index,
-        )?)
-    } else {
-        None
-    };
-
-    let support_training_indices: Vec<usize> = solved
-        .support_indices
-        .iter()
-        .map(|&local| pair_rows[local])
-        .collect();
-    let support_vectors = if kernel_parameters.kernel == SKKernel::Precomputed {
-        SKOwnedFeatureBlock::Dense(Array2::zeros((support_training_indices.len(), 0)))
-    } else {
-        SKOwnedFeatureBlock::select_rows(features, &support_training_indices)?
-    };
-
-    Ok(SKBinarySVCModel {
-        class_negative,
-        class_positive,
-        support_vectors,
-        support_training_indices,
-        dual_coefficients: Array1::from(solved.dual_coefficients),
-        bias: solved.bias,
-        iterations: solved.iterations,
-        platt_parameters,
-    })
 }
 
 fn sk_fit_svc<F: SKFloat>(
@@ -144,48 +45,61 @@ fn sk_fit_svc<F: SKFloat>(
     features: SKDataView<'_, F>,
     targets: &SKTargetView<'_, F>,
 ) -> Result<SKSVCModel<F>, SKError> {
-    let config = &estimator.configuration;
-    let (rows, columns) = sk_validate_svm_training_features(features, config.kernel, "fit")?;
+    let configuration = &estimator.configuration;
+    let (rows, columns) = sk_validate_svm_training_features(features, configuration.kernel, "fit")?;
+    let plan =
+        sk_resolve_svm_execution_plan(&configuration.builder_state, &features, rows, columns)?;
     let (class_indices, classes) = sk_canonicalize_svc_targets(targets, rows)?;
     let number_of_classes = classes.number_of_classes();
     let per_class_weights =
-        sk_resolve_class_weights(&config.class_weight, &class_indices, &classes)?;
+        sk_resolve_class_weights(&configuration.class_weight, &class_indices, &classes)?;
     let kernel_parameters = sk_resolve_kernel_parameters(
-        config.kernel,
-        config.gamma,
-        config.degree,
-        config.coef0,
+        configuration.kernel,
+        configuration.gamma,
+        configuration.degree,
+        configuration.coef0,
         features,
     )?;
 
     let pairs: Vec<(usize, usize)> = (0..number_of_classes)
-        .flat_map(|class_a| ((class_a + 1)..number_of_classes).map(move |class_b| (class_a, class_b)))
+        .flat_map(|class_a| {
+            ((class_a + 1)..number_of_classes).map(move |class_b| (class_a, class_b))
+        })
         .collect();
 
-    let pairwise_models = pairs
-        .into_par_iter()
-        .enumerate()
-        .map(|(pair_index, (class_negative, class_positive))| {
-            sk_fit_binary_pair(
-                config,
-                features,
-                &class_indices,
-                &per_class_weights,
-                kernel_parameters,
-                class_negative,
-                class_positive,
-                pair_index as u64,
-            )
-        })
-        .collect::<Result<Vec<_>, SKError>>()?;
+    let fit_pair = |(pair_index, (class_negative, class_positive)): (usize, (usize, usize))| {
+        sk_fit_binary_pair(
+            configuration,
+            features,
+            &class_indices,
+            &per_class_weights,
+            kernel_parameters,
+            class_negative,
+            class_positive,
+            pair_index as u64,
+        )
+    };
+    let pairwise_models = if plan.parallelism > 1 {
+        pairs
+            .into_par_iter()
+            .enumerate()
+            .map(fit_pair)
+            .collect::<Result<Vec<_>, SKError>>()?
+    } else {
+        pairs
+            .into_iter()
+            .enumerate()
+            .map(fit_pair)
+            .collect::<Result<Vec<_>, SKError>>()?
+    };
 
     Ok(SKSVCModel {
         classes,
         pairwise_models,
         kernel_parameters,
         number_of_features: columns,
-        backend: config.backend,
-        execution_mode: config.execution_mode,
-        probability_enabled: config.probability,
+        backend: configuration.backend,
+        builder_state: configuration.builder_state,
+        probability_enabled: configuration.probability,
     })
 }

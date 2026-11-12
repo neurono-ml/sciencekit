@@ -62,7 +62,7 @@ impl<F: SKFloat> SKKernelParameters<F> {
 
 /// Validate static kernel hyperparameters independent of a feature matrix.
 pub fn sk_validate_kernel_hyperparameters<F: SKFloat>(
-    kernel: SKKernel,
+    _kernel: SKKernel,
     gamma: SKKernelGamma<F>,
     degree: u32,
     coef0: F,
@@ -80,12 +80,6 @@ pub fn sk_validate_kernel_hyperparameters<F: SKFloat>(
                 reason: "explicit gamma must be finite and non-negative".to_owned(),
             });
         }
-    }
-    if matches!(kernel, SKKernel::Polynomial | SKKernel::Sigmoid) && !coef0.is_finite() {
-        return Err(SKError::InvalidHyperparameter {
-            name: "coef0",
-            reason: "kernel offset coef0 must be finite".to_owned(),
-        });
     }
     if !coef0.is_finite() {
         return Err(SKError::InvalidHyperparameter {

@@ -20,7 +20,11 @@ fn platt_sigmoid_matches_hand_computed_formula_bounds_and_monotonicity() {
     let margins = [-3.0_f64, -2.0, -1.2, -0.4, 0.5, 1.3, 2.2, 3.1];
     let signs = [-1_i8, -1, -1, -1, 1, 1, 1, 1];
     let fitted = sk_fit_platt_sigmoid(&margins, &signs);
-    assert!(fitted.slope < 0.0, "expected negative slope, got {}", fitted.slope);
+    assert!(
+        fitted.slope < 0.0,
+        "expected negative slope, got {}",
+        fitted.slope
+    );
 
     let mut previous = 0.0_f64;
     for probe in [-5.0_f64, -2.0, -0.5, 0.0, 0.5, 2.0, 5.0] {
@@ -53,7 +57,7 @@ fn platt_five_fold_cross_validation_is_deterministic_and_monotonic() {
     let options = SKSmoOptions {
         tolerance: 1e-5,
         maximum_number_of_iterations: 500,
-        cache_size_mib: 1,
+        cache_size: 1,
         shrinking: true,
     };
 

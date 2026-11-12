@@ -2,9 +2,7 @@
 //! (spec `support-vector-machines`).
 
 use ndarray::{Array1, Array2, array};
-use sciencekit_common::{
-    SKBuilder, SKClassifierPredictor, SKRegressorPredictor, SKSupervisedFit,
-};
+use sciencekit_common::{SKBuilder, SKClassifierPredictor, SKRegressorPredictor, SKSupervisedFit};
 use sciencekit_math::{SKKernel, SKKernelGamma};
 use sprs::{CsMat, TriMat};
 

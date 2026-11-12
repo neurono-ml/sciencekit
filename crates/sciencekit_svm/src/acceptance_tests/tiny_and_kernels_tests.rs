@@ -101,15 +101,21 @@ fn acceptance_nonlinear_xor_fixture_separates_with_rbf_better_than_linear() {
         .fit(xor_x.view(), xor_y.view())
         .unwrap();
 
-    let linear_acc: f64 =
-        sk_accuracy_score(&truth, &linear_model.predict_labels(xor_x.view()).unwrap().to_vec())
-            .unwrap();
-    let rbf_acc: f64 =
-        sk_accuracy_score(&truth, &rbf_model.predict_labels(xor_x.view()).unwrap().to_vec())
-            .unwrap();
-    let poly_acc: f64 =
-        sk_accuracy_score(&truth, &poly_model.predict_labels(xor_x.view()).unwrap().to_vec())
-            .unwrap();
+    let linear_acc: f64 = sk_accuracy_score(
+        &truth,
+        &linear_model.predict_labels(xor_x.view()).unwrap().to_vec(),
+    )
+    .unwrap();
+    let rbf_acc: f64 = sk_accuracy_score(
+        &truth,
+        &rbf_model.predict_labels(xor_x.view()).unwrap().to_vec(),
+    )
+    .unwrap();
+    let poly_acc: f64 = sk_accuracy_score(
+        &truth,
+        &poly_model.predict_labels(xor_x.view()).unwrap().to_vec(),
+    )
+    .unwrap();
 
     assert!(rbf_acc >= linear_acc && (rbf_acc - 1.0).abs() < 1e-12);
     assert!((poly_acc - 1.0).abs() < 1e-12);

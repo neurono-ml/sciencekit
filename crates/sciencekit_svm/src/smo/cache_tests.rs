@@ -23,16 +23,22 @@ fn cache_tracks_hits_misses_lru_eviction_and_recomputation_on_dense_view() {
     )
     .unwrap();
 
-    assert_eq!(cache.max_cached_rows(), 2);
+    assert_eq!(cache.maximum_cached_rows(), 2);
     assert_eq!(cache.diagonal(), &[1.0, 4.0, 10.0, 5.0]);
 
     let r0 = cache.row(0).unwrap();
     assert_eq!(&*r0, &[1.0, 0.0, 3.0, -1.0]);
-    assert_eq!((cache.hits(), cache.misses(), cache.cached_rows_count()), (0, 1, 1));
+    assert_eq!(
+        (cache.hits(), cache.misses(), cache.cached_rows_count()),
+        (0, 1, 1)
+    );
 
     let r1 = cache.row(1).unwrap();
     assert_eq!(&*r1, &[0.0, 4.0, 2.0, 4.0]);
-    assert_eq!((cache.hits(), cache.misses(), cache.cached_rows_count()), (0, 2, 2));
+    assert_eq!(
+        (cache.hits(), cache.misses(), cache.cached_rows_count()),
+        (0, 2, 2)
+    );
 
     // Touch row 0 so row 1 becomes least-recently-used.
     let _ = cache.row(0).unwrap();
@@ -41,7 +47,10 @@ fn cache_tracks_hits_misses_lru_eviction_and_recomputation_on_dense_view() {
     // Request row 2: evicts row 1, keeps row 0.
     let r2 = cache.row(2).unwrap();
     assert_eq!(&*r2, &[3.0, 2.0, 10.0, -1.0]);
-    assert_eq!((cache.hits(), cache.misses(), cache.cached_rows_count()), (1, 3, 2));
+    assert_eq!(
+        (cache.hits(), cache.misses(), cache.cached_rows_count()),
+        (1, 3, 2)
+    );
 
     // Row 0 is still resident (hit), while row 1 was evicted and must recompute (miss).
     let _ = cache.row(0).unwrap();
@@ -63,7 +72,7 @@ fn cache_supports_csr_views_and_zero_cache_size_recomputes_every_row() {
     let parameters = SKKernelParameters::new(SKKernel::RadialBasisFunction, 0.5, 1, 0.0);
     let mut uncached =
         SKKernelRowCache::from_megabytes(SKDataView::Sparse(csr.view()), parameters, 0).unwrap();
-    assert_eq!(uncached.max_cached_rows(), 0);
+    assert_eq!(uncached.maximum_cached_rows(), 0);
     assert_eq!(uncached.diagonal(), &[1.0, 1.0, 1.0]);
 
     let first = uncached.row(0).unwrap();

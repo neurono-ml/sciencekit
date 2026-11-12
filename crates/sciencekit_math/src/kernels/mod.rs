@@ -1,5 +1,6 @@
 //! Higher-order operation kernels built on `azip!`/`par_azip!`/`zip_mut_with`
-//! (spec `higher-order-kernels`, PRD §4.2).
+//! (spec `higher-order-kernels`, PRD §4.2) and the Mercer / similarity kernel
+//! catalogue (spec `kernel-functions`).
 //!
 //! Every kernel is a pure function over [`SKFloat`] and honours the
 //! higher-order-function mandate: no manual index loops anywhere. Layout-aware
@@ -35,9 +36,7 @@ pub use grain::{
 pub use gram::{sk_gram_matrix, sk_gram_vector};
 pub use linear::sk_linear_kernel_matrix;
 pub use min_max::sk_axis_min_max;
-pub use parallel::{
-    SK_KERNEL_PARALLEL_GRAIN, sk_kernel_matrix, sk_kernel_matrix_sequential,
-};
+pub use parallel::{SK_KERNEL_PARALLEL_GRAIN, sk_kernel_matrix, sk_kernel_matrix_sequential};
 pub use polynomial::sk_polynomial_kernel_matrix;
 pub use precomputed::{sk_precomputed_kernel_matrix, sk_validate_precomputed_query_kernel};
 pub use radial_basis::sk_radial_basis_function_kernel_matrix;

@@ -76,14 +76,14 @@ pub fn sk_maximal_kkt_violation<F: SKFloat>(state: &SKSmoState<F>) -> F {
 
 /// Recover the primal bias `b` from free support vectors (or midpoint fallback).
 pub fn sk_recover_smo_bias<F: SKFloat>(state: &SKSmoState<F>) -> F {
-    let mut free_sum = F::zero();
-    let mut free_count = 0usize;
-    for index in 0..state.alphas.len() {
-        if state.is_free(index) {
-            free_sum = free_sum + state.negative_signed_gradient(index);
-            free_count += 1;
-        }
-    }
+    let (free_sum, free_count) = state
+        .alphas
+        .iter()
+        .enumerate()
+        .filter(|&(index, _)| state.is_free(index))
+        .fold((F::zero(), 0usize), |(sum, count), (index, _)| {
+            (sum + state.negative_signed_gradient(index), count + 1)
+        });
     if free_count > 0 {
         return free_sum / F::from(free_count).expect("count fits scalar");
     }

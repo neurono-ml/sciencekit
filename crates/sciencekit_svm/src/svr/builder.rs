@@ -10,7 +10,6 @@ use super::core_implementation::{SKSVR, SKSVRConfiguration};
 
 /// Builder for [`SKSVR`].
 pub struct SKSVRBuilder<F: SKFloat> {
-    state: SKBuilderState,
     configuration: SKSVRConfiguration<F>,
 }
 
@@ -18,7 +17,6 @@ impl<F: SKFloat> SKSVRBuilder<F> {
     /// Create a builder carrying the documented defaults.
     pub fn new() -> Self {
         Self {
-            state: SKBuilderState::new(),
             configuration: SKSVRConfiguration {
                 regularization_c: F::one(),
                 epsilon: F::from(0.1).expect("0.1 fits SKFloat"),
@@ -31,7 +29,7 @@ impl<F: SKFloat> SKSVRBuilder<F> {
                 cache_size: 200,
                 shrinking: true,
                 backend: SKBackendKind::Faer,
-                execution_mode: SKExecutionMode::Automatic,
+                builder_state: SKBuilderState::new(),
             },
         }
     }
@@ -108,8 +106,7 @@ impl<F: SKFloat> SKSVRBuilder<F> {
     where
         E: TryInto<SKExecutionMode>,
     {
-        self.state.execution_mode(mode);
-        self.configuration.execution_mode = self.state.execution_intent();
+        self.configuration.builder_state.execution_mode(mode);
         self
     }
 }
@@ -125,8 +122,7 @@ impl<F: SKFloat> SKBuilder<SKSVR<F>> for SKSVRBuilder<F> {
     where
         E: TryInto<SKExecutionMode>,
     {
-        self.state.execution_mode(mode);
-        self.configuration.execution_mode = self.state.execution_intent();
+        self.configuration.builder_state.execution_mode(mode);
         self
     }
 

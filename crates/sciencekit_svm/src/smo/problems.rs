@@ -96,15 +96,15 @@ pub fn sk_solve_epsilon_svr<F: SKFloat>(
         options,
     )?;
 
-    let mut support_indices = Vec::new();
-    let mut dual_coefficients = Vec::new();
-    for index in 0..n {
-        let coefficient = solution.alphas[index] - solution.alphas[n + index];
-        if coefficient != F::zero() {
-            support_indices.push(index);
-            dual_coefficients.push(coefficient);
-        }
-    }
+    let (support_indices, dual_coefficients): (Vec<usize>, Vec<F>) = solution.alphas[..n]
+        .iter()
+        .zip(&solution.alphas[n..])
+        .enumerate()
+        .filter_map(|(index, (&alpha_upper, &alpha_lower))| {
+            let coefficient = alpha_upper - alpha_lower;
+            (coefficient != F::zero()).then_some((index, coefficient))
+        })
+        .unzip();
     Ok(SKEpsilonSvrSmoResult {
         support_indices,
         dual_coefficients,

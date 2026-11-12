@@ -16,12 +16,7 @@ pub fn sk_sigmoid_kernel_matrix<F: SKFloat>(
     gamma: F,
     coef0: F,
 ) -> Result<Array2<F>, SKError> {
-    sk_validate_kernel_hyperparameters(
-        SKKernel::Sigmoid,
-        SKKernelGamma::Value(gamma),
-        1,
-        coef0,
-    )?;
+    sk_validate_kernel_hyperparameters(SKKernel::Sigmoid, SKKernelGamma::Value(gamma), 1, coef0)?;
     let mut matrix = sk_linear_kernel_matrix(left, right)?;
     sk_transform_kernel_in_place(&mut matrix, true, |dot_product| {
         (gamma * dot_product + coef0).tanh()

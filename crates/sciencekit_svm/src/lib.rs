@@ -27,6 +27,8 @@ mod concurrency_tests;
 #[cfg(test)]
 mod determinism_tests;
 #[cfg(test)]
+mod observability_and_execution_tests;
+#[cfg(test)]
 mod representation_fit_tests;
 #[cfg(test)]
 mod representation_predict_tests;

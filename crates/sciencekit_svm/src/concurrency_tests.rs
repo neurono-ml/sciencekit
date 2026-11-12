@@ -6,7 +6,7 @@ use std::thread;
 
 use ndarray::{Array1, Array2};
 use sciencekit_common::{
-    SKBuilder, SKClassifierPredictor, SKRegressorPredictor, SKSupervisedFit,
+    SKBuilder, SKClassifierPredictor, SKExecutionMode, SKRegressorPredictor, SKSupervisedFit,
 };
 use sciencekit_math::SKKernel;
 
@@ -88,25 +88,54 @@ fn concurrency_large_batch_parallel_prediction_matches_single_row_sequential() {
 
     let svc = SKSVC::<f64>::build()
         .kernel(SKKernel::RadialBasisFunction)
+        .execution_mode(SKExecutionMode::Automatic)
         .build()
         .unwrap()
         .fit(train_x.view(), train_labels.view())
         .unwrap();
     let svr = SKSVR::<f64>::build()
         .kernel(SKKernel::RadialBasisFunction)
+        .execution_mode(SKExecutionMode::Automatic)
         .build()
         .unwrap()
         .fit(train_x.view(), train_targets.view())
         .unwrap();
 
-    // 600 query rows * ~20 support vectors > 1024 grain & >= 256 rows -> parallel path!
-    let query = Array2::from_shape_fn((600, 4), |(r, c)| ((r * 11 + c * 3) % 29) as f64 * 0.25 - 3.5);
-    let batch_labels = svc.predict_labels(query.view()).unwrap();
-    let batch_reg = svr.predict(query.view()).unwrap();
+    // 600 query rows * 4 features = 2400 > 1024 grain & >= 256 rows:
+    // 4-thread pool runs the row-parallel batch path; 1-thread pool runs the sequential batch path.
+    let query = Array2::from_shape_fn((600, 4), |(r, c)| {
+        ((r * 11 + c * 3) % 29) as f64 * 0.25 - 3.5
+    });
+    let pool_parallel = rayon::ThreadPoolBuilder::new()
+        .num_threads(4)
+        .build()
+        .unwrap();
+    let pool_sequential = rayon::ThreadPoolBuilder::new()
+        .num_threads(1)
+        .build()
+        .unwrap();
+
+    let (batch_labels, batch_reg) = pool_parallel.install(|| {
+        (
+            svc.predict_labels(query.view()).unwrap(),
+            svr.predict(query.view()).unwrap(),
+        )
+    });
+    let (seq_batch_labels, seq_batch_reg) = pool_sequential.install(|| {
+        (
+            svc.predict_labels(query.view()).unwrap(),
+            svr.predict(query.view()).unwrap(),
+        )
+    });
+    assert_eq!(batch_labels, seq_batch_labels);
+    assert_eq!(batch_reg, seq_batch_reg);
 
     for row in 0..query.nrows() {
         let single_view = query.row(row).insert_axis(ndarray::Axis(0));
-        assert_eq!(svc.predict_labels(single_view).unwrap()[0], batch_labels[row]);
+        assert_eq!(
+            svc.predict_labels(single_view).unwrap()[0],
+            batch_labels[row]
+        );
         assert!((svr.predict(single_view).unwrap()[0] - batch_reg[row]).abs() < 1e-12);
     }
 }

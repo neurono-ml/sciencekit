@@ -139,9 +139,9 @@ pub(crate) fn sk_linear_kernel_with_mode<F: SKFloat>(
 ) -> Result<Array2<F>, SKError> {
     sk_validate_kernel_pair(&left, &right)?;
     match (left, right) {
-        (SKDataView::Dense(left_dense), SKDataView::Dense(right_dense)) => {
-            Ok(sk_dense_linear_kernel(&left_dense, &right_dense, allow_parallel))
-        }
+        (SKDataView::Dense(left_dense), SKDataView::Dense(right_dense)) => Ok(
+            sk_dense_linear_kernel(&left_dense, &right_dense, allow_parallel),
+        ),
         (SKDataView::Sparse(left_sparse), SKDataView::Sparse(right_sparse)) => Ok(
             sk_sparse_linear_kernel(&left_sparse, &right_sparse, allow_parallel),
         ),

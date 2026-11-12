@@ -2,9 +2,7 @@
 //! either representation (spec `support-vector-machines`).
 
 use ndarray::{Array2, array};
-use sciencekit_common::{
-    SKBuilder, SKClassifierPredictor, SKRegressorPredictor, SKSupervisedFit,
-};
+use sciencekit_common::{SKBuilder, SKClassifierPredictor, SKRegressorPredictor, SKSupervisedFit};
 use sciencekit_math::SKKernel;
 use sprs::{CsMat, TriMat};
 
@@ -30,11 +28,7 @@ fn representation_predict_supports_all_four_fit_and_query_combinations_for_svc()
         [1.8, 0.4, -0.5]
     ];
     let labels = array![0_i64, 0, 0, 1, 1, 1];
-    let query_dense = array![
-        [-2.2_f64, 0.1, 0.8],
-        [0.0, 0.2, 0.0],
-        [2.2, -0.1, -0.8]
-    ];
+    let query_dense = array![[-2.2_f64, 0.1, 0.8], [0.0, 0.2, 0.0], [2.2, -0.1, -0.8]];
     let train_csr = to_csr(&train_dense);
     let query_csr = to_csr(&query_dense);
 
@@ -73,10 +67,18 @@ fn representation_predict_supports_all_four_fit_and_query_combinations_for_svc()
                 .for_each(|(&actual, &reference)| assert!((actual - reference).abs() < 1e-9));
         }
 
-        let dd_prob = dense_fitted.predict_probabilities(query_dense.view()).unwrap();
-        let ds_prob = dense_fitted.predict_probabilities(query_csr.view()).unwrap();
-        let sd_prob = sparse_fitted.predict_probabilities(query_dense.view()).unwrap();
-        let ss_prob = sparse_fitted.predict_probabilities(query_csr.view()).unwrap();
+        let dd_prob = dense_fitted
+            .predict_probabilities(query_dense.view())
+            .unwrap();
+        let ds_prob = dense_fitted
+            .predict_probabilities(query_csr.view())
+            .unwrap();
+        let sd_prob = sparse_fitted
+            .predict_probabilities(query_dense.view())
+            .unwrap();
+        let ss_prob = sparse_fitted
+            .predict_probabilities(query_csr.view())
+            .unwrap();
 
         for candidate in [&ds_prob, &sd_prob, &ss_prob] {
             candidate
@@ -86,9 +88,18 @@ fn representation_predict_supports_all_four_fit_and_query_combinations_for_svc()
         }
 
         let ref_labels = dense_fitted.predict_labels(query_dense.view()).unwrap();
-        assert_eq!(dense_fitted.predict_labels(query_csr.view()).unwrap(), ref_labels);
-        assert_eq!(sparse_fitted.predict_labels(query_dense.view()).unwrap(), ref_labels);
-        assert_eq!(sparse_fitted.predict_labels(query_csr.view()).unwrap(), ref_labels);
+        assert_eq!(
+            dense_fitted.predict_labels(query_csr.view()).unwrap(),
+            ref_labels
+        );
+        assert_eq!(
+            sparse_fitted.predict_labels(query_dense.view()).unwrap(),
+            ref_labels
+        );
+        assert_eq!(
+            sparse_fitted.predict_labels(query_csr.view()).unwrap(),
+            ref_labels
+        );
     }
 }
 

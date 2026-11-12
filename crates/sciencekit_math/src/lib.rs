@@ -5,7 +5,10 @@
 //! on. It provides:
 //!
 //! - [`kernels`] — reusable higher-order operation kernels (`azip!`/`par_azip!`
-//!   transforms, binary combines, axis reductions, in-place scaling).
+//!   transforms, binary combines, axis reductions, in-place scaling) plus the
+//!   Mercer and similarity kernel catalogue (`SKKernel`, linear, polynomial,
+//!   radial-basis-function, sigmoid and precomputed kernels across dense and
+//!   CSR views).
 //! - [`layout`] — memory-layout helpers (C/F-contiguity detection, forcing
 //!   contiguity before hot loops).
 //! - [`pairwise`] — zero-copy pairwise distance kernels (squared Euclidean,

@@ -33,5 +33,8 @@ fn precomputed_kernel_rejects_non_square_row_mismatch_and_sparse_views() {
     triplets.add_triplet(0, 0, 1.0_f64);
     let csr = triplets.to_csr();
     let sparse_err = sk_precomputed_kernel_matrix(SKDataView::Sparse(csr.view()), 2).unwrap_err();
-    assert!(matches!(sparse_err, SKError::UnsupportedRepresentation { .. }));
+    assert!(matches!(
+        sparse_err,
+        SKError::UnsupportedRepresentation { .. }
+    ));
 }

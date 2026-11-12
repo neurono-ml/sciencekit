@@ -68,8 +68,7 @@ pub(crate) fn sk_radial_basis_kernel_with_mode<F: SKFloat>(
             allow_parallel,
         ));
     }
-    let mut matrix =
-        sk_pairwise_distance_matrix(SKPairwiseMetric::SquaredEuclidean, left, right)?;
+    let mut matrix = sk_pairwise_distance_matrix(SKPairwiseMetric::SquaredEuclidean, left, right)?;
     sk_transform_kernel_in_place(&mut matrix, allow_parallel, |squared_distance| {
         (-gamma * squared_distance.max(F::zero())).exp()
     });

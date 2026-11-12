@@ -11,7 +11,6 @@ use super::weights::{SKClassWeight, sk_validate_static_class_weight};
 
 /// Builder for [`SKSVC`].
 pub struct SKSVCBuilder<F: SKFloat> {
-    state: SKBuilderState,
     configuration: SKSVCConfiguration<F>,
 }
 
@@ -19,7 +18,6 @@ impl<F: SKFloat> SKSVCBuilder<F> {
     /// Create a builder carrying the documented defaults.
     pub fn new() -> Self {
         Self {
-            state: SKBuilderState::new(),
             configuration: SKSVCConfiguration {
                 regularization_c: F::one(),
                 kernel: SKKernel::RadialBasisFunction,
@@ -34,7 +32,7 @@ impl<F: SKFloat> SKSVCBuilder<F> {
                 probability: false,
                 random_seed: 0,
                 backend: SKBackendKind::Faer,
-                execution_mode: SKExecutionMode::Automatic,
+                builder_state: SKBuilderState::new(),
             },
         }
     }
@@ -123,8 +121,7 @@ impl<F: SKFloat> SKSVCBuilder<F> {
     where
         E: TryInto<SKExecutionMode>,
     {
-        self.state.execution_mode(mode);
-        self.configuration.execution_mode = self.state.execution_intent();
+        self.configuration.builder_state.execution_mode(mode);
         self
     }
 }
@@ -140,8 +137,7 @@ impl<F: SKFloat> SKBuilder<SKSVC<F>> for SKSVCBuilder<F> {
     where
         E: TryInto<SKExecutionMode>,
     {
-        self.state.execution_mode(mode);
-        self.configuration.execution_mode = self.state.execution_intent();
+        self.configuration.builder_state.execution_mode(mode);
         self
     }
 

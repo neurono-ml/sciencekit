@@ -97,28 +97,39 @@ pub fn sk_feature_population_variance<F: SKFloat>(
     sk_validate_kernel_finiteness(&features)?;
     let total = F::from(rows * columns).expect("element count fits scalar");
     let mean = match features {
-        SKDataView::Dense(dense) => dense.iter().fold(F::zero(), |acc, &v| acc + v) / total,
+        SKDataView::Dense(dense) => {
+            dense
+                .iter()
+                .fold(F::zero(), |accumulator, &value| accumulator + value)
+                / total
+        }
         SKDataView::Sparse(sparse) => {
-            let sum = sparse.outer_iterator().fold(F::zero(), |acc, row| {
-                row.data().iter().fold(acc, |row_acc, &v| row_acc + v)
+            let sum = sparse.outer_iterator().fold(F::zero(), |accumulator, row| {
+                row.data()
+                    .iter()
+                    .fold(accumulator, |row_accumulator, &value| {
+                        row_accumulator + value
+                    })
             });
             sum / total
         }
         _ => F::zero(),
     };
     let squared_deviations = match features {
-        SKDataView::Dense(dense) => dense.iter().fold(F::zero(), |acc, &v| {
-            let delta = v - mean;
-            acc + delta * delta
+        SKDataView::Dense(dense) => dense.iter().fold(F::zero(), |accumulator, &value| {
+            let delta = value - mean;
+            accumulator + delta * delta
         }),
         SKDataView::Sparse(sparse) => {
             let mut non_zeros = 0usize;
-            let stored = sparse.outer_iterator().fold(F::zero(), |acc, row| {
+            let stored = sparse.outer_iterator().fold(F::zero(), |accumulator, row| {
                 non_zeros += row.nnz();
-                row.data().iter().fold(acc, |row_acc, &v| {
-                    let delta = v - mean;
-                    row_acc + delta * delta
-                })
+                row.data()
+                    .iter()
+                    .fold(accumulator, |row_accumulator, &value| {
+                        let delta = value - mean;
+                        row_accumulator + delta * delta
+                    })
             });
             let zero_entries = F::from(rows * columns - non_zeros).expect("count fits scalar");
             stored + zero_entries * mean * mean

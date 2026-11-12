@@ -7,16 +7,16 @@ use ndarray::Array2;
 use sciencekit_common::SKDataView;
 use sprs::TriMat;
 
-use super::{
-    SKKernel, SKKernelParameters, sk_kernel_matrix, sk_kernel_matrix_sequential,
-};
+use super::{SKKernel, SKKernelParameters, sk_kernel_matrix, sk_kernel_matrix_sequential};
 
 #[test]
 fn parallel_kernel_matches_sequential_on_large_dense_and_sparse_inputs() {
-    let left_dense =
-        Array2::from_shape_fn((96, 16), |(r, c)| ((r * 7 + c * 3) % 19) as f64 * 0.05 - 0.4);
-    let right_dense =
-        Array2::from_shape_fn((80, 16), |(r, c)| ((r * 5 + c * 11) % 17) as f64 * 0.05 - 0.3);
+    let left_dense = Array2::from_shape_fn((96, 16), |(r, c)| {
+        ((r * 7 + c * 3) % 19) as f64 * 0.05 - 0.4
+    });
+    let right_dense = Array2::from_shape_fn((80, 16), |(r, c)| {
+        ((r * 5 + c * 11) % 17) as f64 * 0.05 - 0.3
+    });
 
     let mut triplets = TriMat::new(right_dense.dim());
     right_dense
@@ -87,8 +87,12 @@ fn concurrent_kernel_calls_are_deterministic_across_threads() {
             .map(|_| {
                 let view = features.view();
                 scope.spawn(move || {
-                    sk_kernel_matrix(&parameters, SKDataView::Dense(view), SKDataView::Dense(view))
-                        .unwrap()
+                    sk_kernel_matrix(
+                        &parameters,
+                        SKDataView::Dense(view),
+                        SKDataView::Dense(view),
+                    )
+                    .unwrap()
                 })
             })
             .collect();
@@ -97,4 +101,46 @@ fn concurrent_kernel_calls_are_deterministic_across_threads() {
             assert_eq!(candidate, reference);
         }
     });
+}
+
+#[test]
+fn kernel_catalogue_supports_f32_across_dense_and_sparse_views() {
+    let left_dense = Array2::from_shape_fn((12, 4), |(row, col)| {
+        ((row * 5 + col * 3) % 11) as f32 * 0.1 - 0.3
+    });
+    let mut triplets = TriMat::new((10, 4));
+    for row in 0..10 {
+        triplets.add_triplet(row, row % 4, (row as f32 + 1.0) * 0.2);
+    }
+    let right_csr = triplets.to_csr();
+    let right_dense = right_csr.to_dense();
+
+    let catalogue = [
+        SKKernelParameters::new(SKKernel::Linear, 0.0_f32, 1, 0.0),
+        SKKernelParameters::new(SKKernel::Polynomial, 0.25_f32, 2, 0.5),
+        SKKernelParameters::new(SKKernel::RadialBasisFunction, 0.4_f32, 1, 0.0),
+        SKKernelParameters::new(SKKernel::Sigmoid, 0.2_f32, 1, -0.1),
+    ];
+
+    for parameters in &catalogue {
+        let dense_result = sk_kernel_matrix(
+            parameters,
+            SKDataView::Dense(left_dense.view()),
+            SKDataView::Dense(right_dense.view()),
+        )
+        .unwrap();
+        let mixed_result = sk_kernel_matrix(
+            parameters,
+            SKDataView::Dense(left_dense.view()),
+            SKDataView::Sparse(right_csr.view()),
+        )
+        .unwrap();
+        assert_eq!(dense_result.dim(), (12, 10));
+        dense_result
+            .iter()
+            .zip(mixed_result.iter())
+            .for_each(|(&dense_value, &mixed_value)| {
+                assert!((dense_value - mixed_value).abs() < 1e-5_f32);
+            });
+    }
 }

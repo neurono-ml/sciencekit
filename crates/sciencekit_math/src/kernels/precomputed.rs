@@ -31,10 +31,10 @@ pub fn sk_precomputed_kernel_matrix<F: SKFloat>(
 }
 
 /// Validate a precomputed query kernel matrix `(query_rows, training_rows)`.
-pub fn sk_validate_precomputed_query_kernel<'a, F: SKFloat>(
-    matrix: SKDataView<'a, F>,
+pub fn sk_validate_precomputed_query_kernel<F: SKFloat>(
+    matrix: SKDataView<'_, F>,
     expected_columns: usize,
-) -> Result<ArrayView2<'a, F>, SKError> {
+) -> Result<ArrayView2<'_, F>, SKError> {
     let dense = matrix.as_dense()?;
     let (rows, columns) = dense.dim();
     if columns != expected_columns {

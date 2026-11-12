@@ -28,6 +28,7 @@ fn svc_fit_binary_separable_retains_support_vectors_and_separates_training_rows(
         .unwrap();
 
     assert!(model.converged());
+    assert!(model.iterations() > 0);
     assert_eq!(model.number_of_classes(), 2);
     assert_eq!(model.pairwise_models().len(), 1);
 
@@ -59,9 +60,15 @@ fn svc_fit_binary_separable_retains_support_vectors_and_separates_training_rows(
     for row in 0..features.nrows() {
         let margin = gram.row(row).dot(binary.dual_coefficients()) + binary.bias();
         if labels[row] == 1 {
-            assert!(margin > 0.0, "expected positive margin on row {row}, got {margin}");
+            assert!(
+                margin > 0.0,
+                "expected positive margin on row {row}, got {margin}"
+            );
         } else {
-            assert!(margin < 0.0, "expected negative margin on row {row}, got {margin}");
+            assert!(
+                margin < 0.0,
+                "expected negative margin on row {row}, got {margin}"
+            );
         }
     }
 }

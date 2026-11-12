@@ -66,12 +66,12 @@ pub fn sk_select_working_pair<F: SKFloat>(
     first_kernel_row: &[F],
     row_modulus: usize,
 ) -> Option<SKSmoWorkingPair<F>> {
-    let min_lower = sk_minimum_lower_score(state)?;
-    let violation = first_score - min_lower;
+    let minimum_lower = sk_minimum_lower_score(state)?;
+    let violation = first_score - minimum_lower;
     let two = F::one() + F::one();
     let tau = sk_curvature_floor::<F>();
     let first_row = first % row_modulus;
-    let diag_first = kernel_diagonal[first_row];
+    let diagonal_first = kernel_diagonal[first_row];
 
     let mut best_second: Option<(usize, F)> = None;
     for &candidate in &state.active_indices {
@@ -84,7 +84,7 @@ pub fn sk_select_working_pair<F: SKFloat>(
         }
         let candidate_row = candidate % row_modulus;
         let raw_curvature =
-            diag_first + kernel_diagonal[candidate_row] - two * first_kernel_row[candidate_row];
+            diagonal_first + kernel_diagonal[candidate_row] - two * first_kernel_row[candidate_row];
         let curvature = if raw_curvature > F::zero() {
             raw_curvature
         } else {

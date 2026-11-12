@@ -62,14 +62,9 @@ fn kernel_invalid_parameters_are_rejected_with_named_errors() {
         SKError::InvalidHyperparameter { name: "gamma", .. }
     ));
 
-    let zero_degree = sk_resolve_kernel_parameters(
-        SKKernel::Polynomial,
-        SKKernelGamma::Auto,
-        0,
-        0.0,
-        view,
-    )
-    .unwrap_err();
+    let zero_degree =
+        sk_resolve_kernel_parameters(SKKernel::Polynomial, SKKernelGamma::Auto, 0, 0.0, view)
+            .unwrap_err();
     assert!(matches!(
         zero_degree,
         SKError::InvalidHyperparameter { name: "degree", .. }

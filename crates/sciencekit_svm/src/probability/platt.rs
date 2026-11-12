@@ -22,8 +22,8 @@ impl<F: SKFloat> SKPlattParameters<F> {
     pub fn predict_positive_probability(&self, decision_value: F) -> F {
         let exponent_argument = self.slope * decision_value + self.intercept;
         let probability = if exponent_argument >= F::zero() {
-            let neg_exp = (-exponent_argument).exp();
-            neg_exp / (F::one() + neg_exp)
+            let negative_exponential = (-exponent_argument).exp();
+            negative_exponential / (F::one() + negative_exponential)
         } else {
             F::one() / (F::one() + exponent_argument.exp())
         };
@@ -63,7 +63,13 @@ pub fn sk_fit_platt_sigmoid<F: SKFloat>(
     let target_negative = 1.0 / (negative_count + 2.0);
     let targets: Vec<f64> = signs
         .iter()
-        .map(|&sign| if sign > 0 { target_positive } else { target_negative })
+        .map(|&sign| {
+            if sign > 0 {
+                target_positive
+            } else {
+                target_negative
+            }
+        })
         .collect();
 
     let mut slope = 0.0_f64;
@@ -71,7 +77,7 @@ pub fn sk_fit_platt_sigmoid<F: SKFloat>(
     let mut current_loss = sk_platt_objective(&margins, &targets, slope, intercept);
 
     let damping = 1e-12_f64;
-    let min_step = 1e-10_f64;
+    let minimum_step = 1e-10_f64;
     let stopping_tolerance = 1e-5_f64;
 
     for _ in 0..100 {
@@ -84,13 +90,13 @@ pub fn sk_fit_platt_sigmoid<F: SKFloat>(
         for (&margin, &target) in margins.iter().zip(targets.iter()) {
             let q = margin * slope + intercept;
             let (p, one_minus_p) = if q >= 0.0 {
-                let exp_neg = (-q).exp();
-                let denom = 1.0 + exp_neg;
-                (exp_neg / denom, 1.0 / denom)
+                let negative_exponential = (-q).exp();
+                let denominator = 1.0 + negative_exponential;
+                (negative_exponential / denominator, 1.0 / denominator)
             } else {
-                let exp_pos = q.exp();
-                let denom = 1.0 + exp_pos;
-                (1.0 / denom, exp_pos / denom)
+                let positive_exponential = q.exp();
+                let denominator = 1.0 + positive_exponential;
+                (1.0 / denominator, positive_exponential / denominator)
             };
             let curvature = p * one_minus_p;
             let residual = target - p;
@@ -114,19 +120,20 @@ pub fn sk_fit_platt_sigmoid<F: SKFloat>(
         let directional_derivative = g_a * step_a + g_b * step_b;
 
         let mut step_size = 1.0_f64;
-        while step_size >= min_step {
-            let cand_a = slope + step_size * step_a;
-            let cand_b = intercept + step_size * step_b;
-            let cand_loss = sk_platt_objective(&margins, &targets, cand_a, cand_b);
-            if cand_loss < current_loss + 1e-4 * step_size * directional_derivative {
-                slope = cand_a;
-                intercept = cand_b;
-                current_loss = cand_loss;
+        while step_size >= minimum_step {
+            let candidate_slope = slope + step_size * step_a;
+            let candidate_intercept = intercept + step_size * step_b;
+            let candidate_loss =
+                sk_platt_objective(&margins, &targets, candidate_slope, candidate_intercept);
+            if candidate_loss < current_loss + 1e-4 * step_size * directional_derivative {
+                slope = candidate_slope;
+                intercept = candidate_intercept;
+                current_loss = candidate_loss;
                 break;
             }
             step_size *= 0.5;
         }
-        if step_size < min_step {
+        if step_size < minimum_step {
             break;
         }
     }

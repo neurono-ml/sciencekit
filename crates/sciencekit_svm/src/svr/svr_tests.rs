@@ -26,6 +26,7 @@ fn svr_fits_smooth_one_dimensional_response_and_retains_only_support_vectors() {
         .unwrap();
 
     assert!(model.converged());
+    assert!(model.iterations() > 0);
     assert_eq!(
         model.support_vectors().rows(),
         model.dual_coefficients().len()
@@ -42,7 +43,9 @@ fn svr_fits_smooth_one_dimensional_response_and_retains_only_support_vectors() {
 
 #[test]
 fn svr_widening_epsilon_band_never_increases_support_vector_count() {
-    let residuals = [-0.45_f64, 0.02, -0.20, 0.01, 0.22, -0.02, 0.48, 0.0, -0.10, 0.09];
+    let residuals = [
+        -0.45_f64, 0.02, -0.20, 0.01, 0.22, -0.02, 0.48, 0.0, -0.10, 0.09,
+    ];
     let features = Array2::from_shape_fn((residuals.len(), 1), |(r, _)| -2.0 + r as f64 * 0.45);
     let targets = Array1::from_shape_fn(residuals.len(), |r| {
         1.8 * features[[r, 0]] - 0.3 + residuals[r]

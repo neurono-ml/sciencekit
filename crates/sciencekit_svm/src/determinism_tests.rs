@@ -46,7 +46,10 @@ fn determinism_repeated_fits_and_thread_counts_produce_bit_identical_models() {
     let model_a = pool_1.install(fit_once);
     let model_b = pool_4.install(fit_once);
 
-    assert_eq!(model_a.pairwise_models().len(), model_b.pairwise_models().len());
+    assert_eq!(
+        model_a.pairwise_models().len(),
+        model_b.pairwise_models().len()
+    );
     for (pair_a, pair_b) in model_a
         .pairwise_models()
         .iter()
@@ -79,9 +82,8 @@ fn determinism_repeated_fits_and_thread_counts_produce_bit_identical_models() {
 
 #[test]
 fn determinism_svr_repeated_fits_match_exactly() {
-    let features = Array2::from_shape_fn((16, 2), |(r, c)| {
-        (r as f64 * 0.25 - 1.8) + (c as f64) * 0.3
-    });
+    let features =
+        Array2::from_shape_fn((16, 2), |(r, c)| (r as f64 * 0.25 - 1.8) + (c as f64) * 0.3);
     let targets = Array1::from_shape_fn(16, |r| (features[[r, 0]] * 0.9).sin());
 
     let estimator = SKSVR::<f64>::build()

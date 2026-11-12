@@ -9,7 +9,11 @@ fn smo_working_set_selects_hand_computed_toy_pair_and_updates_gradients() {
     // K = [[4, 2, -4], [2, 1, -2], [-4, -2, 4]], diag = [4, 1, 4].
     // At alpha = [0, 0, 0], G = [-1, -1, -1]:
     // -y G = [-1, -1, +1]; I_up = {2} (score +1), I_low = {0, 1} (score -1).
-    let state = SKSmoState::new(vec![-1, -1, 1], vec![1.0_f64, 1.0, 1.0], vec![-1.0, -1.0, -1.0]);
+    let state = SKSmoState::new(
+        vec![-1, -1, 1],
+        vec![1.0_f64, 1.0, 1.0],
+        vec![-1.0, -1.0, -1.0],
+    );
     let (first, first_score) = sk_select_first_working_index(&state).unwrap();
     assert_eq!(first, 2);
     assert!((first_score - 1.0).abs() < 1e-12);

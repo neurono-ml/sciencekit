@@ -32,11 +32,11 @@ fn coupling_respects_iteration_cap_and_maintains_normalized_simplex_output() {
     assert!((capped.iter().sum::<f64>() - 1.0).abs() < 1e-12);
     capped
         .iter()
-        .for_each(|&prob| assert!((0.0..=1.0).contains(&prob)));
+        .for_each(|&probability| assert!((0.0..=1.0).contains(&probability)));
 
-    let (full, full_iters, full_converged) =
+    let (full, full_iterations, full_converged) =
         sk_couple_pairwise_probabilities_with_budget(&pairwise, 3, 1e-6, 100);
     assert!(full_converged);
-    assert!(full_iters >= 1 && full_iters <= 100);
+    assert!((1..=100).contains(&full_iterations));
     assert!((full.iter().sum::<f64>() - 1.0).abs() < 1e-12);
 }
