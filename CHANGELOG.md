@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Stage-wise gradient boosting in `sciencekit_ensemble` (spec `gradient-boosting`):
+  builder-only `SKGradientBoostingClassifier<F>` / `SKGradientBoostingRegressor<F>` with
+  `number_of_estimators` (default `100`), `learning_rate` (default `0.1`), `maximum_depth`
+  (default `3`), `minimum_samples_leaf` (default `1`), `maximum_features` (default `All`),
+  `subsample` (default `1.0`), `l2_regularization` (default `0.0`), `random_seed`
+  (default `0`), `validation_fraction` (default `0.1`), `n_iter_no_change` (default off)
+  and `tolerance` (default `1e-4`), plus the mandatory `backend` (default `Faer`) and
+  `execution_mode` (default `Automatic`) parameters recorded in every `fit` and `predict`
+  span and carried into the fitted model. The classifier covers `LogLoss` with a logistic
+  sigmoid link for two classes and a softmax link for multiclass (one tree per class per
+  stage); the regressor covers `SquaredError`, `AbsoluteError` and `Huber` with a
+  configurable `huber_delta`. Every stage fits a regression tree to the negative gradient
+  and writes damped Newton leaves `-Σg / (Σh + λ)`, starting from the loss-optimal constant
+  prediction; `subsample < 1.0` draws rows without replacement per stage and
+  `n_iter_no_change` early-stops on a held-out validation fraction. Integer and nominal
+  targets are canonicalized through an `SKLabelTable`, dense and zero-copy CSR fits and
+  predictions never densify a sparse input, and the fitted
+  `SKGradientBoostingClassifierModel` / `SKGradientBoostingRegressorModel` expose
+  `number_of_stages`, the per-stage trees, `initial_prediction(s)`, `learning_rate`,
+  `classes`, `number_of_classes`, `feature_importances` and per-stage feature importances.
 - Successive-halving hyperparameter search in `sciencekit_model_selection` (spec
   `halving-grid-search`): builder-only `SKHalvingGridSearchClassifier<F, E>` /
   `SKHalvingGridSearchRegressor<F, E>` with `candidates`, `splitter`, `scoring`, `factor`
