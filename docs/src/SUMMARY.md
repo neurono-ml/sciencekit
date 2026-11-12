@@ -78,4 +78,5 @@
   - [Mini-batch k-means: learning rates, reassignment and honest streaming](development-explained/ch51-minibatch-kmeans-streaming.md)
   - [Runtime DAG pipelines: topological fitting, deterministic levels and honest merges](development-explained/ch52-pipeline-dag.md)
   - [Extended Safetensors format: safe binary checkpoints, sharding, in-place padding and compression](development-explained/ch54-safetensors-internal-format.md)
+  - [Streaming pipelines: epochs, chained stages and a bounded finalizer](development-explained/ch56-streaming-pipeline.md)
   - [Maintaining this book](development-explained/maintaining.md)

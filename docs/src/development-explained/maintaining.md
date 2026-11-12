@@ -298,4 +298,10 @@ validation, the deterministic level order with ascending node identifiers, the e
 order that concatenates incoming blocks in exact `connect` order without densifying CSR, the
 node-attributed `SKPipelineGraphNodeError` checked variants and the type-erased `SKBoxedFinalModel`
 behind the typed classifier and regressor wrappers.
+The [streaming pipelines chapter](./ch56-streaming-pipeline.html) extends `sciencekit_pipeline`
+with an out-of-core composition layer: the `SKStreamingTransformer` contract, the
+`SKStreamingPipeline` builder and its chained fitting through the shared prefetch executor,
+one-shot materialization within `memory_budget_bytes`, multi-epoch replay on reopenable providers,
+the bounded `SKFinalizerBuffer` that preserves CSR, stage-indexed error propagation and the
+`Send + Sync` fitted pipeline with its `SKStreamingFitReport`.
 
