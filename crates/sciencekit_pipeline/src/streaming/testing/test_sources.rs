@@ -85,3 +85,11 @@ pub(crate) fn sk_tiny_blocks<F: SKFloat>() -> Vec<SKFeatureBlock<F>> {
         .map(|chunk| sk_single_block(2, 2, chunk.to_vec()))
         .collect()
 }
+
+/// A reopenable provider whose every pass fails at the chosen batch.
+pub(crate) fn sk_reopenable_failing_blocks<F: SKFloat>(
+    blocks: Vec<SKFeatureBlock<F>>,
+    fail_at: usize,
+) -> SKReopenableSource<impl FnMut() -> Result<SKTestBlocksSource<F>, SKError>> {
+    SKReopenableSource::new(move || Ok(SKTestBlocksSource::new_failing(blocks.clone(), fail_at)))
+}

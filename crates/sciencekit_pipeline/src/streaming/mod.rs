@@ -33,6 +33,9 @@ mod builder_tests;
 mod epochs_tests;
 
 #[cfg(test)]
+mod errors_tests;
+
+#[cfg(test)]
 mod finalizer_tests;
 
 #[cfg(test)]

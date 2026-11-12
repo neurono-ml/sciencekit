@@ -14,6 +14,6 @@ pub(crate) use test_column_scaling::SKTestColumnScaling;
 pub(crate) use test_estimators::{SKTestIdentityEstimator, SKTestIdentityModel};
 pub(crate) use test_mean_centering::SKTestMeanCentering;
 pub(crate) use test_sources::{
-    SKTestBlocksSource, sk_reopenable_blocks, sk_single_block,
+    SKTestBlocksSource, sk_reopenable_blocks, sk_reopenable_failing_blocks, sk_single_block,
     sk_tiny_blocks,
 };
