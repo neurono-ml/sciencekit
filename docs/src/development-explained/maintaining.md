@@ -287,10 +287,23 @@ The [outlier detection chapter](./ch48-outlier-detection.html) closes Wave 5 in
 `SKOutlierPredictor<F>` contract, seeded random isolation trees over `SKTree`, harmonic BST
 path-length scoring, `Auto` and quantile contamination offsets, and non-densifying CSR-to-CSC
 representation parity.
+The [mini-batch k-means chapter](./ch51-minibatch-kmeans-streaming.html) adds
+`SKMiniBatchKMeans<F>` in `sciencekit_cluster`: the exact per-center learning-rate update in
+closed form over dense and non-densified CSR batches, seeded bounded-sample initialization with
+best-of-`n_init` inertia selection, deterministic low-count center reassignment, incremental
+`partial_fit`, multi-epoch `fit_streaming` over reopenable providers with positive-tolerance
+early stopping, and the typed `SKMiniBatchKMeansModel<F>` prediction, transform and state
+export surface.
 The [extended Safetensors format chapter](./ch54-safetensors-internal-format.html) adds the
 binary `SKModelState` persistence adapter in `sciencekit_interop::safetensors`: standard
 single-file Safetensors compatibility, `sciencekit.*` header metadata, `SKShardPlan`
 multi-shard splitting with atomic `.index.json` manifests, dual-region header and payload
 padding for in-place seek appends with automatic shard overflow, and optional magic-byte
 auto-detected Gzip, Brotli and Snappy compression.
+The [runtime DAG pipelines chapter](./ch52-pipeline-dag.html) adds `SKPipelineGraph` on top of
+`sciencekit_pipeline`: the mandatory builder and private constructors, cycle/single-sink/reachability
+validation, the deterministic level order with ascending node identifiers, the edge-weight merge
+order that concatenates incoming blocks in exact `connect` order without densifying CSR, the
+node-attributed `SKPipelineGraphNodeError` checked variants and the type-erased `SKBoxedFinalModel`
+behind the typed classifier and regressor wrappers.
 

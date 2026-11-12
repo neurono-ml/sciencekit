@@ -107,7 +107,7 @@ and receives a Python binding as soon as it is validated on CPU.
 | Estimator | Description | Status |
 |---|---|---|
 | `SKKMeans` | Lloyd + Elkan k-means with seeded k-means++ (memmap indexes remain Phase 7) | <span class="sk-pill sk-pill--ok">Implemented</span> |
-| `SKMiniBatchKMeans` | Mini-batch k-means with streaming (`SKLazySource`) | <span class="sk-pill sk-pill--neutral">Planned</span> |
+| `SKMiniBatchKMeans` | Mini-batch k-means with per-center learning rates, deterministic reassignment, `partial_fit` and multi-epoch streaming (`SKSourceProvider`) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKDBSCAN` | Density-based clustering over KD-tree / ball-tree and sparse brute-force region queries with explicit `SKClusterLabel::Noise` and nearest-core prediction | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKPCA` | Principal component analysis (full SVD · covariance eigh · sparse randomized SVD) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKTruncatedSVD` | Truncated SVD for sparse data | <span class="sk-pill sk-pill--neutral">Planned</span> |
@@ -123,7 +123,8 @@ and receives a Python binding as soon as it is validated on CPU.
 | `SKGridSearchCVClassifier` / `SKGridSearchCVRegressor` | `sciencekit_model_selection` | Typed grid search over configured candidates with shared folds | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKHalvingGridSearchClassifier` / `SKHalvingGridSearchRegressor` | `sciencekit_model_selection` | Successive-halving search: geometric resource schedule, seeded and stratified round subsamples, deterministic elimination trace, aggressive early pruning and winner refit | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | Halving resource axes beyond sample counts | `sciencekit_model_selection` | Additional `SKHalvingResource` variants (trees, epochs) | <span class="sk-pill sk-pill--neutral">Planned</span> |
-| `SKPipeline` | `sciencekit_pipeline` | Type-safe linear pipeline (compiler-checked composition); DAGs remain planned | <span class="sk-pill sk-pill--ok">Implemented</span> |
+| `SKPipeline` | `sciencekit_pipeline` | Type-safe linear pipeline (compiler-checked composition) | <span class="sk-pill sk-pill--ok">Implemented</span> |
+| `SKPipelineGraph` | `sciencekit_pipeline` | Validated runtime DAG pipeline: topological fit and predict, deterministic level order, edge-order merges without densifying CSR, node-attributed errors and classifier/regressor wrappers | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | Metrics foundation | `sciencekit_metrics` | Accuracy, precision/recall/F1 with macro/micro/weighted/binary averaging, confusion matrix, MSE/RMSE/MAE, R², scorer adapters and streaming accumulators | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | Full metrics | `sciencekit_metrics` | The remaining sklearn metrics (ROC/AUC, calibration, multilabel, ranking) | <span class="sk-pill sk-pill--neutral">Planned</span> |
 | Extended Safetensors & JSON debug | `sciencekit_interop` | Binary Safetensors persistence (metadata header, `SKShardPlan` sharding, in-place header/payload padding, optional Gzip/Brotli/Snappy compression) and deterministic JSON debug inspection over `SKModelState` | <span class="sk-pill sk-pill--emerald">Implemented</span> |
