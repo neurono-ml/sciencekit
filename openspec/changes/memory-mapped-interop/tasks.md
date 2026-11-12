@@ -12,7 +12,7 @@
 - [x] 2.2 TDD float32/float64 zero-copy row views; pointer identity against the mapping.
 - [x] 2.3 TDD Fortran-order rejection and int64-without-cast rejection; explicit cast path materializes.
 - [x] 2.4 TDD alignment handling: aligned and misaligned header lengths; structured error when a zero-copy view is impossible.
-- [ ] 2.5 TDD sequential source over the same `.npy` file; block size, final marking, values.
+- [x] 2.5 TDD sequential source over the same `.npy` file; block size, final marking, values.
 
 ## 3. Arrow IPC random access
 
