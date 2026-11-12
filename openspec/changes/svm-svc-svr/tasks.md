@@ -131,7 +131,7 @@
   and verify the amended paragraphs render in the book.
 - [ ] 8.4 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
   warnings` and `cargo test --workspace`; fix every failure before pushing.
-- [ ] 8.5 Independent review by a separate agent validating every scenario in
+- [x] 8.5 Independent review by a separate agent validating every scenario in
   `kernel-functions` and `support-vector-machines` against the code and tests; address
   every finding and re-run the gates.
 
