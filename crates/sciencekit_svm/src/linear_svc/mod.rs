@@ -6,9 +6,11 @@
 mod builder;
 mod config;
 mod core_implementation;
+mod decision;
 mod design;
 mod fit;
 mod model;
+mod predict;
 mod solver;
 mod validation;
 
@@ -27,5 +29,7 @@ mod linear_svc_design_tests;
 mod linear_svc_fit_tests;
 #[cfg(test)]
 mod linear_svc_multiclass_tests;
+#[cfg(test)]
+mod linear_svc_predict_tests;
 #[cfg(test)]
 mod linear_svc_solver_tests;

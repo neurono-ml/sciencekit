@@ -20,6 +20,28 @@ pub(crate) fn sk_validate_linear_svc_training_features<F: SKFloat>(
     Ok((rows, columns))
 }
 
+/// Validate query features against the fitted feature count.
+pub(crate) fn sk_validate_linear_svc_query_features<F: SKFloat>(
+    features: SKDataView<'_, F>,
+    expected_columns: usize,
+    operation: &'static str,
+) -> Result<(usize, usize), SKError> {
+    let (rows, columns) = sk_svm_view_dimensions(&features)?;
+    if rows == 0 {
+        return Err(SKError::EmptyInput { operation });
+    }
+    if columns != expected_columns {
+        return Err(SKError::shape_mismatch_2d(
+            rows,
+            expected_columns,
+            rows,
+            columns,
+        ));
+    }
+    sk_validate_svm_finiteness(&features)?;
+    Ok((rows, columns))
+}
+
 /// Canonicalize integer or nominal labels and require at least two classes.
 pub(crate) fn sk_canonicalize_linear_svc_targets<F: SKFloat>(
     targets: &SKTargetView<'_, F>,
