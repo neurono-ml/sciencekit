@@ -4,7 +4,7 @@
 - [x] 1.2 TDD raw binary descriptor: explicit parameters and sidecar JSON; dtype/row/column parsing; invalid descriptor rejection.
 - [x] 1.3 TDD raw binary source: `number_of_rows`, O(1) `row`, values; unaligned/misaligned raw layout rejected.
 - [x] 1.4 TDD length validation: file shorter or longer than declared shape fails with a structured error naming the file.
-- [ ] 1.5 TDD wrong endianness and unsupported dtype errors.
+- [x] 1.5 TDD wrong endianness and unsupported dtype errors.
 
 ## 2. NumPy `.npy`
 
