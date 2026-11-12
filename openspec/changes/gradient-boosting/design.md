@@ -151,3 +151,66 @@ Additive: new ensemble estimators and an advanced tree surface. No existing API 
 ## Open Questions
 
 None blocking. Categorical features and missing routing arrive with the histogram variant.
+
+## Deferred capabilities (task 8.3)
+
+This change deliberately stops at the exact-split, in-memory, dense/CSR booster. Each of
+the following is a separate subsystem with its own spec; none of them is silently
+half-implemented — the public surface either rejects the input with a typed error or
+simply does not expose the entry point yet.
+
+| Capability | Status in this change | Why it is deferred |
+|---|---|---|
+| **Histogram binning** | Absent. The exact split search over sorted feature values is used instead. | Binning changes the split search, the subsample gather and the memory layout at once. Shipping exact splits first gives the histogram booster (planned as its own change, `histogram-gradient-boosting`) a validated reference implementation to compare predictions and importances against, instead of debugging bins and gradients together. The loss contract, stage loop, subsampling and early stopping are already shared, so only the structure builder changes. |
+| **Categorical features** | Absent. `fit` consumes numeric dense/CSR data only. | Categorical routing needs an encoding contract (ordinal vs one-hot vs native categorical splits) that belongs to the tree crate, not to boosting. Adding it here would bake an encoding decision into the ensemble layer. |
+| **Missing-value routing** | Absent, and rejected up front. Any `NaN` or infinite feature cell fails `fit`/`predict` with `SKError::NonFiniteValue` at its flattened coordinate (`gradient_boosting/validation.rs`). | Default-direction missing routing (as in scikit-learn's HistGradientBoosting) is a tree-level split policy with its own semantics and tests. Accepting `NaN` before that policy exists would silently produce arbitrary leaf assignments; the explicit rejection is the honest contract. |
+| **Streaming / `partial_fit` / `fit_streaming`** | Absent. `OutOfCoreStreaming` execution intent is rejected by `sk_reject_streaming_mode` with `ExecutionModeIncompatible { mode: "out-of-core-streaming", pattern: "random-access" }`. | Gradient boosting is inherently multi-pass: every stage reads the full design again to recompute gradients and Hessians against updated raw scores, and subsampling plus early stopping need random row access. A streaming contract therefore needs a reopenable provider, a persistent raw-score store and a convergence policy — its own change. |
+| **`memmap2` datasets** | Absent. `SKDataView` has only `Dense` and `Sparse` variants; there is no memory-mapped variant to dispatch on. | Memory mapping is a data-source concern shared by every estimator; it lands with the dataset/source work, not with one algorithm. Supporting it only for boosting would fragment `SKDataView`. |
+| **Model export (`SKExportable` / `SKModelState`)** | Absent. The fitted models expose inspection getters (stages, trees, initial predictions, class table, importances) but do not implement `SKExportable`. | Export must serialize the additive structure, the per-stage trees and the loss metadata in a stable schema. That schema is defined by the interop/model-format work; implementing it locally would create a second, incompatible format. Until then the models remain inspectable in memory and usable in pipelines. |
+| **Quantile and Poisson losses** | Absent. `SKGradientBoostingRegressionLoss` has `SquaredError`, `AbsoluteError` and `Huber`. | They are pure additions to the loss contract and can land later without touching the stage loop; they were left out to keep this change's validation matrix focused. |
+
+## Self-review: scenario to test matrix (task 8.4)
+
+Every scenario in `specs/gradient-boosting/spec.md` and `specs/decision-trees/spec.md` was
+mapped to at least one named executable test. The review found one real gap in the
+acceptance suite — multiclass predictions were compared against raw integer labels while
+`SKClassifierPredictor::predict_labels` is documented to return canonical class indices —
+which was fixed in `gb_large_tests.rs` by canonicalizing the truth labels with
+`sk_canonicalize_labels` before scoring.
+
+| Spec scenario | Named test (all passed) |
+|---|---|
+| Default configuration | `classifier_builder_defaults_match_contract`, `regressor_builder_defaults_match_contract` |
+| Backend reaches the fitted model | `separable_binary_fixture_and_backend_span_propagation`, `concurrent_prediction_agrees_with_sequential_and_records_regressor_backend` |
+| Squared-error gradient | `squared_error_loss_matches_hand_computed_contract` |
+| Log-loss gradient | `binary_log_loss_matches_hand_computed_log_odds_gradients_and_hessians` |
+| Multiclass gradients | `multiclass_log_loss_matches_hand_computed_softmax_and_class_vectors`, `multiclass_single_stage_fits_one_tree_per_class` |
+| One-leaf Newton step | `newton_leaf_value_matches_hand_computed_step_and_degeneracy_guard`, `hand_computed_binary_fit_and_zero_score_sigmoid` |
+| Learning rate scales the update | `single_stage_stump_and_split_apply_newton_leaves_and_shrinkage`, `hand_computed_single_stage_updates_for_all_three_regression_losses` |
+| Regression sums the stages | `hand_computed_single_stage_updates_for_all_three_regression_losses`, `smooth_response_recovered_under_every_regression_loss` |
+| Binary probabilities are sigmoid of the score | `hand_computed_binary_fit_and_zero_score_sigmoid` |
+| Multiclass probabilities sum to one | `multiclass_fits_one_tree_per_class_per_stage_and_softmax_sums_to_one` |
+| Subsample is reproducible | `stochastic_row_and_feature_subsampling_are_reproducible_and_diversify`, `classifier_and_regressor_dense_and_sparse_fit_and_predict_are_equivalent` |
+| Full subsample uses every row | `full_subsample_uses_every_training_row` |
+| Early stop reports fewer stages | `scalar_binary_and_multiclass_loops_stop_early_and_restore_best_stages`, `large_regression_gradient_boosting_all_losses_early_stop_and_metrics` |
+| Disabled early stopping fits every stage | `scalar_binary_and_multiclass_loops_stop_early_and_restore_best_stages` (`full.stages.len() == 12`) |
+| Importances aggregate the stages | `two_stages_with_different_importances_produce_sample_weighted_aggregate`, `classifier_importances_normalize_and_zero_split_boosters_return_zeros` |
+| Sparse fit equals dense fit | `classifier_and_regressor_dense_and_sparse_fit_and_predict_are_equivalent` |
+| Sparse prediction is supported | `classifier_and_regressor_dense_and_sparse_fit_and_predict_are_equivalent`, `ultra_wide_sparse_never_densifies_and_csc_is_rejected` |
+| Non-positive learning rate is rejected | `invalid_classifier_hyperparameters_are_rejected`, `invalid_regressor_hyperparameters_are_rejected`, `hyperparameter_bounds_and_early_stop_validation_are_enforced` |
+| Invalid subsample is rejected | `hyperparameter_bounds_and_early_stop_validation_are_enforced` |
+| Single-class classification is rejected | `single_class_non_finite_values_and_streaming_modes_are_rejected` |
+| Repeated fits agree | `repeated_fits_and_rayon_thread_counts_produce_identical_models` |
+| Concurrent prediction agrees | `concurrent_prediction_agrees_with_sequential_and_records_regressor_backend` |
+| Boosting replaces leaf values | `build_structure_and_replace_leaf_values_preserve_split_geometry` |
+| Leaf replacement validates length | `replace_leaf_values_validates_length_and_leaves_structure_unchanged` |
+| Public estimator behavior is unchanged | `public_decision_tree_regressor_is_unaffected_by_structure_surface` |
+
+Additional coverage beyond the written scenarios: `empty_input_and_shape_mismatches_are_rejected`
+(dimensions), the tiny and 20 000-row acceptance suites (PRD §8.7: little data, lots of data,
+concurrency, dense/sparse and metrics through `sciencekit_metrics`), and the `f32`/`f64` paths in
+`configured_values_reach_classifier_in_f64_and_f32` and
+`configured_values_reach_regressor_in_f64_and_f32`.
+
+**Verdict:** every scenario is exercised by a passing named test; the only uncovered surface is the
+deferred capability list above, which is contractual rather than missing.

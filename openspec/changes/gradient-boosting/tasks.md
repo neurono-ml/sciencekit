@@ -85,9 +85,9 @@
   add a `Development Explained` chapter covering gradients, Hessians, Newton leaves,
   shrinkage and early stopping, update `maintaining.md`, and verify with `mdbook build
   docs`.
-- [ ] 8.3 Record the histogram/categorical/missing-value/streaming/memmap/export
+- [x] 8.3 Record the histogram/categorical/missing-value/streaming/memmap/export
   non-goals in `docs/PRD.md`; verify the amended paragraphs render.
-- [ ] 8.4 Independent review by a separate agent validating every scenario in
+- [x] 8.4 Independent review by a separate agent validating every scenario in
   `gradient-boosting` and the `decision-trees` delta against the code and tests; address
   every finding and re-run the gates.
 
