@@ -129,7 +129,7 @@
 - [x] 8.3 Record the Wave 7 deferral in `docs/PRD.md` — `memmap2`-backed kernel caches,
   persistence and model export are delivered by the interop wave, not by this change —
   and verify the amended paragraphs render in the book.
-- [ ] 8.4 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
+- [x] 8.4 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
   warnings` and `cargo test --workspace`; fix every failure before pushing.
 - [x] 8.5 Independent review by a separate agent validating every scenario in
   `kernel-functions` and `support-vector-machines` against the code and tests; address
