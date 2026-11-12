@@ -135,6 +135,14 @@ Fix every warning. A warning here means the published book could be broken.
 **Step 5 — merge.** Open a PR for branch `docs/sk-decision-tree` into `docs/documentations`.
 When it merges, the deploy workflow rebuilds and publishes the book automatically.
 
+The successive-halving chapter (chapter 53) is the worked example of this path for a new
+algorithm: the search lives in `crates/sciencekit_model_selection/src/halving/`, its companion
+tests (`halving_scheduler_tests.rs`, `halving_trace_tests.rs`, `halving_subsample_tests.rs`,
+`halving_evaluation_tests.rs`, `halving_aggressive_tests.rs`, the per-family `halving_refit_tests.rs`
+modules, the concurrency and representation tests, and `acceptance_tests/halving/`) are cited by
+name in the chapter, and the chapter, its `SUMMARY.md` entry and the halving rows in
+`docs/src/algorithms.md` all landed together on the `docs/halving-grid-search-book` branch.
+
 ### Updating, not forking
 
 If the change is a bug fix or refactor, *replace* the affected part of the existing chapter —
