@@ -57,7 +57,7 @@
 
 ## 5. Acceptance
 
-- [ ] 5.1 Add `acceptance_tests/` covering tiny data, large data (at least 20 000 rows and
+- [x] 5.1 Add `acceptance_tests/` covering tiny data, large data (at least 20 000 rows and
   10 000 features in a sparse fixture), both losses, multiclass, class weights, dense and
   sparse paths, parallel-equals-sequential prediction and metric production through
   `sciencekit_metrics`; verify with `cargo test -p sciencekit_svm`.
