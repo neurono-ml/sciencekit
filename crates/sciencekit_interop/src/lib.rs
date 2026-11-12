@@ -37,4 +37,5 @@ pub mod safetensors;
 pub mod schema;
 pub mod selection;
 pub mod source;
+pub mod tabular;
 pub mod views;
