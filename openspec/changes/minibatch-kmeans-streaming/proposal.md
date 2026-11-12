@@ -19,7 +19,7 @@ executor, and is the PRD's out-of-core clustering differentiator.
   `random_seed` (default 0), `backend` (default `Faer`) and `execution_mode` (default
   `Automatic`).
 - `partial_fit` updates centers from a batch with the per-center learning rate
-  `1 / count[center]`; `fit_streaming` drives an `SKSourceProvider` through the shared
+  `1 / (count[center] + 1)`; `fit_streaming` drives an `SKSourceProvider` through the shared
   prefetch executor and supports multiple epochs when the provider is reopenable.
 - The model exposes centers, labels, inertia, per-center counts and the batch/epoch
   progress, and implements `SKUnsupervisedFit` plus `SKClustererPredictor`; `predict`,

@@ -47,13 +47,13 @@
 - [x] 5.1 Add `acceptance_tests/` covering tiny data, large streaming data (at least
   50 000 rows), dense/sparse, one/multi-epoch providers, comparison with full KMeans and
   metric production; verify with `cargo test -p sciencekit_cluster`.
-- [ ] 5.2 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
+- [x] 5.2 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
   warnings` and `cargo test --workspace`; fix every failure before pushing.
-- [ ] 5.3 Update `CHANGELOG.md` and the companion mdBook chapter (including a
+- [x] 5.3 Update `CHANGELOG.md` and the companion mdBook chapter (including a
   `Development Explained` chapter on per-center learning rates, reassignment and streaming
   epochs); verify with `mdbook build docs`.
 - [x] 5.4 Record the no-Elkan/GPU/memmap/export non-goals in `docs/PRD.md`.
-- [ ] 5.5 Independent review by a separate agent validating every scenario in
+- [x] 5.5 Independent review by a separate agent validating every scenario in
   `mini-batch-k-means`; address every finding and re-run the gates.
 
 ## Workflow follow-up
