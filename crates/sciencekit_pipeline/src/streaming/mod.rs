@@ -33,6 +33,9 @@ mod builder_tests;
 mod fit_tests;
 
 #[cfg(test)]
+mod oneshot_tests;
+
+#[cfg(test)]
 pub(crate) mod testing;
 
 #[cfg(test)]
