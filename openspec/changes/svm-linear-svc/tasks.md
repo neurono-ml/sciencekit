@@ -45,7 +45,7 @@
 
 ## 4. Representation parity and validation
 
-- [ ] 4.1 Add dense-vs-sparse fit equivalence and sparse prediction tests, asserting
+- [x] 4.1 Add dense-vs-sparse fit equivalence and sparse prediction tests, asserting
   coefficients/predictions agree and no sparse input is densified; verify with
   `cargo test -p sciencekit_svm linear_svc_representation`.
 - [ ] 4.2 Add tests for empty input, single-class targets, feature-count mismatch,
