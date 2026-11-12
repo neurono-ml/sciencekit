@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Streaming pipelines (spec `streaming-pipeline`): `sciencekit_pipeline::streaming`
+  adds `SKStreamingTransformer`, `SKStreamingPipeline` /
+  `SKStreamingPipelineBuilder`, `SKStreamingPipelineConfigured`,
+  `SKFittedStreamingPipeline` and `SKStreamingFitReport`. A pipeline composes
+  streaming stages erased behind object-safe adapters, fits them in order by
+  reading an `SKSourceProvider` through the shared prefetch executor (each stage
+  seeing the previous stage's transformed batches), and exposes a per-batch
+  `transform_batch` that preserves dense/CSR without densifying. A reopenable
+  provider replays each configured `epochs` pass; a one-shot provider is
+  materialized once within `memory_budget_bytes`, and an over-budget
+  materialization returns `SKError::BatchBufferOversize`. The batch finalizer
+  accumulates the transformed blocks within the same budget and fits an
+  `SKUnsupervisedFit` estimator, preserving CSR when every block is sparse.
+  Source failures surface the central taxonomy error, stage failures carry the
+  zero-based stage index, multi-epoch requests on a one-shot provider return a
+  structured `SKError::UnsupportedOperation`, empty stage lists and zero
+  epochs/budget return `SKError::InvalidHyperparameter`, and the fitted
+  pipeline is `Send + Sync` for concurrent transformation. Every `fit` and
+  `transform` span records the configured `backend` (default `Faer`) and
+  `execution_mode` (default `Automatic`).
+
 - Runtime directed-acyclic-graph pipelines (spec `pipeline-graph`):
   `sciencekit_pipeline::graph` adds `SKPipelineGraph` /
   `SKPipelineGraphBuilder` over the `petgraph` workspace dependency,
