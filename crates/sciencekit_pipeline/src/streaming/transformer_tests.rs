@@ -42,8 +42,8 @@ fn one_pass_and_two_epochs_learn_the_same_mean() {
     let (SKFeatureBlock::Dense(first), SKFeatureBlock::Dense(second)) = (first, second) else {
         panic!("mean centering returns dense blocks");
     };
-    assert!(first.iter().all(|value| value.abs() < 1e-12));
-    assert!(second.iter().all(|value| value.abs() < 1e-12));
+    assert!(first.iter().all(|value: &f64| value.abs() < 1e-12));
+    assert!(second.iter().all(|value: &f64| value.abs() < 1e-12));
 }
 
 #[test]

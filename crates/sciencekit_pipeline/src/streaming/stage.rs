@@ -15,7 +15,7 @@ use super::provider::{SKObjectProvider, SKStreamingProvider};
 use super::transformer::SKStreamingTransformer;
 
 /// A configured stage erased behind a trait object.
-pub(super) trait SKStreamingStage<F: SKFloat>: Send + Sync {
+pub(crate) trait SKStreamingStage<F: SKFloat>: Send + Sync {
     /// Fit the stage by reading the provider and return its boxed model.
     fn fit_stage(
         &self,
@@ -25,7 +25,7 @@ pub(super) trait SKStreamingStage<F: SKFloat>: Send + Sync {
 }
 
 /// A fitted stage that transforms one batch at a time.
-pub(super) trait SKFittedStage<F: SKFloat>: Send + Sync {
+pub(crate) trait SKFittedStage<F: SKFloat>: Send + Sync {
     /// Apply the fitted stage to one owned batch.
     fn transform_stage_batch(
         &self,

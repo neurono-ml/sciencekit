@@ -21,7 +21,7 @@ use super::stage::SKFittedStage;
 /// pass yields a boxed [`SKLazySource`] whose error is already the central
 /// [`SKError`]. The pipeline only calls it after materializing a one-shot
 /// provider, so every open source can be reopened.
-pub(super) trait SKStreamingProvider<F: SKFloat> {
+pub(crate) trait SKStreamingProvider<F: SKFloat> {
     /// Open one pass as a boxed source.
     fn open_object_source(&mut self) -> Result<SKBoxedSource<'_, F>, SKError>;
 }
@@ -31,7 +31,7 @@ pub(super) trait SKStreamingProvider<F: SKFloat> {
 /// The orphan rule forbids implementing the shared trait for the standard
 /// library's `Box`, so this newtype carries the boxed object and forwards every
 /// read.
-pub(super) struct SKBoxedSource<'pass, F: SKFloat> {
+pub(crate) struct SKBoxedSource<'pass, F: SKFloat> {
     inner: Box<dyn SKLazySource<F, Error = SKError> + Send + 'pass>,
 }
 

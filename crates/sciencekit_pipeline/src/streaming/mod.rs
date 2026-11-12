@@ -10,21 +10,6 @@
 //! This is a **pure dispatcher** module: `mod.rs` only declares and re-exports
 //! submodules; every implementation lives in its own file.
 
-mod builder;
-mod errors;
-mod finalizer;
-mod fitting;
-mod memory;
-mod pipeline;
-mod provider;
-mod stage;
-mod transformer;
-
-pub use builder::{SKStreamingPipeline, SKStreamingPipelineBuilder};
-pub use pipeline::{
-    SKFittedStreamingPipeline, SKStreamingFitReport, SKStreamingPipelineConfigured,
-};
-pub use transformer::SKStreamingTransformer;
 
 #[cfg(test)]
 mod builder_tests;
@@ -32,3 +17,19 @@ mod builder_tests;
 mod testing;
 #[cfg(test)]
 mod transformer_tests;
+
+pub mod pipeline;
+
+mod builder;
+mod errors;
+mod finalizer;
+mod fitting;
+mod memory;
+mod provider;
+mod stage;
+mod transformer;
+pub use builder::{SKStreamingPipeline, SKStreamingPipelineBuilder};
+pub use pipeline::{
+    SKFittedStreamingPipeline, SKStreamingFitReport, SKStreamingPipelineConfigured,
+};
+pub use transformer::SKStreamingTransformer;
