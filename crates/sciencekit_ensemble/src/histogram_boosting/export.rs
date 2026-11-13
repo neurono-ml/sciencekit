@@ -89,16 +89,20 @@ impl<F: SKFloat> SKImportable<F> for SKHistGradientBoostingRegressorModel<F> {
         }
         let (_, importance_values) =
             sk_read_floating_tensor(state, "hist_boosting.stage_importances")?;
-        let mut offset = 0;
-        let stage_importances = stages
-            .iter()
-            .map(|tree| {
-                let end = offset + tree.feature_count();
-                let values = importance_values.get(offset..end).unwrap_or(&[]).to_vec();
-                offset = end;
-                values
-            })
-            .collect();
+        let expected: usize = stages.iter().map(|tree| tree.feature_count()).sum();
+        if importance_values.len() != expected {
+            return Err(SKError::ShapeMismatch {
+                expected: vec![expected],
+                found: vec![importance_values.len()],
+            });
+        }
+        let mut remaining = importance_values.as_slice();
+        let mut stage_importances = Vec::with_capacity(stages.len());
+        for tree in &stages {
+            let (head, tail) = remaining.split_at(tree.feature_count());
+            stage_importances.push(head.to_vec());
+            remaining = tail;
+        }
         Ok(SKHistGradientBoostingRegressorModel {
             stages,
             stage_importances,
@@ -110,7 +114,7 @@ impl<F: SKFloat> SKImportable<F> for SKHistGradientBoostingRegressorModel<F> {
                 SKError::Conversion("learning_rate is not finite".to_string()),
             )?,
             feature_count,
-            feature_importances: read_importances(state)?,
+            feature_importances: read_importances(state, feature_count)?,
             feature_binnings: import_binnings(state, feature_count)?,
             loss: loss_from_name(sk_string_parameter(metadata, "loss", "squared_error")),
             backend: sk_parse_backend_parameter(metadata),
@@ -287,7 +291,7 @@ impl<F: SKFloat> SKImportable<F> for SKHistGradientBoostingClassifierModel<F> {
             number_of_classes: sk_integer_parameter(metadata, "number_of_classes", 1).max(1)
                 as usize,
             feature_count,
-            feature_importances: read_importances(state)?,
+            feature_importances: read_importances(state, feature_count)?,
             feature_binnings: import_binnings(state, feature_count)?,
             backend: sk_parse_backend_parameter(metadata),
             execution_intent: SKExecutionMode::Automatic,
@@ -295,8 +299,17 @@ impl<F: SKFloat> SKImportable<F> for SKHistGradientBoostingClassifierModel<F> {
     }
 }
 
-fn read_importances<F: SKFloat>(state: &SKModelState<F>) -> Result<Vec<F>, SKError> {
+fn read_importances<F: SKFloat>(
+    state: &SKModelState<F>,
+    feature_count: usize,
+) -> Result<Vec<F>, SKError> {
     let (_, values) = sk_read_floating_tensor(state, "hist_boosting.feature_importances")?;
+    if values.len() != feature_count {
+        return Err(SKError::ShapeMismatch {
+            expected: vec![feature_count],
+            found: vec![values.len()],
+        });
+    }
     Ok(values)
 }
 

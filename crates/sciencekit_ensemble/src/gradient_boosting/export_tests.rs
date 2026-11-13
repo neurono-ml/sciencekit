@@ -2,8 +2,8 @@
 
 use ndarray::array;
 use sciencekit_common::{
-    SKBackendKind, SKBuilder, SKClassifierPredictor, SKRegressorPredictor, SKSupervisedFit,
-    sk_assert_export_round_trip,
+    SKBackendKind, SKBuilder, SKClassifierPredictor, SKExportable, SKImportable, SKModelState,
+    SKRegressorPredictor, SKSupervisedFit, SKTensor, sk_assert_export_round_trip,
 };
 
 use super::{SKGradientBoostingClassifier, SKGradientBoostingRegressor};
@@ -52,3 +52,38 @@ fn gradient_boosting_classifier_round_trips_classes_and_stages() {
         imported.predict_labels(features.view()).unwrap()
     );
 }
+
+#[test]
+fn gradient_boosting_import_rejects_a_truncated_stage_importance_tensor() {
+    let features = array![[0.0_f64], [1.0], [2.0], [3.0], [4.0], [5.0]];
+    let targets = array![1.0_f64, 3.0, 5.0, 7.0, 9.0, 11.0];
+    let model = SKGradientBoostingRegressor::<f64>::build()
+        .number_of_estimators(3)
+        .without_early_stopping()
+        .build()
+        .unwrap()
+        .fit(features.view(), targets.view())
+        .unwrap();
+    let state = model.export_state().unwrap();
+    let mut tensors: Vec<_> = state
+        .tensors()
+        .values()
+        .filter(|tensor| tensor.name() != "gradient_boosting.stage_importances")
+        .cloned()
+        .collect();
+    tensors.push(
+        SKTensor::floating(
+            "gradient_boosting.stage_importances",
+            vec![1],
+            vec![1.0],
+        )
+        .unwrap(),
+    );
+    let broken = SKModelState::new(state.metadata().clone(), tensors).unwrap();
+    assert!(matches!(
+        SKGradientBoostingRegressorModel::<f64>::import_state(&broken),
+        Err(sciencekit_common::SKError::ShapeMismatch { .. })
+    ));
+}
+
+use super::SKGradientBoostingRegressorModel;

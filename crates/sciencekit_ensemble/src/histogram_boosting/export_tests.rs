@@ -2,8 +2,8 @@
 
 use ndarray::array;
 use sciencekit_common::{
-    SKBackendKind, SKBuilder, SKClassifierPredictor, SKRegressorPredictor, SKSupervisedFit,
-    sk_assert_export_round_trip,
+    SKBackendKind, SKBuilder, SKClassifierPredictor, SKExportable, SKImportable, SKModelState,
+    SKRegressorPredictor, SKSupervisedFit, SKTensor, sk_assert_export_round_trip,
 };
 use sprs::TriMat;
 
@@ -101,4 +101,32 @@ fn histogram_classifier_round_trips_categorical_masks() {
         model.predict_labels(features.view()).unwrap(),
         imported.predict_labels(features.view()).unwrap()
     );
+}
+
+#[test]
+fn histogram_import_rejects_a_truncated_stage_importance_tensor() {
+    let features = array![[0.0_f64], [1.0], [2.0], [3.0], [4.0], [5.0]];
+    let targets = array![1.0_f64, 3.0, 5.0, 7.0, 9.0, 11.0];
+    let model = SKHistGradientBoostingRegressor::<f64>::build()
+        .number_of_estimators(3)
+        .without_early_stopping()
+        .build()
+        .unwrap()
+        .fit(features.view(), targets.view())
+        .unwrap();
+    let state = model.export_state().unwrap();
+    let mut tensors: Vec<_> = state
+        .tensors()
+        .values()
+        .filter(|tensor| tensor.name() != "hist_boosting.stage_importances")
+        .cloned()
+        .collect();
+    tensors.push(
+        SKTensor::floating("hist_boosting.stage_importances", vec![1], vec![1.0]).unwrap(),
+    );
+    let broken = SKModelState::new(state.metadata().clone(), tensors).unwrap();
+    assert!(matches!(
+        super::SKHistGradientBoostingRegressorModel::<f64>::import_state(&broken),
+        Err(sciencekit_common::SKError::ShapeMismatch { .. })
+    ));
 }

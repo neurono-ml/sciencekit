@@ -97,7 +97,7 @@ impl<F: SKFloat> SKImportable<F> for SKGradientBoostingRegressorModel<F> {
                 SKError::Conversion("learning_rate is not finite".to_string()),
             )?,
             feature_count,
-            feature_importances: read_importances(state)?,
+            feature_importances: read_importances(state, feature_count)?,
             loss: loss_from_name(sk_string_parameter(metadata, "loss", "squared_error")),
             huber_delta: F::from(sk_float_parameter(metadata, "huber_delta", 1.0))
                 .ok_or(SKError::Conversion("huber_delta is not finite".to_string()))?,
@@ -278,7 +278,7 @@ impl<F: SKFloat> SKImportable<F> for SKGradientBoostingClassifierModel<F> {
             number_of_classes: sk_integer_parameter(metadata, "number_of_classes", 1).max(1)
                 as usize,
             feature_count,
-            feature_importances: read_importances(state)?,
+            feature_importances: read_importances(state, feature_count)?,
             loss: SKGradientBoostingClassificationLoss::LogLoss,
             backend: sk_parse_backend_parameter(metadata),
             execution_intent: SKExecutionMode::Automatic,
@@ -291,20 +291,34 @@ fn split_stage_importances<F: SKFloat>(
     stages: &[sciencekit_tree::SKTree<F>],
 ) -> Result<Vec<Vec<F>>, SKError> {
     let (_, values) = sk_read_floating_tensor(state, "gradient_boosting.stage_importances")?;
-    let mut offset = 0;
-    Ok(stages
-        .iter()
-        .map(|tree| {
-            let end = offset + tree.feature_count();
-            let slice = values.get(offset..end).unwrap_or(&[]).to_vec();
-            offset = end;
-            slice
-        })
-        .collect())
+    let expected: usize = stages.iter().map(|tree| tree.feature_count()).sum();
+    if values.len() != expected {
+        return Err(SKError::ShapeMismatch {
+            expected: vec![expected],
+            found: vec![values.len()],
+        });
+    }
+    let mut remaining = values.as_slice();
+    let mut stage_importances = Vec::with_capacity(stages.len());
+    for tree in stages {
+        let (head, tail) = remaining.split_at(tree.feature_count());
+        stage_importances.push(head.to_vec());
+        remaining = tail;
+    }
+    Ok(stage_importances)
 }
 
-fn read_importances<F: SKFloat>(state: &SKModelState<F>) -> Result<Vec<F>, SKError> {
+fn read_importances<F: SKFloat>(
+    state: &SKModelState<F>,
+    feature_count: usize,
+) -> Result<Vec<F>, SKError> {
     let (_, values) = sk_read_floating_tensor(state, "gradient_boosting.feature_importances")?;
+    if values.len() != feature_count {
+        return Err(SKError::ShapeMismatch {
+            expected: vec![feature_count],
+            found: vec![values.len()],
+        });
+    }
     Ok(values)
 }
 
