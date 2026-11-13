@@ -3,12 +3,15 @@
 
 use ndarray::array;
 
-use super::design::{SKDenseLinearSvcDesign, SKLinearSvcDesignAccess};
+use sciencekit_common::SKDataView;
+
+use super::design::{SKLinearSvcDesign, sk_linear_svc_design_access};
 
 #[test]
 fn dense_design_row_dot_matches_the_hand_computed_augmented_row() {
     let features = array![[1.0_f64, 2.0], [3.0, -1.0]];
-    let design = SKDenseLinearSvcDesign::new(features.view(), true);
+    let design = SKLinearSvcDesign::dispatch(SKDataView::Dense(features.view()), true).unwrap();
+    let design = sk_linear_svc_design_access(&design);
 
     assert_eq!(design.number_of_rows(), 2);
     assert_eq!(design.number_of_columns(), 2);
@@ -26,7 +29,8 @@ fn dense_design_row_dot_matches_the_hand_computed_augmented_row() {
 #[test]
 fn dense_design_adds_scaled_augmented_rows_into_the_target() {
     let features = array![[1.0_f64, 2.0], [3.0, -1.0]];
-    let design = SKDenseLinearSvcDesign::new(features.view(), true);
+    let design = SKLinearSvcDesign::dispatch(SKDataView::Dense(features.view()), true).unwrap();
+    let design = sk_linear_svc_design_access(&design);
 
     let mut target = [0.0_f64; 3];
     design.add_scaled_row(0, 2.0, &mut target);
@@ -40,7 +44,8 @@ fn dense_design_adds_scaled_augmented_rows_into_the_target() {
 #[test]
 fn dense_design_without_intercept_uses_the_stored_columns_only() {
     let features = array![[1.0_f64, 2.0]];
-    let design = SKDenseLinearSvcDesign::new(features.view(), false);
+    let design = SKLinearSvcDesign::dispatch(SKDataView::Dense(features.view()), false).unwrap();
+    let design = sk_linear_svc_design_access(&design);
     let coefficients = [2.0_f64, 3.0];
     assert!((design.row_dot(0, &coefficients) - 8.0).abs() < 1e-12);
     assert!((design.row_norm_squared(0) - 5.0).abs() < 1e-12);
@@ -48,10 +53,7 @@ fn dense_design_without_intercept_uses_the_stored_columns_only() {
 
 #[test]
 fn sparse_design_scans_stored_entries_only_and_rejects_csc() {
-    use sciencekit_common::SKDataView;
     use sprs::{CsMat, TriMat};
-
-    use super::design::SKLinearSvcDesign;
 
     let mut triplets = TriMat::new((2, 3));
     triplets.add_triplet(0, 0, 1.0_f64);
@@ -60,7 +62,7 @@ fn sparse_design_scans_stored_entries_only_and_rejects_csc() {
     let csr = triplets.to_csr();
 
     let design = SKLinearSvcDesign::dispatch(SKDataView::Sparse(csr.view()), true).unwrap();
-    let access = super::design::sk_linear_svc_design_access(&design);
+    let access = sk_linear_svc_design_access(&design);
     let coefficients = [0.5_f64, 1.5, -2.0, 0.25];
     // row 0 stored: 1·0.5 + 2·(-2) + bias 0.25
     assert!((access.row_dot(0, &coefficients) - (0.5 - 4.0 + 0.25)).abs() < 1e-12);
@@ -91,10 +93,7 @@ fn sparse_design_scans_stored_entries_only_and_rejects_csc() {
 #[test]
 fn sparse_and_dense_designs_agree_on_the_same_logical_matrix() {
     use ndarray::Array2;
-    use sciencekit_common::SKDataView;
     use sprs::TriMat;
-
-    use super::design::SKLinearSvcDesign;
 
     let dense = Array2::from_shape_vec((2, 3), vec![1.0_f64, 0.0, 2.0, 0.0, -1.0, 0.0]).unwrap();
     let mut triplets = TriMat::new((2, 3));

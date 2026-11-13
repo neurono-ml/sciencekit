@@ -4,7 +4,9 @@
 use ndarray::array;
 
 use super::config::SKLinearSvcLoss;
-use super::design::SKDenseLinearSvcDesign;
+use sciencekit_common::SKDataView;
+
+use super::design::{SKLinearSvcDesign, sk_linear_svc_design_access};
 use super::solver::sk_solve_linear_svc_dual;
 
 fn solve_hinge(
@@ -29,10 +31,12 @@ fn solve_loss(
     intercept: bool,
     tolerance: f64,
 ) -> (super::solver::SKLinearSvcSolverOutcome<f64>, usize) {
-    let design = SKDenseLinearSvcDesign::new(features.view(), intercept);
+    let design =
+        SKLinearSvcDesign::dispatch(SKDataView::Dense(features.view()), intercept).unwrap();
+    let design = sk_linear_svc_design_access(&design);
     let weights = vec![1.0_f64; labels.len()];
     let outcome =
-        sk_solve_linear_svc_dual(&design, labels, &weights, loss, 1.0, tolerance, 10_000).unwrap();
+        sk_solve_linear_svc_dual(design, labels, &weights, loss, 1.0, tolerance, 10_000).unwrap();
     let iterations = outcome.iterations;
     (outcome, iterations)
 }
@@ -151,10 +155,11 @@ fn exhausted_iteration_budget_reports_not_converged_with_the_executed_count() {
         [-0.2, -0.6]
     ];
     let labels = [-1.0_f64, -1.0, 1.0, 1.0, 1.0, -1.0];
-    let design = SKDenseLinearSvcDesign::new(features.view(), true);
+    let design = SKLinearSvcDesign::dispatch(SKDataView::Dense(features.view()), true).unwrap();
+    let design = sk_linear_svc_design_access(&design);
     let weights = vec![1.0_f64; labels.len()];
     let error = sk_solve_linear_svc_dual(
-        &design,
+        design,
         &labels,
         &weights,
         SKLinearSvcLoss::Hinge,

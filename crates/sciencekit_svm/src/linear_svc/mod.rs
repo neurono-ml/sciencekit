@@ -34,6 +34,8 @@ mod linear_svc_fit_tests;
 #[cfg(test)]
 mod linear_svc_multiclass_tests;
 #[cfg(test)]
+mod linear_svc_observability_tests;
+#[cfg(test)]
 mod linear_svc_predict_tests;
 #[cfg(test)]
 mod linear_svc_representation_tests;
