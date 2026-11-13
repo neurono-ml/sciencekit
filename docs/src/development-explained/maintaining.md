@@ -342,4 +342,12 @@ raw binary matrices with explicit descriptors and exact length validation, zero-
 float rows with Fortran-order, endianness and alignment rejection plus an explicit casting path,
 footer-indexed Arrow IPC random access with per-batch decoding, bounded sequential blocks and
 `Send + Sync` concurrent readers.
-
+The [histogram gradient boosting chapter](./ch60-histogram-gradient-boosting.html) adds the
+`histogram_boosting` module of `sciencekit_ensemble`: deterministic quantile binning
+(`SKNumericBinning`, `SKFeatureBinning`, `SKBinnedDataset`) with a reserved missing bin and a
+column-major `u8` store, parallel gradient/Hessian accumulation, the Newton gain prefix scan,
+parent-child histogram subtraction, gain-ordered leaf-wise growth under `maximum_leaf_nodes` and
+`minimum_samples_leaf`, `bitvec` categorical membership masks with an unknown-category direction,
+learned `default_left` missing routing, and the `SKHistGradientBoostingClassifier` /
+`SKHistGradientBoostingRegressor` builders, models and prediction surface that reuse the W4.4 loss
+contract and early-stopping monitor while binning dense and CSR queries without densification.

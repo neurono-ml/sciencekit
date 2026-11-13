@@ -101,6 +101,7 @@ and receives a Python binding as soon as it is validated on CPU.
 | `SKRandomForestRegressor` | Random-forest regression (bootstrap, OOB $R^2$, dense and sparse) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKBaggingClassifier` / `SKBaggingRegressor` | Generic parallel bootstrap and feature-subspace aggregation over any supervised base estimator (OOB accuracy / $R^2$, dense and sparse) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKGradientBoostingClassifier` / `SKGradientBoostingRegressor` | Sequential gradient boosting over negative gradients with Newton leaves, shrinkage, subsampling and early stopping (binary, multiclass, squared/absolute/Huber, dense and sparse) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
+| `SKHistGradientBoostingClassifier` / `SKHistGradientBoostingRegressor` | LightGBM-style histogram boosting: quantile binning with a missing bin, parallel gradient/Hessian histograms, parent subtraction, leaf-wise growth, `bitvec` categorical partitions, learned missing routing, subsampling and early stopping (binary, multiclass, squared/absolute, dense and non-densified CSR) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 
 ## Unsupervised · `sciencekit_cluster`, `sciencekit_decomposition`, `sciencekit_outlier`
 

@@ -86,4 +86,5 @@
   - [OpenTelemetry export: three signals, bounded cardinality and an honest lifecycle](development-explained/ch55-telemetry-export.md)
   - [Streaming pipelines: epochs, chained stages and a bounded finalizer](development-explained/ch56-streaming-pipeline.md)
   - [Memory-mapped sources: raw binary, NumPy npy and Arrow IPC without copying](development-explained/ch58-memory-mapped-interop.md)
+  - [Histogram gradient boosting: bins, histograms and leaves grown on the smaller child](development-explained/ch60-histogram-gradient-boosting.md)
   - [Maintaining this book](development-explained/maintaining.md)
