@@ -53,13 +53,12 @@ pub(super) fn sk_logistic_loss<F: SKFloat>(
                 other => return Err(SKError::UnknownLabel { label: other }),
             }
         } else {
-            let logits =
-                row_score
-                    .as_slice()
-                    .ok_or_else(|| SKError::UnsupportedRepresentation {
-                        representation: "non-contiguous decision row",
-                        suggestion: "reshape the decision scores to a contiguous matrix",
-                    })?;
+            let logits = row_score
+                .as_slice()
+                .ok_or(SKError::UnsupportedRepresentation {
+                    representation: "non-contiguous decision row",
+                    suggestion: "reshape the decision scores to a contiguous matrix",
+                })?;
             sk_multinomial_loss(logits, label as usize, F::one())
         };
         Ok(accumulator + term)
@@ -69,10 +68,10 @@ pub(super) fn sk_logistic_loss<F: SKFloat>(
 
 impl<F: SKFloat> SKLoraAttachedModel<F> {
     /// Fit the factors on integer class labels, leaving the base untouched.
-    pub(super) fn fit_logistic<'a>(
+    pub(super) fn fit_logistic(
         &mut self,
         data: &SKDataView<'_, F>,
-        targets: &SKTargetView<'a, F>,
+        targets: &SKTargetView<'_, F>,
     ) -> Result<(), SKError> {
         let labels = sk_integer_labels(targets)?;
         let (rows_count, columns_count) = sk_feature_dimensions(data);

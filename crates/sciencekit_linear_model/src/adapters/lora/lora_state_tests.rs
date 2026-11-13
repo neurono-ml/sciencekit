@@ -129,7 +129,7 @@ fn a_tampered_factor_shape_is_rejected_without_a_panic() {
     let state = attached.export_state().unwrap();
     let target = SKLoraTargetModule::LinearCoefficients;
     let mut tensors = state.tensors().values().cloned().collect::<Vec<_>>();
-    tensors.retain(|tensor| tensor.name() != &sk_lora_b_tensor_name(target));
+    tensors.retain(|tensor| tensor.name() != sk_lora_b_tensor_name(target));
     tensors
         .push(SKTensor::floating(sk_lora_b_tensor_name(target), vec![3, 2], vec![0.0; 6]).unwrap());
     let tampered = SKModelState::new(state.metadata().clone(), tensors).unwrap();
