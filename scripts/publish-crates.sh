@@ -37,6 +37,7 @@ CRATES=(
   sciencekit_ffi
   sciencekit_onnx
   sciencekit
+  sciencekit_cli
 )
 
 DRY_RUN=""

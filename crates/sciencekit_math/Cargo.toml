@@ -8,7 +8,7 @@ description = "Computational kernels and the BLAS/LAPACK interface for scienceki
 repository = "https://github.com/neurono-ml/sciencekit"
 
 [dependencies]
-sciencekit_common = { path = "../sciencekit_common", version = "0.8.0" }
+sciencekit_common = { path = "../sciencekit_common", version = "0.8.1" }
 # Pure-Rust BLAS/LAPACK default (PRD §6.2, wave-plan-foundation Decision 1).
 faer = "0.24"
 # GEMM fallback kernel for the `MatrixMultiplyBackend`.

@@ -8,8 +8,8 @@ description = "Reproducible data partitioning for sciencekit: train/test splits,
 repository = "https://github.com/neurono-ml/sciencekit"
 
 [dependencies]
-sciencekit_common = { path = "../sciencekit_common", version = "0.8.0" }
-sciencekit_metrics = { path = "../sciencekit_metrics", version = "0.8.0" }
+sciencekit_common = { path = "../sciencekit_common", version = "0.8.1" }
+sciencekit_metrics = { path = "../sciencekit_metrics", version = "0.8.1" }
 ndarray = { workspace = true }
 rayon = { workspace = true }
 sprs = { workspace = true }

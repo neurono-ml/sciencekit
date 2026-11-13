@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.1] — 2026-11-13
+
+Patch release: `0.8.0` was published to crates.io before the umbrella crate was
+filled in, so `sciencekit = "0.8.0"` resolved to an empty re-export surface.
+`0.8.1` republishes the whole family with the content below.
+
 ### Added
 
 - `sciencekit` command-line workflows (spec `workflows-cli`): the
@@ -66,6 +72,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `SKLogisticRegression` models; inference-only families reject `partial_fit`
   with typed guidance instead of silently resetting the imported coefficients.
 
+### Fixed
+
+- The `sciencekit` umbrella crate published in `0.8.0` was empty (its
+  re-exports landed afterwards), so the documented `sciencekit = "0.8.0"`
+  dependency gave no estimators. `0.8.1` publishes the umbrella with the full
+  family surface and feature forwarding described above.
+- `scripts/publish-crates.sh` retries a crate whose publish hits crates.io
+  HTTP 429 with exponential backoff instead of failing the whole release, and
+  declares its retry state without a `local` outside a function.
 
 ## [0.8.0] — 2026-11-13
 
