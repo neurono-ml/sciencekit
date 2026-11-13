@@ -12,20 +12,8 @@ backend-carrying estimator with a distinct fitted model whose objective adds an 
 ### Requirement: Builder-only construction with explicit defaults
 
 `SKLasso<F>` SHALL be constructed only through `SKLasso::<F>::build()`, which SHALL expose
-the chainable configuration sink: `alpha` (a scalar `F` or a sequence of `F`, default `1.0`),
-`include_intercept(bool)` (default `true`), `tolerance(F)` (default `1e-4`),
-`maximum_number_of_iterations(usize)` (default `1000`), `positive(bool)` (default `false`),
-`selection(SKSelection)` (default `Cyclic`), `screening(bool)` (default `true`),
-`backend(SKBackendKind)` (default `Faer`) and `execution_mode(SKExecutionMode)` (default
-`Automatic`); the direct constructor SHALL stay private. Because the configuration carries
-the scalar `alpha`, the estimator MAY be generic over `F`.
-
-#### Scenario: Default configuration
-
-- **WHEN** an estimator is built without calling any setter
-- **THEN** it fits with a single `alpha` equal to one, includes an intercept, is unconstrained
-  in sign, uses cyclic selection and screening, carries `SKBackendKind::Faer` and an
-  `Automatic` execution intent
+the chainable configuration sink; the direct constructor SHALL stay private. Because the
+configuration carries the scalar `alpha`, the estimator MAY be generic over `F`.
 
 #### Scenario: Configuration flows through the model
 
@@ -33,6 +21,22 @@ the scalar `alpha`, the estimator MAY be generic over `F`.
   non-default backend and a non-default tolerance
 - **THEN** the fitted model reports no intercept, reports the positive constraint, carries
   that backend kind and honors the tolerance
+
+### Requirement: The builder exposes every configuration setter with its default
+
+The builder SHALL expose `alpha` (a scalar `F` or a sequence of `F`, default `1.0`),
+`include_intercept(bool)` (default `true`), `tolerance(F)` (default `1e-4`),
+`maximum_number_of_iterations(usize)` (default `1000`), `positive(bool)` (default `false`),
+`selection(SKSelection)` (default `Cyclic`), `screening(bool)` (default `true`),
+`backend(SKBackendKind)` (default `Faer`) and `execution_mode(SKExecutionMode)` (default
+`Automatic`).
+
+#### Scenario: Default configuration
+
+- **WHEN** an estimator is built without calling any setter
+- **THEN** it fits with a single `alpha` equal to one, includes an intercept, is unconstrained
+  in sign, uses cyclic selection and screening, carries `SKBackendKind::Faer` and an
+  `Automatic` execution intent
 
 ### Requirement: The L1 penalty yields a sparse solution and the KKT conditions hold
 

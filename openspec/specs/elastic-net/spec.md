@@ -11,25 +11,29 @@ configured `alpha` and a `l1_ratio` that interpolates between Lasso and Ridge.
 
 ### Requirement: Builder-only construction with explicit defaults
 
-`SKElasticNet<F>` SHALL be constructed only through `SKElasticNet::<F>::build()`, which SHALL
-expose the chainable configuration sink: `alpha` (a scalar `F` or a sequence of `F`, default
-`1.0`), `l1_ratio(F)` (default `0.5`), `include_intercept(bool)` (default `true`),
-`tolerance(F)` (default `1e-4`), `maximum_number_of_iterations(usize)` (default `1000`),
-`positive(bool)` (default `false`), `selection(SKSelection)` (default `Cyclic`),
-`screening(bool)` (default `true`), `backend(SKBackendKind)` (default `Faer`) and
-`execution_mode(SKExecutionMode)` (default `Automatic`); the direct constructor SHALL stay
-private. `l1_ratio` SHALL be validated to the closed interval `[0, 1]`.
+`SKElasticNet<F>` SHALL be constructed only through `SKElasticNet::<F>::build()`, which
+SHALL expose the chainable configuration sink; the direct constructor SHALL stay private.
+`l1_ratio` SHALL be validated to the closed interval `[0, 1]`.
+
+#### Scenario: Out-of-range l1_ratio is rejected
+
+- **WHEN** `l1_ratio` is negative or greater than one and `build` is called
+- **THEN** it returns an invalid-hyperparameter error naming `l1_ratio`
+
+### Requirement: The builder exposes every configuration setter with its default
+
+The builder SHALL expose `alpha` (a scalar `F` or a sequence of `F`, default `1.0`),
+`l1_ratio(F)` (default `0.5`), `include_intercept(bool)` (default `true`), `tolerance(F)`
+(default `1e-4`), `maximum_number_of_iterations(usize)` (default `1000`), `positive(bool)`
+(default `false`), `selection(SKSelection)` (default `Cyclic`), `screening(bool)` (default
+`true`), `backend(SKBackendKind)` (default `Faer`) and `execution_mode(SKExecutionMode)`
+(default `Automatic`).
 
 #### Scenario: Default configuration
 
 - **WHEN** an estimator is built without calling any setter
 - **THEN** it fits with a single `alpha` equal to one, `l1_ratio` equal to one half,
   includes an intercept, carries `SKBackendKind::Faer` and an `Automatic` execution intent
-
-#### Scenario: Out-of-range l1_ratio is rejected
-
-- **WHEN** `l1_ratio` is negative or greater than one and `build` is called
-- **THEN** it returns an invalid-hyperparameter error naming `l1_ratio`
 
 ### Requirement: The l1_ratio interpolates between Lasso and Ridge
 

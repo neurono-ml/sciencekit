@@ -12,22 +12,9 @@ labels, and from a dense `fit`, an incremental `partial_fit` and an out-of-core
 ### Requirement: Builder-only construction with explicit defaults
 
 `SKLogisticRegression<F>` SHALL be constructed only through
-`SKLogisticRegression::<F>::build()`, exposing the chainable configuration sink:
-`penalty(SKLogisticPenalty)` (default `L2`), `l1_ratio(F)` (default `0.5`), `C(F)` and
-`alpha(F)` (default `1.0`), `solver(SKLogisticSolver)` (default `Lbfgs`),
-`multi_class(SKMultiClass)` (default `Auto`), `class_weight(SKClassWeight)` (default
-`None`), `warm_start(bool)` (default `false`), `include_intercept(bool)` (default `true`),
-`tolerance(F)` (default `1e-4`), `maximum_number_of_iterations(usize)` (default `100`),
-`backend(SKBackendKind)` (default `Faer`) and `execution_mode(SKExecutionMode)` (default
-`Automatic`); the direct constructor SHALL stay private. Because the configuration carries
-the scalar `C`/`alpha`, the estimator MAY be generic over `F`.
-
-#### Scenario: Default configuration
-
-- **WHEN** an estimator is built without calling any setter
-- **THEN** it fits with an L2 penalty, regularization strength one, the `Lbfgs` solver,
-  automatic multi-class resolution, no class weighting, no warm start, an intercept, carries
-  `SKBackendKind::Faer` and an `Automatic` execution intent
+`SKLogisticRegression::<F>::build()`, which SHALL expose the chainable configuration sink;
+the direct constructor SHALL stay private. Because the configuration carries the scalar
+`C`/`alpha`, the estimator MAY be generic over `F`.
 
 #### Scenario: Configuration flows through the model
 
@@ -35,6 +22,22 @@ the scalar `C`/`alpha`, the estimator MAY be generic over `F`.
   non-default tolerance
 - **THEN** the fitted model reports no intercept, carries that backend kind and honors the
   tolerance
+
+### Requirement: The builder exposes every configuration setter with its default
+
+The builder SHALL expose `penalty(SKLogisticPenalty)`, `l1_ratio(F)`, `C(F)` and `alpha(F)`,
+`solver(SKLogisticSolver)`, `multi_class(SKMultiClass)`, `class_weight(SKClassWeight)`,
+`warm_start(bool)`, `include_intercept(bool)`, `tolerance(F)`,
+`maximum_number_of_iterations(usize)`, `backend(SKBackendKind)` and
+`execution_mode(SKExecutionMode)`, each carrying the default recorded in the scenarios below.
+
+#### Scenario: Default configuration
+
+- **WHEN** an estimator is built without calling any setter
+- **THEN** it fits with an L2 penalty, `l1_ratio` equal to one half, regularization strength
+  one, the `Lbfgs` solver, automatic multi-class resolution, no class weighting, no warm
+  start, an intercept, a tolerance of `1e-4`, an iteration budget of one hundred, carries
+  `SKBackendKind::Faer` and an `Automatic` execution intent
 
 ### Requirement: Both C and alpha are accepted with last-setter precedence
 
@@ -59,11 +62,9 @@ structured error.
 
 The estimator SHALL minimize the penalized logistic loss: for binary fits
 `(1/n)·Σ_i c_i·log(1 + exp(−y_i·x_iᵀw)) + P(w)` with `y_i ∈ {−1, +1}`, and for multinomial
-fits the softmax cross-entropy with the same penalty `P(w)`, where `P(w)` is `(α/2)‖w‖₂²`
-(`L2`), `α‖w‖₁` (`L1`), `α·(l1_ratio·‖w‖₁ + (1−l1_ratio)/2·‖w‖₂²)` (`ElasticNet`) or `0`
-(`None`), with `α = 1/C`. The intercept SHALL never be penalized, except under the
-`Liblinear` solver, whose LIBLINEAR formulation regularizes the intercept exactly as
-scikit-learn does.
+fits the softmax cross-entropy with the same penalty `P(w)`. The intercept SHALL never be
+penalized, except under the `Liblinear` solver, whose LIBLINEAR formulation regularizes the
+intercept exactly as scikit-learn does.
 
 #### Scenario: A large C approaches the unregularized fit
 
@@ -79,6 +80,17 @@ scikit-learn does.
 
 - **WHEN** data whose best separator has a large intercept is fitted with a growing penalty
 - **THEN** the intercept stays near its unpenalized estimate while the slopes shrink
+
+### Requirement: Each penalty kind defines its penalty term
+
+With `α = 1/C`, the penalty `P(w)` SHALL be `(α/2)‖w‖₂²` (`L2`), `α‖w‖₁` (`L1`),
+`α·(l1_ratio·‖w‖₁ + (1−l1_ratio)/2·‖w‖₂²)` (`ElasticNet`) or `0` (`None`).
+
+#### Scenario: Each penalty kind matches its formula
+
+- **WHEN** an estimator is configured with the `L2`, `L1`, `ElasticNet` or `None` penalty
+- **THEN** the penalty term added to the loss is the formula listed for that kind, with
+  `α = 1/C`
 
 ### Requirement: Multi-class strategies are resolved deterministically
 
