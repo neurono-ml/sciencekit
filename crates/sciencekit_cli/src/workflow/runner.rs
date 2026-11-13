@@ -6,7 +6,9 @@ use serde_json::{Value, json};
 
 use crate::cli::commands::estimator::{sk_fit_regressor, sk_require_targets};
 use crate::cli::commands::metrics::sk_compute_metrics;
-use crate::cli::commands::support::sk_output_format;
+use crate::cli::commands::support::{
+    sk_ensure_output_format_supported, sk_output_format, sk_preflight_output_path,
+};
 use crate::config::{SKEffectiveConfiguration, sk_parse_backend};
 use crate::error::SKCliError;
 use crate::io::{SKModelFormat, sk_load_dataset, sk_save_state, sk_write_predictions};
@@ -19,6 +21,14 @@ pub fn sk_execute_workflow(
     configuration: &SKEffectiveConfiguration,
 ) -> Result<Value, SKCliError> {
     let backend = sk_parse_backend(&configuration.backend)?;
+    if let Some(model_path) = &configuration.model {
+        sk_preflight_output_path(model_path, "configuration.model")?;
+    }
+    if let Some(predictions_path) = &configuration.predictions {
+        let format = sk_output_format(configuration, Path::new(predictions_path))?;
+        sk_preflight_output_path(predictions_path, "configuration.predictions")?;
+        sk_ensure_output_format_supported(format)?;
+    }
     let dataset_path = configuration
         .dataset
         .clone()
