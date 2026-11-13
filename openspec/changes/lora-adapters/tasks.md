@@ -23,7 +23,7 @@
   `cargo test -p sciencekit_linear_model lora_merge`.
 - [x] 3.2 Implement adapter export/import through the interop state and round-trip tests;
   verify with `cargo test -p sciencekit_linear_model lora_state`.
-- [ ] 3.3 Add unsupported-family, shape, non-finite and concurrency tests; verify with
+- [x] 3.3 Add unsupported-family, shape, non-finite and concurrency tests; verify with
   `cargo test -p sciencekit_linear_model lora_validation`.
 
 ## 4. Acceptance and review
