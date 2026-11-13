@@ -15,7 +15,7 @@
   `cargo test -p sciencekit_onnx onnx_regressor`.
 - [x] 2.2 Implement the classifier probabilities/labels path and ambiguity rejection;
   verify with `cargo test -p sciencekit_onnx onnx_classifier`.
-- [ ] 2.3 Add batch of one, large batch and row-by-row agreement tests; verify with
+- [x] 2.3 Add batch of one, large batch and row-by-row agreement tests; verify with
   `cargo test -p sciencekit_onnx onnx_batch`.
 
 ## 3. Operator coverage and validation
