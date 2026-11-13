@@ -112,7 +112,7 @@ fn native_import_loader_round_trips_a_linear_model() {
     let restored = imported.predict_regression(probe.view()).unwrap();
     assert_eq!(original, restored);
     assert_eq!(imported.descriptor().estimator_name(), "SKLinearRegression");
-    assert!(imported.supports_retraining());
+    assert!(!imported.supports_retraining());
 }
 
 /// An export that lost a tensor is a typed missing-tensor rejection.

@@ -2,9 +2,7 @@
 //! (spec `native-model-import`, requirement "Continued training").
 
 use ndarray::array;
-use sciencekit_common::{
-    SKBuilder, SKClassifierPredictor, SKExportable, SKSupervisedFit, SKTargetView,
-};
+use sciencekit_common::{SKBuilder, SKClassifierPredictor, SKSupervisedFit, SKTargetView};
 use sciencekit_linear_model::logistic_regression::SKLogisticRegression;
 
 use super::conversion::SKNativeImport;
