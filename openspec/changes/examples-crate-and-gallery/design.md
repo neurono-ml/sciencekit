@@ -2,18 +2,24 @@
 
 ## Context
 
-sciencekit is a Rust reimplementation of scikit-learn with crates for the foundations
-(`sciencekit_common`, `sciencekit_math`), preprocessing, imputation, linear models and
-metrics. It has **no** example corpus, **no** dataset surface, **no** gallery
-documentation and **no** didactic book. The scikit-learn gallery it must mirror has 34
-sections and 281 example pages.
+sciencekit is a Rust reimplementation of scikit-learn. It now spans twenty-one
+crates — the foundations (`sciencekit_common`, `sciencekit_math`), preprocessing,
+imputation, linear models, metrics, model selection, pipelines, trees, ensembles,
+neighbours, support vector machines, clustering, decomposition, outlier detection and
+the interop layer — and it still has **no** example corpus, **no** dataset surface,
+**no** gallery documentation and **no** didactic book. The scikit-learn gallery it must
+mirror has 34 sections and 281 example pages.
 
 Four facts shape this design:
 
-1. **The corpus is downstream of the algorithms.** Only the algorithm families of
-   PRD phases 1–2 exist today; the catalog therefore has to carry a *blocked* status and
-   name the missing sciencekit capability, so the corpus grows with the roadmap instead
-   of being frozen at a partial snapshot.
+1. **The corpus is downstream of the algorithms.** The estimator surface is wide but not
+   complete: the families of feature selection, calibration, covariance estimation,
+   Gaussian mixtures, Gaussian processes, manifold learning, neural networks and text
+   are not implemented. The catalog therefore has to carry a *blocked* status and name
+   the missing sciencekit capability, so the corpus grows with the roadmap instead of
+   being frozen at a partial snapshot. The **FDR set** (`fdr/`) quantifies this: of
+   125 designed examples, 71 are implementable today, 42 wait on a named crate and 12
+   are deliberate omissions of families with no roadmap path.
 2. **The bindings do not exist.** Python, Go, Julia, JVM and Lua bindings are planned
    changes with no implementation. Multi-language code cannot be written against a
    frozen API yet.
@@ -255,6 +261,57 @@ the page explaining how the penalty trades bias for variance.
 its source — rejected: the rendered page hides the data flow. (b) Copy scikit-learn's
 example files verbatim and translate — rejected: scikit-learn's style (globals,
 `plt` calls, `numpy` arrays) violates this repository's conventions.
+
+### Decision 17 — Every example is designed before it is implemented
+
+The corpus is not a list of names; it is a set of **Feature & Example Design Records**
+(`fdr/`) — one record per example, each spelling out the whole recipe: the dataset and
+its origin, the feature selection, the feature engineering, the preprocessing, the
+ordered pipeline, the configuration spectrum, the behavior the reader must observe, the
+reported output, and the sciencekit capability it needs.
+
+```
+openspec/changes/examples-crate-and-gallery/fdr/
+├── README.md                 the record schema and the pipeline grammar
+├── availability-matrix.md    every record, its origin and its state
+├── 01-preprocessing-and-imputation.md
+├── 02-linear-models.md
+├── 03-neighbors-and-svm.md
+├── 04-trees-and-ensembles.md
+├── 05-clustering.md
+├── 06-decomposition.md
+├── 07-model-selection-and-pipelines.md
+├── 08-metrics-and-inspection.md
+├── 09-feature-selection-and-engineering.md
+└── 10-outliers-covariance-and-long-tail.md
+```
+
+The records go further than their scikit-learn originals on exactly the four points the
+corpus exists to teach: **which** features are selected and why, **what** is derived
+from them, **which** transformations are applied and where they are fitted, and **in
+what order** the stages run. A scikit-learn page shows a model; an FDR shows a
+pipeline.
+
+Two artifacts, two jobs:
+
+- The **FDR** is the *design*: written once, reviewed, and the blueprint the
+  implementation follows.
+- The **catalog record** is the *state*: the pointer to the implementation, the status,
+  the blocker, the languages — the fields that change as the corpus is ported.
+
+The catalog is **derived from** the FDRs, so a design and its record cannot drift; the
+availability matrix is generated from the FDRs for the same reason.
+
+*Rationale.* Writing the recipe before the code is what makes the corpus portable
+across languages: the Python, Go, Julia, JVM and Lua variants of an example must be the
+*same* example, and only a written recipe guarantees that. It also keeps the book's
+chapters honest — a chapter's claim about a configuration is backed by a recipe that
+names the configuration.
+
+*Alternatives considered.* (a) Writing the code first and documenting it afterwards —
+rejected: the documentation then describes whatever the code happened to do, and the
+multi-language port has no shared reference. (b) One giant spreadsheet of examples —
+rejected: it cannot express the ordered pipeline, and it cannot be reviewed as prose.
 
 ### Decision 4 — The dataset surface is owned by the examples crate
 

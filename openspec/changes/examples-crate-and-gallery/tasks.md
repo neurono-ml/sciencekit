@@ -22,6 +22,8 @@
 
 - [ ] 3.1 Define the catalog record schema and its loader, with the fields `id`, `family`, `title`, `sklearn_source`, `sklearn_url`, `dataset_source`, `sciencekit_crates`, `estimators`, `knobs`, `languages`, `status`, `blocked_by`, `omission_reason`, verifying the loader rejects a record missing a required field
 - [ ] 3.2 Populate the catalog with one record for each of the 281 scikit-learn gallery entries, recording every entry's family, scikit-learn source path and URL, and dataset source, and verifying the count against the gallery index
+- [ ] 3.2a Derive the catalog records from the design records in `fdr/`, verifying the validation test reports no design record without a catalog entry and no catalog entry without a design record
+- [ ] 3.2b Extend the design records with the families sciencekit covers only partially — feature selection, calibration, covariance estimation, Gaussian mixtures, Gaussian processes, manifold learning, neural networks and text — verifying each new record names the capability it needs
 - [ ] 3.3 Mark the entries that are intentionally not ported (release highlights, developer-facing entries, text-corpus entries) with `status: omitted` and a recorded reason, verifying no entry is missing from the catalog
 - [ ] 3.4 Mark the entries blocked by a sciencekit capability that does not exist yet with `status: blocked` and the missing capability in `blocked_by`, verifying every blocked record names its blocker
 - [ ] 3.5 Add the catalog validation test that cross-checks the catalog against the crate's filesystem (every ported record has a module and an example target, every module has a record), verifying the test fails when a record is added without its module
@@ -36,6 +38,7 @@
 ## 5. Porting guide and code style
 
 - [ ] 5.1 Write the porting guide (the scikit-learn source layout, the seven-step porting recipe, the estimator mapping table, the allowed mathematical tokens, the code-style rules) under `docs/src/`, verifying every step names the artifact it produces
+- [ ] 5.1a Publish the design records as a chapter of the machine-learning book — "how an example is designed" — walking through one complete record stage by stage, verifying every stage of the record is explained
 - [ ] 5.2 Add the catalog's companion document that maps each scikit-learn gallery section to its sciencekit crate, its status and its wave, verifying it is generated from the catalog
 - [ ] 5.3 Add a lint-style check that the crate contains no abbreviated identifiers other than the allowed mathematical tokens, verifying the check reports a deliberately introduced abbreviation
 

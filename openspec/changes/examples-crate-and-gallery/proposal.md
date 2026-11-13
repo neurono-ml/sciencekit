@@ -29,6 +29,11 @@ what makes the bindings comparable and reviewable.
 - **A local dataset module owned by the crate** (`sciencekit_examples::datasets`),
   reproducing the `sklearn.datasets` surface the gallery depends on: the `make_*` synthetic
   generators and the small classic datasets, with no network access at run time.
+- **A design record per example** (the FDR set): the dataset and its origin, the
+  feature selection, the feature engineering, the preprocessing, the ordered pipeline,
+  the configuration spectrum, the behavior the reader must observe, the reported output
+  and the sciencekit capability it needs — going further than the scikit-learn original
+  on exactly the points the corpus exists to teach.
 - **A machine-readable example catalog** recording, for every scikit-learn gallery entry:
   the example id, its family, the exact scikit-learn source file it is ported from, the
   dataset source, the sciencekit estimators involved, the configuration knobs exercised,
@@ -67,6 +72,9 @@ what makes the bindings comparable and reviewable.
 - `examples-documentation`: the "Examples" gallery section of the main book and the
   separate "Machine Learning with Sciencekit" book — page structure, taxonomy, the
   didactic contract of the book and the cross-references between both.
+- `example-design-records`: the FDR set — the design of every example, its pipeline
+  recipe, its configuration spectrum and the capability it needs; the catalog is derived
+  from it.
 
 ### Modified Capabilities
 

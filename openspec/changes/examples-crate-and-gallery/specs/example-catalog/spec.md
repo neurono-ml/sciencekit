@@ -55,6 +55,31 @@ record the dataset source and the estimators used by that source file.
 - **WHEN** a ported record is read
 - **THEN** it names the scikit-learn dataset or generator the source file loads
 
+### Requirement: Every record derives from a design record
+
+Each catalogued example SHALL have a design record that states its dataset origin, its
+feature selection, its feature engineering, its preprocessing, its ordered pipeline, its
+configuration spectrum and the behavior it must demonstrate, and the catalog SHALL be
+derived from those records.
+
+#### Scenario: The design record exists
+
+- **WHEN** a ported record is inspected
+- **THEN** its design record names the dataset, the stages of the pipeline in order and
+  the configuration settings compared
+
+#### Scenario: The pipeline is ordered and complete
+
+- **WHEN** a design record is read
+- **THEN** it states which features are selected, what is derived from them, which
+  transformations are applied and the order of the stages
+
+#### Scenario: The catalog follows the records
+
+- **WHEN** the catalog is validated against the design records
+- **THEN** every record of the catalog has a matching design record and no design record
+  is missing from the catalog
+
 ### Requirement: Configuration spectrum is recorded
 
 A ported example SHALL record the configuration knobs it exercises and the number of
