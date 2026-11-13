@@ -12,6 +12,7 @@ pub(crate) mod config;
 mod convergence;
 mod early_stopping;
 mod epoch;
+pub(crate) mod export_helpers;
 mod learning_rate;
 mod loss;
 pub(crate) mod objective;

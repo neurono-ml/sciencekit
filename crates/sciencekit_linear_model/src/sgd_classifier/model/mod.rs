@@ -4,6 +4,7 @@
 
 mod accessors;
 mod core_implementation;
+mod export;
 mod partial_fit;
 mod prediction;
 
