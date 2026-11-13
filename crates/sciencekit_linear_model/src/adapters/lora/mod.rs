@@ -12,6 +12,7 @@ mod core_implementation;
 mod fitting;
 mod merge;
 mod prediction;
+mod registry;
 mod state;
 
 pub use artifact::SKLoraAdapterArtifact;
@@ -21,6 +22,7 @@ pub use builder::SKLoraAdapterBuilder;
 pub use config::SKLoraTargetModule;
 pub use core_implementation::SKLoraAdapter;
 pub use merge::SKLoraMergedModel;
+pub use registry::SKLoraAdapterRegistry;
 pub use state::{
     SK_LORA_ESTIMATOR_NAME, SK_LORA_FORMAT_VERSION, sk_lora_a_tensor_name, sk_lora_b_tensor_name,
 };
@@ -39,3 +41,5 @@ mod lora_merge_tests;
 mod lora_predict_tests;
 #[cfg(test)]
 mod lora_state_tests;
+#[cfg(test)]
+mod lora_validation_tests;
