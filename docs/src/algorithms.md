@@ -71,6 +71,7 @@ and receives a Python binding as soon as it is validated on CPU.
 | `SKLogisticRegression` | Regularized logistic classification (binary · multinomial · one-vs-rest · dense · sparse · incremental · streaming) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKSGDClassifier` | Stochastic-gradient linear classification (5 losses · one-vs-rest · dense · sparse · incremental · streaming) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKSGDRegressor` | Stochastic-gradient linear regression (4 losses · Huber / epsilon-insensitive · dense · sparse · incremental · streaming) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
+| `SKLoraAdapter` | Low-rank adaptation of a frozen linear or logistic coefficient block (fit · predict · merge/unmerge · export/import · dense and sparse) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 
 ## Nearest neighbors · `sciencekit_neighbors`
 
