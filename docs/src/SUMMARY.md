@@ -93,4 +93,5 @@
   - [One export contract for every fitted model: export, import and round-trip evidence](development-explained/ch62-model-export-retrofit.md)
   - [ONNX export: turning a fitted model into a portable graph](development-explained/ch63-onnx-export.md)
   - [ONNX import: reading a foreign graph as a model](development-explained/ch64-onnx-import.md)
+  - [Native model import: from a foreign file back to a real model](development-explained/ch65-native-model-import.md)
   - [Maintaining this book](development-explained/maintaining.md)
