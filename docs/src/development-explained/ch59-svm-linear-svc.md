@@ -21,13 +21,13 @@ vector.
 ```mermaid
 flowchart LR
     accTitle: End-to-end flow of SKLinearSVC from data views to confidence margins
-    accDescr: A borrowed dense view or a borrowed CSR view enters one-time representation dispatch. The dispatched design answers row dots and scaled-row accumulation over stored entries only. The dual coordinate-descent solver keeps an O(n) dual vector and an O(p) coefficient vector, then re-optimizes the unpenalized intercept. One-vs-rest heads are fitted in parallel and assembled into SKLinearSVCModel, which exposes decision_function and deterministic labels but deliberately refuses probabilities.
+    accDescr: A borrowed dense view or a borrowed CSR view enters one-time representation dispatch. The dispatched design answers row dots and scaled-row accumulation over stored entries only. The dual coordinate-descent solver keeps an O(n) dual vector and an O(p) coefficient vector, then re-optimizes the intercept by 1-D bisection for the fitted weights. One-vs-rest heads are fitted in parallel and assembled into SKLinearSVCModel, which exposes decision_function and deterministic labels but deliberately refuses probabilities.
     A["SKDataView<br/>Dense or CSR, zero-copy"] --> B["SKLinearSvcDesign::dispatch<br/>(one match, once per operation)"]
     B --> C["SKDenseLinearSvcDesign<br/>row dot · add_scaled_row · ||x_i||²"]
     B --> D["SKSparseLinearSvcDesign<br/>stored entries only"]
     C --> E["Dual coordinate descent<br/>α ∈ Rⁿ · w ∈ Rᵖ⁺¹"]
     D --> E
-    E --> F["Intercept recovery<br/>1-D bisection on the unpenalized loss"]
+    E --> F["Intercept recovery<br/>1-D bisection for fixed weights"]
     F --> G["One-vs-rest heads<br/>parallel when the plan allows"]
     G --> H["SKLinearSVCModel<br/>decision_function · predict_labels"]
     H --> I["predict_probabilities<br/>UnsupportedOperation, by design"]
@@ -188,6 +188,15 @@ and exhausting the budget is an explicit `NotConverged { iterations }`. The acce
 therefore sets `tolerance(1e-2)` where its accuracy target needs no more precision, exactly as
 LIBLINEAR exposes the same knob as `-e`.
 
+The rule deserves one blunt warning: **the tolerance is absolute, not relative to the data**.
+The solver compares $\max_i |PG_i|$ directly against `tolerance`, so features with large
+magnitudes produce large gradients no matter how close the boundary already is. On unscaled
+data with a large offset, the default $10^{-4}$ can be unreachable within the sweep budget and
+`fit` returns `NotConverged` even though the classifier is already accurate. The remedy is to
+scale the features first — `SKStandardScaler` centers and standardizes each column, which also
+removes the offset that made the intercept hard to learn — not to loosen the tolerance until
+the error disappears.
+
 ### Shrinking: the road not taken
 
 LIBLINEAR accelerates sweeps by **shrinking**: rows whose multipliers are pinned at a bound
@@ -244,14 +253,20 @@ dense design appends the intercept coefficient to the dot product, and the spars
 does the same after folding its stored entries. The branch happens in the accessors, not in
 the solver loop.
 
-### Recovering an unpenalized intercept
+### The intercept: an augmented column, re-optimized at the end
 
-The dual's coordinate loop treats the augmented constant column as an ordinary feature,
-which keeps one convolution-free update valid for every coordinate. But the primal problem
-regularizes only $w$, never $b$: an unpenalized intercept does not appear in
-$\tfrac12\lVert w\rVert^2$. After the dual has converged,
-`sk_recover_linear_svc_intercept` re-optimizes $b$ exactly. With $w$ fixed, the training
-objective is a convex function of the single scalar $b$:
+The dual's coordinate loop treats the augmented constant column as an ordinary feature: every
+row implicitly gains a $1$, $Q_{ij}$ gains a $+1$ term and the diagonal becomes
+$\lVert x_i\rVert^2 + 1$. That keeps one update rule valid for every coordinate, but it has a
+consequence worth stating plainly: **the intercept is regularized too**. The same
+$\tfrac12\lVert w\rVert^2$ term that shrinks the feature weights also shrinks the augmented
+coefficient, so the dual solve produces a *penalized* intercept, not an unpenalized bias.
+(LIBLINEAR's default `-B -1` excludes the bias from the regularizer through a different
+formulation; this implementation uses the augmented, regularized design instead.)
+
+After the dual has converged, `sk_recover_linear_svc_intercept` re-optimizes $b$ for the
+weights it already has. With $w$ fixed, the weighted training objective is a convex function
+of the single scalar $b$:
 
 $$
 \sum_i \text{weight}_i \cdot \ell\!\left(1 - y_i (w^\top x_i + b)\right),
@@ -260,9 +275,19 @@ $$
 and its derivative is monotone. The code bisects that derivative over the interval spanned by
 the breakpoints $y_i (1 - y_i w^\top x_i)$ for one hundred steps, then stores the midpoint as
 the intercept. For the hinge loss the derivative steps between slopes; for the squared hinge
-it is continuous. Either way, bisection lands on the minimizer without a second solver, and
-the test `intercept_is_recovered_for_the_two_point_problem` shows the symmetric two-point
-problem coming out with $w = 1$ and $b = 0$.
+it is continuous. Either way, bisection lands on the loss-minimizing intercept **for the fixed
+weights the dual produced**; it does not undo the regularization that shaped $w$, so the
+resulting pair is not the minimizer of a primal objective with a truly unpenalized bias. The
+test `intercept_is_recovered_for_the_two_point_problem` shows the symmetric two-point problem
+coming out with $w = 1$ and $b = 0$ — a case with no offset, where the distinction between
+the two formulations does not bite.
+
+This is why scaling the data matters. The augmented column always has magnitude $1$, while the
+feature columns can have any magnitude, so the relative cost of the intercept depends on the
+feature scale. On unscaled data with a large offset, the intercept is both harder to learn and
+more heavily distorted, and the absolute stopping rule can end in `NotConverged`; centering
+and standardizing the columns first (with `SKStandardScaler`) makes the intercept small and
+the problem well conditioned.
 
 ---
 
@@ -323,9 +348,9 @@ Everything is reached through the builder; the constructor stays private.
 |---|---|---|
 | `SKLinearSVC<F>` | estimator; `build()` starts the builder | — |
 | `SKLinearSVCBuilder<F>` | `C`, `loss`, `class_weight`, `include_intercept`, `tolerance`, `maximum_number_of_iterations`, `backend`, `execution_mode` | `1.0`, `SquaredHinge`, `None`, `true`, `1e-4`, `1000`, `Faer`, `Automatic` |
-| `SKLinearSvcLoss` | `Hinge` or `SquaredHinge` | `SquaredHinge` |
+| `SKLinearSVCLoss` | `Hinge` or `SquaredHinge` | `SquaredHinge` |
 | `sk_linear_svc_loss_from_code(u8)` | binding-facing loss discriminator (`0`/`1`), fails closed | — |
-| `SKLinearSvcHead<F>` | one head's coefficients, intercept and iteration count | — |
+| `SKLinearSVCHead<F>` | one head's coefficients, intercept and iteration count | — |
 | `SKLinearSVCModel<F>` | fitted model: class table, heads, loss, `C`, feature count, backend | — |
 
 `SKLinearSVCModel` implements `SKClassifierPredictor`: `predict_labels` returns the canonical
