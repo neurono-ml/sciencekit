@@ -51,7 +51,7 @@ public module is addressable. There are **21** sub-crates under `crates/`.
 Gaps found and fixed:
 
 1. `sciencekit_common::allocator` (`SKAllocatorKind`, `sk_allocator_kind`) had no
-   door at all — not at the root and not as a module (commit `a506b26`).
+   door at all — not at the root and not as a module (commit `918111e`).
 2. `sciencekit_math::prelude` was the only public module of the crate not
    re-exported (same commit).
 3. `lora-adapters` landed after the branch was written; the explicit
@@ -125,7 +125,7 @@ Two mirroring defects found and fixed:
 bleed: `polars` pulls no DataFusion, `datafusion` pulls no Polars, `onnx` pulls
 no engine adapter, `opencl` pulls no telemetry stack, and the default build
 pulls neither `opencl3` nor `opentelemetry-otlp` nor Arrow. The remaining
-sub-crate switches were forwarded too (commit `64f35f8`): allocator selection,
+sub-crate switches were forwarded too (commit `cfc6ed4`): allocator selection,
 compression codecs, `observability-export` (and its gated
 `sk_opentelemetry_layer`). Three are deliberate, documented omissions:
 `blas-backend` (needs a system BLAS at link time) and `gpu-cuda`/`gpu-rocm` (no
