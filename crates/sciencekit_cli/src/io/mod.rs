@@ -20,3 +20,5 @@ pub use predictions::{SKOutputFormat, sk_write_predictions, sk_write_transformed
 mod dataset_tests;
 #[cfg(test)]
 mod model_tests;
+#[cfg(test)]
+mod predictions_tests;
