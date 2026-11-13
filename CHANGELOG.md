@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `sciencekit_interop` gains the optional `memmap` feature (spec
+  `memory-mapped-sources`): read-only `memmap2` mappings exposed through
+  `SKMappableSource` (O(1) borrowed rows) and `SKLazySource` (bounded owned
+  blocks). `SKRawBinaryMappableSource<F>` maps a headerless fixed-width matrix
+  driven by an explicit or sidecar `SKRawBinaryDescriptor` (`f32`, `f64`,
+  `i64`); `SKNumpyMappableSource<F>` maps C-order `.npy` `f4`/`f8` arrays
+  zero-copy and offers an explicit `open_with_cast` materialising path for
+  `i64` and mismatched float dtypes; `SKArrowIpcMappableSource<F>` reads only
+  the Arrow IPC footer, indexes record batches by cumulative row offsets and
+  decodes a single batch per row lookup behind a shared cache. Opening
+  validates little-endian data, dtype compatibility, exact file length,
+  payload alignment and header framing, and reports structured
+  `MissingMappedFile`, `MappedFilePermissionDenied`, `UnsupportedMappedDtype`,
+  `NonLittleEndianMappedData`, `MappedLengthMismatch`, `MalformedMappedHeader`,
+  `MisalignedMappedData` and `UnreadableMappedBatch` errors naming the file.
+  Companion tests cover random/sequential equivalence, `f32`/`f64`,
+  concurrent `Send + Sync` readers, large files with bounded batches,
+  Fortran order, truncated files and misaligned headers.
 - `sciencekit_math` gains the Mercer and similarity kernel catalogue (spec
   `kernel-functions`): `SKKernel` (`Linear`, `Polynomial`,
   `RadialBasisFunction`, `Sigmoid`, `Precomputed`), `SKKernelGamma<F>`
