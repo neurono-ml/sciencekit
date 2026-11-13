@@ -8,6 +8,7 @@ mod base_model;
 mod builder;
 mod config;
 mod core_implementation;
+mod fitting;
 mod prediction;
 
 pub use attached_model::SKLoraAttachedModel;
@@ -20,3 +21,5 @@ pub use core_implementation::SKLoraAdapter;
 mod lora_adapter_tests;
 #[cfg(test)]
 mod lora_attach_tests;
+#[cfg(test)]
+mod lora_fit_tests;

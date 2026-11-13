@@ -21,8 +21,8 @@ const SK_LORA_INITIAL_SCALE: f64 = 0.01;
 pub struct SKLoraAttachedModel<F> {
     adapter: SKLoraAdapter<F>,
     base: SKLoraBaseModel<F>,
-    a_matrix: Array2<F>,
-    b_matrix: Array2<F>,
+    pub(super) a_matrix: Array2<F>,
+    pub(super) b_matrix: Array2<F>,
     fitted: bool,
 }
 
