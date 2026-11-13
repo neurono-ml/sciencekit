@@ -22,7 +22,7 @@
 
 - [x] 3.1 Implement the documented supported-operator interpreter path (or configure tract)
   and unsupported-op errors; verify with `cargo test -p sciencekit_onnx onnx_operators`.
-- [ ] 3.2 Add external fixture tests, missing-input, multiple-output and non-finite-input
+- [x] 3.2 Add external fixture tests, missing-input, multiple-output and non-finite-input
   tests; verify with `cargo test -p sciencekit_onnx onnx_validation`.
 
 ## 4. Acceptance and review
