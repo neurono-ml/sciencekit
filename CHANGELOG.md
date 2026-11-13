@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Umbrella `sciencekit` crate: one dependency that re-exports the stable public
+  surface of all 21 `sciencekit_*` sub-crates under family modules
+  (`preprocessing`, `impute`, `linear_model`, `neighbors`, `svm`, `tree`,
+  `ensemble`, `cluster`, `decomposition`, `outlier`, `math`, `model_selection`,
+  `pipeline`, `metrics`, `interop`, `accelerators`, `telemetry`, `ffi`) plus a
+  curated `prelude`. Re-exports add no logic and no version line; name
+  collisions are resolved per family (three distinct `SKClassWeight` policies
+  stay in their modules) and shared identities stay single types. `opencl`,
+  `telemetry`, `onnx`, `polars`, `datafusion`, `memmap` and `parquet` are
+  optional features forwarded with `dep:` to the owning crate, so the default
+  build stays core-only; `otlp-grpc`/`otlp-http`, `observability-export`,
+  `compression-gzip`/`-brotli`/`-snappy` and
+  `allocator-jemalloc`/`-mimalloc` forward their sub-crate switches as well.
+  The umbrella lives in the existing workspace-root package because Cargo
+  cannot host a second package named `sciencekit`.
 - Low-rank adapters (spec `lora-adapters`): `SKLoraAdapter<F>` and its builder
   attach a frozen linear or logistic coefficient block to a small `A`/`B`
   factorization, with the documented scaling `alpha / rank`. The attached model
