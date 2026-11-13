@@ -424,3 +424,12 @@ compares predictions with the original, keep the external fixture in
 `crates/sciencekit_onnx/validation/external/` reproducible with
 `validation/compare_native_import.py`, and update this chapter rather than
 adding a parallel one.
+
+The [low-rank adapter chapter](./ch66-lora-adapters.html) adds the
+parameter-efficient path to the same export contract: `SKLoraAdapter<F>` and its
+builder, the frozen `SKLoraBaseModel<F>`, the `A`/`B` factors of
+`SKLoraAttachedModel<F>`, merge/unmerge parity, the persisted
+`lora.<target>.a`/`.b` tensors, and the registry that rejects duplicate
+identifiers. When you extend adapter coverage, keep the zero-adapter identity,
+the merge identity and the persisted-shape validation tests green, extend the
+`lora_*_tests.rs` companions and this chapter rather than adding a parallel one.
