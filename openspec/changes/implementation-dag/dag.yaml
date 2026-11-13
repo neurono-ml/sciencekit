@@ -37,6 +37,7 @@ lanes:
   merge_order:
   - metrics-ranking
   - metrics-clustering
+  - metrics-calibration-multilabel
 - id: tree
   merge_order:
   - decision-tree-cart
@@ -45,6 +46,7 @@ lanes:
   - gradient-boosting
   - histogram-gradient-boosting
   - outlier-detection
+  - outlier-lof-one-class
 - id: neighbors
   merge_order:
   - kd-tree-and-ball-tree
@@ -278,6 +280,17 @@ changes:
     openspec: openspec status --change metrics-clustering --json
     tests:
     - cargo test -p sciencekit_metrics clustering
+- id: metrics-calibration-multilabel
+  group: wave6
+  lane: metrics
+  depends_on:
+  - metrics-ranking
+  - metrics-clustering
+  completion:
+    openspec: openspec status --change metrics-calibration-multilabel --json
+    tests:
+    - cargo test -p sciencekit_metrics calibration
+    - cargo test -p sciencekit_metrics multilabel
 - id: gpu-opencl-backend
   group: cross-cutting
   lane: gpu
@@ -444,6 +457,17 @@ changes:
   - deterministic-randomness
   completion:
     openspec: openspec status --change outlier-detection --json
+    tests:
+    - cargo test -p sciencekit_outlier
+- id: outlier-lof-one-class
+  group: wave5
+  lane: tree
+  depends_on:
+  - outlier-detection
+  - kd-tree-and-ball-tree
+  - svm-svc-svr
+  completion:
+    openspec: openspec status --change outlier-lof-one-class --json
     tests:
     - cargo test -p sciencekit_outlier
 - id: kmeans-lloyd-elkan

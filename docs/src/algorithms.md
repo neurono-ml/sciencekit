@@ -2,7 +2,10 @@
 
 The catalog mirrors the complete scikit-learn taxonomy. Every item enters the roadmap
 with a mandatory four-stage evolution — **naive → tests → performance → out-of-core** —
-and receives a Python binding as soon as it is validated on CPU.
+and receives a Python binding as soon as it is validated on CPU. A **Planned** entry whose
+description links a planned change is specified in OpenSpec and tracked by the
+implementation DAG; an unlinked **Planned** entry has no plan yet, so the linked entries
+below are not the only work still to be planned.
 
 <div class="sk-donut-wrap reveal">
   <div class="sk-donut">
@@ -107,7 +110,7 @@ and receives a Python binding as soon as it is validated on CPU.
 | `SKDBSCAN` | Density-based clustering | <span class="sk-pill sk-pill--neutral">Planned</span> |
 | `SKPCA` | Principal component analysis | <span class="sk-pill sk-pill--neutral">Planned</span> |
 | `SKTruncatedSVD` | Truncated SVD for sparse data | <span class="sk-pill sk-pill--neutral">Planned</span> |
-| Anomaly detection | Outlier estimators from the scikit-learn family | <span class="sk-pill sk-pill--neutral">Planned</span> |
+| Anomaly detection (`SKLocalOutlierFactor`, `SKOneClassSVM`) | Remaining outlier estimators from the scikit-learn family | <a href="https://github.com/neurono-ml/sciencekit/tree/main/openspec/changes/outlier-lof-one-class"><span class="sk-pill sk-pill--neutral">Planned</span></a> |
 
 ## Model selection, pipelines and metrics
 
@@ -118,6 +121,7 @@ and receives a Python binding as soon as it is validated on CPU.
 | `SKGridSearchCV` | `sciencekit_model_selection` | Grid search with cross-validation | <span class="sk-pill sk-pill--neutral">Planned</span> |
 | `SKPipeline` | `sciencekit_pipeline` | Type-safe pipeline (associated types) and DAGs | <span class="sk-pill sk-pill--neutral">Planned</span> |
 | Full metrics | `sciencekit_metrics` | accuracy, f1, MSE, confusion matrix and the remaining sklearn metrics | <span class="sk-pill sk-pill--neutral">Planned</span> |
+| Calibration and multilabel metrics | `sciencekit_metrics` | Calibration curves, Brier score, expected calibration error and multilabel losses (Hamming, Jaccard, subset accuracy, averaged precision/recall/F1, label-ranking average precision) | <a href="https://github.com/neurono-ml/sciencekit/tree/main/openspec/changes/metrics-calibration-multilabel"><span class="sk-pill sk-pill--neutral">Planned</span></a> |
 
 <div class="sk-box sk-box--info">
 <strong>Continuous acceleration:</strong> every completed algorithm receives, in separate changes,
