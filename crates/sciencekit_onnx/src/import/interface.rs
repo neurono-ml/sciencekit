@@ -3,7 +3,7 @@
 use serde_onnx::ir::{ElemType, ValueType};
 
 use super::SKOnnxImportError;
-use crate::graph::{SKOnnxModel, SKOnnxTensorDType};
+use crate::graph::SKOnnxModel;
 
 /// The prediction surface an imported model exposes.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -164,7 +164,14 @@ fn tensor_signature(
                         .collect()
                 })
                 .unwrap_or_default();
-            let _ = SKOnnxTensorDType::from_element_type(tensor.elem)?;
+            if !matches!(
+                tensor.elem,
+                ElemType::Float | ElemType::Double | ElemType::Int64 | ElemType::Bool
+            ) {
+                return Err(SKOnnxImportError::UnsupportedDtype {
+                    element_type: tensor.elem.name().to_string(),
+                });
+            }
             Ok((tensor.elem, shape))
         }
         _ => Err(SKOnnxImportError::UnsupportedOutput {

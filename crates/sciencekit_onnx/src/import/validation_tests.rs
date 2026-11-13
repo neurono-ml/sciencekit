@@ -62,6 +62,36 @@ fn an_integer_feature_input_is_rejected_as_an_unsupported_dtype() {
 }
 
 #[test]
+fn a_float16_feature_input_is_rejected_as_an_unsupported_dtype() {
+    let half = ValueType::tensor(
+        ElemType::Float16,
+        Some(vec![Dim::Param("batch".into()), Dim::Fixed(2)]),
+    );
+    let bytes = encode_graph(
+        &[ValueInfo::new("X", half.clone())],
+        &[ValueInfo::new("out", half)],
+        vec![Node::new(
+            "Identity",
+            "",
+            vec!["X".to_string()],
+            vec!["out".to_string()],
+            vec![],
+        )],
+        vec![],
+    );
+    let error = SKOnnxModel::from_bytes(bytes).expect_err("must reject");
+    match error {
+        SKOnnxImportError::UnsupportedDtype { element_type } => {
+            assert!(
+                element_type.to_lowercase().contains("float16"),
+                "{element_type}"
+            );
+        }
+        other => panic!("expected an unsupported-dtype error, got {other}"),
+    }
+}
+
+#[test]
 fn a_graph_without_a_required_input_is_rejected() {
     let bytes = encode_graph(
         &[],

@@ -2,7 +2,7 @@
 
 use std::path::Path;
 
-use serde_onnx::ir::TensorStorage;
+use serde_onnx::ir::{ElemType, TensorStorage, ValueType};
 
 use super::SKOnnxImportError;
 use super::interface::interface;
@@ -14,6 +14,7 @@ impl SKOnnxModel {
     pub fn from_bytes(bytes: impl Into<Vec<u8>>) -> Result<Self, SKOnnxImportError> {
         let bytes = bytes.into();
         let model = super::decode::decode_model(&bytes)?;
+        reject_unsupported_element_types(&model)?;
         let model = SKOnnxModel::from_parts(bytes, model)?;
         validate(&model)?;
         Ok(model)
@@ -67,6 +68,32 @@ pub(crate) fn validate(model: &SKOnnxModel) -> Result<(), SKOnnxImportError> {
         }
     }
     interface(model)?;
+    Ok(())
+}
+
+/// Reject any declared interface tensor outside the dense numeric subset.
+///
+/// This runs before the model wrapper builds its own value-info vocabulary,
+/// which only knows the four element types the importer executes.
+fn reject_unsupported_element_types(model: &serde_onnx::ir::Model) -> Result<(), SKOnnxImportError> {
+    let value_types = model
+        .graph
+        .inputs
+        .iter()
+        .chain(model.graph.outputs.iter());
+    for info in value_types {
+        let Some(ValueType::Tensor(tensor)) = info.value_type.as_ref() else {
+            continue;
+        };
+        if !matches!(
+            tensor.elem,
+            ElemType::Float | ElemType::Double | ElemType::Int64 | ElemType::Bool
+        ) {
+            return Err(SKOnnxImportError::UnsupportedDtype {
+                element_type: tensor.elem.name().to_string(),
+            });
+        }
+    }
     Ok(())
 }
 
