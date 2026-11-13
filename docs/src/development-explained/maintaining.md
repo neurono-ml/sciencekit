@@ -368,3 +368,12 @@ parent-child histogram subtraction, gain-ordered leaf-wise growth under `maximum
 learned `default_left` missing routing, and the `SKHistGradientBoostingClassifier` /
 `SKHistGradientBoostingRegressor` builders, models and prediction surface that reuse the W4.4 loss
 contract and early-stopping monitor while binning dense and CSR queries without densification.
+
+The [model export retrofit chapter](./ch62-model-export-retrofit.html) adds the shared
+`SKExportable` / `SKImportable` round trip to every retrofitted family: the single
+`SK_MODEL_FORMAT_VERSION`, the dotted tensor naming scheme, the dense/CSR-preserving
+support-vector and training-design codecs, the NaN-aware determinism check
+(`sk_states_equal`), and the companion tests that fit, export, import and compare
+predictions — including the nested tree states of the forests and gradient boosters.
+The chapter's coverage table names the families still pending so the book never claims
+more than the code delivers.
