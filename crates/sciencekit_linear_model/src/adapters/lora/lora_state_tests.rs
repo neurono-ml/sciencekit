@@ -4,7 +4,7 @@ use ndarray::{Array1, Array2, array};
 use sciencekit_common::builders::SKBuilder;
 use sciencekit_common::{
     SKError, SKExportable, SKImportable, SKModelState, SKRegressorPredictor, SKSupervisedFit,
-    SKTensor,
+    SKTensor, SKTensorValues,
 };
 
 use crate::adapters::lora::{
@@ -155,6 +155,51 @@ fn a_missing_factor_tensor_is_rejected() {
     let error = SKLoraAdapterArtifact::<f64>::import_state(&incomplete)
         .expect_err("a state without A cannot rebuild the adapter");
     assert!(matches!(error, SKError::InvalidHyperparameter { .. }));
+}
+
+fn state_with_replaced_factor(
+    attached: &crate::adapters::lora::SKLoraAttachedModel<f64>,
+    tensor_name: &str,
+    replacement: f64,
+) -> SKModelState<f64> {
+    let state = attached.export_state().unwrap();
+    let tensors = state
+        .tensors()
+        .values()
+        .map(|tensor| {
+            if tensor.name() != tensor_name {
+                return tensor.clone();
+            }
+            let shape = tensor.shape().to_vec();
+            let values = match tensor.values() {
+                SKTensorValues::Floating(values) => values.clone(),
+                _ => unreachable!("adapter factors are floating tensors"),
+            };
+            let mut values = values;
+            values[0] = replacement;
+            SKTensor::floating(tensor_name, shape, values).unwrap()
+        })
+        .collect::<Vec<_>>();
+    SKModelState::new(state.metadata().clone(), tensors).unwrap()
+}
+
+#[test]
+fn a_non_finite_stored_factor_is_rejected_on_import() {
+    let attached = fitted_adapter();
+    let target = SKLoraTargetModule::LinearCoefficients;
+    for replacement in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
+        let a_state =
+            state_with_replaced_factor(&attached, &sk_lora_a_tensor_name(target), replacement);
+        let a_error = SKLoraAdapterArtifact::<f64>::import_state(&a_state)
+            .expect_err("a non-finite A factor cannot be imported");
+        assert!(matches!(a_error, SKError::NonFiniteValue { .. }));
+
+        let b_state =
+            state_with_replaced_factor(&attached, &sk_lora_b_tensor_name(target), replacement);
+        let b_error = SKLoraAdapterArtifact::<f64>::import_state(&b_state)
+            .expect_err("a non-finite B factor cannot be imported");
+        assert!(matches!(b_error, SKError::NonFiniteValue { .. }));
+    }
 }
 
 #[test]

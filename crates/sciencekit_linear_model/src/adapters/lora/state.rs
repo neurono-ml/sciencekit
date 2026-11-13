@@ -151,9 +151,20 @@ impl<F: SKFloat> SKImportable<F> for SKLoraAdapterArtifact<F> {
                 found: b_matrix.shape().to_vec(),
             });
         }
+        sk_validate_finite_factor(&a_matrix)?;
+        sk_validate_finite_factor(&b_matrix)?;
         Ok(SKLoraAdapterArtifact::new(
             adapter, a_matrix, b_matrix, fitted,
         ))
+    }
+}
+
+/// Reject a stored factor that carries a non-finite value, naming its flat
+/// position so the caller can locate the corrupt entry.
+fn sk_validate_finite_factor<F: SKFloat>(factor: &Array2<F>) -> Result<(), SKError> {
+    match factor.iter().position(|value| !value.is_finite()) {
+        Some(position) => Err(SKError::NonFiniteValue { position }),
+        None => Ok(()),
     }
 }
 
