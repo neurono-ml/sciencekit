@@ -350,3 +350,29 @@ fn one_backend_serves_both_precisions_of_the_same_kernel() {
         1e-9,
     );
 }
+
+/// A program is compiled once per device and reused, and the cache keeps one
+/// entry per scalar type instead of conflating the two precisions.
+#[test]
+fn programs_are_cached_once_per_scalar_type() {
+    use std::sync::Arc;
+
+    let Some(backend) = real_session() else {
+        return;
+    };
+    let session = session(&backend);
+    let source = "__kernel void sk_cache_probe(__global float* values) { values[0] = 1.0f; }";
+
+    let first = session.program("cache-probe:f32", source).unwrap();
+    let second = session.program("cache-probe:f32", source).unwrap();
+    assert!(
+        Arc::ptr_eq(&first, &second),
+        "the second call must reuse the compiled program"
+    );
+
+    let other_precision = session.program("cache-probe:f64", source).unwrap();
+    assert!(
+        !Arc::ptr_eq(&first, &other_precision),
+        "each scalar type owns its own compiled program"
+    );
+}
