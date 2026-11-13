@@ -58,20 +58,17 @@ impl<F: SKFloat> SKHistGradientBoostingClassifierModel<F> {
         })
     }
 
-    pub(super) fn evaluate_row_probabilities(
-        &self,
-        feature_value: impl Fn(usize) -> F,
-    ) -> Vec<F> {
+    pub(super) fn evaluate_row_probabilities(&self, feature_value: impl Fn(usize) -> F) -> Vec<F> {
         let bin_of_feature = |feature: usize| {
             sk_bin_feature(&self.feature_binnings[feature], feature_value(feature))
         };
         if self.number_of_classes == 2 {
-            let raw_score = self.stages.iter().fold(
-                self.initial_predictions[0],
-                |score, stage_trees| {
-                    score + self.learning_rate * stage_trees[0].leaf_value_for(bin_of_feature)
-                },
-            );
+            let raw_score =
+                self.stages
+                    .iter()
+                    .fold(self.initial_predictions[0], |score, stage_trees| {
+                        score + self.learning_rate * stage_trees[0].leaf_value_for(bin_of_feature)
+                    });
             let positive = SKBinaryLogLoss::sigmoid(raw_score);
             return vec![F::one() - positive, positive];
         }
@@ -94,10 +91,7 @@ impl<F: SKFloat> SKHistGradientBoostingClassifierModel<F> {
 
 /// Bin one raw feature value with its fitted binning; `NaN` follows the
 /// missing-category/missing-bin rule.
-pub(super) fn sk_bin_feature<F: SKFloat>(
-    binning: &SKFeatureBinning<F>,
-    value: F,
-) -> u8 {
+pub(super) fn sk_bin_feature<F: SKFloat>(binning: &SKFeatureBinning<F>, value: F) -> u8 {
     binning.bin(value)
 }
 

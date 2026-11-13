@@ -66,9 +66,8 @@ fn hist_acceptance_large_multiclass_classification() {
 #[test]
 fn hist_acceptance_large_regression() {
     let features = large_features();
-    let targets = ndarray::Array1::from_shape_fn(ROWS, |row| {
-        2.0 * features[[row, 0]] - features[[row, 2]]
-    });
+    let targets =
+        ndarray::Array1::from_shape_fn(ROWS, |row| 2.0 * features[[row, 0]] - features[[row, 2]]);
     let model = SKHistGradientBoostingRegressor::<f64>::build()
         .number_of_estimators(10)
         .learning_rate(0.2)

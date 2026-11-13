@@ -27,15 +27,9 @@ impl<F: SKFloat> SKNumericBinning<F> {
     pub fn derive(values: impl Iterator<Item = F>, maximum_bins: usize) -> Self {
         let maximum_bins = maximum_bins.clamp(1, 255);
         let mut finite_values: Vec<F> = values.filter(|value| value.is_finite()).collect();
-        let sample_stride = finite_values
-            .len()
-            .div_ceil(SK_BINNING_SAMPLE_LIMIT)
-            .max(1);
+        let sample_stride = finite_values.len().div_ceil(SK_BINNING_SAMPLE_LIMIT).max(1);
         if sample_stride > 1 {
-            finite_values = finite_values
-                .into_iter()
-                .step_by(sample_stride)
-                .collect();
+            finite_values = finite_values.into_iter().step_by(sample_stride).collect();
         }
         finite_values.sort_by(|left, right| left.partial_cmp(right).expect("finite values"));
         let mut edges: Vec<F> = (1..maximum_bins)

@@ -11,7 +11,9 @@ use crate::histogram_boosting::{
 fn hist_acceptance_tiny_binary_and_regression_fit() {
     let features = Array2::from_shape_vec(
         (8, 2),
-        vec![0.0, 1.0, 1.0, 0.0, 2.0, 1.0, 3.0, 0.0, 4.0, 1.0, 5.0, 0.0, 6.0, 1.0, 7.0, 0.0],
+        vec![
+            0.0, 1.0, 1.0, 0.0, 2.0, 1.0, 3.0, 0.0, 4.0, 1.0, 5.0, 0.0, 6.0, 1.0, 7.0, 0.0,
+        ],
     )
     .expect("data");
     let labels = ndarray::Array1::from_shape_fn(8, |row| (row % 2) as i64);
@@ -26,11 +28,15 @@ fn hist_acceptance_tiny_binary_and_regression_fit() {
         .fit(features.view(), labels.view())
         .expect("fit");
     assert_eq!(
-        classifier.predict_labels(features.view()).expect("labels").dim(),
+        classifier
+            .predict_labels(features.view())
+            .expect("labels")
+            .dim(),
         8
     );
-    let responses = ndarray::Array1::from_shape_vec((8,), vec![0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0])
-        .expect("targets");
+    let responses =
+        ndarray::Array1::from_shape_vec((8,), vec![0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0])
+            .expect("targets");
     let regressor = SKHistGradientBoostingRegressor::<f64>::build()
         .number_of_estimators(5)
         .minimum_samples_leaf(1)
@@ -40,7 +46,10 @@ fn hist_acceptance_tiny_binary_and_regression_fit() {
         .expect("build")
         .fit(features.view(), responses.view())
         .expect("fit");
-    assert_eq!(regressor.predict(features.view()).expect("predict").dim(), 8);
+    assert_eq!(
+        regressor.predict(features.view()).expect("predict").dim(),
+        8
+    );
 }
 
 #[test]
@@ -48,8 +57,26 @@ fn hist_acceptance_categorical_and_missing_values() {
     let features = Array2::from_shape_vec(
         (10, 2),
         vec![
-            10.0, 0.0, 20.0, 1.0, 10.0, f64::NAN, 30.0, 3.0, 20.0, 4.0, 10.0, 5.0, 30.0, 6.0,
-            20.0, 7.0, 10.0, 8.0, 30.0, 9.0,
+            10.0,
+            0.0,
+            20.0,
+            1.0,
+            10.0,
+            f64::NAN,
+            30.0,
+            3.0,
+            20.0,
+            4.0,
+            10.0,
+            5.0,
+            30.0,
+            6.0,
+            20.0,
+            7.0,
+            10.0,
+            8.0,
+            30.0,
+            9.0,
         ],
     )
     .expect("data");

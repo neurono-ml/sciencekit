@@ -7,9 +7,7 @@
 mod leaf_wise;
 mod tree;
 
-pub use leaf_wise::{
-    SKHistogramGrowthParameters, SKHistogramGrowthResult, sk_grow_histogram_tree,
-};
+pub use leaf_wise::{SKHistogramGrowthParameters, SKHistogramGrowthResult, sk_grow_histogram_tree};
 pub use tree::{SKHistogramNode, SKHistogramTree};
 
 #[cfg(test)]

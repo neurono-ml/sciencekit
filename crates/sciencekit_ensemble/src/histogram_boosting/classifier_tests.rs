@@ -121,7 +121,8 @@ fn hist_classifier_rejects_invalid_parameters_and_single_class_targets() {
             .build(),
         Err(SKError::InvalidHyperparameter { .. })
     ));
-    let features = Array2::from_shape_vec((6, 1), vec![0.0, 1.0, 2.0, 3.0, 4.0, 5.0]).expect("data");
+    let features =
+        Array2::from_shape_vec((6, 1), vec![0.0, 1.0, 2.0, 3.0, 4.0, 5.0]).expect("data");
     let labels = ndarray::Array1::from_elem(6, 1i64);
     let error = SKHistGradientBoostingClassifier::<f64>::build()
         .without_early_stopping()
@@ -129,5 +130,11 @@ fn hist_classifier_rejects_invalid_parameters_and_single_class_targets() {
         .expect("build")
         .fit(features.view(), labels.view())
         .expect_err("single class must fail");
-    assert!(matches!(error, SKError::InvalidHyperparameter { name: "targets", .. }));
+    assert!(matches!(
+        error,
+        SKError::InvalidHyperparameter {
+            name: "targets",
+            ..
+        }
+    ));
 }

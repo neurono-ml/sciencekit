@@ -10,10 +10,10 @@ mod gain;
 mod subtract;
 
 pub use accumulate::{SKFeatureHistogram, SKNodeHistogram, sk_accumulate_histogram};
+pub use categorical::sk_scan_categorical_feature;
 pub use gain::{
     SKHistogramSplit, SKHistogramSplitCandidate, sk_scan_numeric_feature, sk_split_gain,
 };
-pub use categorical::sk_scan_categorical_feature;
 pub use subtract::sk_subtract_histogram;
 
 #[cfg(test)]

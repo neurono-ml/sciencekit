@@ -24,7 +24,7 @@ fn hist_gain_matches_hand_computed_split() {
     let (dataset, rows) = fixture(&gradients, &hessians);
     let histogram = sk_accumulate_histogram(&dataset, &rows, &gradients, &hessians);
     let candidate = sk_scan_numeric_feature(0, histogram.feature(0), 1, 0.0).expect("split");
-        assert!((candidate.gain - 4.0).abs() < 1e-12);
+    assert!((candidate.gain - 4.0).abs() < 1e-12);
     match candidate.split {
         SKHistogramSplit::Numeric {
             maximum_bin,
@@ -57,8 +57,7 @@ fn hist_gain_rejects_splits_below_minimum_samples_leaf() {
 #[test]
 fn hist_gain_evaluates_the_missing_direction() {
     let dense = Array2::from_shape_vec((4, 1), vec![0.0, 1.0, f64::NAN, 3.0]).expect("fixture");
-    let dataset =
-        SKBinnedDataset::build(&SKDataView::Dense(dense.view()), &[], 4).expect("build");
+    let dataset = SKBinnedDataset::build(&SKDataView::Dense(dense.view()), &[], 4).expect("build");
     let gradients = [5.0, 5.0, 5.0, 0.1];
     let hessians = [1.0; 4];
     let rows: Vec<usize> = (0..4).collect();

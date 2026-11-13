@@ -1,9 +1,7 @@
 //! Gain-ordered leaf-wise growth with histogram subtraction (spec
 //! `histogram-gradient-boosting`, design decision 4).
 
-use sciencekit_common::{
-    SK_RANDOM_DOMAIN_TREE, SKFloat, SKRandomGenerator, sk_derive_seed,
-};
+use sciencekit_common::{SK_RANDOM_DOMAIN_TREE, SKFloat, SKRandomGenerator, sk_derive_seed};
 use sciencekit_tree::SKMaximumFeatures;
 
 use crate::histogram_boosting::binning::SKBinnedDataset;
@@ -92,12 +90,7 @@ pub fn sk_grow_histogram_tree<F: SKFloat>(
             .iter()
             .partition(|&&row| sk_row_goes_left(dataset, &split, row));
         let (right_histogram, left_histogram) = if right_rows.len() <= left_rows.len() {
-            let right = sk_accumulate_histogram(
-                dataset,
-                &right_rows,
-                negative_gradients,
-                hessians,
-            );
+            let right = sk_accumulate_histogram(dataset, &right_rows, negative_gradients, hessians);
             let left = sk_subtract_histogram(&leaf.histogram, &right);
             (right, left)
         } else {
@@ -117,12 +110,8 @@ pub fn sk_grow_histogram_tree<F: SKFloat>(
             right_count,
             sk_leaf_value(right_histogram.feature(0), parameters.l2_regularization),
         ));
-        nodes[leaf.node_index] = SKHistogramNode::internal(
-            split,
-            left_index,
-            right_index,
-            leaf.rows.len(),
-        );
+        nodes[leaf.node_index] =
+            SKHistogramNode::internal(split, left_index, right_index, leaf.rows.len());
         gain_totals[candidate.feature_index()] =
             gain_totals[candidate.feature_index()] + candidate.gain;
         leaf_count += 1;
@@ -172,10 +161,7 @@ fn finalize_leaf<F: SKFloat>(
     }
 }
 
-fn sk_leaf_value<F: SKFloat>(
-    histogram: &SKFeatureHistogram<F>,
-    l2_regularization: F,
-) -> F {
+fn sk_leaf_value<F: SKFloat>(histogram: &SKFeatureHistogram<F>, l2_regularization: F) -> F {
     let denominator = histogram.total_hessian() + l2_regularization;
     if denominator <= F::zero() {
         F::zero()
@@ -216,10 +202,7 @@ fn sk_best_candidate<F: SKFloat>(
             left.gain
                 .partial_cmp(&right.gain)
                 .expect("finite gains")
-                .then_with(|| {
-                    left.feature_index()
-                        .cmp(&right.feature_index())
-                })
+                .then_with(|| left.feature_index().cmp(&right.feature_index()))
         })
 }
 
@@ -232,7 +215,11 @@ fn sk_sampled_features<F: SKFloat>(
     if resolved >= feature_count {
         return (0..feature_count).collect();
     }
-    let seed = sk_derive_seed(parameters.random_seed, SK_RANDOM_DOMAIN_TREE, node_index as u64);
+    let seed = sk_derive_seed(
+        parameters.random_seed,
+        SK_RANDOM_DOMAIN_TREE,
+        node_index as u64,
+    );
     let mut features: Vec<usize> = SKRandomGenerator::new(seed)
         .shuffled_indices(feature_count)
         .into_iter()

@@ -30,8 +30,7 @@ fn count_leaves(tree: &SKHistogramTree<f64>) -> usize {
 #[test]
 fn hist_growth_splits_the_highest_gain_leaf() {
     let dense = Array2::from_shape_vec((4, 1), vec![0.0, 1.0, 2.0, 3.0]).expect("fixture");
-    let dataset =
-        SKBinnedDataset::build(&SKDataView::Dense(dense.view()), &[], 4).expect("build");
+    let dataset = SKBinnedDataset::build(&SKDataView::Dense(dense.view()), &[], 4).expect("build");
     let gradients = [1.0, 1.0, -1.0, -1.0];
     let hessians = [1.0; 4];
     let rows: Vec<usize> = (0..4).collect();
@@ -45,8 +44,12 @@ fn hist_growth_splits_the_highest_gain_leaf() {
         SKHistogramSplit::Numeric { maximum_bin, .. } => assert_eq!(*maximum_bin, 1),
         _ => panic!("expected a numeric split"),
     }
-    let left_value = result.tree.leaf_value_for(|feature| dataset.bin(feature, 0));
-    let right_value = result.tree.leaf_value_for(|feature| dataset.bin(feature, 3));
+    let left_value = result
+        .tree
+        .leaf_value_for(|feature| dataset.bin(feature, 0));
+    let right_value = result
+        .tree
+        .leaf_value_for(|feature| dataset.bin(feature, 3));
     assert!((left_value - 1.0).abs() < 1e-12);
     assert!((right_value + 1.0).abs() < 1e-12);
 }
@@ -55,8 +58,7 @@ fn hist_growth_splits_the_highest_gain_leaf() {
 fn hist_growth_respects_the_maximum_leaf_budget() {
     let values: Vec<f64> = (0..16).map(|value| value as f64).collect();
     let dense = Array2::from_shape_vec((16, 1), values).expect("fixture");
-    let dataset =
-        SKBinnedDataset::build(&SKDataView::Dense(dense.view()), &[], 16).expect("build");
+    let dataset = SKBinnedDataset::build(&SKDataView::Dense(dense.view()), &[], 16).expect("build");
     let gradients: Vec<f64> = (0..16)
         .map(|row| if row % 2 == 0 { 1.0 } else { -1.0 })
         .collect();

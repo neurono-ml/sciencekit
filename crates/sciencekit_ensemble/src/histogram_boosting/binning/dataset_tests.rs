@@ -9,11 +9,8 @@ use super::dataset::SKBinnedDataset;
 
 #[test]
 fn hist_dataset_stores_columns_with_u8_bins() {
-    let dense = Array2::from_shape_vec(
-        (3, 2),
-        vec![0.0, 10.0, 1.0, 20.0, 2.0, 30.0],
-    )
-    .expect("fixture");
+    let dense =
+        Array2::from_shape_vec((3, 2), vec![0.0, 10.0, 1.0, 20.0, 2.0, 30.0]).expect("fixture");
     let dataset = SKBinnedDataset::build(&SKDataView::Dense(dense.view()), &[], 8).expect("build");
     assert_eq!(dataset.number_of_rows(), 3);
     assert_eq!(dataset.number_of_features(), 2);
@@ -25,11 +22,7 @@ fn hist_dataset_stores_columns_with_u8_bins() {
 
 #[test]
 fn hist_dataset_maps_categories_and_unknown_bin() {
-    let dense = Array2::from_shape_vec(
-        (4, 1),
-        vec![10.0, 20.0, 10.0, 99.0],
-    )
-    .expect("fixture");
+    let dense = Array2::from_shape_vec((4, 1), vec![10.0, 20.0, 10.0, 99.0]).expect("fixture");
     let dataset = SKBinnedDataset::build(&SKDataView::Dense(dense.view()), &[0], 8).expect("build");
     let binning = dataset.feature_binning(0);
     assert!(binning.is_categorical());
@@ -43,17 +36,9 @@ fn hist_dataset_maps_categories_and_unknown_bin() {
 
 #[test]
 fn hist_dataset_does_not_densify_sparse_input() {
-    let dense = Array2::from_shape_vec(
-        (3, 2),
-        vec![0.0, 5.0, 0.0, 0.0, 2.0, 7.0],
-    )
-    .expect("fixture");
-    let sparse = CsMat::new(
-        (3, 2),
-        vec![0, 1, 1, 3],
-        vec![1, 0, 1],
-        vec![5.0, 2.0, 7.0],
-    );
+    let dense =
+        Array2::from_shape_vec((3, 2), vec![0.0, 5.0, 0.0, 0.0, 2.0, 7.0]).expect("fixture");
+    let sparse = CsMat::new((3, 2), vec![0, 1, 1, 3], vec![1, 0, 1], vec![5.0, 2.0, 7.0]);
     let dense_dataset =
         SKBinnedDataset::build(&SKDataView::Dense(dense.view()), &[], 8).expect("dense build");
     let sparse_dataset =

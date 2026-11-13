@@ -7,9 +7,7 @@ use sciencekit_common::{
 
 use crate::boosting::loss::{SKAbsoluteErrorLoss, SKSquaredErrorLoss};
 use crate::histogram_boosting::binning::SKBinnedDataset;
-use crate::histogram_boosting::fit::{
-    sk_aggregate_histogram_importances, sk_validation_rows,
-};
+use crate::histogram_boosting::fit::{sk_aggregate_histogram_importances, sk_validation_rows};
 use crate::histogram_boosting::scalar_loop::sk_run_histogram_scalar;
 
 use super::loss_kind::SKHistGradientBoostingRegressionLoss;

@@ -20,6 +20,7 @@ pub(crate) struct SKHistogramMulticlassFit<F> {
 }
 
 /// Fit up to `number_of_estimators` multiclass histogram stages.
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn sk_run_histogram_multiclass<F: SKFloat>(
     loss: &SKMulticlassLogLoss,
     dataset: &SKBinnedDataset<F>,
@@ -81,14 +82,10 @@ pub(crate) fn sk_run_histogram_multiclass<F: SKFloat>(
         if let (Some(monitor), Some(validation_rows)) = (monitor.as_mut(), validation_rows) {
             if !validation_rows.is_empty() {
                 let divisor = F::from(validation_rows.len()).expect("count fits");
-                let validation_loss = validation_rows
-                    .iter()
-                    .fold(F::zero(), |sum, &row| {
-                        let row_scores: Vec<F> =
-                            full_scores.row(row).iter().copied().collect();
-                        sum + loss.loss_for_row(&row_scores, class_indices[row])
-                    })
-                    / divisor;
+                let validation_loss = validation_rows.iter().fold(F::zero(), |sum, &row| {
+                    let row_scores: Vec<F> = full_scores.row(row).iter().copied().collect();
+                    sum + loss.loss_for_row(&row_scores, class_indices[row])
+                }) / divisor;
                 if monitor.record(stages.len(), validation_loss) {
                     break;
                 }

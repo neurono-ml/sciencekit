@@ -65,6 +65,7 @@ impl<F: SKFloat> SKFeatureHistogram<F> {
     }
 
     /// Subtract `subtrahend` cell by cell, keeping the totals consistent.
+    #[allow(clippy::assign_op_pattern)]
     pub(crate) fn subtract_assign(&mut self, subtrahend: &Self) {
         self.gradient_sums
             .iter_mut()
@@ -119,8 +120,7 @@ pub fn sk_accumulate_histogram<F: SKFloat>(
                 let bin = usize::from(column[row]);
                 histogram.gradient_sums[bin] =
                     histogram.gradient_sums[bin] + negative_gradients[row];
-                histogram.hessian_sums[bin] =
-                    histogram.hessian_sums[bin] + hessians[row];
+                histogram.hessian_sums[bin] = histogram.hessian_sums[bin] + hessians[row];
                 histogram.counts[bin] += 1;
                 histogram.total_gradient = histogram.total_gradient + negative_gradients[row];
                 histogram.total_hessian = histogram.total_hessian + hessians[row];

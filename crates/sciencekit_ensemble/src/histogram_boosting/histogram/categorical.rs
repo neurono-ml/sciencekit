@@ -30,8 +30,7 @@ pub fn sk_scan_categorical_feature<F: SKFloat>(
             .partial_cmp(&left_ratio)
             .unwrap_or(std::cmp::Ordering::Equal)
     });
-    let (total_gradient, total_hessian) =
-        (histogram.total_gradient(), histogram.total_hessian());
+    let (total_gradient, total_hessian) = (histogram.total_gradient(), histogram.total_hessian());
     let mut best: Option<SKHistogramSplitCandidate<F>> = None;
     let mut left_gradient = F::zero();
     let mut left_hessian = F::zero();

@@ -22,8 +22,7 @@ fn parameters() -> SKHistogramGrowthParameters<f64> {
 fn grow(values: Vec<f64>, gradients: &[f64]) -> super::tree::SKHistogramTree<f64> {
     let rows = values.len();
     let dense = Array2::from_shape_vec((rows, 1), values).expect("fixture");
-    let dataset =
-        SKBinnedDataset::build(&SKDataView::Dense(dense.view()), &[], 8).expect("build");
+    let dataset = SKBinnedDataset::build(&SKDataView::Dense(dense.view()), &[], 8).expect("build");
     let hessians = vec![1.0; rows];
     let row_indices: Vec<usize> = (0..rows).collect();
     sk_grow_histogram_tree::<f64>(&dataset, gradients, &hessians, &row_indices, &parameters()).tree

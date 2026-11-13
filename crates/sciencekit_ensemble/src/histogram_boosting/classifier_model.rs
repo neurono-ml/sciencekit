@@ -43,11 +43,7 @@ impl<F: SKFloat> SKHistGradientBoostingClassifierModel<F> {
     }
 
     /// Borrow `tree_index` within `stage_index`.
-    pub fn stage_tree(
-        &self,
-        stage_index: usize,
-        tree_index: usize,
-    ) -> Option<&SKHistogramTree<F>> {
+    pub fn stage_tree(&self, stage_index: usize, tree_index: usize) -> Option<&SKHistogramTree<F>> {
         self.stages
             .get(stage_index)
             .and_then(|trees| trees.get(tree_index))

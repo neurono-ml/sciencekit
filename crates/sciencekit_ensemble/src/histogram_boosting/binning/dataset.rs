@@ -43,9 +43,7 @@ impl<F: SKFloat> SKFeatureBinning<F> {
     /// The interior quantile edges of a numeric feature (empty for
     /// categorical features).
     pub fn edges(&self) -> &[F] {
-        self.numeric
-            .as_ref()
-            .map_or(&[], SKNumericBinning::edges)
+        self.numeric.as_ref().map_or(&[], SKNumericBinning::edges)
     }
 
     /// The observed category codes of a categorical feature (empty for numeric
@@ -153,8 +151,7 @@ impl<F: SKFloat> SKBinnedDataset<F> {
             .iter()
             .enumerate()
             .for_each(|(feature, binning)| {
-                let block = &mut bins
-                    [feature * number_of_rows..(feature + 1) * number_of_rows];
+                let block = &mut bins[feature * number_of_rows..(feature + 1) * number_of_rows];
                 match features {
                     SKDataView::Dense(dense) => {
                         block
@@ -168,9 +165,7 @@ impl<F: SKFloat> SKBinnedDataset<F> {
                             .for_each(|bin| *bin = binning.bin(F::zero()));
                         (0..number_of_rows).for_each(|row| {
                             let sparse_row = sparse.outer_view(row).expect("row within bounds");
-                            if let Ok(position) =
-                                sparse_row.indices().binary_search(&feature)
-                            {
+                            if let Ok(position) = sparse_row.indices().binary_search(&feature) {
                                 block[row] = binning.bin(sparse_row.data()[position]);
                             }
                         });
@@ -219,8 +214,7 @@ impl<F: SKFloat> SKBinnedDataset<F> {
 
     /// The bin block of `feature_index`.
     pub fn bins_for_feature(&self, feature_index: usize) -> &[u8] {
-        &self.bins
-            [feature_index * self.number_of_rows..(feature_index + 1) * self.number_of_rows]
+        &self.bins[feature_index * self.number_of_rows..(feature_index + 1) * self.number_of_rows]
     }
 
     /// The bin of `(feature_index, row_index)`.

@@ -9,7 +9,10 @@ fn hist_binning_derives_at_most_maximum_bins() {
     assert!(binning.number_of_bins() <= 16);
     assert!(binning.edges().len() < 16);
     assert_eq!(binning.bin(0.0), 0);
-    assert_eq!(usize::from(binning.bin(999.0)), binning.number_of_bins() - 1);
+    assert_eq!(
+        usize::from(binning.bin(999.0)),
+        binning.number_of_bins() - 1
+    );
     assert!(binning.bin(400.0) < binning.bin(600.0));
 }
 

@@ -12,8 +12,7 @@ use super::gain::SKHistogramSplit;
 #[test]
 fn hist_categorical_partitions_categories_by_gradient_ratio() {
     let dense = Array2::from_shape_vec((3, 1), vec![10.0, 20.0, 30.0]).expect("fixture");
-    let dataset =
-        SKBinnedDataset::build(&SKDataView::Dense(dense.view()), &[0], 8).expect("build");
+    let dataset = SKBinnedDataset::build(&SKDataView::Dense(dense.view()), &[0], 8).expect("build");
     let gradients = [3.0, -4.0, 3.0];
     let hessians = [1.0; 3];
     let rows: Vec<usize> = (0..3).collect();
@@ -39,8 +38,7 @@ fn hist_categorical_partitions_categories_by_gradient_ratio() {
 #[test]
 fn hist_categorical_respects_minimum_samples_leaf() {
     let dense = Array2::from_shape_vec((3, 1), vec![10.0, 20.0, 30.0]).expect("fixture");
-    let dataset =
-        SKBinnedDataset::build(&SKDataView::Dense(dense.view()), &[0], 8).expect("build");
+    let dataset = SKBinnedDataset::build(&SKDataView::Dense(dense.view()), &[0], 8).expect("build");
     let gradients = [3.0, -4.0, 3.0];
     let hessians = [1.0; 3];
     let rows: Vec<usize> = (0..3).collect();

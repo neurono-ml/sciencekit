@@ -14,9 +14,8 @@ fn data() -> (Array2<f64>, ndarray::Array1<f64>) {
     let features = Array2::from_shape_fn((rows, 3), |(row, column)| {
         ((row * 13 + column * 7) % 29) as f64 / 4.0
     });
-    let targets = ndarray::Array1::from_shape_fn(rows, |row| {
-        features[[row, 0]] * 0.5 + features[[row, 2]]
-    });
+    let targets =
+        ndarray::Array1::from_shape_fn(rows, |row| features[[row, 0]] * 0.5 + features[[row, 2]]);
     (features, targets)
 }
 
@@ -36,8 +35,12 @@ fn estimator(seed: u64) -> SKHistGradientBoostingRegressor<f64> {
 #[test]
 fn hist_determinism_repeated_fits_agree() {
     let (features, targets) = data();
-    let first = estimator(7).fit(features.view(), targets.view()).expect("fit");
-    let second = estimator(7).fit(features.view(), targets.view()).expect("fit");
+    let first = estimator(7)
+        .fit(features.view(), targets.view())
+        .expect("fit");
+    let second = estimator(7)
+        .fit(features.view(), targets.view())
+        .expect("fit");
     assert_eq!(first.number_of_stages(), second.number_of_stages());
     (0..first.number_of_stages()).for_each(|stage| {
         assert_eq!(
@@ -53,7 +56,11 @@ fn hist_determinism_repeated_fits_agree() {
 #[test]
 fn hist_determinism_concurrent_prediction_agrees() {
     let (features, targets) = data();
-    let model = Arc::new(estimator(3).fit(features.view(), targets.view()).expect("fit"));
+    let model = Arc::new(
+        estimator(3)
+            .fit(features.view(), targets.view())
+            .expect("fit"),
+    );
     let sequential = model.predict(features.view()).expect("predict");
     let handles: Vec<_> = (0..8)
         .map(|_| {
@@ -78,13 +85,19 @@ fn hist_determinism_model_is_send_and_sync() {
 #[test]
 fn hist_determinism_is_thread_count_invariant() {
     let (features, targets) = data();
-    let baseline = estimator(5).fit(features.view(), targets.view()).expect("fit");
+    let baseline = estimator(5)
+        .fit(features.view(), targets.view())
+        .expect("fit");
     let sequential = baseline.predict(features.view()).expect("predict");
     let parallel = rayon::ThreadPoolBuilder::new()
         .num_threads(4)
         .build()
         .expect("pool")
-        .install(|| estimator(5).fit(features.view(), targets.view()).expect("fit"));
+        .install(|| {
+            estimator(5)
+                .fit(features.view(), targets.view())
+                .expect("fit")
+        });
     let parallel_predictions = parallel.predict(features.view()).expect("predict");
     assert_eq!(sequential, parallel_predictions);
     (0..baseline.number_of_stages()).for_each(|stage| {

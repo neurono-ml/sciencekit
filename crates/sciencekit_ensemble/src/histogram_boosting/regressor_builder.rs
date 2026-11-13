@@ -3,9 +3,9 @@
 use sciencekit_common::{SKBackendKind, SKBuilder, SKError, SKExecutionMode, SKFloat};
 use sciencekit_tree::SKMaximumFeatures;
 
-use super::regressor::SKHistGradientBoostingRegressor;
 use super::config::SKHistogramGradientBoostingConfiguration;
 use super::loss_kind::SKHistGradientBoostingRegressionLoss;
+use super::regressor::SKHistGradientBoostingRegressor;
 
 /// Builder for [`SKHistGradientBoostingRegressor`].
 #[derive(Debug, Clone)]

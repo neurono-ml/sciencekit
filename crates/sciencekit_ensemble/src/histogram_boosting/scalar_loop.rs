@@ -7,9 +7,7 @@ use crate::boosting::init::sk_initialize_scalar_scores;
 use crate::boosting::loss::SKGradientLoss;
 use crate::histogram_boosting::binning::SKBinnedDataset;
 use crate::histogram_boosting::growth::SKHistogramTree;
-use crate::histogram_boosting::stage::{
-    SKHistogramStageParameters, sk_fit_histogram_scalar_stage,
-};
+use crate::histogram_boosting::stage::{SKHistogramStageParameters, sk_fit_histogram_scalar_stage};
 
 /// Output of a scalar histogram boosting run.
 #[derive(Debug, Clone)]
@@ -21,6 +19,7 @@ pub(crate) struct SKHistogramScalarFit<F> {
 
 /// Fit up to `number_of_estimators` scalar histogram stages, truncating to the
 /// best stage count when early stopping is enabled.
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn sk_run_histogram_scalar<F: SKFloat, L: SKGradientLoss<F>>(
     loss: &L,
     dataset: &SKBinnedDataset<F>,
@@ -53,12 +52,9 @@ pub(crate) fn sk_run_histogram_scalar<F: SKFloat, L: SKGradientLoss<F>>(
         if let (Some(monitor), Some(validation_rows)) = (monitor.as_mut(), validation_rows) {
             if !validation_rows.is_empty() {
                 let divisor = F::from(validation_rows.len()).expect("count fits");
-                let validation_loss = validation_rows
-                    .iter()
-                    .fold(F::zero(), |sum, &row| {
-                        sum + loss.loss(full_scores[row], targets[row])
-                    })
-                    / divisor;
+                let validation_loss = validation_rows.iter().fold(F::zero(), |sum, &row| {
+                    sum + loss.loss(full_scores[row], targets[row])
+                }) / divisor;
                 if monitor.record(stages.len(), validation_loss) {
                     break;
                 }

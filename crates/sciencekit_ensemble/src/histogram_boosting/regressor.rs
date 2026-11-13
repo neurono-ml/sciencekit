@@ -5,9 +5,9 @@ use sciencekit_common::{
 };
 use sciencekit_tree::SKMaximumFeatures;
 
-use super::regressor_builder::SKHistGradientBoostingRegressorBuilder;
 use super::config::SKHistogramGradientBoostingConfiguration;
 use super::loss_kind::SKHistGradientBoostingRegressionLoss;
+use super::regressor_builder::SKHistGradientBoostingRegressorBuilder;
 
 /// Histogram gradient-boosting regressor, constructed only through
 /// [`SKHistGradientBoostingRegressor::build`].

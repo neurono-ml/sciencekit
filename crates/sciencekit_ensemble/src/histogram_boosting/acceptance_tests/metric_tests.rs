@@ -15,9 +15,8 @@ fn hist_acceptance_produces_classification_and_regression_metrics() {
     let features = Array2::from_shape_fn((rows, 2), |(row, column)| {
         (row % 17) as f64 + column as f64 * 0.25
     });
-    let labels = ndarray::Array1::from_shape_fn(rows, |row| {
-        if features[[row, 0]] > 8.0 { 1 } else { 0 }
-    });
+    let labels =
+        ndarray::Array1::from_shape_fn(rows, |row| if features[[row, 0]] > 8.0 { 1 } else { 0 });
     let classifier = SKHistGradientBoostingClassifier::<f64>::build()
         .number_of_estimators(10)
         .learning_rate(0.3)
@@ -35,9 +34,8 @@ fn hist_acceptance_produces_classification_and_regression_metrics() {
     let accuracy: f64 = sk_accuracy_score(&true_labels, &predicted_labels).expect("accuracy");
     assert!(accuracy > 0.9, "accuracy = {accuracy}");
 
-    let responses = ndarray::Array1::from_shape_fn(rows, |row| {
-        1.5 * features[[row, 0]] - features[[row, 1]]
-    });
+    let responses =
+        ndarray::Array1::from_shape_fn(rows, |row| 1.5 * features[[row, 0]] - features[[row, 1]]);
     let regressor = SKHistGradientBoostingRegressor::<f64>::build()
         .number_of_estimators(12)
         .learning_rate(0.3)

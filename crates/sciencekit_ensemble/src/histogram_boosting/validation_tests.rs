@@ -36,11 +36,7 @@ fn hist_validation_accepts_missing_values_and_rejects_unknown_categorical_column
         Array2::from_shape_vec((4, 2), vec![0.0, 1.0, f64::NAN, 2.0, 2.0, 3.0, 3.0, 4.0])
             .expect("data");
     let responses = ndarray::Array1::from_vec(vec![0.0, 1.0, 2.0, 3.0]);
-    assert!(
-        regressor()
-            .fit(features.view(), responses.view())
-            .is_ok()
-    );
+    assert!(regressor().fit(features.view(), responses.view()).is_ok());
     let error = SKHistGradientBoostingRegressor::<f64>::build()
         .categorical_features(vec![5])
         .without_early_stopping()
@@ -94,8 +90,8 @@ fn hist_validation_rejects_feature_count_mismatch_and_invalid_fraction() {
 
 #[test]
 fn hist_validation_rejects_csc_and_non_finite_targets() {
-    let dense = Array2::from_shape_vec((4, 2), vec![1.0, 0.0, 0.0, 2.0, 3.0, 0.0, 0.0, 4.0])
-        .expect("data");
+    let dense =
+        Array2::from_shape_vec((4, 2), vec![1.0, 0.0, 0.0, 2.0, 3.0, 0.0, 0.0, 4.0]).expect("data");
     let csc = sprs::CsMat::new_csc(
         (4, 2),
         vec![0, 2, 4],

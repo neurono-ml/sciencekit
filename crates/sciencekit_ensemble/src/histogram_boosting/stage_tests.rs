@@ -12,8 +12,7 @@ use crate::histogram_boosting::stage::{SKHistogramStageParameters, sk_fit_histog
 #[test]
 fn hist_stage_applies_a_hand_computed_newton_update() {
     let dense = Array2::from_shape_vec((4, 1), vec![0.0, 1.0, 2.0, 3.0]).expect("fixture");
-    let dataset =
-        SKBinnedDataset::build(&SKDataView::Dense(dense.view()), &[], 4).expect("build");
+    let dataset = SKBinnedDataset::build(&SKDataView::Dense(dense.view()), &[], 4).expect("build");
     let targets = [0.0, 0.0, 1.0, 1.0];
     let loss = SKSquaredErrorLoss::new();
     let initial_prediction = loss.initial_prediction(&targets);

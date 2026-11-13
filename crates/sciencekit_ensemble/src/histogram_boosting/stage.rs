@@ -58,12 +58,7 @@ pub(crate) fn sk_fit_histogram_scalar_stage<F: SKFloat, L: SKGradientLoss<F>>(
         &rows,
         &parameters.growth,
     );
-    sk_apply_tree_to_scores(
-        dataset,
-        &result.tree,
-        parameters.learning_rate,
-        raw_scores,
-    );
+    sk_apply_tree_to_scores(dataset, &result.tree, parameters.learning_rate, raw_scores);
     Ok(result)
 }
 

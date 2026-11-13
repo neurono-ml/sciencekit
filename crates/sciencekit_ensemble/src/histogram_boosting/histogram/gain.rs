@@ -73,10 +73,7 @@ pub fn sk_scan_numeric_feature<F: SKFloat>(
     let missing_gradient = histogram.gradient_sum(missing_bin);
     let missing_hessian = histogram.hessian_sum(missing_bin);
     let missing_count = histogram.count(missing_bin);
-    let (total_gradient, total_hessian) = (
-        histogram.total_gradient(),
-        histogram.total_hessian(),
-    );
+    let (total_gradient, total_hessian) = (histogram.total_gradient(), histogram.total_hessian());
     let mut best: Option<SKHistogramSplitCandidate<F>> = None;
     let mut left_gradient = F::zero();
     let mut left_hessian = F::zero();
