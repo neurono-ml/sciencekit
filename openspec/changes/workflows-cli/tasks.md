@@ -2,7 +2,7 @@
 
 ## 1. Crate and command surface
 
-- [ ] 1.1 Create `crates/sciencekit_cli` with `main.rs`, `clap` commands and exit-code
+- [x] 1.1 Create `crates/sciencekit_cli` with `main.rs`, `clap` commands and exit-code
   mapping; verify `cargo test -p sciencekit_cli cli`.
 - [ ] 1.2 Implement `fit`, `predict`, `transform`, `evaluate`, `export` and `inspect` on
   small CSV fixtures; verify with integration tests.
