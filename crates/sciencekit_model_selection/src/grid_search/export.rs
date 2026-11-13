@@ -5,7 +5,7 @@
 //! winner and its selection metadata and deliberately implements no import.
 
 use sciencekit_common::{
-    SKError, SKExportable, SKFloat, SKModelMetadata, SKModelState, SKParameterValue,
+    SKError, SKExportable, SKFloat, SKImportable, SKModelMetadata, SKModelState, SKParameterValue,
     SKSupervisedFit,
 };
 
@@ -104,4 +104,32 @@ fn sk_augment_with_selection<F: SKFloat>(
             SKParameterValue::from(refitted),
         )?;
     SKModelState::new(metadata, state.tensors().values().cloned().collect())
+}
+
+impl<F, E> SKImportable<F> for SKGridSearchCVRegressorModel<F, E>
+where
+    F: SKFloat,
+    E: SKSupervisedFit<F>,
+{
+    fn import_state(_state: &SKModelState<F>) -> Result<Self, SKError> {
+        Err(sk_grid_search_import_unsupported())
+    }
+}
+
+impl<F, E> SKImportable<F> for SKGridSearchCVClassifierModel<F, E>
+where
+    F: SKFloat,
+    E: SKSupervisedFit<F>,
+{
+    fn import_state(_state: &SKModelState<F>) -> Result<Self, SKError> {
+        Err(sk_grid_search_import_unsupported())
+    }
+}
+
+fn sk_grid_search_import_unsupported() -> SKError {
+    SKError::UnsupportedOperation {
+        operation: "import_state",
+        reason: "a grid-search state carries the refitted winner's tensors and the selection                  metadata but not the winner's own metadata, and the candidate configuration                  cannot be rebuilt from data; re-fit the search instead"
+            .to_string(),
+    }
 }

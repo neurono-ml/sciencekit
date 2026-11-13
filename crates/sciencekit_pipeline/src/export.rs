@@ -8,9 +8,9 @@
 //! limitation through its type-erased boxes.
 
 use sciencekit_common::{
-    SK_MODEL_FORMAT_VERSION, SKError, SKExportable, SKFloat, SKModelMetadata, SKModelState,
-    SKParameterValue, sk_backend_parameter, sk_embed_state, sk_model_tensor_data_type,
-    sk_validate_import_metadata,
+    SK_MODEL_FORMAT_VERSION, SKError, SKExportable, SKFloat, SKImportable, SKModelMetadata,
+    SKModelState, SKParameterValue, sk_backend_parameter, sk_embed_state,
+    sk_model_tensor_data_type, sk_validate_import_metadata,
 };
 
 use crate::pipeline::{SKPipelineClassifier, SKPipelineRegressor};
@@ -145,4 +145,32 @@ pub fn sk_pipeline_stage_count<F: SKFloat>(
         "number_of_stages",
         0,
     ))
+}
+
+impl<F, Stages, FinalModel> SKImportable<F> for SKPipelineClassifier<F, Stages, FinalModel>
+where
+    F: SKFloat,
+    Stages: SKConfiguredStages<F>,
+{
+    fn import_state(_state: &SKModelState<F>) -> Result<Self, SKError> {
+        Err(sk_pipeline_import_unsupported())
+    }
+}
+
+impl<F, Stages, FinalModel> SKImportable<F> for SKPipelineRegressor<F, Stages, FinalModel>
+where
+    F: SKFloat,
+    Stages: SKConfiguredStages<F>,
+{
+    fn import_state(_state: &SKModelState<F>) -> Result<Self, SKError> {
+        Err(sk_pipeline_import_unsupported())
+    }
+}
+
+fn sk_pipeline_import_unsupported() -> SKError {
+    SKError::UnsupportedOperation {
+        operation: "import_state",
+        reason: "a typed pipeline state nests every fitted stage and the final model, but the                  configured stage chain holds live estimator values rather than data and cannot                  be rebuilt from the state; rebuild the pipeline in code and import each nested                  stage state"
+            .to_string(),
+    }
 }

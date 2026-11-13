@@ -3,13 +3,16 @@
 
 use ndarray::{Array1, Array2};
 use sciencekit_common::{
-    SKBuilder, SKDataView, SKError, SKExportable, SKFloat, SKRegressorPredictor, SKSupervisedFit,
-    SKTargetView, SKTensorDataType,
+    SKBuilder, SKDataView, SKError, SKExportable, SKFloat, SKImportable, SKRegressorPredictor,
+    SKSupervisedFit, SKTargetView, SKTensorDataType,
 };
 
 use super::super::fixtures::{cyclic_labels, dense_design};
 use crate::grid_search::mock_estimators::{SKMockConstantRegressor, SKMockThresholdClassifier};
-use crate::halving::{SKHalvingGridSearchClassifier, SKHalvingGridSearchRegressor};
+use crate::halving::{
+    SKHalvingGridSearchClassifier, SKHalvingGridSearchClassifierModel,
+    SKHalvingGridSearchRegressor, SKHalvingGridSearchRegressorModel,
+};
 use crate::split::kfold::SKKFold;
 
 #[derive(Debug, Clone)]
@@ -83,6 +86,15 @@ fn halving_acceptance_tiny_classifier_and_regressor_select_refitted_and_exportab
         exported_clf.metadata().scalar_data_type(),
         SKTensorDataType::F64
     );
+    assert!(matches!(
+        SKHalvingGridSearchClassifierModel::<f64, SKMockThresholdClassifier>::import_state(
+            &exported_clf
+        ),
+        Err(SKError::UnsupportedOperation {
+            operation: "import_state",
+            ..
+        })
+    ));
 
     let targets = Array1::from_iter((0..8).map(|row| row as f64));
     let regressor = SKHalvingGridSearchRegressor::build()
@@ -106,6 +118,15 @@ fn halving_acceptance_tiny_classifier_and_regressor_select_refitted_and_exportab
             .estimator_name(),
         "mock.constant_regressor"
     );
+    assert!(matches!(
+        SKHalvingGridSearchRegressorModel::<f64, SKMockConstantRegressor>::import_state(
+            &reg_model.export_state().unwrap()
+        ),
+        Err(SKError::UnsupportedOperation {
+            operation: "import_state",
+            ..
+        })
+    ));
 
     let unrefitted = SKHalvingGridSearchRegressor::build()
         .candidates(vec![SKMockConstantRegressor::new(1.0)])
