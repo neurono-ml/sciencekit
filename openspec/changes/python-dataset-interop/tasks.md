@@ -16,7 +16,7 @@
 
 ## 3. SciPy sparse
 
-- [ ] 3.1 TDD `csr_matrix` import: `data`/`indices`/`indptr` borrowed, sparse view, stored zeros preserved.
+- [x] 3.1 TDD `csr_matrix` import: `data`/`indices`/`indptr` borrowed, sparse view, stored zeros preserved.
 - [ ] 3.2 TDD `int32` and `int64` index dtypes; conversion reporting.
 - [ ] 3.3 TDD `csc_matrix` and `coo_matrix` explicit conversion to CSR.
 - [ ] 3.4 TDD sparse fit/transform round-trip and result returned as `csr_matrix` when requested.
