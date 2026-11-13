@@ -9,17 +9,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Model export/import coverage (spec `model-export-coverage`): every retrofitted
-  family implements `SKExportable<F>` and `SKImportable<F>` over the shared
-  `SKModelState` contract with stable dotted tensor names, a single
-  `SK_MODEL_FORMAT_VERSION`, resolved-backend metadata and prediction
-  round-trip tests. Covered: standard/min-max/robust scalers, one-hot encoder,
-  polynomial features, simple imputer, missing indicator, KNN imputer, linear
-  regression, ridge, lasso, elastic net, logistic regression, SGD classifier
-  and regressor, k-nearest neighbours (dense and CSR), SVC, SVR, LinearSVC,
-  decision trees, random forests, gradient boosting and bagging. Shared helpers:
-  `sk_assert_export_round_trip`, `sk_states_equal`, the tensor readers and the
-  backend/metadata parameter parsers.
+- Model export coverage (spec `model-export-coverage`): all 47 fitted model
+  types implement `SKExportable<F>` over the shared `SKModelState` contract with
+  stable dotted tensor names, a single `SK_MODEL_FORMAT_VERSION` and
+  resolved-backend metadata. **35 of them round-trip exactly** through
+  `SKImportable<F>`, reproducing the original `predict`/`transform` output
+  bit-for-bit: standard/min-max/robust scalers, one-hot encoder, polynomial
+  features, simple imputer, missing indicator, KNN imputer, linear regression,
+  ridge, lasso, elastic net, logistic regression, SGD classifier and regressor,
+  k-nearest neighbours (dense and CSR), SVC, SVR, LinearSVC, decision trees,
+  random forests, gradient boosting, histogram gradient boosting,
+  KMeans/MiniBatchKMeans/DBSCAN, PCA/TruncatedSVD/IncrementalPCA and
+  IsolationForest.
+- Native import is **conditional** (spec `model-export-coverage`, requirement
+  "Native import where reconstructible"). Ten composite model types export a
+  state but refuse import with a typed `UnsupportedOperation` carrying
+  guidance, because their state does not carry the configuration needed to
+  rebuild them: the bagging classifier and regressor (member metadata is not
+  embedded), the grid-search classifier and regressor and the successive-halving
+  classifier and regressor (winner tensors and selection metadata, but not the
+  winner's configuration), the typed pipeline classifier and regressor (the
+  configured stage chain holds live estimator values) and the feature union
+  (the configured member chain holds live estimator values). The graph and
+  streaming pipelines erase their fitted stage types and therefore refuse at
+  export with the same typed error. Refusal is the spec-mandated behaviour, never
+  a partial model; no model is claimed to round-trip when it cannot.
+- Shared helpers for the retrofit: `sk_assert_export_round_trip`,
+  `sk_states_equal`, the tensor readers and the backend/metadata parameter
+  parsers.
 - The OpenCL 3.0 device backend (spec `opencl-backend`) behind the `opencl`
   feature of `sciencekit_gpu`, re-exported by the `sciencekit_gpu_opencl`
   package through its `gpu-opencl` feature. It implements `SKComputeBackend`
