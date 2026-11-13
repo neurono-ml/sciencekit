@@ -7,8 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.1] — 2026-11-13
+
+Patch release: `0.8.0` was published to crates.io before the umbrella crate was
+filled in, so `sciencekit = "0.8.0"` resolved to an empty re-export surface.
+`0.8.1` republishes the whole family with the content below.
+
 ### Added
 
+- `sciencekit` command-line workflows (spec `workflows-cli`): the
+  `sciencekit_cli` crate ships a `sciencekit` binary with `fit`, `predict`,
+  `transform`, `evaluate`, `export`, `inspect` and `run`. `run` executes a
+  versioned JSON/TOML workflow (YAML behind an optional feature) that records
+  the dataset, feature pipeline, estimator, optional grid search, metrics and
+  output artifacts, so an experiment is reproducible from one document.
+  Configuration resolves as flags > environment (`SCIENCEKIT_*`) > workflow file
+  > defaults, `--dry-run` prints the effective configuration without writing
+  artifacts, and failures map to stable exit codes (`0` success, `2`
+  usage/validation, `3` data/model I/O, `4` unsupported feature, `1` runtime).
+  Unknown workflow fields and unsupported versions are typed errors naming the
+  offending dotted path. CSV/Parquet datasets go through the interop sources,
+  models through Safetensors/JSON (ONNX behind a feature), and telemetry is
+  initialized and flushed on every exit path when an OTLP endpoint is set.
 - Umbrella `sciencekit` crate: one dependency that re-exports the stable public
   surface of all 21 `sciencekit_*` sub-crates under family modules
   (`preprocessing`, `impute`, `linear_model`, `neighbors`, `svm`, `tree`,
@@ -52,6 +72,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `SKLogisticRegression` models; inference-only families reject `partial_fit`
   with typed guidance instead of silently resetting the imported coefficients.
 
+### Fixed
+
+- The `sciencekit` umbrella crate published in `0.8.0` was empty (its
+  re-exports landed afterwards), so the documented `sciencekit = "0.8.0"`
+  dependency gave no estimators. `0.8.1` publishes the umbrella with the full
+  family surface and feature forwarding described above.
+- `scripts/publish-crates.sh` retries a crate whose publish hits crates.io
+  HTTP 429 with exponential backoff instead of failing the whole release, and
+  declares its retry state without a `local` outside a function.
 
 ## [0.8.0] — 2026-11-13
 

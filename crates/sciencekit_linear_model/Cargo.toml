@@ -8,8 +8,8 @@ description = "Linear, regularized, logistic and stochastic-gradient models for 
 repository = "https://github.com/neurono-ml/sciencekit"
 
 [dependencies]
-sciencekit_common = { path = "../sciencekit_common", version = "0.8.0" }
-sciencekit_math = { path = "../sciencekit_math", version = "0.8.0" }
+sciencekit_common = { path = "../sciencekit_common", version = "0.8.1" }
+sciencekit_math = { path = "../sciencekit_math", version = "0.8.1" }
 
 ndarray = { workspace = true }
 rayon = { workspace = true }
