@@ -78,7 +78,17 @@ impl<F: SKFloat> SKNumpyMappableSource<F> {
                 format: "npy",
                 reason: "the declared shape overflows the platform's address space".to_string(),
             })?;
-        let expected_bytes = (element_count * header.dtype.element_size()) as u64;
+        // A crafted header can declare a shape whose element count fits `usize`
+        // while its byte length does not; the multiplication must be checked so
+        // a hostile file becomes a structured error instead of an overflow.
+        let expected_bytes = u64::try_from(element_count)
+            .ok()
+            .and_then(|count| count.checked_mul(header.dtype.element_size() as u64))
+            .ok_or_else(|| SKError::MalformedMappedHeader {
+                path: path_name.clone(),
+                format: "npy",
+                reason: "the declared shape overflows the platform's address space".to_string(),
+            })?;
         let actual_bytes = (mapping.len() - header.data_offset) as u64;
         if actual_bytes != expected_bytes {
             return Err(SKError::MappedLengthMismatch {
