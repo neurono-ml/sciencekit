@@ -1,11 +1,11 @@
 //! Regression and classifier predictor behaviour.
 
-use ndarray::{Array1, array};
-use sciencekit_common::{SKClassifierPredictor, SKRegressorPredictor};
+use ndarray::array;
+use sciencekit_common::SKRegressorPredictor;
 
 use super::SKOnnxImportError;
 use super::SKOnnxPredictor;
-use super::test_support::{affine_regressor_model, softmax_classifier_model};
+use super::test_support::affine_regressor_model;
 
 #[test]
 fn affine_regressor_matches_the_closed_form() {

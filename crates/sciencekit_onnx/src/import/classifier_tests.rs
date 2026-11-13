@@ -1,7 +1,7 @@
 //! Classifier probabilities, labels and head ambiguity.
 
 use ndarray::{Array1, array};
-use sciencekit_common::{SKClassifierPredictor, SKRegressorPredictor};
+use sciencekit_common::SKClassifierPredictor;
 
 use super::SKOnnxImportError;
 use super::SKOnnxPredictor;
