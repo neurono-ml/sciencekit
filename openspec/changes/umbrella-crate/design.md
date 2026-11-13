@@ -20,6 +20,21 @@ cycles.
 
 ## Decisions
 
+### Decision 0 — The umbrella lives in the existing workspace-root package
+
+The plan said "create `crates/sciencekit`". The workspace already has a root
+package named `sciencekit` occupying the umbrella slot (an empty `src/lib.rs`
+plus the workspace-wide export-coverage tests), and Cargo cannot host a second
+package with the same name in one workspace. The umbrella is therefore
+implemented in the **existing root package** (`Cargo.toml` `[package]` +
+`src/`): the same public outcome, one fewer package, and no rename of the
+published crate.
+
+Consequences: the family modules live in `src/<family>.rs` instead of
+`crates/sciencekit/src/`, and the root `[dependencies]` (previously
+`[dev-dependencies]`) are the sub-crates the umbrella re-exports.
+
+
 ### Decision 1 — Module-per-family re-exports
 
 The umbrella exposes modules such as `preprocessing`, `linear_model`, `neighbors`, `svm`,
@@ -35,9 +50,24 @@ estimators/builders. It does not re-export every model to keep compile times rea
 
 ### Decision 3 — Feature flags
 
-`interop`, `safetensors`, `json`, `onnx`, `polars`, `datafusion`, `arrow` and `parquet`
-map to the corresponding optional crates/features. The default build is core-only.
+`opencl`, `telemetry`, `onnx`, `polars`, `datafusion`, `memmap` and `parquet` map to
+the corresponding optional crates/features through `dep:` forwarding, so the
+umbrella never re-declares a dependency version. The default build is core-only.
 Python is not a feature; it is a separate `sciencekit_python` crate.
+
+The family modules are gated the same way: `telemetry` exists only with its
+feature, the ONNX re-exports only with `onnx`, the engine adapters only with
+their adapter feature, and the `sciencekit_gpu_opencl` re-exports only with
+`opencl`. A compile test asserts the mirror in whichever combination is built.
+
+### Decision 3b — Collisions are resolved by family, never by flattening
+
+Three distinct `SKClassWeight` policies (tree/ensemble, linear-model logistic,
+SVM) and two `sk_weighted_average` functions (neighbors, impute) share names
+across families. Each stays in its family module and is deliberately omitted
+from the prelude. Names that are the *same* type re-exported by several modules
+(`SKFeatureBlock`, the device vocabulary, `SKOutlierLabel`, `SKKernel`) are safe
+to duplicate and are documented as one identity.
 
 ### Decision 4 — Documentation
 
@@ -47,10 +77,12 @@ links. docs.rs metadata enables the `docsrs` cfg and feature badges.
 ### Decision 5 — File layout
 
 ```
-crates/sciencekit/src/
-  lib.rs
+src/
+  lib.rs                  # crate docs + shared vocabulary at the root
   prelude.rs
+  math.rs
   preprocessing.rs
+  impute.rs
   linear_model.rs
   neighbors.rs
   svm.rs
@@ -62,7 +94,13 @@ crates/sciencekit/src/
   metrics.rs
   model_selection.rs
   pipeline.rs
-  interop.rs
+  interop.rs              # includes the feature-gated ONNX re-exports
+  accelerators.rs
+  telemetry.rs            # feature-gated
+  ffi.rs
+  features_tests.rs
+  prelude_tests.rs
+  reexports_tests.rs
 ```
 
 Each module is a re-export-only file; no logic.

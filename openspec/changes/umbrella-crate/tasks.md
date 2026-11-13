@@ -13,7 +13,7 @@
 
 - [x] 2.1 Add the optional integration features and a feature-matrix build test; verify
   with `cargo check -p sciencekit --no-default-features` and each feature.
-- [ ] 2.2 Write crate-level documentation and docs.rs metadata; verify with
+- [x] 2.2 Write crate-level documentation and docs.rs metadata; verify with
   `cargo doc -p sciencekit --no-deps`.
 - [ ] 2.3 Add a `Development Explained` subsection on the umbrella and prelude; verify with
   `mdbook build docs`.
