@@ -22,9 +22,30 @@ buffers and the kernel enum. This crate implements them over OpenCL 3.0. The spi
 
 ### Decision 1 — OpenCL 3.0 through the ICD loader
 
-Use `opencl3` (or `ocl` if the spike favors it) behind the `gpu-opencl` feature. Runtime
-requires an ICD loader installed; no vendor SDK is linked at build time. Device programs are
-compiled from embedded OpenCL C sources once per device and cached in the backend.
+Use `opencl3` behind the `opencl` feature (re-exported by the `sciencekit_gpu_opencl`
+package through `gpu-opencl`). Runtime requires an ICD loader installed; no vendor SDK is
+linked at build time. Device programs are compiled from embedded OpenCL C sources once per
+device and cached in the backend.
+
+**Spike evidence** (RTX 3070 Ti Laptop GPU, `clinfo`: `Platform #0: NVIDIA CUDA`, device 0;
+`libOpenCL.so.1` installed, no development symlink, no CL headers):
+
+- `ocl` 0.19.7 was rejected: its link step runs `-lOpenCL` and fails with
+  `cannot find -lOpenCL: No such file or directory`, because only the versioned runtime
+  library is installed. It cannot be used without installing a development package.
+- `opencl3` 0.12.4 (latest) was rejected for the workspace MSRV: `context.rs` uses
+  `Vec::len` in a const context, which needs a newer Rust than 1.85.
+- `opencl3` **0.12.0** (exact pin) compiles on Rust 1.85, resolves to `cl3` 0.13.2, whose
+  dynamic loader opens `libOpenCL.so.1` at runtime. A spike kernel multiplied a host vector
+  by 2 on the device and read back `[2.0, 4.0, 6.0, 8.0]` from
+  `NVIDIA GeForce RTX 3070 Ti Laptop GPU`.
+
+**Package layout.** The implementation lives in `sciencekit_gpu` under
+`src/opencl/` behind the `opencl` feature, not in a separate implementation crate: the
+contract traits (`SKComputeBackend`, `SKDeviceDiscovery`) are defined in `sciencekit_gpu`, so
+a crate that depends on them cannot also be a dependency of `sciencekit_gpu` (package
+cycle). `crates/sciencekit_gpu_opencl` is the planned vendor-facing package and feature name;
+it re-exports the backend and enables `sciencekit_gpu/opencl`, exposing no second contract.
 
 ### Decision 2 — Kernel set
 
