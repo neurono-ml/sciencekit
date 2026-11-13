@@ -90,7 +90,7 @@ review and the strengthened test is named after the arrow.
 | Rule | Evidence | Verdict |
 | --- | --- | --- |
 | `SK`/`sk_` prefixes on public items | `SKLinearSVC*`, `sk_linear_svc_loss_from_code`, module `linear_svc` | PASS |
-| No abbreviations | `maximum_number_of_iterations`, `regularization_c`; `SKLinearSvcLoss`/`SKLinearSvcHead` mix `Svc` with the `SKLinearSVC*` casing of their siblings | PASS with nit (renaming is not blocking) |
+| No abbreviations and `SK`+PascalCase | `maximum_number_of_iterations`, `regularization_c`; `SKLinearSVCLoss`/`SKLinearSVCHead` match the `SKLinearSVC*` casing of their siblings | PASS |
 | Builder-only construction | `from_configuration` is `pub(crate)`; every test builds through the builder | PASS |
 | `backend` default `Faer`, recorded in every public span | builder default test; observability test; `fit`, `decision_function`, `predict_labels`, `predict_probabilities` all pass `self.backend` | PASS |
 | Dense/sparse parity, no densification | `design/` trait + stored-entry scans; no `to_dense` under `linear_svc/`; huge sparse fixture | PASS |
@@ -108,23 +108,27 @@ review and the strengthened test is named after the arrow.
 - **The tolerance is absolute.** On an 8-row separable fixture with features near `100`,
   a default fit returns `NotConverged` even at `C = 0.01`, and reaching `1e-4` needs about
   `7·10^5` sweeps. This is honest (the error is explicit) and matches LIBLINEAR-style
-  behavior on unscaled data, but the documentation must state that features need scaling.
+  behavior on unscaled data. The builder's `tolerance` doc comment and the book chapter now
+  state that the rule is absolute and advise standardizing features (`SKStandardScaler`)
+  instead of loosening the tolerance.
 - **The intercept is effectively regularized.** It enters the dual as an augmented
-  constant column (LIBLINEAR-compatible) and is then replaced by the unpenalized
-  loss-minimizing value for the fixed weights; design Decision 4 calls it "unpenalized".
-  On the offset fixture the fit lands at `w ≈ 0.00698, b ≈ -0.754` (penalized-intercept
-  optimum), while an unpenalized-bias optimum is `w ≈ 0.5, b ≈ -54` (primal objective
-  `7.45` versus `0.125`). The spec only requires an intercept, so this is not a scenario
-  failure, but the design and book wording should describe the augmented, regularized
-  intercept instead of claiming a purely unpenalized bias.
+  constant column (LIBLINEAR-compatible) and is then re-optimized for the fixed weights; the
+  bisection cannot undo the regularization that shaped those weights. On the offset fixture
+  the fit lands at `w ≈ 0.00698, b ≈ -0.754` (penalized-intercept optimum), while an
+  unpenalized-bias optimum is `w ≈ 0.5, b ≈ -54` (primal objective `7.45` versus `0.125`).
+  The spec only requires an intercept, so this is not a scenario failure. Design Decision 4
+  and the book chapter now describe the augmented, regularized intercept and its scaling
+  consequence instead of claiming a purely unpenalized bias.
 - Tests use hand-checkable fixtures with asserted numeric values, not only "no panic".
 
 ### Remaining non-blocking observations
 
-- `SKLinearSVCModel::converged()` always returns `true`; it is truthful after a successful
-  `fit` (divergence is an error), but it cannot become `false` and the fit test's
-  `assert!(model.converged())` is therefore vacuous.
-- The `_` match arms in `decision.rs` and `design/dispatch.rs` are unreachable because
-  `SKDataView` has two variants.
+- The always-true `SKLinearSVCModel::converged()` accessor was removed from the public
+  surface: `fit` already returns `NotConverged` instead of building a model, so the method
+  could never report anything but `true` and carried no information. Its vacuous test
+  assertions were removed with it.
+- The `_` match arms in `decision.rs` and `design/dispatch.rs` are required: `SKDataView` is
+  `#[non_exhaustive]` in `sciencekit_common`, so the wildcard is mandatory across the crate
+  boundary. Both arms carry a comment saying so.
 - Model export is an explicit non-goal of this change (deferred to Wave 7 and recorded in
   `docs/PRD.md`), so PRD §8.7 acceptance is met except for export by design.
