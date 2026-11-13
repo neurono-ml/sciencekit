@@ -19,8 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   stay in their modules) and shared identities stay single types. `opencl`,
   `telemetry`, `onnx`, `polars`, `datafusion`, `memmap` and `parquet` are
   optional features forwarded with `dep:` to the owning crate, so the default
-  build stays core-only. The umbrella lives in the existing workspace-root
-  package because Cargo cannot host a second package named `sciencekit`.
+  build stays core-only; `otlp-grpc`/`otlp-http`, `observability-export`,
+  `compression-gzip`/`-brotli`/`-snappy` and
+  `allocator-jemalloc`/`-mimalloc` forward their sub-crate switches as well.
+  The umbrella lives in the existing workspace-root package because Cargo
+  cannot host a second package named `sciencekit`.
 - Low-rank adapters (spec `lora-adapters`): `SKLoraAdapter<F>` and its builder
   attach a frozen linear or logistic coefficient block to a small `A`/`B`
   factorization, with the documented scaling `alpha / rank`. The attached model

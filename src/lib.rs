@@ -64,12 +64,24 @@
 //! | Feature | Enables |
 //! | --- | --- |
 //! | `opencl` | the OpenCL device backend (`sciencekit_gpu`, `sciencekit_gpu_opencl`) |
-//! | `telemetry` | OpenTelemetry export pipelines (`sciencekit_telemetry`) |
+//! | `telemetry` | OpenTelemetry export pipelines with both OTLP transports (`sciencekit_telemetry`) |
+//! | `otlp-grpc`, `otlp-http` | one OTLP transport each, without the other exporter stack |
+//! | `observability-export` | the minimal trace-only OpenTelemetry layer (`sciencekit_common`) |
 //! | `onnx` | ONNX graph export and import (`sciencekit_onnx`) |
 //! | `polars` | the Polars DataFrame adapter (`sciencekit_interop`) |
 //! | `datafusion` | the DataFusion adapter (`sciencekit_interop`) |
 //! | `memmap` | memory-mapped raw binary, NumPy `.npy` and Arrow IPC sources |
 //! | `parquet` | Arrow/Parquet file paths (`sciencekit_interop`) |
+//! | `compression-gzip`, `compression-brotli`, `compression-snappy` | compressed Safetensors payloads (`sciencekit_interop`) |
+//! | `allocator-jemalloc`, `allocator-mimalloc` | the global allocator, mutually exclusive (`sciencekit_common`) |
+//!
+//! The `blas-backend` switch of `sciencekit_math` and the future CUDA/ROCm
+//! backends are not forwarded yet: the first needs a system BLAS at link time
+//! and the others have no implementation to select. Depend on the owning
+//! sub-crate directly for those three. The two allocator features are mutually
+//! exclusive (one global allocator per process), so `--all-features` is not a
+//! valid build for this crate; enable at most one of them.
+
 //!
 //! Python bindings are a separate crate, not a feature: a C-ABI consumer uses
 //! [`ffi`] directly.
@@ -152,6 +164,8 @@ pub use sciencekit_common::interop::{
     sk_validate_import_metadata,
 };
 pub use sciencekit_common::label_table::{SKLabelTable, sk_canonicalize_labels};
+#[cfg(feature = "observability-export")]
+pub use sciencekit_common::observability::sk_opentelemetry_layer;
 pub use sciencekit_common::observability::{
     SKBackendKind, SKOperationAttributes, SKOperationKind, SKOperationObservation, sk_run_operation,
 };

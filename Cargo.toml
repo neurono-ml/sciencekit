@@ -20,9 +20,26 @@ readme = "README.md"
 keywords = ["machine-learning", "scikit-learn", "statistics", "ndarray", "data-science"]
 categories = ["science", "algorithms"]
 # docs.rs builds the whole integration surface so every feature-gated adapter
-# has a rendered page; the crate itself stays core-only by default.
+# has a rendered page; the crate itself stays core-only by default. `all-features`
+# is not usable here: `allocator-jemalloc` and `allocator-mimalloc` are mutually
+# exclusive in `sciencekit_common` and enabling both is a deliberate compile
+# error, so the integration features are listed explicitly.
 [package.metadata.docs.rs]
-all-features = true
+features = [
+    "opencl",
+    "telemetry",
+    "otlp-grpc",
+    "otlp-http",
+    "observability-export",
+    "onnx",
+    "polars",
+    "datafusion",
+    "memmap",
+    "parquet",
+    "compression-gzip",
+    "compression-brotli",
+    "compression-snappy",
+]
 rustdoc-args = ["--cfg", "docsrs"]
 
 # The language bindings live in their own repositories
@@ -163,6 +180,15 @@ polars = ["sciencekit_interop/polars"]
 datafusion = ["sciencekit_interop/datafusion"]
 # Memory-mapped raw binary, NumPy `.npy` and Arrow IPC sources.
 memmap = ["sciencekit_interop/memmap"]
+# Safetensors payload compression codecs.
+compression-gzip = ["sciencekit_interop/compression-gzip"]
+compression-brotli = ["sciencekit_interop/compression-brotli"]
+compression-snappy = ["sciencekit_interop/compression-snappy"]
+# Global allocator selection (mutually exclusive, as in `sciencekit_common`).
+allocator-jemalloc = ["sciencekit_common/allocator-jemalloc"]
+allocator-mimalloc = ["sciencekit_common/allocator-mimalloc"]
+# Minimal trace-only OpenTelemetry layer from `sciencekit_common`.
+observability-export = ["sciencekit_common/observability-export"]
 # Arrow/Parquet file paths (the sub-crate aliases it to its Arrow adapter).
 parquet = ["sciencekit_interop/parquet"]
 
@@ -170,3 +196,4 @@ parquet = ["sciencekit_interop/parquet"]
 [dev-dependencies]
 ndarray = { workspace = true }
 sprs = { workspace = true }
+tracing-subscriber = { workspace = true }

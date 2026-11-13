@@ -90,3 +90,11 @@ fn the_jemalloc_feature_installs_the_jemalloc_allocator() {
 fn the_mimalloc_feature_installs_the_mimalloc_allocator() {
     assert_eq!(crate::sk_allocator_kind(), crate::SKAllocatorKind::MiMalloc);
 }
+
+/// The opt-in minimal OpenTelemetry layer lives behind a common feature; the
+/// umbrella must forward the switch *and* the function it gates.
+#[cfg(feature = "observability-export")]
+#[test]
+fn the_observability_export_layer_resolves() {
+    let _ = crate::sk_opentelemetry_layer::<tracing_subscriber::Registry>;
+}
