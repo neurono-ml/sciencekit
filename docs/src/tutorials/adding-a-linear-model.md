@@ -13,17 +13,19 @@ linear system means** — including the trade-off that makes it not just a "divi
 
 | Decision | Chosen | Roads not taken — and the reason they are traps |
 |---|---|---|
-| Solver | **SVD least squares** through the backend (`lstsq` = pseudoinverse path) | **Normal equations** (`solve(AᵀA, Aᵀy)`) — the textbook one-liner — squares the condition number: `κ(AᵀA) = κ(A)²`. For even moderately ill-conditioned real data this is the difference between 13 and 7 significant digits, and it silently produces wrong answers exactly where practitioners most need trust (correlated features). §2 walks the numbers. |
+| Solver | **SVD least squares** through the backend (`lstsq` = pseudoinverse path) | **Normal equations** ($\operatorname{solve}(A^{\mathsf T}A, A^{\mathsf T}y)$) — the textbook one-liner — squares the condition number: $\kappa(A^{\mathsf T}A) = \kappa(A)^2$. For even moderately ill-conditioned real data this is the difference between 13 and 7 significant digits, and it silently produces wrong answers exactly where practitioners most need trust (correlated features). §2 walks the numbers. |
 | Rank deficiency | Keep `rank` and `singular_values` from `SKLeastSquaresSolution`; thin support surfaced today | Silently computing with a rank-deficient matrix and returning a solution that claims "the" answer is a subtraction bug hidden in plain sight — SVD hands rank and singular values for free, so we surface them. |
 | Intercept handling | Design-matrix augmentation (prepend a column of ones) unless `include_intercept` is `false` — the PRD forbids
 scikit-learn abbreviations, so `include_intercept` is the name that carries this chapter | Solving for intercept separately via two means collapses rank prematurely on rank-deficient designs. |
-| Streaming | **Gram accumulation per batch**: carry `AᵀA` and `Aᵀy` (and `row_count`) in the stream state, and solve at the end — **the same form the in-memory path never had to use — and the honest precision trade-off is stated.** | Two-pass streaming (means then squares) re-reads the data — the streaming mode exists precisely because we cannot. |
+| Streaming | **Gram accumulation per batch**: carry $A^{\mathsf T}A$ and $A^{\mathsf T}y$ (and `row_count`) in the stream state, and solve at the end — **the same form the in-memory path never had to use — and the honest precision trade-off is stated.** | Two-pass streaming (means then squares) re-reads the data — the streaming mode exists precisely because we cannot. |
 | Dtype | `F: SKFloat` on features; targets arrive as `f64` (`SKTargetView::Continuous`) | Type application binds feature dtype; the *model's* coefficients rise to the solve's precision policy (f64 state, see §3). |
 
 Mermaid, both regimes at a glance:
 
 ```mermaid
 flowchart TB
+  accTitle: Linear-regression execution regimes in the tutorial
+  accDescr: The execution plan chooses an in-memory SVD pseudoinverse solve or a streaming path that accumulates the normal-equation terms per batch and solves at stream end. Both paths produce the fitted linear-regression model used for prediction.
     classDef planNode fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e,stroke-width:2px
     classDef jacNode fill:#f0fdf4,stroke:#16a34a,color:#14532d,stroke-width:2px
     classDef streamNode fill:#fff7ed,stroke:#ea580c,color:#7c2d12,stroke-width:2px
@@ -40,38 +42,38 @@ flowchart TB
 
 ## 2. Theory from zero — least squares, and why one line hides a lie
 
-**The problem.** We have rows `xᵢ ∈ ℝᵖ` and targets `yᵢ ∈ ℝ`. We want a vector of
-coefficients `β` and a scalar intercept `b₀` so that `xᵢ·β + b₀ ≈ yᵢ`. "Best" is
-least-squares: minimize `Σᵢ (yᵢ − xᵢ·β − b₀)²`. With the augmented design matrix
-`A = [1 | X]` (ones in the first column), that is one matrix equation: minimize `‖Aβ − y‖₂`.
+**The problem.** We have rows $x_i \in \mathbb{R}^p$ and targets $y_i \in \mathbb{R}$. We want a vector of
+coefficients $\beta$ and a scalar intercept $b_0$ so that $x_i \cdot \beta + b_0 \approx y_i$. "Best" is
+least-squares: minimize $\sum_i (y_i - x_i \cdot \beta - b_0)^2$. With the augmented design matrix
+$A = [1 \mid X]$ (ones in the first column), that is one matrix equation: minimize $\lVert A\beta - y \rVert_2$.
 
-Three roads to `β`, and the difference between them is not style — it is **numerics**:
+Three roads to $\beta$, and the difference between them is not style — it is **numerics**:
 
-**Road 1 — Normal equations.** Set the gradient of `‖Aβ − y‖₂²` to zero:
-`AᵀAβ = Aᵀy`. One triangular solve afterwards. The seductive part: `AᵀA` is *smaller*
-than `A` when rows ≫ columns (a `p×p` object instead of `n×p`), which made it the
+**Road 1 — Normal equations.** Set the gradient of $\lVert A\beta - y \rVert_2^2$ to zero:
+$A^{\mathsf T}A\beta = A^{\mathsf T}y$. One triangular solve afterwards. The seductive part: $A^{\mathsf T}A$ is *smaller*
+than $A$ when rows $\gg$ columns (a $p \times p$ object instead of $n \times p$), which made it the
 pedagogical favorite for decades. The catch is measurable and unforgiving:
 
-> `κ(AᵀA) = κ(A)²` — the condition number squares.
+> $\kappa(A^{\mathsf T}A) = \kappa(A)^2$ — the condition number squares.
 
 Condition number is the ratio by which a linear solve can amplify input rounding;
-counting doubles means doubling the exponent of the loss: if `A` has condition `10⁷`,
-`AᵀA` has `10¹⁴`, and a 64-bit float has 16 digits — with `AᵀA` the solve is allowed
+counting doubles means doubling the exponent of the loss: if $A$ has condition $10^7$,
+$A^{\mathsf T}A$ has $10^{14}$, and a 64-bit float has 16 digits — with $A^{\mathsf T}A$ the solve is allowed
 about **two digits** of trust at exactly the kind of gritty, correlated-feature datasets
 scikit-learn gets asked to process daily. And near-multicollinearity is not exotic: it is
 *any* pair of features that happen to co-move (age and years-of-experience; two sensors
 reading the same room).
 
-**Road 2 — QR.** Orthogonalize `A` (`A = QR`), then `β = R⁻¹Qᵀy`. `κ(QR) = κ(A)` — the
+**Road 2 — QR.** Orthogonalize $A$ ($A = QR$), then $\beta = R^{-1}Q^{\mathsf T}y$. $\kappa(QR) = \kappa(A)$ — the
 condition number is *not* squared, because the orthogonal factor is perfectly conditioned
-by construction. Stable, `O(np²)`, the classic library workhorse.
+by construction. Stable, $O(np^2)$, the classic library workhorse.
 
 **Road 3 — SVD (the mvp of the "if it is important enough to be in the catalog, it must be
-stable enough to be in the intro" school).** `A = UΣVᵀ`, so
-`β = Σᵢ σᵢ≠0 (uᵢ·y / σᵢ) vᵢ` — the pseudoinverse solution. It costs more than QR *and*
+stable enough to be in the intro" school).** $A = U\Sigma V^{\mathsf T}$, so
+$\beta = \sum_{\sigma_i \neq 0} (u_i \cdot y / \sigma_i)\, v_i$ — the pseudoinverse solution. It costs more than QR *and*
 does something QR does not: **it shows you the rank**. Singular values near zero declare
 the exact features that make the problem degenerate, and the pseudoinverse path
-(`pinv`, `rcond = ε·max(m,n)` in our backend) is exactly how a *least-squares* solve
+(`pinv`, $\text{rcond} = \varepsilon \cdot \max(m,n)$ in our backend) is exactly how a *least-squares* solve
 degrades gracefully when `A` is not full-rank, returning (i) the minimum-norm solution
 and (ii) the information that it did so.
 
@@ -93,37 +95,31 @@ injectable, dispatch-level truths).
 ### 2.1 The streaming road
 
 Streaming sits on the same skeleton — but the naive intuition here *doubles down* on the same
-hole. The tempting "solve least squares per batch and average the β" is almost never right: a
+hole. The tempting "solve least squares per batch and average the $\beta$" is almost never right: a
 weighted average hides how the covered rows distributed, and per-batch ranks do not
 compose.
 
 What *composes* is the raw material of the normal equations — and that is the honest
 finding: the streaming regions re-shape the choice to Gram:
 
-```text
-G := AᵀA        (p × p, symmetric)
-c := Aᵀy        (p, right-hand side)
-```
+$$G := A^{\mathsf T}A \quad (p \times p,\ \text{symmetric}), \qquad c := A^{\mathsf T}y \quad (p,\ \text{right-hand side})$$
 
-Each update adds a rank-|B| contribution: for each batch B (rows × p),
+Each update adds a rank-$\lvert B \rvert$ contribution: for each batch $B$ ($\text{rows} \times p$),
 
-```text
-G := G + BᵀB
-c := c + Bᵀy_batch
-```
+$$G := G + B^{\mathsf T}B, \qquad c := c + B^{\mathsf T}y_{\text{batch}}$$
 
-At the end, one solve of `Gβ = c` obtains the coefficients. Exactly one extra fact dumps the
-price tag on the table: **we computed `AᵀA`, so we are square-conditioning again**. Thus the
+At the end, one solve of $G\beta = c$ obtains the coefficients. Exactly one extra fact dumps the
+price tag on the table: **we computed $A^{\mathsf T}A$, so we are square-conditioning again**. Thus the
 streaming trade-off reads, honestly:
 
 | | in-memory SVD | streaming Gram |
 |---|---|---|
-| Significant digits at `κ(A)=10⁷` | ~9 (16 − log₁₀κ) | ~3–5 (the squared condition eats double) |
-| Memory per stream step | O(n·p) | O(p²) — the entire point |
-| Rank detection at stream end | native | only via `G`'s own singular values (≈ σᵢ² of A) |
+| Significant digits at $\kappa(A)=10^7$ | ~9 ($16 - \log_{10}\kappa$) | ~3–5 (the squared condition eats double) |
+| Memory per stream step | $O(np)$ | $O(p^2)$ — the entire point |
+| Rank detection at stream end | native | only via $G$'s own singular values ($\approx \sigma_i^2$ of $A$) |
 
 This is also why the streaming chapter of the *optimizer* family (next chapter) prefers SGD
-on day one: SGD never forms `AᵀA`, and its engine turns *streaming* from a constraint into
+on day one: SGD never forms $A^{\mathsf T}A$, and its engine turns *streaming* from a constraint into
 the algorithm's natural home.
 
 ---
@@ -143,7 +139,7 @@ pub struct SKGramState<const WITH_INTERCEPT: bool> {
 Notes that carry design weight:
 
 - statistics once again accumulate in **f64** unconditionally, like the moments state —
-  when you accumulate `BᵀB` products, f32×f32→f32 products cross 3 magnitudes of drift per
+  when you accumulate $B^{\mathsf T}B$ products, $f32 \times f32 \to f32$ products cross 3 magnitudes of drift per
   row in adversarial inputs, and the covariates' first digits are exactly what matters;
 - `const WITH_INTERCEPT: bool` carries through; a `1` turns into a prepended column that
   the *gram absorb* adds by chain rule, no separate pass needs reading the data;
@@ -297,7 +293,7 @@ equations got *kept* streaming but with the §2 caveat printed as a test contrac
 | Lots and little data | four-row exact fixture and the rank-deficient one — two shapes, one solver |
 | Under concurrency | model is `Sync` + `Copy`-safe; scoring under rayon exercised in the scorers chapter |
 | Model export | coefficients + intercept + design options serialize (export conventions live in the model chapter of the anchor) |
-| Metrics | `SKSupervisedScorer` (regressor) / `SKLabelScorer` (classifier) give `score()` free — the R² chapter exercises it against these models |
+| Metrics | `SKSupervisedScorer` (regressor) / `SKLabelScorer` (classifier) give `score()` free — the $R^2$ chapter exercises it against these models |
 
 **Chapter sources:**
 

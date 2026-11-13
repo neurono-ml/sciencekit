@@ -23,13 +23,15 @@ in-memory fit is simply the degenerate case of one batch carrying everything**, 
 |---|---|---|
 | Update granularity per step | **one sample per update**, wrapped in an epoch loop | Mini-batch updates would vectorize better, but they change the convergence theory and the schedule semantics; scikit-learn's SGD is per-sample and the library keeps parity. |
 | In-memory path | The **same** per-sample update over the whole matrix, one epoch at a time | A separate closed-form/batch route would fork the semantics: two "fits" with answers that drift apart on ill-conditioned inputs — the exact problem the dual-regime principle exists to prevent. |
-| Learning-rate schedules | all four shipped: `constant`, `inverse_scaling`, `optimal` (with `t₀` estimated from the first batch) and `adaptive` | Dropping `optimal` would break parity; shipping it with a *fixed* constant would hard-code a dataset-dependent number, so the constant is estimated and documented. |
+| Learning-rate schedules | all four shipped: `constant`, `inverse_scaling`, `optimal` (with $t_0$ estimated from the first batch) and `adaptive` | Dropping `optimal` would break parity; shipping it with a *fixed* constant would hard-code a dataset-dependent number, so the constant is estimated and documented. |
 | Losses | the full catalogue: 5 classifier (hinge, log-loss, modified huber, squared hinge, perceptron) and 4 regressor (squared error, huber, epsilon-insensitive, squared epsilon-insensitive); penalties L2/L1/ElasticNet/None | A reduced catalogue would not be scikit-learn-compatible; the substrate pays for the catalogue once and both estimators reuse it. |
 | PartialFit spans | Every batch's `update` wrapped in one `SKOperationKind::PartialFit` span | One fit-wide span for a 10⁵-batch job reports *nothing*; per-batch spans form the legible trace that makes streaming jobs debuggable. |
 | Classifier labels | a `SKLabelTable` **frozen at fit time**, first-occurrence order | Re-indexing per batch would silently move earlier classes; a class unseen at fit is rejected instead of growing the table, because a new column invalidates the trained coefficients. |
 
 ```mermaid
 flowchart TB
+  accTitle: The stochastic-gradient-descent tutorial pipeline
+  accDescr: The builder produces an immutable estimator. Fit resolves a plan that selects in-memory shuffled epochs or streaming batches. Both feed the learning state, which produces the exportable fitted model and its predictions.
     classDef planNode fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e,stroke-width:2px
     classDef computeNode fill:#f0fdf4,stroke:#16a34a,color:#14532d,stroke-width:2px
     classDef modelNode fill:#ede9fe,stroke:#7c3aed,color:#3b0764,stroke-width:2px
@@ -50,14 +52,14 @@ flowchart TB
 ## 2. Theory from zero — gradient descent, without the magic
 
 Both families are supervised, so let us be explicit about the data: you have
-rows `xᵢ ∈ ℝᵖ`, and either
+rows $x_i \in \mathbb{R}^p$, and either
 
-- **regressor:** continuous `yᵢ`; the loss is squared error `L(θ) = ½ Σᵢ (xᵢ·θ − yᵢ)²`;
-- **classifier:** labels `yᵢ ∈ {0..C−1}`; one-vs-rest fits one linear head per class,
+- **regressor:** continuous $y_i$; the loss is squared error $L(\theta) = \tfrac{1}{2} \sum_i (x_i \cdot \theta - y_i)^2$;
+- **classifier:** labels $y_i \in \{0, \ldots, C-1\}$; one-vs-rest fits one linear head per class,
   and probabilities come from the sigmoid (log-loss) or the clipped affine map (modified
   huber) — the only two probabilistic losses.
 
-**The property that carries this chapter is convexity.** Squared error is a quadratic in θ;
+**The property that carries this chapter is convexity.** Squared error is a quadratic in $\theta$;
 log-loss with a linear map is convex. Both are convex, so **plain gradient descent
 converges *provably*** (cited: Bottou 2010 rate analysis; Ruder's survey as the map).
 No second-order machinery, no adaptive friend — the bare minimum the modern frameworks
@@ -65,28 +67,28 @@ demand before their own elaborate bells are even *considered*.
 
 ### 2.1 The single formula to understand
 
-For one sample `x`, target `y` and sample weight `c`, with ridge penalty λ weighed on the coefficient vector:
+For one sample $x$, target $y$ and sample weight $c$, with ridge penalty $\lambda$ weighed on the coefficient vector:
 
-```text
-gradient(w)  = c · ℓ'(xᵀw + b, y) · x + λ w     ← regressor; squared error's slope
-w_new        = w − ηₜ · gradient(w)
-b_new        = b − ηₜ · c · ℓ'(xᵀw + b, y)       ← the intercept is never penalized
-```
+$$\begin{aligned}
+\operatorname{gradient}(w) &= c \cdot \ell'(x^{\mathsf T}w + b, y) \cdot x + \lambda w && \text{regressor; squared error's slope} \\
+w_{\text{new}} &= w - \eta_t \cdot \operatorname{gradient}(w) \\
+b_{\text{new}} &= b - \eta_t \cdot c \cdot \ell'(x^{\mathsf T}w + b, y) && \text{the intercept is never penalized}
+\end{aligned}$$
 
 Separate facts carry each symbol, and each one is a classic textbook door:
 
-- **ηₜ, the learning rate** — how far to travel per step. Too high = divergence; too low =
+- **$\eta_t$, the learning rate** — how far to travel per step. Too high = divergence; too low =
   days to converge. The four shipped schedules:
-  - `constant`: `ηₜ = η₀` — the simplest baseline;
-  - `inverse_scaling`: `ηₜ = η₀ / (1 + t)^p`, `p = 0.25` for the regressor (scikit-learn's
+  - `constant`: $\eta_t = \eta_0$ — the simplest baseline;
+  - `inverse_scaling`: $\eta_t = \eta_0 / (1 + t)^p$, $p = 0.25$ for the regressor (scikit-learn's
     default) — the Robbins–Monro annealing family;
-  - `optimal`: `ηₜ = 1/(α·(t+t₀))`, the classical rate. The constant `t₀` is **estimated**
+  - `optimal`: $\eta_t = 1/(\alpha(t + t_0))$, the classical rate. The constant $t_0$ is **estimated**
     from the first batch's slope scale (Bottou 2012, "Stochastic Gradient Descent Tricks")
     instead of hard-coded, because it is dataset-dependent; the estimate is documented and
     reproducible, not a false universal;
-  - `adaptive`: keep `η` while the epoch objective improves, halve it on a plateau.
-- **λ (ridge), as the L2 penalty you already know from the PRD** — the coefficient
-  shrink is *temporal-independent*: the same penalty every step; the library holds λ = 0 as
+  - `adaptive`: keep $\eta$ while the epoch objective improves, halve it on a plateau.
+- **$\lambda$ (ridge), as the L2 penalty you already know from the PRD** — the coefficient
+  shrink is *temporal-independent*: the same penalty every step; the library holds $\lambda = 0$ as
   *legal but noted* — a fully quadratic, non-regularized problem is exactly
   [SKLinearRegression](adding-a-linear-model.md), shipped elsewhere by design (convex but *closed-form*).
   The L1 component is applied as a **proximal soft-threshold** after the step, which is what
@@ -97,7 +99,7 @@ Separate facts carry each symbol, and each one is a classic textbook door:
 * Bottou, "Large-scale machine learning with SGD" — the classic: convergence as *rates*,
   and the online-vs-batch discussion worth reading before writing
 * Ruder, "An overview of gradient descent optimization algorithms"
-* Robbins & Monro, "A stochastic approximation method" (1951) — the theorem behind ηₜ ≈ 1/t
+* Robbins & Monro, "A stochastic approximation method" (1951) — the theorem behind $\eta_t \approx 1/t$
 * Bottou, "SGD Tricks" (2012) — the practically-correct lemma behind scikit-learn's `optimal`
 * Shalev-Shwartz et al., "Pegasos: primal estimated sub-gradient solver for SVM" — the
   theoretical framework tying loss + regularization to convergence with the theoretical learning rate
@@ -232,12 +234,12 @@ impl SKSGDRegressor {
 
 The exact update closure (sketch carried faithfully into chapter 3):
 
-```text
-one batch in: Xᵦ, yᵦ → gradient(θ) ← (1/|B|) (Xᵦ θ − yᵦ)ᵀ Xᵦ + λ θ
-              rate ← schedule(η₀, t)         # one of {constant, inverse_scaling}
-              θ   ← θ − rate·gradient        # the ONLY sequential-mutating side of the family
-              t   ← t + 1
-```
+$$\begin{aligned}
+\text{one batch in: } X_B, y_B &\rightarrow \operatorname{gradient}(\theta) \leftarrow \tfrac{1}{\lvert B \rvert}(X_B\theta - y_B)^{\mathsf T}X_B + \lambda\theta \\
+\text{rate} &\leftarrow \operatorname{schedule}(\eta_0, t) && \text{one of constant or inverse\_scaling} \\
+\theta &\leftarrow \theta - \text{rate} \cdot \operatorname{gradient} && \text{the only sequentially mutating side of the family} \\
+t &\leftarrow t + 1
+\end{aligned}$$
 
 ### 5.6 `predict` and the label table's reverse map
 
@@ -276,8 +278,8 @@ fn early_stopping_over_a_stream_is_refused() { /* explicit refusal */ }
 |---|---|
 | Lots and little data | §5 test 1 — literally the regimes-equivalence |
 | Under concurrency | per-sample updates are sequential by definition; the estimator and model are immutable, `Send + Sync`, and serve concurrent predictions |
-| Model export | θ + clock + label table — plain fitted structure |
-| Metrics | `SKSupervisedScorer` (R² for the regressor) / `SKLabelScorer` (accuracy for the classifier through the scorer chapter) |
+| Model export | $\theta$ + clock + label table — plain fitted structure |
+| Metrics | `SKSupervisedScorer` ($R^2$ for the regressor) / `SKLabelScorer` (accuracy for the classifier through the scorer chapter) |
 
 Standing **study sources** (each also explained §2):
 
@@ -287,7 +289,7 @@ Standing **study sources** (each also explained §2):
 - Robbins & Monro (see §2)
 - scikit-learn `sklearn.linear_model.SGDClassifier`/`SGDRegressor` documentation and the
   `partial_fit` protocol docs — the semantics referenced in this chapter, including the
-  estimated `t₀` for `optimal`.
+  estimated $t_0$ for `optimal`.
 
 Next: the full contract, decision by decision, in [chapter 17](../development-explained/ch17-sgd-classifier-regressor.html).
 

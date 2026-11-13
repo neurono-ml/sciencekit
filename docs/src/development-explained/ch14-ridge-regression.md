@@ -16,6 +16,8 @@ models after ridge will want it too. This chapter tells the story of both.
 
 ```mermaid
 flowchart TB
+  accTitle: One ridge estimator with dense, sparse and streaming regimes
+  accDescr: The execution plan selects a centered-Gram Cholesky solve for dense in-memory data, a conjugate-gradient solve over a borrowed CSR view for sparse data, or a streaming path that accumulates the Gram state and solves once at the end. All paths produce the same multi-alpha model.
   subgraph Plan["One estimator, four regimes"]
     Q{"sk_resolve_execution_plan(Automatic)"}
   end
@@ -56,19 +58,17 @@ anything.
 Ridge regression answers this by adding a **penalty** on the size of the coefficients. Instead
 of minimizing only the squared error, it minimizes
 
-```text
-‖Xβ + β₀ − y‖₂² + α · ‖β‖₂²
-```
+$$\lVert X\beta + \beta_0 - y \rVert_2^2 + \alpha \lVert \beta \rVert_2^2$$
 
-The second term charges for every unit of coefficient magnitude. The penalty strength `α`
-(`alpha`) is the dial: `α = 0` is ordinary least squares; larger `α` invites smaller, more
+The second term charges for every unit of coefficient magnitude. The penalty strength $\alpha$
+(`alpha`) is the dial: $\alpha = 0$ is ordinary least squares; larger $\alpha$ invites smaller, more
 stable coefficients at the price of a little training error. This is the classic
 **bias–variance trade-off** arriving as one number.
 
 Ridge inherits four hard constraints from the library's design rules, and every one of them is
 a decision this chapter has to walk through:
 
-1. **The intercept must not be penalized.** Shrinking `β₀` would make the fit depend on where
+1. **The intercept must not be penalized.** Shrinking $\beta_0$ would make the fit depend on where
    the target's origin happens to sit — a statistically meaningless, and damaging, penalty.
 2. **Sparse input must stay sparse.** A matrix with a million columns and three non-zeros per
    row must never be converted into a dense million-wide block.
@@ -87,14 +87,14 @@ The rest of the chapter is the story of how those four constraints turned into t
 
 | Decision | Chosen | Roads not taken — and why they are traps |
 |---|---|---|
-| **Unpenalized intercept** | Two algebraically identical spellings: the Gram and SVD solvers **center** the data and recover `β₀ = ȳ − x̄ᵀβ`; the CG solver solves the **augmented** system `(DᵀD + αP)β = Dᵀy` with `D = [1 ‖ X]` and `P = diag(0, 1, …, 1)`. | **W2.1's plain `[1 ‖ X]` augmentation** — it would divide the penalty into the intercept column, shrinking `β₀`. **One spelling for all solvers** — centering densifies a sparse matrix, so it is only usable by the solvers that form the dense `p × p` Gram anyway; the augmented form is the sparse-friendly one, so both exist and are cross-tested. |
-| **Dense exact path** | **Cholesky** on the centered normal equations `(Ĉ + αI)β = ĉ`, one solve per `alpha`. | **Normal equations on the raw design** is the W2.1 trap (`κ(AᵀA) = κ(A)²`). Ridge accepts the squared condition deliberately — the design is centered first, and the users who care about conditioning have the SVD solver (below). What ridge refuses is densifying sparse input to get there. |
-| **Robust dense path** | **SVD**: one decomposition of the centered design, then `β = V diag(σ/(σ²+α)) Uᵀ ỹ` per `alpha`. The decomposition is amortized across the whole grid. | **SVD per `alpha`** — recomputing the factorization for every penalty wastes the one thing that makes a grid cheap. **QR** — stable but does not report rank for free, and rank deficiency with `α = 0` is exactly the case SVD exists for. |
-| **Sparse path** | **Conjugate gradient** over a zero-copy operator on the **borrowed** CSR view: `DᵀD · v` is applied in place, so `XᵀX` is **never formed** and the design is **never densified**. | **Densify then solve** — defeats the entire point of accepting sparse input. **Preconditioned (Jacobi) CG** — plain CG first, per the "iterative evolution, no skipped steps" rule; Jacobi is a recorded follow-up. **Per-batch CG for streaming** — the operator would have to be rebuilt cumulatively and the result would depend on batch boundaries. |
+| **Unpenalized intercept** | Two algebraically identical spellings: the Gram and SVD solvers **center** the data and recover $\beta_0 = \bar{y} - \bar{x}^{\mathsf T}\beta$; the CG solver solves the **augmented** system $(D^{\mathsf T}D + \alpha P)\beta = D^{\mathsf T}y$ with $D = [1 \,\Vert\, X]$ and $P = \operatorname{diag}(0, 1, \ldots, 1)$. | **W2.1's plain $[1 \,\Vert\, X]$ augmentation** — it would divide the penalty into the intercept column, shrinking $\beta_0$. **One spelling for all solvers** — centering densifies a sparse matrix, so it is only usable by the solvers that form the dense $p \times p$ Gram anyway; the augmented form is the sparse-friendly one, so both exist and are cross-tested. |
+| **Dense exact path** | **Cholesky** on the centered normal equations $(\hat{C} + \alpha I)\beta = \hat{c}$, one solve per `alpha`. | **Normal equations on the raw design** is the W2.1 trap ($\kappa(A^{\mathsf T}A) = \kappa(A)^2$). Ridge accepts the squared condition deliberately — the design is centered first, and the users who care about conditioning have the SVD solver (below). What ridge refuses is densifying sparse input to get there. |
+| **Robust dense path** | **SVD**: one decomposition of the centered design, then $\beta = V \operatorname{diag}(\sigma/(\sigma^2+\alpha)) U^{\mathsf T}\tilde{y}$ per `alpha`. The decomposition is amortized across the whole grid. | **SVD per `alpha`** — recomputing the factorization for every penalty wastes the one thing that makes a grid cheap. **QR** — stable but does not report rank for free, and rank deficiency with $\alpha = 0$ is exactly the case SVD exists for. |
+| **Sparse path** | **Conjugate gradient** over a zero-copy operator on the **borrowed** CSR view: $D^{\mathsf T}D \cdot v$ is applied in place, so $X^{\mathsf T}X$ is **never formed** and the design is **never densified**. | **Densify then solve** — defeats the entire point of accepting sparse input. **Preconditioned (Jacobi) CG** — plain CG first, per the "iterative evolution, no skipped steps" rule; Jacobi is a recorded follow-up. **Per-batch CG for streaming** — the operator would have to be rebuilt cumulatively and the result would depend on batch boundaries. |
 | **Solver resolution** | `Automatic` resolves by representation: dense → `Cholesky`, sparse → `SparseCg`. `Cholesky` falls back to `Svd` when every `alpha` is zero or the factor fails. | **Hiding the solver choice** — silently swapping a factorization for an iterative solve changes cost and accuracy characteristics a consumer should be able to see, so the fitted model *exposes* the solver actually used. |
-| **Multi-alpha model** | One coefficient row and one intercept **per `alpha`**, in configuration order; `coefficients()` is `n_alphas × n_features`. | **One estimator per `alpha`** — it would refactorize for every penalty and make the natural "inspect the path" workflow clunky; a grid is the unit ridge reasons in. |
+| **Multi-alpha model** | One coefficient row and one intercept **per `alpha`**, in configuration order; `coefficients()` is $n_{\text{alphas}} \times n_{\text{features}}$. | **One estimator per `alpha`** — it would refactorize for every penalty and make the natural "inspect the path" workflow clunky; a grid is the unit ridge reasons in. |
 | **Prediction** | `predict` is defined **only** for a single `alpha`; a multi-alpha model returns a structured error and directs the consumer to `predict_with_alpha_index`. | **Guessing an `alpha`** — the coefficient vector is ambiguous once several were configured, and silently picking one is a correctness bug; this mirrors scikit-learn, which raises on a multi-alpha `Ridge`. |
-| **Extra regimes** | One `SKCenteredGramState` (running `XᵀX`, `Xᵀy`, `Σx`, `Σy`, row count) drives both `partial_fit` and `fit_streaming`, then one `solve_from_gram` at the end. | **Reusing W2.1's `SKGramState`** — OLS augments with the intercept column while ridge centers; the two are *different formulations* of Decision 1, so sharing one type would force one estimator into the other's spelling. |
+| **Extra regimes** | One `SKCenteredGramState` (running $X^{\mathsf T}X$, $X^{\mathsf T}y$, $\sum x$, $\sum y$, row count) drives both `partial_fit` and `fit_streaming`, then one `solve_from_gram` at the end. | **Reusing W2.1's `SKGramState`** — OLS augments with the intercept column while ridge centers; the two are *different formulations* of Decision 1, so sharing one type would force one estimator into the other's spelling. |
 
 ---
 
@@ -109,36 +109,34 @@ typically two large coefficients of opposite sign that cancel on the training da
 data they stop cancelling and the prediction explodes.
 
 Ridge changes the question to: "split the credit however fits best, **but prefer small
-coefficients**". The `α · ‖β‖₂²` term makes large coefficients cost something, so among the
+coefficients**". The $\alpha \lVert \beta \rVert_2^2$ term makes large coefficients cost something, so among the
 many near-perfect splits the solver picks the one with the smallest magnitude. The
 condition number that was a cliff becomes a gentle slope, and the coefficients stop swinging.
 
-Setting the gradient of `‖Xβ + β₀ − y‖₂² + α‖β‖₂²` to zero gives ridge's normal equations:
+Setting the gradient of $\lVert X\beta + \beta_0 - y \rVert_2^2 + \alpha \lVert \beta \rVert_2^2$ to zero gives ridge's normal equations:
 
-```text
-(XᵀX + αI) β = Xᵀy
-```
+$$(X^{\mathsf T}X + \alpha I)\beta = X^{\mathsf T}y$$
 
-Everything else in this chapter is about computing that `β`, and its friends across a whole
-grid of `α`, safely and cheaply.
+Everything else in this chapter is about computing that $\beta$, and its friends across a whole
+grid of $\alpha$, safely and cheaply.
 
 ### 3.2 Why the intercept must be left out of the penalty
 
-The penalty charges for coefficient magnitude. If we penalized `β₀` too, then a target that
-happens to average 1000 instead of 0 would need a huge `β₀`, and ridge would dutifully shrink
+The penalty charges for coefficient magnitude. If we penalized $\beta_0$ too, then a target that
+happens to average 1000 instead of 0 would need a huge $\beta_0$, and ridge would dutifully shrink
 it toward zero — dragging the whole line down. The answer would depend on the *units and
 origin of the target*, which is statistically absurd: predicting a temperature in Celsius
 versus Kelvin would give different slopes.
 
-The fix is mechanical. **Centering**: subtract each feature's mean `x̄` and the target's mean
-`ȳ`; solve the penalized problem on the zero-mean data (where no intercept is needed, and
-where `XᵀX` and `Xᵀy` become their centered versions `Ĉ = XᵀX − n·x̄x̄ᵀ` and
-`ĉ = Xᵀy − n·x̄·ȳ`); finally recover `β₀ = ȳ − x̄ᵀβ`. The intercept is computed *after* the
+The fix is mechanical. **Centering**: subtract each feature's mean $\bar{x}$ and the target's mean
+$\bar{y}$; solve the penalized problem on the zero-mean data (where no intercept is needed, and
+where $X^{\mathsf T}X$ and $X^{\mathsf T}y$ become their centered versions $\hat{C} = X^{\mathsf T}X - n\bar{x}\bar{x}^{\mathsf T}$ and
+$\hat{c} = X^{\mathsf T}y - n\bar{x}\bar{y}$); finally recover $\beta_0 = \bar{y} - \bar{x}^{\mathsf T}\beta$. The intercept is computed *after* the
 penalized step, so the penalty never touches it.
 
 The CG path writes the same estimator a second way, as one **augmented** system: stack a
-column of ones onto the design (`D = [1 ‖ X]`) but give the penalty a diagonal `P` whose first
-entry is `0` and the rest `1`. Then `(DᵀD + αP)β = Dᵀy` penalizes every coefficient *except*
+column of ones onto the design ($D = [1 \,\Vert\, X]$) but give the penalty a diagonal $P$ whose first
+entry is $0$ and the rest $1$. Then $(D^{\mathsf T}D + \alpha P)\beta = D^{\mathsf T}y$ penalizes every coefficient *except*
 the intercept. Centering and the unpenalized augmentation are the same estimator in different
 clothes; the tests in §5 pin that they agree, so they cannot quietly drift apart.
 
@@ -157,7 +155,7 @@ rather than hiding it.
 
 ### 3.4 The centered Gram — the state that combines
 
-The only incident of `XᵀX` in ridge's dense and streaming paths is the **centered Gram state**:
+The only incident of $X^{\mathsf T}X$ in ridge's dense and streaming paths is the **centered Gram state**:
 
 ```rust
 // crates/sciencekit_linear_model/src/ridge/gram.rs
@@ -185,10 +183,10 @@ result**. That single fact is why `partial_fit` (incremental, dense or sparse) a
 
 ### 3.5 The zero-copy operator and conjugate gradient
 
-For sparse input, forming `XᵀX` means turning a sparse matrix into a dense `p × p` block. When
+For sparse input, forming $X^{\mathsf T}X$ means turning a sparse matrix into a dense $p \times p$ block. When
 `p` is a million, that is precisely the memory blow-up we are trying to avoid. So ridge never
-forms it. Instead, the CG solver only ever needs to *apply* `DᵀD` to a vector, and that can be
-done by walking the sparse structure twice: a forward `D v` and a backward `Dᵀ w`.
+forms it. Instead, the CG solver only ever needs to *apply* $D^{\mathsf T}D$ to a vector, and that can be
+done by walking the sparse structure twice: a forward $D v$ and a backward $D^{\mathsf T} w$.
 
 That is exactly what the `SKLinearOperator` trait abstracts:
 
@@ -204,7 +202,7 @@ pub trait SKLinearOperator<F: SKFloat>: Send + Sync {
 The operator holds its matrix by **reference** and writes the product into a
 caller-provided buffer — no ownership transfer, no copy. `SKCsrNormalEquationOperator` is the
 sparse instance: `apply_into` computes `A v` from the CSR rows, then scatters each stored entry
-into `Aᵀ w`, yielding `AᵀA·v` while `AᵀA` itself is never materialized.
+into $A^{\mathsf T} w$, yielding $A^{\mathsf T}A \cdot v$ while $A^{\mathsf T}A$ itself is never materialized.
 
 **Conjugate gradient** is the iterative method that drives this. Starting from a zero guess, it
 walks a sequence of search directions chosen so that each step is optimal along its direction
@@ -217,7 +215,7 @@ budget is exhausted before the residual norm falls to `tolerance`, it returns
 converged.
 
 Ridge wraps both into one augmented operator, `SKRidgeSparseNormalEquationOperator`, which adds
-the `αP` diagonal and the intercept's constant column to the borrowed `SKCsrNormalEquationOperator`
+the $\alpha P$ diagonal and the intercept's constant column to the borrowed `SKCsrNormalEquationOperator`
 without ever densifying anything.
 
 ### 3.6 Multi-`alpha` amortization
@@ -226,11 +224,9 @@ Why does ridge bother storing a whole grid? Because the expensive part — facto
 system — can be shared. The SVD solver decomposes the centered design **once** and then each
 `alpha` is a cheap elementwise rescale:
 
-```text
-β(α) = V · diag( σᵢ / (σᵢ² + α) ) · Uᵀ ỹ
-```
+$$\beta(\alpha) = V \operatorname{diag}\!\left(\frac{\sigma_i}{\sigma_i^2 + \alpha}\right) U^{\mathsf T}\tilde{y}$$
 
-Only the `σᵢ / (σᵢ² + α)` factor changes between penalties. Fit a 100-value grid and you pay
+Only the $\sigma_i / (\sigma_i^2 + \alpha)$ factor changes between penalties. Fit a 100-value grid and you pay
 for one decomposition, not a hundred. The Cholesky path cannot amortize across `alpha` (each
 penalty changes the matrix, so each needs its own triangular solve), but its solves are cheap,
 and the model shape is identical either way.
@@ -317,9 +313,9 @@ not inside ridge, because they are general symmetric-positive-definite machinery
 - `SKLinearOperator<F>` — the zero-copy operator abstraction (§3.5).
 - `sk_conjugate_gradient` — the SPD solve; returns the solution once the residual norm is at or
   below tolerance, else `SKError::NotConverged { iterations }`.
-- `SKCsrNormalEquationOperator<'a, F>` — the zero-copy `AᵀA` operator over a borrowed CSR view.
+- `SKCsrNormalEquationOperator<'a, F>` — the zero-copy $A^{\mathsf T}A$ operator over a borrowed CSR view.
 
-Ridge's `SKRidgeSparseNormalEquationOperator` composes the last of these, adding `α` and the
+Ridge's `SKRidgeSparseNormalEquationOperator` composes the last of these, adding $\alpha$ and the
 unpenalized intercept, and is the thing `SparseCg` actually drives.
 
 ---
@@ -328,28 +324,28 @@ unpenalized intercept, and is the thing `SparseCg` actually drives.
 
 The executable source of truth is `crates/sciencekit_linear_model/src/ridge/*_tests.rs` (and
 `crates/sciencekit_math/src/solvers/*_tests.rs` for the substrate). The hand-checkable fixture
-is a single feature with `y = 2x`: `X = [[1],[2],[3]]`, so `Σxy = 28`, `Σx² = 14`, and with
-`α = 2` and no intercept the closed-form slope is `28 / 16 = 1.75`.
+is a single feature with $y = 2x$: $X = [[1],[2],[3]]$, so $\sum xy = 28$, $\sum x^2 = 14$, and with
+$\alpha = 2$ and no intercept the closed-form slope is $28 / 16 = 1.75$.
 
 ### Dense fit and multi-alpha shape — `ridge_tests.rs`
 
 - **Hand-checkable closed form** (`hand_checkable_ridge_solution_without_intercept`): fits the
-  `y = 2x` fixture with `α = 2`, no intercept, and asserts the coefficient is exactly `1.75`
-  and the intercept is `0`. This is ridge's definition pinned against arithmetic a human can
+  $y = 2x$ fixture with $\alpha = 2$, no intercept, and asserts the coefficient is exactly $1.75$
+  and the intercept is $0$. This is ridge's definition pinned against arithmetic a human can
   verify.
 - **Scalar vs sequence** (`scalar_alpha_yields_one_solution`,
   `alpha_sequence_yields_one_solution_per_value`): a scalar yields one coefficient row and one
   intercept; `[0.0, 1.0, 4.0]` yields three, **in the configured order**, and — a fact worth
   seeing — the slope *shrinks monotonically* as the penalty grows.
 - **The intercept is not penalized** (`intercept_is_not_penalized`): on a design whose feature
-  has zero mean and whose best line has intercept `5`, growing `α` from `1e-9` to `10` shrinks
-  the slope's magnitude while the intercept stays at `5`. This is §3.2 as an assertion.
+  has zero mean and whose best line has intercept $5$, growing $\alpha$ from $10^{-9}$ to $10$ shrinks
+  the slope's magnitude while the intercept stays at $5$. This is §3.2 as an assertion.
 - **Intercept can be turned off** (`intercept_can_be_disabled`) and **prediction** on new rows
   (`predicts_fitted_line`) evaluates the learned line.
 - **Ambiguity is refused** (`plain_predict_refuses_multiple_alphas`): a two-alpha model's
   `predict` returns `InvalidHyperparameter { name: "alpha", .. }`;
   `predict_with_alpha_index_selects_a_row` shows the explicit path yielding different responses
-  for the exact (`α = 0`) and shrunk (`α = 10`) rows.
+  for the exact ($\alpha = 0$) and shrunk ($\alpha = 10$) rows.
 - **Resolution and carry-through** (`default_solver_resolves_to_cholesky`,
   `non_default_backend_reaches_model`, `fits_both_supported_floats`, `default_configuration`,
   `model_is_send_and_sync`): `Automatic` lands on `Cholesky` for dense input, a non-default
@@ -359,15 +355,15 @@ is a single feature with `y = 2x`: `X = [[1],[2],[3]]`, so `Σxy = 28`, `Σx² =
 
 - **Cholesky matches the closed form** (`cholesky_matches_the_closed_form`): on a two-feature
   design with no intercept, the Cholesky path reproduces the explicit
-  `(XᵀX + αI)⁻¹Xᵀy` computation.
+  $(X^{\mathsf T}X + \alpha I)^{-1}X^{\mathsf T}y$ computation.
 - **SVD agrees with Cholesky** (`svd_agrees_with_cholesky`): the two exact dense solvers return
   the same coefficients and intercept on a well-conditioned design — the cross-solver pin of
   §3.3.
 - **Rank deficiency is a feature** (`rank_deficient_svd_reports_reduced_rank`): a design whose
-  second column is twice the first, with `α = 0`, still fits; the reported rank drops below the
+  second column is twice the first, with $\alpha = 0$, still fits; the reported rank drops below the
   feature count and the singular values are surfaced.
 - **The fallback is real** (`automatic_falls_back_to_svd_for_zero_penalty`): under `Automatic`,
-  a rank-deficient design with `α = 0` records `Svd` — because zero penalty leaves the centered
+  a rank-deficient design with $\alpha = 0$ records `Svd` — because zero penalty leaves the centered
   Gram singular. `cholesky_surfaces_no_singular_values` shows the Cholesky path reporting full
   rank and no singular values.
 
@@ -423,7 +419,7 @@ element is processed.
   stopping rule directly; `zero_iteration_budget_fails_immediately` and
   `unreachable_tolerance_reports_the_budget` pin the honest-failure contract.
 - `normal_equation_operator_matches_explicit_gram_product` applies the operator and compares it
-  to an explicitly formed `AᵀA·v`, while `normal_equation_operator_borrows_the_view_in_place`
+  to an explicitly formed $A^{\mathsf T}A \cdot v$, while `normal_equation_operator_borrows_the_view_in_place`
   asserts repeated applications are identical and the source matrix is untouched.
 
 ---
@@ -472,13 +468,13 @@ or about how far an iterative solve actually got.
 - `SKRidge<F>` is a builder-only, **generic** estimator (its configuration carries scalars)
   with a distinct, `Send + Sync` fitted model that is the export boundary.
 - The **intercept is never penalized**: the Gram and SVD solvers center and recover
-  `β₀ = ȳ − x̄ᵀβ`; the CG solver uses the algebraically identical unpenalized augmentation —
+  $\beta_0 = \bar{y} - \bar{x}^{\mathsf T}\beta$; the CG solver uses the algebraically identical unpenalized augmentation —
   and a cross-solver test keeps the two spellings from drifting.
 - The **solver portfolio** is `Automatic`, `Cholesky`, `Svd`, `SparseCg`; `Automatic` resolves
   by representation, `Cholesky` falls back to `Svd` on a zero penalty or a failed factor, and
   the model always reports the solver actually used.
 - **Sparse stays sparse**: conjugate gradient drives a zero-copy operator over the borrowed CSR
-  view, so `XᵀX` is never formed and the design is never densified.
+  view, so $X^{\mathsf T}X$ is never formed and the design is never densified.
 - **One solution per `alpha`**, with the SVD decomposition amortized across the whole grid; the
   ambiguous multi-alpha `predict` is refused in favour of `predict_with_alpha_index`.
 - **One centered Gram accumulator** drives `partial_fit` and `fit_streaming`, so incremental,

@@ -75,6 +75,8 @@ once, on the state's estimator name, inside `sk_export_state_to_onnx`.
 
 ```mermaid
 flowchart LR
+  accTitle: From fitted Rust models to a verified ONNX graph
+  accDescr: Four fitted model families export a shared model state. A dispatcher keyed by estimator name routes each state to the matching graph builder for preprocessing, linear, tree, neighbour, clustering, decomposition or pipeline models. The builders produce a protobuf model whose predictions are verified with the ONNX checker and runtime.
     subgraph Train["Fitted in Rust"]
         M1["SKStandardScalerModel"]
         M2["SKLogisticRegressionModel"]
@@ -221,13 +223,13 @@ decision in a test.
 ### Support vectors and the kernel subgraph
 
 A fitted kernel SVM is a support-vector expansion:
-`f(x) = Σ αᵢ K(x, sᵢ) + b`. ONNX has no operator for an arbitrary kernel, so
+$f(x) = \sum_i \alpha_i K(x, s_i) + b$. ONNX has no operator for an arbitrary kernel, so
 `export/svm/kernel.rs` writes the kernel itself as arithmetic:
 
-- **linear** — `MatMul(X, SVᵀ)`;
-- **rbf** — broadcast `X − SV`, square, reduce, negate, multiply by `γ` and `Exp`;
-- **polynomial** — `Pow(γ·X·SVᵀ + c₀, degree)`;
-- **sigmoid** — `Tanh(γ·X·SVᵀ + c₀)`.
+- **linear** — $\operatorname{MatMul}(X, SV^{\mathsf T})$;
+- **rbf** — broadcast $X - SV$, square, reduce, negate, multiply by $\gamma$ and apply `Exp`;
+- **polynomial** — $\operatorname{Pow}(\gamma \cdot X \cdot SV^{\mathsf T} + c_0, \text{degree})$;
+- **sigmoid** — $\operatorname{Tanh}(\gamma \cdot X \cdot SV^{\mathsf T} + c_0)$.
 
 The dual coefficients then enter as a `MatMul` and the bias as an `Add`
 (`export/svm/expansion.rs`). `SKSVR` emits the margin as its regression

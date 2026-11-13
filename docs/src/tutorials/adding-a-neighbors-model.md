@@ -64,8 +64,8 @@ representation; the regressor exposes the same minus the table.
 
 | Data | Metric | Strategy |
 |---|---|---|
-| dense, **≥ 64 training rows**, ≤ 20 features | Euclidean/Manhattan/Chebyshev | k-d tree |
-| dense, ≥ 64 rows, > 20 features | Euclidean/Manhattan/Chebyshev | ball tree |
+| dense, **$\ge 64$ training rows**, $\le 20$ features | Euclidean/Manhattan/Chebyshev | k-d tree |
+| dense, $\ge 64$ rows, $> 20$ features | Euclidean/Manhattan/Chebyshev | ball tree |
 | dense, < 64 rows | any | brute force (a tree costs more than it saves) |
 | sparse or mixed | any | brute force over stored entries |
 | any | Cosine | brute force (cosine has no tree-pruning form) |

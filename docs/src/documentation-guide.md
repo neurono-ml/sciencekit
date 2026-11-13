@@ -120,7 +120,7 @@ Item states: `is-done` (green dot), `is-active` (amber dot), default (violet dot
 ### Donut chart & CSS bars
 
 Copy the SVG structure from [Algorithms](./algorithms.md) and recompute segments:
-circumference = `2π × 80 ≈ 502.65`; segment = `count / total × 502.65`; each circle's
+circumference = $2\pi \times 80 \approx 502.65$; segment = $\text{count} / \text{total} \times 502.65$; each circle's
 `stroke-dashoffset` is the negative sum of all previous segments. Keep legend counts in sync.
 
 For horizontal bars reuse `.sk-bars` rows as seen in [Plan & Roadmap](./roadmap.md).

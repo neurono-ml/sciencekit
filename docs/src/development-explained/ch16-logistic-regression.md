@@ -29,6 +29,8 @@ one-vs-rest and multinomial classification.
 
 ```mermaid
 flowchart LR
+  accTitle: The logistic-regression training loop
+  accDescr: Features feed a linear predictor. Binary problems apply a sigmoid and multinomial problems apply a softmax to obtain probabilities, whose argmax gives the label. Labels and the linear predictor feed the penalized logistic loss, whose gradient drives L-BFGS-B, SAGA or LIBLINEAR to update the weights, which feed the predictor again.
   X["features X"] --> Z["linear predictor<br/>z = X·w + b"]
   Z -->|binary| S["sigmoid σ(z)"]
   Z -->|multinomial| M["softmax"]
@@ -69,25 +71,23 @@ flowchart LR
 
 ### 3.1 The sigmoid and the softmax
 
-For two classes the model computes a score `z = x·w + b` and turns it into a probability with
-the **sigmoid** `σ(z) = 1 / (1 + e^{−z})`, which is always between 0 and 1 and equals `0.5` at
-`z = 0`. For several classes it computes one score per class and uses the **softmax**, which
+For two classes the model computes a score $z = x \cdot w + b$ and turns it into a probability with
+the **sigmoid** $\sigma(z) = 1 / (1 + e^{-z})$, which is always between 0 and 1 and equals $0.5$ at
+$z = 0$. For several classes it computes one score per class and uses the **softmax**, which
 normalizes the exponentiated scores into a probability distribution that sums to one. Both are
 implemented to be stable in the tails (`logistic/objective.rs`): the sigmoid never overflows,
 and the softmax subtracts the row maximum before exponentiating.
 
 ### 3.2 The objective
 
-The fit minimizes the **penalized negative log-likelihood**. With a per-sample weight `cᵢ`
-and the regularization strength `α = 1/C`:
+The fit minimizes the **penalized negative log-likelihood**. With a per-sample weight $c_i$
+and the regularization strength $\alpha = 1/C$:
 
-```text
-F(w, b) = (1/n)·Σᵢ cᵢ · loss(xᵢ, yᵢ; w, b)  +  P(w)
-```
+$$F(w, b) = \frac{1}{n}\sum_i c_i \cdot \operatorname{loss}(x_i, y_i; w, b) + P(w)$$
 
-where `loss` is `log(1 + e^{−y·z})` for two classes and `−log softmax` for several, and `P(w)`
-is `(α/2)‖w‖²` (L2), `α‖w‖₁` (L1), `α·(l1_ratio·‖w‖₁ + (1−l1_ratio)/2·‖w‖²)` (ElasticNet) or
-`0` (none). The **intercept is never penalized** — shrinking it would make the fit depend on
+where `loss` is $\log(1 + e^{-y z})$ for two classes and $-\log \operatorname{softmax}$ for several, and $P(w)$
+is $(\alpha/2)\lVert w \rVert^2$ (L2), $\alpha\lVert w \rVert_1$ (L1), $\alpha \cdot (\text{l1\_ratio} \cdot \lVert w \rVert_1 + (1-\text{l1\_ratio})/2 \cdot \lVert w \rVert^2)$ (ElasticNet) or
+$0$ (none). The **intercept is never penalized** — shrinking it would make the fit depend on
 the origin of the data.
 
 ### 3.3 L-BFGS-B: a smarter gradient descent
@@ -120,7 +120,7 @@ The solvers never see a matrix. They see a `SKLogisticDesign` trait (`logistic/d
 just three moves: the dot of one row with the weights, adding a scaled row into a vector, and
 the dot of one column with a vector. A dense design and a **borrowed CSR** design implement it,
 so a sparse design is never turned into a dense one — the only dense object kept is the
-`O(rows × classes)` score matrix.
+$O(\text{rows} \times \text{classes})$ score matrix.
 
 ### 3.7 Labels become indices
 
@@ -132,7 +132,7 @@ original labels. Continuous targets are rejected.
 ### 3.8 The retained design, again
 
 The logistic objective, like the L1 objective, is **not** a function of the Gram matrix
-`XᵀX`. So the incremental (`partial_fit`) and out-of-core (`fit_streaming`) regimes cannot keep
+$X^{\mathsf T}X$. So the incremental (`partial_fit`) and out-of-core (`fit_streaming`) regimes cannot keep
 cross-products: they **retain the design** in a `SKLogisticState` and re-solve at read time.
 This is the same trade-off the L1 pair made, and it is documented.
 

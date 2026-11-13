@@ -1,7 +1,7 @@
 # Decision trees: CART, impurity and split search
 
 A decision tree is the first model in the library that is **not** a linear combination of
-features. It asks a sequence of yes/no questions — "is `x₃ ≤ 1.7`?" — and predicts from the
+features. It asks a sequence of yes/no questions — "is $x_3 \le 1.7$?" — and predicts from the
 leaf a row ends in. That makes trees expressive (they capture interactions and thresholds a
 linear model cannot) and interpretable (the path is the explanation), and it makes them the
 foundation of every ensemble that follows: random forests, bagging, gradient boosting.

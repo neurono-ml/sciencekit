@@ -18,6 +18,8 @@ PRD promised out-of-core SGD, not out-of-core *one-epoch* SGD.
 
 ```mermaid
 flowchart LR
+  accTitle: One-shot sources compared with reopenable providers
+  accDescr: A one-shot source yields batch zero, one and two, then reaches end of file and cannot rewind, so it stops. A reopenable provider opens the source again for each pass, replaying the same batches on pass zero, one and two.
   classDef once fill:#fee2e2,stroke:#dc2626,color:#7f1d1d,stroke-width:2px
   classDef re fill:#dcfce7,stroke:#16a34a,color:#14532d,stroke-width:2px
   classDef io fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e,stroke-width:2px
@@ -86,6 +88,8 @@ reproducible.
 
 ```mermaid
 classDiagram
+  accTitle: The source-provider trait and its two implementations
+  accDescr: SKSupervisedSourceProvider is a trait with an associated source type, a reopenable flag and an open method. ConcreteSource implements it for a mutable source used in one pass, and SKReopenableSource implements it with a factory that yields N passes.
   class SKSupervisedSourceProvider {
     <<trait>>
     +Source~pass~ Source
@@ -109,7 +113,7 @@ The executor does not guess. `SKStreamingPassPolicy` says how many passes are al
 
 | Class | Estimators | Pass policy |
 |---|---|---|
-| Exact accumulator | scalers, polynomial features, simple imputer, OLS, ridge, lasso, elastic net, logistic regression | `SinglePass` — reading twice would double-count `n`, `Σx`, `XᵀX` |
+| Exact accumulator | scalers, polynomial features, simple imputer, OLS, ridge, lasso, elastic net, logistic regression | `SinglePass` — reading twice would double-count $n$, $\Sigma x$, $X^{\mathsf T}X$ |
 | Iterative | `SKSGDClassifier`, `SKSGDRegressor` (and later mini-batch k-means, incremental PCA) | `Iterative { maximum_number_of_passes }` — one epoch per pass |
 
 A one-shot provider with a budget above one takes **one** pass and emits a
@@ -128,6 +132,8 @@ and merges the epoch objective into the convergence tracker:
 
 ```mermaid
 sequenceDiagram
+  accTitle: Epoch loop over a reopenable provider
+  accDescr: For each pass in the epoch budget the estimator opens the provider, receives a source, and reads batches until exhaustion, applying one update per row. At the end of each pass it merges the epoch objective and updates the convergence tracker.
   participant E as SKSGDRegressor
   participant P as provider
   participant S as source
