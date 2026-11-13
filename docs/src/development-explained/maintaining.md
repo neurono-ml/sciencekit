@@ -445,3 +445,13 @@ core-only. When you add a family, extend `src/<family>.rs`, add the name to the
 prelude only when it is broadly useful, forward any heavy dependency through a
 feature, and extend `reexports_tests`, `prelude_tests` and `features_tests` so
 the chapter's claims stay executable.
+
+The [workflows CLI chapter](./ch68-workflows-cli.md) turns the library into a
+process: the `sciencekit` binary, the versioned workflow record, the
+flags > environment > file > defaults resolution, the stable exit-code
+contract, every subcommand, and the feature-gated Parquet/YAML/ONNX paths. When
+you add a command or a workflow key, extend `cli/arguments.rs`,
+`workflow/schema.rs`, `workflow/validation.rs` and `config/precedence.rs`
+together, add a process-level test beside the existing ones in
+`crates/sciencekit_cli/tests/`, and update this chapter rather than adding a
+parallel one.

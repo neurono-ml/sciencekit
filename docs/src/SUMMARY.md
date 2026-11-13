@@ -96,4 +96,5 @@
   - [Native model import: from a foreign file back to a real model](development-explained/ch65-native-model-import.md)
   - [Low-rank adapters: teaching a frozen model a small new trick](development-explained/ch66-lora-adapters.md)
   - [The umbrella crate: one door into many rooms](development-explained/ch67-umbrella-crate.md)
+  - [The workflows CLI: a reproducible experiment in one file](development-explained/ch68-workflows-cli.md)
   - [Maintaining this book](development-explained/maintaining.md)
