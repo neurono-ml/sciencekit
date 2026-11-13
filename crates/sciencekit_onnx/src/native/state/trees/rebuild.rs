@@ -4,6 +4,8 @@ use std::collections::BTreeMap;
 
 use serde_onnx::ml::TreeNodes;
 
+use crate::native::error::SKOnnxNativeError;
+
 /// One fitted tree rebuilt from the parallel ONNX arrays.
 pub(crate) struct Tree {
     pub(crate) split_feature: Vec<i64>,
@@ -17,6 +19,42 @@ pub(crate) struct Tree {
 struct RawNode {
     node_id: i64,
     flat: usize,
+}
+
+/// Reject a tree whose routing the native model cannot represent.
+///
+/// The native tree always sends `feature <= threshold` left and never routes a
+/// missing value, so a graph using another branch mode or
+/// `missing_value_tracks_true` would silently predict different values.
+pub(crate) fn validate_semantics(
+    nodes: &TreeNodes,
+    operator: &str,
+) -> Result<(), SKOnnxNativeError> {
+    let missing = nodes.missing_value_tracks_true.as_deref().unwrap_or(&[]);
+    for (position, mode) in nodes.modes.iter().enumerate() {
+        if mode == "LEAF" {
+            continue;
+        }
+        if mode != "BRANCH_LEQ" {
+            return Err(SKOnnxNativeError::UnsupportedOperator {
+                operator: operator.to_string(),
+                reason: format!(
+                    "the native tree routes with `feature <= threshold` only; branch mode `{mode}` is outside the subset"
+                ),
+            });
+        }
+        if missing
+            .get(position)
+            .is_some_and(|tracks_true| *tracks_true != 0)
+        {
+            return Err(SKOnnxNativeError::UnsupportedOperator {
+                operator: operator.to_string(),
+                reason: "the native tree rejects non-finite input, so `missing_value_tracks_true` is outside the subset"
+                    .to_string(),
+            });
+        }
+    }
+    Ok(())
 }
 
 /// Group the flat arrays by tree, remap node ids to positions and read leaves.
