@@ -6,6 +6,10 @@
 mod contract;
 mod coverage;
 mod dispatcher;
+mod helpers;
+mod metadata;
+mod preprocessing;
+mod stage;
 
 pub use contract::SKToOnnx;
 pub use coverage::{SKOnnxFamilyCoverage, sk_onnx_coverage, sk_onnx_supported_families};
@@ -15,3 +19,5 @@ pub use dispatcher::sk_export_state_to_onnx;
 mod contract_tests;
 #[cfg(test)]
 mod coverage_tests;
+#[cfg(test)]
+mod preprocessing_tests;

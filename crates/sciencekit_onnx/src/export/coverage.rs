@@ -22,7 +22,22 @@ pub struct SKOnnxFamilyCoverage {
 
 /// The family/operator coverage matrix.
 pub fn sk_onnx_coverage() -> &'static [SKOnnxFamilyCoverage] {
-    &[]
+    &[
+        SKOnnxFamilyCoverage {
+            family: "preprocessing.scalers",
+            estimators: &["SKStandardScaler", "SKMinMaxScaler", "SKRobustScaler"],
+            operators: &["Sub", "Mul", "Div", "Add", "Clip"],
+            supported: true,
+            note: "per-column statistics broadcast over the batch dimension",
+        },
+        SKOnnxFamilyCoverage {
+            family: "preprocessing.encoders",
+            estimators: &["SKOneHotEncoder"],
+            operators: &["Gather", "Equal", "Cast", "Concat"],
+            supported: true,
+            note: "numeric integer categories and the ignore policy only; nominal string categories and the reject policy return UnsupportedOperation",
+        },
+    ]
 }
 
 /// The estimator names with a working ONNX exporter.
