@@ -41,11 +41,19 @@ struct SKPendingLeaf<F> {
     node_index: usize,
     rows: Vec<usize>,
     histogram: SKNodeHistogram<F>,
-    gain: F,
+    candidate: Option<SKHistogramSplitCandidate<F>>,
 }
 
-/// Grow one histogram tree leaf-wise, always splitting the leaf with the
-/// largest outstanding gain until the leaf budget is exhausted.
+impl<F: SKFloat> SKPendingLeaf<F> {
+    fn gain(&self) -> F {
+        self.candidate
+            .as_ref()
+            .map_or(F::zero(), |candidate| candidate.gain)
+    }
+}
+
+/// Grow one histogram tree leaf-wise, always splitting the leaf whose own best
+/// split has the largest gain until the leaf budget is exhausted.
 pub fn sk_grow_histogram_tree<F: SKFloat>(
     dataset: &SKBinnedDataset<F>,
     negative_gradients: &[F],
@@ -60,17 +68,18 @@ pub fn sk_grow_histogram_tree<F: SKFloat>(
     let mut pending = vec![SKPendingLeaf {
         node_index: 0,
         rows: rows.to_vec(),
+        candidate: sk_best_candidate(dataset, &root_histogram, parameters, 0),
         histogram: root_histogram,
-        gain: F::one(),
     }];
     let mut leaf_count = 1usize;
     while leaf_count < parameters.maximum_leaf_nodes && !pending.is_empty() {
         let best_position = pending
             .iter()
             .enumerate()
+            .filter(|(_, leaf)| leaf.candidate.is_some())
             .max_by(|(_, left), (_, right)| {
-                left.gain
-                    .partial_cmp(&right.gain)
+                left.gain()
+                    .partial_cmp(&right.gain())
                     .expect("finite gains")
                     .then_with(|| right.node_index.cmp(&left.node_index))
             })
@@ -79,11 +88,7 @@ pub fn sk_grow_histogram_tree<F: SKFloat>(
             break;
         };
         let leaf = pending.swap_remove(position);
-        let candidate = sk_best_candidate(dataset, &leaf, parameters, gain_totals.len());
-        let Some(candidate) = candidate else {
-            finalize_leaf(&mut nodes, &leaf, parameters.l2_regularization);
-            continue;
-        };
+        let candidate = leaf.candidate.expect("selected leaves are splittable");
         let split = candidate.split.clone();
         let (left_rows, right_rows): (Vec<usize>, Vec<usize>) = leaf
             .rows
@@ -118,14 +123,14 @@ pub fn sk_grow_histogram_tree<F: SKFloat>(
         pending.push(SKPendingLeaf {
             node_index: left_index,
             rows: left_rows,
+            candidate: sk_best_candidate(dataset, &left_histogram, parameters, left_index),
             histogram: left_histogram,
-            gain: candidate.gain,
         });
         pending.push(SKPendingLeaf {
             node_index: right_index,
             rows: right_rows,
+            candidate: sk_best_candidate(dataset, &right_histogram, parameters, right_index),
             histogram: right_histogram,
-            gain: candidate.gain,
         });
     }
     pending
@@ -172,11 +177,11 @@ fn sk_leaf_value<F: SKFloat>(histogram: &SKFeatureHistogram<F>, l2_regularizatio
 
 fn sk_best_candidate<F: SKFloat>(
     dataset: &SKBinnedDataset<F>,
-    leaf: &SKPendingLeaf<F>,
+    histogram: &SKNodeHistogram<F>,
     parameters: &SKHistogramGrowthParameters<F>,
-    feature_count: usize,
+    node_index: usize,
 ) -> Option<SKHistogramSplitCandidate<F>> {
-    let features = sk_sampled_features(parameters, feature_count, leaf.node_index);
+    let features = sk_sampled_features(parameters, histogram.number_of_features(), node_index);
     features
         .into_iter()
         .filter_map(|feature| {
@@ -184,7 +189,7 @@ fn sk_best_candidate<F: SKFloat>(
             if binning.is_categorical() {
                 sk_scan_categorical_feature(
                     feature,
-                    leaf.histogram.feature(feature),
+                    histogram.feature(feature),
                     binning.number_of_bins(),
                     parameters.minimum_samples_leaf,
                     parameters.l2_regularization,
@@ -192,7 +197,7 @@ fn sk_best_candidate<F: SKFloat>(
             } else {
                 sk_scan_numeric_feature(
                     feature,
-                    leaf.histogram.feature(feature),
+                    histogram.feature(feature),
                     parameters.minimum_samples_leaf,
                     parameters.l2_regularization,
                 )
