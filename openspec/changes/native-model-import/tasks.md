@@ -19,7 +19,7 @@
 
 - [x] 3.1 Implement warm-start/continued fitting for supported linear/logistic models;
   verify with `cargo test -p sciencekit_linear_model native_retrain`.
-- [ ] 3.2 Add explicit `UnsupportedOperation` for non-retrainable families; verify with
+- [x] 3.2 Add explicit `UnsupportedOperation` for non-retrainable families; verify with
   `cargo test -p sciencekit_interop native_retrain`.
 
 ## 4. Acceptance and review
