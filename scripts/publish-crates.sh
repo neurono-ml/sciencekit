@@ -75,11 +75,11 @@ for crate in "${CRATES[@]}"; do
   # crates.io rate-limits bursts of new crates with HTTP 429. Retry with
   # increasing backoff instead of failing the whole release; every attempt is
   # safe because a version can only be published once.
-  local delay=120
-  local attempt=1
-  local max_attempts=6
+  delay=120
+  attempt=1
+  max_attempts=6
   while true; do
-    local output
+    output=""
     if output=$(cargo publish -p "${crate}" ${DRY_RUN} 2>&1); then
       echo "${output}"
       break
