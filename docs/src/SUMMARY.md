@@ -85,6 +85,8 @@
   - [Extended Safetensors format: safe binary checkpoints, sharding, in-place padding and compression](development-explained/ch54-safetensors-internal-format.md)
   - [OpenTelemetry export: three signals, bounded cardinality and an honest lifecycle](development-explained/ch55-telemetry-export.md)
   - [Streaming pipelines: epochs, chained stages and a bounded finalizer](development-explained/ch56-streaming-pipeline.md)
+  - [Polars and DataFusion sources: one tabular contract for two engines](development-explained/ch57-polars-datafusion-sources.md)
   - [Memory-mapped sources: raw binary, NumPy npy and Arrow IPC without copying](development-explained/ch58-memory-mapped-interop.md)
+  - [Linear support-vector machines: coordinate descent, one sweep at a time](development-explained/ch59-svm-linear-svc.md)
   - [Histogram gradient boosting: bins, histograms and leaves grown on the smaller child](development-explained/ch60-histogram-gradient-boosting.md)
   - [Maintaining this book](development-explained/maintaining.md)

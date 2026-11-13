@@ -89,7 +89,7 @@ and receives a Python binding as soon as it is validated on CPU.
 |---|---|---|
 | `SKSVC` | Kernel-based C-support-vector classification (SMO, OvO, Platt + coupling, dense and sparse) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKSVR` | $\varepsilon$-insensitive support-vector regression (SMO, dense and sparse) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
-| `SKLinearSVC` | Scalable linear SVM (dense and sparse) | <span class="sk-pill sk-pill--neutral">Planned</span> |
+| `SKLinearSVC` | Scalable linear SVM (dual coordinate descent, hinge and squared hinge, one-vs-rest, class weights, dense and sparse) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 
 ## Trees and ensembles · `sciencekit_tree` + `sciencekit_ensemble`
 
@@ -130,6 +130,9 @@ and receives a Python binding as soon as it is validated on CPU.
 | `SKStreamingPipeline` | `sciencekit_pipeline` | Out-of-core linear pipeline over an `SKSourceProvider`: chained `SKStreamingTransformer` fitting through the shared prefetch executor, one-shot materialization within a byte budget, multi-epoch replay, CSR-preserving per-batch transform and a bounded batch finalizer | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | Metrics foundation | `sciencekit_metrics` | Accuracy, precision/recall/F1 with macro/micro/weighted/binary averaging, confusion matrix, MSE/RMSE/MAE, R², scorer adapters and streaming accumulators | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | Full metrics | `sciencekit_metrics` | The remaining sklearn metrics (ROC/AUC, calibration, multilabel, ranking) | <span class="sk-pill sk-pill--neutral">Planned</span> |
+| `SKTabularDataset` / `SKTabularSourceConfig` | `sciencekit_interop` | Engine-neutral tabular sources: column kinds, dense/sparse feature blocks, owned categorical codes and label tables, numeric/categorical missing mapping | <span class="sk-pill sk-pill--emerald">Implemented</span> |
+| Polars sources | `sciencekit_interop` | `DataFrame` and reopenable `LazyFrame` batches behind the optional `polars` feature (Polars 0.46, Rust 1.85 pin) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
+| DataFusion, Arrow and Parquet sources | `sciencekit_interop` | DataFusion 46 `DataFrame`/`RecordBatch` conversion, true record-batch streaming and Parquet-through-DataFusion behind the optional `datafusion` feature, alongside the Arrow 58 adapter | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | Extended Safetensors & JSON debug | `sciencekit_interop` | Binary Safetensors persistence (metadata header, `SKShardPlan` sharding, in-place header/payload padding, optional Gzip/Brotli/Snappy compression) and deterministic JSON debug inspection over `SKModelState` | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | Memory-mapped sources (`memmap` feature) | `sciencekit_interop` | Zero-copy `SKMappableSource`/`SKLazySource` over raw binary, NumPy `.npy` and footer-indexed Arrow IPC files, with descriptor, length, endianness, alignment and truncation validation | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKTelemetry` / `SKTelemetryPipeline` | `sciencekit_telemetry` | Opt-in OTLP trace, log and metric export pipelines, resource attributes, sampling and bounded lifecycle (silent no-op default) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
