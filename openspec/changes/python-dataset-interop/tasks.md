@@ -3,7 +3,7 @@
 - [x] 1.1 Create or extend `crates/sciencekit_python` with a `datasets` module and a representation dispatcher (Arrow PyCapsule → numpy → SciPy sparse → Dask/PySpark → error).
 - [x] 1.2 TDD numpy contiguous `float32`/`float64` borrow: values, zero-copy pointer identity, immutable-during-call contract.
 - [x] 1.3 TDD numpy non-contiguous and wrong-dtype: explicit error with suggested contiguous copy/cast; opt-in copy path.
-- [ ] 1.4 TDD dispatcher error listing supported representations.
+- [x] 1.4 TDD dispatcher error listing supported representations.
 
 ## 2. pandas and Arrow PyCapsule
 
