@@ -27,7 +27,7 @@
 
 ## 4. Acceptance and review
 
-- [ ] 4.1 Import the exported library models (linear, scaler, tree, pipeline) and compare
+- [x] 4.1 Import the exported library models (linear, scaler, tree, pipeline) and compare
   predictions; verify with `cargo test -p sciencekit_onnx onnx_round_trip`.
 - [ ] 4.2 Add concurrent-prediction and `Send + Sync` tests; verify with
   `cargo test -p sciencekit_onnx onnx_concurrency`.
