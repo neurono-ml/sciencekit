@@ -181,4 +181,80 @@ pub enum SKError {
         /// Why the transfer failed.
         reason: String,
     },
+    /// A memory-mapped source names a file that does not exist.
+    #[error("memory-mapped file `{path}` does not exist")]
+    MissingMappedFile {
+        /// The path that was not found.
+        path: String,
+    },
+    /// A memory-mapped source could not read the file for lack of permission.
+    #[error("permission denied reading memory-mapped file `{path}`: {reason}")]
+    MappedFilePermissionDenied {
+        /// The path whose access was denied.
+        path: String,
+        /// The operating-system explanation.
+        reason: String,
+    },
+    /// A memory-mapped file carries a dtype the model scalar cannot view.
+    #[error("memory-mapped file `{path}` carries dtype `{dtype}`; supported: {supported}")]
+    UnsupportedMappedDtype {
+        /// The file that declared the dtype.
+        path: String,
+        /// The dtype the file carries.
+        dtype: String,
+        /// The dtypes the opening path accepts.
+        supported: String,
+    },
+    /// A raw or NumPy memory-mapped file declares a non-little-endian byte order.
+    #[error(
+        "memory-mapped file `{path}` is {endianness}-endian; only little-endian data is supported"
+    )]
+    NonLittleEndianMappedData {
+        /// The file that declared the byte order.
+        path: String,
+        /// The declared byte order (`big`).
+        endianness: String,
+    },
+    /// A memory-mapped file's byte length differs from its declared shape.
+    #[error(
+        "memory-mapped file `{path}` has {actual_bytes} bytes but the declared shape requires {expected_bytes} bytes"
+    )]
+    MappedLengthMismatch {
+        /// The file whose length was checked.
+        path: String,
+        /// The byte count the declared shape requires.
+        expected_bytes: u64,
+        /// The byte count the file carries.
+        actual_bytes: u64,
+    },
+    /// A memory-mapped file's header is malformed or truncated.
+    #[error("malformed {format} header in memory-mapped file `{path}`: {reason}")]
+    MalformedMappedHeader {
+        /// The file whose header was parsed.
+        path: String,
+        /// The header format (`npy`, `arrow-ipc`, `raw-binary-descriptor`).
+        format: &'static str,
+        /// Why the header was rejected.
+        reason: String,
+    },
+    /// A memory-mapped payload is not aligned for the target scalar type.
+    #[error("memory-mapped file `{path}` payload is misaligned for {scalar_type}: {reason}")]
+    MisalignedMappedData {
+        /// The file whose payload is misaligned.
+        path: String,
+        /// The scalar type whose alignment is required.
+        scalar_type: &'static str,
+        /// The alignment diagnosis and the suggested remedy.
+        reason: String,
+    },
+    /// A memory-mapped record batch cannot be read.
+    #[error("memory-mapped file `{path}` cannot serve batch {batch}: {reason}")]
+    UnreadableMappedBatch {
+        /// The file that owns the batch.
+        path: String,
+        /// The zero-based batch index.
+        batch: usize,
+        /// Why the batch could not be read.
+        reason: String,
+    },
 }

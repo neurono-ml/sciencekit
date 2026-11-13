@@ -21,20 +21,27 @@
 
 #![deny(unsafe_code)]
 #![warn(missing_docs)]
-
 #[cfg(test)]
 mod acceptance;
-
 #[cfg(feature = "arrow")]
 pub mod arrow;
+#[cfg(feature = "datafusion")]
+pub mod datafusion;
+#[cfg(feature = "polars")]
+pub mod polars;
+
 pub mod batch;
 pub mod bridge;
 pub mod columns;
 pub mod json;
+#[cfg(feature = "memmap")]
+#[allow(unsafe_code)]
+pub mod memmap;
 pub mod missing;
 pub mod observability;
 pub mod safetensors;
 pub mod schema;
 pub mod selection;
 pub mod source;
+pub mod tabular;
 pub mod views;
