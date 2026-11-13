@@ -13,6 +13,7 @@ mod classifier;
 mod configuration;
 mod error_score;
 pub(crate) mod evaluation;
+mod export;
 pub(crate) mod observation;
 pub(crate) mod prediction;
 mod regressor;
@@ -34,3 +35,6 @@ mod concurrency_tests;
 pub(crate) mod mock_estimators;
 #[cfg(test)]
 mod representation_tests;
+
+#[cfg(test)]
+mod export_tests;

@@ -9,6 +9,7 @@
 //! submodules; every implementation lives in its own file.
 
 mod metadata;
+mod nested;
 mod parameter;
 mod shared;
 mod state;
@@ -17,7 +18,11 @@ mod testing;
 mod traits;
 
 pub use metadata::SKModelMetadata;
+pub use nested::{
+    sk_embed_state, sk_extract_state, sk_nested_parameter_prefix, sk_nested_tensor_prefix,
+};
 pub use parameter::SKParameterValue;
+pub use shared::sk_model_tensor_data_type as sk_nested_tensor_data_type;
 pub use shared::{
     SK_MODEL_FORMAT_VERSION, sk_backend_parameter, sk_boolean_parameter, sk_float_parameter,
     sk_integer_parameter, sk_model_tensor_data_type, sk_parse_backend_name,
