@@ -97,6 +97,35 @@ fn native_validation_rejects_a_model_with_zero_features() {
     ));
 }
 
+/// The facade keeps the model's dense/sparse parity: a sparse probe yields the
+/// same values as the same matrix in dense form for a sparse-aware family.
+#[test]
+fn native_validation_prediction_accepts_dense_and_sparse_features() {
+    use sciencekit_common::{SKBuilder, SKRegressorPredictor, SKSupervisedFit};
+    use sprs::CsMat;
+
+    let features = test_models::features();
+    let targets = ndarray::array![1.0_f64, 3.0, 4.0, 14.0, 11.0, 16.0];
+    use sciencekit_tree::SKDecisionTreeRegressor;
+    let tree = SKDecisionTreeRegressor::<f64>::build()
+        .build()
+        .unwrap()
+        .fit(features.view(), targets.view())
+        .unwrap();
+    let bytes = sk_export_model_safetensors(&tree).unwrap();
+    let imported = sk_import_native_model_from_bytes::<f64>(&bytes).unwrap();
+    let sparse = CsMat::new(
+        (6, 2),
+        vec![0, 0, 1, 2, 4, 6, 8],
+        vec![0, 1, 0, 1, 0, 1, 0, 1],
+        vec![1.0, 1.0, 2.0, 3.0, 3.0, 1.0, 4.0, 2.0],
+    );
+    assert_eq!(
+        tree.predict(features.view()).unwrap(),
+        imported.predict_regression(sparse.view()).unwrap()
+    );
+}
+
 #[test]
 fn native_validation_a_failed_conversion_leaves_no_model() {
     let model = test_models::linear_regression();
