@@ -5,8 +5,10 @@ use sciencekit_common::{SKDataView, SKError, SKFloat, SKTargetView};
 
 use super::linear::sk_linear_loss;
 use super::logistic::{sk_integer_labels, sk_logistic_loss};
+use super::validation::{sk_validate_finite_features, sk_validate_finite_targets};
 use crate::adapters::lora::attached_model::SKLoraAttachedModel;
 use crate::adapters::lora::config::SKLoraTargetModule;
+use crate::adapters::lora::prediction::sk_feature_dimensions;
 
 impl<F: SKFloat> SKLoraAttachedModel<F> {
     /// Fit the adapter on the supplied data.
@@ -50,9 +52,32 @@ impl<F: SKFloat> SKLoraAttachedModel<F> {
     {
         let data = features.try_into()?;
         let targets = targets.try_into()?;
+        let (rows_count, columns_count) = sk_feature_dimensions(&data);
+        if rows_count == 0 || columns_count == 0 {
+            return Err(SKError::ShapeMismatch {
+                expected: vec![rows_count.max(1), self.feature_count().max(1)],
+                found: vec![rows_count, columns_count],
+            });
+        }
+        if columns_count != self.feature_count() {
+            return Err(SKError::shape_mismatch_2d(
+                rows_count,
+                self.feature_count(),
+                rows_count,
+                columns_count,
+            ));
+        }
+        sk_validate_finite_features(&data)?;
         match self.adapter().target() {
             SKLoraTargetModule::LinearCoefficients => {
                 let continuous = targets.as_continuous()?;
+                if continuous.len() != rows_count {
+                    return Err(SKError::ShapeMismatch {
+                        expected: vec![rows_count],
+                        found: vec![continuous.len()],
+                    });
+                }
+                sk_validate_finite_targets(continuous.view())?;
                 sk_linear_loss(
                     &data,
                     self.effective_coefficients()?.view(),
@@ -62,6 +87,12 @@ impl<F: SKFloat> SKLoraAttachedModel<F> {
             }
             SKLoraTargetModule::LogisticCoefficients => {
                 let labels = sk_integer_labels(&targets)?;
+                if labels.len() != rows_count {
+                    return Err(SKError::ShapeMismatch {
+                        expected: vec![rows_count],
+                        found: vec![labels.len()],
+                    });
+                }
                 sk_logistic_loss(self, &data, labels)
             }
         }

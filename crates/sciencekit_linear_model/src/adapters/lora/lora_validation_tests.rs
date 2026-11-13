@@ -38,6 +38,17 @@ fn linear_base() -> SKLoraBaseModel<f64> {
     SKLoraBaseModel::linear_regression(model)
 }
 
+fn logistic_base() -> SKLoraBaseModel<f64> {
+    let features = array![[0.0, 0.0], [1.0, 1.0], [2.0, 2.0], [3.0, 3.0]];
+    let labels = array![0_i64, 0, 1, 1];
+    let model = SKLogisticRegression::<f64>::build()
+        .build()
+        .unwrap()
+        .fit(features.view(), labels.view())
+        .unwrap();
+    SKLoraBaseModel::logistic_regression(model)
+}
+
 fn fitted_regression_adapter(identifier: &str) -> SKLoraAttachedModel<f64> {
     let features = array![[0.0, 0.0], [1.0, 0.0], [0.0, 1.0], [1.0, 1.0]];
     let targets = features.dot(&array![2.7, -2.6]) + 1.0;
@@ -216,4 +227,70 @@ fn an_adapter_is_send_and_sync() {
     fn assert_send_sync<T: Send + Sync>() {}
     assert_send_sync::<SKLoraAttachedModel<f64>>();
     assert_send_sync::<SKLoraAdapterRegistry<f64>>();
+}
+
+#[test]
+fn training_loss_rejects_a_target_count_that_disagrees_with_the_rows() {
+    let features = array![[0.0, 0.0], [1.0, 0.0], [0.0, 1.0], [1.0, 1.0]];
+    let short_targets = array![1.0, 2.0, 3.0];
+    let short_labels = array![0_i64, 1, 1];
+
+    let regression = SKLoraAdapterBuilder::<f64>::new()
+        .rank(2)
+        .build()
+        .unwrap()
+        .attach(linear_base())
+        .unwrap();
+    let regression_error = regression
+        .training_loss(features.view(), short_targets.view())
+        .expect_err("three targets cannot score four rows");
+    assert!(matches!(regression_error, SKError::ShapeMismatch { .. }));
+
+    let classification = SKLoraAdapterBuilder::<f64>::new()
+        .rank(1)
+        .target(SKLoraTargetModule::LogisticCoefficients)
+        .build()
+        .unwrap()
+        .attach(logistic_base())
+        .unwrap();
+    let classification_error = classification
+        .training_loss(features.view(), short_labels.view())
+        .expect_err("three labels cannot score four rows");
+    assert!(matches!(
+        classification_error,
+        SKError::ShapeMismatch { .. }
+    ));
+}
+
+#[test]
+fn training_loss_rejects_a_feature_count_that_disagrees_with_the_base() {
+    let features = array![[0.0, 0.0, 1.0], [1.0, 0.0, 1.0], [0.0, 1.0, 1.0]];
+    let targets = array![1.0, 2.0, 3.0];
+    let labels = array![0_i64, 1, 1];
+
+    let regression = SKLoraAdapterBuilder::<f64>::new()
+        .rank(2)
+        .build()
+        .unwrap()
+        .attach(linear_base())
+        .unwrap();
+    let regression_error = regression
+        .training_loss(features.view(), targets.view())
+        .expect_err("three features cannot score a two-feature base");
+    assert!(matches!(regression_error, SKError::ShapeMismatch { .. }));
+
+    let classification = SKLoraAdapterBuilder::<f64>::new()
+        .rank(1)
+        .target(SKLoraTargetModule::LogisticCoefficients)
+        .build()
+        .unwrap()
+        .attach(logistic_base())
+        .unwrap();
+    let classification_error = classification
+        .training_loss(features.view(), labels.view())
+        .expect_err("three features cannot score a two-feature base");
+    assert!(matches!(
+        classification_error,
+        SKError::ShapeMismatch { .. }
+    ));
 }
