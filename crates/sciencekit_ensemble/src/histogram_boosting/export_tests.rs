@@ -121,9 +121,8 @@ fn histogram_import_rejects_a_truncated_stage_importance_tensor() {
         .filter(|tensor| tensor.name() != "hist_boosting.stage_importances")
         .cloned()
         .collect();
-    tensors.push(
-        SKTensor::floating("hist_boosting.stage_importances", vec![1], vec![1.0]).unwrap(),
-    );
+    tensors
+        .push(SKTensor::floating("hist_boosting.stage_importances", vec![1], vec![1.0]).unwrap());
     let broken = SKModelState::new(state.metadata().clone(), tensors).unwrap();
     assert!(matches!(
         super::SKHistGradientBoostingRegressorModel::<f64>::import_state(&broken),

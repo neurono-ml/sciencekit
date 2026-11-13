@@ -72,12 +72,7 @@ fn gradient_boosting_import_rejects_a_truncated_stage_importance_tensor() {
         .cloned()
         .collect();
     tensors.push(
-        SKTensor::floating(
-            "gradient_boosting.stage_importances",
-            vec![1],
-            vec![1.0],
-        )
-        .unwrap(),
+        SKTensor::floating("gradient_boosting.stage_importances", vec![1], vec![1.0]).unwrap(),
     );
     let broken = SKModelState::new(state.metadata().clone(), tensors).unwrap();
     assert!(matches!(

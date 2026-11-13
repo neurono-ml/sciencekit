@@ -91,6 +91,21 @@ impl<F: SKFloat> SKImportable<F> for SKTruncatedSVDModel<F> {
             sk_read_floating_tensor(state, SK_TRUNCATED_SVD_EXPLAINED_VARIANCE_TENSOR)?;
         let (_, explained_variance_ratio) =
             sk_read_floating_tensor(state, SK_TRUNCATED_SVD_RATIO_TENSOR)?;
+        sk_require_length(
+            &singular_values,
+            components.nrows(),
+            SK_TRUNCATED_SVD_SINGULAR_VALUES_TENSOR,
+        )?;
+        sk_require_length(
+            &explained_variance,
+            components.nrows(),
+            SK_TRUNCATED_SVD_EXPLAINED_VARIANCE_TENSOR,
+        )?;
+        sk_require_length(
+            &explained_variance_ratio,
+            components.nrows(),
+            SK_TRUNCATED_SVD_RATIO_TENSOR,
+        )?;
         let metadata = state.metadata();
         Ok(SKTruncatedSVDModel {
             components,
@@ -120,4 +135,17 @@ fn algorithm_from_name(name: &str) -> SKTruncatedSVDAlgorithm {
         "arpack" => SKTruncatedSVDAlgorithm::Arpack,
         _ => SKTruncatedSVDAlgorithm::Randomized,
     }
+}
+
+/// Reject a secondary tensor whose length disagrees with the component count,
+/// so a malformed state never reaches a broadcasting panic.
+fn sk_require_length<F: SKFloat>(values: &[F], expected: usize, name: &str) -> Result<(), SKError> {
+    if values.len() != expected {
+        return Err(SKError::ShapeMismatch {
+            expected: vec![expected],
+            found: vec![values.len()],
+        });
+    }
+    let _ = name;
+    Ok(())
 }

@@ -108,6 +108,27 @@ impl<F: SKFloat> SKImportable<F> for SKPCAModel<F> {
             sk_read_floating_tensor(state, SK_PCA_EXPLAINED_VARIANCE_RATIO_TENSOR)?;
         let (_, singular_values) = sk_read_floating_tensor(state, SK_PCA_SINGULAR_VALUES_TENSOR)?;
         let (_, whiten_scale) = sk_read_floating_tensor(state, SK_PCA_WHITEN_SCALE_TENSOR)?;
+        sk_require_length(&mean, feature_count, SK_PCA_MEAN_TENSOR)?;
+        sk_require_length(
+            &explained_variance,
+            components.nrows(),
+            SK_PCA_EXPLAINED_VARIANCE_TENSOR,
+        )?;
+        sk_require_length(
+            &explained_variance_ratio,
+            components.nrows(),
+            SK_PCA_EXPLAINED_VARIANCE_RATIO_TENSOR,
+        )?;
+        sk_require_length(
+            &singular_values,
+            components.nrows(),
+            SK_PCA_SINGULAR_VALUES_TENSOR,
+        )?;
+        sk_require_length(
+            &whiten_scale,
+            components.nrows(),
+            SK_PCA_WHITEN_SCALE_TENSOR,
+        )?;
         let metadata = state.metadata();
         Ok(SKPCAModel {
             components,
@@ -144,4 +165,17 @@ fn solver_from_name(name: &str) -> SKPCASolver {
         "covariance_eigh" => SKPCASolver::CovarianceEigh,
         _ => SKPCASolver::Full,
     }
+}
+
+/// Reject a secondary tensor whose length disagrees with the dimensions the
+/// components imply, so a malformed state never reaches a broadcasting panic.
+fn sk_require_length<F: SKFloat>(values: &[F], expected: usize, name: &str) -> Result<(), SKError> {
+    if values.len() != expected {
+        return Err(SKError::ShapeMismatch {
+            expected: vec![expected],
+            found: vec![values.len()],
+        });
+    }
+    let _ = name;
+    Ok(())
 }

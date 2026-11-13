@@ -1,7 +1,13 @@
 //! Companion tests: PCA and truncated SVD round-trip their projections.
 
 use ndarray::array;
-use sciencekit_common::{SKBackendKind, SKBuilder, SKUnsupervisedFit, sk_assert_export_round_trip};
+use sciencekit_common::{
+    SKBackendKind, SKBuilder, SKExportable, SKImportable, SKModelState, SKTensor,
+    SKUnsupervisedFit, sk_assert_export_round_trip,
+};
+
+use crate::pca::SKPCAModel;
+use crate::truncated_svd::SKTruncatedSVDModel;
 
 use crate::pca::SKPCA;
 use crate::truncated_svd::SKTruncatedSVD;
@@ -55,4 +61,52 @@ fn truncated_svd_round_trips_components_and_projection() {
         model.transform(training.view()).unwrap(),
         imported.transform(training.view()).unwrap()
     );
+}
+
+#[test]
+fn pca_import_rejects_a_mean_with_the_wrong_feature_count() {
+    let training = array![[1.0_f64, 2.0, 0.5], [2.5, 4.1, 1.2], [4.0, 6.2, 2.1]];
+    let model = SKPCA::<f64>::build()
+        .number_of_components(2)
+        .build()
+        .unwrap()
+        .fit(training.view())
+        .unwrap();
+    let state = model.export_state().unwrap();
+    let mut tensors: Vec<_> = state
+        .tensors()
+        .values()
+        .filter(|tensor| tensor.name() != "pca.mean")
+        .cloned()
+        .collect();
+    tensors.push(SKTensor::floating("pca.mean", vec![1], vec![0.0]).unwrap());
+    let broken = SKModelState::new(state.metadata().clone(), tensors).unwrap();
+    assert!(matches!(
+        SKPCAModel::<f64>::import_state(&broken),
+        Err(sciencekit_common::SKError::ShapeMismatch { .. })
+    ));
+}
+
+#[test]
+fn truncated_svd_import_rejects_singular_values_with_the_wrong_length() {
+    let training = array![[1.0_f64, 0.0, 2.0], [0.0, 3.0, 1.0], [2.0, 1.0, 0.0]];
+    let model = SKTruncatedSVD::<f64>::build()
+        .number_of_components(2)
+        .build()
+        .unwrap()
+        .fit(training.view())
+        .unwrap();
+    let state = model.export_state().unwrap();
+    let mut tensors: Vec<_> = state
+        .tensors()
+        .values()
+        .filter(|tensor| tensor.name() != "truncated_svd.singular_values")
+        .cloned()
+        .collect();
+    tensors.push(SKTensor::floating("truncated_svd.singular_values", vec![1], vec![1.0]).unwrap());
+    let broken = SKModelState::new(state.metadata().clone(), tensors).unwrap();
+    assert!(matches!(
+        SKTruncatedSVDModel::<f64>::import_state(&broken),
+        Err(sciencekit_common::SKError::ShapeMismatch { .. })
+    ));
 }
