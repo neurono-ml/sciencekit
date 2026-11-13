@@ -2,13 +2,12 @@
 //! `stochastic-gradient-regressor`).
 
 use sciencekit_common::{
-    SKDataView, SKError, SKFloat, SKOperationAttributes, SKOperationKind, SKTargetView,
-    sk_run_operation,
+    SKDataView, SKError, SKFloat, SKOperationAttributes, SKOperationKind, SKRandomGenerator,
+    SKTargetView, sk_run_operation,
 };
 
 use super::core_implementation::SKSGDRegressorModel;
 use super::prediction::dimensions;
-use crate::sgd::SKRandomGenerator;
 use crate::sgd_regressor::fitting::{SKRegressorDesign, sk_reported_parts, sk_run_design_epoch};
 use crate::sgd_regressor::targets::sk_loss_adapter;
 

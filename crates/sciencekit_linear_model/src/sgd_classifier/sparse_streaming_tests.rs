@@ -80,3 +80,23 @@ fn sparse_stream_handles_a_shape_beyond_the_test_budget() {
     assert_eq!(streamed.coefficients().ncols(), 64);
     assert_eq!(streamed.epochs_taken(), 1);
 }
+
+/// A reopenable sparse provider feeds several epochs, carrying the schedule.
+#[test]
+fn sparse_reopenable_provider_runs_multiple_epochs() {
+    let (features, labels) = separable_binary_design();
+    let labels = ndarray::Array1::from_iter(labels.into_iter().map(|label| label as f64));
+    let batches = chunk_pairs_csr(&features, &labels, &[6]);
+    let provider = sciencekit_common::SKReopenableSource::new(move || {
+        Ok(SparseSupervisedSource::<f64>::new(batches.clone()))
+    });
+    let streamed = SKSGDClassifier::<f64>::build()
+        .maximum_number_of_iterations(3)
+        .convergence_policy(SKConvergencePolicy::Permissive)
+        .build()
+        .unwrap()
+        .fit_streaming(provider)
+        .unwrap();
+    assert_eq!(streamed.epochs_taken(), 3);
+    assert_eq!(streamed.coefficients().ncols(), features.ncols());
+}

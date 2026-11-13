@@ -5,7 +5,7 @@ use sciencekit_common::{
     observability::sk_run_operation,
 };
 
-use super::super::streaming::batches::{batch_moments, batch_parallelism};
+use super::super::streaming::batches::{batch_moments, batch_parallelism, sparse_batch_moments};
 use super::super::streaming::state::merge_moments;
 use super::{SKStandardScalerModel, derive_statistics};
 
@@ -17,35 +17,51 @@ impl<F: SKFloat> SKStandardScalerModel<F> {
     where
         X: TryInto<SKDataView<'a, F>, Error = SKError>,
     {
-        let dense = features.try_into()?.as_dense()?;
-        if dense.ncols() != self.moments_mean.len() {
+        let view: SKDataView<'_, F> = features.try_into()?;
+        let (rows_count, columns_count) = match &view {
+            SKDataView::Dense(dense) => dense.dim(),
+            SKDataView::Sparse(sparse) => (sparse.rows(), sparse.cols()),
+            _ => {
+                return Err(SKError::UnsupportedRepresentation {
+                    representation: "unknown",
+                    suggestion: "convert the features to a dense matrix or a CSR matrix",
+                });
+            }
+        };
+        if columns_count != self.moments_mean.len() {
             return Err(SKError::ShapeMismatch {
                 expected: vec![self.moments_mean.len()],
-                found: vec![dense.ncols()],
+                found: vec![columns_count],
             });
         }
-        if dense.nrows() == 0 {
+        if rows_count == 0 {
             return Ok(self);
         }
         let attributes = SKOperationAttributes {
             operation: SKOperationKind::PartialFit,
-            rows_count: dense.nrows(),
-            columns_count: dense.ncols(),
+            rows_count,
+            columns_count,
             execution_mode: self.execution_intent,
             backend: self.backend,
         };
         sk_run_operation(attributes, || -> Result<(), SKError> {
-            let machine = SKExecutionContext::real();
-            let parallelism =
-                batch_parallelism(&dense, machine.available_memory_bytes, machine.cpu_cores);
-            let (batch_mean, batch_deviations) = batch_moments(&dense, parallelism);
+            let (batch_mean, batch_deviations) = match &view {
+                SKDataView::Dense(dense) => {
+                    let machine = SKExecutionContext::real();
+                    let parallelism =
+                        batch_parallelism(dense, machine.available_memory_bytes, machine.cpu_cores);
+                    batch_moments(dense, parallelism)
+                }
+                SKDataView::Sparse(sparse) => sparse_batch_moments(sparse),
+                _ => unreachable!("the representation check rejected every other variant"),
+            };
             merge_moments(
                 &mut self.sample_count,
                 &mut self.moments_mean,
                 &mut self.sum_squared_deviations,
                 &batch_mean,
                 &batch_deviations,
-                dense.nrows() as u64,
+                rows_count as u64,
             );
             let (mean, scale) = derive_statistics(
                 &self.moments_mean,

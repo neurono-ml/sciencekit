@@ -1,0 +1,22 @@
+[package]
+name = "sciencekit_gpu"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+rust-version = "1.85"
+description = "Device-compute contracts for sciencekit: device capabilities, buffers, kernel dispatch and the deterministic CPU fallback."
+repository = "https://github.com/neurono-ml/sciencekit"
+
+[dependencies]
+sciencekit_common = { path = "../sciencekit_common", version = "0.1.0" }
+ndarray = "0.17"
+
+[features]
+default = []
+# Enable the OpenCL device backend. Off by default: the foundation crate only
+# defines the contracts and pulls in no GPU runtime.
+gpu-opencl = []
+# Enable the CUDA device backend. Off by default.
+gpu-cuda = []
+# Enable the ROCm/HIP device backend. Off by default.
+gpu-rocm = []

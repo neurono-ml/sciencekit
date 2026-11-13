@@ -3,9 +3,12 @@
 //! Public operations emit `tracing` spans with structured fields (operation,
 //! shape, execution mode, backend) and record the outcome (duration, error) on
 //! the span. [`sk_run_operation`] is the reusable wrapper algorithm crates
-//! call around fit, transform and predict. OpenTelemetry export is opt-in
-//! behind the `observability-export` feature; the default build initializes no
-//! exporter and emits no OTLP traffic.
+//! call around fit, transform and predict. Minimal trace-only OpenTelemetry
+//! layer construction is opt-in behind the `observability-export` feature,
+//! while full OTLP trace, log and metric pipelines, resource configuration,
+//! sampling and lifecycle (`init`, `force_flush`, `shutdown`) live in the
+//! companion `sciencekit_telemetry` sub-crate; the default build initializes
+//! no exporter and emits no OTLP traffic.
 //!
 //! This is a **pure dispatcher** module: `mod.rs` only declares and re-exports
 //! submodules; every implementation lives in its own file.
@@ -25,4 +28,10 @@ pub use run_operation::sk_run_operation;
 pub use opentelemetry_layer::sk_opentelemetry_layer;
 
 #[cfg(test)]
+mod backend_kind_tests;
+#[cfg(test)]
+mod gpu_span_tests;
+#[cfg(test)]
 mod observability_tests;
+#[cfg(test)]
+mod recording_layer;

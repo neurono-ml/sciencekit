@@ -1,0 +1,20 @@
+# cbindgen configuration for `sciencekit.h`.
+#
+# The header is hand-maintained today (docs-complete, C and C++ friendly) and
+# checked by the `abi` tests: every exported symbol in `SK_FFI_ENTRY_POINTS`
+# must appear in `include/sciencekit.h`. This configuration is the starting
+# point should the project switch to generated headers.
+
+language = "C"
+include_guard = "SCIENCEKIT_H"
+pragma_once = false
+cpp_compat = true
+documentation = true
+documentation_style = "c99"
+
+[export]
+prefix = "SKFfi"
+include = ["SKFfiArray", "SKFfiStatus", "SKFfiDataType", "SKFfiEstimatorFamily"]
+
+[parse]
+parse_deps = false

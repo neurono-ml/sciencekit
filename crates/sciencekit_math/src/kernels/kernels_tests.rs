@@ -3,7 +3,9 @@
 use ndarray::{Array, Array1, Array2, array};
 use sciencekit_common::SKFloat;
 use sciencekit_common::execution::{SKStreamDecision, sk_run_streaming_driver};
-use sciencekit_common::{SKDataBatch, SKError, SKExecutionMode, SKExecutionPlan, SKLazySource};
+use sciencekit_common::{
+    SKBackendKind, SKDataBatch, SKError, SKExecutionMode, SKExecutionPlan, SKLazySource,
+};
 
 use super::{
     sk_axis_min_max, sk_axis_sum, sk_axis_sum_squares, sk_binary_combine, sk_elementwise_transform,
@@ -365,6 +367,8 @@ fn driver_applies_plan_parallelism_to_each_batch() {
         batch_size: Some(1),
         buffer_depth: 1,
         available_memory_bytes: u64::MAX,
+        backend: SKBackendKind::Faer,
+        fallback_reason: None,
     };
     let mut results = Vec::new();
     let update = |batch: SKDataBatch<f64>, parallelism: usize, results: &mut Vec<f64>| {

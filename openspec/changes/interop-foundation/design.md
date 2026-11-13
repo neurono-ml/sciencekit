@@ -60,8 +60,8 @@ unavoidable.
 ### Selection and roles are explicit, not inferred
 
 `SKColumnSelection` names features (ordered) and at most one target; every other column is ignored.
-Name resolution happens against the schema before reading rows. Duplicate names are rejected unless
-the selection is positional. Alternative: infer target as "last column" — rejected because it
+Name resolution happens against the schema before reading rows. Duplicate names are rejected when the schema is built, before any selection exists; a
+duplicate-named table is therefore corrected at the source. Alternative: infer target as "last column" — rejected because it
 silently mislabels data.
 
 ### Missing values are a policy, not a per-engine default
@@ -121,3 +121,10 @@ No existing call site changes. Concrete adapters land in later changes and are f
 
 None blocking the spec: exact module split inside the crate (schema, selection, columns, conversion,
 source, bridge) follows the 200-line rule as the implementation lands.
+
+## Limitations
+
+- A nominal target in a streamed supervised batch is encoded as canonical indices from a
+  **per-batch** label table. `SKSupervisedBatch` carries no table, so the mapping is not
+  recoverable from the stream; callers that need it use `extract_target` directly.
+- Duplicate column names are rejected at schema construction, before any selection exists.

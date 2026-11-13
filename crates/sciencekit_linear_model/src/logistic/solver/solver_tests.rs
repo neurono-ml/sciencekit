@@ -31,6 +31,7 @@ fn config(
         class_weight: SKClassWeight::None,
         include_intercept,
         warm_start: false,
+        random_seed: 0,
     }
 }
 
@@ -261,6 +262,7 @@ fn solvers_work_on_f32() {
         class_weight: SKClassWeight::None,
         include_intercept: true,
         warm_start: false,
+        random_seed: 0,
     };
     let design = SKDenseDesign::new(features.view());
     let weights = vec![1.0_f32; 2];
