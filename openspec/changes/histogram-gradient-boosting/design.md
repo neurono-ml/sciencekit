@@ -80,8 +80,9 @@ does not reuse the CART splitter, only the node representation and traversal.
 ### Decision 5 — Missing-value routing
 
 Rows in the missing bin are included in the scan. If the best split puts the missing bin
-left, `default_left = true`; if right, false. A node with no missing rows records a
-deterministic direction (left) so prediction stays well-defined.
+left, `default_left = true`; if right, false. A node with no missing rows has no learnable
+direction: both candidates tie and the scan keeps the first one it evaluates, which is the
+right direction (`default_left = false`), so prediction stays well-defined and deterministic.
 
 ### Decision 6 — Categorical partitions
 
