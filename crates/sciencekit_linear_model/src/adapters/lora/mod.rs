@@ -28,6 +28,8 @@ pub use state::{
 };
 
 #[cfg(test)]
+mod lora_acceptance_tests;
+#[cfg(test)]
 mod lora_adapter_tests;
 #[cfg(test)]
 mod lora_attach_tests;
