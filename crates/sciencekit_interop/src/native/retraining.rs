@@ -7,7 +7,8 @@
 //! coefficients.
 
 use ndarray::ArrayView2;
-use sciencekit_common::{SKError, SKFloat, SKTargetView};
+use sciencekit_common::{SKBuilder, SKError, SKFloat, SKSupervisedFit, SKTargetView};
+use sciencekit_linear_model::logistic_regression::SKLogisticRegression;
 use sciencekit_math::SKBackendSelection;
 
 use super::conversion::SKNativeImport;
@@ -25,35 +26,75 @@ impl<F: SKFloat + SKBackendSelection> SKNativeImport<F> {
         features: ArrayView2<'a, F>,
         targets: SKTargetView<'a, F>,
     ) -> Result<&mut Self, SKError> {
-        let continuous = targets.as_continuous()?;
-        let target_view = continuous.view();
         match self {
             Self::Regressor { model, descriptor } => {
                 match model {
-                    SKNativeRegressor::LinearRegression(model) => {
-                        model.partial_fit(features, target_view)?;
-                    }
-                    SKNativeRegressor::StochasticGradient(model) => {
-                        model.partial_fit(features, target_view)?;
-                    }
+                    SKNativeRegressor::StochasticGradient(model) => match targets {
+                        SKTargetView::Continuous(view) => {
+                            model.partial_fit(features, view)?;
+                        }
+                        SKTargetView::Integer(view) => {
+                            model.partial_fit(features, view)?;
+                        }
+                        SKTargetView::Nominal(labels) => {
+                            model.partial_fit(features, labels)?;
+                        }
+                        _ => return Err(unsupported_target()),
+                    },
                     _ => return Err(inference_only(descriptor)),
                 }
                 Ok(self)
             }
             Self::Classifier { model, descriptor } => {
                 match model {
-                    SKNativeClassifier::LogisticRegression(model) => {
-                        model.partial_fit(features, target_view)?;
+                    SKNativeClassifier::LogisticRegression(current) => {
+                        let builder = SKLogisticRegression::<F>::build()
+                            .penalty(current.penalty())
+                            .solver(current.solver())
+                            .alpha(current.alpha())
+                            .l1_ratio(current.l1_ratio())
+                            .class_weight(current.class_weight().clone())
+                            .include_intercept(current.include_intercept())
+                            .random_seed(current.random_seed())
+                            .warm_start_from(current)
+                            .build()?;
+                        *current = match targets {
+                            SKTargetView::Continuous(_) => {
+                                return Err(SKError::UnsupportedRepresentation {
+                                    representation: "continuous",
+                                    suggestion: "pass integer or nominal class labels to a classifier",
+                                });
+                            }
+                            SKTargetView::Integer(view) => builder.fit(features, view)?,
+                            SKTargetView::Nominal(labels) => builder.fit(features, labels)?,
+                            _ => return Err(unsupported_target()),
+                        };
                     }
-                    SKNativeClassifier::StochasticGradient(model) => {
-                        model.partial_fit(features, target_view)?;
-                    }
+                    SKNativeClassifier::StochasticGradient(model) => match targets {
+                        SKTargetView::Continuous(view) => {
+                            model.partial_fit(features, view)?;
+                        }
+                        SKTargetView::Integer(view) => {
+                            model.partial_fit(features, view)?;
+                        }
+                        SKTargetView::Nominal(labels) => {
+                            model.partial_fit(features, labels)?;
+                        }
+                        _ => return Err(unsupported_target()),
+                    },
                     _ => return Err(inference_only(descriptor)),
                 }
                 Ok(self)
             }
             _ => Err(inference_only(self.descriptor())),
         }
+    }
+}
+
+fn unsupported_target() -> SKError {
+    SKError::UnsupportedRepresentation {
+        representation: "target",
+        suggestion: "pass continuous values to a regressor or class labels to a classifier",
     }
 }
 

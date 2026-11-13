@@ -8,6 +8,8 @@
 #[cfg(test)]
 mod native_import_tests;
 #[cfg(test)]
+mod native_retrain_tests;
+#[cfg(test)]
 mod native_safetensors_tests;
 #[cfg(test)]
 mod test_models;

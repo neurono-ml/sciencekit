@@ -24,8 +24,8 @@ pub fn sk_native_import_coverage() -> &'static [SKNativeImportCoverage] {
         SKNativeImportCoverage {
             estimator_name: "SKLinearRegression",
             native_type: "SKLinearRegressionModel",
-            retrainable: true,
-            note: "partial_fit continues the accumulated normal equations",
+            retrainable: false,
+            note: "an OLS state carries no accumulated design; use SKSGDRegressor for continued fitting",
         },
         SKNativeImportCoverage {
             estimator_name: "SKRidge",

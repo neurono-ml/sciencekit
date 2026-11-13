@@ -34,7 +34,9 @@ pub(crate) fn convert_regressor<F: SKFloat>(
             let model: SKLinearRegressionModel<F> = import_model(state)?;
             (
                 SKNativeRegressor::LinearRegression(model),
-                SKRetrainingSupport::Supported,
+                not_retrainable(
+                    "an ordinary-least-squares solve keeps no accumulated design across a round trip; use SKSGDRegressor for continued fitting",
+                ),
             )
         }
         SK_RIDGE_ESTIMATOR_NAME => {
