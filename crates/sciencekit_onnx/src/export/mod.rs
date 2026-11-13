@@ -18,6 +18,8 @@ mod preprocessing_tests;
 #[cfg(test)]
 mod remaining_tests;
 #[cfg(test)]
+mod robustness_tests;
+#[cfg(test)]
 mod svm_tests;
 #[cfg(test)]
 mod tree_tests;
