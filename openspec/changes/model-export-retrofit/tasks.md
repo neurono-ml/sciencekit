@@ -56,7 +56,7 @@
 
 ## 6. Pipelines and model selection
 
-- [ ] 6.1 Implement pipeline export/import with stage-qualified names and the final model;
+- [x] 6.1 Implement pipeline export/import with stage-qualified names and the final model;
   verify with `cargo test -p sciencekit_pipeline export`.
 - [ ] 6.2 Implement grid-search/halving export of the best model and selection metadata;
   verify with `cargo test -p sciencekit_model_selection export`.
