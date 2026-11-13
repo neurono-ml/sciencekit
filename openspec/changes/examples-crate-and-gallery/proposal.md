@@ -82,6 +82,18 @@ what makes the bindings comparable and reviewable.
   reference to the separate book; the book theme gains the example page and gallery
   navigation structures.
 
+### New Capabilities (book)
+
+- `book-structure`: the didactic path of the book — the chapter taxonomy, the
+  per-algorithm subsections, the complete-example contract and the example index.
+- `book-formatting`: the standard mdBook formatting contract — semantic markdown, the
+  default theme, the minimal skin and the rules that keep the rendered pages readable.
+- `book-seo`: the search-engine contract — per-page metadata, canonical URLs, Open
+  Graph and Twitter cards, structured data, sitemap, robots and internal linking.
+- `article-publishing`: the Medium and LinkedIn article ecosystem — one self-contained
+  article per chapter, platform-adapted, linked back to the official page, with the
+  generation pipeline that produces them.
+
 ## Impact
 
 - **Workspace**: `Cargo.toml` gains `crates/sciencekit_examples` as a member; the crate
@@ -91,9 +103,13 @@ what makes the bindings comparable and reviewable.
   plotting abstraction, the per-example logic, and the cargo example targets.
 - **Tooling**: `.cargo/config.toml` gains the `example` alias, so the corpus is run with
   `cargo example <example_id>` from the repository root.
-- **Documentation**: `docs/src/**` for the "Examples" section and the gallery pages; a new
-  separate book for "Machine Learning with Sciencekit"; `docs/skin/**` for the gallery and
-  book navigation styles.
+- **Documentation**: `docs/src/**` is rewritten along the didactic path; `docs/skin/**`
+  is reduced to a minimal, standard-compatible skin; `docs/scripts/postbuild.mjs` gains
+  the metadata, structured data and article generation; a new `docs/articles/**` tree
+  holds the generated Medium and LinkedIn articles.
+- **Publishing**: the Medium and LinkedIn articles are produced by the repository and
+  link back to the official book; the posting step itself is manual or API-driven and
+  stays out of the repository's scope.
 - **Dependencies**: no new runtime dependency. `scienceview` is referenced only as an
   optional, non-default Cargo feature and is not published to crates.io yet; `sciencekit`
   itself is the only mandatory dependency.

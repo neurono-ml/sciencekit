@@ -94,6 +94,50 @@
 - [ ] 11.2 Verify every ported example target runs and prints the metrics quoted on its gallery page, by running each target in the corpus of the first wave
 - [ ] 11.3 Verify the internal parity check lists every gallery entry exactly once with its status and its blocker, and that the count of ported entries equals the count of example pages
 - [ ] 11.4 Verify the generator is deterministic — running it twice on an unchanged corpus produces byte-identical pages — and that the committed pages match a fresh generation
+- [ ] 11.5 Verify the book builds with the default theme, that every chapter of the didactic path is reachable from the table of contents, and that the generated articles exist for every chapter
+
+## 12. Book reformatting
+
+- [ ] 12.1 Replace the custom stylesheet with a minimal, standard-compatible one — code-block sizing, the language tabs, the Mermaid and mathematics containers, print rules and accessibility affordances only — verifying every page renders with the default mdBook theme and the stylesheet stays a small fraction of its former length
+- [ ] 12.2 Rewrite the landing page as semantic markdown, removing the hero, the counters and the card grids, verifying the page reads as prose with the stylesheet disabled
+- [ ] 12.3 Audit every page for raw HTML used to lay out content and replace it with markdown, verifying each page keeps one level-one heading and a heading hierarchy that skips no level
+- [ ] 12.4 Verify the printed output of the book keeps the diagrams, the code blocks and the tables, verifying `mdbook build docs` produces a readable print view
+- [ ] 12.5 Verify the diagrams and the mathematics still render in both colour themes, verifying the Mermaid palette keeps its contrast and the mathematics stays legible
+
+## 13. Book structure and chapters
+
+- [ ] 13.1 Write the book's summary along the didactic path — what sciencekit is, the complete example, the algorithms part with its families, the choice of an estimator, interoperability and the examples index — verifying every chapter belongs to exactly one part
+- [ ] 13.2 Write the chapter "What is sciencekit?" — the library, the Rust comparison stated fairly against the Python ecosystem, the algorithms that exist today and the capabilities — verifying every capability claimed is present in the repository
+- [ ] 13.3 Write the chapter "A complete example" — arrays, polars, datafusion lazy loading, the exported training metrics, the configuration comparison, the pipeline, the ONNX and safetensors export with the netron diagrams, the reload and the command-line inference — verifying every stage runs as the chapter shows it
+- [ ] 13.4 State the split discipline in the complete example — holdout, cross-validation and segmentation — verifying the chapter's claims are asserted by the corpus's tests
+- [ ] 13.5 Write the preprocessing and pipelines part, with a level-four subsection per algorithm showing a complete example, verifying every subsection cites a design record
+- [ ] 13.6 Write the supervised learning part, separated into classification and regression, with a level-four subsection per estimator, verifying every subsection shows the configuration spectrum
+- [ ] 13.7 Write the unsupervised learning part, separated into clustering and dimensionality reduction, with a level-four subsection per estimator, verifying every subsection cites a design record
+- [ ] 13.8 Write the training observability part — the OpenTelemetry spans and metrics, Jaeger and Loki in containers, podman and docker — verifying the container commands run as written
+- [ ] 13.9 Write the lazy loading part — eager against lazy, polars and datafusion, when each pays — verifying the memory claims are measured rather than asserted
+- [ ] 13.10 Write the export part — safetensors, ONNX, which to use when, the pipeline export and the netron diagrams — verifying every format claim matches the interop crate
+- [ ] 13.11 Write the inference part — the job batch, the Actix-web inference API and the observability of inference — verifying the API example compiles and answers
+- [ ] 13.12 Write the "choosing an estimator" chapter, adapted from scikit-learn's machine-learning map, verifying every estimator named exists in the repository
+- [ ] 13.13 Write the interoperability chapter with the binding links, verifying every link resolves
+- [ ] 13.14 Write the examples index — every example used in the book, linking to its gallery page and to the chapter that uses it — verifying the index and the chapters agree
+
+## 14. Search engine optimization
+
+- [ ] 14.1 Extend the post-build script with the per-page metadata — title, description, keywords, canonical URL, Open Graph and Twitter card — verifying every rendered page carries them
+- [ ] 14.2 Add the structured data of the chapter and its breadcrumb path to every page, verifying it validates and mirrors the summary's structure
+- [ ] 14.3 Regenerate the sitemap on every build and check the robots policy points at it, verifying every page appears exactly once
+- [ ] 14.4 Add the previous, next and table-of-contents links to every chapter, verifying the link graph reaches every page from the table of contents
+- [ ] 14.5 Write a description for every page that reads as a search result rather than as a repetition of the title, verifying each description is one or two sentences
+- [ ] 14.6 Verify every chapter that a reader can land on directly states what it covers and its prerequisites, verifying it can be followed on its own
+
+## 15. Article ecosystem
+
+- [ ] 15.1 Implement the article generator that exports each chapter into a Medium article and a LinkedIn article, verifying the output is deterministic and carries the code, the tables and the figures
+- [ ] 15.2 Give the Medium variant its own opening, title, subtitle and tags, verifying it reads as an essay rather than as a manual page
+- [ ] 15.3 Give the LinkedIn variant its own headline, its professional opening and its series position, verifying it links to the sibling articles and to the series index
+- [ ] 15.4 Add the back-links to every article — the canonical page of its chapter, the neighbouring chapters and the table of contents — verifying each link resolves
+- [ ] 15.5 State the origin of every article in its opening and verify the metadata suits each platform's search
+- [ ] 15.6 Publish the generated articles under `docs/articles/**` and wire the generation into the documentation workflow, verifying the build produces them and the official pages stay the source of truth
 
 ## Workflow follow-up
 

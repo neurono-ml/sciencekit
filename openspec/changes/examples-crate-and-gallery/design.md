@@ -313,6 +313,116 @@ rejected: the documentation then describes whatever the code happened to do, and
 multi-language port has no shared reference. (b) One giant spreadsheet of examples —
 rejected: it cannot express the ordered pipeline, and it cannot be reviewed as prose.
 
+### Decision 18 — The book returns to standard mdBook formatting
+
+The current book is a marketing site wearing a book's clothes: a hero block, stat
+counters, card grids, 1332 lines of custom CSS and raw HTML inside the markdown. It
+reads as a landing page, it is hard to search, and it is not printable.
+
+The book goes back to **standard mdBook formatting**:
+
+- The default theme does the work. The stylesheet keeps only what mdBook does not
+  provide: code-block sizing, the language tabs, the Mermaid and mathematics
+  containers, print rules and accessibility affordances.
+- The pages become **semantic markdown**: one level-one heading, a hierarchy that never
+  skips a level, and no HTML used to lay out content. A page must remain complete with
+  the stylesheet disabled — that is the test that the content, not the decoration,
+  carries the meaning.
+- The hero, the counters and the card grids are replaced by prose and by the default
+  mdBook structures.
+
+*Rationale.* The book is documentation for a library and the primary surface of the
+project's search presence. Custom chrome fights the renderer, breaks the print view,
+hurts accessibility and makes the markdown unreadable as source. The default theme is
+not a constraint — it is the well-tested baseline, and the visual identity comes from
+the content and the diagrams.
+
+*Alternatives considered.* (a) Keep the custom skin and fix it — rejected: the
+problem is the shape of the markup, not the styling. (b) A static site generator
+instead of mdBook — rejected: the book must stay a `mdbook build` away from the
+repository's conventions and its CI.
+
+### Decision 19 — The book is rewritten along one didactic path
+
+The path is the spine of the book, and every chapter belongs to exactly one part of it:
+
+```
+O que é o sciencekit?
+   └── why Rust, what the library already does, what the ecosystem offers
+Introduzindo um exemplo geral
+   └── arrays → polars → datafusion lazy → OTEL metrics → configurations
+       → pipeline → ONNX/Safetensors export → command-line inference
+Algoritmos
+   ├── preprocessamento e pipelines
+   ├── aprendizado supervisionado (classificação · regressão)
+   ├── aprendizado não supervisionado (clustering · decomposição)
+   ├── métricas OTEL e observabilidade de treinamento
+   ├── carregamento e lazy load
+   ├── exportação e salvamento
+   ├── inferência de modelos salvos (job batch · API · observabilidade)
+   ├── escolhendo o melhor estimador
+   └── interoperabilidade
+Exemplos
+   └── the index of every example the book uses
+```
+
+Every algorithm has a **level-four subsection**, and every algorithm subsection carries
+a *complete* example: feature engineering, feature selection, preprocessing and a
+pipeline wherever the algorithm admits them, plus the configuration spectrum worth
+comparing — never a bare API call.
+
+*Rationale.* A reader arrives at one algorithm, not at the library. The didactic path
+answers the two questions a book must answer in order — *what is this thing* and *how
+do I use it* — and the level-four subsections make every algorithm findable by search
+and by the table of contents.
+
+### Decision 20 — The search contract is explicit
+
+The book is the project's search presence, so its metadata is a contract, not an
+afterthought. The post-build script owns it:
+
+- Per page: a title, a description written for the search result (not a repetition of
+  the title), keywords, the canonical URL, the Open Graph and Twitter card
+  properties.
+- Per page: **structured data** describing the chapter and its breadcrumb path.
+- Per book: the sitemap, regenerated on every build, and a robots policy that permits
+  the pages and points at the sitemap.
+- Per chapter: links to the previous chapter, to the next chapter, to the table of
+  contents and to the examples it uses — so no page is orphaned and the link graph
+  mirrors the didactic path.
+
+*Rationale.* The metadata is generated, so it cannot drift from the content; and the
+breadcrumb data mirrors the summary's structure, so the structured data tells the
+engine the same story the page tells the reader.
+
+### Decision 21 — The articles are generated, not written twice
+
+Each chapter is exported into a Medium article and a LinkedIn article by the same
+pipeline that builds the book. The articles are **self-contained**: the explanation,
+the code, the tables and the figures travel with them. Each one links back to the
+canonical page of its chapter, to the neighbouring chapters and to the table of
+contents, and each one states its origin.
+
+The two platforms get different treatments of the same material:
+
+| | Medium | LinkedIn |
+|---|---|---|
+| Opening | the problem the chapter solves | the professional consequence of the subject |
+| Shape | a complete essay | a short, dense, skimmable piece |
+| Metadata | title, subtitle, tags | headline, opening hook, series position |
+| Ecosystem | the book's chapters as a series | the series index plus every sibling article |
+
+*Rationale.* Writing the articles by hand would triple the maintenance cost and let
+them drift from the book. Generating them keeps one source of truth — the chapter —
+while the platform adaptation happens in the generator, where it is explicit and
+testable. The back-link matters for both the reader and the platforms' own search:
+the article is the entry point, the book is the authority.
+
+*Alternatives considered.* (a) Publish the whole book as one Medium post — rejected:
+the platforms' discovery works per article, and a reader cannot share a chapter. (b)
+Hand-write the articles — rejected: drift and triple maintenance. (c) Publish only the
+code — rejected: the articles' value is the explanation.
+
 ### Decision 4 — The dataset surface is owned by the examples crate
 
 `crates/sciencekit_examples/src/datasets/` provides the `sklearn.datasets` surface the
