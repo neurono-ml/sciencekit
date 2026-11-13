@@ -15,7 +15,7 @@
 
 use sciencekit_common::{SKError, SKFloat};
 
-use super::config::SKLinearSvcLoss;
+use super::config::SKLinearSVCLoss;
 use super::design::SKLinearSvcDesignAccess;
 
 /// Result of a converged dual solve.
@@ -36,7 +36,7 @@ pub(crate) fn sk_solve_linear_svc_dual<F: SKFloat>(
     design: &(dyn SKLinearSvcDesignAccess<F> + Sync),
     labels: &[F],
     row_weights: &[F],
-    loss: SKLinearSvcLoss,
+    loss: SKLinearSVCLoss,
     regularization_c: F,
     tolerance: F,
     maximum_number_of_iterations: usize,
@@ -60,14 +60,14 @@ pub(crate) fn sk_solve_linear_svc_dual<F: SKFloat>(
                 return;
             }
             let diagonal_shift = match loss {
-                SKLinearSvcLoss::Hinge => F::zero(),
-                SKLinearSvcLoss::SquaredHinge => {
+                SKLinearSVCLoss::Hinge => F::zero(),
+                SKLinearSVCLoss::SquaredHinge => {
                     F::one() / ((F::one() + F::one()) * class_capacity)
                 }
             };
             let upper_bound = match loss {
-                SKLinearSvcLoss::Hinge => class_capacity,
-                SKLinearSvcLoss::SquaredHinge => F::infinity(),
+                SKLinearSVCLoss::Hinge => class_capacity,
+                SKLinearSVCLoss::SquaredHinge => F::infinity(),
             };
             let diagonal = design.row_norm_squared(row) + diagonal_shift;
             if diagonal <= F::zero() {
@@ -117,17 +117,20 @@ pub(crate) fn sk_solve_linear_svc_dual<F: SKFloat>(
     })
 }
 
-/// Recover the unpenalized intercept for the fitted coefficient vector.
+/// Re-optimize the intercept for the fitted coefficient vector.
 ///
 /// The dual solve treats the intercept as an augmented constant feature so one
-/// coordinate loop stays valid. The primal objective is flat in an unpenalized
-/// intercept, so after convergence the intercept is re-optimized by bisecting
-/// the derivative of the class-weighted loss along that single direction.
+/// coordinate loop stays valid; that also means the L2 term penalizes the
+/// intercept along with the weights. After convergence, the intercept is
+/// re-optimized for those fixed weights by bisecting the derivative of the
+/// class-weighted loss along that single direction. The polish removes the bias
+/// error for the dual's weights but cannot undo the regularization that shaped
+/// them.
 fn sk_recover_linear_svc_intercept<F: SKFloat>(
     design: &(dyn SKLinearSvcDesignAccess<F> + Sync),
     labels: &[F],
     row_weights: &[F],
-    loss: SKLinearSvcLoss,
+    loss: SKLinearSVCLoss,
     coefficients: &mut [F],
 ) -> F {
     let rows = design.number_of_rows();
@@ -156,8 +159,8 @@ fn sk_recover_linear_svc_intercept<F: SKFloat>(
                 accumulator
             } else {
                 let slope = match loss {
-                    SKLinearSvcLoss::Hinge => F::one(),
-                    SKLinearSvcLoss::SquaredHinge => (F::one() + F::one()) * residual,
+                    SKLinearSVCLoss::Hinge => F::one(),
+                    SKLinearSVCLoss::SquaredHinge => (F::one() + F::one()) * residual,
                 };
                 accumulator - row_weights[row] * labels[row] * slope
             }
