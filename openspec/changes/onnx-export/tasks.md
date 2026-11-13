@@ -16,7 +16,7 @@
 - [x] 2.1 Implement preprocessing exporters (scalers, encoders, imputers) with graph
   validity and prediction-parity tests; verify with
   `cargo test -p sciencekit_onnx export_preprocessing`.
-- [ ] 2.2 Implement linear/logistic exporters with MatMul/Add/link operators and f32/f64
+- [x] 2.2 Implement linear/logistic exporters with MatMul/Add/link operators and f32/f64
   parity tests; verify with `cargo test -p sciencekit_onnx export_linear`.
 - [ ] 2.3 Implement tree/forest/boosting exporters via ONNX-ML tree ensembles and parity
   tests; verify with `cargo test -p sciencekit_onnx export_tree`.
