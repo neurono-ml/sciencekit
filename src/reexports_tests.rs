@@ -226,3 +226,20 @@ fn allocator_selection_vocabulary_resolves() {
 fn the_math_prelude_module_is_addressable() {
     sized::<crate::math::prelude::SKFaerBackend>();
 }
+
+#[test]
+fn the_low_rank_adapter_api_resolves() {
+    sized::<crate::linear_model::SKLoraAdapter<f64>>();
+    sized::<crate::linear_model::SKLoraAdapterBuilder<f64>>();
+    sized::<crate::linear_model::SKLoraAdapterArtifact<f64>>();
+    sized::<crate::linear_model::SKLoraAdapterRegistry<f64>>();
+    sized::<crate::linear_model::SKLoraAttachedModel<f64>>();
+    sized::<crate::linear_model::SKLoraBaseModel<f64>>();
+    sized::<crate::linear_model::SKLoraMergedModel<f64>>();
+    sized::<crate::linear_model::SKLoraTargetModule>();
+    sized::<crate::linear_model::adapters::lora::SKLoraAdapter<f64>>();
+    let _ = crate::linear_model::SK_LORA_ESTIMATOR_NAME;
+    let _ = crate::linear_model::SK_LORA_FORMAT_VERSION;
+    let _ = crate::linear_model::sk_lora_a_tensor_name;
+    let _ = crate::linear_model::sk_lora_b_tensor_name;
+}
