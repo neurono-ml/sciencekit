@@ -45,6 +45,9 @@ pub struct SKNumpyMappableSource<F> {
 impl<F: SKFloat> SKNumpyMappableSource<F> {
     /// Open a `.npy` array, requiring a dtype that matches the model scalar.
     ///
+    /// The file must not be truncated or rewritten while the source is alive;
+    /// see the module-level file-stability contract for the failure mode.
+    ///
     /// # Errors
     /// Returns a structured error for a missing file, a malformed or truncated
     /// header, Fortran order, a non-little-endian dtype, a shape whose byte
@@ -58,6 +61,9 @@ impl<F: SKFloat> SKNumpyMappableSource<F> {
     ///
     /// This is the documented path for `int64` (and for any float dtype that
     /// differs from the model scalar): it materializes the matrix in memory.
+    ///
+    /// The file must not be truncated or rewritten while it is being mapped and
+    /// converted; see the module-level file-stability contract.
     ///
     /// # Errors
     /// Returns the same structured opening errors as [`Self::open`].

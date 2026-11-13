@@ -5,6 +5,22 @@
 //! re-exports their public items. Unsafe code is confined to the zero-copy
 //! view helpers, each of which documents and validates its alignment and
 //! lifetime preconditions.
+//!
+//! # File stability contract
+//!
+//! A mapped source reads directly from the operating system's mapping of the
+//! file for as long as the source — and any row view borrowed from it — is
+//! alive. The mapping is created read-only and sciencekit never writes to it,
+//! but no portable mechanism can stop *another* process (or safe code holding
+//! the same path) from truncating, rewriting or replacing the file meanwhile.
+//!
+//! The caller must therefore guarantee that the mapped file is not modified,
+//! truncated or replaced while the source is alive; open a private snapshot or
+//! copy when the file may change. Failure mode if the contract is broken:
+//! on Unix, reading a page of a file that was truncated underneath the mapping
+//! raises `SIGBUS`, and a concurrent rewrite yields torn or stale values. Both
+//! are process-level faults, not catchable Rust errors; this is why the
+//! contract is stated here rather than checked at runtime.
 
 mod alignment;
 #[cfg(feature = "arrow")]

@@ -37,6 +37,9 @@ impl<F: SKFloat> SKRawBinaryMappableSource<F> {
     /// The declared shape must match the file length exactly, the declared
     /// dtype must match the model scalar, and the data must be little-endian.
     ///
+    /// The file must not be truncated or rewritten while the source is alive;
+    /// see the module-level file-stability contract for the failure mode.
+    ///
     /// # Errors
     /// Returns a structured error for a missing file, denied permission, a
     /// non-little-endian declaration, a dtype the scalar cannot view, or a
