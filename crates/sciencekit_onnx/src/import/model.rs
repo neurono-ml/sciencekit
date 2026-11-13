@@ -75,12 +75,10 @@ pub(crate) fn validate(model: &SKOnnxModel) -> Result<(), SKOnnxImportError> {
 ///
 /// This runs before the model wrapper builds its own value-info vocabulary,
 /// which only knows the four element types the importer executes.
-fn reject_unsupported_element_types(model: &serde_onnx::ir::Model) -> Result<(), SKOnnxImportError> {
-    let value_types = model
-        .graph
-        .inputs
-        .iter()
-        .chain(model.graph.outputs.iter());
+fn reject_unsupported_element_types(
+    model: &serde_onnx::ir::Model,
+) -> Result<(), SKOnnxImportError> {
+    let value_types = model.graph.inputs.iter().chain(model.graph.outputs.iter());
     for info in value_types {
         let Some(ValueType::Tensor(tensor)) = info.value_type.as_ref() else {
             continue;

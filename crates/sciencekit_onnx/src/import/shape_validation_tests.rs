@@ -49,57 +49,36 @@ fn an_initializer_width_that_differs_from_the_declared_input_width_is_rejected()
 
 #[test]
 fn a_transpose_permutation_of_the_wrong_length_is_rejected() {
-    let error = run_operator(SKOnnxNode::new(
-        "Transpose",
-        vec!["X".to_string()],
-        vec!["out".to_string()],
-    )
-    .attribute_integers("perm", vec![0]));
-    assert!(matches!(
-        error,
-        SKOnnxImportError::InvalidOperator { .. }
-    ));
+    let error = run_operator(
+        SKOnnxNode::new("Transpose", vec!["X".to_string()], vec!["out".to_string()])
+            .attribute_integers("perm", vec![0]),
+    );
+    assert!(matches!(error, SKOnnxImportError::InvalidOperator { .. }));
 }
 
 #[test]
 fn a_transpose_permutation_with_repeated_axes_is_rejected() {
-    let error = run_operator(SKOnnxNode::new(
-        "Transpose",
-        vec!["X".to_string()],
-        vec!["out".to_string()],
-    )
-    .attribute_integers("perm", vec![0, 0]));
-    assert!(matches!(
-        error,
-        SKOnnxImportError::InvalidOperator { .. }
-    ));
+    let error = run_operator(
+        SKOnnxNode::new("Transpose", vec!["X".to_string()], vec!["out".to_string()])
+            .attribute_integers("perm", vec![0, 0]),
+    );
+    assert!(matches!(error, SKOnnxImportError::InvalidOperator { .. }));
 }
 
 #[test]
 fn squeezing_the_same_axis_twice_is_rejected() {
     let error = run_operator(
-        SKOnnxNode::new(
-            "Squeeze",
-            vec!["X".to_string()],
-            vec!["out".to_string()],
-        )
-        .attribute_integers("axes", vec![1, 1]),
+        SKOnnxNode::new("Squeeze", vec!["X".to_string()], vec!["out".to_string()])
+            .attribute_integers("axes", vec![1, 1]),
     );
-    assert!(matches!(
-        error,
-        SKOnnxImportError::InvalidOperator { .. }
-    ));
+    assert!(matches!(error, SKOnnxImportError::InvalidOperator { .. }));
 }
 
 #[test]
 fn a_reshape_whose_dimensions_overflow_is_rejected() {
     let error = run_operator(
-        SKOnnxNode::new(
-            "Reshape",
-            vec!["X".to_string()],
-            vec!["out".to_string()],
-        )
-        .attribute_integers("shape", vec![i64::MAX, 4]),
+        SKOnnxNode::new("Reshape", vec!["X".to_string()], vec!["out".to_string()])
+            .attribute_integers("shape", vec![i64::MAX, 4]),
     );
     assert!(matches!(
         error,

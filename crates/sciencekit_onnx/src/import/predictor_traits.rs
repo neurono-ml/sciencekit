@@ -42,11 +42,12 @@ impl<F: SKFloat> SKClassifierPredictor<F> for SKOnnxPredictor<F> {
                     ));
                 }
             };
-            let value = outputs
-                .get(labels)
-                .ok_or_else(|| SKOnnxImportError::UnsupportedOutput {
-                    detail: format!("the label output `{labels}` was not produced"),
-                })?;
+            let value =
+                outputs
+                    .get(labels)
+                    .ok_or_else(|| SKOnnxImportError::UnsupportedOutput {
+                        detail: format!("the label output `{labels}` was not produced"),
+                    })?;
             Ok(Array1::from_iter(value.to_i64_values()))
         })
     }

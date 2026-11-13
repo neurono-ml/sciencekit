@@ -84,7 +84,11 @@ impl core::fmt::Display for SKOnnxImportError {
                 write!(f, "the bytes are not a valid ONNX model: {detail}")
             }
             Self::GraphCycle { path } => {
-                write!(f, "the graph data dependencies form a cycle: {}", path.join(" -> "))
+                write!(
+                    f,
+                    "the graph data dependencies form a cycle: {}",
+                    path.join(" -> ")
+                )
             }
             Self::UnsupportedOpset {
                 domain,

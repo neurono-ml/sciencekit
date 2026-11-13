@@ -4,9 +4,6 @@
 //! This is a **pure dispatcher** module: `mod.rs` only declares submodules and
 //! re-exports their public items; every implementation lives in its own file.
 
-
-
-
 #[cfg(test)]
 mod batch_tests;
 #[cfg(test)]
@@ -39,7 +36,6 @@ mod shape_validation_tests;
 mod test_support;
 #[cfg(test)]
 mod validation_tests;
-
 
 mod attributes;
 mod decode;

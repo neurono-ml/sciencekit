@@ -82,9 +82,7 @@ fn binary_rbf_svc_round_trips_labels_and_decision_values() {
         .fit(features.view(), labels.as_slice())
         .expect("the classifier fits");
     let expected_labels = model.predict_labels(features.view()).expect("labels");
-    let expected_decisions = model
-        .decision_function(features.view())
-        .expect("decisions");
+    let expected_decisions = model.decision_function(features.view()).expect("decisions");
     let imported = import::<f64>(&model.to_onnx().expect("the classifier exports"));
     assert_eq!(
         imported
@@ -118,9 +116,7 @@ fn multiclass_rbf_svc_round_trips_labels_and_decision_values() {
         .fit(features.view(), labels.as_slice())
         .expect("the classifier fits");
     let expected_labels = model.predict_labels(features.view()).expect("labels");
-    let expected_decisions = model
-        .decision_function(features.view())
-        .expect("decisions");
+    let expected_decisions = model.decision_function(features.view()).expect("decisions");
     let imported = import::<f64>(&model.to_onnx().expect("the classifier exports"));
     assert_eq!(
         imported
@@ -307,7 +303,10 @@ fn histogram_gradient_boosting_cannot_round_trip_because_export_rejects_boosting
     match error {
         SKError::UnsupportedOperation { operation, reason } => {
             assert_eq!(operation, "onnx_export");
-            assert!(reason.contains("SKHistGradientBoostingRegressor"), "{reason}");
+            assert!(
+                reason.contains("SKHistGradientBoostingRegressor"),
+                "{reason}"
+            );
         }
         other => panic!("expected an unsupported-operation error, got {other}"),
     }

@@ -64,7 +64,10 @@ fn a_duplicated_node_output_is_rejected_before_inference() {
     let error = SKOnnxModel::from_bytes(bytes).expect_err("a duplicate output must be rejected");
     match error {
         SKOnnxImportError::InvalidModel { detail } => {
-            assert!(detail.contains("out"), "the diagnosis must name the value: {detail}");
+            assert!(
+                detail.contains("out"),
+                "the diagnosis must name the value: {detail}"
+            );
         }
         other => panic!("expected an invalid-model error, got {other}"),
     }

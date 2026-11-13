@@ -66,12 +66,8 @@ fn the_pinned_decoder_rejects_an_empty_string_attribute() {
                 .expect("a valid input"),
         )
         .add_node(
-            SKOnnxNode::new(
-                "Custom",
-                vec!["X".to_string()],
-                vec!["out".to_string()],
-            )
-            .attribute_string("label", ""),
+            SKOnnxNode::new("Custom", vec!["X".to_string()], vec!["out".to_string()])
+                .attribute_string("label", ""),
         )
         .add_output(
             SKOnnxValueInfo::floating_matrix("out", SKOnnxTensorDType::Double, 2)
@@ -97,12 +93,8 @@ fn flatten_model(axis: i64) -> Vec<u8> {
                 .expect("a valid input"),
         )
         .add_node(
-            SKOnnxNode::new(
-                "Flatten",
-                vec!["X".to_string()],
-                vec!["out".to_string()],
-            )
-            .attribute_integer("axis", axis),
+            SKOnnxNode::new("Flatten", vec!["X".to_string()], vec!["out".to_string()])
+                .attribute_integer("axis", axis),
         )
         .add_output(
             SKOnnxValueInfo::floating_matrix("out", SKOnnxTensorDType::Double, 2)

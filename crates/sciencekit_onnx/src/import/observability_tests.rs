@@ -33,10 +33,7 @@ impl<S: Subscriber> Layer<S> for SpanFieldRecorder {
     fn on_new_span(&self, attributes: &Attributes<'_>, _id: &Id, _context: Context<'_, S>) {
         let mut visitor = DebugFieldVisitor::default();
         attributes.values().record(&mut visitor);
-        self.spans
-            .lock()
-            .expect("span lock")
-            .push(visitor.0);
+        self.spans.lock().expect("span lock").push(visitor.0);
     }
 }
 
@@ -61,7 +58,11 @@ fn the_configured_backend_reaches_the_prediction_span() {
     let spans = recorder.spans.lock().expect("span lock");
     let fields = spans
         .iter()
-        .find(|fields| fields.get("operation").is_some_and(|value| value.contains("predict")))
+        .find(|fields| {
+            fields
+                .get("operation")
+                .is_some_and(|value| value.contains("predict"))
+        })
         .expect("a predict span must be recorded");
     assert!(
         fields

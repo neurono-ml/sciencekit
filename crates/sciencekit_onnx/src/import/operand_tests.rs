@@ -70,8 +70,5 @@ fn an_empty_operand_slot_is_rejected_instead_of_being_looked_up() {
     let error = predictor
         .predict(array![[1.0, 2.0]].view())
         .expect_err("the empty operand must be rejected");
-    assert!(matches!(
-        error,
-        SKOnnxImportError::InvalidOperator { .. }
-    ));
+    assert!(matches!(error, SKOnnxImportError::InvalidOperator { .. }));
 }
