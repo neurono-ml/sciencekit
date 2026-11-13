@@ -7,7 +7,7 @@
 //!
 //! # Getting started
 //!
-//! ```text
+//! ```
 //! use ndarray::array;
 //! use sciencekit::prelude::*;
 //!
@@ -52,6 +52,13 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+#[cfg(test)]
+mod export_coverage_tests;
+#[cfg(test)]
+mod prelude_tests;
+#[cfg(test)]
+mod reexports_tests;
+
 pub mod accelerators;
 pub mod cluster;
 pub mod decomposition;
@@ -66,11 +73,11 @@ pub mod model_selection;
 pub mod neighbors;
 pub mod outlier;
 pub mod pipeline;
+pub mod prelude;
 pub mod preprocessing;
 pub mod svm;
 pub mod telemetry;
 pub mod tree;
-
 // The shared vocabulary is re-exported at the root: a user reaching for
 // `sciencekit::SKError` or `sciencekit::SKDataView` should not have to know
 // which sub-crate owns the type.
@@ -119,8 +126,3 @@ pub use sciencekit_common::scorer_traits::{
 };
 pub use sciencekit_common::sk_float::SKFloat;
 pub use sciencekit_common::target_view::SKTargetView;
-
-#[cfg(test)]
-mod export_coverage_tests;
-#[cfg(test)]
-mod reexports_tests;
