@@ -37,6 +37,9 @@ pub struct SKArrowIpcMappableSource<F> {
 impl<F: SKFloat> SKArrowIpcMappableSource<F> {
     /// Open and index an Arrow IPC file without decoding its data batches.
     ///
+    /// The file must not be truncated or rewritten while the source is alive;
+    /// see the module-level file-stability contract for the failure mode.
+    ///
     /// # Errors
     /// Returns a structured error for a missing file, a malformed header, a
     /// truncated batch, or a column dtype other than `Float32`/`Float64`.
@@ -181,8 +184,10 @@ impl<F: SKFloat> SKMappableSource<F> for SKArrowIpcMappableSource<F> {
                 ),
             })?;
         let end = start + number_of_columns;
-        Ok(ArrayView1::from_shape(number_of_columns, &values[start..end])
-            .expect("a row slice always reshapes to a one-dimensional view"))
+        Ok(
+            ArrayView1::from_shape(number_of_columns, &values[start..end])
+                .expect("a row slice always reshapes to a one-dimensional view"),
+        )
     }
 }
 
