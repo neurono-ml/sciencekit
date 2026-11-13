@@ -4,7 +4,7 @@ use crate::graph::SKOnnxModel;
 use crate::native::error::SKOnnxNativeError;
 
 use super::super::initializers::{SKOnnxConstant, constant};
-use super::super::validation::{sk_dtype_mismatch, sk_require_floating, sk_shape_mismatch};
+use super::super::validation::{sk_element_type_mismatch, sk_require_floating, sk_shape_mismatch};
 use super::shared::invalid;
 
 /// Operators an affine graph may use beside the mapped ones.
@@ -92,7 +92,7 @@ fn sk_validate_feature_input(
         .data_type
         .unwrap_or(crate::graph::SKOnnxTensorDType::Double);
     if input.element_type() != weight_type {
-        return Err(sk_dtype_mismatch(
+        return Err(sk_element_type_mismatch(
             input.name(),
             weight_type,
             input.element_type(),

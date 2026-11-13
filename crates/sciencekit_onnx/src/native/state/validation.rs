@@ -23,7 +23,7 @@ pub(crate) fn sk_shape_mismatch(
 }
 
 /// A typed dtype rejection raised while mapping an ONNX graph.
-pub(crate) fn sk_dtype_mismatch(
+pub(crate) fn sk_element_type_mismatch(
     tensor: &str,
     expected: SKOnnxTensorDType,
     found: SKOnnxTensorDType,
@@ -43,7 +43,7 @@ pub(crate) fn sk_require_floating(
     if constant.is_floating() {
         return Ok(());
     }
-    Err(sk_dtype_mismatch(
+    Err(sk_element_type_mismatch(
         name,
         SKOnnxTensorDType::Double,
         constant.data_type.unwrap_or(SKOnnxTensorDType::Int64),
