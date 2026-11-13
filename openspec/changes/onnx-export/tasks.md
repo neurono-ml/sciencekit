@@ -34,9 +34,9 @@
 
 ## 4. Validation, acceptance and review
 
-- [ ] 4.1 Load exported graphs with `tract-onnx 0.22` and compare predictions on fixtures;
+- [x] 4.1 Load exported graphs with `tract-onnx 0.22` and compare predictions on fixtures;
   verify with `cargo test -p sciencekit_onnx onnx_runtime`.
-- [ ] 4.2 Add metadata, dtype, large/small model and concurrent-export tests; verify with
+- [x] 4.2 Add metadata, dtype, large/small model and concurrent-export tests; verify with
   `cargo test -p sciencekit_onnx`.
 - [ ] 4.3 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
   warnings` and `cargo test --workspace`; fix every failure before pushing.
