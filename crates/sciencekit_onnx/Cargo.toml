@@ -1,0 +1,28 @@
+[package]
+name = "sciencekit_onnx"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+rust-version = "1.85"
+description = "ONNX export for sciencekit: translate a fitted model's neutral state into a valid ONNX graph."
+repository = "https://github.com/neurono-ml/sciencekit"
+
+[dependencies]
+sciencekit_common = { path = "../sciencekit_common", version = "0.1.0" }
+prost = "0.14"
+
+[dev-dependencies]
+ndarray = { workspace = true }
+sciencekit_cluster = { path = "../sciencekit_cluster" }
+sciencekit_decomposition = { path = "../sciencekit_decomposition" }
+sciencekit_ensemble = { path = "../sciencekit_ensemble" }
+sciencekit_impute = { path = "../sciencekit_impute" }
+sciencekit_linear_model = { path = "../sciencekit_linear_model" }
+sciencekit_neighbors = { path = "../sciencekit_neighbors" }
+sciencekit_outlier = { path = "../sciencekit_outlier" }
+sciencekit_pipeline = { path = "../sciencekit_pipeline" }
+sciencekit_preprocessing = { path = "../sciencekit_preprocessing" }
+sciencekit_svm = { path = "../sciencekit_svm" }
+sciencekit_tree = { path = "../sciencekit_tree" }
+serde_json = "1"
+tempfile = "3"
