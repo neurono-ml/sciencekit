@@ -53,6 +53,12 @@ pub(crate) fn sk_solve_linear_svc_dual<F: SKFloat>(
         let mut maximum_projected_gradient = F::zero();
         (0..rows).for_each(|row| {
             let class_capacity = regularization_c * row_weights[row];
+            if class_capacity <= F::zero() {
+                // A zero class weight removes the row from the objective: its
+                // dual coordinate is pinned at zero, so its gradient never
+                // reaches the tolerance and must not enter the stopping rule.
+                return;
+            }
             let diagonal_shift = match loss {
                 SKLinearSvcLoss::Hinge => F::zero(),
                 SKLinearSvcLoss::SquaredHinge => {

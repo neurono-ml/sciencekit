@@ -4,7 +4,7 @@
 use ndarray::{Array1, array};
 use sciencekit_common::{SKBuilder, SKClassifierPredictor, SKSupervisedFit};
 
-use super::SKLinearSVC;
+use super::{SKLinearSVC, SKLinearSvcLoss};
 use crate::svc::SKClassWeight;
 
 fn imbalanced_fixture() -> (ndarray::Array2<f64>, Array1<i64>) {
@@ -134,4 +134,36 @@ fn label_map_weights_resolve_against_the_canonical_class_table() {
         label_map.heads()[0].intercept(),
         explicit.heads()[0].intercept()
     );
+}
+
+#[test]
+fn explicit_zero_weight_class_is_ignored_without_breaking_convergence() {
+    // `Explicit` accepts a zero weight (the validator only requires finite,
+    // non-negative values with at least one positive entry). A zero-weighted
+    // class contributes nothing to the objective, so the solver must drop its
+    // rows instead of reporting their permanently violating gradient.
+    let features = array![[-2.0_f64], [-1.0], [-0.5], [0.2], [0.4], [0.8]];
+    let labels = array![0_i64, 0, 0, 0, 1, 1];
+
+    [SKLinearSvcLoss::Hinge, SKLinearSvcLoss::SquaredHinge]
+        .into_iter()
+        .for_each(|loss| {
+            let model = SKLinearSVC::<f64>::build()
+                .loss(loss)
+                .class_weight(SKClassWeight::Explicit(vec![0.0, 1.0]))
+                .build()
+                .unwrap()
+                .fit(features.view(), labels.view())
+                .unwrap_or_else(|error| {
+                    panic!("zero-weight class must not break the {loss:?} fit: {error:?}")
+                });
+
+            assert!(
+                model.heads()[0]
+                    .coefficients()
+                    .iter()
+                    .all(|value| value.is_finite())
+            );
+            assert!(model.heads()[0].intercept().is_finite());
+        });
 }
