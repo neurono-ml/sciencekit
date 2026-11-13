@@ -32,6 +32,7 @@ sciencekit_preprocessing = { path = "../sciencekit_preprocessing" }
 sciencekit_svm = { path = "../sciencekit_svm" }
 sciencekit_tree = { path = "../sciencekit_tree" }
 serde_json = "1"
+sprs = { workspace = true }
 tempfile = "3"
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }

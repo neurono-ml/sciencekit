@@ -6,6 +6,7 @@
 
 
 
+
 #[cfg(test)]
 mod batch_tests;
 #[cfg(test)]
@@ -21,13 +22,15 @@ mod interpreter_tests;
 #[cfg(test)]
 mod model_tests;
 #[cfg(test)]
-mod operand_tests;
-#[cfg(test)]
 mod observability_tests;
+#[cfg(test)]
+mod operand_tests;
 #[cfg(test)]
 mod operators_tests;
 #[cfg(test)]
 mod predictor_tests;
+#[cfg(test)]
+mod round_trip_families_tests;
 #[cfg(test)]
 mod round_trip_tests;
 #[cfg(test)]
@@ -36,6 +39,7 @@ mod shape_validation_tests;
 mod test_support;
 #[cfg(test)]
 mod validation_tests;
+
 
 mod attributes;
 mod decode;
