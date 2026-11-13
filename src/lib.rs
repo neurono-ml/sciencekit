@@ -114,6 +114,12 @@ pub mod tree;
 // The shared vocabulary is re-exported at the root: a user reaching for
 // `sciencekit::SKError` or `sciencekit::SKDataView` should not have to know
 // which sub-crate owns the type.
+// The allocator selection vocabulary travels with the crate root for the same
+// reason as the rest of the shared vocabulary, and the module stays addressable
+// because its features (`allocator-jemalloc`, `allocator-mimalloc`) are the
+// switch that makes the choice real.
+pub use sciencekit_common::allocator;
+pub use sciencekit_common::allocator::{SKAllocatorKind, sk_allocator_kind};
 pub use sciencekit_common::batching::{
     SKDataBatch, SKFeatureBlock, SKIntoFeatureBlock, SKLazySource, SKMappableSource,
     SKReopenableSource, SKSourceProvider, SKSupervisedBatch, SKSupervisedLazySource,

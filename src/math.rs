@@ -34,6 +34,8 @@ pub use sciencekit_math::pairwise::{
     sk_sparse_manhattan_distance_matrix, sk_sparse_squared_euclidean_distance_matrix,
     sk_squared_euclidean_distance_matrix,
 };
+pub use sciencekit_math::prelude;
+
 pub use sciencekit_math::solvers;
 pub use sciencekit_math::solvers::{
     SKCsrNormalEquationOperator, SKLinearOperator, sk_conjugate_gradient,

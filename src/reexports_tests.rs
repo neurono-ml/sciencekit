@@ -127,3 +127,15 @@ fn colliding_names_live_in_their_family_modules() {
     sized::<crate::SKDeviceInfo>();
     sized::<crate::accelerators::SKDeviceInfo>();
 }
+
+#[test]
+fn allocator_selection_vocabulary_resolves() {
+    sized::<crate::SKAllocatorKind>();
+    sized::<crate::allocator::SKAllocatorKind>();
+    let _ = crate::sk_allocator_kind();
+}
+
+#[test]
+fn the_math_prelude_module_is_addressable() {
+    sized::<crate::math::prelude::SKFaerBackend>();
+}
