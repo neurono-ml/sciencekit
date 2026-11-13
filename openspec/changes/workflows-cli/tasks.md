@@ -11,7 +11,7 @@
 
 ## 2. Workflow schema and config
 
-- [ ] 2.1 Implement the versioned workflow schema (JSON/TOML) and unknown-field/version
+- [x] 2.1 Implement the versioned workflow schema (JSON/TOML) and unknown-field/version
   validation; verify with `cargo test -p sciencekit_cli workflow_schema`.
 - [ ] 2.2 Implement configuration precedence (flags > env > file > defaults) and dry-run
   output; verify with `cargo test -p sciencekit_cli config`.
