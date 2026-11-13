@@ -27,7 +27,7 @@
 - [x] 3.2 Implement export/import for `SKLasso`, `SKElasticNet` and
   `SKLogisticRegression` (per-alpha solutions, class tables, solver metadata); verify with
   `cargo test -p sciencekit_linear_model export`.
-- [ ] 3.3 Implement export/import for `SKSGDClassifier`/`SKSGDRegressor` (averaged iterate,
+- [x] 3.3 Implement export/import for `SKSGDClassifier`/`SKSGDRegressor` (averaged iterate,
   schedule/penalty metadata, class table); verify with
   `cargo test -p sciencekit_linear_model export`.
 
