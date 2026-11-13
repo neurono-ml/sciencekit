@@ -38,9 +38,9 @@
   verify with `cargo test -p sciencekit_onnx onnx_runtime`.
 - [x] 4.2 Add metadata, dtype, large/small model and concurrent-export tests; verify with
   `cargo test -p sciencekit_onnx`.
-- [ ] 4.3 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
+- [x] 4.3 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
   warnings` and `cargo test --workspace`; fix every failure before pushing.
-- [ ] 4.4 Update `CHANGELOG.md` and the companion mdBook chapter (including a
+- [x] 4.4 Update `CHANGELOG.md` and the companion mdBook chapter (including a
   `Development Explained` chapter on ONNX graphs, opsets and operator mapping); verify with
   `mdbook build docs`.
 - [ ] 4.5 Independent review by a separate agent validating every scenario in
