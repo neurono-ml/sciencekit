@@ -10,6 +10,7 @@ mod classifier_fit;
 mod classifier_model;
 mod classifier_predict;
 pub(super) mod config;
+mod export;
 pub(super) mod importances;
 mod loss_kind;
 mod regressor;
@@ -45,3 +46,6 @@ mod gb_regressor_tests;
 mod gb_representation_tests;
 #[cfg(test)]
 mod gb_validation_tests;
+
+#[cfg(test)]
+mod export_tests;

@@ -18,6 +18,7 @@
 #![warn(missing_docs)]
 
 mod bootstrap;
+mod export_support;
 
 pub mod bagging;
 pub mod boosting;
