@@ -119,3 +119,33 @@ fn native_retrain_sgd_regressor_accepts_more_data() {
             .all(|value| value.is_finite())
     );
 }
+
+#[test]
+fn native_retrain_guidance_explains_why_a_family_is_inference_only() {
+    let model = test_models::decision_tree_regressor();
+    let bytes = sk_export_model_safetensors(&model).unwrap();
+    let mut imported = sk_import_native_model_from_bytes::<f64>(&bytes).unwrap();
+    let extra = array![1.0_f64, 2.0];
+    let message = imported
+        .partial_fit(
+            extra_features().view(),
+            SKTargetView::Continuous(extra.view()),
+        )
+        .unwrap_err()
+        .to_string();
+    assert!(message.contains("partial_fit"));
+    assert!(message.contains("inference-only"));
+}
+
+#[test]
+fn native_retrain_coverage_marks_inference_only_families() {
+    for row in super::sk_native_import_coverage() {
+        if !row.retrainable {
+            assert!(
+                !row.note.is_empty(),
+                "{} must explain why it is inference-only",
+                row.estimator_name
+            );
+        }
+    }
+}
