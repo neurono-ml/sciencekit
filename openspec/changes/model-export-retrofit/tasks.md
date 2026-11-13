@@ -21,7 +21,7 @@
 
 ## 3. Linear models
 
-- [ ] 3.1 Implement export/import for `SKLinearRegression` and `SKRidge` (coefficients,
+- [x] 3.1 Implement export/import for `SKLinearRegression` and `SKRidge` (coefficients,
   intercepts, alpha dimension, rank/singular values); verify with
   `cargo test -p sciencekit_linear_model export`.
 - [ ] 3.2 Implement export/import for `SKLasso`, `SKElasticNet` and
