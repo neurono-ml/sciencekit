@@ -150,7 +150,12 @@ Both descents share the same discipline:
   the reported loss is monotone even when the data has a difficult scale.
 
 The training verdict is observable through `training_loss`, which returns the
-same number the optimizer minimizes. The test
+same number the optimizer minimizes. It validates its inputs exactly like `fit`
+does before touching the loss: a feature count that disagrees with the base, a
+target vector whose length disagrees with the rows, and a non-finite feature or
+target all return a typed error instead of panicking or silently truncating
+(`training_loss_rejects_a_feature_count_that_disagrees_with_the_base`,
+`training_loss_rejects_a_target_count_that_disagrees_with_the_rows`). The test
 `fitting_reduces_the_training_loss_below_the_frozen_base` compares the loss before
 and after the fit on a shifted relationship, and
 `fitting_reduces_the_logistic_loss_below_the_frozen_base` does the same for a
@@ -217,9 +222,11 @@ base through `attach`.
 The validation tests stay on the trust boundary: a tampered `B` shape returns
 `ShapeMismatch` (`a_tampered_factor_shape_is_rejected_without_a_panic`), a state
 without `A` returns `InvalidHyperparameter` (`a_missing_factor_tensor_is_rejected`),
-and a round trip reproduces the original predictions exactly
-(`a_round_trip_preserves_predictions_exactly`). No untrusted length or shape is
-ever unwrapped.
+a stored factor carrying `NaN` or infinity returns `NonFiniteValue`
+(`a_non_finite_stored_factor_is_rejected_on_import`), and a round trip
+reproduces the original predictions exactly
+(`a_round_trip_preserves_predictions_exactly`). No untrusted length, shape or
+value is ever unwrapped.
 
 `SKLoraAdapterRegistry` addresses several adapters by identifier. Inserting the
 same identifier twice is an error naming the identifier
