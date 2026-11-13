@@ -459,6 +459,26 @@ Every implementation validates, at minimum:
 2. Execution under **concurrency**;
 3. **Model export** and **metric generation**.
 
+### 8.8. Deferred histogram-boosting work
+
+The histogram gradient boosters (`SKHistGradientBoostingClassifier` and
+`SKHistGradientBoostingRegressor`) ship with an in-memory, column-major binned store. Three
+pieces of their surface are explicitly deferred to Wave 7 and are not part of the current
+contract:
+
+- **`memmap2` streaming store:** binned data will be persisted and memory-mapped, replacing
+  the in-memory store behind the same binning interface so out-of-core fitting does not
+  change the public estimators.
+- **Monotonic and interaction constraints:** per-feature monotonic directions and allowed
+  feature-interaction groups are not implemented.
+- **Persistence and export:** the histogram boosters do not yet implement the standard
+  export trait; Safetensors, JSON debug and ONNX export land with the Wave 7 export
+  retrofit.
+
+Quantile and Poisson losses, `partial_fit` and GPU acceleration of histogram accumulation
+share the same deferral. None of these omissions changes the validated CPU behaviour of the
+current estimators.
+
 ---
 
 ## 9. Errors and Observability

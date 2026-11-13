@@ -22,6 +22,7 @@ mod bootstrap;
 pub mod bagging;
 pub mod boosting;
 pub mod gradient_boosting;
+pub mod histogram_boosting;
 pub mod random_forest;
 
 pub use bagging::{
@@ -34,6 +35,12 @@ pub use gradient_boosting::{
     SKGradientBoostingClassifierBuilder, SKGradientBoostingClassifierModel,
     SKGradientBoostingRegressionLoss, SKGradientBoostingRegressor,
     SKGradientBoostingRegressorBuilder, SKGradientBoostingRegressorModel,
+};
+pub use histogram_boosting::{
+    SKHistGradientBoostingClassifier, SKHistGradientBoostingClassifierBuilder,
+    SKHistGradientBoostingClassifierModel, SKHistGradientBoostingRegressionLoss,
+    SKHistGradientBoostingRegressor, SKHistGradientBoostingRegressorBuilder,
+    SKHistGradientBoostingRegressorModel,
 };
 pub use random_forest::{
     SKRandomForestClassifier, SKRandomForestClassifierBuilder, SKRandomForestClassifierModel,

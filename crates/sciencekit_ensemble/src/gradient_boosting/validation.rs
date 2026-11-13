@@ -9,7 +9,7 @@ use sciencekit_common::{
 
 /// Validate that a fit feature view is non-empty, has at least one column and
 /// uses dense or CSR storage.
-pub(super) fn sk_fit_dimensions<F>(
+pub(crate) fn sk_fit_dimensions<F>(
     features: &SKDataView<'_, F>,
 ) -> Result<(usize, usize), SKError> {
     let (rows, columns) = sk_extract_dimensions(features)?;
@@ -24,7 +24,7 @@ pub(super) fn sk_fit_dimensions<F>(
 
 /// Validate that a prediction feature view is non-empty, matches
 /// `expected_columns`, and uses dense or CSR storage.
-pub(super) fn sk_predict_dimensions<F>(
+pub(crate) fn sk_predict_dimensions<F>(
     features: &SKDataView<'_, F>,
     expected_columns: usize,
 ) -> Result<(usize, usize), SKError> {
@@ -65,7 +65,7 @@ fn sk_extract_dimensions<F>(features: &SKDataView<'_, F>) -> Result<(usize, usiz
 }
 
 /// Reject `OutOfCoreStreaming` on in-memory stage-wise gradient boosting.
-pub(super) fn sk_reject_streaming_mode(execution_intent: SKExecutionMode) -> Result<(), SKError> {
+pub(crate) fn sk_reject_streaming_mode(execution_intent: SKExecutionMode) -> Result<(), SKError> {
     if execution_intent == SKExecutionMode::OutOfCoreStreaming {
         return Err(SKError::ExecutionModeIncompatible {
             mode: "out-of-core-streaming",
@@ -77,7 +77,7 @@ pub(super) fn sk_reject_streaming_mode(execution_intent: SKExecutionMode) -> Res
 
 /// Reject any non-finite cell in a dense or CSR view at its flattened row-major
 /// coordinate.
-pub(super) fn sk_validate_finite_features<F: SKFloat>(
+pub(crate) fn sk_validate_finite_features<F: SKFloat>(
     features: &SKDataView<'_, F>,
 ) -> Result<(), SKError> {
     match features {
@@ -118,7 +118,7 @@ pub(super) fn sk_validate_finite_features<F: SKFloat>(
 }
 
 /// Canonicalize nominal or integer classification targets.
-pub(super) fn sk_canonicalize_targets<F: SKFloat>(
+pub(crate) fn sk_canonicalize_targets<F: SKFloat>(
     targets: &SKTargetView<'_, F>,
 ) -> Result<(Vec<usize>, SKLabelTable), SKError> {
     match targets {
@@ -141,7 +141,7 @@ pub(super) fn sk_canonicalize_targets<F: SKFloat>(
 
 /// Evaluate `row_count` prediction rows sequentially or in parallel according
 /// to `execution_intent`.
-pub(super) fn sk_map_prediction_rows<T, F>(
+pub(crate) fn sk_map_prediction_rows<T, F>(
     row_count: usize,
     tree_count: usize,
     execution_intent: SKExecutionMode,
@@ -164,7 +164,7 @@ where
 
 /// Select the largest class probability, breaking exact ties toward the
 /// smallest canonical class index.
-pub(super) fn sk_select_canonical_class<F: SKFloat>(probabilities: &[F]) -> usize {
+pub(crate) fn sk_select_canonical_class<F: SKFloat>(probabilities: &[F]) -> usize {
     probabilities
         .iter()
         .enumerate()

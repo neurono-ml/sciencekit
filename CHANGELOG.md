@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `sciencekit_ensemble` gains histogram gradient boosting (spec
+  `histogram-gradient-boosting`): `SKHistGradientBoostingClassifier<F>`,
+  `SKHistGradientBoostingClassifierBuilder<F>`,
+  `SKHistGradientBoostingClassifierModel<F>`, `SKHistGradientBoostingRegressor<F>`,
+  `SKHistGradientBoostingRegressorBuilder<F>`,
+  `SKHistGradientBoostingRegressorModel<F>` and
+  `SKHistGradientBoostingRegressionLoss` (`SquaredError`, `AbsoluteError`). Fit
+  derives at most 255 quantile bins per numeric feature with a dedicated missing
+  bin (`SKNumericBinning`, `SKBinnedDataset`, `SKFeatureBinning`), accumulates
+  gradient/Hessian histograms in parallel across features
+  (`sk_accumulate_histogram`), finds numeric and categorical splits with the
+  Newton gain (`sk_scan_numeric_feature`, `sk_scan_categorical_feature`,
+  `sk_split_gain`), subtracts the smaller child histogram from its parent
+  (`sk_subtract_histogram`) and grows trees leaf-wise under `maximum_leaf_nodes`
+  and `minimum_samples_leaf` (`sk_grow_histogram_tree`, `SKHistogramTree`,
+  `SKHistogramNode`). Categorical partitions use `bitvec` membership masks with a
+  documented unknown-category direction, missing values learn a `default_left`
+  direction per split, and prediction bins dense or CSR queries without
+  densification. Early stopping uses a seeded validation fraction and
+  `n_iter_no_change`, and every operation records the configured backend.
 - Feature-gated tabular sources in `sciencekit_interop` (spec
   `tabular-sources`): the materialized `SKTabularDataset<F>` with a projected
   `SKTabularSchema`, a dense or sparse `SKFeatureBlock` and an owned
