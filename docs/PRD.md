@@ -459,6 +459,26 @@ Every implementation validates, at minimum:
 2. Execution under **concurrency**;
 3. **Model export** and **metric generation**.
 
+### 8.8. Deferred histogram-boosting work
+
+The histogram gradient boosters (`SKHistGradientBoostingClassifier` and
+`SKHistGradientBoostingRegressor`) ship with an in-memory, column-major binned store. Three
+pieces of their surface are explicitly deferred to Wave 7 and are not part of the current
+contract:
+
+- **`memmap2` streaming store:** binned data will be persisted and memory-mapped, replacing
+  the in-memory store behind the same binning interface so out-of-core fitting does not
+  change the public estimators.
+- **Monotonic and interaction constraints:** per-feature monotonic directions and allowed
+  feature-interaction groups are not implemented.
+- **Persistence and export:** the histogram boosters do not yet implement the standard
+  export trait; Safetensors, JSON debug and ONNX export land with the Wave 7 export
+  retrofit.
+
+Quantile and Poisson losses, `partial_fit` and GPU acceleration of histogram accumulation
+share the same deferral. None of these omissions changes the validated CPU behaviour of the
+current estimators.
+
 ---
 
 ## 9. Errors and Observability
@@ -565,6 +585,7 @@ Order faithful to the scikit-learn mapping (from the handoff), respecting depend
    - `memmap2`-backed tree indexes are **out of scope here** and delivered by Phase 7 (interop), like all persistence and export.
 9. `sciencekit_svm`: SKSVC, SKSVR, SKLinearSVC.
    - `SKSVC`/`SKSVR` keep representation parity through the sparse-aware kernel and `SKLinearSVC` through the sparse linear path; neither needs the dense-only exception. Precomputed Gram matrices are the sole dense-only input wrapper (`UnsupportedRepresentation` on sparse).
+   - `SKLinearSVC` fits the L2-regularized linear SVC dual for the L1-hinge and L2-squared-hinge losses by LIBLINEAR-style dual coordinate descent, with one-vs-rest multiclass heads fitted in parallel, class-weighted box capacities and a dense/borrowed-CSR design that scans stored entries only. Its unpenalized intercept is recovered after the dual solve. It deliberately exposes **no probability model**: `predict_probabilities` returns `UnsupportedOperation`, because margins are not calibrated probabilities, and callers compose it with a calibrated classifier instead. `Crammer-Singer` multiclass, `memmap2`-backed coefficient spilling and model persistence/export are **out of scope here** and delivered by Phase 7 (interop), as for `SKSVC`/`SKSVR`.
    - `memmap2`-backed kernel caches, model persistence and model export are **out of scope here** and delivered by Phase 7 (the interop wave), not by the `svm-svc-svr` algorithm change; SMO retains an in-memory bounded LRU kernel-row cache (`cache_size` in MiB) and support-vector-only model state (`SKOwnedFeatureBlock`).
 
 ### Phase 4 — Trees and ensembles

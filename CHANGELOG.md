@@ -22,6 +22,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and an honest `SKFallbackReason` with structured errors when the feature is
   off, no platform exists or the device cannot be opened. The default build
   pulls in no OpenCL dependency and calls no OpenCL symbol.
+- `sciencekit_ensemble` gains histogram gradient boosting (spec
+  `histogram-gradient-boosting`): `SKHistGradientBoostingClassifier<F>`,
+  `SKHistGradientBoostingClassifierBuilder<F>`,
+  `SKHistGradientBoostingClassifierModel<F>`, `SKHistGradientBoostingRegressor<F>`,
+  `SKHistGradientBoostingRegressorBuilder<F>`,
+  `SKHistGradientBoostingRegressorModel<F>` and
+  `SKHistGradientBoostingRegressionLoss` (`SquaredError`, `AbsoluteError`). Fit
+  derives at most 255 quantile bins per numeric feature with a dedicated missing
+  bin (`SKNumericBinning`, `SKBinnedDataset`, `SKFeatureBinning`), accumulates
+  gradient/Hessian histograms in parallel across features
+  (`sk_accumulate_histogram`), finds numeric and categorical splits with the
+  Newton gain (`sk_scan_numeric_feature`, `sk_scan_categorical_feature`,
+  `sk_split_gain`), subtracts the smaller child histogram from its parent
+  (`sk_subtract_histogram`) and grows trees leaf-wise under `maximum_leaf_nodes`
+  and `minimum_samples_leaf` (`sk_grow_histogram_tree`, `SKHistogramTree`,
+  `SKHistogramNode`). Categorical partitions use `bitvec` membership masks with a
+  documented unknown-category direction, missing values learn a `default_left`
+  direction per split, and prediction bins dense or CSR queries without
+  densification. Early stopping uses a seeded validation fraction and
+  `n_iter_no_change`, and every operation records the configured backend.
 - Feature-gated tabular sources in `sciencekit_interop` (spec
   `tabular-sources`): the materialized `SKTabularDataset<F>` with a projected
   `SKTabularSchema`, a dense or sparse `SKFeatureBlock` and an owned
@@ -84,6 +104,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`SKPlattParameters`, `sk_fit_platt_sigmoid`, `sk_calibrate_binary_platt`,
   `sk_couple_pairwise_probabilities`,
   `sk_couple_pairwise_probabilities_with_budget`).
+- `SKLinearSVC<F>` in `sciencekit_svm` (spec
+  `linear-support-vector-classifier`): a builder-only L2-regularized linear
+  support-vector classifier (`C`, `loss`, `class_weight`, `include_intercept`,
+  `tolerance`, `maximum_number_of_iterations`, `backend`, `execution_mode`)
+  backed by a LIBLINEAR-style dual coordinate-descent solver for the L1-hinge
+  and L2-squared-hinge losses. It exposes `SKLinearSVCLoss` (`Hinge`,
+  `SquaredHinge`), `SKLinearSVCHead<F>` and `SKLinearSVCModel<F>` with
+  `decision_function`, deterministic `predict_labels` and an explicit
+  `UnsupportedOperation` from `predict_probabilities` (no calibrated
+  probability model). Fitting runs one-vs-rest heads in parallel with
+  deterministic order, accepts dense or borrowed CSR designs without
+  densifying, honours `None`/`Balanced`/explicit class weights, and reports
+  `NotConverged { iterations }` when the iteration budget is exhausted.
 - Stage-wise gradient boosting in `sciencekit_ensemble` (spec `gradient-boosting`):
   builder-only `SKGradientBoostingClassifier<F>` / `SKGradientBoostingRegressor<F>` with
   `number_of_estimators` (default `100`), `learning_rate` (default `0.1`), `maximum_depth`
