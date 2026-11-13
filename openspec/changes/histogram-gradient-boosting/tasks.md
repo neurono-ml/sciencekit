@@ -73,7 +73,7 @@
 
 - [x] 7.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under `Unreleased →
   Added` for the histogram boosters, binning, categorical partitions and missing routing.
-- [ ] 7.2 Companion documentation change on its own `docs/*` branch (merged into
+- [x] 7.2 Companion documentation change on its own `docs/*` branch (merged into
   `docs/documentations`): add the histogram-boosting chapter, register it in `SUMMARY.md`,
   add a `Development Explained` chapter covering binning, histograms, leaf-wise growth,
   categorical bitmasks and missing routing, update `maintaining.md`, and verify with
