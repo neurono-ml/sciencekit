@@ -22,7 +22,7 @@
 
 - [x] 3.1 Implement CSV/Parquet dataset adapters and clear missing-feature errors; verify
   with feature-gated fixtures.
-- [ ] 3.2 Implement Safetensors/JSON/ONNX model and prediction adapters; verify with
+- [x] 3.2 Implement Safetensors/JSON/ONNX model and prediction adapters; verify with
   round-trip fixtures.
 - [ ] 3.3 Integrate `sciencekit_telemetry`, flushing on every exit path; verify with an
   in-memory endpoint test.
