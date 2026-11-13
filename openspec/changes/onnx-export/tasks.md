@@ -13,7 +13,7 @@
 
 ## 2. Core exporters
 
-- [ ] 2.1 Implement preprocessing exporters (scalers, encoders, imputers) with graph
+- [x] 2.1 Implement preprocessing exporters (scalers, encoders, imputers) with graph
   validity and prediction-parity tests; verify with
   `cargo test -p sciencekit_onnx export_preprocessing`.
 - [ ] 2.2 Implement linear/logistic exporters with MatMul/Add/link operators and f32/f64
