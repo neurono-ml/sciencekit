@@ -174,8 +174,8 @@ Two properties matter beyond correctness. First, **determinism**: the multiplier
 zero, coordinates are visited in index order, and no randomness enters, so repeated fits on
 the same data are bit-identical. Second, **memory**: the solver holds an $O(n)$ dual vector
 and an $O(p)$ coefficient vector. For the acceptance fixture of $20\,000$ rows and
-$10\,000$ features that is $160$ KiB of coefficients, not the $1.6$ GiB a dense design would
-need.
+$10\,000$ features that is about $234$ KiB of solver state, not the $1.6$ GB a dense design
+would need.
 
 ### The convergence tail is honest
 
@@ -234,7 +234,7 @@ fn row_dot(&self, row_index: usize, coefficients: &[F]) -> F {
 The companion test
 `sparse_fit_scans_stored_entries_only_on_a_matrix_too_wide_to_densify` in
 `linear_svc_representation_tests.rs` makes the guarantee observable: it fits $40$ rows by
-$4\,000\,000$ columns — $1.28$ GiB if densified, a few stored entries per row in reality —
+$4\,000\,000$ columns — $1.28$ GB if densified, a few stored entries per row in reality —
 and recovers every training label. If any code path tried to densify, the test would run out
 of memory instead of passing.
 
