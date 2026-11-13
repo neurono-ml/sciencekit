@@ -129,7 +129,16 @@ sized::<crate::pipeline::SKFeatureBlock<f64>>();
 
 The second pair is the safe case: `sciencekit_common` owns `SKFeatureBlock`,
 and the pipeline crate deliberately re-exports that same type rather than
-inventing a block of its own. Two doors, one room.
+inventing a block of its own. Two doors, one room. The same test module proves
+the identity for the device vocabulary, `SKOutlierLabel`, `SKKernel` and the
+tree/ensemble split vocabulary: each helper function only compiles when both
+paths name one type.
+
+A third shared name is quieter but recorded: `SKSplitter` is a split-selection
+enum in `tree` and the train/test partitioning trait in `model_selection`. One
+is a value, the other a contract, and neither is in the prelude, so the bare
+name never reaches a program unqualified — but the family module is always the
+safe door.
 
 ## The build → fit → predict walk-through
 
@@ -195,10 +204,22 @@ opencl = [
     "sciencekit_gpu_opencl/gpu-opencl",
     "sciencekit_gpu/opencl",
 ]
-telemetry = ["dep:sciencekit_telemetry"]
+telemetry = ["dep:sciencekit_telemetry", "sciencekit_telemetry/telemetry"]
+otlp-grpc = ["dep:sciencekit_telemetry", "sciencekit_telemetry/otlp-grpc"]
 onnx = ["dep:sciencekit_onnx"]
 parquet = ["sciencekit_interop/parquet"]
+allocator-jemalloc = ["sciencekit_common/allocator-jemalloc"]
 ```
+
+Forwarding is not only about dependencies: `telemetry` also forwards the
+sub-crate's own `telemetry` feature, because enabling the crate alone would
+leave every OTLP transport compiled out and the pipeline builder would answer
+"enable feature `otlp-grpc` or `telemetry`" forever. The separate
+`otlp-grpc`/`otlp-http` switches exist for a build that wants one exporter
+stack; `allocator-jemalloc`/`-mimalloc`, `observability-export` and the three
+`compression-*` codecs are forwarded the same way. Three sub-crate features
+are deliberately *not* forwarded: `blas-backend` needs a system BLAS at link
+time, and `gpu-cuda`/`gpu-rocm` have no backend to select yet.
 
 The `dep:` syntax means "enable this optional dependency without also creating
 a public feature of the same name" — the umbrella's feature names are its own
@@ -228,10 +249,13 @@ the test is the part that stays with the code.
 - **Making the umbrella a version line of its own.** It inherits
   `version.workspace = true`, so a release bumps one line and every re-export
   points at the matching sub-crate version.
-- **Adding a `lora-adapters` module now.** That capability is being implemented
-  in a parallel change. The umbrella will re-export it once it lands, as a
-  follow-up; depending on an unfinished crate would make this change's build
-  nondeterministic.
+- **Dropping a family module that grew later.** The low-rank adapters landed in
+  `sciencekit_linear_model` after the umbrella's first draft, and an explicit
+  item list would have hidden them. The `linear_model` family re-exports
+  `adapters` and its types, and `the_low_rank_adapter_api_resolves` in
+  `src/reexports_tests.rs` fails the build if that door closes again. The same
+  test-backed discipline covers any future family: extend the module, add a
+  compile test, then trust the list.
 
 ## What the reader should take away
 
