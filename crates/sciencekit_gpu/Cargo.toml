@@ -1,0 +1,36 @@
+[package]
+name = "sciencekit_gpu"
+version.workspace = true
+edition = "2024"
+license = "Apache-2.0"
+rust-version = "1.85"
+description = "Device-compute contracts for sciencekit: device capabilities, buffers, kernel dispatch, the deterministic CPU fallback and the OpenCL backend."
+repository = "https://github.com/neurono-ml/sciencekit"
+
+[dependencies]
+sciencekit_common = { path = "../sciencekit_common", version = "0.8.0" }
+ndarray = "0.17"
+tracing = { workspace = true }
+# OpenCL 3.0 through the ICD loader, loaded dynamically at runtime. The exact
+# pin is required: 0.12.1+ uses `Vec::len` in a const context and breaks the
+# workspace MSRV (Rust 1.85), while 0.12.0 already resolves to cl3 0.13, whose
+# dynamic loader opens `libOpenCL.so.1` — the file an ICD runtime actually
+# installs, without the development symlink.
+opencl3 = { version = "=0.12.0", optional = true }
+num-traits = "0.2"
+
+[dev-dependencies]
+tracing-subscriber = { workspace = true }
+
+[features]
+default = []
+# Enable the OpenCL device backend. Off by default: the crate only defines the
+# contracts and pulls in no GPU runtime.
+opencl = ["dep:opencl3"]
+# Historical alias kept so a `gpu-opencl` build keeps enabling the OpenCL
+# backend; the canonical feature is `opencl`.
+gpu-opencl = ["opencl"]
+# Enable the CUDA device backend. Off by default.
+gpu-cuda = []
+# Enable the ROCm/HIP device backend. Off by default.
+gpu-rocm = []

@@ -8,23 +8,56 @@
 
 [package]
 name = "sciencekit"
-version = "0.1.0"
-edition = "2024"
-license = "Apache-2.0"
-rust-version = "1.85"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
 description = "Machine Learning library in Rust reimplementing all of scikit-learn — extreme performance, zero-copy and native out-of-core."
-repository = "https://github.com/neurono-ml/sciencekit"
+repository.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+# The language bindings live in their own repositories
+# (`neurono-ml/sciencekit-go` and `neurono-ml/sciencekit-lua`); only the Rust
+# core and the shared C ABI (`sciencekit_ffi`) stay here.
+exclude = [".devcontainer/"]
 
 [workspace]
 resolver = "3"
 members = [
+    "crates/sciencekit_cluster",
     "crates/sciencekit_common",
+    "crates/sciencekit_decomposition",
+    "crates/sciencekit_ensemble",
+    "crates/sciencekit_ffi",
+    "crates/sciencekit_gpu",
+    "crates/sciencekit_gpu_opencl",
     "crates/sciencekit_impute",
+    "crates/sciencekit_interop",
     "crates/sciencekit_linear_model",
     "crates/sciencekit_math",
     "crates/sciencekit_metrics",
+    "crates/sciencekit_model_selection",
+    "crates/sciencekit_neighbors",
+    "crates/sciencekit_onnx",
+    "crates/sciencekit_outlier",
+    "crates/sciencekit_pipeline",
+    "crates/sciencekit_svm",
+    "crates/sciencekit_telemetry",
+    "crates/sciencekit_tree",
     "crates/sciencekit_preprocessing",
 ]
+
+# Single source of truth for the workspace version and shared package metadata.
+# Every crate inherits `version` (and the umbrella crate inherits the rest), so a
+# release bumps one line and internal dependencies always resolve to it.
+[workspace.package]
+version = "0.8.0"
+edition = "2024"
+license = "Apache-2.0"
+rust-version = "1.85"
+repository = "https://github.com/neurono-ml/sciencekit"
+homepage = "https://neurono-ml.github.io/sciencekit/"
+documentation = "https://docs.rs/sciencekit"
 
 # Optimize dependencies in dev/test builds. The pure-Rust linear algebra
 # (`faer`) is dramatically slower unoptimized — an SVD that takes milliseconds
@@ -40,6 +73,9 @@ opt-level = 2
 tracing = "0.1"
 tracing-opentelemetry = { version = "0.33", default-features = false }
 opentelemetry = "0.32"
+opentelemetry_sdk = "0.32"
+opentelemetry-otlp = { version = "0.32", default-features = false }
+opentelemetry-appender-tracing = "0.32"
 tracing-subscriber = "0.3"
 tikv-jemallocator = "0.5"
 mimalloc = "0.1"
@@ -53,6 +89,32 @@ rayon = "1"
 # preprocessing encoders and the sparse imputation path build on it.
 sprs = "0.11"
 
+# Compact bit membership masks for histogram-boosting categorical splits
+# (spec `histogram-gradient-boosting`).
+bitvec = "1.1"
+
 # Online quantile sketch for the robust scaler (spec `robust-scaler`) and for the
 # streaming median of the imputer (spec `simple-imputer`).
 tdigest = "1.0"
+
+# Directed acyclic graph structure for runtime feature pipelines (spec
+# `pipeline-graph`).
+petgraph = "0.7"
+# Workspace-wide export coverage test: the umbrella dev-depends on every model
+# crate so one test can assert the shared contract is implemented everywhere.
+[dev-dependencies]
+ndarray = { workspace = true }
+sprs = { workspace = true }
+sciencekit_common = { path = "crates/sciencekit_common", version = "0.8.0" }
+sciencekit_preprocessing = { path = "crates/sciencekit_preprocessing", version = "0.8.0" }
+sciencekit_impute = { path = "crates/sciencekit_impute", version = "0.8.0" }
+sciencekit_linear_model = { path = "crates/sciencekit_linear_model", version = "0.8.0" }
+sciencekit_neighbors = { path = "crates/sciencekit_neighbors", version = "0.8.0" }
+sciencekit_svm = { path = "crates/sciencekit_svm", version = "0.8.0" }
+sciencekit_tree = { path = "crates/sciencekit_tree", version = "0.8.0" }
+sciencekit_ensemble = { path = "crates/sciencekit_ensemble", version = "0.8.0" }
+sciencekit_cluster = { path = "crates/sciencekit_cluster", version = "0.8.0" }
+sciencekit_decomposition = { path = "crates/sciencekit_decomposition", version = "0.8.0" }
+sciencekit_outlier = { path = "crates/sciencekit_outlier", version = "0.8.0" }
+sciencekit_pipeline = { path = "crates/sciencekit_pipeline", version = "0.8.0" }
+sciencekit_model_selection = { path = "crates/sciencekit_model_selection", version = "0.8.0" }

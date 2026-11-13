@@ -1,0 +1,20 @@
+[package]
+name = "sciencekit_gpu_opencl"
+version.workspace = true
+edition = "2024"
+license = "Apache-2.0"
+rust-version = "1.85"
+description = "OpenCL 3.0 device backend for sciencekit: discovery, buffers, runtime-compiled kernels, explicit transfers and honest CPU fallback."
+repository = "https://github.com/neurono-ml/sciencekit"
+
+[dependencies]
+sciencekit_gpu = { path = "../sciencekit_gpu", version = "0.8.0", optional = true }
+
+[dev-dependencies]
+ndarray = "0.17"
+
+[features]
+default = []
+# Enable the OpenCL backend. Off by default; the crate then exposes nothing and
+# pulls in no dependency at all.
+gpu-opencl = ["dep:sciencekit_gpu", "sciencekit_gpu/opencl"]

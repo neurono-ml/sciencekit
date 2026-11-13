@@ -2,7 +2,7 @@
 
 use ndarray::Array1;
 use sciencekit_common::execution::SKStreamDecision;
-use sciencekit_common::{SKError, SKFloat, SKLabelTable, SKSupervisedBatch};
+use sciencekit_common::{SKError, SKFloat, SKLabelTable, SKRandomGenerator, SKSupervisedBatch};
 
 use super::super::super::coefficients::SKSGDClassifierCoefficients;
 use super::super::super::targets::{
@@ -13,7 +13,7 @@ use super::super::state::sk_create_states;
 use crate::class_weight::{SKClassWeight, sk_expand_class_weights};
 use crate::sgd::config::SKSGDConfig;
 use crate::sgd::objective::SKEpochObjective;
-use crate::sgd::{SKLearningState, SKRandomGenerator, SKSGDClassifierLoss, sk_run_block_epoch};
+use crate::sgd::{SKLearningState, SKSGDClassifierLoss, sk_run_block_epoch};
 
 /// The mutable state shared by every pass of the fit.
 pub(super) struct SKClassifierStreamState<'a, F> {

@@ -1,0 +1,20 @@
+[package]
+name = "sciencekit_cluster"
+version.workspace = true
+edition = "2024"
+license = "Apache-2.0"
+rust-version = "1.85"
+description = "Clustering estimators for sciencekit: KMeans, MiniBatchKMeans and DBSCAN."
+repository = "https://github.com/neurono-ml/sciencekit"
+
+[dependencies]
+sciencekit_common = { path = "../sciencekit_common", version = "0.8.0" }
+sciencekit_math = { path = "../sciencekit_math", version = "0.8.0" }
+sciencekit_neighbors = { path = "../sciencekit_neighbors", version = "0.8.0" }
+ndarray = { workspace = true }
+rayon = { workspace = true }
+sprs = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+sciencekit_metrics = { path = "../sciencekit_metrics", version = "0.8.0" }

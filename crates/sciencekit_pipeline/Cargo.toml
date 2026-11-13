@@ -1,0 +1,22 @@
+[package]
+name = "sciencekit_pipeline"
+version.workspace = true
+edition = "2024"
+license = "Apache-2.0"
+rust-version = "1.85"
+description = "Compile-time typed linear pipelines and validated runtime DAG pipelines for sciencekit estimators."
+repository = "https://github.com/neurono-ml/sciencekit"
+
+[dependencies]
+sciencekit_common = { path = "../sciencekit_common", version = "0.8.0" }
+
+ndarray = { workspace = true }
+petgraph = { workspace = true }
+sprs = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+sciencekit_impute = { path = "../sciencekit_impute", version = "0.8.0" }
+sciencekit_linear_model = { path = "../sciencekit_linear_model", version = "0.8.0" }
+sciencekit_metrics = { path = "../sciencekit_metrics", version = "0.8.0" }
+sciencekit_preprocessing = { path = "../sciencekit_preprocessing", version = "0.8.0" }

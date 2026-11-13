@@ -195,3 +195,95 @@ fn an_f32_fit_predicts() {
         0.05,
     );
 }
+
+#[test]
+fn the_shared_generator_reproduces_the_sgd_epoch_order() {
+    // Cross-crate guarantee (spec `deterministic-randomness`): the shared
+    // generator seeded with the estimator's seed yields exactly the visiting
+    // order the SGD fit applies, so one seeded epoch replays bit-for-bit.
+    use sciencekit_common::SKRandomGenerator;
+
+    use crate::sgd::config::SKSGDConfig;
+    use crate::sgd::{sk_regressor_loss_adapter, sk_run_dense_epoch};
+    use crate::sgd_regressor::fitting::{sk_create_state, sk_reported_parts};
+
+    let seed = 11;
+    let (features, targets) = regression_design();
+    let model = SKSGDRegressor::<f64>::build()
+        .alpha(0.0)
+        .maximum_number_of_iterations(1)
+        .random_seed(seed)
+        .convergence_policy(SKConvergencePolicy::Permissive)
+        .build()
+        .unwrap()
+        .fit(features.view(), targets.view())
+        .unwrap();
+
+    let config = SKSGDConfig::<f64> {
+        alpha: 0.0,
+        learning_rate: SKSGDLearningRate::InverseScaling,
+        maximum_number_of_iterations: 1,
+        random_seed: seed,
+        convergence_policy: SKConvergencePolicy::Permissive,
+        ..SKSGDConfig::default()
+    };
+    let loss = sk_regressor_loss_adapter(SKSGDRegressorLoss::SquaredError, 0.0);
+    let mut state = sk_create_state(
+        &config,
+        SKSGDRegressorLoss::SquaredError,
+        0.0,
+        None,
+        features.ncols(),
+        targets.as_slice().unwrap(),
+    )
+    .unwrap();
+    let order = SKRandomGenerator::new(seed).shuffled_indices(features.nrows());
+    let weights = vec![1.0; features.nrows()];
+    sk_run_dense_epoch(
+        &mut state,
+        features.view(),
+        targets.view(),
+        &weights,
+        &loss,
+        &config,
+        &order,
+    )
+    .unwrap();
+    let (coefficients, intercept) = sk_reported_parts(&state, features.ncols());
+    assert_eq!(
+        model.coefficients().as_slice().unwrap(),
+        coefficients.as_slice().unwrap()
+    );
+    assert_eq!(model.intercept(), intercept);
+}
+
+#[test]
+fn the_fit_result_is_thread_count_invariant() {
+    // The seeded fit must not depend on the worker count (spec
+    // `deterministic-randomness`, scenario "Thread count does not change the
+    // result").
+    let (features, targets) = regression_design();
+    let fit_with_threads = |threads: usize| {
+        let pool = rayon::ThreadPoolBuilder::new()
+            .num_threads(threads)
+            .build()
+            .unwrap();
+        pool.install(|| {
+            SKSGDRegressor::<f64>::build()
+                .random_seed(11)
+                .maximum_number_of_iterations(10)
+                .convergence_policy(SKConvergencePolicy::Permissive)
+                .build()
+                .unwrap()
+                .fit(features.view(), targets.view())
+                .unwrap()
+        })
+    };
+    let single_threaded = fit_with_threads(1);
+    let multi_threaded = fit_with_threads(4);
+    assert_eq!(
+        single_threaded.coefficients(),
+        multi_threaded.coefficients()
+    );
+    assert_eq!(single_threaded.intercept(), multi_threaded.intercept());
+}

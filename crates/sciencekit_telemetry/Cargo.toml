@@ -1,0 +1,51 @@
+[package]
+name = "sciencekit_telemetry"
+version.workspace = true
+edition = "2024"
+license = "Apache-2.0"
+rust-version = "1.85"
+description = "Opt-in OpenTelemetry trace, log and metric export pipelines and lifecycle for sciencekit."
+repository = "https://github.com/neurono-ml/sciencekit"
+
+[dependencies]
+sciencekit_common = { path = "../sciencekit_common", version = "0.8.0" }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true, features = ["registry"] }
+tracing-opentelemetry = { workspace = true }
+opentelemetry = { workspace = true, features = ["trace", "metrics", "logs"] }
+opentelemetry_sdk = { workspace = true, features = ["trace", "metrics", "logs"] }
+opentelemetry-appender-tracing = { workspace = true }
+opentelemetry-otlp = { workspace = true, optional = true }
+http = { version = "1", optional = true }
+tokio = { version = "=1.53.1", features = ["rt"], optional = true }
+
+[dev-dependencies]
+opentelemetry_sdk = { workspace = true, features = ["trace", "metrics", "logs", "testing"] }
+ndarray = { workspace = true }
+sprs = { workspace = true }
+sciencekit_preprocessing = { path = "../sciencekit_preprocessing", version = "0.8.0" }
+sciencekit_metrics = { path = "../sciencekit_metrics", version = "0.8.0" }
+
+[features]
+default = []
+# Export traces, logs and metrics over OTLP/gRPC (tonic). Off by default.
+otlp-grpc = [
+    "dep:opentelemetry-otlp",
+    "dep:http",
+    "dep:tokio",
+    "opentelemetry-otlp/grpc-tonic",
+    "opentelemetry-otlp/trace",
+    "opentelemetry-otlp/metrics",
+    "opentelemetry-otlp/logs",
+]
+# Export traces, logs and metrics over OTLP/HTTP protobuf. Off by default.
+otlp-http = [
+    "dep:opentelemetry-otlp",
+    "opentelemetry-otlp/http-proto",
+    "opentelemetry-otlp/reqwest-blocking-client",
+    "opentelemetry-otlp/trace",
+    "opentelemetry-otlp/metrics",
+    "opentelemetry-otlp/logs",
+]
+# Convenience umbrella enabling both OTLP gRPC and HTTP transports.
+telemetry = ["otlp-grpc", "otlp-http"]

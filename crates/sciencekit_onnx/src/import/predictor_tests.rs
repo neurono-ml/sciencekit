@@ -1,0 +1,60 @@
+//! Regression and classifier predictor behaviour.
+
+use ndarray::array;
+use sciencekit_common::SKRegressorPredictor;
+
+use super::SKOnnxImportError;
+use super::SKOnnxPredictor;
+use super::test_support::affine_regressor_model;
+
+#[test]
+fn affine_regressor_matches_the_closed_form() {
+    let predictor = SKOnnxPredictor::<f64>::builder()
+        .model(affine_regressor_model())
+        .build()
+        .expect("the regressor model builds");
+    let features = array![[1.0, 2.0], [0.0, 0.0]];
+    let prediction = predictor.predict(features.view()).expect("inference runs");
+    assert!((prediction[0] - 0.5).abs() < 1e-12);
+    assert!((prediction[1] - 0.5).abs() < 1e-12);
+}
+
+#[test]
+fn feature_width_mismatch_is_rejected_before_inference() {
+    let predictor = SKOnnxPredictor::<f64>::builder()
+        .model(affine_regressor_model())
+        .build()
+        .expect("the regressor model builds");
+    let error = predictor
+        .predict(array![[1.0, 2.0, 3.0]].view())
+        .expect_err("must reject");
+    assert!(matches!(error, SKOnnxImportError::ShapeMismatch { .. }));
+}
+
+#[test]
+fn non_finite_input_is_rejected() {
+    let predictor = SKOnnxPredictor::<f64>::builder()
+        .model(affine_regressor_model())
+        .build()
+        .expect("the regressor model builds");
+    let error = predictor
+        .predict(array![[f64::NAN, 0.0]].view())
+        .expect_err("must reject");
+    assert!(matches!(
+        error,
+        SKOnnxImportError::Central(sciencekit_common::SKError::NonFiniteValue { .. })
+    ));
+}
+
+#[test]
+fn f64_predictor_explicitly_converts_to_an_f32_model_input() {
+    let predictor = SKOnnxPredictor::<f64>::builder()
+        .model(super::test_support::identity_model_f32())
+        .build()
+        .expect("the model builds");
+    let features = array![[1.0_f64, 2.0]];
+    let outputs = predictor
+        .predict_arrays(features.view())
+        .expect("inference runs");
+    assert_eq!(outputs["out"].shape(), &[1, 2]);
+}

@@ -1,11 +1,15 @@
 [package]
 name = "sciencekit_linear_model"
-version = "0.1.0"
+version.workspace = true
 edition = "2024"
+license = "Apache-2.0"
+rust-version = "1.85"
+description = "Linear, regularized, logistic and stochastic-gradient models for sciencekit."
+repository = "https://github.com/neurono-ml/sciencekit"
 
 [dependencies]
-sciencekit_common = { path = "../sciencekit_common" }
-sciencekit_math = { path = "../sciencekit_math" }
+sciencekit_common = { path = "../sciencekit_common", version = "0.8.0" }
+sciencekit_math = { path = "../sciencekit_math", version = "0.8.0" }
 
 ndarray = { workspace = true }
 rayon = { workspace = true }

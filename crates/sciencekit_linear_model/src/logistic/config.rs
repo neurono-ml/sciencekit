@@ -71,6 +71,11 @@ pub(crate) struct SKLogisticConfig<F> {
     pub(crate) include_intercept: bool,
     /// Whether the optimizer is seeded from a supplied solution.
     pub(crate) warm_start: bool,
+    /// The seed of every stochastic choice in the fit (default `0`).
+    ///
+    /// Only the SAGA solver draws randomness; every component derives its own
+    /// stream from this seed, so the result never depends on thread scheduling.
+    pub(crate) random_seed: u64,
 }
 
 /// Validate the numeric logistic hyperparameters: the regularization strength,

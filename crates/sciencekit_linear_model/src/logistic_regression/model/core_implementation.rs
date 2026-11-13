@@ -112,6 +112,11 @@ impl<F: SKFloat> SKLogisticRegressionModel<F> {
         self.config.include_intercept
     }
 
+    /// The seed the fit derived every stochastic choice from.
+    pub fn random_seed(&self) -> u64 {
+        self.config.random_seed
+    }
+
     /// The number of features the model was fitted on.
     pub fn feature_count(&self) -> usize {
         self.coefficients.ncols()
@@ -131,5 +136,15 @@ impl<F: SKFloat> SKLogisticRegressionModel<F> {
     /// The error for a prediction whose column count disagrees with the fit.
     pub(crate) fn feature_mismatch(&self, rows: usize, columns: usize) -> SKError {
         SKError::shape_mismatch_2d(rows, self.feature_count(), rows, columns)
+    }
+
+    /// A clone of this model carrying a replacement coefficient block.
+    ///
+    /// Used by the adapter merge: the intercepts, class table, strategy,
+    /// configuration and retained design are preserved.
+    pub(crate) fn with_coefficients(&self, coefficients: Array2<F>) -> Self {
+        let mut merged = self.clone();
+        merged.coefficients = coefficients;
+        merged
     }
 }

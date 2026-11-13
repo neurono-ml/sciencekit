@@ -46,7 +46,11 @@ Each heavy operation SHALL resolve its own plan from the stored intent and that 
 - **THEN** prediction's plan differs from fit's plan, reflecting the new context without manual reconfiguration
 
 ### Requirement: Size-aware parallelism resolution
-Resolution SHALL derive the plan's `parallelism` from the mode, the size of the work unit, the available cores and the documented per-kernel grain — not unconditionally from the core count: the work unit is the whole dataset for in-memory modes, one batch for streaming, and an arbitrary shard for memory-mapped access; `parallelism` SHALL be capped at `unit_size / grain` (rounded up), capped by the core count, and SHALL be exactly one when the machine is single-core or the unit is below one grain.
+Resolution SHALL derive the plan's `parallelism` from the mode, the size of the work unit, the available cores and the documented per-kernel grain — not unconditionally from the core count; `parallelism` SHALL be capped at `unit_size / grain` (rounded up), capped by the core count, and SHALL be exactly one when the machine is single-core or the unit is below one grain.
+
+#### Scenario: The work unit follows the access pattern
+- **WHEN** a plan is resolved for an in-memory mode, a streaming mode or a memory-mapped random-access mode
+- **THEN** the work unit is the whole dataset, one batch and an arbitrary shard respectively
 
 #### Scenario: Small dataset resolves sequential
 - **WHEN** an in-memory operation resolves over a context whose dataset size yields fewer than one grain of elements per thread

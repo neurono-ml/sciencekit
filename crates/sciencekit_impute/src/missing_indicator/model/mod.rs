@@ -4,6 +4,7 @@
 //! implementation lives in its own file under this folder.
 
 mod core_implementation;
+pub(crate) mod export;
 mod transform;
 
 pub use core_implementation::SKMissingIndicatorModel;

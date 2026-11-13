@@ -115,6 +115,16 @@ impl<F: SKFloat> SKLinearRegressionModel<F> {
     pub fn backend(&self) -> SKBackendKind {
         self.backend
     }
+
+    /// A clone of this model carrying a replacement coefficient block.
+    ///
+    /// Used by the adapter merge: everything except the coefficients (intercept,
+    /// rank, singular values, Gram state, backend) is preserved.
+    pub(crate) fn with_coefficients(&self, coefficients: Array1<F>) -> Self {
+        let mut merged = self.clone();
+        merged.coefficients = coefficients;
+        merged
+    }
 }
 
 /// Split a least-squares solution column into the intercept and the feature

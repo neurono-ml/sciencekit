@@ -108,11 +108,17 @@ densifying it.
 ### Requirement: The LIBLINEAR coordinate-descent solver solves the one-vs-rest path
 
 The substrate SHALL provide a LIBLINEAR-style solver for the `L1` and `L2` penalties that
-operates one-vs-rest: for `L2` it updates the box-constrained dual coordinates, each by a
-Newton step on the scalar subproblem; for `L1` it runs a primal coordinate descent with a
-soft-threshold step. Both converge on the maximum coordinate change against `tolerance`,
+operates one-vs-rest and converges on the maximum coordinate change against `tolerance`,
 bounded by `maximum_number_of_iterations`. As in scikit-learn's LIBLINEAR path, the intercept
-is augmented as a constant feature and is therefore regularised.
+SHALL be augmented as a constant feature and is therefore regularised.
+
+#### Scenario: Each penalty follows its coordinate-descent step
+
+- **WHEN** the `Liblinear` solver fits with the `L2` penalty
+- **THEN** it updates the box-constrained dual coordinates, each by a Newton step on the
+  scalar subproblem
+- **WHEN** the `Liblinear` solver fits with the `L1` penalty
+- **THEN** it runs a primal coordinate descent with a soft-threshold step
 
 #### Scenario: Coordinate-descent solver matches the primal optimum
 

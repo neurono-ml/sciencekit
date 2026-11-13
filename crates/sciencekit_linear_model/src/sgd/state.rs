@@ -40,6 +40,25 @@ impl<F: SKFloat> SKLearningState<F> {
         }
     }
 
+    /// Rebuild a learning state that resumes from exported weights.
+    ///
+    /// Only `partial_fit` reads the schedule, so resume uses the configured
+    /// schedule with a zero optimal offset; `predict` is unaffected.
+    pub(crate) fn from_exported(
+        weights: Array1<F>,
+        intercept: F,
+        config: &crate::sgd::config::SKSGDConfig<F>,
+    ) -> Self {
+        let schedule = crate::sgd::learning_rate::schedule::SKLearningRateSchedule::new(
+            config.learning_rate,
+            config.initial_learning_rate,
+            config.inverse_scaling_power,
+            config.alpha,
+            F::zero(),
+        );
+        Self::new(weights, intercept, schedule, config.average)
+    }
+
     /// The learning rate for the current update count.
     pub(crate) fn learning_rate(&self) -> F {
         self.schedule.rate(self.step)

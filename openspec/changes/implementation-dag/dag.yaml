@@ -1,0 +1,898 @@
+version: 1
+generated_for: sciencekit
+source_of_truth: openspec/changes/implementation-dag/dag.yaml
+policy:
+  max_parallel_changes_per_lane: 1
+  merge_requires:
+  - all tasks checked
+  - openspec validate green
+  - code gates green
+  - independent review passed
+  - code PR merged into main
+  - openspec PR merged into main
+  - docs PR merged into docs/documentations when the change ships docs
+  global_gates:
+  - cargo fmt --all --check
+  - cargo clippy --workspace --all-targets -- -D warnings
+  - cargo test --workspace
+  docs_gate: mdbook build docs
+  rebase_before_merge: true
+  no_direct_main_commits: true
+lanes:
+- id: common
+  merge_order:
+  - representation-parity
+  - wave-seven-deferrals
+  - deterministic-randomness
+  - clustering-contracts
+  - interop-contracts
+  - interop-foundation
+  - gpu-compute-contracts
+  - telemetry-export
+- id: math
+  merge_order:
+  - sparse-pairwise-distances
+  - randomized-svd-kernel
+- id: metrics
+  merge_order:
+  - metrics-ranking
+  - metrics-clustering
+  - metrics-calibration-multilabel
+- id: tree
+  merge_order:
+  - decision-tree-cart
+  - random-forest
+  - bagging
+  - gradient-boosting
+  - histogram-gradient-boosting
+  - outlier-detection
+  - outlier-lof-one-class
+- id: neighbors
+  merge_order:
+  - kd-tree-and-ball-tree
+  - knn-classifier-regressor
+  - knn-imputer
+  - svm-svc-svr
+  - svm-linear-svc
+- id: cluster
+  merge_order:
+  - kmeans-lloyd-elkan
+  - minibatch-kmeans-streaming
+  - dbscan
+- id: decomposition
+  merge_order:
+  - pca
+  - truncated-svd
+  - incremental-pca
+- id: model-selection
+  merge_order:
+  - model-selection-core
+  - grid-search-cv
+  - halving-grid-search
+- id: pipeline
+  merge_order:
+  - type-safe-pipeline
+  - feature-union
+  - pipeline-dag
+  - streaming-pipeline
+- id: interop
+  merge_order:
+  - arrow-interop
+  - polars-interop
+  - datafusion-interop
+  - memory-mapped-interop
+  - safetensors-internal-format
+  - json-debug-format
+  - model-export-retrofit
+  - onnx-export
+  - onnx-import
+  - native-model-import
+  - lora-adapters
+- id: gpu
+  merge_order:
+  - gpu-opencl-backend
+  - gpu-cuda-backend
+  - gpu-rocm-backend
+- id: bindings
+  merge_order:
+  - ffi-core
+  - lua-bindings
+  - go-bindings
+- id: streaming
+  merge_order:
+  - sparse-streaming-coverage
+- id: product
+  merge_order:
+  - umbrella-crate
+  - workflows-cli
+- id: python
+  merge_order:
+  - python-bindings-complete
+  - python-dataset-interop
+- id: julia
+  merge_order:
+  - julia-dataset-interop
+- id: jvm
+  deferred: true
+  deferred_reason: "No JVM repository, JNI/FFM layer or owner; see ADR #381."
+  merge_order:
+  - jvm-dataset-interop
+- id: r
+  merge_order:
+  - r-bindings
+changes:
+- id: representation-parity
+  group: foundation-docs
+  lane: common
+  depends_on: []
+  completion:
+    openspec: openspec status --change representation-parity --json
+    tests: []
+    extra:
+    - openspec validate representation-parity
+    - mdbook build docs
+- id: wave-seven-deferrals
+  group: foundation-docs
+  lane: common
+  depends_on: []
+  completion:
+    openspec: openspec status --change wave-seven-deferrals --json
+    tests: []
+    extra:
+    - openspec validate wave-seven-deferrals
+    - mdbook build docs
+- id: deterministic-randomness
+  group: foundation
+  lane: common
+  depends_on: []
+  completion:
+    openspec: openspec status --change deterministic-randomness --json
+    tests:
+    - cargo test -p sciencekit_common random
+    - cargo test -p sciencekit_linear_model sgd
+- id: clustering-contracts
+  group: foundation
+  lane: common
+  depends_on: []
+  completion:
+    openspec: openspec status --change clustering-contracts --json
+    tests:
+    - cargo test -p sciencekit_common clusterer
+    - cargo test -p sciencekit_common scorer
+- id: interop-contracts
+  group: foundation
+  lane: common
+  depends_on: []
+  completion:
+    openspec: openspec status --change interop-contracts --json
+    tests:
+    - cargo test -p sciencekit_common interop
+    - cargo test -p sciencekit_interop
+- id: gpu-compute-contracts
+  group: foundation
+  lane: common
+  depends_on: []
+  completion:
+    openspec: openspec status --change gpu-compute-contracts --json
+    tests:
+    - cargo test -p sciencekit_gpu
+    - cargo test -p sciencekit_common backend_kind
+- id: telemetry-export
+  group: foundation
+  lane: common
+  depends_on: []
+  completion:
+    openspec: openspec status --change telemetry-export --json
+    tests:
+    - cargo test -p sciencekit_telemetry
+- id: ffi-core
+  group: foundation
+  lane: bindings
+  depends_on: []
+  completion:
+    openspec: openspec status --change ffi-core --json
+    tests:
+    - cargo test -p sciencekit_ffi
+    - cc tests/c_smoke.c -lsciencekit_ffi -o /tmp/sciencekit_c_smoke
+- id: sparse-pairwise-distances
+  group: foundation
+  lane: math
+  depends_on: []
+  completion:
+    openspec: openspec status --change sparse-pairwise-distances --json
+    tests:
+    - cargo test -p sciencekit_math sparse_
+- id: randomized-svd-kernel
+  group: foundation
+  lane: math
+  depends_on:
+  - deterministic-randomness
+  completion:
+    openspec: openspec status --change randomized-svd-kernel --json
+    tests:
+    - cargo test -p sciencekit_math randomized
+- id: model-selection-core
+  group: wave6
+  lane: model-selection
+  depends_on:
+  - deterministic-randomness
+  - representation-parity
+  completion:
+    openspec: openspec status --change model-selection-core --json
+    tests:
+    - cargo test -p sciencekit_model_selection
+- id: type-safe-pipeline
+  group: wave6
+  lane: pipeline
+  depends_on: []
+  completion:
+    openspec: openspec status --change type-safe-pipeline --json
+    tests:
+    - cargo test -p sciencekit_pipeline
+- id: sparse-streaming-coverage
+  group: cross-cutting
+  lane: streaming
+  depends_on: []
+  completion:
+    openspec: openspec status --change sparse-streaming-coverage --json
+    tests:
+    - cargo test --workspace sparse_streaming
+- id: kd-tree-and-ball-tree
+  group: wave3
+  lane: neighbors
+  depends_on: []
+  completion:
+    openspec: openspec status --change kd-tree-and-ball-tree --json
+    tests:
+    - cargo test -p sciencekit_neighbors
+- id: decision-tree-cart
+  group: wave4
+  lane: tree
+  depends_on:
+  - deterministic-randomness
+  completion:
+    openspec: openspec status --change decision-tree-cart --json
+    tests:
+    - cargo test -p sciencekit_tree
+- id: knn-imputer
+  group: wave3
+  lane: neighbors
+  depends_on: []
+  completion:
+    openspec: openspec status --change knn-imputer --json
+    tests:
+    - cargo test -p sciencekit_impute knn
+- id: metrics-ranking
+  group: wave6
+  lane: metrics
+  depends_on: []
+  completion:
+    openspec: openspec status --change metrics-ranking --json
+    tests:
+    - cargo test -p sciencekit_metrics ranking
+- id: metrics-clustering
+  group: wave6
+  lane: metrics
+  depends_on:
+  - clustering-contracts
+  - sparse-pairwise-distances
+  completion:
+    openspec: openspec status --change metrics-clustering --json
+    tests:
+    - cargo test -p sciencekit_metrics clustering
+- id: metrics-calibration-multilabel
+  group: wave6
+  lane: metrics
+  depends_on:
+  - metrics-ranking
+  - metrics-clustering
+  completion:
+    openspec: openspec status --change metrics-calibration-multilabel --json
+    tests:
+    - cargo test -p sciencekit_metrics calibration
+    - cargo test -p sciencekit_metrics multilabel
+- id: gpu-opencl-backend
+  group: cross-cutting
+  lane: gpu
+  depends_on:
+  - gpu-compute-contracts
+  completion:
+    openspec: openspec status --change gpu-opencl-backend --json
+    tests:
+    - cargo test -p sciencekit_gpu_opencl --features gpu-opencl
+- id: gpu-cuda-backend
+  group: cross-cutting
+  lane: gpu
+  depends_on:
+  - gpu-compute-contracts
+  completion:
+    openspec: openspec status --change gpu-cuda-backend --json
+    tests:
+    - cargo test -p sciencekit_gpu_cuda --features gpu-cuda
+- id: gpu-rocm-backend
+  group: cross-cutting
+  lane: gpu
+  depends_on:
+  - gpu-compute-contracts
+  completion:
+    openspec: openspec status --change gpu-rocm-backend --json
+    tests:
+    - cargo test -p sciencekit_gpu_rocm --features gpu-rocm
+- id: lua-bindings
+  group: cross-cutting
+  lane: bindings
+  depends_on:
+  - ffi-core
+  completion:
+    openspec: openspec status --change lua-bindings --json
+    tests:
+    - cargo test -p sciencekit_lua
+    - lua tests/run.lua
+- id: julia-bindings
+  group: cross-cutting
+  lane: bindings
+  depends_on:
+  - ffi-core
+  completion:
+    openspec: openspec status --change julia-bindings --json
+    tests:
+    - julia --project=julia/ScienceKit -e 'using Pkg; Pkg.test()'
+  status: superseded
+  superseded_by:
+  - julia-dataset-interop
+- id: go-bindings
+  group: cross-cutting
+  lane: bindings
+  depends_on:
+  - ffi-core
+  completion:
+    openspec: openspec status --change go-bindings --json
+    tests:
+    - go test ./go/...
+- id: jvm-bindings
+  group: cross-cutting
+  lane: bindings
+  depends_on:
+  - ffi-core
+  completion:
+    openspec: openspec status --change jvm-bindings --json
+    tests:
+    - ./gradlew test
+    - sbt test
+    - clojure -M:test
+  status: superseded
+  superseded_by:
+  - jvm-dataset-interop
+  deferred: true
+  deferred_reason: "Superseded by jvm-dataset-interop, which is itself deferred; see ADR #381."
+- id: knn-classifier-regressor
+  group: wave3
+  lane: neighbors
+  depends_on:
+  - kd-tree-and-ball-tree
+  - sparse-pairwise-distances
+  - representation-parity
+  completion:
+    openspec: openspec status --change knn-classifier-regressor --json
+    tests:
+    - cargo test -p sciencekit_neighbors
+- id: svm-svc-svr
+  group: wave3
+  lane: neighbors
+  depends_on:
+  - sparse-pairwise-distances
+  - deterministic-randomness
+  - representation-parity
+  completion:
+    openspec: openspec status --change svm-svc-svr --json
+    tests:
+    - cargo test -p sciencekit_svm
+- id: svm-linear-svc
+  group: wave3
+  lane: neighbors
+  depends_on:
+  - svm-svc-svr
+  - representation-parity
+  completion:
+    openspec: openspec status --change svm-linear-svc --json
+    tests:
+    - cargo test -p sciencekit_svm
+- id: dbscan
+  group: wave5
+  lane: cluster
+  depends_on:
+  - clustering-contracts
+  - kd-tree-and-ball-tree
+  - sparse-pairwise-distances
+  completion:
+    openspec: openspec status --change dbscan --json
+    tests:
+    - cargo test -p sciencekit_cluster dbscan
+- id: random-forest
+  group: wave4
+  lane: tree
+  depends_on:
+  - decision-tree-cart
+  - deterministic-randomness
+  completion:
+    openspec: openspec status --change random-forest --json
+    tests:
+    - cargo test -p sciencekit_ensemble forest
+- id: bagging
+  group: wave4
+  lane: tree
+  depends_on:
+  - random-forest
+  - deterministic-randomness
+  completion:
+    openspec: openspec status --change bagging --json
+    tests:
+    - cargo test -p sciencekit_ensemble bagging
+- id: gradient-boosting
+  group: wave4
+  lane: tree
+  depends_on:
+  - decision-tree-cart
+  - deterministic-randomness
+  completion:
+    openspec: openspec status --change gradient-boosting --json
+    tests:
+    - cargo test -p sciencekit_ensemble boosting
+- id: histogram-gradient-boosting
+  group: wave4
+  lane: tree
+  depends_on:
+  - gradient-boosting
+  - decision-tree-cart
+  - deterministic-randomness
+  completion:
+    openspec: openspec status --change histogram-gradient-boosting --json
+    tests:
+    - cargo test -p sciencekit_ensemble hist_
+- id: outlier-detection
+  group: wave5
+  lane: tree
+  depends_on:
+  - decision-tree-cart
+  - deterministic-randomness
+  completion:
+    openspec: openspec status --change outlier-detection --json
+    tests:
+    - cargo test -p sciencekit_outlier
+- id: outlier-lof-one-class
+  group: wave5
+  lane: tree
+  depends_on:
+  - outlier-detection
+  - kd-tree-and-ball-tree
+  - svm-svc-svr
+  completion:
+    openspec: openspec status --change outlier-lof-one-class --json
+    tests:
+    - cargo test -p sciencekit_outlier
+- id: kmeans-lloyd-elkan
+  group: wave5
+  lane: cluster
+  depends_on:
+  - clustering-contracts
+  - deterministic-randomness
+  completion:
+    openspec: openspec status --change kmeans-lloyd-elkan --json
+    tests:
+    - cargo test -p sciencekit_cluster kmeans
+- id: minibatch-kmeans-streaming
+  group: wave5
+  lane: cluster
+  depends_on:
+  - kmeans-lloyd-elkan
+  - clustering-contracts
+  - deterministic-randomness
+  completion:
+    openspec: openspec status --change minibatch-kmeans-streaming --json
+    tests:
+    - cargo test -p sciencekit_cluster minibatch
+- id: pca
+  group: wave5
+  lane: decomposition
+  depends_on:
+  - randomized-svd-kernel
+  - representation-parity
+  completion:
+    openspec: openspec status --change pca --json
+    tests:
+    - cargo test -p sciencekit_decomposition pca
+- id: truncated-svd
+  group: wave5
+  lane: decomposition
+  depends_on:
+  - pca
+  - randomized-svd-kernel
+  completion:
+    openspec: openspec status --change truncated-svd --json
+    tests:
+    - cargo test -p sciencekit_decomposition truncated
+- id: incremental-pca
+  group: wave5
+  lane: decomposition
+  depends_on:
+  - pca
+  completion:
+    openspec: openspec status --change incremental-pca --json
+    tests:
+    - cargo test -p sciencekit_decomposition incremental
+- id: grid-search-cv
+  group: wave6
+  lane: model-selection
+  depends_on:
+  - model-selection-core
+  - metrics-ranking
+  completion:
+    openspec: openspec status --change grid-search-cv --json
+    tests:
+    - cargo test -p sciencekit_model_selection grid_
+- id: halving-grid-search
+  group: wave6
+  lane: model-selection
+  depends_on:
+  - grid-search-cv
+  - model-selection-core
+  completion:
+    openspec: openspec status --change halving-grid-search --json
+    tests:
+    - cargo test -p sciencekit_model_selection halving
+- id: feature-union
+  group: wave6
+  lane: pipeline
+  depends_on:
+  - type-safe-pipeline
+  completion:
+    openspec: openspec status --change feature-union --json
+    tests:
+    - cargo test -p sciencekit_pipeline union
+- id: pipeline-dag
+  group: wave6
+  lane: pipeline
+  depends_on:
+  - type-safe-pipeline
+  completion:
+    openspec: openspec status --change pipeline-dag --json
+    tests:
+    - cargo test -p sciencekit_pipeline graph
+- id: streaming-pipeline
+  group: wave6
+  lane: pipeline
+  depends_on:
+  - type-safe-pipeline
+  completion:
+    openspec: openspec status --change streaming-pipeline --json
+    tests:
+    - cargo test -p sciencekit_pipeline streaming
+- id: model-export-retrofit
+  group: wave7
+  lane: interop
+  join: all
+  depends_on:
+  - interop-contracts
+  - knn-classifier-regressor
+  - knn-imputer
+  - svm-svc-svr
+  - svm-linear-svc
+  - decision-tree-cart
+  - random-forest
+  - bagging
+  - gradient-boosting
+  - histogram-gradient-boosting
+  - kmeans-lloyd-elkan
+  - minibatch-kmeans-streaming
+  - dbscan
+  - pca
+  - truncated-svd
+  - incremental-pca
+  - outlier-detection
+  - type-safe-pipeline
+  - feature-union
+  - pipeline-dag
+  - streaming-pipeline
+  - grid-search-cv
+  - halving-grid-search
+  completion:
+    openspec: openspec status --change model-export-retrofit --json
+    tests:
+    - cargo test --workspace export_coverage
+- id: safetensors-internal-format
+  group: wave7
+  lane: interop
+  depends_on:
+  - interop-contracts
+  - interop-foundation
+  soft_depends_on:
+  - model-export-retrofit
+  completion:
+    openspec: openspec status --change safetensors-internal-format --json
+    tests:
+    - cargo test -p sciencekit_interop safetensors
+- id: json-debug-format
+  group: wave7
+  lane: interop
+  depends_on:
+  - interop-contracts
+  - interop-foundation
+  soft_depends_on:
+  - model-export-retrofit
+  completion:
+    openspec: openspec status --change json-debug-format --json
+    tests:
+    - cargo test -p sciencekit_interop json
+- id: onnx-export
+  group: wave7
+  lane: interop
+  depends_on:
+  - interop-contracts
+  - model-export-retrofit
+  completion:
+    openspec: openspec status --change onnx-export --json
+    tests:
+    - cargo test -p sciencekit_onnx export
+- id: onnx-import
+  group: wave7
+  lane: interop
+  depends_on:
+  - onnx-export
+  completion:
+    openspec: openspec status --change onnx-import --json
+    tests:
+    - cargo test -p sciencekit_onnx onnx_
+- id: polars-datafusion-sources
+  group: wave7
+  lane: interop
+  depends_on:
+  - interop-contracts
+  completion:
+    openspec: openspec status --change polars-datafusion-sources --json
+    tests:
+    - cargo test -p sciencekit_interop --features polars,datafusion,arrow,parquet tabular
+  status: superseded
+  superseded_by:
+  - arrow-interop
+  - polars-interop
+  - datafusion-interop
+  - memory-mapped-interop
+- id: native-model-import
+  group: cross-cutting
+  lane: interop
+  depends_on:
+  - onnx-import
+  - safetensors-internal-format
+  - model-export-retrofit
+  - interop-foundation
+  completion:
+    openspec: openspec status --change native-model-import --json
+    tests:
+    - cargo test -p sciencekit_interop native
+    - cargo test -p sciencekit_onnx native
+- id: lora-adapters
+  group: cross-cutting
+  lane: interop
+  depends_on:
+  - native-model-import
+  completion:
+    openspec: openspec status --change lora-adapters --json
+    tests:
+    - cargo test -p sciencekit_linear_model lora
+- id: umbrella-crate
+  group: wave7
+  lane: product
+  join: all
+  depends_on:
+  - deterministic-randomness
+  - clustering-contracts
+  - interop-contracts
+  - gpu-compute-contracts
+  - ffi-core
+  - telemetry-export
+  - sparse-pairwise-distances
+  - randomized-svd-kernel
+  - metrics-ranking
+  - metrics-clustering
+  - kd-tree-and-ball-tree
+  - knn-classifier-regressor
+  - knn-imputer
+  - svm-svc-svr
+  - svm-linear-svc
+  - decision-tree-cart
+  - random-forest
+  - bagging
+  - gradient-boosting
+  - histogram-gradient-boosting
+  - outlier-detection
+  - kmeans-lloyd-elkan
+  - minibatch-kmeans-streaming
+  - dbscan
+  - pca
+  - truncated-svd
+  - incremental-pca
+  - model-selection-core
+  - grid-search-cv
+  - halving-grid-search
+  - type-safe-pipeline
+  - feature-union
+  - pipeline-dag
+  - streaming-pipeline
+  - model-export-retrofit
+  - safetensors-internal-format
+  - json-debug-format
+  - onnx-export
+  - onnx-import
+  - native-model-import
+  - lora-adapters
+  - interop-foundation
+  - arrow-interop
+  - polars-interop
+  - datafusion-interop
+  - memory-mapped-interop
+  completion:
+    openspec: openspec status --change umbrella-crate --json
+    tests:
+    - cargo test -p sciencekit
+- id: python-bindings-complete
+  group: wave7
+  lane: python
+  join: all
+  depends_on:
+  - knn-classifier-regressor
+  - knn-imputer
+  - svm-svc-svr
+  - svm-linear-svc
+  - decision-tree-cart
+  - random-forest
+  - bagging
+  - gradient-boosting
+  - histogram-gradient-boosting
+  - outlier-detection
+  - kmeans-lloyd-elkan
+  - minibatch-kmeans-streaming
+  - dbscan
+  - pca
+  - truncated-svd
+  - incremental-pca
+  - model-selection-core
+  - grid-search-cv
+  - halving-grid-search
+  - type-safe-pipeline
+  - feature-union
+  - pipeline-dag
+  - streaming-pipeline
+  - model-export-retrofit
+  - safetensors-internal-format
+  - json-debug-format
+  - onnx-export
+  - onnx-import
+  - interop-foundation
+  completion:
+    openspec: openspec status --change python-bindings-complete --json
+    tests:
+    - maturin develop --release
+    - pytest python/tests
+    - maturin build --release
+- id: workflows-cli
+  group: cross-cutting
+  lane: product
+  join: all
+  depends_on:
+  - umbrella-crate
+  - safetensors-internal-format
+  - json-debug-format
+  - onnx-export
+  - onnx-import
+  - type-safe-pipeline
+  - grid-search-cv
+  - halving-grid-search
+  - metrics-ranking
+  - metrics-clustering
+  - telemetry-export
+  - interop-foundation
+  - arrow-interop
+  - polars-interop
+  - datafusion-interop
+  - memory-mapped-interop
+  completion:
+    openspec: openspec status --change workflows-cli --json
+    tests:
+    - cargo test -p sciencekit_cli
+- id: interop-foundation
+  group: foundation
+  lane: common
+  depends_on: []
+  completion:
+    openspec: openspec status --change interop-foundation --json
+    tests:
+    - cargo test -p sciencekit_interop
+    - cargo test -p sciencekit_common interop
+- id: arrow-interop
+  group: wave7
+  lane: interop
+  depends_on:
+  - interop-foundation
+  completion:
+    openspec: openspec status --change arrow-interop --json
+    tests:
+    - cargo test -p sciencekit_interop --features arrow
+- id: polars-interop
+  group: wave7
+  lane: interop
+  depends_on:
+  - interop-foundation
+  - arrow-interop
+  completion:
+    openspec: openspec status --change polars-interop --json
+    tests:
+    - cargo test -p sciencekit_interop --features polars
+- id: datafusion-interop
+  group: wave7
+  lane: interop
+  depends_on:
+  - interop-foundation
+  - arrow-interop
+  completion:
+    openspec: openspec status --change datafusion-interop --json
+    tests:
+    - cargo test -p sciencekit_interop --features datafusion
+- id: memory-mapped-interop
+  group: wave7
+  lane: interop
+  depends_on:
+  - interop-foundation
+  - arrow-interop
+  completion:
+    openspec: openspec status --change memory-mapped-interop --json
+    tests:
+    - cargo test -p sciencekit_interop --features memmap
+- id: python-dataset-interop
+  group: cross-cutting
+  lane: python
+  depends_on:
+  - python-bindings-complete
+  - interop-foundation
+  - arrow-interop
+  completion:
+    openspec: openspec status --change python-dataset-interop --json
+    tests:
+    - maturin develop --release
+    - pytest python/tests/datasets
+- id: julia-dataset-interop
+  group: cross-cutting
+  lane: julia
+  depends_on:
+  - interop-foundation
+  - arrow-interop
+  completion:
+    openspec: openspec status --change julia-dataset-interop --json
+    tests:
+    - julia --project=julia/ScienceKit -e 'using Pkg; Pkg.test()'
+    - cargo test -p sciencekit_julia_abi
+- id: jvm-dataset-interop
+  group: cross-cutting
+  lane: jvm
+  depends_on:
+  - interop-foundation
+  - arrow-interop
+  completion:
+    openspec: openspec status --change jvm-dataset-interop --json
+    tests:
+    - ./gradlew test
+    - sbt test
+    - cargo test -p sciencekit_jvm_abi
+  deferred: true
+  deferred_reason: "The JVM lane is deferred until a dedicated repository and owner exist; see ADR #381."
+- id: r-bindings
+  group: cross-cutting
+  lane: r
+  depends_on:
+  - ffi-core
+  - interop-foundation
+  completion:
+    openspec: openspec status --change r-bindings --json
+    tests:
+    - R CMD check .
+    extra:
+    - openspec validate r-bindings

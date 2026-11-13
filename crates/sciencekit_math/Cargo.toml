@@ -1,6 +1,6 @@
 [package]
 name = "sciencekit_math"
-version = "0.1.0"
+version.workspace = true
 edition = "2024"
 license = "Apache-2.0"
 rust-version = "1.85"
@@ -8,7 +8,7 @@ description = "Computational kernels and the BLAS/LAPACK interface for scienceki
 repository = "https://github.com/neurono-ml/sciencekit"
 
 [dependencies]
-sciencekit_common = { path = "../sciencekit_common" }
+sciencekit_common = { path = "../sciencekit_common", version = "0.8.0" }
 # Pure-Rust BLAS/LAPACK default (PRD §6.2, wave-plan-foundation Decision 1).
 faer = "0.24"
 # GEMM fallback kernel for the `MatrixMultiplyBackend`.

@@ -54,6 +54,11 @@ impl<F: SKFloat> SKElasticNetModel<F> {
         self.core.positive()
     }
 
+    /// The seed the fit derived every stochastic choice from.
+    pub fn random_seed(&self) -> u64 {
+        self.core.random_seed()
+    }
+
     /// The backend kind carried from the estimator that produced this model.
     pub fn backend(&self) -> SKBackendKind {
         self.core.backend()
