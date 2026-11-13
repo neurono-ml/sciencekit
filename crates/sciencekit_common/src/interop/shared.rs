@@ -36,11 +36,11 @@ pub fn sk_model_tensor_data_type<F: SKFloat>() -> SKTensorDataType {
 /// values.
 pub fn sk_read_floating_tensor<F: SKFloat>(
     state: &SKModelState<F>,
-    name: &'static str,
+    name: &str,
 ) -> Result<(Vec<usize>, Vec<F>), SKError> {
     let tensor = state.tensor(name).ok_or(SKError::InvalidHyperparameter {
-        name,
-        reason: "the exported state does not carry this tensor".to_string(),
+        name: "tensor",
+        reason: format!("the exported state does not carry `{name}`"),
     })?;
     match tensor.values() {
         SKTensorValues::Floating(values) => Ok((tensor.shape().to_vec(), values.clone())),
@@ -59,11 +59,11 @@ pub fn sk_read_floating_tensor<F: SKFloat>(
 /// [`SKError::UnsupportedRepresentation`] when it does not carry integers.
 pub fn sk_read_integer_tensor<F: SKFloat>(
     state: &SKModelState<F>,
-    name: &'static str,
+    name: &str,
 ) -> Result<Vec<i64>, SKError> {
     let tensor = state.tensor(name).ok_or(SKError::InvalidHyperparameter {
-        name,
-        reason: "the exported state does not carry this tensor".to_string(),
+        name: "tensor",
+        reason: format!("the exported state does not carry `{name}`"),
     })?;
     match tensor.values() {
         SKTensorValues::Integer(values) => Ok(values.clone()),
@@ -82,11 +82,11 @@ pub fn sk_read_integer_tensor<F: SKFloat>(
 /// [`SKError::UnsupportedRepresentation`] when it does not carry booleans.
 pub fn sk_read_boolean_tensor<F: SKFloat>(
     state: &SKModelState<F>,
-    name: &'static str,
+    name: &str,
 ) -> Result<Vec<bool>, SKError> {
     let tensor = state.tensor(name).ok_or(SKError::InvalidHyperparameter {
-        name,
-        reason: "the exported state does not carry this tensor".to_string(),
+        name: "tensor",
+        reason: format!("the exported state does not carry `{name}`"),
     })?;
     match tensor.values() {
         SKTensorValues::Boolean(values) => Ok(values.clone()),
