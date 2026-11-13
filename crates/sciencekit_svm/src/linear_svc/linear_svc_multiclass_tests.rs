@@ -20,7 +20,7 @@ fn multiclass_features() -> ndarray::Array2<f64> {
     ]
 }
 
-fn decision(head: &super::SKLinearSvcHead<f64>, row: &[f64]) -> f64 {
+fn decision(head: &super::SKLinearSVCHead<f64>, row: &[f64]) -> f64 {
     let dot: f64 = head
         .coefficients()
         .iter()
@@ -43,7 +43,6 @@ fn three_class_fit_retains_three_heads_in_canonical_order() {
 
     assert_eq!(model.number_of_classes(), 3);
     assert_eq!(model.heads().len(), 3);
-    assert!(model.converged());
 
     // Head `c` must score its own class highest on that class's rows.
     (0..features.nrows()).for_each(|row| {

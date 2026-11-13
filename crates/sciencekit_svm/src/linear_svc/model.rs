@@ -4,17 +4,17 @@
 use ndarray::Array1;
 use sciencekit_common::{SKBackendKind, SKBuilderState, SKExecutionMode, SKFloat, SKLabelTable};
 
-use super::config::SKLinearSvcLoss;
+use super::config::SKLinearSVCLoss;
 
 /// One fitted binary head: a coefficient vector and an intercept.
 #[derive(Debug, Clone)]
-pub struct SKLinearSvcHead<F: SKFloat> {
+pub struct SKLinearSVCHead<F: SKFloat> {
     pub(crate) coefficients: Array1<F>,
     pub(crate) intercept: F,
     pub(crate) iterations: usize,
 }
 
-impl<F: SKFloat> SKLinearSvcHead<F> {
+impl<F: SKFloat> SKLinearSVCHead<F> {
     /// Coefficient vector in feature order (one entry per input column).
     pub fn coefficients(&self) -> &Array1<F> {
         &self.coefficients
@@ -39,8 +39,8 @@ impl<F: SKFloat> SKLinearSvcHead<F> {
 #[derive(Debug, Clone)]
 pub struct SKLinearSVCModel<F: SKFloat> {
     pub(crate) classes: SKLabelTable,
-    pub(crate) heads: Vec<SKLinearSvcHead<F>>,
-    pub(crate) loss: SKLinearSvcLoss,
+    pub(crate) heads: Vec<SKLinearSVCHead<F>>,
+    pub(crate) loss: SKLinearSVCLoss,
     pub(crate) regularization_c: F,
     pub(crate) number_of_features: usize,
     pub(crate) include_intercept: bool,
@@ -65,12 +65,12 @@ impl<F: SKFloat> SKLinearSVCModel<F> {
     }
 
     /// Fitted heads in canonical class order (one head for a binary problem).
-    pub fn heads(&self) -> &[SKLinearSvcHead<F>] {
+    pub fn heads(&self) -> &[SKLinearSVCHead<F>] {
         &self.heads
     }
 
     /// Loss function the model was fitted with.
-    pub fn loss(&self) -> SKLinearSvcLoss {
+    pub fn loss(&self) -> SKLinearSVCLoss {
         self.loss
     }
 
@@ -89,15 +89,9 @@ impl<F: SKFloat> SKLinearSVCModel<F> {
     pub fn iterations(&self) -> usize {
         self.heads
             .iter()
-            .map(SKLinearSvcHead::iterations)
+            .map(SKLinearSVCHead::iterations)
             .max()
             .unwrap_or(0)
-    }
-
-    /// Whether every head reached its tolerance. `fit` returns
-    /// `NotConverged` instead of building a model otherwise.
-    pub fn converged(&self) -> bool {
-        true
     }
 
     /// Configured math backend kind transferred from the estimator.
