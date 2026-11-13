@@ -65,11 +65,11 @@
 
 ## 7. Documentation and review
 
-- [ ] 7.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under `Unreleased →
+- [x] 7.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under `Unreleased →
   Added` for model export coverage.
-- [ ] 7.2 Add a `Development Explained` chapter on stable tensor names, metadata and
+- [x] 7.2 Add a `Development Explained` chapter on stable tensor names, metadata and
   round-trip import; verify with `mdbook build docs`.
-- [ ] 7.3 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
+- [x] 7.3 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
   warnings` and `cargo test --workspace`; fix every failure before pushing.
 - [ ] 7.4 Independent review by a separate agent validating every scenario in
   `model-export-coverage`; address every finding and re-run the gates.
@@ -80,3 +80,12 @@
   with a closing keyword.
 - Push the code branch and the `-openspec` branch and open both PRs.
 - Archive the change after both PRs merge, then delete the merged branches and worktrees.
+
+## Status note
+
+Tasks 1.1–4.2 and 7.1–7.3 are complete on the code, OpenSpec and documentation
+branches. Task 4.3 covers decision trees, random forests and gradient boosting
+(bagging was already exported); histogram gradient boosting is still pending, so
+4.3 stays open. Tasks 5.x (clustering, decomposition, outlier detection), 6.x
+(pipelines, model selection, workspace coverage) and 7.4 (independent review)
+remain open.
