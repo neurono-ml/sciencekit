@@ -11,7 +11,7 @@
 - [x] 2.2 TDD pandas DataFrame/Series through `__arrow_c_stream__`: columns, values, index ignored, feature/target roles.
 - [x] 2.3 TDD pandas nullable dtypes: `pd.NA` under reject/NaN/fill policies.
 - [x] 2.4 TDD pandas categorical target: label table, predictions mapped back to categories.
-- [ ] 2.5 TDD older-pandas fallback path (`to_numpy`) and its documented copy behavior.
+- [x] 2.5 TDD older-pandas fallback path (`to_numpy`) and its documented copy behavior.
 - [ ] 2.6 TDD generic PyCapsule producer (a minimal class implementing `__arrow_c_stream__`) is accepted.
 
 ## 3. SciPy sparse
