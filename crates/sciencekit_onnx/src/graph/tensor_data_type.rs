@@ -1,6 +1,11 @@
 //! The ONNX tensor element types.
+//!
+//! The neutral model owns its own data-type vocabulary; this module is the
+//! single place where it meets the shared [`serde_onnx::ir::ElemType`] used by
+//! both the exporter and the importer.
 
 use sciencekit_common::{SKError, SKTensorDataType};
+use serde_onnx::ir::ElemType;
 
 /// The ONNX `TensorProto.DataType` values the exporter emits.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -18,11 +23,33 @@ pub enum SKOnnxTensorDType {
 impl SKOnnxTensorDType {
     /// The numeric `TensorProto.DataType` value.
     pub fn element_type(self) -> i32 {
+        self.to_element_type().disc()
+    }
+
+    /// The shared IR element type.
+    pub fn to_element_type(self) -> ElemType {
         match self {
-            SKOnnxTensorDType::Float => 1,
-            SKOnnxTensorDType::Double => 11,
-            SKOnnxTensorDType::Int64 => 7,
-            SKOnnxTensorDType::Boolean => 9,
+            SKOnnxTensorDType::Float => ElemType::Float,
+            SKOnnxTensorDType::Double => ElemType::Double,
+            SKOnnxTensorDType::Int64 => ElemType::Int64,
+            SKOnnxTensorDType::Boolean => ElemType::Bool,
+        }
+    }
+
+    /// Recover the exporter vocabulary from a shared IR element type.
+    pub fn from_element_type(element_type: ElemType) -> Result<Self, SKError> {
+        match element_type {
+            ElemType::Float => Ok(SKOnnxTensorDType::Float),
+            ElemType::Double => Ok(SKOnnxTensorDType::Double),
+            ElemType::Int64 => Ok(SKOnnxTensorDType::Int64),
+            ElemType::Bool => Ok(SKOnnxTensorDType::Boolean),
+            other => Err(SKError::UnsupportedOperation {
+                operation: "onnx_import",
+                reason: format!(
+                    "the ONNX element type `{}` is outside the importer's dense numeric subset",
+                    other.name()
+                ),
+            }),
         }
     }
 

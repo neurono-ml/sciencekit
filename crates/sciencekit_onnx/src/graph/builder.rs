@@ -1,12 +1,17 @@
 //! The name-checked ONNX graph builder.
+//!
+//! The builder validates the graph and assembles the shared
+//! [`serde_onnx::ir::Model`] used by both directions of interoperability: the
+//! exporter encodes that model, the importer decodes the same type.
 
 use std::collections::{BTreeMap, BTreeSet};
 
 use sciencekit_common::{SKError, SKFloat};
+use serde_onnx::ir::{Dim, Graph, Model, OpsetId, Tensor, TensorData};
 
 use super::{
     SK_ONNX_DEFAULT_OPSET, SK_ONNX_IR_VERSION, SK_ONNX_ML_DOMAIN, SK_ONNX_ML_TREE_OPSET,
-    SKOnnxModel, SKOnnxNode, SKOnnxTensorDType, SKOnnxValueInfo, proto,
+    SKOnnxModel, SKOnnxNode, SKOnnxTensorDType, SKOnnxValueInfo,
 };
 
 /// Builds one ONNX graph and serializes it as a `ModelProto`.
@@ -29,7 +34,7 @@ struct SKOnnxTensorDefinition {
     name: String,
     data_type: SKOnnxTensorDType,
     dimensions: Vec<usize>,
-    raw_data: Vec<u8>,
+    data: TensorData,
 }
 
 impl SKOnnxGraphBuilder {
@@ -77,17 +82,21 @@ impl SKOnnxGraphBuilder {
         values: &[F],
     ) -> &mut Self {
         let data_type = SKOnnxTensorDType::for_scalar::<F>();
-        let raw_data = match data_type {
-            SKOnnxTensorDType::Float => values
-                .iter()
-                .flat_map(|value| value.to_f32().unwrap_or(f32::NAN).to_le_bytes())
-                .collect(),
-            _ => values
-                .iter()
-                .flat_map(|value| value.to_f64().unwrap_or(f64::NAN).to_le_bytes())
-                .collect(),
+        let data = match data_type {
+            SKOnnxTensorDType::Float => TensorData::F32(
+                values
+                    .iter()
+                    .map(|value| value.to_f32().unwrap_or(f32::NAN))
+                    .collect(),
+            ),
+            _ => TensorData::F64(
+                values
+                    .iter()
+                    .map(|value| value.to_f64().unwrap_or(f64::NAN))
+                    .collect(),
+            ),
         };
-        self.push_initializer(name, data_type, dimensions, raw_data);
+        self.push_initializer(name, data_type, dimensions, data);
         self
     }
 
@@ -98,11 +107,12 @@ impl SKOnnxGraphBuilder {
         dimensions: Vec<usize>,
         values: &[i64],
     ) -> &mut Self {
-        let raw_data = values
-            .iter()
-            .flat_map(|value| value.to_le_bytes())
-            .collect();
-        self.push_initializer(name, SKOnnxTensorDType::Int64, dimensions, raw_data);
+        self.push_initializer(
+            name,
+            SKOnnxTensorDType::Int64,
+            dimensions,
+            TensorData::I64(values.to_vec()),
+        );
         self
     }
 
@@ -111,13 +121,13 @@ impl SKOnnxGraphBuilder {
         name: impl Into<String>,
         data_type: SKOnnxTensorDType,
         dimensions: Vec<usize>,
-        raw_data: Vec<u8>,
+        data: TensorData,
     ) {
         self.initializers.push(SKOnnxTensorDefinition {
             name: name.into(),
             data_type,
             dimensions,
-            raw_data,
+            data,
         });
     }
 
@@ -151,11 +161,11 @@ impl SKOnnxGraphBuilder {
                 });
             }
             let expected: usize = initializer.dimensions.iter().product();
-            let bytes_per_value = bytes_per_value(initializer.data_type);
-            if initializer.raw_data.len() != expected * bytes_per_value {
+            let found = initializer.data.len().unwrap_or(expected);
+            if found != expected {
                 return Err(SKError::ShapeMismatch {
                     expected: initializer.dimensions.clone(),
-                    found: vec![initializer.raw_data.len() / bytes_per_value.max(1)],
+                    found: vec![found],
                 });
             }
         }
@@ -194,77 +204,54 @@ impl SKOnnxGraphBuilder {
                 });
             }
         }
-        let mut opset_import = vec![
-            proto::SkOnnxOperatorSetIdProto {
-                domain: String::new(),
-                version: SK_ONNX_DEFAULT_OPSET,
-            },
-            proto::SkOnnxOperatorSetIdProto {
-                domain: SK_ONNX_ML_DOMAIN.to_string(),
-                version: SK_ONNX_ML_TREE_OPSET,
-            },
-        ];
-        opset_import.sort_by(|left, right| left.domain.cmp(&right.domain));
-        let model_proto = proto::SkOnnxModelProto {
-            ir_version: SK_ONNX_IR_VERSION,
-            producer_name: "sciencekit".to_string(),
-            producer_version: env!("CARGO_PKG_VERSION").to_string(),
-            domain: String::new(),
-            model_version: 1,
-            doc_string: String::new(),
-            graph: Some(proto::SkOnnxGraphProto {
-                node: self.nodes.iter().map(SKOnnxNode::to_proto).collect(),
-                name: self.graph_name.clone(),
-                initializer: self.initializers.iter().map(initializer_to_proto).collect(),
-                doc_string: String::new(),
-                input: self.inputs.iter().map(SKOnnxValueInfo::to_proto).collect(),
-                output: self.outputs.iter().map(SKOnnxValueInfo::to_proto).collect(),
-            }),
-            opset_import,
-            metadata_props: self
-                .metadata
-                .iter()
-                .map(|(key, value)| proto::SkOnnxStringStringEntryProto {
-                    key: key.clone(),
-                    value: value.clone(),
-                })
-                .collect(),
-        };
-        let bytes = prost::Message::encode_to_vec(&model_proto);
-        let node_count = self.nodes.len();
-        let initializer_count = self.initializers.len();
-        Ok(SKOnnxModel::new(
-            bytes,
-            SK_ONNX_DEFAULT_OPSET,
-            SK_ONNX_ML_TREE_OPSET,
-            self.inputs,
-            self.outputs,
-            self.metadata,
-            node_count,
-            initializer_count,
-        ))
+        let mut graph = Graph::new(self.graph_name);
+        graph.inputs = self.inputs.iter().map(SKOnnxValueInfo::to_ir).collect();
+        graph.outputs = self.outputs.iter().map(SKOnnxValueInfo::to_ir).collect();
+        graph.nodes = self.nodes.iter().map(SKOnnxNode::to_ir).collect();
+        graph.initializers = self
+            .initializers
+            .iter()
+            .map(SKOnnxTensorDefinition::to_ir)
+            .collect();
+        let mut model = Model::new(
+            graph,
+            vec![
+                OpsetId {
+                    domain: String::new(),
+                    version: SK_ONNX_DEFAULT_OPSET,
+                },
+                OpsetId {
+                    domain: SK_ONNX_ML_DOMAIN.to_string(),
+                    version: SK_ONNX_ML_TREE_OPSET,
+                },
+            ],
+        );
+        model.ir_version = SK_ONNX_IR_VERSION;
+        model.producer_name = "sciencekit".to_string();
+        model.producer_version = env!("CARGO_PKG_VERSION").to_string();
+        model.model_version = 1;
+        model.metadata = self
+            .metadata
+            .iter()
+            .map(|(k, v)| (k.clone(), v.clone()))
+            .collect();
+        let bytes = serde_onnx::proto::encode_model(&model);
+        SKOnnxModel::from_parts(bytes, model)
     }
 }
 
-fn bytes_per_value(data_type: SKOnnxTensorDType) -> usize {
-    match data_type {
-        SKOnnxTensorDType::Float => 4,
-        SKOnnxTensorDType::Double => 8,
-        SKOnnxTensorDType::Int64 => 8,
-        SKOnnxTensorDType::Boolean => 1,
-    }
-}
-
-fn initializer_to_proto(initializer: &SKOnnxTensorDefinition) -> proto::SkOnnxTensorProto {
-    proto::SkOnnxTensorProto {
-        dims: initializer
+impl SKOnnxTensorDefinition {
+    fn to_ir(&self) -> Tensor {
+        let shape = self
             .dimensions
             .iter()
-            .map(|dimension| *dimension as i64)
-            .collect(),
-        data_type: initializer.data_type.element_type(),
-        name: initializer.name.clone(),
-        raw_data: initializer.raw_data.clone(),
-        doc_string: String::new(),
+            .map(|dimension| Dim::Fixed(*dimension as i64))
+            .collect();
+        Tensor::new(
+            self.name.clone(),
+            self.data_type.to_element_type(),
+            shape,
+            self.data.clone(),
+        )
     }
 }

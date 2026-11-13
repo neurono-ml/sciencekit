@@ -1,8 +1,9 @@
 //! A declared graph input or output.
 
 use sciencekit_common::SKError;
+use serde_onnx::ir::{Dim, TensorType, ValueInfo, ValueType};
 
-use super::{SKOnnxTensorDType, proto};
+use super::SKOnnxTensorDType;
 
 /// One dimension of a declared tensor shape.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -19,16 +20,19 @@ impl SKOnnxDimension {
         SKOnnxDimension::Symbolic("batch_size".to_string())
     }
 
-    pub(super) fn to_proto(&self) -> proto::SkOnnxDimensionProto {
+    pub(super) fn to_ir(&self) -> Dim {
         match self {
-            SKOnnxDimension::Fixed(value) => proto::SkOnnxDimensionProto {
-                dim_value: Some(*value as i64),
-                dim_param: None,
-            },
-            SKOnnxDimension::Symbolic(name) => proto::SkOnnxDimensionProto {
-                dim_value: None,
-                dim_param: Some(name.clone()),
-            },
+            SKOnnxDimension::Fixed(value) => Dim::Fixed(*value as i64),
+            SKOnnxDimension::Symbolic(name) => Dim::Param(name.clone()),
+        }
+    }
+
+    /// Recover a dimension from the shared IR.
+    pub fn from_ir(dimension: &Dim) -> Self {
+        match dimension {
+            Dim::Fixed(value) => SKOnnxDimension::Fixed((*value).max(0) as usize),
+            Dim::Param(name) => SKOnnxDimension::Symbolic(name.clone()),
+            Dim::Unknown => SKOnnxDimension::Symbolic("unknown".to_string()),
         }
     }
 }
@@ -102,18 +106,42 @@ impl SKOnnxValueInfo {
         }
     }
 
-    pub(super) fn to_proto(&self) -> proto::SkOnnxValueInfoProto {
-        proto::SkOnnxValueInfoProto {
-            name: self.name.clone(),
-            r#type: Some(proto::SkOnnxTypeProto {
-                tensor_type: Some(proto::SkOnnxTensorTypeProto {
-                    elem_type: self.element_type.element_type(),
-                    shape: Some(proto::SkOnnxTensorShapeProto {
-                        dim: self.shape.iter().map(SKOnnxDimension::to_proto).collect(),
-                    }),
-                }),
-            }),
-            doc_string: String::new(),
-        }
+    pub(super) fn to_ir(&self) -> ValueInfo {
+        let tensor = TensorType::shaped(
+            self.element_type.to_element_type(),
+            self.shape.iter().map(SKOnnxDimension::to_ir),
+        );
+        ValueInfo::new(self.name.clone(), ValueType::Tensor(tensor))
+    }
+
+    pub(super) fn from_ir(info: &ValueInfo) -> Result<Self, SKError> {
+        let value_type = info.value_type.as_ref().ok_or_else(|| {
+            SKError::Conversion(format!(
+                "the ONNX value `{}` does not declare a tensor type",
+                info.name
+            ))
+        })?;
+        let ValueType::Tensor(tensor) = value_type else {
+            return Err(SKError::UnsupportedOperation {
+                operation: "onnx_import",
+                reason: format!(
+                    "the ONNX value `{}` is not a dense tensor and is outside the supported subset",
+                    info.name
+                ),
+            });
+        };
+        let element_type = SKOnnxTensorDType::from_element_type(tensor.elem)?;
+        let shape = tensor
+            .shape
+            .as_ref()
+            .map(|dims| dims.iter().map(SKOnnxDimension::from_ir).collect())
+            .unwrap_or_default();
+        SKOnnxValueInfo::new(info.name.clone(), element_type, shape)
+    }
+}
+
+impl From<&SKOnnxValueInfo> for ValueInfo {
+    fn from(info: &SKOnnxValueInfo) -> Self {
+        info.to_ir()
     }
 }

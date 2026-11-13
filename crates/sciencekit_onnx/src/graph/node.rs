@@ -1,14 +1,11 @@
 //! A graph node and its typed attributes.
+//!
+//! The node stores the shared [`serde_onnx::ir::Attribute`] values directly, so
+//! the exporter and the importer speak exactly the same attribute vocabulary.
 
-use super::{SK_ONNX_ML_DOMAIN, proto};
+use serde_onnx::ir::{Attribute, AttributeValue, Node};
 
-/// The protobuf `AttributeProto.AttributeType` discriminants.
-const ATTRIBUTE_TYPE_FLOAT: i32 = 1;
-const ATTRIBUTE_TYPE_INT: i32 = 2;
-const ATTRIBUTE_TYPE_STRING: i32 = 3;
-const ATTRIBUTE_TYPE_FLOATS: i32 = 6;
-const ATTRIBUTE_TYPE_INTS: i32 = 7;
-const ATTRIBUTE_TYPE_STRINGS: i32 = 8;
+use super::SK_ONNX_ML_DOMAIN;
 
 /// An ONNX operator invocation with named inputs, outputs and attributes.
 #[derive(Debug, Clone, PartialEq)]
@@ -17,7 +14,7 @@ pub struct SKOnnxNode {
     domain: String,
     inputs: Vec<String>,
     outputs: Vec<String>,
-    attributes: Vec<proto::SkOnnxAttributeProto>,
+    attributes: Vec<Attribute>,
 }
 
 impl SKOnnxNode {
@@ -63,58 +60,42 @@ impl SKOnnxNode {
         &self.outputs
     }
 
+    /// The typed attributes, in declaration order.
+    pub fn attributes(&self) -> &[Attribute] {
+        &self.attributes
+    }
+
     /// Attach a scalar float attribute.
     pub fn attribute_float(mut self, name: impl Into<String>, value: f64) -> Self {
-        self.attributes.push(proto::SkOnnxAttributeProto {
-            name: name.into(),
-            f: value as f32,
-            r#type: ATTRIBUTE_TYPE_FLOAT,
-            ..Default::default()
-        });
+        self.attributes.push(Attribute::float(name, value as f32));
         self
     }
 
     /// Attach a scalar integer attribute.
     pub fn attribute_integer(mut self, name: impl Into<String>, value: i64) -> Self {
-        self.attributes.push(proto::SkOnnxAttributeProto {
-            name: name.into(),
-            i: value,
-            r#type: ATTRIBUTE_TYPE_INT,
-            ..Default::default()
-        });
+        self.attributes.push(Attribute::int(name, value));
         self
     }
 
     /// Attach a string attribute.
     pub fn attribute_string(mut self, name: impl Into<String>, value: impl AsRef<str>) -> Self {
-        self.attributes.push(proto::SkOnnxAttributeProto {
-            name: name.into(),
-            s: value.as_ref().as_bytes().to_vec(),
-            r#type: ATTRIBUTE_TYPE_STRING,
-            ..Default::default()
-        });
+        self.attributes
+            .push(Attribute::string(name, value.as_ref().to_string()));
         self
     }
 
     /// Attach a list of floats.
     pub fn attribute_floats(mut self, name: impl Into<String>, values: Vec<f64>) -> Self {
-        self.attributes.push(proto::SkOnnxAttributeProto {
-            name: name.into(),
-            floats: values.into_iter().map(|value| value as f32).collect(),
-            r#type: ATTRIBUTE_TYPE_FLOATS,
-            ..Default::default()
-        });
+        self.attributes.push(Attribute::floats(
+            name,
+            values.into_iter().map(|value| value as f32).collect(),
+        ));
         self
     }
 
     /// Attach a list of integers.
     pub fn attribute_integers(mut self, name: impl Into<String>, values: Vec<i64>) -> Self {
-        self.attributes.push(proto::SkOnnxAttributeProto {
-            name: name.into(),
-            ints: values,
-            r#type: ATTRIBUTE_TYPE_INTS,
-            ..Default::default()
-        });
+        self.attributes.push(Attribute::ints(name, values));
         self
     }
 
@@ -124,26 +105,45 @@ impl SKOnnxNode {
         name: impl Into<String>,
         values: Vec<S>,
     ) -> Self {
-        self.attributes.push(proto::SkOnnxAttributeProto {
-            name: name.into(),
-            strings: values
+        self.attributes.push(Attribute::strings(
+            name,
+            values
                 .into_iter()
-                .map(|value| value.as_ref().as_bytes().to_vec())
+                .map(|value| value.as_ref().to_string())
                 .collect(),
-            r#type: ATTRIBUTE_TYPE_STRINGS,
-            ..Default::default()
-        });
+        ));
         self
     }
 
-    pub(super) fn to_proto(&self) -> proto::SkOnnxNodeProto {
-        proto::SkOnnxNodeProto {
-            input: self.inputs.clone(),
-            output: self.outputs.clone(),
-            name: String::new(),
-            op_type: self.op_type.clone(),
-            attribute: self.attributes.clone(),
-            domain: self.domain.clone(),
-        }
+    pub(super) fn to_ir(&self) -> Node {
+        Node::new(
+            self.op_type.clone(),
+            self.domain.clone(),
+            self.inputs.clone(),
+            self.outputs.clone(),
+            self.attributes.clone(),
+        )
+    }
+
+    /// The scalar float attribute named `name`, when present.
+    pub fn float_attribute(&self, name: &str) -> Option<f32> {
+        self.attributes
+            .iter()
+            .find(|attribute| attribute.name == name)
+            .and_then(|attribute| match &attribute.value {
+                AttributeValue::Float(value) => Some(*value),
+                _ => None,
+            })
+    }
+
+    /// The scalar integer attribute named `name`, when present.
+    pub fn integer_attribute(&self, name: &str) -> Option<i64> {
+        self.attributes
+            .iter()
+            .find(|attribute| attribute.name == name)
+            .and_then(|attribute| match &attribute.value {
+                AttributeValue::Int(value) => Some(*value),
+                _ => None,
+            })
     }
 }
