@@ -50,11 +50,7 @@ pub fn sk_run_predict(arguments: SKPredictArguments) -> Result<(), SKCliError> {
         "--output",
         "configuration.predictions",
     )?;
-    let format = sk_output_format(
-        &configuration,
-        arguments.configuration.output_format.is_some(),
-        Path::new(&output_path),
-    )?;
+    let format = sk_output_format(&configuration, Path::new(&output_path))?;
 
     let dataset = sk_load_dataset(
         Path::new(&dataset_path),

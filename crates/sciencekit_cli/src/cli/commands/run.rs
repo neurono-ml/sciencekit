@@ -20,12 +20,6 @@ pub fn sk_run_workflow_command(arguments: SKRunArguments) -> Result<(), SKCliErr
     if sk_dry_run_requested(&configuration)? {
         return Ok(());
     }
-    let output_format_explicit = arguments.configuration.output_format.is_some()
-        || workflow
-            .output
-            .as_ref()
-            .and_then(|output| output.format.as_ref())
-            .is_some();
-    let report = sk_execute_workflow(&workflow, &configuration, output_format_explicit)?;
+    let report = sk_execute_workflow(&workflow, &configuration)?;
     sk_report(None, &report)
 }

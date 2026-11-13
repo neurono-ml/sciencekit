@@ -26,6 +26,7 @@ pub fn sk_default_configuration() -> SKEffectiveConfiguration {
         predictions: None,
         metrics: sk_default_metrics(),
         output_format: SK_DEFAULT_OUTPUT_FORMAT.to_string(),
+        output_format_explicit: false,
         backend: SK_DEFAULT_BACKEND.to_string(),
         dry_run: false,
     }
@@ -106,7 +107,15 @@ pub fn sk_resolve_configuration(
         Some(workflow) => sk_file_overrides(workflow).apply(sk_default_configuration()),
         None => sk_default_configuration(),
     };
-    flags.apply(environment.apply(with_file))
+    let file_sets_output_format = workflow
+        .and_then(|workflow| workflow.output.as_ref())
+        .and_then(|output| output.format.as_ref())
+        .is_some();
+    let mut configuration = flags.apply(environment.apply(with_file));
+    configuration.output_format_explicit = file_sets_output_format
+        || environment.output_format.is_some()
+        || flags.output_format.is_some();
+    configuration
 }
 
 /// Validate the config values that do not depend on reading an artifact.

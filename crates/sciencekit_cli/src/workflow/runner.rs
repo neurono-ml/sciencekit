@@ -17,7 +17,6 @@ use crate::workflow::steps::{sk_apply_pipeline_steps, sk_grid_search};
 pub fn sk_execute_workflow(
     workflow: &SKWorkflow,
     configuration: &SKEffectiveConfiguration,
-    output_format_explicit: bool,
 ) -> Result<Value, SKCliError> {
     let backend = sk_parse_backend(&configuration.backend)?;
     let dataset_path = configuration
@@ -84,11 +83,7 @@ pub fn sk_execute_workflow(
     }
     let mut written_predictions = Value::Null;
     if let Some(predictions_path) = &configuration.predictions {
-        let format = sk_output_format(
-            configuration,
-            output_format_explicit,
-            Path::new(predictions_path),
-        )?;
+        let format = sk_output_format(configuration, Path::new(predictions_path))?;
         let values: Vec<f64> = predictions.iter().copied().collect();
         sk_write_predictions(Path::new(predictions_path), format, &target_name, &values)?;
         written_predictions = json!(predictions_path);

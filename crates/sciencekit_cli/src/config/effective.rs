@@ -24,6 +24,10 @@ pub struct SKEffectiveConfiguration {
     pub metrics: Vec<String>,
     /// The prediction or matrix output format.
     pub output_format: String,
+    /// Whether a flag, the environment or the workflow file chose
+    /// [`Self::output_format`]; when false the file extension decides.
+    #[serde(skip)]
+    pub output_format_explicit: bool,
     /// The math backend kind recorded by the estimators.
     pub backend: String,
     /// Whether artifacts must not be written.

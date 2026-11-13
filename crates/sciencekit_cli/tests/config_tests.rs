@@ -62,3 +62,133 @@ fn precedence_resolves_flags_over_environment_over_file_over_defaults() {
         1.0
     );
 }
+
+#[test]
+fn the_workflow_file_output_format_beats_extension_inference() {
+    let directory = tempdir().expect("a temporary directory");
+    let dataset = sk_dataset(directory.path());
+    let model = directory.path().join("model.safetensors");
+    let config = directory.path().join("config.json");
+    std::fs::write(
+        &config,
+        format!(
+            r#"{{"version": 1, "dataset": {{"path": "{}", "target": "y"}}, "estimator": {{"name": "ridge"}}, "output": {{"format": "json"}}}}"#,
+            dataset.display()
+        ),
+    )
+    .expect("the config file");
+    let config_text = config.to_str().expect("a UTF-8 path");
+
+    sk_command()
+        .args([
+            "fit",
+            "--input",
+            dataset.to_str().expect("a UTF-8 path"),
+            "--target",
+            "y",
+            "--model",
+            model.to_str().expect("a UTF-8 path"),
+        ])
+        .assert()
+        .success();
+
+    let predictions = directory.path().join("predictions.csv");
+    sk_command()
+        .args([
+            "predict",
+            "--config",
+            config_text,
+            "--model",
+            model.to_str().expect("a UTF-8 path"),
+            "--input",
+            dataset.to_str().expect("a UTF-8 path"),
+            "--output",
+            predictions.to_str().expect("a UTF-8 path"),
+        ])
+        .assert()
+        .success();
+    let text = std::fs::read_to_string(&predictions).expect("the predictions file");
+    assert!(
+        text.starts_with("[["),
+        "the workflow file's `output.format` must win over the `.csv` extension, got {text}"
+    );
+
+    let scaler = directory.path().join("scaler.safetensors");
+    sk_command()
+        .args([
+            "fit",
+            "--input",
+            dataset.to_str().expect("a UTF-8 path"),
+            "--target",
+            "y",
+            "--estimator",
+            "standard_scaler",
+            "--model",
+            scaler.to_str().expect("a UTF-8 path"),
+        ])
+        .assert()
+        .success();
+
+    let transformed = directory.path().join("transformed.csv");
+    sk_command()
+        .args([
+            "transform",
+            "--config",
+            config_text,
+            "--model",
+            scaler.to_str().expect("a UTF-8 path"),
+            "--input",
+            dataset.to_str().expect("a UTF-8 path"),
+            "--output",
+            transformed.to_str().expect("a UTF-8 path"),
+        ])
+        .assert()
+        .success();
+    let text = std::fs::read_to_string(&transformed).expect("the transformed matrix");
+    assert!(
+        text.starts_with("[["),
+        "the workflow file's `output.format` must win over the `.csv` extension, got {text}"
+    );
+}
+
+#[test]
+fn an_empty_output_format_variable_leaves_the_extension_in_charge() {
+    let directory = tempdir().expect("a temporary directory");
+    let dataset = sk_dataset(directory.path());
+    let model = directory.path().join("model.safetensors");
+    sk_command()
+        .args([
+            "fit",
+            "--input",
+            dataset.to_str().expect("a UTF-8 path"),
+            "--target",
+            "y",
+            "--model",
+            model.to_str().expect("a UTF-8 path"),
+        ])
+        .assert()
+        .success();
+
+    let predictions = directory.path().join("predictions.json");
+    let mut command = sk_command();
+    command
+        .args([
+            "predict",
+            "--model",
+            model.to_str().expect("a UTF-8 path"),
+            "--input",
+            dataset.to_str().expect("a UTF-8 path"),
+            "--target",
+            "y",
+            "--output",
+            predictions.to_str().expect("a UTF-8 path"),
+        ])
+        .env("SCIENCEKIT_OUTPUT_FORMAT", "")
+        .assert()
+        .success();
+    let text = std::fs::read_to_string(&predictions).expect("the predictions file");
+    assert!(
+        text.starts_with("[["),
+        "an empty environment value must not force CSV, got {text}"
+    );
+}
