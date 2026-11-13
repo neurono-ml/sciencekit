@@ -1,43 +1,21 @@
-//! Mapping a sciencekit-exported preprocessing graph back to scaler state
-//! (spec `native-model-import`, requirement "ONNX native import").
-//!
-//! The exporter writes the learned per-column statistics as named
-//! initializers. Reading those names back is exact, while inferring
-//! `(x - a) / b` versus `(x - a) * b` from operator order would be ambiguous
-//! between the three scalers.
+//! The three scaler families the native ONNX mapper rebuilds.
 
-use sciencekit_common::{
-    SK_MODEL_FORMAT_VERSION, SKFloat, SKModelMetadata, SKModelState, SKParameterValue, SKTensor,
-    sk_model_tensor_data_type,
-};
+use sciencekit_common::{SKFloat, SKModelState, SKParameterValue, SKTensor};
 
-use super::initializers::constant;
-use super::metadata::SKOnnxNativeMetadata;
+use super::state::{column, model_has, native, required_column, scalar, scaler_metadata, tensor};
 use crate::graph::SKOnnxModel;
 use crate::native::error::SKOnnxNativeError;
+use crate::native::state::metadata::SKOnnxNativeMetadata;
 
-/// Convert a scaler graph, or return `None` when the estimator is not a scaler.
-pub(crate) fn state_from_scaler<F: SKFloat>(
-    model: &SKOnnxModel,
-    metadata: &SKOnnxNativeMetadata,
-) -> Result<Option<SKModelState<F>>, SKOnnxNativeError> {
-    match metadata.estimator_name.as_str() {
-        "SKStandardScaler" => standard_scaler(model, metadata).map(Some),
-        "SKMinMaxScaler" => minmax_scaler(model, metadata).map(Some),
-        "SKRobustScaler" => robust_scaler(model, metadata).map(Some),
-        _ => Ok(None),
-    }
-}
-
-fn standard_scaler<F: SKFloat>(
+pub(super) fn standard_scaler<F: SKFloat>(
     model: &SKOnnxModel,
     metadata: &SKOnnxNativeMetadata,
 ) -> Result<SKModelState<F>, SKOnnxNativeError> {
     let features = metadata.feature_count;
     let mean =
-        column(model, "standard_scaler.mean", features).unwrap_or_else(|| vec![0.0; features]);
+        column(model, "standard_scaler.mean", features)?.unwrap_or_else(|| vec![0.0; features]);
     let scale =
-        column(model, "standard_scaler.scale", features).unwrap_or_else(|| vec![1.0; features]);
+        column(model, "standard_scaler.scale", features)?.unwrap_or_else(|| vec![1.0; features]);
     let sum_squared_deviations: Vec<F> = scale
         .iter()
         .map(|value| F::from(value * value).unwrap_or_else(F::zero))
@@ -69,19 +47,15 @@ fn standard_scaler<F: SKFloat>(
     SKModelState::new(metadata, tensors).map_err(native)
 }
 
-fn minmax_scaler<F: SKFloat>(
+pub(super) fn minmax_scaler<F: SKFloat>(
     model: &SKOnnxModel,
     metadata: &SKOnnxNativeMetadata,
 ) -> Result<SKModelState<F>, SKOnnxNativeError> {
     let features = metadata.feature_count;
     let minimum = required_column(model, "minmax_scaler.minimum", features)?;
     let scale = required_column(model, "minmax_scaler.scale", features)?;
-    let feature_minimum = constant(model, "minmax_scaler.feature_minimum")
-        .and_then(|constant| constant.scalar())
-        .unwrap_or(0.0);
-    let feature_maximum = constant(model, "minmax_scaler.feature_maximum")
-        .and_then(|constant| constant.scalar())
-        .unwrap_or(1.0);
+    let feature_minimum = scalar(model, "minmax_scaler.feature_minimum")?.unwrap_or(0.0);
+    let feature_maximum = scalar(model, "minmax_scaler.feature_maximum")?.unwrap_or(1.0);
     let range = feature_maximum - feature_minimum;
     let maximum: Vec<F> = minimum
         .iter()
@@ -127,13 +101,13 @@ fn minmax_scaler<F: SKFloat>(
     SKModelState::new(metadata, tensors).map_err(native)
 }
 
-fn robust_scaler<F: SKFloat>(
+pub(super) fn robust_scaler<F: SKFloat>(
     model: &SKOnnxModel,
     metadata: &SKOnnxNativeMetadata,
 ) -> Result<SKModelState<F>, SKOnnxNativeError> {
     let features = metadata.feature_count;
     let center =
-        column(model, "robust_scaler.center", features).unwrap_or_else(|| vec![0.0; features]);
+        column(model, "robust_scaler.center", features)?.unwrap_or_else(|| vec![0.0; features]);
     let scale = required_column(model, "robust_scaler.scale", features)?;
     let metadata = scaler_metadata::<F>("SKRobustScaler", features)?;
     let tensors = vec![
@@ -141,55 +115,4 @@ fn robust_scaler<F: SKFloat>(
         tensor("robust_scaler.scale", scale)?,
     ];
     SKModelState::new(metadata, tensors).map_err(native)
-}
-
-fn scaler_metadata<F: SKFloat>(
-    estimator_name: &str,
-    features: usize,
-) -> Result<SKModelMetadata, SKOnnxNativeError> {
-    SKModelMetadata::new(
-        estimator_name,
-        SK_MODEL_FORMAT_VERSION,
-        sk_model_tensor_data_type::<F>(),
-        features,
-    )
-    .map_err(native)
-}
-
-fn tensor<F: SKFloat>(name: &str, values: Vec<f64>) -> Result<SKTensor<F>, SKOnnxNativeError> {
-    SKTensor::floating(
-        name,
-        vec![values.len()],
-        values
-            .iter()
-            .map(|value| F::from(*value).unwrap_or_else(F::zero))
-            .collect(),
-    )
-    .map_err(native)
-}
-
-fn column(model: &SKOnnxModel, name: &str, features: usize) -> Option<Vec<f64>> {
-    constant(model, name)
-        .filter(|constant| constant.values.len() == features)
-        .map(|constant| constant.values)
-}
-
-fn required_column(
-    model: &SKOnnxModel,
-    name: &str,
-    features: usize,
-) -> Result<Vec<f64>, SKOnnxNativeError> {
-    column(model, name, features).ok_or_else(|| SKOnnxNativeError::InvalidGraph {
-        detail: format!(
-            "the scaler graph does not carry the initializer `{name}` of width {features}"
-        ),
-    })
-}
-
-fn model_has(model: &SKOnnxModel, name: &str) -> bool {
-    constant(model, name).is_some()
-}
-
-fn native(error: sciencekit_common::SKError) -> SKOnnxNativeError {
-    SKOnnxNativeError::Native(sciencekit_interop::native::SKNativeImportError::from(error))
 }

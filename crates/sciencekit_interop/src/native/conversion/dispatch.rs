@@ -25,6 +25,15 @@ pub use super::result::SKNativeImport;
 pub fn sk_import_native_state<F: SKFloat>(
     state: &SKModelState<F>,
 ) -> Result<SKNativeImport<F>, SKNativeImportError> {
+    // A zero-width model cannot answer any prediction; validating the declared
+    // feature count here keeps every family from rebuilding one.
+    if state.metadata().feature_count() == 0 {
+        return Err(SKNativeImportError::ShapeMismatch {
+            tensor: "feature_count".to_string(),
+            expected: vec![1],
+            found: vec![0],
+        });
+    }
     let estimator_name = state.metadata().estimator_name();
     if let Some(converted) = convert_regressor(state, estimator_name)? {
         return Ok(converted);

@@ -6,6 +6,7 @@ mod initializers;
 mod metadata;
 mod scalers;
 mod trees;
+mod validation;
 
 use sciencekit_common::{SKFloat, SKModelState};
 

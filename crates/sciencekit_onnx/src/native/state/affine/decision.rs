@@ -4,6 +4,7 @@ use crate::graph::SKOnnxModel;
 use crate::native::error::SKOnnxNativeError;
 
 use super::super::initializers::{SKOnnxConstant, constant};
+use super::super::validation::{sk_dtype_mismatch, sk_require_floating, sk_shape_mismatch};
 use super::shared::invalid;
 
 /// Operators an affine graph may use beside the mapped ones.
@@ -45,6 +46,7 @@ pub(crate) fn read_affine(model: &SKOnnxModel) -> Result<Option<Affine>, SKOnnxN
             "the MatMul weight `{weight_name}` is not an initializer"
         ))
     })?;
+    sk_require_floating(&weights, weight_name)?;
     let &[feature_count, heads] = weights.shape.as_slice() else {
         return Err(invalid(format!(
             "the MatMul weight must be a matrix, got shape {:?}",
@@ -56,7 +58,11 @@ pub(crate) fn read_affine(model: &SKOnnxModel) -> Result<Option<Affine>, SKOnnxN
             "the MatMul weight payload disagrees with its shape",
         ));
     }
+    sk_validate_feature_input(model, &matmul.inputs[0], feature_count, &weights)?;
     let bias = find_bias(model, &matmul.outputs);
+    if let Some(bias) = bias.as_ref() {
+        sk_require_floating(bias, "MatMul.bias")?;
+    }
     let link = graph
         .nodes
         .iter()
@@ -67,6 +73,41 @@ pub(crate) fn read_affine(model: &SKOnnxModel) -> Result<Option<Affine>, SKOnnxN
         feature_count,
         link,
     }))
+}
+
+fn sk_validate_feature_input(
+    model: &SKOnnxModel,
+    input_name: &str,
+    feature_count: usize,
+    weights: &SKOnnxConstant,
+) -> Result<(), SKOnnxNativeError> {
+    let Some(input) = model
+        .inputs()
+        .iter()
+        .find(|input| input.name() == input_name)
+    else {
+        return Ok(());
+    };
+    let weight_type = weights
+        .data_type
+        .unwrap_or(crate::graph::SKOnnxTensorDType::Double);
+    if input.element_type() != weight_type {
+        return Err(sk_dtype_mismatch(
+            input.name(),
+            weight_type,
+            input.element_type(),
+        ));
+    }
+    if let Some(declared) = input.feature_count() {
+        if declared != feature_count {
+            return Err(sk_shape_mismatch(
+                input.name(),
+                vec![feature_count],
+                vec![declared],
+            ));
+        }
+    }
+    Ok(())
 }
 
 fn find_bias(model: &SKOnnxModel, matmul_outputs: &[String]) -> Option<SKOnnxConstant> {

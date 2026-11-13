@@ -76,6 +76,27 @@ fn native_validation_rejects_a_state_with_the_wrong_scalar() {
     assert!(!error.to_string().is_empty());
 }
 
+/// A state fitted on zero features cannot produce a usable model.
+#[test]
+fn native_validation_rejects_a_model_with_zero_features() {
+    use sciencekit_common::SKTensor;
+
+    let metadata = SKModelMetadata::new("SKLinearRegression", 1, SKTensorDataType::F64, 0).unwrap();
+    let tensors = vec![
+        SKTensor::floating("linear.coefficients", vec![0], Vec::<f64>::new()).unwrap(),
+        SKTensor::floating("linear.intercept", vec![], vec![0.0_f64]).unwrap(),
+        SKTensor::integer("linear.rank", vec![], vec![0_i64]).unwrap(),
+        SKTensor::floating("linear.singular_values", vec![0], Vec::<f64>::new()).unwrap(),
+    ];
+    let broken = SKModelState::<f64>::new(metadata, tensors).unwrap();
+    let error = super::sk_import_native_state(&broken).unwrap_err();
+    assert!(matches!(
+        error,
+        super::error::SKNativeImportError::ShapeMismatch { ref tensor, .. }
+            if tensor == "feature_count"
+    ));
+}
+
 #[test]
 fn native_validation_a_failed_conversion_leaves_no_model() {
     let model = test_models::linear_regression();
