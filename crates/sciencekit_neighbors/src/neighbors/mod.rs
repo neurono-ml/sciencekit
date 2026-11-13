@@ -7,7 +7,7 @@
 mod algorithm;
 mod brute_force;
 mod configuration;
-pub(crate) mod export_helpers;
+pub mod export_helpers;
 mod index;
 mod metric;
 mod search;

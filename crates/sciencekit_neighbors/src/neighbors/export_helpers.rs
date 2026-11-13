@@ -22,7 +22,7 @@ use crate::neighbors::{
 pub const SK_TRAINING_REPRESENTATION_PARAMETER: &str = "training_representation";
 
 /// Attach the search configuration to metadata.
-pub(crate) fn with_neighbors_configuration(
+pub fn with_neighbors_configuration(
     mut metadata: SKModelMetadata,
     configuration: &SKNeighborsConfiguration,
 ) -> Result<SKModelMetadata, SKError> {
@@ -52,7 +52,7 @@ pub(crate) fn with_neighbors_configuration(
 }
 
 /// Decode the search configuration from metadata.
-pub(crate) fn read_neighbors_configuration(
+pub fn read_neighbors_configuration(
     metadata: &SKModelMetadata,
 ) -> Result<SKNeighborsConfiguration, SKError> {
     let configuration = SKNeighborsConfiguration {
@@ -72,7 +72,7 @@ pub(crate) fn read_neighbors_configuration(
 }
 
 /// Encode the owned training design under a family prefix.
-pub(crate) fn export_training_data<F: SKFloat>(
+pub fn export_training_data<F: SKFloat>(
     training: &SKTrainingData<F>,
     prefix: &str,
 ) -> Result<(Vec<SKTensor<F>>, &'static str), SKError> {
@@ -113,7 +113,7 @@ pub(crate) fn export_training_data<F: SKFloat>(
 }
 
 /// Rebuild the owned training design from a family state.
-pub(crate) fn import_training_data<F: SKFloat>(
+pub fn import_training_data<F: SKFloat>(
     state: &SKModelState<F>,
     prefix: &str,
     representation: &str,

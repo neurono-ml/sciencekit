@@ -10,6 +10,7 @@ mod config;
 mod core_implementation;
 pub(crate) mod distance;
 mod elkan;
+mod export;
 mod fit;
 pub(crate) mod init;
 pub(crate) mod iteration;
@@ -43,3 +44,6 @@ mod kmeans_lloyd_tests;
 mod kmeans_predict_tests;
 #[cfg(test)]
 mod kmeans_validation_tests;
+
+#[cfg(test)]
+mod export_tests;
