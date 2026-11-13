@@ -24,7 +24,7 @@ pub fn export_tree<F: SKFloat>(
         .collect();
     let thresholds: Vec<F> = nodes
         .iter()
-        .map(|node| node.threshold.unwrap_or_else(F::nan))
+        .map(|node| node.threshold.unwrap_or_else(F::zero))
         .collect();
     let left: Vec<i64> = nodes
         .iter()
