@@ -23,6 +23,16 @@ impl SKIntegerCategoryTable {
         }
     }
 
+    /// Rebuild a table from its exported code order.
+    pub(crate) fn from_codes(codes: Vec<i64>) -> Self {
+        let index_of = codes
+            .iter()
+            .enumerate()
+            .map(|(index, &code)| (code, index))
+            .collect();
+        SKIntegerCategoryTable { codes, index_of }
+    }
+
     /// The number of distinct categories.
     pub fn number_of_categories(&self) -> usize {
         self.codes.len()
