@@ -13,11 +13,15 @@
 mod export;
 mod graph;
 
+#[cfg(test)]
+mod acceptance_tests;
+
 pub use export::{
     SKOnnxFamilyCoverage, SKToOnnx, sk_export_state_to_onnx, sk_onnx_coverage,
     sk_onnx_supported_families,
 };
 pub use graph::{
     SK_ONNX_DEFAULT_OPSET, SK_ONNX_IR_VERSION, SK_ONNX_ML_DOMAIN, SK_ONNX_ML_TREE_OPSET,
-    SKOnnxDimension, SKOnnxModel, SKOnnxTensorDType, SKOnnxValueInfo,
+    SKOnnxDimension, SKOnnxGraphBuilder, SKOnnxModel, SKOnnxNode, SKOnnxTensorDType,
+    SKOnnxValueInfo,
 };

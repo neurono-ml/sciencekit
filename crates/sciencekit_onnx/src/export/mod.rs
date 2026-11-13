@@ -8,9 +8,7 @@ mod coverage;
 mod dispatcher;
 
 pub use contract::SKToOnnx;
-pub use coverage::{
-    SKOnnxFamilyCoverage, sk_onnx_coverage, sk_onnx_supported_families,
-};
+pub use coverage::{SKOnnxFamilyCoverage, sk_onnx_coverage, sk_onnx_supported_families};
 pub use dispatcher::sk_export_state_to_onnx;
 
 #[cfg(test)]

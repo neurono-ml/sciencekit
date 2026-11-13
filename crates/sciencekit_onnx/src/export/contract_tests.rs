@@ -32,7 +32,9 @@ impl<F: SKFloat> SKExportable<F> for SKContractFixture<F> {
 
 #[test]
 fn to_onnx_propagates_the_state_export_error() {
-    let fixture = SKContractFixture::<f32> { values: vec![1.0, 2.0] };
+    let fixture = SKContractFixture::<f32> {
+        values: vec![1.0, 2.0],
+    };
     let error = fixture.to_onnx().expect_err("the fixture has no exporter");
     assert!(matches!(
         error,
