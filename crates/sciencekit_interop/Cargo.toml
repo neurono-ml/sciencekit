@@ -47,8 +47,9 @@ polars = { version = "=0.46.0", default-features = false, features = ["lazy", "s
 # `polars-utils` depends on `stacker`, whose `psm` build dependency resolves to
 # `ar_archive_writer` 0.5.x using let-chains (Rust 1.88) when left to float.
 # Pinning `psm` through a direct optional dependency keeps `--features polars`
-# buildable on the Rust 1.85 toolchain without a committed lockfile.
-psm = { version = "=0.1.28", optional = true }
+# buildable on the Rust 1.85 toolchain; `0.1.24` is the last release whose
+# `ar_archive_writer` builds on 1.85, matching the CI downgrade step.
+psm = { version = "=0.1.24", optional = true }
 datafusion = { version = "=46.0.0", default-features = false, features = ["parquet"], optional = true }
 # `arrow-cast` 54 (through DataFusion 46) accepts comfy-table 7.x and floats to
 # 7.2, whose source uses let-chains from Rust 1.88. Pin the last 1.64-compatible
