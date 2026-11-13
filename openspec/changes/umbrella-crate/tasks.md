@@ -22,7 +22,7 @@
 
 - [x] 3.1 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
   warnings` and `cargo test --workspace`; fix every failure before pushing.
-- [ ] 3.2 Update `CHANGELOG.md` under `Unreleased → Added` for the umbrella crate.
+- [x] 3.2 Update `CHANGELOG.md` under `Unreleased → Added` for the umbrella crate.
 - [ ] 3.3 Independent review by a separate agent validating every scenario in
   `umbrella-crate`; address every finding and re-run the gates.
 
