@@ -22,6 +22,11 @@ snap = { version = "1.1", optional = true }
 tracing = { workspace = true }
 tokio = { version = "=1.53.1", features = ["rt"] }
 
+# Optional memory-mapped sources (feature `memmap`). `memmap2` supplies the
+# read-only mapping and `npyz` parses the NumPy `.npy` header.
+memmap2 = { version = "0.9", optional = true }
+npyz = { version = "0.8", default-features = false, optional = true }
+
 # Optional Arrow adapter (feature `arrow`). Versions are pinned to the last
 # release whose MSRV is Rust 1.85, the workspace toolchain (PRD §3.6).
 arrow-array = { version = "=58.3.0", features = ["ffi"], optional = true }
@@ -33,6 +38,25 @@ arrow-json = { version = "=58.3.0", optional = true }
 arrow-schema = { version = "=58.3.0", features = ["ffi"], optional = true }
 arrow-select = { version = "=58.3.0", optional = true }
 parquet = { version = "=58.3.0", features = ["arrow"], default-features = false, optional = true }
+
+# Optional DataFrame adapters (features `polars` and `datafusion`). Polars
+# 0.46 is the last release verified on the Rust 1.85 toolchain; DataFusion 46
+# declares MSRV 1.82 and pins Arrow 54.2, so it is used only inside its own
+# adapter and never on the default build path.
+polars = { version = "=0.46.0", default-features = false, features = ["lazy", "strings", "dtype-categorical"], optional = true }
+# `polars-utils` depends on `stacker`, whose `psm` build dependency resolves to
+# `ar_archive_writer` 0.5.x using let-chains (Rust 1.88) when left to float.
+# Pinning `psm` through a direct optional dependency keeps `--features polars`
+# buildable on the Rust 1.85 toolchain; `0.1.24` is the last release whose
+# `ar_archive_writer` builds on 1.85, matching the CI downgrade step.
+psm = { version = "=0.1.24", optional = true }
+datafusion = { version = "=46.0.0", default-features = false, features = ["parquet"], optional = true }
+# `arrow-cast` 54 (through DataFusion 46) accepts comfy-table 7.x and floats to
+# 7.2, whose source uses let-chains from Rust 1.88. Pin the last 1.64-compatible
+# release, the same way `psm` is pinned for Polars.
+comfy-table = { version = "=7.1.4", optional = true }
+futures = { version = "0.3", optional = true }
+
 
 [dev-dependencies]
 tracing-subscriber = { workspace = true }
@@ -54,9 +78,16 @@ arrow = [
     "dep:arrow-select",
     "dep:parquet",
 ]
-polars = []
-datafusion = []
-memmap = []
+# The Parquet file path is part of the Arrow adapter (`arrow`), which owns the
+# `parquet` 58 dependency. The alias exists because the proposal and the task
+# book document `--features parquet` as a selectable capability; it enables the
+# Arrow/Parquet reader rather than a second, duplicate dependency.
+parquet = ["arrow"]
+polars = ["dep:polars", "dep:psm"]
+datafusion = ["dep:datafusion", "dep:comfy-table", "dep:futures"]
+# Memory-mapped raw binary, NumPy `.npy` and Arrow IPC sources. Arrow IPC uses
+# the `arrow` adapter, so the flag enables it as well.
+memmap = ["dep:memmap2", "dep:npyz", "arrow"]
 compression-gzip = ["dep:flate2"]
 compression-brotli = ["dep:brotli"]
 compression-snappy = ["dep:snap"]

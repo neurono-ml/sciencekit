@@ -29,6 +29,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   direction per split, and prediction bins dense or CSR queries without
   densification. Early stopping uses a seeded validation fraction and
   `n_iter_no_change`, and every operation records the configured backend.
+- Feature-gated tabular sources in `sciencekit_interop` (spec
+  `tabular-sources`): the materialized `SKTabularDataset<F>` with a projected
+  `SKTabularSchema`, a dense or sparse `SKFeatureBlock` and an owned
+  `SKNominalMatrixOwned` categorical block; `SKColumnKind` (`Numeric`,
+  `Categorical`, `Boolean`, `Ignored`) and the builder-validated
+  `SKTabularSourceConfig`; `SKTabularBatch::to_tabular_dataset` applying one
+  missing-value policy (numeric nulls to `NaN`, categorical nulls to
+  `SK_CATEGORICAL_MISSING_CODE`) and rejecting unsupported dtypes by column.
+  The optional `polars` feature converts Polars 0.46 `DataFrame` values and
+  exposes a reopenable sliced `LazyFrame` batch source; the optional
+  `datafusion` feature converts DataFusion 46 `DataFrame`/`RecordBatch` values,
+  streams a physical plan as record batches, and reads Parquet files through a
+  temporary session. Both engines keep their own Arrow vocabulary behind the
+  neutral column contract, and the default build resolves neither dependency.
+- `sciencekit_interop` gains the optional `memmap` feature (spec
+  `memory-mapped-sources`): read-only `memmap2` mappings exposed through
+  `SKMappableSource` (O(1) borrowed rows) and `SKLazySource` (bounded owned
+  blocks). `SKRawBinaryMappableSource<F>` maps a headerless fixed-width matrix
+  driven by an explicit or sidecar `SKRawBinaryDescriptor` (`f32`, `f64`,
+  `i64`); `SKNumpyMappableSource<F>` maps C-order `.npy` `f4`/`f8` arrays
+  zero-copy and offers an explicit `open_with_cast` materialising path for
+  `i64` and mismatched float dtypes; `SKArrowIpcMappableSource<F>` reads only
+  the Arrow IPC footer, indexes record batches by cumulative row offsets and
+  decodes a single batch per row lookup behind a shared cache. Opening
+  validates little-endian data, dtype compatibility, exact file length,
+  payload alignment and header framing, and reports structured
+  `MissingMappedFile`, `MappedFilePermissionDenied`, `UnsupportedMappedDtype`,
+  `NonLittleEndianMappedData`, `MappedLengthMismatch`, `MalformedMappedHeader`,
+  `MisalignedMappedData` and `UnreadableMappedBatch` errors naming the file.
+  Companion tests cover random/sequential equivalence, `f32`/`f64`,
+  concurrent `Send + Sync` readers, large files with bounded batches,
+  Fortran order, truncated files and misaligned headers.
 - `sciencekit_math` gains the Mercer and similarity kernel catalogue (spec
   `kernel-functions`): `SKKernel` (`Linear`, `Polynomial`,
   `RadialBasisFunction`, `Sigmoid`, `Precomputed`), `SKKernelGamma<F>`
@@ -59,6 +91,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`SKPlattParameters`, `sk_fit_platt_sigmoid`, `sk_calibrate_binary_platt`,
   `sk_couple_pairwise_probabilities`,
   `sk_couple_pairwise_probabilities_with_budget`).
+- `SKLinearSVC<F>` in `sciencekit_svm` (spec
+  `linear-support-vector-classifier`): a builder-only L2-regularized linear
+  support-vector classifier (`C`, `loss`, `class_weight`, `include_intercept`,
+  `tolerance`, `maximum_number_of_iterations`, `backend`, `execution_mode`)
+  backed by a LIBLINEAR-style dual coordinate-descent solver for the L1-hinge
+  and L2-squared-hinge losses. It exposes `SKLinearSVCLoss` (`Hinge`,
+  `SquaredHinge`), `SKLinearSVCHead<F>` and `SKLinearSVCModel<F>` with
+  `decision_function`, deterministic `predict_labels` and an explicit
+  `UnsupportedOperation` from `predict_probabilities` (no calibrated
+  probability model). Fitting runs one-vs-rest heads in parallel with
+  deterministic order, accepts dense or borrowed CSR designs without
+  densifying, honours `None`/`Balanced`/explicit class weights, and reports
+  `NotConverged { iterations }` when the iteration budget is exhausted.
 - Stage-wise gradient boosting in `sciencekit_ensemble` (spec `gradient-boosting`):
   builder-only `SKGradientBoostingClassifier<F>` / `SKGradientBoostingRegressor<F>` with
   `number_of_estimators` (default `100`), `learning_rate` (default `0.1`), `maximum_depth`
@@ -439,6 +484,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   or mismatched dtypes (`SKError::InvalidHyperparameter`) and tensor
   shape/value-count disagreements (`SKError::ShapeMismatch`) are rejected up
   front before materializing model state.
+
+### Fixed
+
+- `sciencekit_interop` `memmap` NumPy sources reject `.npy` byte lengths whose element-count multiplication overflows the address space, using `checked_mul` and reporting `SKError::MalformedMappedHeader` instead of wrapping into an undersized mapping.
+- `sciencekit_interop` `memmap` Arrow IPC row access validates crafted batch metadata with checked arithmetic and a safe shared cache, rejecting out-of-range offsets with structured errors rather than reading past a batch.
+- New `hostile_input_tests` and Arrow IPC layout tests exercise truncated raw files, absurd `.npy` dimensions, wrong-shape descriptors and tampered batch metadata as typed errors.
 
 ## [0.7.0] — 2026-11-11
 

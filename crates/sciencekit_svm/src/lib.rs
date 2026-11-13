@@ -1,21 +1,29 @@
-//! `sciencekit_svm` — kernel support-vector machines (`SKSVC` and `SKSVR`)
-//! (spec `support-vector-machines`, PRD §12 Phase 3).
+//! `sciencekit_svm` — support-vector machines (`SKSVC`, `SKSVR` and
+//! `SKLinearSVC`) (specs `support-vector-machines` and
+//! `linear-support-vector-classifier`, PRD §12 Phase 3).
 //!
 //! Provides C-support-vector classification (`SKSVC`) with one-vs-one
 //! multiclass, class weights and optional Platt + pairwise-coupling probability
 //! calibration, alongside epsilon-insensitive support-vector regression
 //! (`SKSVR`). Both share a deterministic pure-Rust second-order SMO solver, a
 //! bounded LRU kernel-row cache and dense/sparse/mixed representation parity.
+//! `SKLinearSVC` adds the LIBLINEAR-style linear counterpart: dual coordinate
+//! descent for the hinge and squared-hinge losses over a dense or borrowed-CSR
+//! design, one-vs-rest multiclass heads and an explicit convergence budget.
 
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
 pub mod kernel;
+pub mod linear_svc;
 pub mod probability;
 pub mod smo;
 pub mod svc;
 pub mod svr;
 
+pub use linear_svc::{
+    SKLinearSVC, SKLinearSVCBuilder, SKLinearSVCLoss, sk_linear_svc_loss_from_code,
+};
 pub use sciencekit_math::{SKKernel, SKKernelGamma, SKKernelParameters};
 pub use svc::{SKBinarySVCModel, SKClassWeight, SKSVC, SKSVCBuilder, SKSVCModel};
 pub use svr::{SKSVR, SKSVRBuilder, SKSVRModel};
