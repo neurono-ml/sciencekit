@@ -15,7 +15,7 @@
 - [x] 2.2 Implement export/import for `SKOneHotEncoder` and `SKPolynomialFeatures`,
   including category/label tables; verify with
   `cargo test -p sciencekit_preprocessing export`.
-- [ ] 2.3 Implement export/import for `SKSimpleImputer` and `SKMissingIndicator`, including
+- [x] 2.3 Implement export/import for `SKSimpleImputer` and `SKMissingIndicator`, including
   indicator scope and strategy metadata; verify with
   `cargo test -p sciencekit_impute export`.
 
