@@ -1,5 +1,10 @@
 # Proposal
 
+## Status
+
+Deferred — see ADR #381. The JVM lane has no `sciencekit-jvm` repository, no JNI layer and
+no owner; this plan is preserved as design material, not as committed near-term work.
+
 ## Why
 
 The JVM ecosystem (Java, Scala, Clojure) is large and can share one native binding. A JNI
