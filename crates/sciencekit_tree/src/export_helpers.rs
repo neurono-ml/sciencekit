@@ -3,7 +3,8 @@
 //! A tree travels as parallel node arrays: split features, thresholds, child
 //! indices, sample counts and impurity per node, plus a flattened leaf-value
 //! array with its per-node offsets. Children use `-1` and split features use
-//! `-1` to mean "leaf"; thresholds use NaN at leaves.
+//! `-1` to mean "leaf"; leaf thresholds are stored as zero because traversal
+//! never reads a threshold on a leaf (a NaN there would not serialize).
 
 use sciencekit_common::{
     SKError, SKFloat, SKModelState, SKTensor, sk_read_floating_tensor, sk_read_integer_tensor,

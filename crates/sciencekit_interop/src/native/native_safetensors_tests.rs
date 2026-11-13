@@ -4,7 +4,8 @@
 
 use ndarray::Array2;
 use sciencekit_common::{
-    SKClassifierPredictor, SKClustererPredictor, SKFeatureTransformer, SKRegressorPredictor,
+    SKClassifierPredictor, SKClustererPredictor, SKExportable, SKFeatureTransformer,
+    SKRegressorPredictor,
 };
 
 use super::conversion::SKNativeImport;
@@ -97,6 +98,66 @@ fn native_safetensors_round_trips_tree_and_forest() {
     assert_eq!(
         forest.predict_probabilities(features.view()).unwrap(),
         imported.predict_probabilities(features.view()).unwrap()
+    );
+}
+
+/// A leaf threshold of zero routes exactly like the NaN the exporter used
+/// before the change: traversal only reads a threshold on split nodes.
+#[test]
+fn native_safetensors_leaf_threshold_zero_is_lossless() {
+    use sciencekit_common::{
+        SKModelState, SKTensor, sk_read_floating_tensor, sk_read_integer_tensor,
+    };
+
+    let tree = test_models::decision_tree_regressor();
+    let state = tree.export_state().unwrap();
+    let split = sk_read_integer_tensor(&state, "tree.nodes.split_feature").unwrap();
+    let (_, thresholds) = sk_read_floating_tensor(&state, "tree.nodes.threshold").unwrap();
+    assert!(
+        split
+            .iter()
+            .zip(&thresholds)
+            .filter(|(feature, _)| **feature < 0)
+            .all(|(_, threshold)| *threshold == 0.0),
+        "the exporter must encode every leaf threshold as zero"
+    );
+
+    let mut nan_tensors = Vec::new();
+    for (name, tensor) in state.tensors() {
+        if name == "tree.nodes.threshold" {
+            let values: Vec<f64> = split
+                .iter()
+                .zip(&thresholds)
+                .map(
+                    |(feature, threshold)| {
+                        if *feature < 0 { f64::NAN } else { *threshold }
+                    },
+                )
+                .collect();
+            nan_tensors
+                .push(SKTensor::floating(name.clone(), tensor.shape().to_vec(), values).unwrap());
+        } else {
+            nan_tensors.push(tensor.clone());
+        }
+    }
+    let nan_state = SKModelState::new(state.metadata().clone(), nan_tensors).unwrap();
+    let nan_imported = super::sk_import_native_state(&nan_state).unwrap();
+    let zero_imported = super::sk_import_native_state(&state).unwrap();
+    let probe = ndarray::array![
+        [0.0_f64, 0.0],
+        [1.0, 0.0],
+        [2.0, 1.0],
+        [3.0, 2.0],
+        [4.0, 3.0],
+    ];
+    let expected = tree.predict(probe.view()).unwrap();
+    assert_eq!(
+        expected,
+        nan_imported.predict_regression(probe.view()).unwrap()
+    );
+    assert_eq!(
+        expected,
+        zero_imported.predict_regression(probe.view()).unwrap()
     );
 }
 
