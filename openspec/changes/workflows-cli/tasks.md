@@ -24,7 +24,7 @@
   with feature-gated fixtures.
 - [x] 3.2 Implement Safetensors/JSON/ONNX model and prediction adapters; verify with
   round-trip fixtures.
-- [ ] 3.3 Integrate `sciencekit_telemetry`, flushing on every exit path; verify with an
+- [x] 3.3 Integrate `sciencekit_telemetry`, flushing on every exit path; verify with an
   in-memory endpoint test.
 
 ## 4. Acceptance and review
