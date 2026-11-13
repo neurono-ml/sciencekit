@@ -58,7 +58,7 @@ pub use interop::{
     sk_assert_state_names, sk_backend_parameter, sk_boolean_parameter, sk_embed_state,
     sk_extract_state, sk_float_parameter, sk_integer_parameter, sk_model_tensor_data_type,
     sk_parse_backend_name, sk_parse_backend_parameter, sk_read_boolean_tensor,
-    sk_read_floating_tensor, sk_read_integer_tensor, sk_string_parameter,
+    sk_read_floating_tensor, sk_read_integer_tensor, sk_states_equal, sk_string_parameter,
     sk_validate_import_metadata,
 };
 pub use label_table::{SKLabelTable, sk_canonicalize_labels};
