@@ -99,7 +99,9 @@ by the work items of one group, much faster than global memory).
    writes `SK_REAL`, replaced by `float` or `double` before compilation. One kernel file
    serves both precisions; f64 support is still gated by the device's reported
    `double_fp_config`, and a device without it returns `UnsupportedScalarType` instead of
-   silently computing in f32.
+   silently computing in f32. The session caches each compiled program under a key carrying
+   **both the kernel name and the scalar type**, so an f32 dispatch can never hand a later
+   f64 dispatch the wrong program.
 6. **The fallback backend always exists.** `SKOpenClBackend` is compiled whether the feature
    is on or off. With the feature off it calls no OpenCL symbol, `discover_devices` returns
    an empty inventory and `fallback_reason()` returns
@@ -159,12 +161,15 @@ The API makes the decision impossible to ignore:
   `DeviceUnavailable`. This is the shape planning wants: it can always hold a backend value
   and read the reason, instead of matching on a constructor failure.
 
-Every public operation opens a span through
-`opencl::observability::operation_span(operation)`, which records `backend = opencl`,
-`operation`, and — once known — `device_index` and `transfer_bytes`. The fields are recorded
-on the same span the operation runs inside, so a trace shows *which* device ran the kernel
-and *how much* data crossed the bus. The test
-`a_kernel_operation_records_backend_device_and_bytes` asserts exactly those four fields.
+Every public operation opens a span through `SKOpenClBackend::operation_span(operation)`.
+An operation with an open session records `backend = opencl`, the operation name and — once
+known — `device_index` and `transfer_bytes`: a trace shows *which* device ran the kernel and
+*how much* data crossed the bus. An operation on a backend without a device never claims
+device work: it records the host fallback kind (`faer`) and the `fallback_reason`
+(`no-device-available`), exactly as `sk_resolve_operation_backend` does, and leaves the
+device index and byte count unset. The tests
+`a_kernel_operation_records_backend_device_and_bytes` and
+`an_unavailable_operation_records_the_host_fallback_and_reason` assert both halves.
 
 ## 5. The kernels, one by one
 
@@ -233,6 +238,10 @@ skip line — but they never fake a device.
   metrics against a CPU reference on a 13 × 11 / 17 × 11 input.
 - `...::large_pairwise_matches_the_cpu_reference` — 257 rows against 129 rows.
 - `...::single_precision_pairwise_matches_within_tolerance` — the f32 tolerance (1e-3).
+- `...::one_backend_serves_both_precisions_of_the_same_kernel` — an f32 dispatch followed by
+  an f64 dispatch of the same kernel on one backend still matches the CPU.
+- `...::programs_are_cached_once_per_scalar_type` — the same program is reused, and each
+  precision owns a separate cache entry.
 - `...::gemm_matches_the_cpu_reference` — 17 × 23 × 19, 64 × 96 × 32 and 129 × 47 × 65.
 - `...::elementwise_kernels_match_the_cpu_reference` — affine transform and combination.
 - `...::tree_prediction_matches_the_cpu_reference` — a hand-built five-row tree, including a
@@ -248,6 +257,9 @@ skip line — but they never fake a device.
   `...::concurrent_transfers_agree` — eight threads over one shared backend.
 - `opencl::backend::observability_tests::a_kernel_operation_records_backend_device_and_bytes` —
   the span records `opencl`, the operation, the device index and a positive byte count.
+- `opencl::backend::fallback_tests::an_unavailable_operation_records_the_host_fallback_and_reason` —
+  a failed device attempt records the host fallback and `no-device-available`, never OpenCL
+  device work it did not perform.
 - `sciencekit_gpu_opencl::lib_tests::the_reexported_backend_runs_a_real_kernel` — the facade
   package's feature wiring drives a real GEMM.
 
