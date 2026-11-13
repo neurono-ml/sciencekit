@@ -24,7 +24,7 @@
 
 ## 4. Acceptance and review
 
-- [ ] 4.1 Add concurrent conversion, shape/class-table validation and no-partial-model
+- [x] 4.1 Add concurrent conversion, shape/class-table validation and no-partial-model
   tests; verify with `cargo test -p sciencekit_interop native_validation`.
 - [ ] 4.2 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
   warnings` and `cargo test --workspace`; fix every failure before pushing.
