@@ -9,7 +9,7 @@
 
 ## 2. Preprocessing and impute
 
-- [ ] 2.1 Implement export/import for `SKStandardScaler`, `SKMinMaxScaler` and
+- [x] 2.1 Implement export/import for `SKStandardScaler`, `SKMinMaxScaler` and
   `SKRobustScaler` (`standard_scaler.*`, `minmax_scaler.*`, `robust_scaler.*`) and
   round-trip predictions; verify with `cargo test -p sciencekit_preprocessing export`.
 - [ ] 2.2 Implement export/import for `SKOneHotEncoder` and `SKPolynomialFeatures`,
