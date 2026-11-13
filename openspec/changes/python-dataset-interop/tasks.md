@@ -26,7 +26,7 @@
 - [x] 4.1 TDD Polars Python `DataFrame` through the PyCapsule interface; zero intermediate pandas.
 - [x] 4.2 TDD Polars `LazyFrame` collected in batches on a reader thread; chunk size and final marking.
 - [x] 4.3 TDD Dask DataFrame: partition order, bounded resident memory, streamed fit equals concatenated fit.
-- [ ] 4.4 TDD PySpark small frame via `toArrow()`; parity with pandas.
+- [x] 4.4 TDD PySpark small frame via `toArrow()`; parity with pandas.
 - [ ] 4.5 TDD PySpark distributed path via `mapInArrow`; skip when pyspark is absent; document driver-memory limits.
 
 ## 5. Results, threading, errors, validation
