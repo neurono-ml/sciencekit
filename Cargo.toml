@@ -71,6 +71,7 @@ members = [
     "crates/sciencekit_telemetry",
     "crates/sciencekit_tree",
     "crates/sciencekit_preprocessing",
+    "crates/sciencekit_cli",
 ]
 
 # Single source of truth for the workspace version and shared package metadata.

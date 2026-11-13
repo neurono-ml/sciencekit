@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `sciencekit` command-line workflows (spec `workflows-cli`): the
+  `sciencekit_cli` crate ships a `sciencekit` binary with `fit`, `predict`,
+  `transform`, `evaluate`, `export`, `inspect` and `run`. `run` executes a
+  versioned JSON/TOML workflow (YAML behind an optional feature) that records
+  the dataset, feature pipeline, estimator, optional grid search, metrics and
+  output artifacts, so an experiment is reproducible from one document.
+  Configuration resolves as flags > environment (`SCIENCEKIT_*`) > workflow file
+  > defaults, `--dry-run` prints the effective configuration without writing
+  artifacts, and failures map to stable exit codes (`0` success, `2`
+  usage/validation, `3` data/model I/O, `4` unsupported feature, `1` runtime).
+  Unknown workflow fields and unsupported versions are typed errors naming the
+  offending dotted path. CSV/Parquet datasets go through the interop sources,
+  models through Safetensors/JSON (ONNX behind a feature), and telemetry is
+  initialized and flushed on every exit path when an OTLP endpoint is set.
 - Umbrella `sciencekit` crate: one dependency that re-exports the stable public
   surface of all 21 `sciencekit_*` sub-crates under family modules
   (`preprocessing`, `impute`, `linear_model`, `neighbors`, `svm`, `tree`,

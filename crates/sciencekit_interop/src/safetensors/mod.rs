@@ -52,6 +52,8 @@ mod safetensors_compression_detection_tests;
 #[cfg(test)]
 mod safetensors_compression_tests;
 #[cfg(test)]
+mod safetensors_determinism_tests;
+#[cfg(test)]
 mod safetensors_padding_tests;
 #[cfg(test)]
 mod safetensors_round_trip_io_tests;
