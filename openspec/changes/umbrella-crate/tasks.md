@@ -15,7 +15,7 @@
   with `cargo check -p sciencekit --no-default-features` and each feature.
 - [x] 2.2 Write crate-level documentation and docs.rs metadata; verify with
   `cargo doc -p sciencekit --no-deps`.
-- [ ] 2.3 Add a `Development Explained` subsection on the umbrella and prelude; verify with
+- [x] 2.3 Add a `Development Explained` subsection on the umbrella and prelude; verify with
   `mdbook build docs`.
 
 ## 3. Gates and review
