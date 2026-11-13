@@ -51,6 +51,23 @@ fn native_import_rejects_a_truncated_container() {
     assert!(matches!(error, SKNativeImportError::TruncatedFile { .. }));
 }
 
+/// A header length near `u64::MAX` is a typed truncation, never an overflow.
+#[test]
+fn native_import_rejects_an_oversized_header_length() {
+    for declared in [u64::MAX, u64::MAX - 4, u64::MAX / 2] {
+        let mut bytes = declared.to_le_bytes().to_vec();
+        bytes.extend_from_slice(b"{}");
+        let error = sk_detect_native_model_format(&bytes).unwrap_err();
+        assert!(matches!(
+            error,
+            SKNativeImportError::TruncatedFile {
+                format: "safetensors",
+                ..
+            }
+        ));
+    }
+}
+
 /// A Safetensors header naming another major version is rejected up front.
 #[test]
 fn native_import_rejects_an_unknown_safetensors_version() {

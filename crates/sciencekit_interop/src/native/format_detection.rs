@@ -94,9 +94,11 @@ fn validate_safetensors_header(bytes: &[u8]) -> Result<(), SKNativeImportError> 
     );
     let available = (bytes.len() - 8) as u64;
     if header_length > available {
+        // `header_length` comes from untrusted bytes: adding the eight header
+        // length bytes must not overflow, so saturate the reported total.
         return Err(SKNativeImportError::TruncatedFile {
             format: "safetensors",
-            needed: 8 + header_length,
+            needed: header_length.saturating_add(8),
             available: bytes.len() as u64,
         });
     }
