@@ -23,7 +23,7 @@
 
 ## 3. Remaining families
 
-- [ ] 3.1 Implement SVM exporters (linear/RBF) and parity tests; verify with
+- [x] 3.1 Implement SVM exporters (linear/RBF) and parity tests; verify with
   `cargo test -p sciencekit_onnx export_svm`.
 - [x] 3.2 Implement neighbour, clustering, decomposition and outlier exporters with parity
   tests; verify with `cargo test -p sciencekit_onnx export_remaining`.
