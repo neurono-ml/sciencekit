@@ -15,9 +15,9 @@ out-of-core regimes of the L1-regularized estimators.
 The substrate SHALL define a coordinate-descent configuration carrying `tolerance`,
 `maximum_number_of_iterations`, the `positive` flag, the sweep `selection` and the
 `screening` flag, plus the shared penalty-sequence conversion trait accepting a scalar `F`
-and a sequence (`Vec<F>`, `Array1<F>`, `&[F]`, `[F; N]`). Configuration validation SHALL
-reject a non-positive `tolerance`, a zero `maximum_number_of_iterations`, an empty penalty
-sequence and any negative penalty with the central `SKError::InvalidHyperparameter`.
+and a sequence. Configuration validation SHALL reject a non-positive `tolerance`, a zero
+`maximum_number_of_iterations`, an empty penalty sequence and any negative penalty with the
+central `SKError::InvalidHyperparameter`.
 
 #### Scenario: Valid configuration is accepted
 
@@ -30,6 +30,12 @@ sequence and any negative penalty with the central `SKError::InvalidHyperparamet
 - **WHEN** the tolerance is zero, the iteration budget is zero, the penalty sequence is
   empty or any penalty is negative
 - **THEN** validation returns an `InvalidHyperparameter` error naming the offending field
+
+#### Scenario: Every accepted penalty sequence form converts
+
+- **WHEN** the conversion trait receives a scalar `F`, a `Vec<F>`, an `Array1<F>`, a `&[F]`
+  or a `[F; N]`
+- **THEN** each form converts to the configured penalty sequence
 
 ### Requirement: Soft-threshold coordinate iteration
 
@@ -118,11 +124,18 @@ converged solution beyond tolerance.
 ### Requirement: Gap-safe screening is correct by construction
 
 The substrate SHALL screen coordinates that provably cannot enter the active set: a strong
-initial active set from the gradient at the origin, a gap-safe safe-screening elimination for
-the pure-L1 objective derived from a dual-feasible point and the primal–dual gap radius, and a
-KKT reactivation pass that adds back any coordinate whose full-gradient KKT condition is
-violated. Screening SHALL never change the converged solution, and the fitted estimator SHALL
-expose how many coordinates were screened.
+initial active set, a gap-safe safe-screening elimination for the pure-L1 objective derived
+from a dual-feasible point and the primal–dual gap radius, and a KKT reactivation pass.
+Screening SHALL never change the converged solution, and the fitted estimator SHALL expose
+how many coordinates were screened.
+
+#### Scenario: The screening stages run in order
+
+- **WHEN** screening runs on a pure-L1 problem
+- **THEN** the initial active set comes from the gradient at the origin, the gap-safe
+  elimination derives its bound from a dual-feasible point and the primal–dual gap radius,
+  and the KKT reactivation pass adds back any coordinate whose full-gradient KKT condition is
+  violated
 
 #### Scenario: Screened equals unscreened
 
