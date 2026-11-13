@@ -31,6 +31,8 @@ pub enum SKFeatureBlock<F> {
 
 ```mermaid
 classDiagram
+  accTitle: Borrowed data views and owned feature blocks
+  accDescr: SKDataView is a borrowed enum that holds either a dense array view or a sparse CSR view. SKFeatureBlock is the owned counterpart that holds either a dense array or a CSR matrix, and its view method borrows it as a data view.
   class SKDataView {
     <<enum, borrowed>>
     Dense ArrayView2
@@ -102,8 +104,8 @@ A CSR matrix stores only the non-zeros. Every other entry is zero, and the stati
 count it:
 
 - **Mean and moments**: a column with `e` explicit values in `n` rows has `n − e` implicit
-  zeros. `Σx` and `Σx²` include nothing for them (they contribute zero), but the **count** is
-  `n`, so the mean is `Σx / n`, not `Σx / e`.
+  zeros. $\Sigma x$ and $\Sigma x^2$ include nothing for them (they contribute zero), but the **count** is
+  $n$, so the mean is $\Sigma x / n$, not $\Sigma x / e$.
 - **Min and max**: zero participates unless a column is explicitly present in *every* row.
   The accumulator therefore tracks a per-column explicit count.
 - **Quantiles**: the robust scaler's sketch receives the explicit values plus one weighted
@@ -113,6 +115,8 @@ count it:
 
 ```mermaid
 flowchart LR
+  accTitle: How a sparse row contributes to column statistics
+  accDescr: A CSR row stores explicit values at columns three and seven, while every other column is an implicit zero. Explicit entries contribute to sums, sums of squares, minimum and maximum. Implicit zeros contribute to the row count, not the nonzero count, and add zero mass to the quantile sketch.
   classDef row fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e,stroke-width:2px
   classDef zero fill:#fef9c3,stroke:#ca8a04,color:#713f12,stroke-width:2px
   classDef stat fill:#dcfce7,stroke:#16a34a,color:#14532d,stroke-width:2px
@@ -134,7 +138,7 @@ The in-memory `fit` already had sparse paths — Gram products over `CsMatView`,
 design that stacks CSR, per-row SGD updates. The streaming change does not invent new
 algebra; it routes the block to the same code:
 
-- **Scalers**: per-column `count`, `Σx`, `Σx²` / `extrema` / sketch over CSR rows in
+- **Scalers**: per-column `count`, $\Sigma x$, $\Sigma x^2$ / `extrema` / sketch over CSR rows in
   `O(nnz)`.
 - **Polynomial features**: expand each CSR row directly; the output is sparse and follows the
   documented column order.

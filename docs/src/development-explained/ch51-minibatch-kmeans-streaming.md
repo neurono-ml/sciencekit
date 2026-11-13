@@ -42,9 +42,9 @@ center, and the model never invents a "noise" label. What changes is the *fittin
 | Decision | Why we chose it | Alternatives we discarded |
 |---|---|---|
 | **Per-center learning rate `1 / (count[c] + 1)`** | New centers should move a lot; mature centers should barely move. Dividing by the number of rows already assigned to that center gives exactly that decay. | A global fixed learning rate (destroys mature centers) or a schedule based on wall-clock batches (not reproducible). |
-| **Exact closed-form batch update** | Applying the row rule sequentially over a batch reduces algebraically to `c ← (n/(n+m))·c + (1/(n+m))·Σx` with `n` the prior count and `m` the batch count. This lets a CSR batch touch only its stored entries — `O(k·d + nnz)` instead of densifying `m × d`. | A row-by-row `for` loop over dense materialized rows: simpler, but densifies sparse input and is far slower. |
+| **Exact closed-form batch update** | Applying the row rule sequentially over a batch reduces algebraically to $c \leftarrow \frac{n}{n+m}c + \frac{1}{n+m}\sum x$ with $n$ the prior count and $m$ the batch count. This lets a CSR batch touch only its stored entries — $O(kd + \operatorname{nnz})$ instead of densifying $m \times d$. | A row-by-row `for` loop over dense materialized rows: simpler, but densifies sparse input and is far slower. |
 | **Deterministic bounded initialization sample** | Centers start from at most `initialization_batch_size` rows, drawn without replacement from a seeded generator and sorted, then `number_of_initializations` independent seeds compete on sample inertia. | Initializing from the first `batch_size` rows (positional bias), or random restarts without a seed (irreproducible). |
-| **Deterministic low-count reassignment** | A center that receives almost no rows is a dead center. After each batch, centers below `reassignment_ratio × mean_count` steal the batch point currently farthest from its assigned center, with ties broken by the smallest row index, and reset the stolen center's count to `1`. | Re-running k-means++ on the whole dataset whenever a center is empty (expensive, not streaming-friendly). |
+| **Deterministic low-count reassignment** | A center that receives almost no rows is a dead center. After each batch, centers below $\text{reassignment\_ratio} \times \text{mean\_count}$ steal the batch point currently farthest from its assigned center, with ties broken by the smallest row index, and reset the stolen center's count to `1`. | Re-running k-means++ on the whole dataset whenever a center is empty (expensive, not streaming-friendly). |
 | **Reuse the shared streaming executor** | `fit_streaming` calls `sk_run_streaming_provider` with a mutable driver, so prefetching, parallelism and the reopenable-provider pass policy are the same code other estimators use. | A bespoke `while let Some(batch)` loop that would duplicate executor behavior and diverge from other streaming estimators. |
 | **`tolerance = 0` means "use the full budget"** | Users often want a predictable number of passes. A positive tolerance enables early stopping when the largest center shift (and reassignment activity) is at or below it; zero explicitly disables the stop. | Treating zero as "stop immediately" (surprising) or as exact convergence (float equality is unattainable). |
 
@@ -129,7 +129,7 @@ the one whose sample inertia (sum of squared distances to assigned centers) is s
 ### Reassignment: keeping every center alive
 
 After a batch has been folded into the centers, the estimator computes the mean count over all
-clusters. A center with `count < reassignment_ratio × mean_count` is starving. The estimator
+clusters. A center with $\text{count} < \text{reassignment\_ratio} \times \text{mean\_count}$ is starving. The estimator
 ranks every batch row once by squared distance to its *currently assigned* center, sorted by
 distance descending and then row index ascending. It then pairs the starving centers, in
 ascending cluster index, with the most distant rows in that ranking: the first starving center

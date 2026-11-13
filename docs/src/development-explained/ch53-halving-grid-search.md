@@ -160,13 +160,13 @@ left. If the resource schedule has only two rounds, a tournament that starts wit
 candidates will still have 3 survivors after the last round — no single winner. Aggressive
 mode caps the survivor count at what the remaining rounds can reduce to one:
 
-```text
-future_rounds = number_of_resources_from_here_to_the_cap - 1
-capacity      = factor ^ future_rounds        (checked, saturating)
-survivors     = min(ceil(alive / factor), capacity)
-```
+$$\begin{aligned}
+\text{future\_rounds} &= \text{number\_of\_resources\_from\_here\_to\_the\_cap} - 1 \\
+\text{capacity} &= \text{factor}^{\text{future\_rounds}} && (\text{checked, saturating}) \\
+\text{survivors} &= \min(\lceil \text{alive} / \text{factor} \rceil, \text{capacity})
+\end{aligned}$$
 
-With 27 candidates, factor 3, and the schedule `[10, 30]`, `future_rounds = 1`, so capacity is
+With 27 candidates, factor 3, and the schedule $[10, 30]$, $\text{future\_rounds} = 1$, so capacity is
 3: round 0 keeps three candidates, prunes the other six early, and round 1 finishes with one.
 The pruned six are still named in `aggressively_pruned_candidate_indices()` — pruning is
 recorded, never hidden.
@@ -322,13 +322,13 @@ splitters, groups and aggressive mode through the builders. The scoring-policy s
 visits every `SKClassifierScoring` and `SKRegressorScoring` variant, while
 `halving_acceptance_determinism_error_score_and_held_out_metrics_compose` ties the whole story
 together: a seeded train/test split, a deterministic halving search, `ErrorScore::Value(NaN)`
-recovery, and held-out accuracy, F1, MSE and R² produced by `sciencekit_metrics`.
+recovery, and held-out accuracy, F1, MSE and $R^2$ produced by `sciencekit_metrics`.
 
 ## 6. Why this shape scales
 
 The total work is dominated by the first round, not the last. Nine candidates at resource 10
 cost 90 candidate-rows; three candidates at resource 30 cost another 90; one candidate at
-resource 90 costs 90. A full grid search would have spent 9 × 90 = 810 candidate-rows. The
+resource 90 costs 90. A full grid search would have spent $9 \times 90 = 810$ candidate-rows. The
 saving is roughly a factor of the elimination ratio per round, and it compounds on large
 grids — exactly the regime where exhaustive search stops being practical.
 

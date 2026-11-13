@@ -4,7 +4,7 @@
 negative gradient of the loss, replace each leaf with a Newton step, shrink the tree and add it to
 the running score. Its split finder, inherited from the exact CART implementation in
 `sciencekit_tree`, pays a steep price at every node: it sorts each candidate feature again, so one
-tree costs roughly `O(number_of_nodes × number_of_features × n log n)`.
+tree costs roughly $O(\text{number\_of\_nodes} \times \text{number\_of\_features} \times n \log n)$.
 
 For a few thousand rows that is fine. For a few hundred thousand it is not, and it also gets in the
 way of two things tabular data needs: **missing values** and **categorical columns**. This chapter
@@ -131,7 +131,7 @@ single left-to-right scan can maintain prefix `G`, `H` and count and evaluate ev
 candidate is rejected when either side has fewer than `minimum_samples_leaf` rows or when its gain is
 not strictly positive. `hist_gain_matches_hand_computed_split` uses gradients `1, 1, -1, -1` and unit
 Hessians to show that boundary 1 wins with gain `4`. `hist_gain_applies_l2_regularization` checks the
-`λ` term, and `hist_gain_rejects_splits_below_minimum_samples_leaf` shows that raising the minimum to
+$\lambda$ term, and `hist_gain_rejects_splits_below_minimum_samples_leaf` shows that raising the minimum to
 three rows removes every boundary.
 
 ---
@@ -187,17 +187,17 @@ constructor.
 
 ## 6. Categorical splits are membership masks, not thresholds
 
-A numeric split asks `bin <= maximum_bin`. A categorical split cannot: `{10, 30}` versus `{20}` is
+A numeric split asks $\text{bin} \le \text{maximum\_bin}$. A categorical split cannot: `{10, 30}` versus `{20}` is
 not an interval. `sk_scan_categorical_feature` in `histogram/categorical.rs` therefore:
 
-1. Sorts the observed category bins by their gradient-to-Hessian ratio `G / (H + λ)`.
+1. Sorts the observed category bins by their gradient-to-Hessian ratio $G / (H + \lambda)$.
 2. Scans prefix partitions of that ordering, evaluating the same gain formula.
 3. Stores the winning left set as a `BitVec<u8, Lsb0>` with one bit per observed category bin.
 4. Sends the unknown-category bin to the right, a documented direction that never panics.
 
-`hist_categorical_partitions_categories_by_gradient_ratio` builds gradients `3, −4, 3` over
-categories `{10, 20, 30}` and asserts that the winning mask has bits 0 and 2 set, bit 1 clear, and
-gain `98/3`. `hist_categorical_respects_minimum_samples_leaf` shows that requiring two rows per side
+`hist_categorical_partitions_categories_by_gradient_ratio` builds gradients $3, -4, 3$ over
+categories $\{10, 20, 30\}$ and asserts that the winning mask has bits 0 and 2 set, bit 1 clear, and
+gain $98/3$. `hist_categorical_respects_minimum_samples_leaf` shows that requiring two rows per side
 leaves only three rows and removes every partition.
 
 At prediction time `SKHistogramTree` reads the membership bit for the query's category bin. A query
@@ -213,7 +213,7 @@ masked-out observed category reach the right leaf, while a masked-in category re
 The dedicated missing bin is included in every numeric scan, in **both** possible directions. For a
 given boundary the scan evaluates "missing rows go left" and "missing rows go right", keeps the
 larger gain and stores the winner as `default_left`. Prediction checks the bin first: a bin equal to
-`missing_bin` follows `default_left`; every other bin follows the ordinary `bin <= maximum_bin` rule.
+`missing_bin` follows `default_left`; every other bin follows the ordinary $\text{bin} \le \text{maximum\_bin}$ rule.
 
 `hist_missing_learns_the_left_direction` and `hist_missing_learns_the_right_direction` construct
 gradients that make each direction strictly better and then assert that a missing query reaches the
@@ -226,10 +226,10 @@ the first candidate, and the learned direction is deterministically "right" (`de
 ## 8. Boosting on top of the same loss contract
 
 The booster does not re-implement losses. `stage.rs` asks the existing `SKGradientLoss` trait for
-`negative_gradient` and `hessian`, grows a histogram tree, then adds `learning_rate × tree(x)` to
+`negative_gradient` and `hessian`, grows a histogram tree, then adds $\text{learning\_rate} \times \operatorname{tree}(x)$ to
 every row's raw score. `hist_stage_applies_a_hand_computed_newton_update` fits a single stage to
-targets `0, 0, 1, 1` with squared error: the initial prediction is `0.5`, the two leaves are
-`−0.5` and `+0.5`, and with learning rate `0.1` the raw scores become `0.45, 0.45, 0.55, 0.55`.
+targets $0, 0, 1, 1$ with squared error: the initial prediction is $0.5$, the two leaves are
+$-0.5$ and $+0.5$, and with learning rate $0.1$ the raw scores become $0.45, 0.45, 0.55, 0.55$.
 
 The scalar loop in `scalar_loop.rs` and the multiclass loop in `multiclass_loop.rs` reuse the
 existing gradient-boosting pieces:

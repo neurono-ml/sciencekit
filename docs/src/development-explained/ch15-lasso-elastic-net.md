@@ -84,9 +84,9 @@ The rest of the chapter is how those constraints became code.
 | Decision | Chosen | Roads not taken — and why they are traps |
 |---|---|---|
 | **One body, two names** | A shared `coordinate_descent` substrate; `SKLasso` and `SKElasticNet` are thin builder-configured estimators over it, with **distinct** fitted models. | **One public estimator with an `l1_ratio`** — scikit-learn ships two names for two statistically distinct models, and the wave plan names both. **Duplicating the solver** — Lasso is the `l1_ratio = 1` case of the same objective, so two solvers would drift. |
-| **The solver** | **Coordinate descent**: sweep the coordinates and update each by a soft-threshold of the partial residual, `wⱼ ← S(xⱼᵀr/n + aⱼwⱼ, αρ) / (aⱼ + α(1−ρ))`. | **Proximal gradient / FISTA** — plain coordinate descent first, per the "iterative evolution, no skipped steps" rule. **A second-order QP solver** — heavier and not the field's reference for Lasso. |
+| **The solver** | **Coordinate descent**: sweep the coordinates and update each by a soft-threshold of the partial residual, $w_j \leftarrow S(x_j^{\mathsf T}r/n + a_j w_j, \alpha\rho) / (a_j + \alpha(1-\rho))$. | **Proximal gradient / FISTA** — plain coordinate descent first, per the "iterative evolution, no skipped steps" rule. **A second-order QP solver** — heavier and not the field's reference for Lasso. |
 | **Convergence** | The **maximum coordinate change** across a sweep, against `tolerance`, bounded by `maximum_number_of_iterations`; exhaustion raises `SKError::NotConverged { iterations }`. | **A fixed iteration count** — silent truncation dressed up as a solution. **A residual norm alone** — it does not measure the coordinate-wise step that actually drives L1. |
-| **The intercept** | An **unpenalized coordinate**: every sweep, `β₀ ← β₀ + mean(r)` and the residual is recentered — algebraically identical to centering the design, but it never densifies a sparse column. | **Center-then-solve** — centering $x_j - \bar{x}_j$ is dense even for a sparse column, exactly the ridge trap applied to L1. **Penalizing the intercept** — makes the fit depend on the target's origin. |
+| **The intercept** | An **unpenalized coordinate**: every sweep, $\beta_0 \leftarrow \beta_0 + \operatorname{mean}(r)$ and the residual is recentered — algebraically identical to centering the design, but it never densifies a sparse column. | **Center-then-solve** — centering $x_j - \bar{x}_j$ is dense even for a sparse column, exactly the ridge trap applied to L1. **Penalizing the intercept** — makes the fit depend on the target's origin. |
 | **Screening** | A strong initial active set, a **gap-safe** safe-screening test derived from the primal–dual gap, and a **KKT reactivation** pass that adds back any violating coordinate. The final answer equals the unscreened solve **by construction**. | **Screening without reactivation** — a heuristic that can silently return a suboptimal answer. **No screening** — leaves the sparse-solution win on the table. |
 | **Sparse path** | Dense and sparse share **one** coordinate loop through a column-access abstraction; a sparse design's column entries are gathered as `(row, value)` lists and the design is never densified. | **A separate sparse solver** — doubles the iteration, the screening and the convergence logic, and lets them drift. **Densify then solve** — defeats accepting sparse input. |
 | **Incremental / streaming** | A shared **retained-design** accumulator: dense batches appended, sparse batches stacked, re-solved at read time; independent of batch order and size. | **Reusing ridge's Gram accumulator** — the L1 objective is not a function of $X^\top X$. **Per-batch online coordinate descent** — the result would depend on batch boundaries, breaking "incremental ≡ dense". |
@@ -132,7 +132,7 @@ that matters: how much the coefficients are still moving.
 
 Shrinking the intercept would make the fit depend on where the target's origin happens to sit —
 statistically wrong. Turning the intercept into a coordinate makes the rule beautiful: its exact
-update is `β₀ ← β₀ + mean(r)`, i.e. *recenter the residual and push the removed mean into the
+update is $\beta_0 \leftarrow \beta_0 + \operatorname{mean}(r)$, i.e. *recenter the residual and push the removed mean into the
 intercept*. After every sweep the residual has mean zero, so the feature gradients
 $x_j^\top r / n$ equal the **centered** gradients $x̃_j^\top r / n$ for free — no dense
 centering of the design required. This is why the sparse path can stay sparse.
@@ -147,16 +147,16 @@ those coordinates so the solver never even visits them. The danger is skipping a
 *should* be active, which would silently return a wrong answer. The change makes that impossible.
 
 The pure-L1 problem has a firm primal–dual bound. For any dual-feasible point $z$ (satisfying
-$\lVert X^\top z\rVert_\infty \le \alpha$) and the dual optimum $z^\*$, the primal–dual gap $G$
+$\lVert X^\top z\rVert_\infty \le \alpha$) and the dual optimum $z^{*}$, the primal–dual gap $G$
 bounds the distance
 
-$$\lVert z^\* - z\rVert_2 \;\le\; R = \sqrt{2G/n}.$$
+$$\lVert z^{*} - z\rVert_2 \;\le\; R = \sqrt{2G/n}.$$
 
 A coordinate is then **provably zero** when
 
 $$\lvert x_j^\top z\rvert + \lVert x_j\rVert_2\,R \;<\; \alpha,$$
 
-because $\lvert x_j^\top z^\*\rvert < \alpha$ contradicts complementary slackness for
+because $\lvert x_j^\top z^{*}\rvert < \alpha$ contradicts complementary slackness for
 $\beta_j \ne 0$. The solver builds $z$ from the current residual, computes the gap, and screens.
 Then — and this is the safety net — after the screened active set converges it checks the
 **full** gradient on every coordinate and **reactivates** any violator, re-solving until none
@@ -215,7 +215,7 @@ but it is the seam through which both estimators hand the solver one identical c
 
 ### `SKCoordinateDescentModelCore<F>` — the shared learned state
 
-The single implementation behind both fitted models: the `n_alphas × n_features` coefficients,
+The single implementation behind both fitted models: the $n_{\text{alphas}} \times n_{\text{features}}$ coefficients,
 the per-`alpha` intercepts, the `l1_ratio`, the backend kind, the screening count, the
 configuration and the retained design. `predict_with_alpha_index` and `partial_fit` live here so
 the two public model types cannot diverge.

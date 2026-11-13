@@ -11,6 +11,8 @@ transformers Wave 1 promised last.
 
 ```mermaid
 flowchart LR
+  accTitle: Two encoders over three input shapes
+  accDescr: Nominal text and integer codes enter the one-hot encoder, which produces a fitted model that outputs either a dense array or a CSR sparse matrix. A numeric matrix enters the polynomial-features encoder, whose fitted model also outputs dense or CSR.
   subgraph Input["Feature data"]
     N["nominal text<br/>[[&quot;a&quot;,&quot;x&quot;],[&quot;b&quot;,&quot;y&quot;]]"]
     I["integer codes<br/>[[0,-1],[2,1]]"]
@@ -69,7 +71,7 @@ that choice is half of this chapter.
 | **Dense *and* sparse output, chosen by the builder** | Both expansions are overwhelmingly sparse, so both emit a dense `Array2` **or** a `sprs` CSR matrix; `sparse_output` picks the default and `transform_dense` / `transform_sparse` are always available. The CSR build is two-pass and parallel across rows with `CsMat::new_from_unsorted`. | Dense only — losing the zero-copy sparse path the library bets on. A generic output type — the transformer trait is bound to numeric `SKDataView` input, which categorical data cannot satisfy, so a concrete non-exhaustive enum is both simpler and future-proof. |
 | **No runtime `phf` perfect hash** | The wave plan phrased the table as "interned string table, perfect-hash". A *runtime* perfect-hash builder does not exist in `phf` (it is compile-time codegen); an ordered `HashMap`-backed interning table already gives average `O(1)` with no extra dependency and no unsafe. The plan's intent — a deterministic, compact, ordered table — is met. | Adding `phf` for a property it does not provide at runtime. |
 | **`fit` learns scalar-independent state; transforms are generic over `F`** | The learned tables and the exponent list do not depend on the output scalar, so the fitted models are **not** generic over `F` — only `transform_dense`/`transform_sparse` are. | A `PhantomData<F>` on the model — a type parameter that tracks nothing. |
-| **Polynomial order: bias, then degree, then lexicographic** | Terms are combinations of feature indices, laid out bias-first, then by increasing total degree, then lexicographically: for two features at degree two that is `1, x0, x1, x0², x0x1, x1²`. This is exactly scikit-learn's column order. | Reverse-lexicographic exponent tuples — a different, surprising order that would break parity. |
+| **Polynomial order: bias, then degree, then lexicographic** | Terms are combinations of feature indices, laid out bias-first, then by increasing total degree, then lexicographically: for two features at degree two that is $1, x_0, x_1, x_0^2, x_0x_1, x_1^2$. This is exactly scikit-learn's column order. | Reverse-lexicographic exponent tuples — a different, surprising order that would break parity. |
 | **The backend is still carried, not dispatched** | As in the scalers, the math is interning and products, not heavy dense algebra — but both estimators still expose `backend(SKBackendKind)` and record the kind in every span, per `backend-selection`. | Omitting it — a non-uniform selection surface. |
 
 ---

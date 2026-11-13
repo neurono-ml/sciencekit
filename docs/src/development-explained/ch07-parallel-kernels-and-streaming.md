@@ -197,7 +197,7 @@ tolerance, never bit-for-bit equality.)
 are at most one core, if the unit is unknown or zero, or if the unit is below one grain.
 
 *Why it exists:* It is the single, pure place where "how many threads?" is answered from the
-*size of the work unit* — whole dataset for in-memory, one batch for streaming, `∞` (so
+*size of the work unit* — whole dataset for in-memory, one batch for streaming, $\infty$ (so
 "always cores") for memory-mapped shards. Because it is a pure function of the context, it is
 testable by injecting simulated values with no real machine involved (see `grain_governs_resolution_across_regimes` below).
 

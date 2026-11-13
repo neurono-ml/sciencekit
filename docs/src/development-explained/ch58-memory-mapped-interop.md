@@ -59,6 +59,8 @@ lives inside the mapping.
 
 ```mermaid
 flowchart TB
+  accTitle: Memory-mapped inputs and the two source interfaces
+  accDescr: A raw binary file, a NumPy file and an Arrow IPC file each pass through format-specific validation or header parsing, then map into the process address space as a read-only memory map. The map serves either a random-access mappable source or a sequential lazy source.
     subgraph DISK["on disk"]
         RAW["raw binary<br/>headerless fixed-width scalars"]
         NPY[".npy<br/>Python header + C-order payload"]

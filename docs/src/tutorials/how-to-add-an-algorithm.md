@@ -69,13 +69,16 @@ Skipping any of the six produces the estimators this library exists to make unne
 Once any file reaches 200 lines, it becomes a **folder module** with a standardized shape.
 Start in that shape directly: implement the algorithm *expecting* to exceed 200 lines.
 
-```text
-crates/sciencekit_preprocessing/src/standard_scaler/
-├── mod.rs                     # pure dispatcher: mod declarations + re-exports ONLY
-├── builder.rs                 # builder + hyperparameter validation + build()
-├── core_implementation.rs     # the estimator struct + fit internals
-├── model.rs                   # the fitted object + transform
-└── standard_scaler_tests.rs   # companion tests, declared at the END of mod.rs
+```mermaid
+flowchart TD
+  accTitle: The standard folder-module layout for an algorithm
+  accDescr: The standard_scaler folder contains a pure dispatcher mod.rs that only declares submodules and re-exports, a builder file with hyperparameter validation and build, a core implementation file with the estimator and fit internals, an owned model file with transform, and a companion tests file declared at the end of mod.rs.
+  ROOT["crates/sciencekit_preprocessing/src/standard_scaler/"]
+  ROOT --> MOD["mod.rs<br/>pure dispatcher: module declarations and re-exports only"]
+  ROOT --> BUILDER["builder.rs<br/>builder, hyperparameter validation and build()"]
+  ROOT --> CORE["core_implementation.rs<br/>the estimator struct and fit internals"]
+  ROOT --> MODEL["model.rs<br/>the fitted object and transform"]
+  ROOT --> TESTS["standard_scaler_tests.rs<br/>companion tests, declared at the end of mod.rs"]
 ```
 
 Three hard rules from the conventions chapter:
@@ -304,15 +307,14 @@ fn standardize<F: SKFloat>(
 What `sk_resolve_execution_plan` does with that (pure, deterministic — so your tests can
 assert it exactly):
 
-```
-intent = Automatic:
-    dataset_size_bytes ≤ available_memory_bytes  →  InProcessSynchronous
-    else access_pattern RandomAccess             →  OutOfCoreMemoryMapped
-    else Sequential | Iterative                  →  OutOfCoreStreaming
-
-parallelism = min(cores, ceil(unit_elements / grain))
-              unit = whole dataset (in-memory) | one batch (streaming, batch_size_hint) | ∞ (mapped)
-```
+$$\begin{aligned}
+\text{intent} = \text{Automatic}:&\ \\
+&\text{dataset\_size\_bytes} \le \text{available\_memory\_bytes} &&\to \text{InProcessSynchronous} \\
+&\text{else access\_pattern RandomAccess} &&\to \text{OutOfCoreMemoryMapped} \\
+&\text{else Sequential} \mid \text{Iterative} &&\to \text{OutOfCoreStreaming} \\[4pt]
+\text{parallelism} &= \min(\text{cores}, \lceil \text{unit\_elements} / \text{grain} \rceil) \\
+\text{unit} &= \text{whole dataset (in-memory)} \mid \text{one batch (streaming, batch\_size\_hint)} \mid \infty \text{ (mapped)}
+\end{aligned}$$
 
 Two compile-time facts your tests should lock in:
 
@@ -366,7 +368,7 @@ The rules to internalize before writing your first kernel call:
 - **Partials, never shared accumulators.** When you compute anything in parallel, each
   worker accumulates into *its own* partial vector; partials are combined once at the end.
   This is why the parallel column sum is deterministic-order-tolerant and race-free — and in
-  the [transformer chapter](adding-a-transformer.md) it is why Σ and Σx² partials compose
+  the [transformer chapter](adding-a-transformer.md) it is why $\Sigma$ and $\Sigma x^2$ partials compose
   into Welford cleanly.
 - **Layout is a contract, not an accident.** Pass `&features.view()` into kernels; when a
   copy may be needed for a blocked/backend path, `sk_force_contiguous` gives back a
@@ -427,7 +429,7 @@ accumulates a Gram matrix per batch; for SGD Chapter 3 of this part never had to
 anything — its `update` is *already* the only formulation it has.
 
 **Batch sizing.** The plan carries `plan.batch_size` (streaming only) and checks a buffer
-guard: `2 × batch_elements × scalar_size ≤ available_memory_bytes`, else
+guard: $2 \times \text{batch\_elements} \times \text{scalar\_size} \le \text{available\_memory\_bytes}$, else
 `SKError::BatchBufferOversize`. Pass `batch_size_hint` in the context if your format has a
 natural batch (e.g. rows of a parquet row-group, cache-line multiples of a `.npy` memmap).
 
@@ -480,7 +482,7 @@ pub fn fit<F>(...) -> Result<Model, MyError> {
 `sk_run_operation` opens a span carrying operation/rows/columns/mode/backend, times the
 closure and, if it errors, records the error — bounded enums only, never free-form strings.
 The streaming tip: each per-batch `update` is instrumented with `SKOperationKind::PartialFit`
-(k-means over 10² batches, an SGD classifier with 100 → a streaming job becomes a legible
+(k-means over $10^2$ batches, an SGD classifier with 100 → a streaming job becomes a legible
 sequence of partial steps rather than one opaque `fit`).
 
 ---

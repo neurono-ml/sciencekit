@@ -19,7 +19,7 @@ waves — needs those numbers.
 At the same time, the distance catalogue in `sciencekit_math` stopped at Euclidean, Manhattan
 and Cosine. The next wave needs two more:
 
-- **Chebyshev** (`L∞`), the "largest coordinate difference" distance used by `p = ∞`
+- **Chebyshev** ($L_\infty$), the "largest coordinate difference" distance used by $p = \infty$
   neighbours;
 - **NaN-aware Euclidean**, the only distance a missing-value imputer can use, because it
   compares only the features observed in *both* rows.
@@ -106,17 +106,17 @@ Per-class scores are not enough for a single number. `SKAveraging` defines four 
 | `Weighted` | Weight each class by its true support. |
 | `Binary { positive_label }` | Report one chosen class explicitly — no hidden `pos_label = 1`. |
 
-### 2.4 Regression: error and R²
+### 2.4 Regression: error and $R^2$
 
 Regression predicts a continuous number. The library measures the **mean squared error**,
 its square root, the **mean absolute error**, and the **coefficient of determination**
-`R² = 1 − SSE / SST`. When every target is identical, `SST` is zero; the documented finite
+$R^2 = 1 - \mathrm{SSE} / \mathrm{SST}$. When every target is identical, $\mathrm{SST}$ is zero; the documented finite
 policy returns `1` for an exact prediction and `0` otherwise, instead of dividing by zero.
 
 ### 2.5 Streaming: sums, not predictions
 
 A metric over a million rows must not store a million predictions. The regression accumulator
-stores constant-size state — count, a running mean, `M2` (the Welford/Chan sum of squared deviations from the mean), and compensated `Σ(y−ŷ)²` and `Σ|y−ŷ|` — and the classification
+stores constant-size state — count, a running mean, $M_2$ (the Welford/Chan sum of squared deviations from the mean), and compensated $\sum (y - \hat{y})^2$ and $\sum \lvert y - \hat{y} \rvert$ — and the classification
 accumulator stores one counter per observed label pair. Both can be merged, so batches and
 parallel partitions finalize to exactly the whole-input result.
 
@@ -138,10 +138,10 @@ flowchart TB
     class G violet
 ```
 
-Long sums in `f32` lose small addends next to large ones, and `Σy² − n·mean²` cancels
+Long sums in `f32` lose small addends next to large ones, and $\sum y^2 - n \cdot \overline{y}^2$ cancels
 catastrophically for large targets. The regression accumulator therefore uses
 **Neumaier compensated summation** for the error sums and the **Welford/Chan `M2`** state for
-the target variance: `M2` accumulates squared deviations from the running mean, so no large
+the target variance: $M_2$ accumulates squared deviations from the running mean, so no large
 terms cancel and merges use the standard parallel formula. A test sums `[1e8, 1, -1e8, 1]` in `f32` and proves the compensated value is `2` while
 the naive sum is `1`.
 
@@ -151,9 +151,7 @@ the naive sum is `1`.
 in either row, it is **not compared**. The sum runs only over co-observed features, then is
 scaled by the ratio of total features to co-observed features:
 
-```
-d(a, b) = sqrt( Σ_present (aᵢ − bᵢ)² · total_features / present_features )
-```
+$$d(a, b) = \sqrt{\sum_{\text{present}} (a_i - b_i)^2 \cdot \frac{\text{total\_features}}{\text{present\_features}}}$$
 
 If the two rows share no observed feature, the distance is NaN. This is exactly the distance
 `SKKNNImputer` needs, because the set of comparable features changes from pair to pair — which
@@ -188,7 +186,7 @@ flowchart LR
 | **Explicit zero-division policy** | Zero is finite, comparable and never contaminates an average; the policy is testable. | Returning NaN — one undefined class poisons every macro average downstream. |
 | **Binary averaging is explicit** | `Binary { positive_label }` names the class instead of assuming label `1`. | scikit-learn's hidden `pos_label = 1` default — surprising for label sets without `1`. |
 | **Compensated sums, scalar stays `F`** | An `f32` pipeline never detours through `f64`; compensation recovers the lost bits. | Accumulating everything in `f64` — a scalar detour inconsistent with the generic-float change. |
-| **Accumulators, not stored predictions** | Constant-size regression state and `O(k²)` classification state finalize to the same values as a whole pass. | Keeping every prediction — unbounded memory, defeats streaming. |
+| **Accumulators, not stored predictions** | Constant-size regression state and $O(k^2)$ classification state finalize to the same values as a whole pass. | Keeping every prediction — unbounded memory, defeats streaming. |
 
 ---
 
@@ -213,7 +211,7 @@ the convenient form (run inference, then delegate): `SKAccuracyScorer`, `SKPreci
 `SKMeanAbsoluteErrorScorer`, `SKR2Scorer`.
 
 **Accumulators** — `SKClassificationAccumulator` (observe, merge, finalize a confusion
-matrix) and `SKRegressionAccumulator` (observe, merge, finalize errors and `R²`). Both are
+matrix) and `SKRegressionAccumulator` (observe, merge, finalize errors and $R^2$). Both are
 `Send + Sync`; both reject finalization over zero observations with `EmptyInput`.
 
 The two distance kernels live in `sciencekit_math::pairwise`:
@@ -251,7 +249,7 @@ data, micro F1 and accuracy must agree.
 matrix with `sk_confusion_matrix`; `merging_two_accumulators_equals_concatenation` splits the
 same pairs, merges, and checks equality again. The concurrency test partitions 10 000 pairs
 across eight rayon tasks and reduces the accumulators. The regression twin does the same for
-MSE, MAE and `R²`, and the acceptance suite repeats the exercise at 100 000 observations.
+MSE, MAE and $R^2$, and the acceptance suite repeats the exercise at $100\,000$ observations.
 
 ### The distances
 

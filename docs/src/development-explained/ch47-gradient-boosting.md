@@ -36,10 +36,10 @@ The boosting answer is a loop:
 3. **Fit a small tree to the mistake.** Grow a shallow regression tree whose target is that negative
    gradient. In code, `crates/sciencekit_tree/src/structure/` exposes a structure-only build that
    grows the split geometry on the pseudo-residuals without computing criterion-driven leaf values.
-4. **Overwrite the leaf values with a Newton step.** Each leaf receives `-Σg / (Σh + λ)`, built from
-   the first derivative `g` and second derivative `h` of the *real* loss over the rows that fell in
+4. **Overwrite the leaf values with a Newton step.** Each leaf receives $-\sum g / (\sum h + \lambda)$, built from
+   the first derivative $g$ and second derivative $h$ of the *real* loss over the rows that fell in
    that leaf. This is what makes the update correct for losses other than squared error.
-5. **Take a small step.** Multiply the tree's output by the learning rate `ν` (called shrinkage) and
+5. **Take a small step.** Multiply the tree's output by the learning rate $\nu$ (called shrinkage) and
    add it to the running raw score. Repeat.
 
 After $T$ stages the regressor predicts
@@ -89,10 +89,10 @@ flowchart LR
 |---|---|---|
 | **One loss-agnostic stage loop shared by regression, binary and multiclass** | Every loss only has to answer five questions: its initial prediction, its negative gradient, its Hessian, its link and its loss value (`SKGradientLoss<F>` in `boosting/loss/contract.rs`). The loop, the shrinkage and the early-stopping bookkeeping are written once, so a future histogram booster can reuse them untouched. | One bespoke loop per loss — triplicated subsampling, early stopping and multiclass handling, and three places to drift apart. |
 | **Grow the split structure on the negative gradient, then replace the leaves** | The tree crate's split criterion is a fast variance-reduction search, which is exactly the right *shape* heuristic for pseudo-residuals. But the *value* each leaf should output is loss-specific. Splitting the two concerns lets one structure builder serve squared error, log-loss and Huber while `SKTreeStructure::replace_leaf_values` writes the Newton step afterwards. | Teaching the split criterion every loss, or re-implementing tree growth inside `sciencekit_ensemble`. |
-| **Newton leaves `-Σg / (Σh + λ)` instead of leaf means** | For squared error the two coincide exactly, but for log-loss a leaf mean of the residuals would ignore the curvature `p(1-p)` and overshoot badly on confident rows. The second derivative also gives `l2_regularization` a mathematically honest home: it damps the step, it is not a penalty on the split search. | Plain residual means (Friedman's original "least squares" tree) — simpler, but wrong for every loss whose curvature varies. |
-| **A documented positive Hessian surrogate for `AbsoluteError` and `Huber`** | `|y - f|` is not twice differentiable: its second derivative is zero almost everywhere and undefined at zero. Using a constant Hessian of `1` makes the leaf step a damped median-like update that stays finite and behaves well in practice, and the choice is written down rather than hidden. | Dividing by a zero Hessian, or silently substituting the squared-error loss for the robust ones. |
-| **Multiclass via one tree per class per stage with a diagonal Hessian** | This is the standard gradient-boosting compromise: the true softmax Hessian is a full `C × C` matrix, and fitting one tree to a full-matrix direction would require a matrix-valued tree. The diagonal `p_c(1 - p_c)` keeps the update per-class and keeps the model surface simple. | Multivariate trees with vector leaves — far more machinery for a small accuracy gain. |
-| **Shrinkage `ν` as an explicit builder parameter, default `0.1`** | A small step is the single most effective regularizer of boosting: it lets many weak stages combine and makes the model far less sensitive to the number of stages. Exposing it (instead of hard-coding `1.0`) makes the trade-off between stages and step size a documented contract. | Always taking the full Newton step and compensating with a tiny `number_of_estimators`. |
+| **Newton leaves $-\sum g / (\sum h + \lambda)$ instead of leaf means** | For squared error the two coincide exactly, but for log-loss a leaf mean of the residuals would ignore the curvature $p(1-p)$ and overshoot badly on confident rows. The second derivative also gives `l2_regularization` a mathematically honest home: it damps the step, it is not a penalty on the split search. | Plain residual means (Friedman's original "least squares" tree) — simpler, but wrong for every loss whose curvature varies. |
+| **A documented positive Hessian surrogate for `AbsoluteError` and `Huber`** | $\lvert y - f \rvert$ is not twice differentiable: its second derivative is zero almost everywhere and undefined at zero. Using a constant Hessian of `1` makes the leaf step a damped median-like update that stays finite and behaves well in practice, and the choice is written down rather than hidden. | Dividing by a zero Hessian, or silently substituting the squared-error loss for the robust ones. |
+| **Multiclass via one tree per class per stage with a diagonal Hessian** | This is the standard gradient-boosting compromise: the true softmax Hessian is a full $C \times C$ matrix, and fitting one tree to a full-matrix direction would require a matrix-valued tree. The diagonal $p_c(1 - p_c)$ keeps the update per-class and keeps the model surface simple. | Multivariate trees with vector leaves — far more machinery for a small accuracy gain. |
+| **Shrinkage $\nu$ as an explicit builder parameter, default $0.1$** | A small step is the single most effective regularizer of boosting: it lets many weak stages combine and makes the model far less sensitive to the number of stages. Exposing it (instead of hard-coding `1.0`) makes the trade-off between stages and step size a documented contract. | Always taking the full Newton step and compensating with a tiny `number_of_estimators`. |
 | **Seeded without-replacement row subsampling per stage** | Stochastic gradient boosting (`subsample < 1`) de-correlates consecutive stages and shortens each fit. Drawing without replacement avoids duplicate rows, and deriving the seed from `(global_seed, stage, class)` keeps every stage reproducible and thread-count invariant. | Sampling with replacement (duplicates distort the Hessian sums) or using one global RNG advanced in fit order (thread scheduling would change the draw). |
 | **Early stopping by truncating back to the best validation stage** | The monitor keeps the *stage count* that achieved the lowest held-out loss and truncates the ensemble to it, so the returned model is the best one seen, not merely the last one before patience ran out. Classification splits are stratified so a rare class is not wiped out of the validation fold. | Returning the last stage, or a separate "early-stopped" model family. |
 | **No histogram binning, categorical routing, missing-value handling, streaming, memmap or export in this change** | Each of those is a substantial subsystem with its own spec. Shipping a correct exact-split booster first gives the later histogram change a validated reference to measure against, instead of debugging binning and gradients at the same time. | Bundling everything — a change too large to review and too easy to get subtly wrong. |
@@ -134,26 +134,26 @@ $$
 `boosting/init.rs` implements this twice: `sk_newton_leaf_value` from the raw gradients and
 `sk_newton_leaf_value_from_negative_gradients` from the already-negated ones the stage loop produces.
 Both guard the degenerate case: a leaf whose Hessian sum is zero or negative keeps the value `0.0` so
-a pathological row can never produce an infinite update. `λ` (`l2_regularization`) is added to the
+a pathological row can never produce an infinite update. $\lambda$ (`l2_regularization`) is added to the
 denominator, which shrinks every leaf — a leaf backed by little curvature information moves less.
 
 For the hand-computed binary fixture in `gb_classifier_tests.rs`, four balanced rows start at raw
-score `0.0`. Each row has Hessian `p(1-p) = 0.25` and negative gradients `-0.5` (class 0) and `+0.5`
+score $0.0$. Each row has Hessian $p(1-p) = 0.25$ and negative gradients $-0.5$ (class 0) and $+0.5$
 (class 1). A depth-1 split puts two class-0 rows on one side and two class-1 rows on the other:
-`(-1.0) / 0.5 = -2.0` and `(+1.0) / 0.5 = +2.0`. With `learning_rate(0.25)` the raw scores become
-`∓0.5`, and the positive-class probabilities become `sigmoid(∓0.5)` — exactly what the test asserts.
+$(-1.0) / 0.5 = -2.0$ and $(+1.0) / 0.5 = +2.0$. With `learning_rate(0.25)` the raw scores become
+$\mp 0.5$, and the positive-class probabilities become $\sigma(\mp 0.5)$ — exactly what the test asserts.
 
 ### The learning rate is not a formality
 
-With `ν = 1.0` each stage fully commits to the current Newton step; consecutive trees then chase
-each other and the ensemble overfits within a handful of stages. With `ν = 0.1` the same correction
+With $\nu = 1.0$ each stage fully commits to the current Newton step; consecutive trees then chase
+each other and the ensemble overfits within a handful of stages. With $\nu = 0.1$ the same correction
 is spread over roughly ten stages, and each stage gets to see a slightly different residual field.
-This is why the library defaults to `0.1` and why the acceptance tests pair a small `ν` with a
+This is why the library defaults to $0.1$ and why the acceptance tests pair a small $\nu$ with a
 larger `number_of_estimators` instead of a single big step.
 
 ### Initial predictions: where the additive model starts
 
-A boosted model is `f_0 + ν Σ h_t`. The constant matters because it is the loss-optimal prediction
+A boosted model is $f_0 + \nu \sum h_t$. The constant matters because it is the loss-optimal prediction
 before any tree exists:
 
 | Estimator | `initial_prediction` | Source |
@@ -296,13 +296,13 @@ Every claim above is pinned by a companion test. These are the ones worth readin
 ### `newton_leaf_value_matches_hand_computed_step_and_degeneracy_guard`
 
 In `boosting/boosting_stage_tests.rs`. It feeds known gradients and Hessians to
-`sk_newton_leaf_value`, checks the exact quotient `-Σg / (Σh + λ)` including a non-zero `λ`, and
+`sk_newton_leaf_value`, checks the exact quotient $-\sum g / (\sum h + \lambda)$ including a non-zero $\lambda$, and
 checks that a leaf with a zero Hessian sum yields `0.0` instead of an infinite value.
 
 ### `single_stage_stump_and_split_apply_newton_leaves_and_shrinkage` and `multiclass_single_stage_fits_one_tree_per_class`
 
 Also in `boosting_stage_tests.rs`. The first grows one depth-0 stump and one depth-1 split, verifying
-that leaf values are Newton steps and that the raw scores are updated by `learning_rate × tree`. The
+that leaf values are Newton steps and that the raw scores are updated by $\text{learning\_rate} \times \text{tree}$. The
 second verifies the multiclass bookkeeping: one tree per canonical class, each column updated from
 its own tree.
 
@@ -382,14 +382,14 @@ finite positive `learning_rate`, valid `maximum_features`, `subsample ∈ (0, 1]
 
 In `gradient_boosting/acceptance_tests/` (the folder added for task 7.1). The tiny suite fits a sparse
 binary classifier in `f64`, a dense multiclass classifier in `f32`, and all three regression losses
-in `f32`, scoring accuracy `1.0` and `R² > 0.85` through `sciencekit_metrics`.
+in `f32`, scoring accuracy $1.0$ and $R^2 > 0.85$ through `sciencekit_metrics`.
 `large_binary_and_multiclass_gradient_boosting_with_metrics` builds a deterministic 20 000 × 5 design,
 fits with subsampling, `Sqrt` feature sampling and early stopping, asserts dense and sparse
-probabilities are identical, and requires accuracy and macro-`F₁` above `0.85` and log-loss below
-`0.40` for binary, plus accuracy and macro-`F₁` above `0.82` for multiclass.
+probabilities are identical, and requires accuracy and macro-$F_1$ above $0.85$ and log-loss below
+$0.40$ for binary, plus accuracy and macro-$F_1$ above $0.82$ for multiclass.
 `large_regression_gradient_boosting_all_losses_early_stop_and_metrics` runs the same design through
 `SquaredError`, `AbsoluteError` and `Huber`, asserts dense/CSR prediction equality, and requires
-`MSE < 0.45`, `MAE < 0.50` and `R² > 0.85`, then explicitly checks that a `learning_rate(1.0)` run
+$\mathrm{MSE} < 0.45$, $\mathrm{MAE} < 0.50$ and $R^2 > 0.85$, then explicitly checks that a `learning_rate(1.0)` run
 with patience `3` returns fewer than its `30` allowed stages — early stopping measured on real data.
 
 ---

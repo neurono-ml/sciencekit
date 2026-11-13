@@ -294,7 +294,7 @@ and $R^2$ scoring.
 The [gradient boosting chapter](./ch47-gradient-boosting.html) extends `sciencekit_ensemble` with
 `SKGradientBoostingClassifier<F>` and `SKGradientBoostingRegressor<F>`: a loss-agnostic stage loop
 that fits structure-only trees to the negative gradient, replaces leaves with damped Newton steps
-`-Σg / (Σh + λ)`, shrinks every stage by the learning rate, subsamples rows without replacement from
+$-\sum g / (\sum h + \lambda)$, shrinks every stage by the learning rate, subsamples rows without replacement from
 per-stage seeds, and early-stops by truncating back to the best held-out validation stage, over dense
 and non-densified CSR input for binary, multiclass and all three regression losses.
 The [outlier detection chapter](./ch48-outlier-detection.html) closes Wave 5 in

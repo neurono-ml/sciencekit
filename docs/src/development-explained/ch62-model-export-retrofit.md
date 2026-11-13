@@ -34,6 +34,8 @@ change.
 
 ```mermaid
 flowchart LR
+  accTitle: Model export and import through one shared state
+  accDescr: Scaler, linear and forest models export their state into a shared model-state object of metadata and named tensors, while a type-erased pipeline refuses export. The state is written by the safetensors and JSON debug writers, reserved for a future ONNX builder, and can be imported into a fresh model.
     subgraph Models["Model crates"]
         S["SKStandardScalerModel"]
         L["SKLinearRegressionModel"]
@@ -92,6 +94,8 @@ predictions.
 
 ```mermaid
 flowchart TB
+  accTitle: A sparse design round-trips through export and import without densifying
+  accDescr: A CSR design is exported into metadata that records the sparse representation plus integer and float tensors. Importing that state rebuilds the CSR design and never converts it to a dense matrix.
     CSR["CSR design<br/>indptr · indices · data"] --> Export["export_state"]
     Export --> Meta["metadata:<br/>representation = csr"]
     Export --> Tensors["integer/float tensors"]
