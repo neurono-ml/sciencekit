@@ -5,6 +5,7 @@
 //! re-exports their public items; every implementation lives in its own file.
 
 
+
 #[cfg(test)]
 mod batch_tests;
 #[cfg(test)]
@@ -19,6 +20,8 @@ mod interpreter_tests;
 mod model_tests;
 #[cfg(test)]
 mod operand_tests;
+#[cfg(test)]
+mod observability_tests;
 #[cfg(test)]
 mod operators_tests;
 #[cfg(test)]

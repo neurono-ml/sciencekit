@@ -5,7 +5,10 @@ use std::collections::BTreeMap;
 use std::collections::BTreeMap as ArrayMap;
 
 use ndarray::{Array1, ArrayD, IxDyn};
-use sciencekit_common::{SKDataView, SKFloat};
+use sciencekit_common::{
+    SKBackendKind, SKDataView, SKExecutionMode, SKFloat, SKOperationAttributes, SKOperationKind,
+    sk_run_operation,
+};
 
 use super::SKOnnxImportError;
 use super::interface::{SKOnnxInterface, SKOnnxPredictionHead};
@@ -23,6 +26,8 @@ use crate::graph::SKOnnxModel;
 pub struct SKOnnxPredictor<F: SKFloat> {
     pub(super) model: SKOnnxModel,
     pub(super) interface: SKOnnxInterface,
+    pub(super) backend: SKBackendKind,
+    pub(super) execution_mode: SKExecutionMode,
     pub(super) marker: std::marker::PhantomData<F>,
 }
 
@@ -35,6 +40,16 @@ impl<F: SKFloat> SKOnnxPredictor<F> {
     /// The declared feature width the input must match.
     pub fn feature_count(&self) -> usize {
         self.interface.feature_count
+    }
+
+    /// The math backend kind recorded in every prediction span.
+    pub fn backend(&self) -> SKBackendKind {
+        self.backend
+    }
+
+    /// The execution mode recorded in every prediction span.
+    pub fn execution_mode(&self) -> SKExecutionMode {
+        self.execution_mode
     }
 
     /// The loaded model.
@@ -53,34 +68,61 @@ impl<F: SKFloat> SKOnnxPredictor<F> {
     where
         X: TryInto<SKDataView<'a, F>, Error = sciencekit_common::SKError>,
     {
+        self.run_observed(features, |rows, values| {
+            let outputs = self.run(rows, values)?;
+            outputs
+                .into_iter()
+                .map(|(name, value)| {
+                    let shape = value.shape();
+                    let converted: Vec<F> = value
+                        .to_f64_values()
+                        .into_iter()
+                        .map(|value| num_traits::NumCast::from(value).unwrap_or_else(F::zero))
+                        .collect();
+                    let array = ArrayD::from_shape_vec(IxDyn(&shape), converted).map_err(|_| {
+                        SKOnnxImportError::ShapeMismatch {
+                            expected: shape.clone(),
+                            found: shape,
+                        }
+                    })?;
+                    Ok((name, array))
+                })
+                .collect()
+        })
+    }
+
+    /// Run one prediction inside its observability span.
+    ///
+    /// The span records the configured backend and execution mode - never a
+    /// hardcoded value - so a consumer's subscriber sees the selection the
+    /// builder received.
+    pub(super) fn run_observed<'a, X, T>(
+        &self,
+        features: X,
+        operation: impl FnOnce(usize, Vec<f64>) -> Result<T, SKOnnxImportError>,
+    ) -> Result<T, SKOnnxImportError>
+    where
+        X: TryInto<SKDataView<'a, F>, Error = sciencekit_common::SKError>,
+    {
         let view = features.try_into().map_err(SKOnnxImportError::Central)?;
-        let (rows, values) = self.features(view)?;
-        let outputs = self.run(rows, values)?;
-        outputs
-            .into_iter()
-            .map(|(name, value)| {
-                let shape = value.shape();
-                let converted: Vec<F> = value
-                    .to_f64_values()
-                    .into_iter()
-                    .map(|value| num_traits::NumCast::from(value).unwrap_or_else(F::zero))
-                    .collect();
-                let array = ArrayD::from_shape_vec(IxDyn(&shape), converted).map_err(|_| {
-                    SKOnnxImportError::ShapeMismatch {
-                        expected: shape.clone(),
-                        found: shape,
-                    }
-                })?;
-                Ok((name, array))
-            })
-            .collect()
+        let dense = view.as_dense().map_err(SKOnnxImportError::Central)?;
+        let attributes = SKOperationAttributes {
+            operation: SKOperationKind::Predict,
+            rows_count: dense.nrows(),
+            columns_count: dense.ncols(),
+            execution_mode: self.execution_mode,
+            backend: self.backend,
+        };
+        sk_run_operation(attributes, || {
+            let (rows, values) = self.features(dense)?;
+            operation(rows, values)
+        })
     }
 
     pub(super) fn features(
         &self,
-        features: SKDataView<'_, F>,
+        dense: ndarray::ArrayView2<'_, F>,
     ) -> Result<(usize, Vec<f64>), SKOnnxImportError> {
-        let dense = features.as_dense()?;
         if dense.ncols() != self.interface.feature_count {
             return Err(SKOnnxImportError::ShapeMismatch {
                 expected: vec![dense.nrows(), self.interface.feature_count],

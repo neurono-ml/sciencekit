@@ -3,7 +3,7 @@
 use std::marker::PhantomData;
 use std::path::PathBuf;
 
-use sciencekit_common::SKFloat;
+use sciencekit_common::{SKBackendKind, SKExecutionMode, SKFloat};
 
 use super::SKOnnxImportError;
 use super::interface::interface;
@@ -11,12 +11,20 @@ use super::predictor::SKOnnxPredictor;
 use crate::graph::SKOnnxModel;
 
 /// Builder for [`SKOnnxPredictor`].
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct SKOnnxPredictorBuilder<F: SKFloat> {
     model: Option<SKOnnxModel>,
     bytes: Option<Vec<u8>>,
     path: Option<PathBuf>,
+    backend: SKBackendKind,
+    execution_mode: SKExecutionMode,
     marker: PhantomData<F>,
+}
+
+impl<F: SKFloat> Default for SKOnnxPredictorBuilder<F> {
+    fn default() -> Self {
+        SKOnnxPredictorBuilder::new()
+    }
 }
 
 impl<F: SKFloat> SKOnnxPredictorBuilder<F> {
@@ -26,8 +34,24 @@ impl<F: SKFloat> SKOnnxPredictorBuilder<F> {
             model: None,
             bytes: None,
             path: None,
+            backend: SKBackendKind::Faer,
+            execution_mode: SKExecutionMode::Automatic,
             marker: PhantomData,
         }
+    }
+
+    /// Set the math backend kind recorded in every prediction span
+    /// (default [`SKBackendKind::Faer`]).
+    pub fn backend(mut self, backend: SKBackendKind) -> Self {
+        self.backend = backend;
+        self
+    }
+
+    /// Set the execution mode recorded in every prediction span
+    /// (default [`SKExecutionMode::Automatic`]).
+    pub fn execution_mode(mut self, execution_mode: SKExecutionMode) -> Self {
+        self.execution_mode = execution_mode;
+        self
     }
 
     /// Attach an already decoded model.
@@ -64,6 +88,8 @@ impl<F: SKFloat> SKOnnxPredictorBuilder<F> {
         Ok(SKOnnxPredictor {
             model,
             interface,
+            backend: self.backend,
+            execution_mode: self.execution_mode,
             marker: PhantomData,
         })
     }

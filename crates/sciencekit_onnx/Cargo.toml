@@ -33,3 +33,5 @@ sciencekit_svm = { path = "../sciencekit_svm" }
 sciencekit_tree = { path = "../sciencekit_tree" }
 serde_json = "1"
 tempfile = "3"
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
