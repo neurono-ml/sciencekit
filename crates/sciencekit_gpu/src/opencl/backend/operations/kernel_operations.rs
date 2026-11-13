@@ -19,7 +19,7 @@ impl SKOpenClBackend {
         &self,
         host: ArrayView2<'_, F>,
     ) -> Result<SKOpenClBuffer<F>, SKError> {
-        let span = observability::operation_span("upload_resident");
+        let span = self.operation_span("upload_resident");
         let _entered = span.enter();
         let session = self.session()?;
         ensure_scalar_supported::<F>(session)?;
@@ -37,7 +37,7 @@ impl SKOpenClBackend {
         &self,
         buffer: &SKOpenClBuffer<F>,
     ) -> Result<Array2<F>, SKError> {
-        let span = observability::operation_span("download_resident");
+        let span = self.operation_span("download_resident");
         let _entered = span.enter();
         let session = self.session()?;
         let matrix = buffer::download_buffer(session, buffer)?;
@@ -56,7 +56,7 @@ impl SKOpenClBackend {
         left: ArrayView2<'_, F>,
         right: ArrayView2<'_, F>,
     ) -> Result<Array2<F>, SKError> {
-        let span = observability::operation_span("pairwise_distance");
+        let span = self.operation_span("pairwise_distance");
         let _entered = span.enter();
         let session = self.session()?;
         ensure_scalar_supported::<F>(session)?;
@@ -85,7 +85,7 @@ impl SKOpenClBackend {
         left: ArrayView2<'_, F>,
         right: ArrayView2<'_, F>,
     ) -> Result<Array2<F>, SKError> {
-        let span = observability::operation_span("gemm");
+        let span = self.operation_span("gemm");
         let _entered = span.enter();
         let session = self.session()?;
         ensure_scalar_supported::<F>(session)?;

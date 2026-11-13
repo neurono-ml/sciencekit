@@ -12,7 +12,6 @@ use crate::backend::{SKComputeBackend, SKDeviceDiscovery};
 use crate::buffer::{SKDeviceBuffer, SKDeviceTransferPolicy};
 use crate::kernel::SKDeviceBufferRef;
 use crate::opencl::device::sk_opencl_devices;
-use crate::opencl::observability;
 
 #[cfg(feature = "opencl")]
 use crate::buffer::SKDeviceBufferBuilder;
@@ -35,13 +34,13 @@ impl<F: SKFloat> SKComputeBackend<F> for SKOpenClBackend {
     }
 
     fn upload(&self, host: ArrayView2<'_, F>) -> Result<SKDeviceBuffer<F>, SKError> {
-        let span = observability::operation_span("upload");
+        let span = self.operation_span("upload");
         let _entered = span.enter();
         self.upload_implementation(host, &span)
     }
 
     fn download(&self, buffer: &SKDeviceBuffer<F>) -> Result<Array2<F>, SKError> {
-        let span = observability::operation_span("download");
+        let span = self.operation_span("download");
         let _entered = span.enter();
         self.download_implementation(buffer, &span)
     }
@@ -51,7 +50,7 @@ impl<F: SKFloat> SKComputeBackend<F> for SKOpenClBackend {
         kernel: SKGpuKernel,
         arguments: &[SKDeviceBufferRef<'_, F>],
     ) -> Result<SKDeviceBuffer<F>, SKError> {
-        let span = observability::operation_span("dispatch");
+        let span = self.operation_span("dispatch");
         let _entered = span.enter();
         self.dispatch_implementation(kernel, arguments, &span)
     }

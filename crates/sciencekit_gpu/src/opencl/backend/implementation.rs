@@ -11,7 +11,9 @@ use std::sync::atomic::{AtomicU64, Ordering};
 #[cfg(feature = "opencl")]
 use std::sync::Arc;
 
-use sciencekit_common::{SKDeviceInfo, SKError, SKFallbackReason};
+use sciencekit_common::{
+    SK_HOST_FALLBACK_BACKEND, SKBackendKind, SKDeviceInfo, SKError, SKFallbackReason,
+};
 
 use super::builder::SKOpenClBackendBuilder;
 use crate::buffer::SKDeviceTransferPolicy;
@@ -133,6 +135,20 @@ impl SKOpenClBackend {
         } else {
             Some(recorded_fallback_reason())
         }
+    }
+
+    /// Open the span for one public operation.
+    ///
+    /// An available backend records [`SKBackendKind::OpenCl`]; an unavailable
+    /// one records the host fallback kind and its reason, so the span never
+    /// claims device work that did not happen.
+    pub(crate) fn operation_span(&self, operation: &'static str) -> tracing::Span {
+        let (backend, reason) = if self.is_available() {
+            (SKBackendKind::OpenCl, None)
+        } else {
+            (SK_HOST_FALLBACK_BACKEND, self.fallback_reason())
+        };
+        crate::opencl::observability::operation_span(operation, backend, reason)
     }
 
     /// The bytes this backend has moved so far.

@@ -118,3 +118,47 @@ fn a_real_device_serves_the_contract_surface() {
     assert_eq!(backend.download(&product).expect("download"), host);
     assert!(backend.transfer_report().total_bytes() > 0);
 }
+
+/// An unavailable operation never claims device work on its span: it records the
+/// host fallback and why, so a trace cannot mistake a failed device attempt for
+/// a kernel that ran on OpenCL.
+#[test]
+fn an_unavailable_operation_records_the_host_fallback_and_reason() {
+    use tracing_subscriber::prelude::*;
+
+    use super::span_recorder::RecordingLayer;
+
+    let backend = unavailable_backend();
+    let host = array![[1.0_f64, 2.0], [3.0, 4.0]];
+    let recorder = RecordingLayer::default();
+    let subscriber = tracing_subscriber::registry().with(recorder.clone());
+    let error = tracing::subscriber::with_default(subscriber, || {
+        backend
+            .upload(host.view())
+            .expect_err("an unavailable backend must reject the upload")
+    });
+    assert!(matches!(error, SKError::DeviceUnavailable { .. }));
+
+    let spans = recorder.spans();
+    let (_, fields) = spans
+        .iter()
+        .find(|(name, _)| name == "opencl_operation")
+        .expect("the operation must still open its span");
+    assert_eq!(
+        fields.get("backend").map(String::as_str),
+        Some("faer"),
+        "a failed device operation must report the host fallback that serves it"
+    );
+    assert_eq!(
+        fields.get("fallback_reason").map(String::as_str),
+        Some("no-device-available")
+    );
+    assert!(
+        !fields.contains_key("device_index"),
+        "no device ran the operation"
+    );
+    assert!(
+        !fields.contains_key("transfer_bytes"),
+        "no bytes crossed the bus"
+    );
+}

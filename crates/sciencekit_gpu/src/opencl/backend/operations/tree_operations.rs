@@ -20,7 +20,7 @@ impl SKOpenClBackend {
         features: ArrayView2<'_, F>,
         nodes: ArrayView2<'_, F>,
     ) -> Result<Array2<F>, SKError> {
-        let span = observability::operation_span("tree_predict");
+        let span = self.operation_span("tree_predict");
         let _entered = span.enter();
         let session = self.session()?;
         ensure_scalar_supported::<F>(session)?;

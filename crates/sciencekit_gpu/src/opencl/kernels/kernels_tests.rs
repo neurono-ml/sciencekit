@@ -291,8 +291,9 @@ fn one_backend_serves_both_precisions_of_the_same_kernel() {
     };
     let session = session(&backend);
 
-    let left_single: Array2<f32> =
-        Array2::from_shape_fn((7, 5), |(row, column)| ((row * 3 + column) as f32) * 0.5 - 1.0);
+    let left_single: Array2<f32> = Array2::from_shape_fn((7, 5), |(row, column)| {
+        ((row * 3 + column) as f32) * 0.5 - 1.0
+    });
     let right_single: Array2<f32> =
         Array2::from_shape_fn((11, 5), |(row, column)| ((row * 7 + column) as f32) * 0.25);
     let left_resident = upload_view(session, left_single.view()).unwrap();

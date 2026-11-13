@@ -17,7 +17,7 @@ impl SKOpenClBackend {
         factor: F,
         offset: F,
     ) -> Result<Array2<F>, SKError> {
-        let span = observability::operation_span("elementwise_transform");
+        let span = self.operation_span("elementwise_transform");
         let _entered = span.enter();
         let session = self.session()?;
         ensure_scalar_supported::<F>(session)?;
@@ -39,7 +39,7 @@ impl SKOpenClBackend {
         left: ArrayView2<'_, F>,
         right: ArrayView2<'_, F>,
     ) -> Result<Array2<F>, SKError> {
-        let span = observability::operation_span("elementwise_combine");
+        let span = self.operation_span("elementwise_combine");
         let _entered = span.enter();
         let session = self.session()?;
         ensure_scalar_supported::<F>(session)?;

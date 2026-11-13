@@ -22,3 +22,5 @@ mod concurrency_tests;
 mod fallback_tests;
 #[cfg(all(test, feature = "opencl"))]
 mod observability_tests;
+#[cfg(test)]
+pub(crate) mod span_recorder;
