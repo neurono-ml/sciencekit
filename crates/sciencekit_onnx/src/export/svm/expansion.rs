@@ -4,7 +4,7 @@ use sciencekit_common::{SKError, SKFloat, SKModelState};
 
 use crate::graph::{SKOnnxGraphBuilder, SKOnnxNode};
 
-use super::super::helpers::floating_tensor;
+use super::super::helpers::{floating_tensor, require_feature_width, unsupported};
 use super::kernel::append_kernel;
 
 /// Append `MatMul(kernel, dual_coefficients) + bias` and return the margin name.
@@ -40,12 +40,36 @@ pub(crate) fn append_expansion<F: SKFloat>(
     Ok(output)
 }
 
+/// Read a dense support-vector block, rejecting a CSR block explicitly.
+pub(crate) fn dense_support_vectors<F: SKFloat>(
+    state: &SKModelState<F>,
+    prefix: &str,
+    estimator_name: &str,
+) -> Result<(Vec<usize>, Vec<F>), SKError> {
+    let tensor_name = format!("{prefix}.support_vectors_dense");
+    if state.tensor(&tensor_name).is_none() {
+        return Err(unsupported(
+            estimator_name,
+            "the support-vector block is stored as CSR; the exported graph needs a dense support-vector matrix",
+        ));
+    }
+    read_dense_support_vectors(state, prefix)
+}
+
 /// Read a `[rows, features]` support-vector block and one scalar from a state.
 pub(crate) fn read_dense_support_vectors<F: SKFloat>(
     state: &SKModelState<F>,
     prefix: &str,
 ) -> Result<(Vec<usize>, Vec<F>), SKError> {
-    floating_tensor(state, &format!("{prefix}.support_vectors_dense"))
+    let (shape, values) = floating_tensor(state, &format!("{prefix}.support_vectors_dense"))?;
+    let &[_, width] = shape.as_slice() else {
+        return Err(SKError::ShapeMismatch {
+            expected: vec![1, state.metadata().feature_count()],
+            found: shape,
+        });
+    };
+    require_feature_width(state, width)?;
+    Ok((shape, values))
 }
 
 /// Read the single-element bias tensor.

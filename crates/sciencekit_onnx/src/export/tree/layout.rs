@@ -17,14 +17,48 @@ pub(crate) struct SKOnnxTreeLayout<F: SKFloat> {
 impl<F: SKFloat> SKOnnxTreeLayout<F> {
     /// Read the tree under a tensor prefix (`tree` or a forest member prefix).
     pub(crate) fn read(state: &SKModelState<F>, prefix: &str) -> Result<Self, SKError> {
-        Ok(SKOnnxTreeLayout {
+        let layout = SKOnnxTreeLayout {
             split_feature: integer_tensor(state, &format!("{prefix}.nodes.split_feature"))?,
             threshold: floating_tensor(state, &format!("{prefix}.nodes.threshold"))?.1,
             left: integer_tensor(state, &format!("{prefix}.nodes.left"))?,
             right: integer_tensor(state, &format!("{prefix}.nodes.right"))?,
             values: floating_tensor(state, &format!("{prefix}.nodes.value"))?.1,
             value_offsets: integer_tensor(state, &format!("{prefix}.nodes.value_offsets"))?,
-        })
+        };
+        layout.validate(state)?;
+        Ok(layout)
+    }
+
+    /// Reject parallel arrays of different lengths and splits naming a feature
+    /// the declared graph input does not have.
+    fn validate(&self, state: &SKModelState<F>) -> Result<(), SKError> {
+        let node_count = self.split_feature.len();
+        for length in [self.threshold.len(), self.left.len(), self.right.len()] {
+            if length != node_count {
+                return Err(SKError::ShapeMismatch {
+                    expected: vec![node_count],
+                    found: vec![length],
+                });
+            }
+        }
+        if self.value_offsets.len() != node_count + 1 {
+            return Err(SKError::ShapeMismatch {
+                expected: vec![node_count + 1],
+                found: vec![self.value_offsets.len()],
+            });
+        }
+        let feature_count = state.metadata().feature_count() as i64;
+        if let Some(&feature) = self
+            .split_feature
+            .iter()
+            .find(|&&feature| feature >= feature_count)
+        {
+            return Err(SKError::ShapeMismatch {
+                expected: vec![state.metadata().feature_count()],
+                found: vec![feature.max(0) as usize],
+            });
+        }
+        Ok(())
     }
 
     /// The leaf value slice of one node.

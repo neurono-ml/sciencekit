@@ -9,6 +9,21 @@ use crate::graph::{SKOnnxGraphBuilder, SKOnnxNode};
 
 use super::super::helpers::{float_parameter, integer_parameter, string_parameter, unsupported};
 
+/// Reject a kernel the operator subset cannot express before any tensor is read.
+pub(crate) fn require_exportable_kernel<F: SKFloat>(
+    state: &SKModelState<F>,
+) -> Result<(), SKError> {
+    match string_parameter(state, "kernel", "rbf") {
+        "linear" | "polynomial" | "rbf" | "sigmoid" => Ok(()),
+        other => Err(unsupported(
+            "SVM kernel",
+            format!(
+                "the `{other}` kernel cannot be expressed with the exported operator subset; supported kernels are linear, polynomial, rbf and sigmoid"
+            ),
+        )),
+    }
+}
+
 /// Append the kernel matrix for the model's configured kernel.
 pub(crate) fn append_kernel<F: SKFloat>(
     state: &SKModelState<F>,
