@@ -21,4 +21,9 @@ pub(crate) enum SKOnnxStageKind {
         probability_tensor: String,
         class_count: usize,
     },
+    /// A single integer label output (clustering).
+    Labels {
+        label_tensor: String,
+        label_count: usize,
+    },
 }

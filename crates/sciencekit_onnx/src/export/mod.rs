@@ -12,14 +12,19 @@ mod linear_tests;
 #[cfg(test)]
 mod preprocessing_tests;
 #[cfg(test)]
+mod remaining_tests;
+#[cfg(test)]
 mod tree_tests;
 
+mod cluster;
 mod contract;
 mod coverage;
+mod decomposition;
 mod dispatcher;
 mod helpers;
 mod linear;
 mod metadata;
+mod neighbors;
 mod preprocessing;
 mod stage;
 mod tree;

@@ -290,10 +290,18 @@ fn append_logistic_regression<F: SKFloat>(
                 vec![sigmoids.clone()],
             ));
             let total = format!("{namespace}logistic.total");
+            builder.add_integer_initializer(
+                format!("{namespace}logistic.total_axes"),
+                vec![1],
+                &[1],
+            );
             builder.add_node(
-                SKOnnxNode::new("ReduceSum", vec![sigmoids.clone()], vec![total.clone()])
-                    .attribute_integer("axis", 1)
-                    .attribute_integer("keepdims", 1),
+                SKOnnxNode::new(
+                    "ReduceSum",
+                    vec![sigmoids.clone(), format!("{namespace}logistic.total_axes")],
+                    vec![total.clone()],
+                )
+                .attribute_integer("keepdims", 1),
             );
             builder.add_node(SKOnnxNode::new(
                 "Div",

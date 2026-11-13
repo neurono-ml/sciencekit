@@ -4,9 +4,12 @@ use sciencekit_common::{SKError, SKFloat, SKModelState};
 
 use crate::graph::{SKOnnxGraphBuilder, SKOnnxModel, SKOnnxTensorDType, SKOnnxValueInfo};
 
+use super::cluster::append_cluster;
+use super::decomposition::append_decomposition;
 use super::helpers::unsupported;
 use super::linear::append_linear;
 use super::metadata::attach_metadata;
+use super::neighbors::append_neighbors;
 use super::preprocessing::append_preprocessing;
 use super::stage::{SKOnnxStageKind, SKOnnxStageOutput};
 use super::tree::append_tree;
@@ -72,6 +75,15 @@ pub(crate) fn append_estimator<F: SKFloat>(
     if let Some(output) = append_tree(estimator_name, state, builder, input, namespace)? {
         return Ok(output);
     }
+    if let Some(output) = append_neighbors(estimator_name, state, builder, input, namespace)? {
+        return Ok(output);
+    }
+    if let Some(output) = append_cluster(estimator_name, state, builder, input, namespace)? {
+        return Ok(output);
+    }
+    if let Some(output) = append_decomposition(estimator_name, state, builder, input, namespace)? {
+        return Ok(output);
+    }
     Err(unsupported(
         estimator_name,
         "no exporter is registered for this family",
@@ -103,6 +115,13 @@ pub(crate) fn declare_outputs(
                     crate::graph::SKOnnxDimension::batch(),
                     crate::graph::SKOnnxDimension::Fixed(output.width),
                 ],
+            )?);
+        }
+        SKOnnxStageKind::Labels { label_tensor, .. } => {
+            builder.add_output(SKOnnxValueInfo::new(
+                label_tensor.clone(),
+                SKOnnxTensorDType::Int64,
+                vec![crate::graph::SKOnnxDimension::batch()],
             )?);
         }
         SKOnnxStageKind::Classification {

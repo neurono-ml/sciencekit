@@ -86,3 +86,8 @@ pub(crate) fn require_feature_count<F: SKFloat>(
     let _ = family;
     Ok(())
 }
+
+/// The ONNX element type of the model scalar.
+pub(crate) fn element_type<F: SKFloat>() -> i64 {
+    crate::graph::SKOnnxTensorDType::for_scalar::<F>().element_type() as i64
+}
