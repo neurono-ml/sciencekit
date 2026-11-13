@@ -2,7 +2,7 @@
 
 ## 1. Runtime spike and model wrapper
 
-- [ ] 1.1 Spike `tract-onnx 0.22` on MSRV 1.85 with a tiny ONNX fixture; record whether
+- [x] 1.1 Spike `tract-onnx 0.22` on MSRV 1.85 with a tiny ONNX fixture; record whether
   it builds and runs, otherwise choose the minimal interpreter; update `design.md`.
 - [ ] 1.2 Implement `SKOnnxModel` parsing/metadata (input/output names, shapes, dtypes) and
   invalid-bytes tests; verify with `cargo test -p sciencekit_onnx onnx_model`.
