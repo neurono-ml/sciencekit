@@ -18,7 +18,7 @@
   `cargo test -p sciencekit_onnx export_preprocessing`.
 - [x] 2.2 Implement linear/logistic exporters with MatMul/Add/link operators and f32/f64
   parity tests; verify with `cargo test -p sciencekit_onnx export_linear`.
-- [ ] 2.3 Implement tree/forest/boosting exporters via ONNX-ML tree ensembles and parity
+- [x] 2.3 Implement tree/forest/boosting exporters via ONNX-ML tree ensembles and parity
   tests; verify with `cargo test -p sciencekit_onnx export_tree`.
 
 ## 3. Remaining families
