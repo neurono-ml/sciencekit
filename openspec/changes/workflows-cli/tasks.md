@@ -29,7 +29,7 @@
 
 ## 4. Acceptance and review
 
-- [ ] 4.1 Add CLI integration tests for every command, invalid workflows, missing
+- [x] 4.1 Add CLI integration tests for every command, invalid workflows, missing
   features, dry-run and exit codes; verify with `cargo test -p sciencekit_cli`.
 - [ ] 4.2 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
   warnings` and `cargo test --workspace`; fix every failure before pushing.
