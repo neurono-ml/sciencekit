@@ -1,8 +1,12 @@
 //! The imported model records its configured backend in every prediction span
 //! (spec `backend-selection`, spec `observability`).
+//!
+//! A process-wide subscriber is installed once: `cargo test` runs the suite on
+//! parallel threads, and a thread-local subscriber would race with predictor
+//! spans emitted by the other round-trip tests.
 
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, OnceLock};
 
 use ndarray::array;
 use sciencekit_common::{SKBackendKind, SKExecutionMode, SKRegressorPredictor};
@@ -37,38 +41,45 @@ impl<S: Subscriber> Layer<S> for SpanFieldRecorder {
     }
 }
 
+fn recorder() -> &'static SpanFieldRecorder {
+    static RECORDER: OnceLock<SpanFieldRecorder> = OnceLock::new();
+    RECORDER.get_or_init(|| {
+        let recorder = SpanFieldRecorder::default();
+        let subscriber = tracing_subscriber::registry().with(recorder.clone());
+        tracing::subscriber::set_global_default(subscriber)
+            .expect("the test process has no global subscriber");
+        tracing::callsite::rebuild_interest_cache();
+        recorder
+    })
+}
+
 #[test]
 fn the_configured_backend_reaches_the_prediction_span() {
-    tracing::callsite::rebuild_interest_cache();
-    let recorder = SpanFieldRecorder::default();
-    let subscriber = tracing_subscriber::registry().with(recorder.clone());
-
-    tracing::subscriber::with_default(subscriber, || {
-        let predictor = SKOnnxPredictor::<f64>::builder()
-            .model(affine_regressor_model())
-            .backend(SKBackendKind::MatrixMultiply)
-            .execution_mode(SKExecutionMode::InProcessSynchronous)
-            .build()
-            .expect("the fixture imports");
-        let _ = predictor
-            .predict(array![[1.0, 2.0]].view())
-            .expect("the fixture predicts");
-    });
+    let recorder = recorder();
+    let predictor = SKOnnxPredictor::<f64>::builder()
+        .model(affine_regressor_model())
+        .backend(SKBackendKind::MatrixMultiply)
+        .execution_mode(SKExecutionMode::InProcessSynchronous)
+        .build()
+        .expect("the fixture imports");
+    let _ = predictor
+        .predict(array![[1.0, 2.0]].view())
+        .expect("the fixture predicts");
 
     let spans = recorder.spans.lock().expect("span lock");
     let fields = spans
         .iter()
         .find(|fields| {
             fields
-                .get("operation")
-                .is_some_and(|value| value.contains("predict"))
+                .get("backend")
+                .is_some_and(|value| value.contains("matrixmultiply"))
         })
-        .expect("a predict span must be recorded");
+        .unwrap_or_else(|| panic!("the override span must be recorded: {spans:?}"));
     assert!(
         fields
-            .get("backend")
-            .is_some_and(|value| value.contains("matrixmultiply")),
-        "the configured backend must be recorded: {fields:?}"
+            .get("operation")
+            .is_some_and(|value| value.contains("predict")),
+        "the override span is a prediction: {fields:?}"
     );
     assert!(
         fields
