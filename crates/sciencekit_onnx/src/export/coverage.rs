@@ -37,6 +37,35 @@ pub fn sk_onnx_coverage() -> &'static [SKOnnxFamilyCoverage] {
             supported: true,
             note: "numeric integer categories and the ignore policy only; nominal string categories and the reject policy return UnsupportedOperation",
         },
+        SKOnnxFamilyCoverage {
+            family: "linear.regressors",
+            estimators: &[
+                "SKLinearRegression",
+                "SKRidge",
+                "SKLasso",
+                "SKElasticNet",
+                "SKSGDRegressor",
+            ],
+            operators: &["MatMul", "Add"],
+            supported: true,
+            note: "one output column; the coordinate-descent families require a single configured alpha",
+        },
+        SKOnnxFamilyCoverage {
+            family: "linear.classifiers",
+            estimators: &["SKLogisticRegression"],
+            operators: &[
+                "MatMul",
+                "Add",
+                "Sigmoid",
+                "Softmax",
+                "ReduceSum",
+                "Div",
+                "Concat",
+                "ArgMax",
+            ],
+            supported: true,
+            note: "binary, multinomial and one-versus-rest strategies; the label output is the canonical class index",
+        },
     ]
 }
 

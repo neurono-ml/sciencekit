@@ -7,7 +7,7 @@ mod fixtures;
 mod interface;
 
 pub(crate) use fixtures::write_fixture;
-pub(crate) use interface::assert_regressor_interface;
+pub(crate) use interface::{assert_classifier_interface, assert_regressor_interface};
 
 #[cfg(test)]
 mod identity_tests;

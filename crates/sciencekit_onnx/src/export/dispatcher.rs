@@ -5,6 +5,7 @@ use sciencekit_common::{SKError, SKFloat, SKModelState};
 use crate::graph::{SKOnnxGraphBuilder, SKOnnxModel, SKOnnxTensorDType, SKOnnxValueInfo};
 
 use super::helpers::unsupported;
+use super::linear::append_linear;
 use super::metadata::attach_metadata;
 use super::preprocessing::append_preprocessing;
 use super::stage::{SKOnnxStageKind, SKOnnxStageOutput};
@@ -64,6 +65,9 @@ pub(crate) fn append_estimator<F: SKFloat>(
     if let Some(output) = append_preprocessing(estimator_name, state, builder, input, namespace)? {
         return Ok(output);
     }
+    if let Some(output) = append_linear(estimator_name, state, builder, input, namespace)? {
+        return Ok(output);
+    }
     Err(unsupported(
         estimator_name,
         "no exporter is registered for this family",
@@ -76,8 +80,8 @@ pub(crate) fn declare_outputs(
     output: &SKOnnxStageOutput,
     element_type: SKOnnxTensorDType,
 ) -> Result<(), SKError> {
-    match output.kind {
-        SKOnnxStageKind::Transformed | SKOnnxStageKind::Regression => {
+    match &output.kind {
+        SKOnnxStageKind::Transformed => {
             builder.add_output(SKOnnxValueInfo::new(
                 output.tensor.clone(),
                 element_type,
@@ -87,7 +91,35 @@ pub(crate) fn declare_outputs(
                 ],
             )?);
         }
-        SKOnnxStageKind::Classification => {}
+        SKOnnxStageKind::Regression => {
+            builder.add_output(SKOnnxValueInfo::new(
+                output.tensor.clone(),
+                element_type,
+                vec![
+                    crate::graph::SKOnnxDimension::batch(),
+                    crate::graph::SKOnnxDimension::Fixed(output.width),
+                ],
+            )?);
+        }
+        SKOnnxStageKind::Classification {
+            label_tensor,
+            probability_tensor,
+            class_count,
+        } => {
+            builder.add_output(SKOnnxValueInfo::new(
+                label_tensor.clone(),
+                SKOnnxTensorDType::Int64,
+                vec![crate::graph::SKOnnxDimension::batch()],
+            )?);
+            builder.add_output(SKOnnxValueInfo::new(
+                probability_tensor.clone(),
+                element_type,
+                vec![
+                    crate::graph::SKOnnxDimension::batch(),
+                    crate::graph::SKOnnxDimension::Fixed(*class_count),
+                ],
+            )?);
+        }
     }
     Ok(())
 }

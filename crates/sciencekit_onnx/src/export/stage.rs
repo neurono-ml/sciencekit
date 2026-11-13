@@ -9,13 +9,16 @@ pub(crate) struct SKOnnxStageOutput {
 }
 
 /// How the produced tensor may be consumed.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[allow(dead_code)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum SKOnnxStageKind {
     /// A feature matrix a further stage can consume.
     Transformed,
     /// A single-column regression prediction.
     Regression,
     /// A label output plus a probability matrix.
-    Classification,
+    Classification {
+        label_tensor: String,
+        probability_tensor: String,
+        class_count: usize,
+    },
 }
