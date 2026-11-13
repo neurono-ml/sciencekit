@@ -336,4 +336,10 @@ with an out-of-core composition layer: the `SKStreamingTransformer` contract, th
 one-shot materialization within `memory_budget_bytes`, multi-epoch replay on reopenable providers,
 the bounded `SKFinalizerBuffer` that preserves CSR, stage-indexed error propagation and the
 `Send + Sync` fitted pipeline with its `SKStreamingFitReport`.
+The [memory-mapped sources chapter](./ch58-memory-mapped-interop.html) adds the `memmap` feature of
+`sciencekit_interop`: read-only `memmap2` mappings behind `SKMappableSource` and `SKLazySource`,
+raw binary matrices with explicit descriptors and exact length validation, zero-copy NumPy `.npy`
+float rows with Fortran-order, endianness and alignment rejection plus an explicit casting path,
+footer-indexed Arrow IPC random access with per-batch decoding, bounded sequential blocks and
+`Send + Sync` concurrent readers.
 
