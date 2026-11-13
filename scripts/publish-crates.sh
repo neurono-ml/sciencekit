@@ -72,7 +72,33 @@ for crate in "${CRATES[@]}"; do
     continue
   fi
   echo "publish ${crate} ${version}"
-  cargo publish -p "${crate}" ${DRY_RUN}
+  # crates.io rate-limits bursts of new crates with HTTP 429. Retry with
+  # increasing backoff instead of failing the whole release; every attempt is
+  # safe because a version can only be published once.
+  local delay=120
+  local attempt=1
+  local max_attempts=6
+  while true; do
+    local output
+    if output=$(cargo publish -p "${crate}" ${DRY_RUN} 2>&1); then
+      echo "${output}"
+      break
+    fi
+    if [[ "${DRY_RUN}" == "" ]] && grep -qE "status 429|Too Many Requests" <<<"${output}"; then
+      if (( attempt >= max_attempts )); then
+        echo "${output}"
+        echo "crates.io kept rate-limiting ${crate} after ${attempt} attempts" >&2
+        exit 1
+      fi
+      echo "rate limited on ${crate}; retrying in ${delay}s (attempt ${attempt}/${max_attempts})"
+      sleep "${delay}"
+      delay=$(( delay * 2 > 900 ? 900 : delay * 2 ))
+      attempt=$(( attempt + 1 ))
+      continue
+    fi
+    echo "${output}"
+    exit 1
+  done
   # crates.io needs a moment before the new version resolves for dependents.
   if [[ -z "${DRY_RUN}" ]]; then
     sleep 20
