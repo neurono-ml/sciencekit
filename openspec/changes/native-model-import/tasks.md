@@ -4,7 +4,7 @@
 
 - [x] 1.1 Define `SKNativeImport<F>` and the conversion result/error surface; verify with
   `cargo test -p sciencekit_interop native_import`.
-- [ ] 1.2 Wire Safetensors/JSON state import through `SKImportable` for linear/preprocessing
+- [x] 1.2 Wire Safetensors/JSON state import through `SKImportable` for linear/preprocessing
   families and test round-trip predictions; verify with
   `cargo test -p sciencekit_interop native_safetensors`.
 
