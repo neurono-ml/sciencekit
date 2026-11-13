@@ -11,7 +11,7 @@
 
 ## 2. Features and docs
 
-- [ ] 2.1 Add the optional integration features and a feature-matrix build test; verify
+- [x] 2.1 Add the optional integration features and a feature-matrix build test; verify
   with `cargo check -p sciencekit --no-default-features` and each feature.
 - [ ] 2.2 Write crate-level documentation and docs.rs metadata; verify with
   `cargo doc -p sciencekit --no-deps`.
