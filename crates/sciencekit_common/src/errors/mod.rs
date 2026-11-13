@@ -7,6 +7,7 @@
 //! This is a **pure dispatcher** module: `mod.rs` only declares and re-exports
 //! submodules; the implementation lives in `error_kind.rs`.
 
+mod error_kind;
 
 pub use error_kind::SKError;
 
