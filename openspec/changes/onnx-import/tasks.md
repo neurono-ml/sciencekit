@@ -29,7 +29,7 @@
 
 - [x] 4.1 Import the exported library models (linear, scaler, tree, pipeline) and compare
   predictions; verify with `cargo test -p sciencekit_onnx onnx_round_trip`.
-- [ ] 4.2 Add concurrent-prediction and `Send + Sync` tests; verify with
+- [x] 4.2 Add concurrent-prediction and `Send + Sync` tests; verify with
   `cargo test -p sciencekit_onnx onnx_concurrency`.
 - [ ] 4.3 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
   warnings` and `cargo test --workspace`; fix every failure before pushing.
