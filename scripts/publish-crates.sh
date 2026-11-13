@@ -35,6 +35,7 @@ CRATES=(
   sciencekit_telemetry
   sciencekit_pipeline
   sciencekit_ffi
+  sciencekit_onnx
   sciencekit
 )
 

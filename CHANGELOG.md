@@ -16,7 +16,8 @@ k-means), decomposition (PCA, truncated SVD and incremental out-of-core PCA),
 successive-halving model selection, DAG and streaming pipelines, the expanded
 interoperability layer (Polars/DataFusion sources, memory-mapped files,
 safetensors and JSON debug formats), the OpenCL 3.0 device backend, opt-in
-OpenTelemetry export, isolation forests and workspace-wide model export.
+OpenTelemetry export, isolation forests, workspace-wide model export and ONNX
+export.
 
 ### Added
 
