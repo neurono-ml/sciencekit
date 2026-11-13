@@ -26,7 +26,7 @@
 
 - [x] 4.1 Add concurrent conversion, shape/class-table validation and no-partial-model
   tests; verify with `cargo test -p sciencekit_interop native_validation`.
-- [ ] 4.2 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
+- [x] 4.2 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
   warnings` and `cargo test --workspace`; fix every failure before pushing.
 - [ ] 4.3 Update `CHANGELOG.md` and the companion mdBook chapter (including a
   `Development Explained` chapter on native import and retraining); verify with
