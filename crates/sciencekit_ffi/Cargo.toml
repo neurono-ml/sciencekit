@@ -1,6 +1,6 @@
 [package]
 name = "sciencekit_ffi"
-version = "0.1.0"
+version.workspace = true
 edition = "2024"
 license = "Apache-2.0"
 rust-version = "1.85"
@@ -15,11 +15,11 @@ name = "sciencekit_ffi"
 crate-type = ["cdylib", "staticlib", "rlib"]
 
 [dependencies]
-sciencekit_common = { path = "../sciencekit_common", version = "0.1.0" }
-sciencekit_linear_model = { path = "../sciencekit_linear_model", version = "0.1.0" }
-sciencekit_math = { path = "../sciencekit_math", version = "0.1.0" }
-sciencekit_metrics = { path = "../sciencekit_metrics", version = "0.1.0" }
-sciencekit_preprocessing = { path = "../sciencekit_preprocessing", version = "0.1.0" }
+sciencekit_common = { path = "../sciencekit_common", version = "0.8.0" }
+sciencekit_linear_model = { path = "../sciencekit_linear_model", version = "0.8.0" }
+sciencekit_math = { path = "../sciencekit_math", version = "0.8.0" }
+sciencekit_metrics = { path = "../sciencekit_metrics", version = "0.8.0" }
+sciencekit_preprocessing = { path = "../sciencekit_preprocessing", version = "0.8.0" }
 
 ndarray = { workspace = true }
 

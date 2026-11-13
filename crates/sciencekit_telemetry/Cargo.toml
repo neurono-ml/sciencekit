@@ -1,6 +1,6 @@
 [package]
 name = "sciencekit_telemetry"
-version = "0.1.0"
+version.workspace = true
 edition = "2024"
 license = "Apache-2.0"
 rust-version = "1.85"
@@ -8,7 +8,7 @@ description = "Opt-in OpenTelemetry trace, log and metric export pipelines and l
 repository = "https://github.com/neurono-ml/sciencekit"
 
 [dependencies]
-sciencekit_common = { path = "../sciencekit_common", version = "0.1.0" }
+sciencekit_common = { path = "../sciencekit_common", version = "0.8.0" }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true, features = ["registry"] }
 tracing-opentelemetry = { workspace = true }
@@ -23,8 +23,8 @@ tokio = { version = "=1.53.1", features = ["rt"], optional = true }
 opentelemetry_sdk = { workspace = true, features = ["trace", "metrics", "logs", "testing"] }
 ndarray = { workspace = true }
 sprs = { workspace = true }
-sciencekit_preprocessing = { path = "../sciencekit_preprocessing", version = "0.1.0" }
-sciencekit_metrics = { path = "../sciencekit_metrics", version = "0.1.0" }
+sciencekit_preprocessing = { path = "../sciencekit_preprocessing", version = "0.8.0" }
+sciencekit_metrics = { path = "../sciencekit_metrics", version = "0.8.0" }
 
 [features]
 default = []

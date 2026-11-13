@@ -1,6 +1,6 @@
 [package]
 name = "sciencekit_interop"
-version = "0.1.0"
+version.workspace = true
 edition = "2024"
 license = "Apache-2.0"
 rust-version = "1.85"
@@ -8,7 +8,7 @@ description = "Engine-neutral interoperability layer for sciencekit: tabular sch
 repository = "https://github.com/neurono-ml/sciencekit"
 
 [dependencies]
-sciencekit_common = { path = "../sciencekit_common", version = "0.1.0" }
+sciencekit_common = { path = "../sciencekit_common", version = "0.8.0" }
 
 ndarray = { workspace = true }
 sprs = { workspace = true }

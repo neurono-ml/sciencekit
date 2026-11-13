@@ -24,10 +24,18 @@ CRATES=(
   sciencekit_neighbors
   sciencekit_cluster
   sciencekit_tree
+  sciencekit_gpu
+  sciencekit_gpu_opencl
+  sciencekit_svm
   sciencekit_model_selection
   sciencekit_interop
+  sciencekit_decomposition
+  sciencekit_ensemble
+  sciencekit_outlier
+  sciencekit_telemetry
   sciencekit_pipeline
   sciencekit_ffi
+  sciencekit_onnx
   sciencekit
 )
 
