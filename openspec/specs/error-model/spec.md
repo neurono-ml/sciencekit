@@ -2,7 +2,9 @@
 
 ## Purpose
 Establishes the central error taxonomy shared across the whole library: common variants named precisely, uniform conversion into algorithm-specific errors, and absence of ad-hoc error types in central contracts.
+
 ## Requirements
+
 ### Requirement: Central error with agreed variants
 The library SHALL expose a central error enum covering at minimum: shape mismatch (with expected and found dimensions), data representation unsupported by the algorithm, invalid hyperparameter (identifiable), execution mode incompatible with the declared access pattern, non-convergence (with executed iteration count), input/output error and conversion failure at the data boundary.
 
@@ -32,3 +34,32 @@ Platform input/output errors SHALL convert into the central error without manual
 - **WHEN** a read/write operation fails with a platform error during processing
 - **THEN** the consumer receives the central error in the I/O variant, with the original error preserved as source
 
+### Requirement: Empty observation set error
+
+The central taxonomy SHALL represent an operation that requires at least one observation
+but received none, naming the operation, and SHALL NOT return a numeric sentinel or panic.
+
+#### Scenario: Empty evaluation is rejected
+
+- **WHEN** a metric is computed over zero observations
+- **THEN** the returned error names the operation and reports that observations are required
+
+### Requirement: Non-finite numeric value error
+
+The central taxonomy SHALL represent a non-finite numeric value received where finite
+values are required, carrying the zero-based position of the offending value.
+
+#### Scenario: NaN identifies its position
+
+- **WHEN** a prediction at position three is NaN
+- **THEN** the returned error reports `NonFiniteValue` with position three
+
+### Requirement: Unknown label error
+
+The central taxonomy SHALL represent a label observed outside an explicitly supplied label
+space, carrying the offending label value.
+
+#### Scenario: Unknown label carries its value
+
+- **WHEN** an observation carries label `7` and the explicit label space is `[0, 1]`
+- **THEN** the returned error reports `UnknownLabel` with label `7`
