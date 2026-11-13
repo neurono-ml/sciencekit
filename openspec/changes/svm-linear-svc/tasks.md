@@ -6,7 +6,7 @@
   `config.rs` and `builder.rs`; implement the defaults (`C = 1.0`, `SquaredHinge`,
   `None`, intercept on, tolerance, iteration budget, `Faer`, `Automatic`) and
   invalid-value tests; verify with `cargo test -p sciencekit_svm linear_svc_builder`.
-- [x] 1.2 Implement `SKLinearSvcLoss` (`Hinge`, `SquaredHinge`) and `SKClassWeight`
+- [x] 1.2 Implement `SKLinearSVCLoss` (`Hinge`, `SquaredHinge`) and `SKClassWeight`
   resolution, with tests for default loss, explicit loss and explicit/balanced weights;
   verify with `cargo test -p sciencekit_svm linear_svc_config`.
 
