@@ -38,16 +38,23 @@ sentinel). Boolean columns map to 0/1 numeric columns. Ignored columns are dropp
 
 ### Decision 2 — Fallible conversions
 
-Each integration implements `TryFrom<&DataFrame>` / `TryFrom<RecordBatch>` for
-`SKTabularSource<F>` (and `f64`/`f32` variants). The conversion validates column selection,
-dtypes, null policy and row counts. A `SKTabularSourceConfig` selects columns and kinds.
+Each integration exposes a free conversion function (and, where a materialized value makes
+sense, a `TryFrom<(&DataFrame, &SKTabularSourceConfig)>`) for `SKTabularSource<F>` (and
+`f64`/`f32` variants). The conversion validates column selection, dtypes, null policy and row
+counts. A `SKTabularSourceConfig` selects columns and kinds.
 
 ### Decision 3 — Streaming adapters
 
 Polars `LazyFrame` and DataFusion `DataFrame` expose a batch provider through the existing
 `SKSourceProvider`/`SKLazySource` contracts; each batch converts to `SKFeatureBlock`/
-categorical block. Materialized conversions collect all batches into one source. The
-streaming path never collects the whole dataset.
+categorical block. Materialized conversions collect all batches into one source.
+
+DataFusion runs the physical plan through `execute_stream` and never collects the whole result
+set. Polars 0.46 exposes no incremental stream API over a `LazyFrame` (only `collect` and
+`sink_*`), so `SKPolarsLazySource` executes the plan once per `open` and slices the executed
+frame into owned batches of at most `batch_size` rows. That keeps downstream memory bounded
+per block and row order intact, but the plan itself is not pulled row by row; the type and the
+mdBook chapter state this limitation instead of claiming streaming the engine cannot do.
 
 ### Decision 4 — Missing values
 
@@ -81,12 +88,21 @@ integers regardless of the model scalar.
 ### Decision 6 — File layout
 
 ```
-crates/sciencekit_interop/src/tabular/
-  mod.rs, schema.rs, source.rs, categorical.rs, config.rs,
-  polars.rs, datafusion.rs, arrow.rs, parquet.rs, *_tests.rs
+crates/sciencekit_interop/src/
+  tabular/
+    mod.rs, column_kind.rs, config.rs, dataset.rs, materialization.rs,
+    nominal_matrix_owned.rs, *_tests.rs
+  polars/
+    mod.rs, dtype_mapping.rs, column_conversion.rs, dataframe_conversion.rs,
+    lazy_source.rs, polars_tests.rs
+  datafusion/
+    mod.rs, dtype_mapping.rs, column_conversion.rs, batch_conversion.rs,
+    dataframe_conversion.rs, parquet_conversion.rs, stream_source.rs,
+    datafusion_tests.rs
 ```
 
-`mod.rs` files are pure dispatchers; implementation files stay under 200 lines.
+`mod.rs` files are pure dispatchers; implementation files stay under 200 lines (the test
+companions are the exception).
 
 ## Risks / Trade-offs
 

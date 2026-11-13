@@ -40,9 +40,10 @@ behind the `polars` feature, with column selection and missing-value mapping.
 
 #### Scenario: LazyFrame batches
 
-- **WHEN** a LazyFrame is converted in streaming mode
-- **THEN** batches are produced through the source contract without collecting the whole
-  frame
+- **WHEN** a LazyFrame is converted through the Polars streaming source
+- **THEN** ordered batches of at most `batch_size` rows are produced through the source
+  contract, and the source documents that Polars 0.46 has no incremental stream API, so the
+  plan is executed once per open and sliced into owned batches rather than pulled row by row
 
 ### Requirement: DataFusion and Arrow conversions
 
