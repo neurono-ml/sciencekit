@@ -25,7 +25,7 @@
 
 - [ ] 3.1 Implement SVM exporters (linear/RBF) and parity tests; verify with
   `cargo test -p sciencekit_onnx export_svm`.
-- [ ] 3.2 Implement neighbour, clustering, decomposition and outlier exporters with parity
+- [x] 3.2 Implement neighbour, clustering, decomposition and outlier exporters with parity
   tests; verify with `cargo test -p sciencekit_onnx export_remaining`.
 - [ ] 3.3 Implement pipeline composition and grid-search best-model export; verify with
   `cargo test -p sciencekit_onnx export_pipeline`.
