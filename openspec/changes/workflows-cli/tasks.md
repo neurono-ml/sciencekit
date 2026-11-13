@@ -15,7 +15,7 @@
   validation; verify with `cargo test -p sciencekit_cli workflow_schema`.
 - [x] 2.2 Implement configuration precedence (flags > env > file > defaults) and dry-run
   output; verify with `cargo test -p sciencekit_cli config`.
-- [ ] 2.3 Add the optional YAML feature after the `serde_yaml_ng` spike; verify with a
+- [x] 2.3 Add the optional YAML feature after the `serde_yaml_ng` spike; verify with a
   YAML fixture.
 
 ## 3. Adapters and telemetry
