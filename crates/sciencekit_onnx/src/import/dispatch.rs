@@ -25,7 +25,16 @@ pub(crate) fn run_node(
         });
     }
     let operand = |position: usize| -> Result<&SKOnnxValue, SKOnnxImportError> {
-        let name = &node.inputs[position];
+        let name = node
+            .inputs
+            .get(position)
+            .filter(|name| !name.is_empty())
+            .ok_or_else(|| SKOnnxImportError::InvalidOperator {
+                operator: node.op_type.clone(),
+                detail: format!(
+                    "the operator requires an operand at position {position}, but the node does not declare one"
+                ),
+            })?;
         values
             .get(name)
             .ok_or_else(|| SKOnnxImportError::MissingInitializer {

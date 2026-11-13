@@ -44,6 +44,8 @@ mod interpreter_tests;
 #[cfg(test)]
 mod model_tests;
 #[cfg(test)]
+mod operand_tests;
+#[cfg(test)]
 mod operators_tests;
 #[cfg(test)]
 mod predictor_tests;
