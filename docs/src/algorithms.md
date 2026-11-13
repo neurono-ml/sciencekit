@@ -8,21 +8,21 @@ and receives a Python binding as soon as it is validated on CPU.
   <div class="sk-donut">
     <svg viewBox="0 0 200 200" role="img" aria-label="Algorithm distribution by category">
       <circle cx="100" cy="100" r="80" stroke="#eceef1"/>
-      <circle cx="100" cy="100" r="80" stroke="#0284c7" stroke-dasharray="62.83 502.65" stroke-dashoffset="-0.00"/>
-      <circle cx="100" cy="100" r="80" stroke="#0d9488" stroke-dasharray="37.70 502.65" stroke-dashoffset="-62.83"/>
-      <circle cx="100" cy="100" r="80" stroke="#7c3aed" stroke-dasharray="87.96 502.65" stroke-dashoffset="-100.53"/>
-      <circle cx="100" cy="100" r="80" stroke="#4f46e5" stroke-dasharray="50.27 502.65" stroke-dashoffset="-188.50"/>
-      <circle cx="100" cy="100" r="80" stroke="#e11d48" stroke-dasharray="37.70 502.65" stroke-dashoffset="-238.76"/>
-      <circle cx="100" cy="100" r="80" stroke="#d97706" stroke-dasharray="25.13 502.65" stroke-dashoffset="-276.46"/>
-      <circle cx="100" cy="100" r="80" stroke="#ea580c" stroke-dasharray="37.70 502.65" stroke-dashoffset="-301.59"/>
-      <circle cx="100" cy="100" r="80" stroke="#059669" stroke-dasharray="37.70 502.65" stroke-dashoffset="-339.29"/>
-      <circle cx="100" cy="100" r="80" stroke="#0891b2" stroke-dasharray="25.13 502.65" stroke-dashoffset="-376.99"/>
-      <circle cx="100" cy="100" r="80" stroke="#db2777" stroke-dasharray="12.57 502.65" stroke-dashoffset="-402.12"/>
-      <circle cx="100" cy="100" r="80" stroke="#2563eb" stroke-dasharray="37.70 502.65" stroke-dashoffset="-414.69"/>
-      <circle cx="100" cy="100" r="80" stroke="#16a34a" stroke-dasharray="50.27 502.65" stroke-dashoffset="-452.39"/>
+      <circle cx="100" cy="100" r="80" stroke="#0284c7" stroke-dasharray="58.45 502.65" stroke-dashoffset="0.00"/>
+      <circle cx="100" cy="100" r="80" stroke="#0d9488" stroke-dasharray="35.07 502.65" stroke-dashoffset="-58.45"/>
+      <circle cx="100" cy="100" r="80" stroke="#7c3aed" stroke-dasharray="81.83 502.65" stroke-dashoffset="-93.52"/>
+      <circle cx="100" cy="100" r="80" stroke="#4f46e5" stroke-dasharray="46.76 502.65" stroke-dashoffset="-175.35"/>
+      <circle cx="100" cy="100" r="80" stroke="#e11d48" stroke-dasharray="35.07 502.65" stroke-dashoffset="-222.11"/>
+      <circle cx="100" cy="100" r="80" stroke="#d97706" stroke-dasharray="23.38 502.65" stroke-dashoffset="-257.18"/>
+      <circle cx="100" cy="100" r="80" stroke="#ea580c" stroke-dasharray="46.76 502.65" stroke-dashoffset="-280.56"/>
+      <circle cx="100" cy="100" r="80" stroke="#059669" stroke-dasharray="35.07 502.65" stroke-dashoffset="-327.32"/>
+      <circle cx="100" cy="100" r="80" stroke="#0891b2" stroke-dasharray="35.07 502.65" stroke-dashoffset="-362.39"/>
+      <circle cx="100" cy="100" r="80" stroke="#db2777" stroke-dasharray="11.69 502.65" stroke-dashoffset="-397.46"/>
+      <circle cx="100" cy="100" r="80" stroke="#2563eb" stroke-dasharray="70.14 502.65" stroke-dashoffset="-409.15"/>
+      <circle cx="100" cy="100" r="80" stroke="#16a34a" stroke-dasharray="23.38 502.65" stroke-dashoffset="-479.29"/>
     </svg>
     <div class="sk-donut__center">
-      <span class="sk-donut__value">40+</span>
+      <span class="sk-donut__value">43+</span>
       <span class="sk-donut__label">algorithms</span>
     </div>
   </div>
@@ -33,12 +33,12 @@ and receives a Python binding as soon as it is validated on CPU.
     <li><span class="sk-donut__swatch" style="background:#4f46e5"></span>Nearest neighbors<span class="sk-donut__count">4</span></li>
     <li><span class="sk-donut__swatch" style="background:#e11d48"></span>SVM<span class="sk-donut__count">3</span></li>
     <li><span class="sk-donut__swatch" style="background:#d97706"></span>Trees<span class="sk-donut__count">2</span></li>
-    <li><span class="sk-donut__swatch" style="background:#ea580c"></span>Ensembles<span class="sk-donut__count">3</span></li>
+    <li><span class="sk-donut__swatch" style="background:#ea580c"></span>Ensembles<span class="sk-donut__count">4</span></li>
     <li><span class="sk-donut__swatch" style="background:#059669"></span>Clustering<span class="sk-donut__count">3</span></li>
-    <li><span class="sk-donut__swatch" style="background:#0891b2"></span>Decomposition<span class="sk-donut__count">2</span></li>
+    <li><span class="sk-donut__swatch" style="background:#0891b2"></span>Decomposition<span class="sk-donut__count">3</span></li>
     <li><span class="sk-donut__swatch" style="background:#db2777"></span>Outliers<span class="sk-donut__count">1+</span></li>
-    <li><span class="sk-donut__swatch" style="background:#2563eb"></span>Model selection<span class="sk-donut__count">3</span></li>
-    <li><span class="sk-donut__swatch" style="background:#16a34a"></span>Metrics<span class="sk-donut__count">4+</span></li>
+    <li><span class="sk-donut__swatch" style="background:#2563eb"></span>Model selection<span class="sk-donut__count">6</span></li>
+    <li><span class="sk-donut__swatch" style="background:#16a34a"></span>Metrics<span class="sk-donut__count">2+</span></li>
   </ul>
 </div>
 
@@ -47,10 +47,10 @@ and receives a Python binding as soon as it is validated on CPU.
 | Estimator | Description | Status |
 |---|---|---|
 | `SKStandardScaler` | Standardizes by removing the mean and scaling to unit variance (dense · incremental · streaming) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
-| `SKMinMaxScaler` | Scales each feature to a fixed range | <span class="sk-pill sk-pill--neutral">Planned</span> |
-| `SKRobustScaler` | Scaling robust to outliers through quartile statistics | <span class="sk-pill sk-pill--neutral">Planned</span> |
-| `SKOneHotEncoder` | One-hot encoding of categories | <span class="sk-pill sk-pill--neutral">Planned</span> |
-| `SKPolynomialFeatures` | Polynomial and interaction features | <span class="sk-pill sk-pill--neutral">Planned</span> |
+| `SKMinMaxScaler` | Affine scaling of each column onto a configurable range with optional clipping (exact dense fit · sparse-aware incremental and streaming) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
+| `SKRobustScaler` | Median / interquartile-range scaling with optional unit-variance normalization (exact dense fit · quantile-sketch incremental and streaming) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
+| `SKOneHotEncoder` | One-hot encoding of categorical columns into dense or CSR indicators, with a configurable unknown-category policy (dense and streaming categorical fit) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
+| `SKPolynomialFeatures` | Polynomial and interaction expansion with configurable degree, bias and dense/CSR output (dense · sparse · streaming) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 
 ## Imputation · `sciencekit_impute`
 
@@ -58,7 +58,7 @@ and receives a Python binding as soon as it is validated on CPU.
 |---|---|---|
 | `SKSimpleImputer` | Mean, median, most frequent and constant imputation (dense · sparse · incremental · streaming) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKMissingIndicator` | `0.0`/`1.0` mask of the features missing at fit time (dense · sparse) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
-| `SKKNNImputer` | Multivariate imputation via nearest neighbors | <span class="sk-pill sk-pill--neutral">Planned</span> |
+| `SKKNNImputer` | Multivariate imputation from the nearest complete donors, with uniform or distance weights and an optional missing indicator (dense only; sparse views rejected) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 
 ## Linear models · `sciencekit_linear_model`
 
@@ -71,8 +71,6 @@ and receives a Python binding as soon as it is validated on CPU.
 | `SKLogisticRegression` | Regularized logistic classification (binary · multinomial · one-vs-rest · dense · sparse · incremental · streaming) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKSGDClassifier` | Stochastic-gradient linear classification (5 losses · one-vs-rest · dense · sparse · incremental · streaming) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKSGDRegressor` | Stochastic-gradient linear regression (4 losses · Huber / epsilon-insensitive · dense · sparse · incremental · streaming) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
-| `SKSGDClassifier` | Incremental classification via SGD · streaming (`SKLazySource`) | <span class="sk-pill sk-pill--neutral">Planned</span> |
-| `SKSGDRegressor` | Incremental regression via SGD · streaming (`SKLazySource`) | <span class="sk-pill sk-pill--neutral">Planned</span> |
 
 ## Nearest neighbors · `sciencekit_neighbors`
 
@@ -80,8 +78,8 @@ and receives a Python binding as soon as it is validated on CPU.
 |---|---|---|
 | `SKKNeighborsClassifier` | k-NN classification (dense trees · sparse brute force) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKKNeighborsRegressor` | k-NN regression (dense trees · sparse brute force) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
-| `SKKDTree` | kd-tree for fast spatial search | <span class="sk-pill sk-pill--neutral">Planned</span> |
-| `SKBallTree` | Ball tree for arbitrary metrics | <span class="sk-pill sk-pill--neutral">Planned</span> |
+| `SKKDTree` | Immutable, exact k-d tree over dense features (median split on the widest-spread axis; sparse views rejected with `UnsupportedRepresentation`) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
+| `SKBallTree` | Immutable, exact ball tree over dense features (farthest-pivot split; sparse views rejected with `UnsupportedRepresentation`) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 
 ## Support vector machines · `sciencekit_svm`
 
@@ -120,16 +118,19 @@ and receives a Python binding as soon as it is validated on CPU.
 
 | Item | Crate | Description | Status |
 |---|---|---|---|
-| `sk_train_test_split` | `sciencekit_model_selection` | Deterministic data partitioning | <span class="sk-pill sk-pill--neutral">Planned</span> |
-| `SKKFold` | `sciencekit_model_selection` | k-fold cross-validation | <span class="sk-pill sk-pill--neutral">Planned</span> |
+| `sk_train_test_split` | `sciencekit_model_selection` | Seeded train/test partition by fraction or explicit count, with optional stratification, gathering rows without densifying sparse input | <span class="sk-pill sk-pill--emerald">Implemented</span> |
+| `SKKFold` | `sciencekit_model_selection` | Plain K-fold with an optional seeded shuffle; disjoint test folds together cover every row exactly once | <span class="sk-pill sk-pill--emerald">Implemented</span> |
+| `SKStratifiedKFold` | `sciencekit_model_selection` | K-fold preserving per-class proportions; rejects a class with fewer examples than folds | <span class="sk-pill sk-pill--emerald">Implemented</span> |
+| `SKGroupKFold` | `sciencekit_model_selection` | K-fold that keeps every group entirely on one side of each split | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKGridSearchCVClassifier` / `SKGridSearchCVRegressor` | `sciencekit_model_selection` | Typed grid search over configured candidates with shared folds | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKHalvingGridSearchClassifier` / `SKHalvingGridSearchRegressor` | `sciencekit_model_selection` | Successive-halving search: geometric resource schedule, seeded and stratified round subsamples, deterministic elimination trace, aggressive early pruning and winner refit | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | Halving resource axes beyond sample counts | `sciencekit_model_selection` | Additional `SKHalvingResource` variants (trees, epochs) | <span class="sk-pill sk-pill--neutral">Planned</span> |
 | `SKPipeline` | `sciencekit_pipeline` | Type-safe linear pipeline (compiler-checked composition) | <span class="sk-pill sk-pill--ok">Implemented</span> |
 | `SKPipelineGraph` | `sciencekit_pipeline` | Validated runtime DAG pipeline: topological fit and predict, deterministic level order, edge-order merges without densifying CSR, node-attributed errors and classifier/regressor wrappers | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKStreamingPipeline` | `sciencekit_pipeline` | Out-of-core linear pipeline over an `SKSourceProvider`: chained `SKStreamingTransformer` fitting through the shared prefetch executor, one-shot materialization within a byte budget, multi-epoch replay, CSR-preserving per-batch transform and a bounded batch finalizer | <span class="sk-pill sk-pill--emerald">Implemented</span> |
-| Metrics foundation | `sciencekit_metrics` | Accuracy, precision/recall/F1 with macro/micro/weighted/binary averaging, confusion matrix, MSE/RMSE/MAE, R², scorer adapters and streaming accumulators | <span class="sk-pill sk-pill--emerald">Implemented</span> |
-| Full metrics | `sciencekit_metrics` | The remaining sklearn metrics (ROC/AUC, calibration, multilabel, ranking) | <span class="sk-pill sk-pill--neutral">Planned</span> |
+| Classification, regression and clustering metrics | `sciencekit_metrics` | Accuracy, precision/recall/F1 with macro/micro/weighted/binary averaging, confusion matrix, MSE/RMSE/MAE, $R^2$, silhouette, Calinski-Harabasz, Davies-Bouldin, homogeneity/completeness/V-measure, adjusted Rand and mutual information, plus scorer adapters and streaming accumulators | <span class="sk-pill sk-pill--emerald">Implemented</span> |
+| Ranking metrics | `sciencekit_metrics` | ROC/AUC (binary and multiclass one-vs-rest), ROC and precision-recall curves, average precision, log loss, Matthews correlation and balanced accuracy, with a streaming AUC accumulator and scorer adapters | <span class="sk-pill sk-pill--emerald">Implemented</span> |
+| Calibration and multilabel metrics | `sciencekit_metrics` | Calibration curves, Brier score and multilabel losses (e.g. Hamming and Jaccard) | <span class="sk-pill sk-pill--neutral">Planned</span> |
 | `SKTabularDataset` / `SKTabularSourceConfig` | `sciencekit_interop` | Engine-neutral tabular sources: column kinds, dense/sparse feature blocks, owned categorical codes and label tables, numeric/categorical missing mapping | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | Polars sources | `sciencekit_interop` | `DataFrame` and reopenable `LazyFrame` batches behind the optional `polars` feature (Polars 0.46, Rust 1.85 pin) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | DataFusion, Arrow and Parquet sources | `sciencekit_interop` | DataFusion 46 `DataFrame`/`RecordBatch` conversion, true record-batch streaming and Parquet-through-DataFusion behind the optional `datafusion` feature, alongside the Arrow 58 adapter | <span class="sk-pill sk-pill--emerald">Implemented</span> |
