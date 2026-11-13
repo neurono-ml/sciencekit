@@ -34,6 +34,8 @@ pub use predictor_builder::SKOnnxPredictorBuilder;
 #[cfg(test)]
 mod batch_tests;
 #[cfg(test)]
+mod classifier_tests;
+#[cfg(test)]
 mod concurrency_tests;
 #[cfg(test)]
 mod interpreter_tests;
