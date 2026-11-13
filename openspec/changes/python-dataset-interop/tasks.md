@@ -36,6 +36,6 @@
 - [x] 5.3 TDD GIL release: two Python threads fit concurrently; both succeed; no deadlock.
 - [x] 5.4 TDD error mapping: unknown column → `KeyError`, unsupported dtype → `TypeError`, shape mismatch → `ValueError`.
 - [x] 5.5 TDD `float32`/`float64` and large/small data across representations.
-- [ ] 5.6 Run the CI gates plus the Python test matrix with optional extras.
+- [x] 5.6 Run the CI gates plus the Python test matrix with optional extras.
 - [ ] 5.7 Add the Python interop book chapter and the `Development Explained` chapter on binding representations; register in `SUMMARY.md`; add Python stubs and docs.
 - [ ] 5.8 Update `CHANGELOG.md` and open the ADR issue for this change.
