@@ -5,17 +5,6 @@
 //! This is a **pure dispatcher** module: `mod.rs` only declares submodules and
 //! re-exports their public items; every implementation lives in its own file.
 
-#[cfg(test)]
-mod native_import_tests;
-#[cfg(test)]
-mod native_retrain_tests;
-#[cfg(test)]
-mod native_safetensors_tests;
-#[cfg(test)]
-mod native_validation_tests;
-#[cfg(test)]
-mod test_models;
-
 mod conversion;
 mod coverage;
 mod descriptor;
@@ -35,3 +24,14 @@ pub use model::{
     SKNativeClassifier, SKNativeClusterer, SKNativeModelKind, SKNativeRegressor,
     SKNativeTransformer,
 };
+
+#[cfg(test)]
+mod native_import_tests;
+#[cfg(test)]
+mod native_retrain_tests;
+#[cfg(test)]
+mod native_safetensors_tests;
+#[cfg(test)]
+mod native_validation_tests;
+#[cfg(test)]
+mod test_models;

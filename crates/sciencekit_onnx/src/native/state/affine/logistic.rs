@@ -28,14 +28,13 @@ pub(crate) fn state<F: SKFloat>(
             .map(|value| F::from(*value).unwrap_or_else(F::zero))
             .collect::<Vec<F>>()
     } else {
-        let mut transposed = vec![F::zero(); feature_count * heads];
-        for feature in 0..feature_count {
-            for head in 0..heads {
-                transposed[head * feature_count + feature] =
-                    F::from(affine.weights.values[feature * heads + head]).unwrap_or_else(F::zero);
-            }
-        }
-        transposed
+        (0..heads)
+            .flat_map(|head| {
+                let values = &affine.weights.values;
+                (0..feature_count).map(move |feature| values[feature * heads + head])
+            })
+            .map(|value| F::from(value).unwrap_or_else(F::zero))
+            .collect()
     };
     let intercepts: Vec<F> = (0..heads)
         .map(|head| {

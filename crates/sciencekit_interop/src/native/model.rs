@@ -24,7 +24,7 @@ use sciencekit_tree::{SKDecisionTreeClassifierModel, SKDecisionTreeRegressorMode
 /// The prediction surface a native model exposes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SKNativeModelKind {
-    /// Emits continuous responses.
+    /// Emits canonical class indices and class probabilities.
     Classifier,
     /// Emits continuous responses.
     Regressor,
