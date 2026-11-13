@@ -4,7 +4,7 @@
 use ndarray::array;
 use sciencekit_common::{
     SKBackendKind, SKBuilder, SKExportable, SKImportable, SKModelMetadata, SKModelState,
-    SKParameterValue, SKSupervisedFit,
+    SKParameterValue, SKRegressorPredictor, SKSupervisedFit,
 };
 
 use super::SKLinearRegressionModel;
@@ -118,4 +118,53 @@ fn import_accepts_lowercase_backend_names() {
             SKLinearRegressionModel::<f64>::import_state(&state).expect("import succeeds");
         assert_eq!(restored.backend(), kind);
     }
+}
+
+#[test]
+fn linear_regression_import_rejects_a_future_format_version() {
+    let features = array![[0.0_f64], [1.0]];
+    let targets = array![0.0_f64, 2.0];
+    let model = SKLinearRegression::build()
+        .build()
+        .unwrap()
+        .fit(features.view(), targets.view())
+        .unwrap();
+    let state = SKExportable::<f64>::export_state(&model).unwrap();
+    let original = state.metadata();
+    let future = sciencekit_common::SKModelMetadata::new(
+        original.estimator_name(),
+        original.format_version() + 1,
+        original.scalar_data_type(),
+        original.feature_count(),
+    )
+    .unwrap();
+    let broken =
+        sciencekit_common::SKModelState::new(future, state.tensors().values().cloned().collect())
+            .unwrap();
+    assert!(matches!(
+        SKLinearRegressionModel::<f64>::import_state(&broken),
+        Err(sciencekit_common::SKError::UnsupportedRepresentation { .. })
+    ));
+}
+
+#[test]
+fn linear_regression_import_ignores_an_unexpected_extra_tensor() {
+    let features = array![[0.0_f64], [1.0], [2.0]];
+    let targets = array![1.0_f64, 3.0, 5.0];
+    let model = SKLinearRegression::build()
+        .build()
+        .unwrap()
+        .fit(features.view(), targets.view())
+        .unwrap();
+    let state = SKExportable::<f64>::export_state(&model).unwrap();
+    let mut tensors: Vec<_> = state.tensors().values().cloned().collect();
+    tensors.push(
+        sciencekit_common::SKTensor::floating("linear.unexpected", vec![1], vec![42.0]).unwrap(),
+    );
+    let extended = sciencekit_common::SKModelState::new(state.metadata().clone(), tensors).unwrap();
+    let imported = SKLinearRegressionModel::<f64>::import_state(&extended).unwrap();
+    assert_eq!(
+        imported.predict(features.view()).unwrap(),
+        model.predict(features.view()).unwrap()
+    );
 }

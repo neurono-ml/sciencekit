@@ -13,6 +13,8 @@ mod classifier_fit;
 mod classifier_model;
 mod classifier_predict;
 mod config;
+mod export;
+mod export_helpers;
 mod fit;
 pub mod growth;
 pub mod histogram;
@@ -54,3 +56,6 @@ mod validation_tests;
 
 #[cfg(test)]
 mod acceptance_tests;
+
+#[cfg(test)]
+mod export_tests;

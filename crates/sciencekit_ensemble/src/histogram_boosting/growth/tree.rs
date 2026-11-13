@@ -31,6 +31,23 @@ impl<F: SKFloat> SKHistogramNode<F> {
         }
     }
 
+    /// Rebuild a node from an exported state.
+    pub(crate) fn from_exported(
+        split: Option<SKHistogramSplit>,
+        left_child: Option<usize>,
+        right_child: Option<usize>,
+        value: F,
+        sample_count: usize,
+    ) -> Self {
+        Self {
+            split,
+            left_child,
+            right_child,
+            value,
+            sample_count,
+        }
+    }
+
     /// Build a leaf carrying its Newton value.
     pub fn leaf(sample_count: usize, value: F) -> Self {
         Self {
@@ -82,6 +99,14 @@ pub struct SKHistogramTree<F> {
 
 impl<F: SKFloat> SKHistogramTree<F> {
     pub(super) fn new(nodes: Vec<SKHistogramNode<F>>, feature_count: usize) -> Self {
+        Self {
+            nodes,
+            feature_count,
+        }
+    }
+
+    /// Rebuild a tree from an exported node array.
+    pub(crate) fn from_exported(nodes: Vec<SKHistogramNode<F>>, feature_count: usize) -> Self {
         Self {
             nodes,
             feature_count,

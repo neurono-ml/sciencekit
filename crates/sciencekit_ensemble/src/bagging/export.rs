@@ -2,8 +2,8 @@
 //! whose base models implement `SKExportable`.
 
 use sciencekit_common::{
-    SKError, SKExportable, SKFloat, SKModelMetadata, SKModelState, SKParameterValue, SKTensor,
-    SKTensorDataType,
+    SKError, SKExportable, SKFloat, SKImportable, SKModelMetadata, SKModelState, SKParameterValue,
+    SKTensor, SKTensorDataType,
 };
 
 use super::model::{
@@ -167,4 +167,24 @@ fn sk_append_prefixed_base_tensors<F: SKFloat, M: SKExportable<F>>(
         tensors.push(renamed);
         Ok(())
     })
+}
+
+impl<F: SKFloat, M: SKExportable<F>> SKImportable<F> for SKBaggingClassifierModel<F, M> {
+    fn import_state(_state: &SKModelState<F>) -> Result<Self, SKError> {
+        Err(SKError::UnsupportedOperation {
+            operation: "import_state",
+            reason: "a bagging classifier state prefixes each member's tensors but does not carry                      that member's own metadata, so the base model cannot be reconstructed;                      re-fit the bagging estimator instead"
+                .to_string(),
+        })
+    }
+}
+
+impl<F: SKFloat, M: SKExportable<F>> SKImportable<F> for SKBaggingRegressorModel<F, M> {
+    fn import_state(_state: &SKModelState<F>) -> Result<Self, SKError> {
+        Err(SKError::UnsupportedOperation {
+            operation: "import_state",
+            reason: "a bagging regressor state prefixes each member's tensors but does not carry                      that member's own metadata, so the base model cannot be reconstructed;                      re-fit the bagging estimator instead"
+                .to_string(),
+        })
+    }
 }

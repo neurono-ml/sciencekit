@@ -3,8 +3,9 @@
 
 use ndarray::Array1;
 use sciencekit_common::{
-    SKBackendKind, SKError, SKExecutionMode, SKExportable, SKFloat, SKImportable, SKModelMetadata,
-    SKModelState, SKParameterValue, SKTensor, SKTensorValues, sk_validate_import_metadata,
+    SK_MODEL_FORMAT_VERSION, SKBackendKind, SKError, SKExecutionMode, SKExportable, SKFloat,
+    SKImportable, SKModelMetadata, SKModelState, SKParameterValue, SKTensor, SKTensorValues,
+    sk_read_floating_tensor, sk_read_integer_tensor, sk_validate_import_metadata,
 };
 
 use super::core_implementation::SKLinearRegressionModel;
@@ -13,11 +14,15 @@ use crate::linear_regression::gram::SKGramState;
 /// The stable estimator name every exported linear-regression state carries.
 pub const SK_LINEAR_REGRESSION_ESTIMATOR_NAME: &str = "SKLinearRegression";
 /// The format version of the exported linear-regression state.
-pub const SK_LINEAR_REGRESSION_FORMAT_VERSION: u32 = 1;
+pub const SK_LINEAR_REGRESSION_FORMAT_VERSION: u32 = SK_MODEL_FORMAT_VERSION;
 /// The stable tensor name of the coefficients.
 pub const SK_LINEAR_COEFFICIENTS_TENSOR: &str = "linear.coefficients";
 /// The stable tensor name of the intercept.
 pub const SK_LINEAR_INTERCEPT_TENSOR: &str = "linear.intercept";
+/// The stable tensor name of the solve rank.
+pub const SK_LINEAR_RANK_TENSOR: &str = "linear.rank";
+/// The stable tensor name of the design singular values.
+pub const SK_LINEAR_SINGULAR_VALUES_TENSOR: &str = "linear.singular_values";
 
 impl<F: SKFloat> SKExportable<F> for SKLinearRegressionModel<F> {
     fn export_state(&self) -> Result<SKModelState<F>, SKError> {
@@ -42,7 +47,16 @@ impl<F: SKFloat> SKExportable<F> for SKLinearRegressionModel<F> {
         )?;
         let intercept =
             SKTensor::floating(SK_LINEAR_INTERCEPT_TENSOR, Vec::new(), vec![self.intercept])?;
-        SKModelState::new(metadata, vec![coefficients, intercept])
+        let rank = SKTensor::integer(SK_LINEAR_RANK_TENSOR, Vec::new(), vec![self.rank as i64])?;
+        let singular_values = SKTensor::floating(
+            SK_LINEAR_SINGULAR_VALUES_TENSOR,
+            vec![self.singular_values.len()],
+            self.singular_values.clone(),
+        )?;
+        SKModelState::new(
+            metadata,
+            vec![coefficients, intercept, rank, singular_values],
+        )
     }
 }
 
@@ -79,9 +93,15 @@ impl<F: SKFloat> SKImportable<F> for SKLinearRegressionModel<F> {
             .and_then(SKParameterValue::as_string)
             .map(parse_backend)
             .unwrap_or(SKBackendKind::Faer);
+        let rank_values = sk_read_integer_tensor(state, SK_LINEAR_RANK_TENSOR)?;
+        let rank = rank_values.first().copied().unwrap_or(0).max(0) as usize;
+        let (_, singular_values) =
+            sk_read_floating_tensor(state, SK_LINEAR_SINGULAR_VALUES_TENSOR)?;
         Ok(restore(
             coefficients,
             *intercept,
+            rank,
+            singular_values,
             include_intercept,
             backend,
         ))
@@ -92,6 +112,8 @@ impl<F: SKFloat> SKImportable<F> for SKLinearRegressionModel<F> {
 fn restore<F: SKFloat>(
     coefficients: Vec<F>,
     intercept: F,
+    rank: usize,
+    singular_values: Vec<F>,
     include_intercept: bool,
     backend: SKBackendKind,
 ) -> SKLinearRegressionModel<F> {
@@ -99,8 +121,8 @@ fn restore<F: SKFloat>(
     SKLinearRegressionModel {
         coefficients: Array1::from_vec(coefficients),
         intercept,
-        rank: 0,
-        singular_values: Vec::new(),
+        rank,
+        singular_values,
         gram: SKGramState::empty(design_width),
         include_intercept,
         backend,

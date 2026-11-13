@@ -2,6 +2,7 @@
 //! prediction. Carries no implementation logic.
 
 mod core_implementation;
+mod export;
 mod predictor;
 
 pub use core_implementation::SKElasticNetModel;

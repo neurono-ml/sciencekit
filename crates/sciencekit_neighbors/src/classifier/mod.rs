@@ -5,6 +5,7 @@
 
 mod builder;
 mod core_implementation;
+mod export;
 mod fit;
 mod model;
 mod predict;
@@ -29,3 +30,6 @@ mod classifier_representation_tests;
 mod classifier_target_tests;
 #[cfg(test)]
 mod classifier_validation_tests;
+
+#[cfg(test)]
+mod export_tests;

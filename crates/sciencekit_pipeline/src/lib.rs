@@ -46,6 +46,7 @@ mod stage_tests;
 #[cfg(test)]
 mod streaming_coverage;
 
+pub mod export;
 pub mod feature_union;
 pub mod graph;
 pub mod pipeline;
@@ -75,3 +76,6 @@ pub use streaming::{
     SKFittedStreamingPipeline, SKStreamingFitReport, SKStreamingPipeline,
     SKStreamingPipelineBuilder, SKStreamingPipelineConfigured, SKStreamingTransformer,
 };
+
+#[cfg(test)]
+mod export_tests;

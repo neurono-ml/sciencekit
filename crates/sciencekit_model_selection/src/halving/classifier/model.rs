@@ -2,7 +2,8 @@
 //! (spec `halving-grid-search`, requirement `Refit and prediction`).
 
 use sciencekit_common::{
-    SKBackendKind, SKError, SKExecutionMode, SKExportable, SKFloat, SKModelState, SKSupervisedFit,
+    SKBackendKind, SKError, SKExecutionMode, SKExportable, SKFloat, SKImportable, SKModelState,
+    SKSupervisedFit,
 };
 
 use crate::grid_search::SKClassifierScoring;
@@ -109,5 +110,20 @@ where
                 reason: "the halving grid search was built with refit(false), so no best model is stored".to_owned(),
             })?;
         model.export_state()
+    }
+}
+
+impl<F, E> SKImportable<F> for SKHalvingGridSearchClassifierModel<F, E>
+where
+    F: SKFloat,
+    E: SKSupervisedFit<F>,
+{
+    fn import_state(_state: &SKModelState<F>) -> Result<Self, SKError> {
+        Err(SKError::UnsupportedOperation {
+            operation: "import_state",
+            reason: "a successive-halving state carries the refitted winner's tensors but not \
+                     the candidate configuration or elimination trace; re-fit the search instead"
+                .to_string(),
+        })
     }
 }

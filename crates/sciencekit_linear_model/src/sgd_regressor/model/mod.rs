@@ -4,7 +4,11 @@
 
 mod accessors;
 mod core_implementation;
+mod export;
 mod partial_fit;
 mod prediction;
 
 pub use core_implementation::SKSGDRegressorModel;
+
+#[cfg(test)]
+mod export_tests;

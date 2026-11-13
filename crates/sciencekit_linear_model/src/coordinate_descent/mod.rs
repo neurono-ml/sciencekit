@@ -8,6 +8,7 @@ mod access;
 mod accumulator;
 pub mod config;
 mod core;
+pub(crate) mod export_helpers;
 mod fit;
 mod screening;
 mod solution;

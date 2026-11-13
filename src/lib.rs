@@ -7,3 +7,6 @@
 
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
+
+#[cfg(test)]
+mod export_coverage_tests;

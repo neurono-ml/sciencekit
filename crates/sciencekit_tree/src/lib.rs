@@ -27,6 +27,7 @@ mod growth;
 mod splitter;
 
 pub mod classifier;
+pub mod export_helpers;
 pub mod impurity;
 pub mod node;
 pub mod regressor;

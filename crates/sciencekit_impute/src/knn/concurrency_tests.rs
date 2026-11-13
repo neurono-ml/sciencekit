@@ -95,3 +95,35 @@ fn knn_concurrency_the_shared_estimator_fits_concurrently() {
         }
     });
 }
+
+#[test]
+fn knn_imputer_round_trips_state() {
+    use sciencekit_common::sk_assert_export_round_trip;
+    let training = design(16, 3);
+    let model = SKKNNImputer::<f64>::build()
+        .nearest_neighbors_count(3)
+        .add_indicator(true)
+        .backend(sciencekit_common::SKBackendKind::MatrixMultiply)
+        .build()
+        .unwrap()
+        .fit(training.view())
+        .unwrap();
+    let imported = sk_assert_export_round_trip::<f64, _>(&model).unwrap();
+    assert_eq!(
+        imported.backend(),
+        sciencekit_common::SKBackendKind::MatrixMultiply
+    );
+    assert_eq!(imported.training_rows(), model.training_rows());
+    assert!(
+        imported
+            .training_features()
+            .iter()
+            .zip(model.training_features().iter())
+            .all(|(left, right)| left.to_bits() == right.to_bits())
+    );
+    let probe = design(5, 3);
+    assert_eq!(
+        dense(model.transform(&probe).unwrap()),
+        dense(imported.transform(&probe).unwrap())
+    );
+}

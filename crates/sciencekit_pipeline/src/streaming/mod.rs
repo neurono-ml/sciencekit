@@ -12,6 +12,7 @@
 
 mod builder;
 mod errors;
+mod export;
 mod finalizer;
 mod fitting;
 mod memory;

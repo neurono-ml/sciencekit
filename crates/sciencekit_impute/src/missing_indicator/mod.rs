@@ -5,7 +5,7 @@
 
 mod builder;
 mod core_implementation;
-mod model;
+pub(crate) mod model;
 mod output;
 mod scope;
 

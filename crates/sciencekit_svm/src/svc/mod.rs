@@ -7,6 +7,7 @@ mod binary_fit;
 mod builder;
 mod core_implementation;
 mod decision;
+mod export;
 mod fit;
 mod model;
 mod predict;
@@ -34,3 +35,6 @@ mod svc_predict_tests;
 mod svc_probability_tests;
 #[cfg(test)]
 mod svc_weights_tests;
+
+#[cfg(test)]
+mod export_tests;

@@ -53,8 +53,13 @@ pub use fit_traits::{
     SKSupervisedFit, SKUnsupervisedFit, sk_validate_cluster_assignments,
 };
 pub use interop::{
-    SKExportable, SKImportable, SKModelMetadata, SKModelState, SKParameterValue, SKTensor,
-    SKTensorDataType, SKTensorValues, sk_validate_import_metadata,
+    SK_MODEL_FORMAT_VERSION, SKExportable, SKImportable, SKModelMetadata, SKModelState,
+    SKParameterValue, SKTensor, SKTensorDataType, SKTensorValues, sk_assert_export_round_trip,
+    sk_assert_state_names, sk_backend_parameter, sk_boolean_parameter, sk_embed_state,
+    sk_extract_state, sk_float_parameter, sk_integer_parameter, sk_model_tensor_data_type,
+    sk_parse_backend_name, sk_parse_backend_parameter, sk_read_boolean_tensor,
+    sk_read_floating_tensor, sk_read_integer_tensor, sk_states_equal, sk_string_parameter,
+    sk_validate_import_metadata,
 };
 pub use label_table::{SKLabelTable, sk_canonicalize_labels};
 pub use observability::{

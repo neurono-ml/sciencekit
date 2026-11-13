@@ -1,6 +1,6 @@
 //! Construction and validation tests (spec `streaming-pipeline`, task 1.1).
 
-use sciencekit_common::SKBuilder;
+use sciencekit_common::{SKBuilder, SKExportable};
 use sciencekit_preprocessing::standard_scaler::core_implementation::SKStandardScaler;
 
 use crate::streaming::SKStreamingPipeline;
@@ -61,4 +61,21 @@ fn a_valid_pipeline_is_configured_with_the_default_backend() {
     assert_eq!(fitted.report().number_of_epochs(), 1);
     assert_eq!(fitted.report().number_of_batches(), 3);
     assert_eq!(fitted.report().number_of_rows(), 6);
+}
+
+#[test]
+fn streaming_pipeline_export_returns_a_typed_unsupported_operation() {
+    let provider = super::testing::sk_reopenable_blocks(sk_tiny_blocks::<f64>());
+    let configured = SKStreamingPipeline::start::<f64>()
+        .then(SKTestMeanCentering::new())
+        .finalize_estimator(SKStandardScaler::build().build().unwrap())
+        .unwrap();
+    let fitted = configured.fit(provider).unwrap();
+    assert!(matches!(
+        fitted.export_state(),
+        Err(sciencekit_common::SKError::UnsupportedOperation {
+            operation: "export_state",
+            ..
+        })
+    ));
 }

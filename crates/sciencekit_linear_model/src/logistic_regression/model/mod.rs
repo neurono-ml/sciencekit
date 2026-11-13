@@ -2,7 +2,11 @@
 //! its incremental learning. Carries no implementation logic.
 
 mod core_implementation;
+mod export;
 mod partial_fit;
 mod prediction;
 
 pub use core_implementation::SKLogisticRegressionModel;
+
+#[cfg(test)]
+mod export_tests;

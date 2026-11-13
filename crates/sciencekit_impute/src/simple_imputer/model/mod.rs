@@ -2,8 +2,12 @@
 //! (spec `simple-imputer`).
 
 mod core_implementation;
+mod export;
 mod partial_fit;
 mod stacking;
 mod transform;
 
 pub use core_implementation::SKSimpleImputerModel;
+
+#[cfg(test)]
+mod export_tests;

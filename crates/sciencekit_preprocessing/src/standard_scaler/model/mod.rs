@@ -2,7 +2,11 @@
 //! Carries no implementation logic.
 
 mod core_implementation;
+mod export;
 mod partial_fit;
 
 pub use core_implementation::SKStandardScalerModel;
 pub(crate) use core_implementation::derive_statistics;
+
+#[cfg(test)]
+mod export_tests;

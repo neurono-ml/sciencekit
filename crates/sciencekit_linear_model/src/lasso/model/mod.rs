@@ -2,6 +2,10 @@
 //! Carries no implementation logic.
 
 mod core_implementation;
+mod export;
 mod predictor;
 
 pub use core_implementation::SKLassoModel;
+
+#[cfg(test)]
+mod export_tests;

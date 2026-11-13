@@ -2,7 +2,9 @@
 //! `pipeline-graph`, Task 2.2).
 
 use ndarray::{Array1, array};
-use sciencekit_common::{SKBackendKind, SKBuilder, SKClassifierPredictor, SKExecutionMode};
+use sciencekit_common::{
+    SKBackendKind, SKBuilder, SKClassifierPredictor, SKExecutionMode, SKExportable,
+};
 use sciencekit_impute::simple_imputer::SKSimpleImputer;
 use sciencekit_linear_model::linear_regression::core_implementation::SKLinearRegression;
 use sciencekit_linear_model::linear_regression::model::SKLinearRegressionModel;
@@ -142,4 +144,26 @@ fn regressor_diamond_graph_learns_identical_weights_to_linear_feature_union_chai
     assert!(
         (graph_regressor.intercept() - linear_equivalent.final_model().intercept()).abs() < 1e-12
     );
+}
+
+#[test]
+fn graph_pipeline_export_returns_a_typed_unsupported_operation() {
+    let features = array![[1.0_f64, 10.0], [2.0, 20.0], [3.0, 30.0], [4.0, 40.0]];
+    let labels = Array1::from_vec(vec![0_i64, 0, 1, 1]);
+    let mut builder = SKPipelineGraph::<f64>::build();
+    let standard_node = builder.add_transformer(SKStandardScaler::build().build().unwrap());
+    let classifier_node = builder.add_classifier(SKLogisticRegression::build().build().unwrap());
+    builder.connect(standard_node, classifier_node);
+    let fitted = builder
+        .build()
+        .unwrap()
+        .fit(&features, labels.view())
+        .unwrap();
+    assert!(matches!(
+        fitted.export_state(),
+        Err(sciencekit_common::SKError::UnsupportedOperation {
+            operation: "export_state",
+            ..
+        })
+    ));
 }
