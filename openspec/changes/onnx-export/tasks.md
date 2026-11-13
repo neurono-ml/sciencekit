@@ -8,7 +8,7 @@
 - [x] 1.2 Create `crates/sciencekit_onnx` with `Cargo.toml`, `lib.rs` and the graph
   dispatcher; add it to `[workspace.members]`; verify `cargo test -p sciencekit_onnx`
   compiles.
-- [ ] 1.3 Implement the graph builder (inputs, initializers, nodes, outputs, metadata) and
+- [x] 1.3 Implement the graph builder (inputs, initializers, nodes, outputs, metadata) and
   a hand-checkable identity graph; verify with `cargo test -p sciencekit_onnx graph`.
 
 ## 2. Core exporters
