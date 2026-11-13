@@ -48,7 +48,7 @@
 - [x] 5.1 Implement export/import for KMeans, MiniBatchKMeans and DBSCAN (centers, counts,
   labels/core indices, typed assignment metadata); verify with
   `cargo test -p sciencekit_cluster export`.
-- [ ] 5.2 Implement export/import for PCA, TruncatedSVD and IncrementalPCA (components,
+- [x] 5.2 Implement export/import for PCA, TruncatedSVD and IncrementalPCA (components,
   mean, variance, solver metadata); verify with
   `cargo test -p sciencekit_decomposition export`.
 - [ ] 5.3 Implement export/import for IsolationForest (tree arrays, offsets,
