@@ -11,7 +11,7 @@
 
 ## 2. Predictor
 
-- [ ] 2.1 Implement the regressor predictor and shape/dtype validation; verify with
+- [x] 2.1 Implement the regressor predictor and shape/dtype validation; verify with
   `cargo test -p sciencekit_onnx onnx_regressor`.
 - [ ] 2.2 Implement the classifier probabilities/labels path and ambiguity rejection;
   verify with `cargo test -p sciencekit_onnx onnx_classifier`.
