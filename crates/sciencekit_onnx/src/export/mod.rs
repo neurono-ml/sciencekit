@@ -6,6 +6,8 @@
 #[cfg(test)]
 mod contract_tests;
 #[cfg(test)]
+mod coverage_matrix_tests;
+#[cfg(test)]
 mod coverage_tests;
 #[cfg(test)]
 mod linear_tests;

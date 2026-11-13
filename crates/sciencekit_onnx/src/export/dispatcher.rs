@@ -90,7 +90,7 @@ pub(crate) fn append_estimator<F: SKFloat>(
     }
     Err(unsupported(
         estimator_name,
-        "no exporter is registered for this family",
+        "no exporter is registered for this family; `sk_onnx_coverage` lists every supported estimator",
     ))
 }
 
