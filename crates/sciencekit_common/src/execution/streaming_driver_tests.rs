@@ -12,7 +12,8 @@ use super::streaming_driver::{
 };
 use super::{SKExecutionMode, SKExecutionPlan};
 use crate::{
-    SKDataBatch, SKDataView, SKError, SKLazySource, SKSupervisedBatch, SKSupervisedLazySource,
+    SKBackendKind, SKDataBatch, SKDataView, SKError, SKLazySource, SKSupervisedBatch,
+    SKSupervisedLazySource,
 };
 
 /// An instrumented sequential source: logs every read and can fail mid-stream.
@@ -87,6 +88,8 @@ fn streaming_plan() -> SKExecutionPlan {
         batch_size: Some(1),
         buffer_depth: 1,
         available_memory_bytes: u64::MAX,
+        backend: SKBackendKind::Faer,
+        fallback_reason: None,
     }
 }
 

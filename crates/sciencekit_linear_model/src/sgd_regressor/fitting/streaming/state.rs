@@ -1,15 +1,14 @@
 //! The mutable state shared by every pass of the regressor stream.
 
 use sciencekit_common::execution::SKStreamDecision;
-use sciencekit_common::{SKError, SKFloat, SKSupervisedBatch};
+use sciencekit_common::{SKError, SKFloat, SKRandomGenerator, SKSupervisedBatch};
 
 use super::super::super::coefficients::SKSGDRegressorCoefficients;
 use super::super::state::sk_create_state;
 use crate::sgd::config::SKSGDConfig;
 use crate::sgd::objective::SKEpochObjective;
 use crate::sgd::{
-    SKLearningState, SKRandomGenerator, SKSGDRegressorLoss, SKSGDRegressorLossAdapter,
-    sk_run_batch_epoch,
+    SKLearningState, SKSGDRegressorLoss, SKSGDRegressorLossAdapter, sk_run_batch_epoch,
 };
 
 /// The mutable state shared by every pass of the fit.

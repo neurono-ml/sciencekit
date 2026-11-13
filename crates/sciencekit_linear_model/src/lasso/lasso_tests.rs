@@ -1,8 +1,8 @@
 //! Dense lasso fit, sparsity, optimality and prediction tests (spec `lasso`).
 
 use crate::coordinate_descent::test_datasets::{
-    assert_close, assert_close_scalar, one_feature, orthogonal_design, soft_threshold,
-    zero_mean_feature,
+    assert_close, assert_close_scalar, correlated_design, one_feature, orthogonal_design,
+    soft_threshold, zero_mean_feature,
 };
 use ndarray::array;
 use sciencekit_common::builders::SKBuilder;
@@ -40,6 +40,7 @@ fn default_configuration() {
     assert_eq!(estimator.backend(), SKBackendKind::Faer);
     assert_eq!(estimator.maximum_number_of_iterations(), 1000);
     assert!((estimator.tolerance() - 1e-4).abs() < 1e-12);
+    assert_eq!(estimator.random_seed(), 0);
 }
 
 /// On the orthogonal design the coefficients match `S(βⱼ, α)`.
@@ -181,4 +182,89 @@ fn non_default_backend_reaches_model() {
         .unwrap();
     let model = estimator.fit(features.view(), targets.view()).unwrap();
     assert_eq!(model.backend(), SKBackendKind::MatrixMultiply);
+}
+
+/// A random-selection lasso whose sweep order is fully described by the seed.
+fn random_selection_lasso(seed: u64) -> SKLasso<f64> {
+    SKLasso::build()
+        .alpha(0.05)
+        .selection(crate::coordinate_descent::SKSelection::Random)
+        .random_seed(seed)
+        .maximum_number_of_iterations(100_000)
+        // A loose tolerance stops before the optimum, keeping the seeded sweep
+        // order observable in the coefficients.
+        .tolerance(1e-2)
+        .build()
+        .expect("lasso builds")
+}
+
+#[test]
+fn random_seed_defaults_to_zero_and_reaches_the_model() {
+    let estimator = SKLasso::<f64>::build().build().unwrap();
+    assert_eq!(estimator.random_seed(), 0);
+    let (features, targets) = orthogonal_design();
+    let model = estimator.fit(features.view(), targets.view()).unwrap();
+    assert_eq!(model.random_seed(), 0);
+
+    let seeded = SKLasso::<f64>::build().random_seed(9).build().unwrap();
+    assert_eq!(seeded.random_seed(), 9);
+}
+
+#[test]
+fn random_selection_same_seed_reproduces_the_coefficients() {
+    let (features, targets) = orthogonal_design();
+    let first = random_selection_lasso(7)
+        .fit(features.view(), targets.view())
+        .unwrap();
+    let second = random_selection_lasso(7)
+        .fit(features.view(), targets.view())
+        .unwrap();
+    assert_eq!(first.coefficients(), second.coefficients());
+    assert_eq!(first.intercepts(), second.intercepts());
+    assert_eq!(first.random_seed(), 7);
+}
+
+#[test]
+fn random_selection_different_seeds_can_change_the_coefficients() {
+    let (features, targets) = correlated_design();
+    let first = random_selection_lasso(1)
+        .fit(features.view(), targets.view())
+        .unwrap();
+    let second = random_selection_lasso(2)
+        .fit(features.view(), targets.view())
+        .unwrap();
+    assert_ne!(first.coefficients(), second.coefficients());
+}
+
+#[test]
+fn parallel_per_alpha_results_are_stored_by_index_for_every_thread_count() {
+    // Each alpha is an independent parallel component with a generator derived
+    // from its configured position; the result rows must follow that index
+    // whichever thread finishes first (spec scenario "Stable order").
+    let (features, targets) = correlated_design();
+    let fit_with_threads = |threads: usize| {
+        let pool = rayon::ThreadPoolBuilder::new()
+            .num_threads(threads)
+            .build()
+            .unwrap();
+        pool.install(|| {
+            SKLasso::build()
+                .alpha(vec![0.05, 0.1, 0.2])
+                .selection(crate::coordinate_descent::SKSelection::Random)
+                .random_seed(13)
+                .tolerance(1e-4)
+                .maximum_number_of_iterations(100_000)
+                .build()
+                .unwrap()
+                .fit(features.view(), targets.view())
+                .unwrap()
+        })
+    };
+    let single_threaded = fit_with_threads(1);
+    let multi_threaded = fit_with_threads(4);
+    assert_eq!(
+        single_threaded.coefficients(),
+        multi_threaded.coefficients()
+    );
+    assert_eq!(single_threaded.intercepts(), multi_threaded.intercepts());
 }

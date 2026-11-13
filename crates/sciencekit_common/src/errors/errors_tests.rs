@@ -144,6 +144,17 @@ fn non_finite_value_carries_its_position() {
     assert!(format!("{err}").contains('3'));
 }
 
+/// A probability outside the unit interval carries its position.
+#[test]
+fn probability_out_of_range_carries_the_position() {
+    let err = SKError::ProbabilityOutOfRange { position: 4 };
+    match &err {
+        SKError::ProbabilityOutOfRange { position } => assert_eq!(*position, 4),
+        other => panic!("expected probability-out-of-range variant, got {other:?}"),
+    }
+    assert!(format!("{err}").contains('4'));
+}
+
 /// A label outside the resolved space carries the offending value.
 #[test]
 fn unknown_label_carries_the_label() {
@@ -153,4 +164,27 @@ fn unknown_label_carries_the_label() {
         other => panic!("expected unknown-label variant, got {other:?}"),
     }
     assert!(format!("{err}").contains('7'));
+}
+
+/// Device error variants render the backend, scalar type and failure reason.
+#[test]
+fn device_errors_render_backend_scalar_and_reason() {
+    let unavailable = SKError::DeviceUnavailable {
+        backend: "opencl",
+        reason: "no runtime".to_string(),
+    };
+    assert!(unavailable.to_string().contains("opencl"));
+    assert!(unavailable.to_string().contains("no runtime"));
+
+    let scalar = SKError::UnsupportedScalarType {
+        backend: "cuda",
+        scalar_type: "f64",
+    };
+    assert!(scalar.to_string().contains("cuda"));
+    assert!(scalar.to_string().contains("f64"));
+
+    let transfer = SKError::DeviceTransferFailure {
+        reason: "device lost".to_string(),
+    };
+    assert!(transfer.to_string().contains("device lost"));
 }

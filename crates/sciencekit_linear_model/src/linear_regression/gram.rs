@@ -56,7 +56,7 @@ impl<F: SKFloat> SKGramState<F> {
     /// `Xᵀ·1` and `Xᵀy` from `Xᵀ·y`; the implicit intercept column is assembled
     /// from the row count and `Σx`. The design is never densified — only the
     /// `p × p` Gram and the `O(p)` vectors are materialized.
-    pub(super) fn accumulate_sparse(
+    pub(crate) fn accumulate_sparse(
         &mut self,
         features: &CsMatView<'_, F>,
         target: &ArrayView1<F>,

@@ -116,3 +116,21 @@ fn sparse_stream_matches_a_dense_run_on_the_shared_dataset() {
         1e-9,
     );
 }
+
+/// A sparse incremental update learns the same moments as a dense one.
+#[test]
+fn sparse_streaming_partial_fit_matches_dense() {
+    let features = zeros_rich_features();
+    let reference = default_scaler().fit(&features).expect("fit succeeds");
+    let chunks = chunk_csr(&features, &[2, 3, 3]);
+    let mut model = default_scaler()
+        .fit(&chunks[0].to_dense())
+        .expect("dense fit succeeds");
+    for chunk in &chunks[1..] {
+        model
+            .partial_fit(chunk.view())
+            .expect("sparse partial_fit succeeds");
+    }
+    assert_close_sparse(&model.mean().to_vec(), &reference.mean().to_vec(), 1e-9);
+    assert_close_sparse(&model.scale().to_vec(), &reference.scale().to_vec(), 1e-9);
+}

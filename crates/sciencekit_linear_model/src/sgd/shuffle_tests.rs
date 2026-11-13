@@ -2,7 +2,7 @@
 //! decision 6).
 
 use ndarray::{Array1, Array2};
-use sciencekit_common::SKFloat;
+use sciencekit_common::{SKFloat, SKRandomGenerator};
 
 use super::config::SKSGDConfig;
 use super::epoch::{sk_run_dense_epoch, sk_run_sparse_epoch};
@@ -10,7 +10,6 @@ use super::learning_rate::schedule::SKLearningRateSchedule;
 use super::loss::SKSGDRegressorLoss;
 use super::loss::regressor::sk_regressor_loss_adapter;
 use super::penalty::SKSGDPenalty;
-use super::shuffle::SKRandomGenerator;
 use super::state::SKLearningState;
 use crate::test_datasets::to_csr;
 

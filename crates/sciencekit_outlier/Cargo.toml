@@ -1,0 +1,22 @@
+[package]
+name = "sciencekit_outlier"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+rust-version = "1.85"
+description = "Outlier and anomaly detection estimators for sciencekit: Isolation Forest with random isolation trees, path-length scoring and dense/sparse representation parity."
+repository = "https://github.com/neurono-ml/sciencekit"
+
+[dependencies]
+sciencekit_common = { path = "../sciencekit_common", version = "0.1.0" }
+sciencekit_math = { path = "../sciencekit_math", version = "0.1.0" }
+sciencekit_tree = { path = "../sciencekit_tree", version = "0.1.0" }
+
+ndarray = { workspace = true }
+rayon = { workspace = true }
+sprs = { workspace = true }
+
+[dev-dependencies]
+sciencekit_metrics = { path = "../sciencekit_metrics", version = "0.1.0" }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }

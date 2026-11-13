@@ -3,6 +3,7 @@
 use crate::SKError;
 
 use super::context::SKExecutionContext;
+use super::device_plan::plan_backend;
 use super::modes::{SKAccessPattern, SKExecutionMode};
 use super::plan::SKExecutionPlan;
 
@@ -21,6 +22,8 @@ pub fn sk_resolve_execution_plan(
     intent: SKExecutionMode,
     context: &SKExecutionContext,
 ) -> Result<SKExecutionPlan, SKError> {
+    let (backend, fallback_reason) =
+        plan_backend(intent, context.device.as_ref(), context.scalar_size_bytes);
     match intent {
         SKExecutionMode::Automatic => {
             let fits_in_memory = context.dataset_size_bytes <= context.available_memory_bytes;
@@ -48,6 +51,8 @@ pub fn sk_resolve_execution_plan(
                 batch_size,
                 buffer_depth: 1,
                 available_memory_bytes: context.available_memory_bytes,
+                backend,
+                fallback_reason,
             })
         }
         SKExecutionMode::InProcessSynchronous
@@ -58,6 +63,8 @@ pub fn sk_resolve_execution_plan(
             batch_size: None,
             buffer_depth: 1,
             available_memory_bytes: context.available_memory_bytes,
+            backend,
+            fallback_reason,
         }),
         SKExecutionMode::OutOfCoreStreaming => {
             if context.access_pattern == SKAccessPattern::RandomAccess {
@@ -73,6 +80,8 @@ pub fn sk_resolve_execution_plan(
                     batch_size: context.batch_size_hint,
                     buffer_depth: 1,
                     available_memory_bytes: context.available_memory_bytes,
+                    backend,
+                    fallback_reason,
                 })
             }
         }

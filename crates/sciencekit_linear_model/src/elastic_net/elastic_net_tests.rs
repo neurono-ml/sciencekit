@@ -2,7 +2,8 @@
 //! (spec `elastic-net`).
 
 use crate::coordinate_descent::test_datasets::{
-    assert_close, assert_close_scalar, one_feature, orthogonal_design, zero_mean_feature,
+    assert_close, assert_close_scalar, correlated_design, one_feature, orthogonal_design,
+    zero_mean_feature,
 };
 use ndarray::array;
 use sciencekit_common::builders::SKBuilder;
@@ -42,6 +43,7 @@ fn default_configuration() {
     assert!(estimator.screening());
     assert_eq!(estimator.execution_intent(), SKExecutionMode::Automatic);
     assert_eq!(estimator.backend(), SKBackendKind::Faer);
+    assert_eq!(estimator.random_seed(), 0);
 }
 
 /// `l1_ratio = 1` reproduces the lasso solution.
@@ -177,4 +179,58 @@ fn non_default_backend_reaches_model() {
         .unwrap();
     let model = estimator.fit(features.view(), targets.view()).unwrap();
     assert_eq!(model.backend(), SKBackendKind::MatrixMultiply);
+}
+
+/// A random-selection elastic net whose sweep order is fully described by the
+/// seed.
+fn random_selection_elastic_net(seed: u64) -> SKElasticNet<f64> {
+    SKElasticNet::build()
+        .alpha(0.5)
+        .l1_ratio(0.5)
+        .selection(crate::coordinate_descent::SKSelection::Random)
+        .random_seed(seed)
+        .maximum_number_of_iterations(100_000)
+        // A loose tolerance stops before the optimum, keeping the seeded sweep
+        // order observable in the coefficients.
+        .tolerance(1e-2)
+        .build()
+        .expect("elastic net builds")
+}
+
+#[test]
+fn random_seed_defaults_to_zero_and_reaches_the_model() {
+    let estimator = SKElasticNet::<f64>::build().build().unwrap();
+    assert_eq!(estimator.random_seed(), 0);
+    let (features, targets) = orthogonal_design();
+    let model = estimator.fit(features.view(), targets.view()).unwrap();
+    assert_eq!(model.random_seed(), 0);
+
+    let seeded = SKElasticNet::<f64>::build().random_seed(9).build().unwrap();
+    assert_eq!(seeded.random_seed(), 9);
+}
+
+#[test]
+fn random_selection_same_seed_reproduces_the_coefficients() {
+    let (features, targets) = orthogonal_design();
+    let first = random_selection_elastic_net(7)
+        .fit(features.view(), targets.view())
+        .unwrap();
+    let second = random_selection_elastic_net(7)
+        .fit(features.view(), targets.view())
+        .unwrap();
+    assert_eq!(first.coefficients(), second.coefficients());
+    assert_eq!(first.intercepts(), second.intercepts());
+    assert_eq!(first.random_seed(), 7);
+}
+
+#[test]
+fn random_selection_different_seeds_can_change_the_coefficients() {
+    let (features, targets) = correlated_design();
+    let first = random_selection_elastic_net(1)
+        .fit(features.view(), targets.view())
+        .unwrap();
+    let second = random_selection_elastic_net(2)
+        .fit(features.view(), targets.view())
+        .unwrap();
+    assert_ne!(first.coefficients(), second.coefficients());
 }

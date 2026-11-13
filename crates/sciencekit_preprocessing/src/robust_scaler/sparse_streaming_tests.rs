@@ -13,7 +13,7 @@ use super::test_datasets::{
     SKETCH_RELATIVE_TOLERANCE, assert_close_with_tolerance, chunked_source, default_scaler,
 };
 use crate::sparse_streaming_test_datasets::{
-    SparseVecSource, chunk_csr, guard_matrix, zeros_rich_large_features,
+    SparseVecSource, assert_close_sparse, chunk_csr, guard_matrix, zeros_rich_large_features,
 };
 
 /// A sparse stream approximates the dense stream and the dense concatenated fit.
@@ -90,6 +90,32 @@ fn in_process_intent_accepts_sparse_batches() {
     assert_close_with_tolerance(
         collected.center(),
         &reference.center().to_vec(),
+        SKETCH_RELATIVE_TOLERANCE,
+    );
+}
+
+/// A sparse incremental update feeds the sketches the same way a dense one does.
+#[test]
+fn sparse_streaming_partial_fit_matches_the_dense_stream() {
+    let features = zeros_rich_large_features(600);
+    let dense_model = default_scaler()
+        .fit_streaming(&mut SparseVecSource::new(chunk_csr(
+            &features,
+            &[200, 200, 200],
+        )))
+        .expect("stream succeeds");
+    let chunks = chunk_csr(&features, &[200, 200, 200]);
+    let mut model = default_scaler()
+        .fit(&chunks[0].to_dense())
+        .expect("dense fit succeeds");
+    for chunk in &chunks[1..] {
+        model
+            .partial_fit(chunk.view())
+            .expect("sparse partial_fit succeeds");
+    }
+    assert_close_sparse(
+        &model.center().to_vec(),
+        &dense_model.center().to_vec(),
         SKETCH_RELATIVE_TOLERANCE,
     );
 }

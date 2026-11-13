@@ -6,7 +6,7 @@ use sprs::CsMat;
 
 use super::streaming_driver::SKStreamDecision;
 use super::{SKExecutionMode, SKExecutionPlan, sk_run_streaming_driver};
-use crate::{SKDataBatch, SKError, SKFeatureBlock, SKLazySource};
+use crate::{SKBackendKind, SKDataBatch, SKError, SKFeatureBlock, SKLazySource};
 
 /// A source of owned batches in a fixed order.
 struct BlockSource {
@@ -34,6 +34,8 @@ fn guard_plan(available_memory_bytes: u64) -> SKExecutionPlan {
         batch_size: Some(2),
         buffer_depth: 1,
         available_memory_bytes,
+        backend: SKBackendKind::Faer,
+        fallback_reason: None,
     }
 }
 

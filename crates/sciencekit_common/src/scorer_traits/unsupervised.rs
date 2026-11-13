@@ -1,14 +1,21 @@
 //! The unsupervised scorer contract.
 
-use ndarray::Array1;
+use ndarray::ArrayView1;
 
 use crate::SKError;
 use crate::data_view::SKDataView;
-use crate::fit_traits::SKRegressorPredictor;
+use crate::fit_traits::{SKClusterLabel, SKClustererPredictor, sk_validate_cluster_assignments};
 use crate::sk_float::SKFloat;
 
-/// An unsupervised scorer (e.g. silhouette-like) over features and assignments.
-pub trait SKUnsupervisedScorer<F: SKFloat, M: SKRegressorPredictor<F>>
+/// An unsupervised scorer (e.g. silhouette-like) over features and typed
+/// cluster assignments.
+///
+/// The pure form receives assignments the caller already computed; the
+/// convenient form obtains them from a fitted clusterer through
+/// [`SKClustererPredictor`]. A scorer that meets the noise variant documents
+/// whether it excludes or rejects those rows — never treating noise as a
+/// cluster.
+pub trait SKUnsupervisedScorer<F: SKFloat, M: SKClustererPredictor<F>>
 where
     Self::Error: From<M::Error>,
 {
@@ -18,18 +25,15 @@ where
     fn score_from_assignments(
         &self,
         features: SKDataView<'_, F>,
-        assignments: ndarray::ArrayView1<'_, usize>,
+        assignments: ArrayView1<'_, SKClusterLabel>,
     ) -> Result<f64, Self::Error>;
-    /// Convenient form: obtain the model's outputs, then delegate to the pure form.
+    /// Convenient form: obtain the model's typed assignments, then delegate.
     fn score(&self, model: &M, features: SKDataView<'_, F>) -> Result<f64, Self::Error> {
-        let raw = match features {
-            SKDataView::Dense(dense) => model.predict(dense)?,
-            SKDataView::Sparse(sparse) => model.predict(sparse)?,
+        let (number_of_rows, assignments) = match features {
+            SKDataView::Dense(dense) => (dense.nrows(), model.predict_clusters(dense)?),
+            SKDataView::Sparse(sparse) => (sparse.rows(), model.predict_clusters(sparse)?),
         };
-        // A regressor returns continuous responses; reinterpret as assignments
-        // by rounding to indices (convenient-form contract).
-        let assignments: Array1<usize> =
-            raw.mapv(|value| num_traits::ToPrimitive::to_usize(&value.round()).unwrap_or(0));
+        sk_validate_cluster_assignments(number_of_rows, assignments.view())?;
         self.score_from_assignments(features, assignments.view())
     }
 }

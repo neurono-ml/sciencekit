@@ -42,7 +42,7 @@ where
             let binary_labels = sk_binary_labels(labels, None);
             let seed = sk_binary_initial(initial, 0, design.columns_count(), config);
             let (coefficients, intercept, _) =
-                sk_solve_binary(design, &binary_labels, sample_weights, seed, config)?;
+                sk_solve_binary(design, &binary_labels, sample_weights, seed, config, 0)?;
             Ok(SKLogisticSolution {
                 coefficients: coefficients.insert_axis(Axis(0)),
                 intercepts: Array1::from_vec(vec![intercept]),
@@ -54,7 +54,14 @@ where
                 .map(|class| {
                     let binary_labels = sk_binary_labels(labels, Some(class));
                     let seed = sk_binary_initial(initial, class, design.columns_count(), config);
-                    sk_solve_binary(design, &binary_labels, sample_weights, seed, config)
+                    sk_solve_binary(
+                        design,
+                        &binary_labels,
+                        sample_weights,
+                        seed,
+                        config,
+                        class as u64,
+                    )
                 })
                 .collect();
             let mut coefficients = Array2::<F>::zeros((number_of_classes, design.columns_count()));
@@ -95,6 +102,7 @@ fn sk_solve_binary<F, D>(
     sample_weights: &[F],
     initial: Option<Array1<F>>,
     config: &SKLogisticConfig<F>,
+    component_index: u64,
 ) -> Result<(Array1<F>, F, usize), SKError>
 where
     F: SKFloat,
@@ -118,9 +126,14 @@ where
                 solution.iterations,
             ))
         }
-        SKLogisticSolver::Saga => {
-            sk_solve_binary_head_saga(design, labels, sample_weights, initial, config)
-        }
+        SKLogisticSolver::Saga => sk_solve_binary_head_saga(
+            design,
+            labels,
+            sample_weights,
+            initial,
+            config,
+            component_index,
+        ),
         SKLogisticSolver::Liblinear => match config.penalty {
             SKLogisticPenalty::L1 => {
                 sk_solve_binary_head_liblinear_l1(design, labels, sample_weights, config)

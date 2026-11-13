@@ -30,6 +30,7 @@ pub struct SKLogisticRegressionBuilder<F> {
     pub(super) include_intercept: bool,
     pub(super) tolerance: F,
     pub(super) maximum_number_of_iterations: usize,
+    pub(super) random_seed: u64,
     pub(super) backend: SKBackendKind,
 }
 
@@ -51,6 +52,7 @@ impl<F: SKFloat> SKLogisticRegressionBuilder<F> {
             include_intercept: true,
             tolerance: F::from(1e-4).expect("1e-4 fits"),
             maximum_number_of_iterations: 100,
+            random_seed: 0,
             backend: SKBackendKind::Faer,
         }
     }
@@ -145,6 +147,16 @@ impl<F: SKFloat> SKLogisticRegressionBuilder<F> {
         self
     }
 
+    /// The seed of every stochastic choice in the fit (default `0`).
+    ///
+    /// The SAGA solver derives every component's stream from it (`L-BFGS` and
+    /// `LIBLINEAR` are deterministic); the same seed, data and configuration
+    /// reproduce the coefficients.
+    pub fn random_seed(mut self, value: u64) -> Self {
+        self.random_seed = value;
+        self
+    }
+
     /// The math backend kind (default `SKBackendKind::Faer`).
     pub fn backend(mut self, value: SKBackendKind) -> Self {
         self.backend = value;
@@ -173,6 +185,7 @@ impl<F: SKFloat> SKLogisticRegressionBuilder<F> {
             class_weight: self.class_weight.clone(),
             include_intercept: self.include_intercept,
             warm_start: self.warm_start,
+            random_seed: self.random_seed,
         }
     }
 }
