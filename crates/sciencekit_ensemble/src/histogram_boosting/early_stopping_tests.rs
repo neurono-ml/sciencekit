@@ -44,6 +44,23 @@ fn hist_early_stop_disabled_fits_every_iteration() {
 }
 
 #[test]
+fn hist_early_stop_keeps_every_stage_when_no_validation_split_is_possible() {
+    // Three rows and three classes cannot hold out a stratified validation
+    // split; early stopping must then behave as disabled instead of silently
+    // keeping only the first stage.
+    let features = Array2::from_shape_vec((3, 1), vec![0.0, 1.0, 2.0]).expect("data");
+    let labels = ndarray::Array1::from_vec(vec![0i64, 1, 2]);
+    let model = super::SKHistGradientBoostingClassifier::<f64>::build()
+        .number_of_estimators(5)
+        .minimum_samples_leaf(1)
+        .build()
+        .expect("build")
+        .fit(features.view(), labels.view())
+        .expect("fit");
+    assert_eq!(model.number_of_stages(), 5);
+}
+
+#[test]
 fn hist_early_stop_is_seed_deterministic() {
     let (features, targets) = (
         Array2::from_shape_fn((80, 2), |(row, column)| ((row * 11 + column) % 17) as f64),

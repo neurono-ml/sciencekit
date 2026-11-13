@@ -44,6 +44,7 @@ pub(crate) fn sk_run_histogram_multiclass<F: SKFloat>(
     let mut stages = Vec::with_capacity(number_of_estimators);
     let mut stage_importances = Vec::with_capacity(number_of_estimators);
     let mut monitor = early_stopping
+        .filter(|_| validation_rows.is_some_and(|rows| !rows.is_empty()))
         .map(|stopping| SKEarlyStoppingMonitor::new(stopping.patience, stopping.tolerance));
     for stage_index in 0..number_of_estimators {
         let (negative_gradients, hessians) =
