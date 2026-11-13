@@ -71,8 +71,9 @@
   round-trip import; verify with `mdbook build docs`.
 - [x] 7.3 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
   warnings` and `cargo test --workspace`; fix every failure before pushing.
-- [ ] 7.4 Independent review by a separate agent validating every scenario in
-  `model-export-coverage`; address every finding and re-run the gates.
+- [x] 7.4 Independent review by a separate agent validating every scenario in
+  `model-export-coverage`; address every finding and re-run the gates. Verdict matrix and
+  fixed defects: `verification.md`.
 
 ## Workflow follow-up
 
@@ -83,9 +84,10 @@
 
 ## Status note
 
-Tasks 1.1–6.3 and 7.1–7.3 are complete. Task 7.4 (independent review) is
-deliberately left unchecked: a separate reviewer agent validates every
-`model-export-coverage` scenario before the code PR is considered ready.
+Tasks 1.1–6.3 and 7.1–7.4 are complete. The independent review in `verification.md`
+confirms 35 families round-trip exactly and records 10 composite models that return a typed
+`UnsupportedOperation` plus 2 type-erased pipeline models that cannot export; those remain
+blocking findings against the headline claim.
 The typed pipeline exports its stages and final model but deliberately
 implements no import, because its configured stage chain holds live estimator
 values rather than data; the graph pipeline shares that limitation.

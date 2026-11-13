@@ -75,6 +75,31 @@ provides `assert_export_round_trip(model, features)`: export, import, compare pr
 within tolerance; assert non-empty state and stable names. Each family calls it with its
 fixtures.
 
+### Decision 5a — Round-trip tolerance is zero
+
+Import is lossless: the state carries every floating value verbatim, so an imported model
+reproduces the original's `predict`/`transform`/`predict_labels` output **bit-for-bit** for
+the same format version and input. The documented tolerance is therefore `0` (exact
+equality), which is stronger than a numeric epsilon; the family tests assert `assert_eq!` on
+the outputs rather than an approximate comparison. Benign NaN markers are the only values
+compared by classification (`sk_states_equal` treats two NaNs as equal).
+
+### Decision 5b — Explicit import limits
+
+The state is sufficient to rebuild: every preprocessing model, imputer/indicator, linear
+model, neighbour, SVM, tree, forest, exact/histogram booster, clusterer, decomposition and
+outlier detector. These limitations are typed `UnsupportedOperation` errors with guidance,
+never a partial model:
+
+- Bagging ensembles prefix each member's tensors but do not carry the member's own metadata.
+- Grid-search and successive-halving states carry the refitted winner's tensors and selection
+  metadata, not the winner's metadata or candidate configuration.
+- The typed pipeline's configured stage chain holds live estimator values; its nested stage
+  states are still exported for inspection and per-stage import.
+- Graph and streaming pipelines erase their fitted stage types behind `Any`/trait objects and
+  cannot recover their concrete states; feature-union member states export, but the configured
+  member chain cannot be rebuilt from data.
+
 ### Decision 6 — File layout
 
 Per crate, a `model/export.rs` and optional `model/import.rs`; the family's `mod.rs`
