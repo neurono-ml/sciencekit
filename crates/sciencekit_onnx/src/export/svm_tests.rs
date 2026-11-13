@@ -254,3 +254,156 @@ fn export_svm_precomputed_kernel_is_rejected_by_name() {
         other => panic!("unexpected error: {other}"),
     }
 }
+
+#[test]
+fn export_svm_binary_svc_non_default_gamma_matches_the_rust_outputs() {
+    use sciencekit_svm::svc::SKSVC;
+
+    let features: Array2<f64> = binary_features();
+    let labels = ["left", "left", "left", "right", "right", "right"];
+    let model = SKSVC::<f64>::build()
+        .kernel(SKKernel::RadialBasisFunction)
+        .gamma(SKKernelGamma::Value(1.75_f64))
+        .probability(false)
+        .build()
+        .expect("the classifier configuration is valid")
+        .fit(features.view(), labels.as_slice())
+        .expect("the classifier fits");
+    let decisions = model
+        .decision_function(features.view())
+        .expect("the decisions");
+    let predicted = model.predict_labels(features.view()).expect("the labels");
+    let onnx = model.to_onnx().expect("the classifier exports");
+    write_classifier_fixture(
+        "svc_binary_rbf_gamma_f64",
+        &onnx,
+        &features,
+        &predicted,
+        &decisions,
+        1e-8,
+    );
+}
+
+#[test]
+fn export_svm_multiclass_svc_vote_tie_matches_the_rust_outputs() {
+    use sciencekit_svm::svc::SKSVC;
+
+    let training: Array2<f64> = array![
+        [-2.0, 0.0],
+        [-1.5, 0.5],
+        [2.0, 0.0],
+        [1.5, -0.5],
+        [0.0, 2.0],
+        [0.5, 1.5]
+    ];
+    let labels = ["a", "a", "b", "b", "c", "c"];
+    let model = SKSVC::<f64>::build()
+        .kernel(SKKernel::RadialBasisFunction)
+        .gamma(SKKernelGamma::Value(0.5_f64))
+        .probability(false)
+        .build()
+        .expect("the classifier configuration is valid")
+        .fit(training.view(), labels.as_slice())
+        .expect("the classifier fits");
+    // Far from every support vector the three pairwise margins are all
+    // negative, so each class receives exactly one vote: a 1-1-1 tie that the
+    // Rust winner rule resolves to the smallest class index.
+    let mut features = training.clone();
+    features
+        .push_row(array![-3.0, -3.0].view())
+        .expect("the row appends");
+    features
+        .push_row(array![3.0, 3.0].view())
+        .expect("the row appends");
+    let decisions = model
+        .decision_function(features.view())
+        .expect("the decisions");
+    let predicted = model.predict_labels(features.view()).expect("the labels");
+    let onnx = model.to_onnx().expect("the classifier exports");
+    write_classifier_fixture(
+        "svc_multiclass_vote_tie_f64",
+        &onnx,
+        &features,
+        &predicted,
+        &decisions,
+        1e-8,
+    );
+}
+
+#[test]
+fn export_svm_linear_svc_explicit_class_weights_match_the_rust_outputs() {
+    use sciencekit_svm::linear_svc::SKLinearSVC;
+    use sciencekit_svm::svc::SKClassWeight;
+
+    let features: Array2<f64> = multiclass_features();
+    let labels = ["left", "left", "right", "right", "left", "left"];
+    let model = SKLinearSVC::<f64>::build()
+        .class_weight(SKClassWeight::Explicit(vec![1.0_f64, 4.0]))
+        .build()
+        .expect("the classifier configuration is valid")
+        .fit(features.view(), labels.as_slice())
+        .expect("the classifier fits");
+    let decisions = model
+        .decision_function(features.view())
+        .expect("the decisions");
+    let predicted = model.predict_labels(features.view()).expect("the labels");
+    let onnx = model.to_onnx().expect("the classifier exports");
+    write_classifier_fixture(
+        "linear_svc_binary_weighted_f64",
+        &onnx,
+        &features,
+        &predicted,
+        &decisions,
+        1e-9,
+    );
+}
+
+#[test]
+fn export_svm_f32_classifier_declares_float_tensors_and_matches_the_rust_outputs() {
+    use sciencekit_svm::svc::SKSVC;
+
+    let features: Array2<f32> = binary_features();
+    let labels = ["left", "left", "left", "right", "right", "right"];
+    let model = SKSVC::<f32>::build()
+        .kernel(SKKernel::RadialBasisFunction)
+        .gamma(SKKernelGamma::Value(0.5_f32))
+        .probability(false)
+        .build()
+        .expect("the classifier configuration is valid")
+        .fit(features.view(), labels.as_slice())
+        .expect("the classifier fits");
+    let decisions = model
+        .decision_function(features.view())
+        .expect("the decisions");
+    let predicted = model.predict_labels(features.view()).expect("the labels");
+    let onnx = model.to_onnx().expect("the classifier exports");
+    assert_eq!(
+        onnx.inputs()[0].element_type(),
+        crate::graph::SKOnnxTensorDType::Float
+    );
+    let input = serde_json::json!(
+        features
+            .rows()
+            .into_iter()
+            .map(|row| row.to_vec())
+            .collect::<Vec<Vec<f32>>>()
+    );
+    let decisions_json = serde_json::json!(
+        decisions
+            .rows()
+            .into_iter()
+            .map(|row| row.to_vec())
+            .collect::<Vec<Vec<f32>>>()
+    );
+    write_fixture(
+        "svc_binary_rbf_f32",
+        &onnx,
+        "features",
+        input,
+        serde_json::json!({
+            onnx.outputs()[0].name(): predicted.to_vec(),
+            onnx.outputs()[1].name(): decisions_json,
+        }),
+        1e-4,
+    );
+}
