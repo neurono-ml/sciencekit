@@ -44,6 +44,9 @@ fn onnx_runtime_validates_an_exported_scaler() {
     let fixture = directory.path().join("standard_scaler");
     std::fs::create_dir_all(&fixture).expect("the fixture directory");
     write_fixture_at(&fixture, &onnx, &features, &transformed);
+    // The harness compares three predictions: Rust, the imported model and
+    // onnxruntime. Record the imported one so the harness has all three.
+    write_imported_at(&fixture, &onnx, &features);
     let harness = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("validation/compare_with_onnxruntime.py");
     let output = Command::new("python3")
@@ -56,6 +59,34 @@ fn onnx_runtime_validates_an_exported_scaler() {
         "the reference runtime rejected the graph: {}",
         String::from_utf8_lossy(&output.stderr)
     );
+}
+
+fn write_imported_at(
+    directory: &std::path::Path,
+    model: &crate::graph::SKOnnxModel,
+    features: &Array2<f64>,
+) {
+    use crate::SKOnnxPredictor;
+    let predictor = SKOnnxPredictor::<f64>::builder()
+        .model_bytes(model.bytes().to_vec())
+        .build()
+        .expect("the exported model imports");
+    let outputs = predictor
+        .predict_arrays(features.view())
+        .expect("the imported model predicts");
+    let serialized: serde_json::Map<String, serde_json::Value> = outputs
+        .into_iter()
+        .map(|(name, array)| {
+            let shape: Vec<usize> = array.shape().to_vec();
+            let data: Vec<f64> = array.iter().copied().collect();
+            (name, serde_json::json!({"shape": shape, "data": data}))
+        })
+        .collect();
+    std::fs::write(
+        directory.join("imported.json"),
+        serde_json::json!({"outputs": serialized}).to_string(),
+    )
+    .expect("the imported prediction is writable");
 }
 
 fn write_fixture_at(
