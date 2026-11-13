@@ -20,6 +20,14 @@ pub(crate) fn mat_mul(
             ),
         });
     }
+    let left_shape = left.shape();
+    let right_shape = right.shape();
+    if left_shape[1] != right_shape[0] {
+        return Err(SKOnnxImportError::ShapeMismatch {
+            expected: left_shape,
+            found: right_shape,
+        });
+    }
     match (left, right) {
         (SKOnnxValue::Float32(a), SKOnnxValue::Float32(b)) => Ok(SKOnnxValue::Float32(
             as_matrix(a)?.dot(&as_matrix(b)?).into_dyn(),
@@ -39,7 +47,18 @@ pub(crate) fn transpose(
 ) -> Result<SKOnnxValue, SKOnnxImportError> {
     let rank = value.shape().len();
     let permutation = match permutation {
-        Some(axes) => super::reductions::resolve_axes(axes, rank)?,
+        Some(axes) => {
+            let resolved = super::reductions::resolve_axes(axes, rank)?;
+            if resolved.len() != rank || !is_a_permutation(&resolved) {
+                return Err(SKOnnxImportError::InvalidOperator {
+                    operator: "Transpose".to_string(),
+                    detail: format!(
+                        "the permutation {axes:?} is not a permutation of axes 0..{rank}"
+                    ),
+                });
+            }
+            resolved
+        }
         None => (0..rank).rev().collect(),
     };
     Ok(match value {
@@ -121,9 +140,19 @@ fn resolve_reshape(length: usize, shape: &[i64]) -> Result<Vec<usize>, SKOnnxImp
             resolved.push(0);
         } else if *dimension == 0 {
             resolved.push(1);
+        } else if *dimension < -1 {
+            return Err(SKOnnxImportError::InvalidOperator {
+                operator: "Reshape".to_string(),
+                detail: format!("the dimension {dimension} is neither -1, 0 nor positive"),
+            });
         } else {
             let value = *dimension as usize;
-            known *= value;
+            known = known
+                .checked_mul(value)
+                .ok_or_else(|| SKOnnxImportError::InvalidOperator {
+                    operator: "Reshape".to_string(),
+                    detail: "the target shape overflows the addressable element count".to_string(),
+                })?;
             resolved.push(value);
         }
     }
@@ -137,6 +166,17 @@ fn resolve_reshape(length: usize, shape: &[i64]) -> Result<Vec<usize>, SKOnnxImp
         resolved[position] = length / known;
     }
     Ok(resolved)
+}
+
+fn is_a_permutation(axes: &[usize]) -> bool {
+    let mut seen = vec![false; axes.len()];
+    for axis in axes {
+        match seen.get_mut(*axis) {
+            Some(slot) if !*slot => *slot = true,
+            _ => return false,
+        }
+    }
+    true
 }
 
 fn as_matrix(array: &ndarray::ArrayD<f32>) -> Result<Array2<f32>, SKOnnxImportError> {

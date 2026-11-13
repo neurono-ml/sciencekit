@@ -74,6 +74,12 @@ pub(crate) fn unsqueeze(
 ) -> Result<SKOnnxValue, SKOnnxImportError> {
     let rank = value.shape().len() + axes.len();
     let mut positions = resolve_axes(axes, rank)?;
+    if !has_no_duplicates(&positions) {
+        return Err(SKOnnxImportError::InvalidOperator {
+            operator: "Unsqueeze".to_string(),
+            detail: format!("the axes {axes:?} repeat a position"),
+        });
+    }
     positions.sort_unstable();
     let mut result = value.clone();
     for position in positions {
@@ -89,7 +95,28 @@ pub(crate) fn squeeze(
 ) -> Result<SKOnnxValue, SKOnnxImportError> {
     let rank = value.shape().len();
     let positions: Vec<usize> = match axes {
-        Some(axes) => resolve_axes(axes, rank)?,
+        Some(axes) => {
+            let resolved = resolve_axes(axes, rank)?;
+            if !has_no_duplicates(&resolved) {
+                return Err(SKOnnxImportError::InvalidOperator {
+                    operator: "Squeeze".to_string(),
+                    detail: format!("the axes {axes:?} repeat a position"),
+                });
+            }
+            if let Some(position) = resolved
+                .iter()
+                .find(|position| value.shape()[**position] != 1)
+            {
+                return Err(SKOnnxImportError::InvalidOperator {
+                    operator: "Squeeze".to_string(),
+                    detail: format!(
+                        "axis {position} has extent {}; only size-one axes can be squeezed",
+                        value.shape()[*position]
+                    ),
+                });
+            }
+            resolved
+        }
         None => value
             .shape()
             .iter()
@@ -117,6 +144,13 @@ pub(crate) fn flatten(value: &SKOnnxValue, axis: i64) -> Result<SKOnnxValue, SKO
     let rows: usize = shape[..axis].iter().product();
     let columns: usize = shape[axis..].iter().product();
     super::matrix::reshape(value, &[rows as i64, columns as i64])
+}
+
+fn has_no_duplicates(positions: &[usize]) -> bool {
+    let mut sorted = positions.to_vec();
+    sorted.sort_unstable();
+    sorted.dedup();
+    sorted.len() == positions.len()
 }
 
 fn insert_axis(value: &SKOnnxValue, position: usize) -> SKOnnxValue {
