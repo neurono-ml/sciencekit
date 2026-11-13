@@ -22,7 +22,8 @@ pub(crate) fn create_kernel(
     scalar_type: &str,
 ) -> Result<Kernel, SKError> {
     let source = scalar_source(template, scalar_type)?;
-    let program = session.program(program_key, &source)?;
+    let program_key = format!("{program_key}:{scalar_type}");
+    let program = session.program(&program_key, &source)?;
     Kernel::create(&program, kernel_name).map_err(|code| {
         SKError::Conversion(format!(
             "OpenCL kernel `{kernel_name}` creation failed with code {code}"

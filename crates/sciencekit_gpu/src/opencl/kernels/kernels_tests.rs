@@ -280,3 +280,72 @@ fn a_broken_program_reports_the_build_log() {
         other => panic!("unexpected error: {other}"),
     }
 }
+
+/// One backend must serve both precisions: the program cache is per scalar type,
+/// so an `f32` dispatch cannot leave an `f32` program behind for a later `f64`
+/// dispatch of the same kernel.
+#[test]
+fn one_backend_serves_both_precisions_of_the_same_kernel() {
+    let Some(backend) = real_session() else {
+        return;
+    };
+    let session = session(&backend);
+
+    let left_single: Array2<f32> =
+        Array2::from_shape_fn((7, 5), |(row, column)| ((row * 3 + column) as f32) * 0.5 - 1.0);
+    let right_single: Array2<f32> =
+        Array2::from_shape_fn((11, 5), |(row, column)| ((row * 7 + column) as f32) * 0.25);
+    let left_resident = upload_view(session, left_single.view()).unwrap();
+    let right_resident = upload_view(session, right_single.view()).unwrap();
+    let single_output = allocate_resident::<f32>(session, (7, 11)).unwrap();
+    run_pairwise_distance(
+        session,
+        &left_resident,
+        &right_resident,
+        &single_output,
+        SKOpenClDistanceMetric::SquaredEuclidean,
+    )
+    .unwrap();
+    let single_actual = download_buffer(session, &single_output).unwrap();
+    let single_expected: Array2<f32> = Array2::from_shape_fn((7, 11), |(row, other)| {
+        left_single
+            .row(row)
+            .iter()
+            .zip(right_single.row(other).iter())
+            .map(|(left_value, right_value)| (left_value - right_value).powi(2))
+            .sum()
+    });
+    let single_worst = single_actual
+        .iter()
+        .zip(single_expected.iter())
+        .map(|(actual, expected)| (actual - expected).abs())
+        .fold(0.0_f32, f32::max);
+    assert!(
+        single_worst <= 1e-3,
+        "the f32 dispatch must match the CPU: {single_worst}"
+    );
+
+    let left_double = deterministic_matrix(7, 5, 0.0);
+    let right_double = deterministic_matrix(11, 5, 0.5);
+    let left_resident = upload_view(session, left_double.view()).unwrap();
+    let right_resident = upload_view(session, right_double.view()).unwrap();
+    let double_output = allocate_resident::<f64>(session, (7, 11)).unwrap();
+    run_pairwise_distance(
+        session,
+        &left_resident,
+        &right_resident,
+        &double_output,
+        SKOpenClDistanceMetric::SquaredEuclidean,
+    )
+    .unwrap();
+    let double_actual = download_buffer(session, &double_output).unwrap();
+    assert_close(
+        &double_actual,
+        &reference_pairwise(
+            &left_double,
+            &right_double,
+            SKOpenClDistanceMetric::SquaredEuclidean,
+        ),
+        1e-9,
+    );
+}

@@ -28,7 +28,10 @@ pub(crate) struct SKOpenClSession {
     queue: CommandQueue,
     device_identifier: usize,
     device: SKDeviceInfo,
-    programs: Mutex<HashMap<&'static str, SharedProgram>>,
+    /// The cache key carries the kernel name *and* the scalar type: the same
+    /// kernel compiled for `f32` and for `f64` are different programs, so a
+    /// single key would hand the second dispatch the first precision's code.
+    programs: Mutex<HashMap<String, SharedProgram>>,
 }
 
 impl SKOpenClSession {
@@ -85,13 +88,13 @@ impl SKOpenClSession {
 
     /// Compile `source` under `key`, or return the program compiled earlier.
     ///
+    /// The caller's key must identify everything that changes the generated
+    /// code — the kernel name **and** the scalar type — because the same
+    /// kernel compiled for `f32` and `f64` are two different programs.
+    ///
     /// A failed build is reported with the driver's build log, never swallowed:
     /// the caller sees the compiler diagnostics and can fall back to the CPU.
-    pub(crate) fn program(
-        &self,
-        key: &'static str,
-        source: &str,
-    ) -> Result<SharedProgram, SKError> {
+    pub(crate) fn program(&self, key: &str, source: &str) -> Result<SharedProgram, SKError> {
         let mut programs = self
             .programs
             .lock()
@@ -101,7 +104,7 @@ impl SKOpenClSession {
         }
         let program = compile_program(&self.context, self.device_identifier(), source)?;
         let program = Arc::new(program);
-        programs.insert(key, Arc::clone(&program));
+        programs.insert(key.to_string(), Arc::clone(&program));
         Ok(program)
     }
 }
