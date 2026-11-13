@@ -9,6 +9,7 @@ use super::linear::append_linear;
 use super::metadata::attach_metadata;
 use super::preprocessing::append_preprocessing;
 use super::stage::{SKOnnxStageKind, SKOnnxStageOutput};
+use super::tree::append_tree;
 
 /// The single graph input every exported model declares.
 pub(crate) const SK_ONNX_FEATURE_INPUT: &str = "features";
@@ -66,6 +67,9 @@ pub(crate) fn append_estimator<F: SKFloat>(
         return Ok(output);
     }
     if let Some(output) = append_linear(estimator_name, state, builder, input, namespace)? {
+        return Ok(output);
+    }
+    if let Some(output) = append_tree(estimator_name, state, builder, input, namespace)? {
         return Ok(output);
     }
     Err(unsupported(

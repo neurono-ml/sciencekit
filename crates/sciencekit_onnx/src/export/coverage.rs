@@ -38,6 +38,30 @@ pub fn sk_onnx_coverage() -> &'static [SKOnnxFamilyCoverage] {
             note: "numeric integer categories and the ignore policy only; nominal string categories and the reject policy return UnsupportedOperation",
         },
         SKOnnxFamilyCoverage {
+            family: "trees",
+            estimators: &[
+                "SKDecisionTreeClassifier",
+                "SKDecisionTreeRegressor",
+                "SKRandomForestClassifier",
+                "SKRandomForestRegressor",
+            ],
+            operators: &["TreeEnsembleClassifier", "TreeEnsembleRegressor", "ArgMax"],
+            supported: true,
+            note: "f32 only: the ONNX-ML schema stores thresholds and leaf weights as float attributes, so double trees return UnsupportedOperation",
+        },
+        SKOnnxFamilyCoverage {
+            family: "boosting",
+            estimators: &[
+                "SKGradientBoostingClassifier",
+                "SKGradientBoostingRegressor",
+                "SKHistGradientBoostingClassifier",
+                "SKHistGradientBoostingRegressor",
+            ],
+            operators: &[],
+            supported: false,
+            note: "boosting states carry a base score per class and a learning rate; the exporter keeps them out of the matrix until that composition has parity fixtures",
+        },
+        SKOnnxFamilyCoverage {
             family: "linear.regressors",
             estimators: &[
                 "SKLinearRegression",
