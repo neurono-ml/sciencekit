@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The OpenCL 3.0 device backend (spec `opencl-backend`) behind the `opencl`
+  feature of `sciencekit_gpu`, re-exported by the `sciencekit_gpu_opencl`
+  package through its `gpu-opencl` feature. It implements `SKComputeBackend`
+  over an ICD loader loaded at runtime: deterministic platform/device
+  enumeration with capability reporting, `SKOpenClBackend` built only through
+  `SKOpenClBackendBuilder`, real device buffers with capacity and device-memory
+  validation, explicit accounted uploads/downloads, runtime-compiled and cached
+  kernels (pairwise distance for squared-Euclidean/Euclidean/Manhattan/
+  Chebyshev, tiled GEMM, elementwise transform and combine, tree-ensemble
+  prediction), CPU parity tests on a real device, concurrent dispatch parity,
+  and an honest `SKFallbackReason` with structured errors when the feature is
+  off, no platform exists or the device cannot be opened. The default build
+  pulls in no OpenCL dependency and calls no OpenCL symbol.
 - `sciencekit_ensemble` gains histogram gradient boosting (spec
   `histogram-gradient-boosting`): `SKHistGradientBoostingClassifier<F>`,
   `SKHistGradientBoostingClassifierBuilder<F>`,
