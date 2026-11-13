@@ -32,6 +32,8 @@ mod concurrency_tests;
 #[cfg(test)]
 mod descriptor_tests;
 #[cfg(test)]
+mod hostile_input_tests;
+#[cfg(test)]
 mod numpy_tests;
 #[cfg(test)]
 mod raw_binary_tests;
