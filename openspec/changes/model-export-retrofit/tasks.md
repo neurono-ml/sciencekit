@@ -83,9 +83,9 @@
 
 ## Status note
 
-Tasks 1.1–4.2 and 7.1–7.3 are complete on the code, OpenSpec and documentation
-branches. Task 4.3 covers decision trees, random forests and gradient boosting
-(bagging was already exported); histogram gradient boosting is still pending, so
-4.3 stays open. Tasks 5.x (clustering, decomposition, outlier detection), 6.x
-(pipelines, model selection, workspace coverage) and 7.4 (independent review)
-remain open.
+Tasks 1.1–6.3 and 7.1–7.3 are complete. Task 7.4 (independent review) is
+deliberately left unchecked: a separate reviewer agent validates every
+`model-export-coverage` scenario before the code PR is considered ready.
+The typed pipeline exports its stages and final model but deliberately
+implements no import, because its configured stage chain holds live estimator
+values rather than data; the graph pipeline shares that limitation.
