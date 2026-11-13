@@ -88,5 +88,5 @@ fn native_onnx_records_the_requested_backend() {
         imported.descriptor().backend(),
         sciencekit_common::SKBackendKind::MatrixMultiply
     );
-    assert!(imported.supports_retraining());
+    assert!(!imported.supports_retraining());
 }

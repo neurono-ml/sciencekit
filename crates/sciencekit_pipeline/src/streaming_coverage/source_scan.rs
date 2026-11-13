@@ -70,11 +70,14 @@ fn sk_consider(root: &Path, path: &Path, sources: &mut Vec<StreamingSource>) {
         .replace('\\', "/");
     if relative.starts_with("sciencekit_pipeline/src/streaming_coverage/")
         || relative.starts_with("sciencekit_pipeline/src/streaming/")
+        || relative.starts_with("sciencekit_interop/src/native/")
     {
         // The audit module's own source mentions the method names it searches
-        // for, and the streaming-pipeline contract plus its fixtures are
-        // pipeline stages rather than estimator streaming entry points; other
-        // files in the crate are still scanned.
+        // for, the streaming-pipeline contract plus its fixtures are pipeline
+        // stages rather than estimator streaming entry points, and the native
+        // import facade delegates to an existing estimator's `partial_fit`
+        // instead of adding a streaming algorithm; other files are still
+        // scanned.
         return;
     }
     sources.push(StreamingSource {
