@@ -350,3 +350,11 @@ float rows with Fortran-order, endianness and alignment rejection plus an explic
 footer-indexed Arrow IPC random access with per-batch decoding, bounded sequential blocks and
 `Send + Sync` concurrent readers.
 
+The [linear support-vector machines chapter](./ch59-svm-linear-svc.html) completes
+`sciencekit_svm` with `SKLinearSVC<F>`: the LIBLINEAR-style dual coordinate descent for the
+L1-hinge and L2-squared-hinge losses, the `SKDenseLinearSvcDesign` /
+`SKSparseLinearSvcDesign` abstraction that scans CSR stored entries without densifying, the
+unpenalized intercept recovered by a one-dimensional bisection, parallel one-vs-rest heads
+with deterministic order and smallest-index tie-breaking, class-weighted box capacities, the
+explicit `NotConverged { iterations }` budget, and the deliberate `UnsupportedOperation` from
+`predict_probabilities`.
