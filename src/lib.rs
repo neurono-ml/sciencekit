@@ -39,7 +39,7 @@
 //! - [`metrics`] — scores and streaming accumulators.
 //! - [`interop`] — dataset interop, model formats and ONNX.
 //! - [`accelerators`] — device-compute contracts and the OpenCL backend.
-//! - [`telemetry`] — opt-in OpenTelemetry export.
+//! - `telemetry` — opt-in OpenTelemetry export (feature `telemetry`).
 //! - [`ffi`] — the stable C ABI.
 //!
 //! [`prelude`] gathers the traits, types and estimators needed by typical code.
@@ -54,6 +54,8 @@
 
 #[cfg(test)]
 mod export_coverage_tests;
+#[cfg(test)]
+mod features_tests;
 #[cfg(test)]
 mod prelude_tests;
 #[cfg(test)]
@@ -76,6 +78,7 @@ pub mod pipeline;
 pub mod prelude;
 pub mod preprocessing;
 pub mod svm;
+#[cfg(feature = "telemetry")]
 pub mod telemetry;
 pub mod tree;
 // The shared vocabulary is re-exported at the root: a user reaching for

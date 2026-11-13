@@ -121,10 +121,37 @@ sciencekit_interop = { path = "crates/sciencekit_interop", version = "0.8.0" }
 sciencekit_svm = { path = "crates/sciencekit_svm", version = "0.8.0" }
 sciencekit_outlier = { path = "crates/sciencekit_outlier", version = "0.8.0" }
 sciencekit_gpu = { path = "crates/sciencekit_gpu", version = "0.8.0" }
-sciencekit_gpu_opencl = { path = "crates/sciencekit_gpu_opencl", version = "0.8.0" }
-sciencekit_telemetry = { path = "crates/sciencekit_telemetry", version = "0.8.0" }
-sciencekit_onnx = { path = "crates/sciencekit_onnx", version = "0.8.0" }
+sciencekit_gpu_opencl = { path = "crates/sciencekit_gpu_opencl", version = "0.8.0", optional = true }
+sciencekit_telemetry = { path = "crates/sciencekit_telemetry", version = "0.8.0", optional = true }
+sciencekit_onnx = { path = "crates/sciencekit_onnx", version = "0.8.0", optional = true }
 sciencekit_ffi = { path = "crates/sciencekit_ffi", version = "0.8.0" }
+
+# The default build is core-only: no GPU runtime, no OpenTelemetry SDK, no ONNX
+# translator and no engine adapter. Each optional integration forwards to the
+# sub-crate that owns it, so the umbrella never re-declares a dependency
+# version. Python bindings are a separate crate (`sciencekit_python`) and are
+# deliberately not a feature here.
+[features]
+default = []
+# OpenCL device backend: enables the backend in `sciencekit_gpu` and pulls in
+# the vendor-facing `sciencekit_gpu_opencl` package.
+opencl = [
+    "dep:sciencekit_gpu_opencl",
+    "sciencekit_gpu_opencl/gpu-opencl",
+    "sciencekit_gpu/opencl",
+]
+# OpenTelemetry trace, log and metric export pipelines.
+telemetry = ["dep:sciencekit_telemetry"]
+# ONNX graph translation (export and import).
+onnx = ["dep:sciencekit_onnx"]
+# Polars DataFrame adapter for `sciencekit_interop`.
+polars = ["sciencekit_interop/polars"]
+# DataFusion adapter for `sciencekit_interop`.
+datafusion = ["sciencekit_interop/datafusion"]
+# Memory-mapped raw binary, NumPy `.npy` and Arrow IPC sources.
+memmap = ["sciencekit_interop/memmap"]
+# Arrow/Parquet file paths (the sub-crate aliases it to its Arrow adapter).
+parquet = ["sciencekit_interop/parquet"]
 
 # The umbrella's own compile tests build small in-memory designs.
 [dev-dependencies]

@@ -10,11 +10,13 @@ fn implements<T: crate::SKFloat>() {}
 
 #[test]
 fn every_family_module_is_addressable() {
+    #[cfg(feature = "telemetry")]
+    #[allow(unused_imports)]
+    use crate::telemetry;
     #[allow(unused_imports)]
     use crate::{
         accelerators, cluster, decomposition, ensemble, ffi, impute, interop, linear_model, math,
-        metrics, model_selection, neighbors, outlier, pipeline, preprocessing, svm, telemetry,
-        tree,
+        metrics, model_selection, neighbors, outlier, pipeline, preprocessing, svm, tree,
     };
 }
 
@@ -103,7 +105,9 @@ fn metrics_math_and_integration_types_resolve() {
     let _ = crate::math::sk_pairwise_distance_matrix::<f64>;
     sized::<crate::accelerators::SKDeviceBuffer<f64>>();
     sized::<crate::accelerators::SKOpenClBackend>();
+    #[cfg(feature = "telemetry")]
     sized::<crate::telemetry::SKTelemetryConfiguration>();
+    #[cfg(feature = "onnx")]
     sized::<crate::interop::SKOnnxModel>();
     sized::<crate::ffi::SKFfiStatus>();
 }
