@@ -358,3 +358,13 @@ unpenalized intercept recovered by a one-dimensional bisection, parallel one-vs-
 with deterministic order and smallest-index tie-breaking, class-weighted box capacities, the
 explicit `NotConverged { iterations }` budget, and the deliberate `UnsupportedOperation` from
 `predict_probabilities`.
+
+The [histogram gradient boosting chapter](./ch60-histogram-gradient-boosting.html) adds the
+`histogram_boosting` module of `sciencekit_ensemble`: deterministic quantile binning
+(`SKNumericBinning`, `SKFeatureBinning`, `SKBinnedDataset`) with a reserved missing bin and a
+column-major `u8` store, parallel gradient/Hessian accumulation, the Newton gain prefix scan,
+parent-child histogram subtraction, gain-ordered leaf-wise growth under `maximum_leaf_nodes` and
+`minimum_samples_leaf`, `bitvec` categorical membership masks with an unknown-category direction,
+learned `default_left` missing routing, and the `SKHistGradientBoostingClassifier` /
+`SKHistGradientBoostingRegressor` builders, models and prediction surface that reuse the W4.4 loss
+contract and early-stopping monitor while binning dense and CSR queries without densification.

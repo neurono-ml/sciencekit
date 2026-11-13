@@ -88,4 +88,5 @@
   - [Polars and DataFusion sources: one tabular contract for two engines](development-explained/ch57-polars-datafusion-sources.md)
   - [Memory-mapped sources: raw binary, NumPy npy and Arrow IPC without copying](development-explained/ch58-memory-mapped-interop.md)
   - [Linear support-vector machines: coordinate descent, one sweep at a time](development-explained/ch59-svm-linear-svc.md)
+  - [Histogram gradient boosting: bins, histograms and leaves grown on the smaller child](development-explained/ch60-histogram-gradient-boosting.md)
   - [Maintaining this book](development-explained/maintaining.md)
