@@ -36,7 +36,7 @@
 - [x] 4.1 Implement export/import for KNN and KNNImputer (training design, tree/index
   metadata, weights/metric); verify with `cargo test -p sciencekit_neighbors export` and
   `cargo test -p sciencekit_impute export`.
-- [ ] 4.2 Implement export/import for SVC/SVR/LinearSVC (support vectors, dual
+- [x] 4.2 Implement export/import for SVC/SVR/LinearSVC (support vectors, dual
   coefficients, kernel config, class tables); verify with
   `cargo test -p sciencekit_svm export`.
 - [ ] 4.3 Implement export/import for decision trees and the ensembles (node arrays, leaf
