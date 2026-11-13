@@ -23,6 +23,13 @@ sub-crate under documented module paths.
 - **WHEN** a user needs a specific family
 - **THEN** the umbrella exposes it under a named module (for example `linear_model`)
 
+#### Scenario: A later capability stays reachable
+
+- **WHEN** a sub-crate grows a public module after the umbrella was written (for
+  example the low-rank adapters in `linear_model`)
+- **THEN** the umbrella re-exports that module and its items under the same family
+  module, proven by a compile test
+
 ### Requirement: Prelude
 
 The umbrella SHALL provide a `prelude` with the traits and types used by typical code

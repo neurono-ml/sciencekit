@@ -55,6 +55,19 @@ the corresponding optional crates/features through `dep:` forwarding, so the
 umbrella never re-declares a dependency version. The default build is core-only.
 Python is not a feature; it is a separate `sciencekit_python` crate.
 
+The forwarding is complete for every sub-crate switch that changes what the
+umbrella can *do*: `otlp-grpc`/`otlp-http` (one OTLP transport each),
+`observability-export`, `compression-gzip`/`-brotli`/`-snappy` and
+`allocator-jemalloc`/`-mimalloc`. `telemetry` forwards the sub-crate's own
+`telemetry` umbrella feature (both transports); forwarding only the dependency
+would enable the crate while leaving every transport compiled out, so the
+pipeline builder would reject every configuration. The two allocator features are
+mutually exclusive — one global allocator per process — so the crate documents
+that `--all-features` is not a valid build and the docs.rs metadata lists the
+integration features explicitly instead. Three switches stay out on purpose:
+`blas-backend` needs a system BLAS at link time, and `gpu-cuda` / `gpu-rocm`
+have no implementation to select yet.
+
 The family modules are gated the same way: `telemetry` exists only with its
 feature, the ONNX re-exports only with `onnx`, the engine adapters only with
 their adapter feature, and the `sciencekit_gpu_opencl` re-exports only with
@@ -65,9 +78,13 @@ their adapter feature, and the `sciencekit_gpu_opencl` re-exports only with
 Three distinct `SKClassWeight` policies (tree/ensemble, linear-model logistic,
 SVM) and two `sk_weighted_average` functions (neighbors, impute) share names
 across families. Each stays in its family module and is deliberately omitted
-from the prelude. Names that are the *same* type re-exported by several modules
-(`SKFeatureBlock`, the device vocabulary, `SKOutlierLabel`, `SKKernel`) are safe
-to duplicate and are documented as one identity.
+from the prelude. A quieter third collision is recorded too: `SKSplitter` is a
+split-selection enum in `tree` and the train/test partition trait in
+`model_selection`; neither is a prelude name. Names that are the *same* type
+re-exported by several modules (`SKFeatureBlock`, the device vocabulary,
+`SKOutlierLabel`, `SKKernel`) are safe to duplicate and are documented as one
+identity; `reexports_tests.rs` proves the identity by assigning between the two
+spellings and each helper only type-checks when both paths name one type.
 
 ### Decision 4 — Documentation
 
