@@ -10,6 +10,7 @@ mod boxed;
 mod builder;
 mod concatenate;
 mod errors;
+mod export;
 mod model;
 mod pipeline_stage;
 mod stages;
@@ -19,6 +20,9 @@ pub use boxed::{SKBlockTransformer, SKBoxedFittedStage};
 pub use builder::{SKFeatureUnion, SKFeatureUnionBuilder};
 pub(crate) use concatenate::sk_concatenate_blocks;
 pub use errors::SKFeatureUnionMemberError;
+pub use export::{
+    SK_FEATURE_UNION_ESTIMATOR_NAME, SKFeatureUnionExportableStages, sk_feature_union_member_count,
+};
 pub use model::SKFeatureUnionModel;
 pub use stages::{SKFeatureUnionArity, SKFeatureUnionStages};
 
@@ -26,6 +30,8 @@ pub use stages::{SKFeatureUnionArity, SKFeatureUnionStages};
 mod union_boxed_tests;
 #[cfg(test)]
 mod union_concatenation_tests;
+#[cfg(test)]
+mod union_export_tests;
 #[cfg(test)]
 mod union_fit_tests;
 #[cfg(test)]
