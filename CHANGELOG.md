@@ -50,6 +50,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   listed in `sk_onnx_coverage`. Predictions are validated against the reference
   `onnxruntime` by the committed harness
   `crates/sciencekit_onnx/validation/compare_with_onnxruntime.py`.
+- ONNX import (spec `onnx-import`): the same `sciencekit_onnx` crate now loads
+  an ONNX model and runs it as a generic predictor through `SKOnnxPredictor<F>`
+  (built by `SKOnnxPredictorBuilder`), implementing both
+  `SKRegressorPredictor<F>` and `SKClassifierPredictor<F>`. A dependency-free
+  interpreter executes a documented operator subset over the shared
+  `serde-onnx` IR (pinned at revision `0c54592`), including the `ai.onnx.ml`
+  tree ensembles. Validation rejects invalid bytes, wrong opsets, unsupported
+  operators, missing initializers, external data, shape/dtype mismatches and
+  ambiguous outputs with the typed `SKOnnxImportError`. Export was refactored
+  onto the same IR, so both directions share one model vocabulary. The
+  extended harness `validation/compare_with_onnxruntime.py` imports every
+  fixture and reports 36/36 models matching both the Rust prediction and
+  `onnxruntime`.
 - Shared helpers for the retrofit: `sk_assert_export_round_trip`,
   `sk_states_equal`, the tensor readers and the backend/metadata parameter
   parsers.
