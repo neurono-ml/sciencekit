@@ -39,7 +39,7 @@
 - [x] 4.2 Implement export/import for SVC/SVR/LinearSVC (support vectors, dual
   coefficients, kernel config, class tables); verify with
   `cargo test -p sciencekit_svm export`.
-- [ ] 4.3 Implement export/import for decision trees and the ensembles (node arrays, leaf
+- [x] 4.3 Implement export/import for decision trees and the ensembles (node arrays, leaf
   values, tree list, class tables, OOB metadata); verify with
   `cargo test -p sciencekit_tree export` and `cargo test -p sciencekit_ensemble export`.
 
