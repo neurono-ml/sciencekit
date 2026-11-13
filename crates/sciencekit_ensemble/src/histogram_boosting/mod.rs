@@ -42,6 +42,8 @@ mod determinism_tests;
 #[cfg(test)]
 mod early_stopping_tests;
 #[cfg(test)]
+mod multiclass_loop_tests;
+#[cfg(test)]
 mod regressor_tests;
 #[cfg(test)]
 mod representation_tests;
