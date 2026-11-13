@@ -29,11 +29,6 @@
 // the functions are called from languages where a Rust `unsafe` marker has no
 // meaning. Marking them `unsafe` would only burden the Rust-side tests.
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
-// The C entry points take raw pointers by design. Their safety contract is
-// documented per function (`# Safety`), validated before any dereference, and
-// the functions are called from languages where a Rust `unsafe` marker has no
-// meaning. Marking them `unsafe` would only burden the Rust-side tests.
-#![allow(clippy::not_unsafe_ptr_arg_deref)]
 
 pub mod abi;
 pub mod array;
