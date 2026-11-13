@@ -32,6 +32,17 @@ never reimplements a scaler, a metric or a model format. That boundary is a
 design decision, not a limitation: a second implementation would drift from the
 library every time an algorithm changed.
 
+**Reproducible means byte-reproducible.** The Safetensors encoder writes its
+metadata from ordered maps and orders tensor payloads by descending alignment
+and then by name, so two runs of one workflow produce the same model bytes.
+`tests/reproducibility_tests.rs` runs one workflow twice into two directories
+and compares the model and predictions files byte for byte; the interop unit
+test `safetensors_determinism_tests.rs` pins the sorted header. A run also
+preflights every declared output — destination directory and format capability —
+before it writes the first file, so a failing predictions path or a missing
+Parquet feature exits non-zero without leaving a half-written experiment record
+(`tests/preflight_tests.rs`).
+
 ```mermaid
 flowchart LR
     A["workflow.json<br/>the experiment record"] --> L["loader + validator<br/>typed paths"]
@@ -108,12 +119,25 @@ without erasing the fields it does not set. `SCIENCEKIT_ALPHA`,
 variables form the environment layer in `config/environment.rs`.
 
 `--dry-run` renders the **resolved** configuration as JSON and stops before any
-artifact is written. It also validates that the dataset exists and that the
-output directories exist, so a typo surfaces before a long fit.
+artifact is written. It also validates that the dataset exists, that the output
+directories exist and that every enumerated value is one the commands accept:
+dataset, output and model formats, estimator and metric names, and the backend.
+A dry run that prints cleanly is therefore executable; `tests/validation_tests.rs`
+runs the binary with an invalid dataset format, output format, metric, estimator
+and backend, and with an invalid workflow `output.format`, and asserts each one
+fails here instead of halfway through a fit.
 `tests/config_tests.rs` proves all four levels in one test,
 `precedence_resolves_flags_over_environment_over_file_over_defaults`: the file
 sets `alpha = 2.0`, the environment sets `3.0`, a flag sets `4.0`, and the test
 asserts `4.0`, then `3.0`, then `2.0`, then the default `1.0`.
+
+An artifact format is one of those layers: a flag, `SCIENCEKIT_OUTPUT_FORMAT` or
+the workflow's `output.format` decides the format, and only when none of them
+has an opinion does the output file extension infer it. The resolved
+configuration records that provenance in `output_format_explicit`, so
+`predict`/`transform` cannot quietly fall back to CSV for a workflow that asked
+for JSON, and an empty environment variable is ignored rather than treated as a
+choice (`tests/config_tests.rs` covers both).
 
 ## Exit codes are a contract
 
@@ -133,7 +157,9 @@ command cannot invent a new number. Clap's own usage failures already exit with
 `2`, which is why the contract starts there rather than at `1`.
 `tests/error_tests.rs` pins three of the five codes against the real process:
 an invalid workflow exits `2`, a missing model exits `3`, and a format whose
-Cargo feature is off exits `4` with a message naming that feature.
+Cargo feature is off exits `4` with a message naming that feature. The
+dry-run validation tests above extend the `2`/`4` cases to every enumerated
+configuration value.
 
 ## Every subcommand in one pass
 
