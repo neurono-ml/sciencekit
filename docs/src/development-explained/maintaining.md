@@ -336,6 +336,19 @@ with an out-of-core composition layer: the `SKStreamingTransformer` contract, th
 one-shot materialization within `memory_budget_bytes`, multi-epoch replay on reopenable providers,
 the bounded `SKFinalizerBuffer` that preserves CSR, stage-indexed error propagation and the
 `Send + Sync` fitted pipeline with its `SKStreamingFitReport`.
+The [Polars and DataFusion sources chapter](./ch57-polars-datafusion-sources.html) adds the
+feature-gated tabular sources in `sciencekit_interop`: the materialized
+`SKTabularDataset<F>` with `SKColumnKind`, `SKTabularSourceConfig` and the owned
+`SKNominalMatrixOwned`; Polars `DataFrame`/`LazyFrame` conversion with categorical labels read
+from their strings; DataFusion 46 `DataFrame`/`RecordBatch` conversion plus a true
+record-batch stream and Parquet-through-DataFusion; and the missing-value mapping shared by
+both engines.
+The [memory-mapped sources chapter](./ch58-memory-mapped-interop.html) adds the `memmap` feature of
+`sciencekit_interop`: read-only `memmap2` mappings behind `SKMappableSource` and `SKLazySource`,
+raw binary matrices with explicit descriptors and exact length validation, zero-copy NumPy `.npy`
+float rows with Fortran-order, endianness and alignment rejection plus an explicit casting path,
+footer-indexed Arrow IPC random access with per-batch decoding, bounded sequential blocks and
+`Send + Sync` concurrent readers.
 
 The [linear support-vector machines chapter](./ch59-svm-linear-svc.html) completes
 `sciencekit_svm` with `SKLinearSVC<F>`: the LIBLINEAR-style dual coordinate descent for the
