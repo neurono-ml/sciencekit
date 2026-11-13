@@ -191,3 +191,97 @@ fn logistic_regression_export_declares_the_class_table_in_metadata() {
     );
     let _ = json_vector(&array![1.0_f64]);
 }
+
+#[test]
+fn logistic_regression_declared_input_rejects_a_wider_matrix() {
+    use sciencekit_linear_model::logistic_regression::SKLogisticRegression;
+
+    use crate::acceptance_tests::write_runtime_error_fixture;
+
+    let features: Array2<f64> = features();
+    let targets: Array1<i64> = array![0, 0, 0, 1, 1, 1];
+    let model = SKLogisticRegression::<f64>::build()
+        .build()
+        .expect("the classifier configuration is valid")
+        .fit(features.view(), targets.view())
+        .expect("the classifier fits");
+    let onnx = model.to_onnx().expect("the classifier exports");
+    let mut wider = features.clone();
+    wider
+        .push_column(Array1::zeros(6).view())
+        .expect("the column appends");
+    write_runtime_error_fixture(
+        "logistic_regression_feature_count_mismatch_f64",
+        &onnx,
+        "features",
+        json_matrix(&wider),
+        "Expected: 2",
+    );
+}
+
+fn write_coordinate_descent_fixture<M>(name: &str, features: &Array2<f64>, model: &M)
+where
+    M: SKRegressorPredictor<f64, Error = sciencekit_common::SKError> + super::SKToOnnx<f64>,
+{
+    let prediction = model
+        .predict(features.view())
+        .expect("the regressor predicts");
+    let onnx = model.to_onnx().expect("the regressor exports");
+    write_fixture(
+        name,
+        &onnx,
+        "features",
+        json_matrix(features),
+        serde_json::json!({ onnx.outputs()[0].name(): prediction.iter().map(|value| vec![*value]).collect::<Vec<Vec<f64>>>() }),
+        1e-9,
+    );
+}
+
+#[test]
+fn lasso_export_matches_the_rust_prediction() {
+    use sciencekit_linear_model::lasso::SKLasso;
+
+    let features: Array2<f64> = features();
+    let targets: Array1<f64> = array![1.0, 3.0, 4.0, 14.0, 9.0, 23.0];
+    let model = SKLasso::build()
+        .alpha(0.1_f64)
+        .maximum_number_of_iterations(10_000)
+        .build()
+        .expect("the regressor configuration is valid")
+        .fit(features.view(), targets.view())
+        .expect("the regressor fits");
+    write_coordinate_descent_fixture("lasso_single_alpha_f64", &features, &model);
+}
+
+#[test]
+fn elastic_net_export_matches_the_rust_prediction() {
+    use sciencekit_linear_model::elastic_net::SKElasticNet;
+
+    let features: Array2<f64> = features();
+    let targets: Array1<f64> = array![1.0, 3.0, 4.0, 14.0, 9.0, 23.0];
+    let model = SKElasticNet::build()
+        .alpha(0.1_f64)
+        .l1_ratio(0.5_f64)
+        .maximum_number_of_iterations(10_000)
+        .build()
+        .expect("the regressor configuration is valid")
+        .fit(features.view(), targets.view())
+        .expect("the regressor fits");
+    write_coordinate_descent_fixture("elastic_net_single_alpha_f64", &features, &model);
+}
+
+#[test]
+fn sgd_regressor_export_matches_the_rust_prediction() {
+    use sciencekit_linear_model::sgd_regressor::SKSGDRegressor;
+
+    let features: Array2<f64> = features();
+    let targets: Array1<f64> = array![1.0, 3.0, 4.0, 14.0, 9.0, 23.0];
+    let model = SKSGDRegressor::build()
+        .maximum_number_of_iterations(2_000)
+        .random_seed(7)
+        .build()
+        .expect("the regressor configuration is valid")
+        .fit(features.view(), targets.view())
+        .expect("the regressor fits");
+    write_coordinate_descent_fixture("sgd_regressor_f64", &features, &model);
+}

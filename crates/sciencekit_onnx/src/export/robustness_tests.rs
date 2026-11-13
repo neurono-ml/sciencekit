@@ -128,3 +128,42 @@ fn classifier_metadata_carries_the_class_table() {
     );
 }
 
+#[test]
+fn export_rejects_a_state_whose_feature_count_disagrees_with_its_tensors() {
+    use sciencekit_common::{SKError, SKExportable, SKModelMetadata, SKModelState};
+
+    let features: Array2<f64> = ndarray::array![[0.0, 0.0], [1.0, 1.0], [2.0, 2.0]];
+    let targets: ndarray::Array1<f64> = ndarray::array![1.0, 2.0, 3.0];
+    let model =
+        sciencekit_linear_model::linear_regression::core_implementation::SKLinearRegression::build(
+        )
+        .build()
+        .expect("the regressor configuration is valid")
+        .fit(features.view(), targets.view())
+        .expect("the regressor fits");
+    let state = model.export_state().expect("the state exports");
+    let metadata = state.metadata();
+    let mut tampered = SKModelMetadata::new(
+        metadata.estimator_name(),
+        metadata.format_version(),
+        metadata.scalar_data_type(),
+        metadata.feature_count() + 1,
+    )
+    .expect("the metadata is valid");
+    for (name, value) in metadata.parameters() {
+        tampered = tampered
+            .with_parameter(name.clone(), value.clone())
+            .expect("the parameter is valid");
+    }
+    let tampered_state = SKModelState::new(
+        tampered,
+        state.tensors().values().cloned().collect::<Vec<_>>(),
+    )
+    .expect("the state is valid");
+    let error = crate::export::sk_export_state_to_onnx(&tampered_state)
+        .expect_err("a state whose width disagrees with its tensors is rejected");
+    assert!(
+        matches!(error, SKError::ShapeMismatch { .. }),
+        "unexpected error: {error:?}"
+    );
+}

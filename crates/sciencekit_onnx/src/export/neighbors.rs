@@ -10,7 +10,8 @@ use sciencekit_common::{SKError, SKFloat, SKModelState};
 use crate::graph::{SKOnnxGraphBuilder, SKOnnxNode};
 
 use super::helpers::{
-    floating_tensor, integer_parameter, integer_tensor, string_parameter, unsupported,
+    floating_tensor, integer_parameter, integer_tensor, require_feature_width, string_parameter,
+    unsupported,
 };
 use super::stage::{SKOnnxStageKind, SKOnnxStageOutput};
 
@@ -47,6 +48,7 @@ pub(crate) fn append_neighbors<F: SKFloat>(
             found: training_shape,
         });
     };
+    require_feature_width(state, feature_count)?;
     let neighbors = integer_parameter(state, "nearest_neighbors_count", 1).max(1) as usize;
     // Pairwise squared distances through broadcasting: [N, 1, F] - [1, M, F].
     builder.add_floating_initializer(

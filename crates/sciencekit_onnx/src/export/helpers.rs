@@ -87,6 +87,26 @@ pub(crate) fn require_feature_count<F: SKFloat>(
     Ok(())
 }
 
+/// Reject a learned per-feature dimension that disagrees with the declared input.
+///
+/// The graph input width comes from the state metadata while a learned tensor
+/// carries its own shape; a corrupted state that disagrees would produce a
+/// graph the runtime rejects at prediction time, so the exporter fails first.
+pub(crate) fn require_feature_width<F: SKFloat>(
+    state: &SKModelState<F>,
+    width: usize,
+) -> Result<(), SKError> {
+    let declared = state.metadata().feature_count();
+    if width == declared {
+        Ok(())
+    } else {
+        Err(SKError::ShapeMismatch {
+            expected: vec![declared],
+            found: vec![width],
+        })
+    }
+}
+
 /// The ONNX element type of the model scalar.
 pub(crate) fn element_type<F: SKFloat>() -> i64 {
     crate::graph::SKOnnxTensorDType::for_scalar::<F>().element_type() as i64

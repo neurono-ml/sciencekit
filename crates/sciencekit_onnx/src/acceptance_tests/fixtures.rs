@@ -43,3 +43,35 @@ pub(crate) fn write_fixture(
     )
     .expect("the expected output is writable");
 }
+
+/// Write one model plus an input the reference runtime must reject.
+///
+/// The declared input width is part of the exported contract: a matrix with a
+/// different feature count has to fail loudly at run time instead of silently
+/// producing a prediction for a different function.
+pub(crate) fn write_runtime_error_fixture(
+    fixture_name: &str,
+    model: &SKOnnxModel,
+    input_name: &str,
+    input: Value,
+    error_contains: &str,
+) {
+    let Some(root) = fixture_directory() else {
+        return;
+    };
+    let directory = root.join(fixture_name);
+    std::fs::create_dir_all(&directory).expect("the fixture directory is writable");
+    model
+        .save(directory.join("model.onnx"))
+        .expect("the model is writable");
+    std::fs::write(
+        directory.join("input.json"),
+        json!({"input_name": input_name, "input": input}).to_string(),
+    )
+    .expect("the input is writable");
+    std::fs::write(
+        directory.join("expected.json"),
+        json!({"runtime_error_contains": error_contains}).to_string(),
+    )
+    .expect("the expected runtime error is writable");
+}

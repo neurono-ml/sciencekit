@@ -9,7 +9,7 @@ use sciencekit_common::{SKError, SKFloat, SKModelState};
 
 use crate::graph::{SKOnnxGraphBuilder, SKOnnxNode};
 
-use super::helpers::{boolean_parameter, floating_tensor};
+use super::helpers::{boolean_parameter, floating_tensor, require_feature_width};
 use super::stage::{SKOnnxStageKind, SKOnnxStageOutput};
 
 pub(crate) const SK_PCA_NAME: &str = "SKPCA";
@@ -80,6 +80,7 @@ fn append_projection<F: SKFloat>(
             found: component_shape,
         });
     };
+    require_feature_width(state, feature_count)?;
     let mut transposed = vec![F::zero(); components.len()];
     for component in 0..component_count {
         for feature in 0..feature_count {
@@ -95,6 +96,7 @@ fn append_projection<F: SKFloat>(
     let mut current = input.to_string();
     if with_mean {
         let (_, mean) = floating_tensor(state, &format!("{prefix}.mean"))?;
+        require_feature_width(state, mean.len())?;
         builder.add_floating_initializer(
             format!("{namespace}{prefix}.mean"),
             vec![mean.len()],

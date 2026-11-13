@@ -54,6 +54,20 @@ def validate_fixture(directory: Path) -> bool:
     input_array = np.asarray(input_payload["input"], dtype=np.float32 if _is_float_model(model) else np.float64)
     feeds = {input_payload["input_name"]: input_array}
     output_names = [output.name for output in session.get_outputs()]
+
+    if "runtime_error_contains" in expected_payload:
+        needle = expected_payload["runtime_error_contains"]
+        try:
+            session.run(output_names, feeds)
+        except Exception as error:  # noqa: BLE001 - the runtime error type is not stable
+            if needle not in str(error):
+                print(f"FAIL {directory.name}: the runtime failed with an unexpected error: {error}")
+                return False
+            print(f"PASS {directory.name}: the runtime rejected the input as expected")
+            return True
+        print(f"FAIL {directory.name}: the runtime accepted an input it should reject")
+        return False
+
     values = session.run(output_names, feeds)
     actual = dict(zip(output_names, [value.tolist() for value in values]))
 

@@ -10,7 +10,8 @@ use sciencekit_common::{SKError, SKFloat, SKModelState, SKParameterValue};
 use crate::graph::{SKOnnxGraphBuilder, SKOnnxNode, SKOnnxTensorDType};
 
 use super::helpers::{
-    boolean_parameter, floating_tensor, integer_tensor, string_parameter, unsupported,
+    boolean_parameter, floating_tensor, integer_tensor, require_feature_width, string_parameter,
+    unsupported,
 };
 use super::stage::{SKOnnxStageKind, SKOnnxStageOutput};
 
@@ -53,6 +54,7 @@ fn append_standard_scaler<F: SKFloat>(
     let (dimensions, mean) = floating_tensor(state, "standard_scaler.mean")?;
     let (_, scale) = floating_tensor(state, "standard_scaler.scale")?;
     let width = dimensions.first().copied().unwrap_or(0);
+    require_feature_width(state, width)?;
     let mut current = input.to_string();
     if boolean_parameter(state, "with_mean", true) {
         builder.add_floating_initializer(
@@ -99,6 +101,7 @@ fn append_minmax_scaler<F: SKFloat>(
     let (_, maximum) = floating_tensor(state, "minmax_scaler.maximum")?;
     let (_, scale) = floating_tensor(state, "minmax_scaler.scale")?;
     let width = dimensions.first().copied().unwrap_or(0);
+    require_feature_width(state, width)?;
     let feature_minimum = super::helpers::float_parameter(state, "feature_minimum", 0.0);
     let feature_maximum = super::helpers::float_parameter(state, "feature_maximum", 1.0);
 
@@ -179,6 +182,7 @@ fn append_robust_scaler<F: SKFloat>(
     let (dimensions, center) = floating_tensor(state, "robust_scaler.center")?;
     let (_, scale) = floating_tensor(state, "robust_scaler.scale")?;
     let width = dimensions.first().copied().unwrap_or(0);
+    require_feature_width(state, width)?;
     let mut current = input.to_string();
     if boolean_parameter(state, "with_centering", true) {
         builder.add_floating_initializer(
@@ -264,6 +268,7 @@ fn append_one_hot_encoder<F: SKFloat>(
         }
         categories_by_column.push(values);
     }
+    require_feature_width(state, categories_by_column.len())?;
     let mut pieces = Vec::new();
     let mut width = 0;
     for (column, codes) in categories_by_column.iter().enumerate() {

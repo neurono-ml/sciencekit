@@ -9,7 +9,9 @@ use sciencekit_common::{SKError, SKFloat, SKModelState};
 
 use crate::graph::{SKOnnxGraphBuilder, SKOnnxNode};
 
-use super::helpers::{boolean_parameter, floating_tensor, string_parameter, unsupported};
+use super::helpers::{
+    boolean_parameter, floating_tensor, require_feature_width, string_parameter, unsupported,
+};
 use super::stage::{SKOnnxStageKind, SKOnnxStageOutput};
 
 pub(crate) const SK_LINEAR_REGRESSION_NAME: &str = "SKLinearRegression";
@@ -83,6 +85,7 @@ fn append_single_vector_regressor<F: SKFloat>(
         });
     };
     let width = coefficients.len();
+    require_feature_width(state, width)?;
     builder.add_floating_initializer(
         format!("{namespace}linear.coefficients"),
         vec![width, 1],
@@ -140,6 +143,7 @@ fn append_multi_alpha_regressor<F: SKFloat>(
         });
     };
     let width = *shape.last().unwrap_or(&coefficients.len());
+    require_feature_width(state, width)?;
     if coefficients.len() != width {
         return Err(SKError::ShapeMismatch {
             expected: vec![1, width],
@@ -202,6 +206,7 @@ fn append_logistic_regression<F: SKFloat>(
             super::helpers::integer_parameter(state, "number_of_classes", heads as i64).max(1)
                 as usize
         });
+    require_feature_width(state, feature_count)?;
     let strategy = string_parameter(state, "strategy", "binary");
     if strategy == "binary" && heads != 1 {
         return Err(SKError::ShapeMismatch {

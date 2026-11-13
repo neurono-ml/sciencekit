@@ -10,5 +10,5 @@ pub mod onnx_runtime_tests;
 
 mod fixtures;
 mod interface;
-pub(crate) use fixtures::write_fixture;
+pub(crate) use fixtures::{write_fixture, write_runtime_error_fixture};
 pub(crate) use interface::{assert_classifier_interface, assert_regressor_interface};
