@@ -33,7 +33,7 @@
 
 ## 4. Neighbours, SVM and trees
 
-- [ ] 4.1 Implement export/import for KNN and KNNImputer (training design, tree/index
+- [x] 4.1 Implement export/import for KNN and KNNImputer (training design, tree/index
   metadata, weights/metric); verify with `cargo test -p sciencekit_neighbors export` and
   `cargo test -p sciencekit_impute export`.
 - [ ] 4.2 Implement export/import for SVC/SVR/LinearSVC (support vectors, dual
