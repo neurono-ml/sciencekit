@@ -143,6 +143,29 @@ and receives a Python binding as soon as it is validated on CPU.
 | OpenCL backend (`opencl` feature) | `sciencekit_gpu`, `sciencekit_gpu_opencl` | First real device backend behind `SKComputeBackend`: ICD-loader device discovery, builder-only construction, device buffers with memory/capacity validation, explicit accounted transfers, runtime-compiled pairwise/GEMM/elementwise/tree kernels with CPU parity, concurrent dispatch and honest CPU fallback | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKTelemetry` / `SKTelemetryPipeline` | `sciencekit_telemetry` | Opt-in OTLP trace, log and metric export pipelines, resource attributes, sampling and bounded lifecycle (silent no-op default) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 
+## One entry point · `sciencekit`
+
+Every crate below stays independently consumable, but applications normally add the
+umbrella package. It re-exports the stable public surface under family modules and
+gives docs.rs and crates.io a single front page; it adds no logic.
+
+| Module | Owning crate(s) | Contents |
+|---|---|---|
+| `sciencekit::prelude` | curated across families | builder/fit/predict traits, data views, `SKError`, `SKFloat` and the headline estimators |
+| `sciencekit::math` | `sciencekit_math` | kernels, pairwise distances, solvers and the math backend |
+| `sciencekit::preprocessing` | `sciencekit_preprocessing` | scalers, one-hot, polynomial features |
+| `sciencekit::impute` | `sciencekit_impute` | simple, indicator and KNN imputers |
+| `sciencekit::linear_model` | `sciencekit_linear_model` | linear, regularized, logistic and SGD models |
+| `sciencekit::neighbors`, `sciencekit::svm` | `sciencekit_neighbors`, `sciencekit_svm` | nearest neighbors and support-vector machines |
+| `sciencekit::tree`, `sciencekit::ensemble`, `sciencekit::outlier` | `sciencekit_tree`, `sciencekit_ensemble`, `sciencekit_outlier` | trees, forests, boosting and isolation forests |
+| `sciencekit::cluster`, `sciencekit::decomposition` | `sciencekit_cluster`, `sciencekit_decomposition` | clustering, PCA and SVD |
+| `sciencekit::model_selection`, `sciencekit::pipeline`, `sciencekit::metrics` | `sciencekit_model_selection`, `sciencekit_pipeline`, `sciencekit_metrics` | splitting, search, composition and evaluation |
+| `sciencekit::interop` | `sciencekit_interop`, `sciencekit_onnx` | tabular sources, model formats and ONNX |
+| `sciencekit::accelerators`, `sciencekit::telemetry`, `sciencekit::ffi` | `sciencekit_gpu`, `sciencekit_gpu_opencl`, `sciencekit_telemetry`, `sciencekit_ffi` | device contracts, OTLP export and the C ABI |
+
+Integration features (`opencl`, `telemetry`, `onnx`, `polars`, `datafusion`, `memmap`,
+`parquet`) are off by default and forward to the owning crate.
+
 <div class="sk-box sk-box--info">
 <strong>Continuous acceleration:</strong> every completed algorithm receives, in separate changes,
 a Python binding (<code>sciencekit_python</code>) and GPU backends (OpenCL → CUDA → ROCm) behind

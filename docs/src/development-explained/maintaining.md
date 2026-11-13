@@ -424,3 +424,15 @@ compares predictions with the original, keep the external fixture in
 `crates/sciencekit_onnx/validation/external/` reproducible with
 `validation/compare_native_import.py`, and update this chapter rather than
 adding a parallel one.
+
+The [umbrella crate chapter](./ch67-umbrella-crate.md) explains the entry point
+rather than an algorithm: why one package re-exports twenty-one, how the
+umbrella lives in the existing workspace-root package (a `crates/sciencekit`
+would have duplicated the package name), how the curated prelude differs from a
+glob import, which names collide across families (`SKClassWeight` is three
+distinct policies; `SKFeatureBlock` is one shared identity), and how the
+integration features forward with `dep:` while the default build stays
+core-only. When you add a family, extend `src/<family>.rs`, add the name to the
+prelude only when it is broadly useful, forward any heavy dependency through a
+feature, and extend `reexports_tests`, `prelude_tests` and `features_tests` so
+the chapter's claims stay executable.

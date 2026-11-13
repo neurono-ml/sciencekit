@@ -94,4 +94,5 @@
   - [ONNX export: turning a fitted model into a portable graph](development-explained/ch63-onnx-export.md)
   - [ONNX import: reading a foreign graph as a model](development-explained/ch64-onnx-import.md)
   - [Native model import: from a foreign file back to a real model](development-explained/ch65-native-model-import.md)
+  - [The umbrella crate: one door into many rooms](development-explained/ch67-umbrella-crate.md)
   - [Maintaining this book](development-explained/maintaining.md)
