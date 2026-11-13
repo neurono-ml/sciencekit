@@ -40,6 +40,9 @@ impl<'a, F: SKFloat> SKLinearSvcDesign<'a, F> {
                     has_intercept,
                 )))
             }
+            // `SKDataView` is `#[non_exhaustive]` in `sciencekit_common`, so the
+            // wildcard is required across the crate boundary even though the
+            // currently known variants are only `Dense` and `Sparse`.
             _ => Err(SKError::UnsupportedRepresentation {
                 representation: features.representation(),
                 suggestion: "convert the input to a dense matrix or a CSR matrix",

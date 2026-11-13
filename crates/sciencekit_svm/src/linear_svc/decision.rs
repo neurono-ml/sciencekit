@@ -5,14 +5,14 @@ use ndarray::{Array1, Array2, ArrayView1, Axis};
 use sciencekit_common::{SKDataView, SKError, SKFloat};
 use sprs::CsVecView;
 
-use super::model::{SKLinearSVCModel, SKLinearSvcHead};
+use super::model::{SKLinearSVCHead, SKLinearSVCModel};
 use super::validation::sk_validate_linear_svc_query_features;
 
-fn sk_dense_head_decision<F: SKFloat>(head: &SKLinearSvcHead<F>, row: ArrayView1<'_, F>) -> F {
+fn sk_dense_head_decision<F: SKFloat>(head: &SKLinearSVCHead<F>, row: ArrayView1<'_, F>) -> F {
     row.dot(head.coefficients()) + head.intercept()
 }
 
-fn sk_sparse_head_decision<F: SKFloat>(head: &SKLinearSvcHead<F>, row: CsVecView<'_, F>) -> F {
+fn sk_sparse_head_decision<F: SKFloat>(head: &SKLinearSVCHead<F>, row: CsVecView<'_, F>) -> F {
     row.indices()
         .iter()
         .zip(row.data().iter())
@@ -79,6 +79,9 @@ pub(crate) fn sk_linear_svc_decision_matrix<F: SKFloat>(
                     }
                 });
         }
+        // `SKDataView` is `#[non_exhaustive]` in `sciencekit_common`, so the
+        // wildcard is required across the crate boundary even though the
+        // currently known variants are only `Dense` and `Sparse`.
         _ => {
             return Err(SKError::UnsupportedRepresentation {
                 representation: features.representation(),
