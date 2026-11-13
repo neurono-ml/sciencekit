@@ -101,20 +101,14 @@ fn regressor_predict<F: SKFloat>(
 ) -> Result<Array1<F>, SKError> {
     match model {
         SKNativeRegressor::LinearRegression(model) => {
-            SKRegressorPredictor::predict(model, features).map_err(Into::into)
+            SKRegressorPredictor::predict(model, features)
         }
-        SKNativeRegressor::Ridge(model) => {
-            SKRegressorPredictor::predict(model, features).map_err(Into::into)
-        }
+        SKNativeRegressor::Ridge(model) => SKRegressorPredictor::predict(model, features),
         SKNativeRegressor::StochasticGradient(model) => {
-            SKRegressorPredictor::predict(model, features).map_err(Into::into)
+            SKRegressorPredictor::predict(model, features)
         }
-        SKNativeRegressor::DecisionTree(model) => {
-            SKRegressorPredictor::predict(model, features).map_err(Into::into)
-        }
-        SKNativeRegressor::RandomForest(model) => {
-            SKRegressorPredictor::predict(model, features).map_err(Into::into)
-        }
+        SKNativeRegressor::DecisionTree(model) => SKRegressorPredictor::predict(model, features),
+        SKNativeRegressor::RandomForest(model) => SKRegressorPredictor::predict(model, features),
     }
 }
 
@@ -124,16 +118,16 @@ fn classifier_labels<F: SKFloat>(
 ) -> Result<Array1<i64>, SKError> {
     match model {
         SKNativeClassifier::LogisticRegression(model) => {
-            SKClassifierPredictor::predict_labels(model, features).map_err(Into::into)
+            SKClassifierPredictor::predict_labels(model, features)
         }
         SKNativeClassifier::StochasticGradient(model) => {
-            SKClassifierPredictor::predict_labels(model, features).map_err(Into::into)
+            SKClassifierPredictor::predict_labels(model, features)
         }
         SKNativeClassifier::DecisionTree(model) => {
-            SKClassifierPredictor::predict_labels(model, features).map_err(Into::into)
+            SKClassifierPredictor::predict_labels(model, features)
         }
         SKNativeClassifier::RandomForest(model) => {
-            SKClassifierPredictor::predict_labels(model, features).map_err(Into::into)
+            SKClassifierPredictor::predict_labels(model, features)
         }
     }
 }
@@ -144,16 +138,16 @@ fn classifier_probabilities<F: SKFloat>(
 ) -> Result<Array2<F>, SKError> {
     match model {
         SKNativeClassifier::LogisticRegression(model) => {
-            SKClassifierPredictor::predict_probabilities(model, features).map_err(Into::into)
+            SKClassifierPredictor::predict_probabilities(model, features)
         }
         SKNativeClassifier::StochasticGradient(model) => {
-            SKClassifierPredictor::predict_probabilities(model, features).map_err(Into::into)
+            SKClassifierPredictor::predict_probabilities(model, features)
         }
         SKNativeClassifier::DecisionTree(model) => {
-            SKClassifierPredictor::predict_probabilities(model, features).map_err(Into::into)
+            SKClassifierPredictor::predict_probabilities(model, features)
         }
         SKNativeClassifier::RandomForest(model) => {
-            SKClassifierPredictor::predict_probabilities(model, features).map_err(Into::into)
+            SKClassifierPredictor::predict_probabilities(model, features)
         }
     }
 }
@@ -164,13 +158,13 @@ fn transformer_transform<F: SKFloat>(
 ) -> Result<Array2<F>, SKError> {
     match model {
         SKNativeTransformer::StandardScaler(model) => {
-            SKFeatureTransformer::transform(model, features).map_err(Into::into)
+            SKFeatureTransformer::transform(model, features)
         }
         SKNativeTransformer::MinMaxScaler(model) => {
-            SKFeatureTransformer::transform(model, features).map_err(Into::into)
+            SKFeatureTransformer::transform(model, features)
         }
         SKNativeTransformer::RobustScaler(model) => {
-            SKFeatureTransformer::transform(model, features).map_err(Into::into)
+            SKFeatureTransformer::transform(model, features)
         }
     }
 }
@@ -180,8 +174,6 @@ fn clusterer_clusters<F: SKFloat>(
     features: ArrayView2<'_, F>,
 ) -> Result<Array1<SKClusterLabel>, SKError> {
     match model {
-        SKNativeClusterer::KMeans(model) => {
-            SKClustererPredictor::predict_clusters(model, features).map_err(Into::into)
-        }
+        SKNativeClusterer::KMeans(model) => SKClustererPredictor::predict_clusters(model, features),
     }
 }
