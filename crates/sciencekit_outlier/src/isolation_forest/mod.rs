@@ -4,6 +4,7 @@ mod builder;
 mod config;
 mod core_implementation;
 mod execution;
+mod export;
 mod fit;
 mod model;
 mod predict;
@@ -39,3 +40,6 @@ mod isolation_score_tests;
 mod isolation_tree_tests;
 #[cfg(test)]
 mod isolation_validation_tests;
+
+#[cfg(test)]
+mod export_tests;
