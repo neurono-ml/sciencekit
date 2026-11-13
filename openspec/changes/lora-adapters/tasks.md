@@ -4,7 +4,7 @@
 
 - [x] 1.1 Create the LoRA adapter module with `SKLoraAdapter`, builder, rank/alpha and
   scaling tests; verify with `cargo test -p sciencekit_linear_model lora_adapter`.
-- [ ] 1.2 Implement `A`/`B` shape/initialization and frozen-base attachment, with a
+- [x] 1.2 Implement `A`/`B` shape/initialization and frozen-base attachment, with a
   zero-adapter prediction test; verify with
   `cargo test -p sciencekit_linear_model lora_attach`.
 
