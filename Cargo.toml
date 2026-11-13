@@ -149,8 +149,12 @@ opencl = [
     "sciencekit_gpu_opencl/gpu-opencl",
     "sciencekit_gpu/opencl",
 ]
-# OpenTelemetry trace, log and metric export pipelines.
-telemetry = ["dep:sciencekit_telemetry"]
+# OpenTelemetry trace, log and metric export pipelines, with both OTLP
+# transports enabled (the sub-crate's own `telemetry` umbrella feature).
+telemetry = ["dep:sciencekit_telemetry", "sciencekit_telemetry/telemetry"]
+# Granular OTLP transports for a build that wants only one exporter stack.
+otlp-grpc = ["dep:sciencekit_telemetry", "sciencekit_telemetry/otlp-grpc"]
+otlp-http = ["dep:sciencekit_telemetry", "sciencekit_telemetry/otlp-http"]
 # ONNX graph translation (export and import).
 onnx = ["dep:sciencekit_onnx"]
 # Polars DataFrame adapter for `sciencekit_interop`.

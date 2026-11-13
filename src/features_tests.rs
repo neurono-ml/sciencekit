@@ -59,3 +59,34 @@ fn the_default_build_compiles_only_the_core() {
     sized::<crate::preprocessing::SKStandardScaler>();
     sized::<crate::metrics::classification::SKConfusionMatrix>();
 }
+
+/// The umbrella's `telemetry` feature must enable a real transport, not just
+/// the crate: a pipeline that always refuses with "enable otlp-grpc" would make
+/// the documented capability a lie.
+#[cfg(feature = "telemetry")]
+#[test]
+fn the_telemetry_feature_enables_an_export_transport() {
+    use crate::SKBuilder;
+    let configuration = crate::telemetry::SKTelemetryConfiguration::build()
+        .service_name("sciencekit-umbrella-test")
+        .build()
+        .unwrap();
+    assert!(
+        crate::telemetry::sk_build_otlp_pipeline(configuration).is_ok(),
+        "the umbrella `telemetry` feature must forward the sub-crate transport feature"
+    );
+}
+
+/// Forwarded allocator features must actually reach the global allocator of the
+/// sub-crate, not merely compile.
+#[cfg(feature = "allocator-jemalloc")]
+#[test]
+fn the_jemalloc_feature_installs_the_jemalloc_allocator() {
+    assert_eq!(crate::sk_allocator_kind(), crate::SKAllocatorKind::Jemalloc);
+}
+
+#[cfg(feature = "allocator-mimalloc")]
+#[test]
+fn the_mimalloc_feature_installs_the_mimalloc_allocator() {
+    assert_eq!(crate::sk_allocator_kind(), crate::SKAllocatorKind::MiMalloc);
+}
