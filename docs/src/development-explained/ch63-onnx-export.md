@@ -179,6 +179,7 @@ a label containing punctuation survives the trip. `producer_name` is
 | Linear regressors | `SKLinearRegression`, `SKRidge`, `SKLasso`, `SKElasticNet`, `SKSGDRegressor` | `MatMul`, `Add` | one coefficient vector; coordinate-descent families need a single alpha |
 | Logistic | `SKLogisticRegression` | `MatMul`, `Add`, `Sigmoid`, `Softmax`, `ReduceSum`, `Div`, `Concat`, `ArgMax` | binary, multinomial and one-versus-rest |
 | Trees | `SKDecisionTree*`, `SKRandomForest*` | `TreeEnsembleClassifier`, `TreeEnsembleRegressor`, `ArgMax` | f32 only |
+| Support-vector machines | `SKSVC`, `SKSVR`, `SKLinearSVC` | `MatMul`, `Add`, `Unsqueeze`, `Sub`, `Mul`, `ReduceSum`, `Exp`, `Tanh`, `Pow`, `Greater`, `Cast`, `Gather`, `Abs`, `ArgMax` | linear, polynomial, rbf and sigmoid kernels |
 | Neighbours | `SKKNeighbors*` | `Unsqueeze`, `Sub`, `Mul`, `ReduceSum`, `TopK`, `Gather`, `Equal`, `Cast`, `Concat`, `Div`, `ArgMax` | dense brute-force search, uniform weights |
 | Clustering | `SKKMeans`, `SKMiniBatchKMeans` | `Unsqueeze`, `Sub`, `Mul`, `ReduceSum`, `ArgMin` | nearest centre |
 | Decomposition | `SKPCA`, `SKTruncatedSVD` | `Sub`, `MatMul`, `Div` | PCA includes the mean and the whitening scale |
@@ -216,6 +217,43 @@ if state.metadata().scalar_data_type() == SKTensorDataType::F64 {
 
 `f64_trees_are_rejected_because_the_onnx_ml_attributes_are_floats` locks that
 decision in a test.
+
+### Support vectors and the kernel subgraph
+
+A fitted kernel SVM is a support-vector expansion:
+`f(x) = Σ αᵢ K(x, sᵢ) + b`. ONNX has no operator for an arbitrary kernel, so
+`export/svm/kernel.rs` writes the kernel itself as arithmetic:
+
+- **linear** — `MatMul(X, SVᵀ)`;
+- **rbf** — broadcast `X − SV`, square, reduce, negate, multiply by `γ` and `Exp`;
+- **polynomial** — `Pow(γ·X·SVᵀ + c₀, degree)`;
+- **sigmoid** — `Tanh(γ·X·SVᵀ + c₀)`.
+
+The dual coefficients then enter as a `MatMul` and the bias as an `Add`
+(`export/svm/expansion.rs`). `SKSVR` emits the margin as its regression
+prediction.
+
+`SKSVC` keeps one expansion per one-vs-one pair. A binary model exposes the
+single signed margin and derives its label from `ArgMax([−m, +m])`, which
+reproduces the Rust rule "zero votes for the negative class". A multiclass model
+reproduces `sk_aggregate_one_vs_one_confidences` node by node: per class it
+accumulates the vote (`Greater` + `Cast`, with the loser contribution
+`1 − winner`) and the signed margin sum, then builds
+`votes + margin_sum / (3 · (|margin_sum| + 1))`. Labels come from `ArgMax` over
+the votes only — exactly what the Rust predictor does — so ties fall to the
+smallest class index. Calibrated probabilities are *not* exported; the graph
+exposes decisions and labels, which is what the SVM spec promises.
+
+`SKLinearSVC` needs no kernel: its heads are linear, so the graph is one
+`MatMul` plus `Add`, with a single head mirrored into `[−d, d]` to match the
+Rust decision matrix, followed by `ArgMax`.
+
+Two limits are explicit. A **precomputed** kernel reads a gram query the graph
+cannot interpret, so it returns `UnsupportedOperation` naming the kernel. A
+**CSR** support-vector block has no dense matrix to expand, so it returns
+`UnsupportedOperation` naming the representation. Neither silently exports a
+wrong graph. `export_svm_precomputed_kernel_is_rejected_by_name` locks the first
+case.
 
 ### Neighbours without a k-d tree
 
@@ -296,7 +334,13 @@ writes a fixture under `SCIENCEKIT_ONNX_FIXTURE_DIR`:
   `export_remaining_kmeans_matches_the_rust_labels`,
   `export_remaining_pca_matches_the_rust_transform` and the truncated-SVD test;
 - `export_pipeline_classifier_composes_scaler_and_logistic_regression` and
-  `export_pipeline_regressor_composes_two_transforms_and_a_linear_model`.
+  `export_pipeline_regressor_composes_two_transforms_and_a_linear_model`;
+- `export_svm_binary_svc_rbf_matches_the_rust_decisions_and_labels`,
+  `export_svm_binary_svc_linear_matches_the_rust_decisions_and_labels`,
+  `export_svm_multiclass_svc_one_vs_one_matches_the_rust_outputs`,
+  `export_svm_svr_rbf_matches_the_rust_prediction`,
+  `export_svm_linear_svc_binary_and_multiclass_match_the_rust_outputs` and
+  `export_svm_precomputed_kernel_is_rejected_by_name`.
 
 **Acceptance.** `onnx_runtime_validates_an_exported_scaler` regenerates a fixture
 and executes the committed harness when the host Python has `onnx` and
@@ -315,9 +359,11 @@ A file that merely *parses* proves nothing. The committed harness
 exported model with `onnx`, validates it with `onnx.checker.check_model`, runs
 it with `onnxruntime.InferenceSession` and compares every declared output
 against the Rust prediction within the fixture tolerance. The recorded run
-matched **20 of 20 fixtures**, including f32 and f64 scalers, the one-hot
+matched **26 of 26 fixtures**, including f32 and f64 scalers, the one-hot
 encoder, binary and multiclass logistic models, decision trees, random forests,
-k-nearest neighbours, k-means, PCA, truncated SVD and both pipelines.
+k-nearest neighbours, k-means, PCA, truncated SVD, both pipelines, binary SVC
+with rbf and linear kernels, multiclass one-vs-one SVC, rbf SVR and binary plus
+multiclass `SKLinearSVC`.
 
 ## Decisions and roads not taken
 
@@ -333,10 +379,10 @@ k-nearest neighbours, k-means, PCA, truncated SVD and both pipelines.
   CSR-only state is rejected with a reason instead of being densified silently.
 - **`f32` trees only.** The ONNX-ML schema's float attributes cannot carry
   doubles faithfully, so the exporter says so.
-- **Unsupported families are loud.** SVMs (kernel expansions and one-versus-one
-  voting), gradient/histogram boosting (base score plus learning rate),
-  isolation forest (path-length composition) and DBSCAN (no fitted prediction)
-  return `UnsupportedOperation` naming the family. They are listed as
+- **Unsupported families are loud.** Gradient/histogram boosting (base score
+  plus learning rate), isolation forest (path-length composition) and DBSCAN (no
+  fitted prediction) return `UnsupportedOperation` naming the family; precomputed
+  SVM kernels and CSR support vectors are rejected by name for the same reason. They are listed as
   unsupported in `sk_onnx_coverage`; none of them produces a partial graph.
 - **Validation with `onnxruntime`, not `tract`.** The design named
   `tract-onnx 0.22` as one possible checker. Its transitive crates were not
