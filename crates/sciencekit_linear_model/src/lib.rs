@@ -19,6 +19,7 @@
 
 #![warn(missing_docs)]
 
+pub mod adapters;
 #[cfg(test)]
 pub(crate) mod sparse_streaming_test_datasets;
 #[cfg(test)]

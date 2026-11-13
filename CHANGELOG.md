@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Low-rank adapters (spec `lora-adapters`): `SKLoraAdapter<F>` and its builder
+  attach a frozen linear or logistic coefficient block to a small `A`/`B`
+  factorization, with the documented scaling `alpha / rank`. The attached model
+  fits only the factors (monotone descent on the regression or logistic loss,
+  dense and sparse), predicts through the same product as the base, merges into
+  a standalone native model with bit-for-bit prediction parity, unmerges back,
+  and exports/imports through `SKModelState` under `lora.<target>.a`/`.b`.
+  `SKLoraAdapterRegistry<F>` rejects duplicate identifiers; unsupported base
+  families, target mismatches, rank zero, shape mismatches and non-finite data
+  return typed errors without panicking.
 - Native model import (spec `native-model-import`): `SKNativeImport<F>` turns a
   neutral state into the matching fitted type — linear/logistic/SGD models,
   decision trees and forests, scalers and k-means — with a descriptor that keeps
