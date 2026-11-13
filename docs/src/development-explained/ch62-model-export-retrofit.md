@@ -1,7 +1,8 @@
-# One model state for every fitted model
+# One export contract for every fitted model
 
 This chapter explains how `sciencekit` gives every fitted model the same
-export/import surface — one neutral schema that Safetensors, the JSON debug
+export surface — and a native import wherever the exported state is enough to
+rebuild the model — through one neutral schema that Safetensors, the JSON debug
 reader, ONNX and the language bindings can all consume without knowing a single
 estimator. It is written for a reader who has never used Rust or a numerical
 library, and every claim is grounded in the code and the companion tests.
@@ -42,7 +43,7 @@ flowchart LR
     S -->|export_state| State
     L -->|export_state| State
     F -->|export_state| State
-    P -->|export_state| State
+    P -->|export_state| Refusal["UnsupportedOperation<br/>type-erased stages"]
     State["SKModelState&lt;F&gt;<br/>metadata + named tensors"]
     State -->|tensors| SF["Safetensors writer"]
     State -->|tensors| JS["JSON debug writer"]
@@ -142,8 +143,10 @@ repository's folder-module rule: a pure-dispatcher `mod.rs` declares
 
 ## Walking the companion tests
 
-Every family has a test that fits, exports, imports into a fresh model, and
-compares predictions — never merely "export returned Ok".
+Every importable family has a test that fits, exports, imports into a fresh
+model, and compares predictions — never merely "export returned Ok". The
+composite families that refuse import instead have a companion test that
+asserts the typed `UnsupportedOperation` (see the refusal table below).
 
 - `standard_scaler_round_trips_predictions_and_backend`
   (`crates/sciencekit_preprocessing/src/standard_scaler/model/export_tests.rs`)
@@ -183,34 +186,75 @@ compares predictions — never merely "export returned Ok".
 
 ## Coverage in this change
 
-The retrofit lands family by family, each family in its own commit:
+The retrofit lands family by family, each family in its own commit. It covers
+**47 fitted model types**. Export is universal; import is conditional. Of the
+47, **35 round-trip exactly** — fit, export, import and reproduce the original
+`predict`/`transform` output bit-for-bit — while **12 refuse explicitly** (10
+composites at import, 2 type-erased pipelines at export). Nothing here claims
+that every model round-trips.
 
-| Family | State |
-|---|---|
-| Scalers (`standard_scaler`, `minmax_scaler`, `robust_scaler`) | Implemented |
-| One-hot encoders and polynomial features | Implemented |
-| Simple imputer, missing indicator, KNN imputer | Implemented |
-| Linear regression, ridge, lasso, elastic net, logistic regression, SGD | Implemented |
-| K-nearest neighbours (dense and CSR) | Implemented |
-| SVC, SVR, LinearSVC | Implemented |
-| Decision trees, random forests, gradient boosting, bagging | Implemented |
-| Histogram gradient boosting | Implemented (binning tables, categorical masks, missing routing) |
-| Clustering (KMeans, MiniBatchKMeans, DBSCAN) | Implemented |
-| Decomposition (PCA, TruncatedSVD, IncrementalPCA) | Implemented |
-| Outlier detection (IsolationForest) | Implemented |
-| Typed pipelines | Export implemented; import is unsupported by design |
-| Grid-search and halving winners | Implemented (best model plus selection metadata) |
+| Family | Export | Import |
+|---|---|---|
+| Scalers (`standard_scaler`, `minmax_scaler`, `robust_scaler`) | yes | yes — bit-identical |
+| One-hot encoders and polynomial features | yes | yes — bit-identical |
+| Simple imputer, missing indicator, KNN imputer | yes | yes — bit-identical |
+| Linear regression, ridge, lasso, elastic net, logistic regression, SGD | yes | yes — bit-identical |
+| K-nearest neighbours (dense and CSR) | yes | yes — bit-identical |
+| SVC, SVR, LinearSVC | yes | yes — bit-identical |
+| Decision trees, random forests, gradient boosting | yes | yes — bit-identical |
+| Histogram gradient boosting | yes (binning tables, categorical masks, missing routing) | yes — bit-identical |
+| Clustering (KMeans, MiniBatchKMeans, DBSCAN) | yes | yes — bit-identical |
+| Decomposition (PCA, TruncatedSVD, IncrementalPCA) | yes | yes — bit-identical |
+| Outlier detection (IsolationForest) | yes | yes — bit-identical |
+| Bagging, grid-search and halving winners | yes | no — typed `UnsupportedOperation` |
+| Typed pipelines and feature union | yes | no — typed `UnsupportedOperation` |
+| Graph and streaming pipelines | no — typed `UnsupportedOperation` | no |
 
 The workspace-wide coverage test in the umbrella crate asserts at compile time
-that every fitted model type implements the contract, and at run time that the
-shared format version is used and concurrent exports agree
+that every fitted model type exposes the export contract, and at run time that
+the shared format version is used and concurrent exports agree
 (`concurrent_export_agrees_with_the_single_threaded_state`).
 
-A typed pipeline exports its stages and final model but cannot reconstruct its
-configured stage chain from a state — those are live estimator values, not data
-— so import is deliberately not implemented there. The graph pipeline has the
-same limitation through its type-erased boxes. This is the documented
-"reconstructible" boundary of the contract.
+## What refuses to import, and why
+
+The spec (`model-export-coverage`) asks for two different things. Requirement
+"Every fitted model exports state" is about describing the learned model;
+requirement "Native import where reconstructible" is about *rebuilding* the
+estimator object. A state can be complete enough to inspect and still not
+contain the configuration needed to construct the estimator again. The spec
+covers exactly that gap: "models that cannot SHALL return `UnsupportedOperation`
+with guidance", never a partial model.
+
+The refusals are therefore deliberate, typed and documented, not missing code:
+
+| Model family (model type) | Export? | Import? |
+|---|---|---|
+| Bagging classifier (`SKBaggingClassifierModel`) | yes | no — typed `UnsupportedOperation`: member tensors are prefixed, but each member's own metadata is absent, so the base model cannot be rebuilt |
+| Bagging regressor (`SKBaggingRegressorModel`) | yes | no — same member-metadata gap |
+| Grid-search classifier (`SKGridSearchCVClassifierModel`) | yes | no — typed `UnsupportedOperation`: winner tensors and selection metadata are present, the winner's configuration is not |
+| Grid-search regressor (`SKGridSearchCVRegressorModel`) | yes | no — same winner-configuration gap |
+| Successive-halving classifier (`SKHalvingGridSearchClassifierModel`) | yes | no — same winner-configuration gap |
+| Successive-halving regressor (`SKHalvingGridSearchRegressorModel`) | yes | no — same winner-configuration gap |
+| Typed pipeline classifier and regressor (`SKPipelineClassifier`, `SKPipelineRegressor`) | yes (nested stage states and final model) | no — typed `UnsupportedOperation`: the configured stage chain holds live estimator values, not data |
+| Feature union (`SKFeatureUnionModel`, static tuple) | yes (each member state) | no — typed `UnsupportedOperation`: the configured member chain holds live estimator values |
+| Graph pipeline (`SKPipelineGraphModel`) | no — typed `UnsupportedOperation`: stages sit behind type-erased `Any` boxes | no |
+| Streaming pipeline (`SKFittedStreamingPipeline`) | no — typed `UnsupportedOperation`: fitted stages are type-erased | no |
+
+Each message names the missing information and suggests the path forward. For a
+typed pipeline, for example, the guidance is to rebuild the pipeline in code
+and import each nested stage state; for bagging, grid-search and halving the
+guidance is to re-fit the estimator. The tests
+`graph_pipeline_export_returns_a_typed_unsupported_operation`,
+`streaming_pipeline_export_returns_a_typed_unsupported_operation` and
+`feature_union_import_returns_a_typed_unsupported_operation` assert the error
+kind, so a silent regression to a partial model would fail the suite.
+
+Why not import these too? Their state carries numbers but not enough
+configuration: bagging members and search winners would need their own nested
+metadata embedded, and the typed pipeline/union/graph/streaming stages hold live
+estimator values that a state cannot express today. That is an architectural
+change (a serialisable stage descriptor), deliberately left out of this
+retrofit.
 
 ## Roads not taken
 
