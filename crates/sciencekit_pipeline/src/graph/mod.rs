@@ -9,6 +9,7 @@ mod builder_accessors;
 mod classifier_wrapper;
 mod errors;
 mod execute;
+mod export;
 mod final_estimator;
 mod graph_definition;
 mod merge;

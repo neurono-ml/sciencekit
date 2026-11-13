@@ -1,7 +1,7 @@
 //! Companion tests: a fitted feature union nests every member state.
 
 use ndarray::array;
-use sciencekit_common::{SKBackendKind, SKBuilder, SKExportable, SKFeatureBlock};
+use sciencekit_common::{SKBackendKind, SKBuilder, SKExportable, SKFeatureBlock, SKImportable};
 use sciencekit_preprocessing::minmax_scaler::core_implementation::SKMinMaxScaler;
 use sciencekit_preprocessing::standard_scaler::core_implementation::SKStandardScaler;
 
@@ -50,4 +50,24 @@ fn feature_union_export_nests_each_member_and_reports_the_backend() {
         state.tensor("feature_union.member_widths").unwrap().shape(),
         &[2]
     );
+}
+
+#[test]
+fn feature_union_import_returns_a_typed_unsupported_operation() {
+    let input: SKFeatureBlock<f64> = array![[1.0_f64, 2.0], [3.0, 4.0]].into();
+    let fitted = SKFeatureUnion::build()
+        .stages((SKStandardScaler::build().build().unwrap(),))
+        .build()
+        .unwrap()
+        .fit(&input)
+        .unwrap();
+    assert!(matches!(
+        crate::feature_union::SKFeatureUnionModel::<f64, (SKStandardScaler,)>::import_state(
+            &fitted.export_state().unwrap()
+        ),
+        Err(sciencekit_common::SKError::UnsupportedOperation {
+            operation: "import_state",
+            ..
+        })
+    ));
 }

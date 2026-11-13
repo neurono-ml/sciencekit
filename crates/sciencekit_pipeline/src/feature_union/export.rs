@@ -5,8 +5,9 @@
 //! stores type-erased members and is deliberately not exportable.
 
 use sciencekit_common::{
-    SK_MODEL_FORMAT_VERSION, SKError, SKExportable, SKFloat, SKModelMetadata, SKModelState,
-    SKParameterValue, sk_backend_parameter, sk_embed_state, sk_model_tensor_data_type,
+    SK_MODEL_FORMAT_VERSION, SKError, SKExportable, SKFloat, SKImportable, SKModelMetadata,
+    SKModelState, SKParameterValue, sk_backend_parameter, sk_embed_state,
+    sk_model_tensor_data_type,
 };
 
 use crate::feature_union::model::SKFeatureUnionModel;
@@ -150,3 +151,19 @@ impl_feature_union_exportable_tuple!(
     (Member6, member6),
     (Member7, member7)
 );
+
+impl<F, Stages> SKImportable<F> for SKFeatureUnionModel<F, Stages>
+where
+    F: SKFloat,
+    Stages: SKFeatureUnionStages<F>,
+{
+    fn import_state(_state: &SKModelState<F>) -> Result<Self, SKError> {
+        Err(SKError::UnsupportedOperation {
+            operation: "import_state",
+            reason: "a feature-union state nests every fitted member, but the configured member \
+                     chain holds live estimator values rather than data; rebuild the union in \
+                     code and import each nested member state"
+                .to_string(),
+        })
+    }
+}
