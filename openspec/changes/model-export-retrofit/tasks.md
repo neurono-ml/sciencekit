@@ -51,7 +51,7 @@
 - [x] 5.2 Implement export/import for PCA, TruncatedSVD and IncrementalPCA (components,
   mean, variance, solver metadata); verify with
   `cargo test -p sciencekit_decomposition export`.
-- [ ] 5.3 Implement export/import for IsolationForest (tree arrays, offsets,
+- [x] 5.3 Implement export/import for IsolationForest (tree arrays, offsets,
   contamination metadata); verify with `cargo test -p sciencekit_outlier export`.
 
 ## 6. Pipelines and model selection
