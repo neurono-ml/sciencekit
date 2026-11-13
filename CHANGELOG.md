@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Model export/import coverage (spec `model-export-coverage`): every retrofitted
+  family implements `SKExportable<F>` and `SKImportable<F>` over the shared
+  `SKModelState` contract with stable dotted tensor names, a single
+  `SK_MODEL_FORMAT_VERSION`, resolved-backend metadata and prediction
+  round-trip tests. Covered: standard/min-max/robust scalers, one-hot encoder,
+  polynomial features, simple imputer, missing indicator, KNN imputer, linear
+  regression, ridge, lasso, elastic net, logistic regression, SGD classifier
+  and regressor, k-nearest neighbours (dense and CSR), SVC, SVR, LinearSVC,
+  decision trees, random forests, gradient boosting and bagging. Shared helpers:
+  `sk_assert_export_round_trip`, `sk_states_equal`, the tensor readers and the
+  backend/metadata parameter parsers.
 - `sciencekit_ensemble` gains histogram gradient boosting (spec
   `histogram-gradient-boosting`): `SKHistGradientBoostingClassifier<F>`,
   `SKHistGradientBoostingClassifierBuilder<F>`,
