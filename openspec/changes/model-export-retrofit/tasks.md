@@ -58,9 +58,9 @@
 
 - [x] 6.1 Implement pipeline export/import with stage-qualified names and the final model;
   verify with `cargo test -p sciencekit_pipeline export`.
-- [ ] 6.2 Implement grid-search/halving export of the best model and selection metadata;
+- [x] 6.2 Implement grid-search/halving export of the best model and selection metadata;
   verify with `cargo test -p sciencekit_model_selection export`.
-- [ ] 6.3 Add the workspace-wide export coverage test and concurrent-export determinism
+- [x] 6.3 Add the workspace-wide export coverage test and concurrent-export determinism
   test; verify with `cargo test --workspace export_coverage`.
 
 ## 7. Documentation and review
