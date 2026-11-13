@@ -5,7 +5,7 @@
 //! feature-gated in the sub-crate; the umbrella mirrors those flags so enabling
 //! one makes the adapter reachable here too.
 
-#[cfg(feature = "parquet")]
+#[cfg(any(feature = "parquet", feature = "memmap"))]
 pub use sciencekit_interop::arrow;
 #[cfg(feature = "datafusion")]
 pub use sciencekit_interop::datafusion;

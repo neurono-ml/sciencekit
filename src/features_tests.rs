@@ -38,6 +38,9 @@ fn optional_integrations_mirror_their_features() {
     #[cfg(feature = "memmap")]
     {
         let _ = core::any::type_name::<crate::interop::memmap::SKRawBinaryDescriptor>();
+        // `sciencekit_interop/memmap` also enables the Arrow adapter: the Arrow
+        // IPC sources need it, so the umbrella must mirror that reachability.
+        let _ = core::any::type_name::<crate::interop::arrow::SKArrowFileFormat>();
     }
 
     #[cfg(feature = "parquet")]
