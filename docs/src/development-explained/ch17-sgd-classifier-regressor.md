@@ -20,6 +20,8 @@ PRD puts it in the out-of-core differentiator, not in the "another linear model"
 
 ```mermaid
 flowchart LR
+  accTitle: Memory profiles of exact solvers and of stochastic gradient descent
+  accDescr: Three dataset paths compare memory use: the Gram matrix keeps a p-by-p matrix, the retained-design solver keeps the whole feature matrix, and stochastic gradient descent keeps only one sample at a time while updating a parameter vector of p times k numbers.
   classDef mem fill:#fee2e2,stroke:#dc2626,color:#7f1d1d,stroke-width:2px
   classDef sgd fill:#dcfce7,stroke:#16a34a,color:#14532d,stroke-width:2px
   classDef io fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e,stroke-width:2px
@@ -54,28 +56,28 @@ the promise is that the *sequence* converges, and that the cost per step is `O(p
 
 ### 3.1 The update rule
 
-For a sample with features `x`, target `y` and weight `c`, the model predicts the linear score
-`f = xᵀw + b`. The loss `ℓ(f, y)` measures how wrong that is, and its slope with respect to
-`f` tells us which way to move:
+For a sample with features $x$, target $y$ and weight $c$, the model predicts the linear score
+$f = x^{\mathsf T}w + b$. The loss $\ell(f, y)$ measures how wrong that is, and its slope with respect to
+$f$ tells us which way to move:
 
-```
-gradient = c · ℓ'(f, y) · x
-w ← w − η · (gradient + α · (1 − l1_ratio) · w)
-b ← b − η · gradient_intercept          ← the intercept is never penalized
-w ← soft_threshold(w, η · α · l1_ratio) ← only when the L1 component is active
-```
+$$\begin{aligned}
+g &= c \cdot \ell'(f, y) \cdot x \\
+w &\leftarrow w - \eta \cdot (g + \alpha \cdot (1 - \text{l1\_ratio}) \cdot w) \\
+b &\leftarrow b - \eta \cdot g_{\text{intercept}} && \text{the intercept is never penalized} \\
+w &\leftarrow \operatorname{soft\_threshold}(w, \eta \cdot \alpha \cdot \text{l1\_ratio}) && \text{only when the L1 component is active}
+\end{aligned}$$
 
-The **learning rate** `η` decides how far each step goes. The data term is the **mean** loss
+The **learning rate** $\eta$ decides how far each step goes. The data term is the **mean** loss
 (like scikit-learn), so `alpha` keeps exactly the meaning a scikit-learn user expects.
 
 ### 3.2 Schedules
 
 | Schedule | Step size | Intuition |
 |---|---|---|
-| `Constant` | `η₀` | the simplest baseline |
-| `InverseScaling` | `η₀ / (1 + t)^p` | big early steps, careful late ones |
-| `Optimal` | `1 / (α · (t + t₀))` | the classical `1/t` form, with `t₀` estimated from the first batch's slope scale |
-| `Adaptive` | `η` halved on a non-improving epoch | reacts to a plateau without a schedule formula |
+| `Constant` | $\eta_0$ | the simplest baseline |
+| `InverseScaling` | $\eta_0 / (1 + t)^p$ | big early steps, careful late ones |
+| `Optimal` | $1 / (\alpha \cdot (t + t_0))$ | the classical $1/t$ form, with $t_0$ estimated from the first batch's slope scale |
+| `Adaptive` | $\eta$ halved on a non-improving epoch | reacts to a plateau without a schedule formula |
 
 The counter `t` is **monotone across** `fit`, `fit_streaming` and `partial_fit`: an
 incremental continuation does not restart the clock, which is what makes the fits agree.
@@ -85,11 +87,9 @@ incremental continuation does not restart the clock, which is what makes the fit
 The L1 penalty is not differentiable at zero. Instead of pretending it is, the update takes a
 gradient step and then *projects* each coordinate:
 
-```
-soft_threshold(v, λ) = sign(v) · max(|v| − λ, 0)
-```
+$$\operatorname{soft\_threshold}(v, \lambda) = \operatorname{sign}(v) \cdot \max(\lvert v \rvert - \lambda, 0)$$
 
-Any coordinate whose step does not clear `λ` lands exactly on zero — and stays there. This is
+Any coordinate whose step does not clear $\lambda$ lands exactly on zero — and stays there. This is
 why an L1 fit can be used as a feature selector, and why the tests assert `== 0.0`, not
 `≈ 0.0`.
 
@@ -97,9 +97,7 @@ why an L1 fit can be used as a feature selector, and why the tests assert `== 0.
 
 With `average(true)` the model reports the **running mean of the iterates it visited**:
 
-```
-w̄ ← w̄ + (w − w̄) / t
-```
+$$\bar{w} \leftarrow \bar{w} + \frac{w - \bar{w}}{t}$$
 
 One vector of extra state, no trajectory stored. Averaging trades a little bias for a large
 variance reduction at the end of training — the ASGD trick.
@@ -119,12 +117,12 @@ a compute knob, not a feasibility test.
 
 ### 3.6 One-vs-rest and probabilities
 
-With `k` classes the classifier fits `k` independent heads, each against the rest with
-`±1` targets, and predicts the arg-max of the heads' scores (ties go to the lowest canonical
+With $k$ classes the classifier fits $k$ independent heads, each against the rest with
+$\pm 1$ targets, and predicts the arg-max of the heads' scores (ties go to the lowest canonical
 index). Probabilities are available **only** for the two probabilistic losses:
 
 - `log_loss` → the logistic sigmoid;
-- `modified_huber` → the clipped affine `(f + 1) / 2` in `[0, 1]`.
+- `modified_huber` → the clipped affine $(f + 1) / 2$ in $[0, 1]$.
 
 Asking for probabilities under `hinge` returns
 `SKError::UnsupportedOperation { operation: "predict_probabilities", … }` rather than inventing
@@ -132,6 +130,8 @@ a number.
 
 ```mermaid
 flowchart TB
+  accTitle: One-vs-rest heads and the losses each supports
+  accDescr: The feature matrix feeds one binary head per class. The heads combine through argmax to produce a label, and through sigmoid or modified Huber to produce probabilities when the loss is probabilistic. Hinge, squared hinge and perceptron losses are rejected with UnsupportedOperation.
   classDef cls fill:#ede9fe,stroke:#7c3aed,color:#3b0764,stroke-width:2px
   classDef prob fill:#fef9c3,stroke:#ca8a04,color:#713f12,stroke-width:2px
   classDef ref fill:#fee2e2,stroke:#dc2626,color:#7f1d1d,stroke-width:2px
@@ -215,6 +215,8 @@ cannot rewind, so `fit_streaming` runs exactly one epoch and says so:
 
 ```mermaid
 sequenceDiagram
+  accTitle: One epoch of stochastic gradient descent over a lazy source
+  accDescr: The estimator requests supervised batches from the source and applies one update per row to the learning state. When the source returns no more batches, the epoch ends with one epoch taken and the converged flag false.
   participant E as SKSGDClassifier
   participant S as SKSupervisedLazySource
   participant W as learning state

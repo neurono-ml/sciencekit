@@ -430,7 +430,7 @@ Line by line:
    The `.abs() < 1e-12` is a floating-point tolerance: we expect exactly `2`, allowing tiny
    rounding.
 4. `assert!((distance[[1, 0]] - 13.0).abs() < 1e-12);` — from `(3,4)` to `(1,1)` the squared
-   distance is `(1−3)² + (1−4)² = 4 + 9 = 13`, which the norm-expansion also produces.
+   distance is $(1-3)^2 + (1-4)^2 = 4 + 9 = 13$, which the norm-expansion also produces.
 
 ### Test 3: `elementwise_parallel_matches_sequential_on_large_array` (from `kernels_tests.rs`)
 

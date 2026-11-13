@@ -11,6 +11,8 @@ Everything in one place: after this chapter you can write a transformer end-to-e
 
 ```mermaid
 flowchart LR
+  accTitle: The standard-scaler tutorial pipeline
+  accDescr: The builder produces an immutable estimator. Fit resolves a plan that selects in-memory parallel reductions or streaming Welford updates. Both feed the fitted standard-scaler model, whose transform emits scaled features.
     classDef planNode fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e,stroke-width:2px
     classDef computeNode fill:#f0fdf4,stroke:#16a34a,color:#14532d,stroke-width:2px
     classDef streamNode fill:#fff7ed,stroke:#ea580c,color:#7c2d12,stroke-width:2px
@@ -39,7 +41,7 @@ a single bad sensor reading can drag a mean half a column away.
 | Decision | Chosen | Roads not taken, and why |
 |---|---|---|
 | Population (÷N) variance, like eager scikit-learn's default? | Yes for the fit statistic | Degrees-of-freedom correction (÷N−1) is a *sampling* choice, not a preprocessing one; it is requested at scoring time, not baked into the transformer. |
-| One parallel reduction for Σ and Σx²? | No — **Welford both regimes** | Σx² has ~half the significant digits of x; subtracting means from it amplifies rounding — the *catastrophic cancellation* walk-through is §3. The naive two-array reduction is exactly the "obvious solution that fails", §2. |
+| One parallel reduction for $\Sigma$ and $\Sigma x^2$? | No — **Welford both regimes** | $\Sigma x^2$ has ~half the significant digits of $x$; subtracting means from it amplifies rounding — the *catastrophic cancellation* walk-through is §3. The naive two-array reduction is exactly the "obvious solution that fails", §2. |
 | Compute variance in the same pass as mean when streaming? | Yes — Welford carries (count, mean, M2) | A second pass (means first, then squares) requires re-reading the data — worthless when the raison d'être of the streaming path is *not having the data twice*. |
 | `transform` after streaming fit must be exact? | Bit-near-identical to in-memory | Guaranteed by testing both regimes against the same fixtures (walk-through §6). |
 | RobustScaler's medians under streaming | Two-pass honest approach: streaming *moments* for `with_centering=False` choice, exact quantiles via a resumable, batch-buffered exact pass (P² approximation discussed, not shipped) | Exact online quantiles require nontrivial estimator structures (P² algorithm, Jain & Chlamtac 1985); approximating with simpler checkpoints silently violates the transformer's deterministic contract. See §5. |
@@ -58,8 +60,8 @@ explicit future addition, see §5).
 
 ### 2.1 The mean, and what "sum" quietly means
 
-The mean of column *j* is `μ_j = (1/N) Σᵢ xᵢⱼ`. The variance is
-`σ²_j = (1/N) Σᵢ (xᵢⱼ − μ_j)²`. Both look like one-liners. They are one-liners *in exact
+The mean of column $j$ is $\mu_j = \frac{1}{N}\sum_i x_{ij}$. The variance is
+$\sigma_j^2 = \frac{1}{N}\sum_i (x_{ij} - \mu_j)^2$. Both look like one-liners. They are one-liners *in exact
 arithmetic* — and the whole content of this chapter lives in what floating-point
 arithmetic does to the naive forms.
 
@@ -77,9 +79,9 @@ precision).
 
 The naive algebraic identity for variance is:
 
-    σ² = Σx²/N − μ²
+$$\sigma^2 = \frac{\Sigma x^2}{N} - \mu^2$$
 
-**Pro:** one accumulation, reads the array once, easy to parallelize (Σ and Σx² partials in
+**Pro:** one accumulation, reads the array once, easy to parallelize ($\Sigma$ and $\Sigma x^2$ partials in
 the same pass). **Con:** for data whose mean is huge compared to its spread — a very common
 shape in financial data, sensor data, any data conditioned by adding a constant — you
 subtract two numbers that are nearly equal, each with ~16 significant decimal digits of a
@@ -88,8 +90,10 @@ in common.
 
 A classic reminder (need to show scale, not precision):
 
-    σ² = Σx²/N − μ²    where each summand carries 53 bits
-    |Σx²/N − μ²|  ≪  Σx²/N          ⇒ information DESTROYED has exactly the parts you needed
+$$\begin{aligned}
+\sigma^2 &= \frac{\Sigma x^2}{N} - \mu^2 && \text{where each summand carries 53 bits} \\
+\left\lvert \frac{\Sigma x^2}{N} - \mu^2 \right\rvert &\ll \frac{\Sigma x^2}{N} && \text{the information destroyed has exactly the parts you needed}
+\end{aligned}$$
 
 with a proviso: when the spread is ~1e-8 or less of the mean, the naive identity is not
 "slightly imprecise" — it returns **negative numbers that square to imaginary standard
@@ -100,17 +104,16 @@ deviations** (a real bug class reported repeatedly in scikit-learn; see the
 
 The fix (Welford 1962; the multi-participant combiner is Chan, Golub & LeVeque 1983,
 "Algorithms for computing the sample variance: analysis and recommendations", *The American Statistician*)
-re-represents the state as **(count, mean, M2)** rather than (n, Σx, Σx²):
+re-represents the state as **(count, mean, M2)** rather than $(n, \Sigma x, \Sigma x^2)$:
 
-```text
-W(x; count, mean, M2):
-    count     = count + 1
-    delta     = x − mean
-    mean     = mean + delta / count          // new mean = old mean + (x − old mean)/n
-    M2       = M2 + delta·(x − mean)          // M2 = Σᵢ (xᵢ − current_mean)²
-
-output: variance = M2 / count
-```
+$$\begin{aligned}
+W(x;\ \text{count}, \text{mean}, M_2):& \\
+\text{count} &= \text{count} + 1 \\
+\text{delta} &= x - \text{mean} \\
+\text{mean} &= \text{mean} + \frac{\text{delta}}{\text{count}} && \text{new mean} = \text{old mean} + \frac{x - \text{old mean}}{n} \\
+M_2 &= M_2 + \text{delta} \cdot (x - \text{mean}) && M_2 = \sum_i (x_i - \text{current\_mean})^2 \\
+\text{output: variance} &= \frac{M_2}{\text{count}}
+\end{aligned}$$
 
 Every intermediate is a **small residual** — the possibly-conditioned subtraction is
 `(x − mean)`, not `(big − big)`; the cancellation is *structured*, not pathological.
@@ -118,12 +121,12 @@ Every intermediate is a **small residual** — the possibly-conditioned subtract
 And when the participants are *batches* (streaming), the form composes: two partial
 states (count_a, mean_a, M2_a), (count_b, mean_b, M2_b) combine with
 
-```text
-delta      = mean_b − mean_a
-count_c    = count_a + count_b
-mean_c    = mean_a + delta · count_b / count_c
-M2_c      = M2_a + M2_b + delta² · (count_a · count_b / count_c)
-```
+$$\begin{aligned}
+\text{delta} &= \text{mean}_b - \text{mean}_a \\
+\text{count}_c &= \text{count}_a + \text{count}_b \\
+\text{mean}_c &= \text{mean}_a + \text{delta} \cdot \frac{\text{count}_b}{\text{count}_c} \\
+M_{2,c} &= M_{2,a} + M_{2,b} + \text{delta}^2 \cdot \frac{\text{count}_a \cdot \text{count}_b}{\text{count}_c}
+\end{aligned}$$
 
 That is the *whole* algorithm: for the streaming path the "update per batch" is exactly the
 above with batch=(count_b, mean_b, M2_b) — each batch collapsed to its OWN Welford state
@@ -265,7 +268,7 @@ impl SKMoments {
 
 One caveat that keeps this honest: the exact Welford row-deceleration must be generic over
 both fact layouts, `f32` and `f64`; state carries **f64 internally** always — variance
-accumulated in f32 Σx²-adjacent forms collapses *exactly* in the case Welford exists to
+accumulated in f32 $\Sigma x^2$-adjacent forms collapses *exactly* in the case Welford exists to
 prevent. This is a deliberate micro-decision: mean/variance at f32 costs you the 1e-7
 precision the rest of the pipeline relies on. The *features* stay `F`; the statistics are
 f64 unconditionally.
@@ -413,9 +416,7 @@ The same skeleton with one state change and one *honest* confession.
 **The change.** The state is not moments; it is three *quantiles* per column —
 `median` (50%) and the first/third quartile edges bounding the IQR:
 
-```text
-scaled = (x − median) / IQR
-```
+$$\text{scaled} = \frac{x - \text{median}}{\mathrm{IQR}}$$
 
 **The honest conversation.** An exact quantile is an *order statistic*: it needs all the
 values sorted. Streaming resistant numbers to a floating-point pipeline in one pass is a
@@ -424,8 +425,8 @@ values sorted. Streaming resistant numbers to a floating-point pipeline in one p
 | Approach | What it buys | What you pay | Shipped as? |
 |---|---|---|---|
 | Exact — read the batch window, sort the window (cached), then transform | Exact answers, deterministic, trivial to test | Requires holding the *entire* distinct window (this is how scikit-learn does its `RobustScaler.quantile_range`) — a sorted copy of the full column | **Yes** (in-memory, and "streaming" via a bounded-column windowed exact layer) |
-| P² algorithm (Jain & Chlamtac 1985) | O(1) memory exact-for-many distributions | This is a *heuristic estimator* with documented accuracy drift on adversarial/heavy-tail data; silently changing an exact transformer to an estimator breaks the "little and lots tests agree" acceptance | Not in ship — referenced as the extension |
-| Greenwald-Khanna sketch | ε-approximate quantiles with proof | ε is a *choice*; the transformer guarantee "deterministic for identical inputs" survives, but the *exactness* test would need a tolerance | Not in ship |
+| P² algorithm (Jain & Chlamtac 1985) | $O(1)$ memory exact-for-many distributions | This is a *heuristic estimator* with documented accuracy drift on adversarial/heavy-tail data; silently changing an exact transformer to an estimator breaks the "little and lots tests agree" acceptance | Not in ship — referenced as the extension |
+| Greenwald-Khanna sketch | $\varepsilon$-approximate quantiles with proof | $\varepsilon$ is a *choice*; the transformer guarantee "deterministic for identical inputs" survives, but the *exactness* test would need a tolerance | Not in ship |
 
 So the practical rule this chapter hands you: **a robust transformer either fits its data
 or it says so**. `SKRobustScaler` keeps the exact-window implementation and, in streaming
@@ -438,7 +439,7 @@ pick an estimator and document its error.
 
 * Jain & Chlamtac, "The P² algorithm for dynamic calculation of quantiles and histograms
   without storing observations", *CACM* 28(10), 1985 — the famous O(1)-memory one-pass quantile estimator
-* Greenwald & Khanna, "Space-efficient online computation of quantile summaries", *SIGMOD* 2001 — the ε-accurate predecessor of modern sketches
+* Greenwald & Khanna, "Space-efficient online computation of quantile summaries", *SIGMOD* 2001 — the $\varepsilon$-accurate predecessor of modern sketches
 * scikit-learn, `sklearn.preprocessing.RobustScaler` documentation — the behavior contract this chapter mirrors (quantile range default, centering/scaling flags)
 
 ---
@@ -510,7 +511,7 @@ The PRD §8.7 four-item acceptance, mapped:
 **Study sources for this chapter:**
 
 - Chan, Golub, LeVeque (1983) — the combinating variance analysis (see §2.3's cites)
-- Knuth, *The Art of Computer Programming* II, §4.2.2 — where Σx² collapse is discussed
+- Knuth, *The Art of Computer Programming* II, §4.2.2 — where $\Sigma x^2$ collapse is discussed
 - `practical` style blogs: John D. Cook, "Accurately computing running variance" (the modern favorite walk-through of the algorithm written for engineers)
 - scikit-learn: `sklearn.preprocessing.StandardScaler` and `RobustScaler` docs and their
   `fit` source — the semantics you are reimplementing and the exactness conventions you inherit

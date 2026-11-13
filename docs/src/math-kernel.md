@@ -83,7 +83,7 @@ derives `parallelism = min(cores, ceil(unit / grain))` from the work-unit size
 count, and returns exactly `1` for single-core machines or sub-grain units.
 Each kernel documents a **grain** — the minimum elements per work unit needed to
 amortize parallel dispatch — measured by the `kernel_calibration` criterion
-bench (cheap/medium/expensive closures × sizes 10¹–10⁷) and recorded beside the
+bench (cheap/medium/expensive closures $\times$ sizes $10^1$–$10^7$) and recorded beside the
 kernel with machine + date provenance:
 
 | Kernel grain constant | Value | Calibrated on |

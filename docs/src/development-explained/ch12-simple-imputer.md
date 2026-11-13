@@ -10,6 +10,8 @@ them, and a builder flag lets the first stack the second after its own output.
 
 ```mermaid
 flowchart LR
+  accTitle: How the simple imputer turns a feature matrix into an imputed output
+  accDescr: A dense or sparse feature matrix becomes a data view. The missing-value check finds the observed entries per column, a statistic such as mean, median, mode or constant is computed, and the fitted model transforms the data into dense or sparse imputed output. An optional missing indicator model is stacked last.
   subgraph Input["One feature matrix"]
     D["dense Array2<br/>[[1.0, NaN, 10.0], ...]"]
     S["sparse CsMat (CSR)<br/>explicit entries + implicit zeros"]
@@ -81,7 +83,7 @@ this chapter.
 | **Median as an order statistic; ties in the mode to the smallest value** | The median sorts the observed values (midpoint of the middle pair on an even count); the mode sorts and scans runs, replacing only on a **strictly** larger count, so a tie always resolves to the smallest value. Both are deterministic. | Hash-based mode — `SKFloat` has no `Hash`, and hash iteration order would make ties unpredictable. |
 | **All-missing column → `NaN` statistic, recorded as dropped** | A column with no observed cell has no statistic. The model stores `NaN` in `statistics` (one entry per **input** column) and lists the column in `dropped_columns` unless `keep_empty_features(true)`, which retains it filled with `0.0`. | Dropping silently — the export boundary must tell the caller which columns vanished. Inventing a statistic — every invented value is a lie. |
 | **`partial_fit` and `fit_streaming` from day one** | The project's iterative mandate forbids skipping the incremental/out-of-core stage. The model carries a `SKImputationState` with per-column counts, compensated sums, value counts and a `tdigest` sketch, so one more batch extends the same state. | Batch-only — a Wave 1 estimator that cannot stream would be re-opened in Wave 2. |
-| **The median sketch stores only explicit values; structural zeros are a separate multiplicity** | In CSR, the implicit zeros are not stored, so a sketch cannot see them. The state keeps their count per column and inverts the combined CDF: `(explicit · F_explicit + zeros · [v ≥ 0]) / total`. This is exact for a single batch and within tolerance across batches. | Weighting the zero centroid in the sketch — `tdigest` interpolates between centroid means, and the test `[0,0,0,0,10,12]` returned `4.0` instead of `0.0`. |
+| **The median sketch stores only explicit values; structural zeros are a separate multiplicity** | In CSR, the implicit zeros are not stored, so a sketch cannot see them. The state keeps their count per column and inverts the combined CDF: $(\text{explicit} \cdot F_{\text{explicit}} + \text{zeros} \cdot [v \ge 0]) / \text{total}$. This is exact for a single batch and within tolerance across batches. | Weighting the zero centroid in the sketch — `tdigest` interpolates between centroid means, and the test `[0,0,0,0,10,12]` returned `4.0` instead of `0.0`. |
 | **The mask is typed on `F`, not `bool`** | `SKIndicatorOutput<F>` emits `0.0`/`1.0` in the scalar type so a stacked output is one matrix of one scalar, ready for the next pipeline stage. | A `bool` mask — scikit-learn's choice; it would introduce a second scalar type through every downstream pipeline. The deviation is recorded in the ADR and pinned by tests. |
 | **`add_indicator` composes, it does not special-case** | The imputer fits a real `SKMissingIndicator` on the same batch (same marker, same backend, `error_on_new(false)`) and stores the fitted model. The transform runs the imputation, then stacks the mask in a second pass. | A private mask routine — duplicated logic that would drift from the standalone indicator. |
 | **`error_on_new` defaults to `true`** | Missingness in a feature that was complete at fit is suspicious: the training distribution changed. The default fails with a precise `SKError::UnexpectedMissingness { column }`; `error_on_new(false)` tolerates it and leaves the cell unmarked. | Silently masking the new column — it has no mask column, so the information would be lost invisibly. |
@@ -97,7 +99,7 @@ this chapter.
 
 $$\text{missing}(v, m) = \begin{cases} v \ne v & m \text{ is } \texttt{NaN} \\ v = m & \text{otherwise} \end{cases}$$
 
-The `v ≠ v` trick is the standard way to ask "is this a `NaN`" without naming the type. The
+The $v \neq v$ trick is the standard way to ask "is this a `NaN`" without naming the type. The
 second branch is plain equality — which is why the `0.0` marker has a special consequence in
 sparse data. `sk_sparse_marks_implicit_zeros(marker)` answers "does the marker claim the cells
 CSR does not store?", and it is true only for `0.0`: a `NaN` marker leaves structural zeros
@@ -168,6 +170,8 @@ approximation.
 
 ```mermaid
 flowchart TB
+  accTitle: Three fitting regimes that share one simple-imputer model
+  accDescr: A single batch seeds the state and computes exact statistics. Partial fit extends the same state and refreshes the statistics. Streaming either collects batches for an in-process fit or drives one batch at a time, taking the median from a sketch. All three regimes produce the same model.
   subgraph Batch["fit — one batch"]
     B1["seed the state<br/>counts · sums · value_counts · sketch"] --> B2["exact statistics<br/>mean/mode/constant from the state<br/>median from the order statistic"]
   end
@@ -235,6 +239,8 @@ and simply **not masked** — the mask only covers the scope learned at fit. Tes
 
 ```mermaid
 flowchart TB
+  accTitle: How the missing indicator model decides which columns to mask
+  accDescr: Fit scans every column and selects either the columns with at least one missing cell or all columns. Transform rejects a missing cell outside the scope when configured to error; otherwise it emits a zero-or-one mask, dense or CSR, which the imputer stacks after the imputed features when add_indicator is set.
   F["fit: scan every column"] --> SC{"scope"}
   SC -->|MissingOnly| MO["columns with ≥1 missing cell"]
   SC -->|All| AL["every column"]

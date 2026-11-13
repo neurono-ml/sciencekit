@@ -83,11 +83,14 @@ write `mod shapes;` (note the semicolon, not a block), Rust looks for a file nam
 
 But what if `shapes` grows too big for one file? Then you turn it into a **folder**:
 
-```
-shapes/            ← a directory
-  mod.rs           ← the "label" file: declares the module's contents
-  circle.rs        ← one implementation file
-  rectangle.rs     ← another implementation file
+```mermaid
+flowchart TD
+  accTitle: A folder module and the role of each file
+  accDescr: The shapes directory is the module. Its mod.rs is the label file that declares the module contents, while circle.rs and rectangle.rs are separate implementation files inside the same module.
+  ROOT["shapes/ (the module directory)"]
+  ROOT --> MOD["mod.rs<br/>the label file: declares the module contents"]
+  ROOT --> CIRCLE["circle.rs<br/>one implementation file"]
+  ROOT --> RECT["rectangle.rs<br/>another implementation file"]
 ```
 
 The special file `mod.rs` inside a folder **is** the module. Rust reads

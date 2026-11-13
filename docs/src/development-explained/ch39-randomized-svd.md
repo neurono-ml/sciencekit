@@ -25,6 +25,8 @@ that prove it behaves.
 
 ```mermaid
 flowchart TD
+  accTitle: The randomized SVD pipeline
+  accDescr: An m-by-n matrix is multiplied by a seeded Gaussian sketch to form a smaller matrix. Power iterations alternate a thin QR factorization with products against the input. The final basis is used to project the input to a small matrix, whose exact SVD yields the left singular vectors, right singular vectors and singular values of the result.
     X["X: m x n matrix<br/>(dense or CSR)"] --> O["Omega: n x (k+p)<br/>seeded Gaussian draws"]
     O --> Y["Y = X Omega<br/>m x (k+p)"]
     Y --> P{"power<br/>iterations"}
@@ -90,7 +92,7 @@ pub fn sk_randomized_svd<F: SKBackendSelection>(
 `SKRandomizedSvdResult` carries three public fields — `u`, `singular_values` and `v`
 — plus three helpers: `number_of_components`, `reconstruct` (which multiplies the
 factors back together) and `relative_frobenius_error`, which compares the
-reconstruction with a reference matrix and returns `‖X − U Σ Vᵀ‖_F / ‖X‖_F`.
+reconstruction with a reference matrix and returns $\lVert X - U \Sigma V^{\mathsf T} \rVert_F / \lVert X \rVert_F$.
 
 ### Why `SKBackendSelection` and not `SKFloat`
 
@@ -142,20 +144,18 @@ same shape with `f32`, so the draw order does not depend on the scalar width.
 
 The projection is one sparse or dense product:
 
-```text
-Y = X · Omega        (m x (k+p))
-```
+$$Y = X \cdot \Omega \quad (m \times (k+p))$$
 
 `Y` already spans a good approximation of the dominant column space — but a random
 basis is a noisy approximation. The power iterations sharpen it:
 
-```text
-repeat q times:
-    Q = thin_qr(Y)     (m x r, r = k + p)
-    Z = Xᵀ Q           (n x r)
-    Y = X Z            (m x r)
-Q = thin_qr(Y)         (final basis)
-```
+$$\begin{aligned}
+&\text{repeat } q \text{ times:} \\
+&\quad Q = \operatorname{thin\_qr}(Y) && (m \times r,\ r = k + p) \\
+&\quad Z = X^{\mathsf T} Q && (n \times r) \\
+&\quad Y = X Z && (m \times r) \\
+&Q = \operatorname{thin\_qr}(Y) && (\text{final basis})
+\end{aligned}$$
 
 Each pass multiplies the components of `Y` by the squared singular values of `X`, so
 the dominant directions grow relative to the rest. That is the whole trick: a small
@@ -180,12 +180,12 @@ make the test a statement about the fixture rather than about the algorithm.
 
 The obvious implementation calls the backend's QR decomposition. That was the first
 version, and it was wrong for this library's target sizes: the backend returns the
-**full** `m x m` orthogonal factor. For a 4 000-row matrix that is 128 MB of `f64`
+**full** $m \times m$ orthogonal factor. For a 4 000-row matrix that is 128 MB of `f64`
 that nobody needs; for wider problems it is worse, and the measurement was 161
 seconds on a fixture that should take a fraction of a second.
 
 So the kernel owns a small Householder QR (`qr.rs`) that returns exactly the thin
-factor, `m x min(m, n)` — here `m x (k+p)`. A rank-deficient column is completed with
+factor, $m \times \min(m, n)$ — here $m \times (k+p)$. A rank-deficient column is completed with
 a canonical direction so the basis always has `k+p` orthonormal columns; the algorithm
 then works on whatever rank the matrix actually has.
 
@@ -198,26 +198,20 @@ is a handful of vector operations on a matrix with ten or twenty columns.
 
 With `Q` in hand, project the matrix from the left:
 
-```text
-B = Qᵀ X        (k+p) x n
-```
+$$B = Q^{\mathsf T} X \quad ((k+p) \times n)$$
 
 `B` is the matrix `X` seen through the random basis. Its row space is the same as the
 dominant row space of `X`. Instead of decomposing `B` (still wide), the kernel forms
 its Gram matrix:
 
-```text
-G = B Bᵀ        (k+p) x (k+p)
-```
+$$G = B B^{\mathsf T} \quad ((k+p) \times (k+p))$$
 
 and runs an exact symmetric eigendecomposition on `G` (`small_svd.rs`). The
 eigendecomposition of a matrix whose side is `k+p` is cheap, exact enough, and
 independent of `m` and `n`. The right singular vectors come from `B` and the left ones
 are lifted back through the basis:
 
-```text
-U = Q · U_small     (m x k)
-```
+$$U = Q \cdot U_{\text{small}} \quad (m \times k)$$
 
 Finally the factors are truncated to `k`, the singular values are sorted
 non-increasingly, and a **sign convention** is applied: the entry of each singular
@@ -233,9 +227,9 @@ operations need care:
 
 - `X · Omega` gathers rows of `Omega` weighted by the non-zero values. It reads the
   matrix exactly once and never materializes a dense `X`.
-- `Xᵀ · Q` is the transpose product, implemented over the same CSR structure.
+- $X^{\mathsf T} \cdot Q$ is the transpose product, implemented over the same CSR structure.
 
-The dense intermediates are `Y`, `Z` and `Q`, all of shape `m x (k+p)` or
+The dense intermediates are $Y$, $Z$ and $Q$, all of shape $m \times (k+p)$ or
 `n x (k+p)`. The test `randomized_sparse_does_not_densify_a_wide_matrix` is a guard:
 it factorizes a wide sparse fixture and checks that nothing the size of the input
 appeared.
@@ -295,7 +289,7 @@ The kernel rejects an invalid configuration up front
 | `number_of_components > min(rows, columns)` | `InvalidHyperparameter` |
 | `number_of_power_iterations == 0` | `InvalidHyperparameter` |
 | `oversampling == 0` | `InvalidHyperparameter` |
-| centering length ≠ number of features | shape mismatch |
+| centering length $\neq$ number of features | shape mismatch |
 
 `oversampling` is a `usize`, so a negative oversampling is not representable; the
 zero case is what the builder must reject, and it does.
@@ -350,7 +344,7 @@ guarantees are stated once.
 |---|---|
 | Seeded Gaussian basis, domain `SK_RANDOM_DOMAIN_PROJECTION` | Reproducible results without coordinating with other subsystems |
 | Thin Householder QR in the kernel | The backend's full `m x m` factor is prohibitive; the kernel only needs `k+p` columns |
-| Gram matrix of `B` for the small SVD | Exact symmetric eigendecomposition on a `(k+p)²` matrix, independent of `m` and `n` |
+| Gram matrix of $B$ for the small SVD | Exact symmetric eigendecomposition on a $(k+p)^2$ matrix, independent of $m$ and $n$ |
 | Sign convention on the singular vectors | Deterministic, comparable output despite the sign ambiguity |
 | Implicit centering | PCA semantics without densifying sparse input |
 | `SKBackendSelection` bound | The kernel needs a backend; the backend exists for the sealed scalar set |

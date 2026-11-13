@@ -108,7 +108,7 @@ idempotent release, so the finalizer can never double-free.
 ### `TestLinearRegressionFitPredictAndScore`
 
 The end-to-end path through cgo: matrix → descriptor → fit → predict → score, with the known
-linear fixture and `R² ≈ 1`.
+linear fixture and $R^2 \approx 1$.
 
 ### `TestLinearRegressionFloat32`
 

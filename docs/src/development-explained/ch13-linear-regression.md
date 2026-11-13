@@ -14,6 +14,8 @@ decomposition* carries the solve — the obvious one is a numerical trap. The se
 
 ```mermaid
 flowchart TB
+  accTitle: One linear-regression plan with dense and streaming regimes
+  accDescr: The execution plan chooses between an in-memory dense solve by SVD pseudoinverse and an out-of-core streaming path that accumulates the Gram matrix and cross-product per batch, then solves once at stream end. Both produce the same fitted model, which predicts as X times coefficients plus intercept.
   subgraph Plan["One plan, three regimes"]
     Q{"sk_resolve_execution_plan(Automatic)"}
   end
@@ -39,18 +41,16 @@ flowchart TB
 
 ## 1. The problem we were solving
 
-We have rows of features `xᵢ ∈ ℝᵖ` and a numeric answer `yᵢ ∈ ℝ` for each. We want a vector of
-coefficients `β` and an intercept `b₀` so that `xᵢ·β + b₀ ≈ yᵢ`. "Best" means least squares:
-choose `β, b₀` to minimize `Σᵢ (yᵢ − xᵢ·β − b₀)²`. Written as one matrix equation, with the
-**design matrix** `A = [1 ‖ X]` (a column of ones prepended to the features), it is:
+We have rows of features $x_i \in \mathbb{R}^p$ and a numeric answer $y_i \in \mathbb{R}$ for each. We want a vector of
+coefficients $\beta$ and an intercept $b_0$ so that $x_i \cdot \beta + b_0 \approx y_i$. "Best" means least squares:
+choose $\beta, b_0$ to minimize $\sum_i (y_i - x_i \cdot \beta - b_0)^2$. Written as one matrix equation, with the
+**design matrix** $A = [1 \,\Vert\, X]$ (a column of ones prepended to the features), it is:
 
-```text
-minimize ‖A β − y‖₂
-```
+$$\min_{\beta} \lVert A \beta - y \rVert_2$$
 
 Three problems sit under that innocent line.
 
-1. **Which solver?** There are three standard roads to `β`, and the difference between them
+1. **Which solver?** There are three standard roads to $\beta$, and the difference between them
    is not style — it is how many correct digits survive. The textbook one-liner (the *normal
    equations*) is a trap, and the trap is exactly the situation practitioners meet most.
 2. **What if the columns are redundant?** Two features that co-move make the design
@@ -68,9 +68,9 @@ Solving all three once, honestly, is what this chapter records.
 
 | Decision | Chosen | Roads not taken — and why they are traps |
 |---|---|---|
-| **Dense solver** | SVD least squares through the backend's `lstsq` (the pseudoinverse path) | **Normal equations** (`solve(AᵀA, Aᵀy)`) square the condition number: `κ(AᵀA) = κ(A)²`. For even moderately ill-conditioned real data that is the difference between ~13 and ~7 trustworthy digits, silently wrong exactly where correlated features live. **QR** is stable and cheaper but does not report rank for free — deferred as a profile-driven escape hatch. |
-| **Intercept** | Design-matrix augmentation: prepend a column of ones, solve `b₀` jointly with `β` | **Center-then-solve** (subtract the means, solve, recover the intercept) collapses rank prematurely on rank-deficient designs and complicates the streaming accumulator. The augmented matrix is the *same* object the streaming path accumulates. |
-| **Streaming** | **Gram accumulation**: carry `AᵀA` and `Aᵀy` per batch, solve once at the end | **Solve per batch and average the coefficients** — a weighted average hides how the rows were distributed and per-batch ranks do not compose. The Gram form composes exactly. It re-introduces the squared condition number — accepted and documented, not hidden. |
+| **Dense solver** | SVD least squares through the backend's `lstsq` (the pseudoinverse path) | **Normal equations** ($\operatorname{solve}(A^{\mathsf T}A, A^{\mathsf T}y)$) square the condition number: $\kappa(A^{\mathsf T}A) = \kappa(A)^2$. For even moderately ill-conditioned real data that is the difference between ~13 and ~7 trustworthy digits, silently wrong exactly where correlated features live. **QR** is stable and cheaper but does not report rank for free — deferred as a profile-driven escape hatch. |
+| **Intercept** | Design-matrix augmentation: prepend a column of ones, solve $b_0$ jointly with $\beta$ | **Center-then-solve** (subtract the means, solve, recover the intercept) collapses rank prematurely on rank-deficient designs and complicates the streaming accumulator. The augmented matrix is the *same* object the streaming path accumulates. |
+| **Streaming** | **Gram accumulation**: carry $A^{\mathsf T}A$ and $A^{\mathsf T}y$ per batch, solve once at the end | **Solve per batch and average the coefficients** — a weighted average hides how the rows were distributed and per-batch ranks do not compose. The Gram form composes exactly. It re-introduces the squared condition number — accepted and documented, not hidden. |
 | **Rank deficiency** | Surface `rank` and `singular_values` on the model; return the minimum-norm solution | Silently computing with a rank-deficient matrix and returning "the" answer is a subtraction bug in plain sight. SVD hands rank and singular values for free. |
 | **Scalar genericity** | Estimator **not** generic (its config carries no scalar); model generic over `F` | Making the estimator generic when nothing in its configuration is scalar would add a phantom type parameter — against `backend-selection`. |
 
@@ -80,22 +80,22 @@ Solving all three once, honestly, is what this chapter records.
 
 ### 3.1 Three roads to the least-squares solution
 
-Set the gradient of `‖Aβ − y‖₂²` to zero and you get the **normal equations**:
-`AᵀA β = Aᵀy`. When rows ≫ columns, `AᵀA` is a small `p×p` object (instead of the tall
-`n×p` design), which made this the pedagogical favourite for decades. The catch is measurable:
+Set the gradient of $\lVert A\beta - y \rVert_2^2$ to zero and you get the **normal equations**:
+$A^{\mathsf T}A \beta = A^{\mathsf T}y$. When rows $\gg$ columns, $A^{\mathsf T}A$ is a small $p \times p$ object (instead of the tall
+$n \times p$ design), which made this the pedagogical favourite for decades. The catch is measurable:
 
-> `κ(AᵀA) = κ(A)²` — the condition number **squares**.
+> $\kappa(A^{\mathsf T}A) = \kappa(A)^2$ — the condition number **squares**.
 
 The condition number is the factor by which a linear solve can amplify rounding. Doubling its
-exponent means doubling the digits you lose. If `A` has condition `10⁷`, `AᵀA` has `10¹⁴`, and
+exponent means doubling the digits you lose. If $A$ has condition $10^7$, $A^{\mathsf T}A$ has $10^{14}$, and
 a 64-bit float has about 16 digits — with the normal equations the solve is allowed roughly
 **two** digits of trust, on exactly the gritty, correlated-feature data we are asked to
 process.
 
-**QR** orthogonalizes `A = QR` and solves `β = R⁻¹Qᵀy`. Because `Q` is perfectly conditioned,
-`κ(QR) = κ(A)` — the condition is *not* squared. Stable and `O(np²)`.
+**QR** orthogonalizes $A = QR$ and solves $\beta = R^{-1}Q^{\mathsf T}y$. Because $Q$ is perfectly conditioned,
+$\kappa(QR) = \kappa(A)$ — the condition is *not* squared. Stable and $O(np^2)$.
 
-**SVD** factors `A = UΣVᵀ`, so `β = Σ_{σᵢ≠0} (uᵢ·y / σᵢ) vᵢ` — the pseudoinverse solution.
+**SVD** factors $A = U\Sigma V^{\mathsf T}$, so $\beta = \sum_{\sigma_i \neq 0} (u_i \cdot y / \sigma_i)\, v_i$ — the pseudoinverse solution.
 It costs more than QR *and* does something QR does not: **it shows you the rank**. Singular
 values near zero declare exactly which features make the problem degenerate, and the
 pseudoinverse path degrades gracefully when `A` is not full-rank, returning both the
@@ -108,34 +108,29 @@ We chose SVD, exposed as the backend's `lstsq`. The *algorithm* never sees `faer
 
 Instead of treating the intercept as a special case, we prepend a column of ones:
 
-```text
-A = [ 1 | X ]      β = [ b₀ | β_features ]ᵀ
-```
+$$A = [\,1 \mid X\,], \qquad \beta = [\,b_0 \mid \beta_{\text{features}}\,]^{\mathsf T}$$
 
 The intercept becomes one more coefficient, solved by the same call. The payoff appears in
-§3.3: the streaming path accumulates `AᵀA` for *this* matrix, so the intercept rides along
+§3.3: the streaming path accumulates $A^{\mathsf T}A$ for *this* matrix, so the intercept rides along
 with no separate pass.
 
 ### 3.3 The streaming road — and its honest price
 
-The tempting streaming idea — solve least squares per batch and average the `β` — is almost
+The tempting streaming idea — solve least squares per batch and average the $\beta$ — is almost
 never right: a weighted average hides how the covered rows were distributed, and per-batch
 ranks do not compose. What *composes* is the raw material of the normal equations:
 
-```text
-G := AᵀA        (p × p, symmetric)
-c := Aᵀy        (p, the right-hand side)
-```
+$$G := A^{\mathsf T}A \quad (p \times p,\ \text{symmetric}), \qquad c := A^{\mathsf T}y \quad (p,\ \text{the right-hand side})$$
 
-Each batch `B` adds a rank-`|B|` contribution: `G := G + BᵀB`, `c := c + Bᵀy_batch`. At the
-end, one solve of `Gβ = c` yields the coefficients. Exactly one extra fact must be said out
-loud: **we computed `AᵀA`, so we are square-conditioning again.** The streaming trade-off is:
+Each batch $B$ adds a rank-$\lvert B \rvert$ contribution: $G := G + B^{\mathsf T}B$, $c := c + B^{\mathsf T}y_{\text{batch}}$. At the
+end, one solve of $G\beta = c$ yields the coefficients. Exactly one extra fact must be said out
+loud: **we computed $A^{\mathsf T}A$, so we are square-conditioning again.** The streaming trade-off is:
 
 | | in-memory SVD | streaming Gram |
 |---|---|---|
-| Trustworthy digits at `κ(A)=10⁷` | ~9 | ~3–5 (the squared condition eats the rest) |
-| Memory per stream step | `O(n·p)` | `O(p²)` — the entire point |
-| Rank at stream end | native | only via `G`'s own singular values (≈ `σᵢ²` of `A`) |
+| Trustworthy digits at $\kappa(A)=10^7$ | ~9 | ~3–5 (the squared condition eats the rest) |
+| Memory per stream step | $O(np)$ | $O(p^2)$ — the entire point |
+| Rank at stream end | native | only via $G$'s own singular values ($\approx \sigma_i^2$ of $A$) |
 
 We keep the dense path on SVD and the streaming path on the Gram. They are not "the same
 computation"; they are two honest points on a trade-off, and the tests below pin where they
@@ -275,7 +270,7 @@ dense path — out-of-core is a transport choice, not a different model.
 The executable source of truth is
 `crates/sciencekit_linear_model/src/linear_regression/*_tests.rs`, with shared fixtures in
 `test_datasets.rs`. The small fixture is a hand-checkable line: `X = [[1,0],[0,1],[1,1],[2,1]]`
-with `y = 3·x₀ − 2·x₁ + 0.5`.
+with $y = 3x_0 - 2x_1 + 0.5$.
 
 - **Exact recovery** (`recovers_exact_coefficients_and_intercept`): the SVD fit returns
   coefficients `[3, −2]` and intercept `0.5` to `1e-9`.
@@ -309,10 +304,10 @@ with `y = 3·x₀ − 2·x₁ + 0.5`.
 
 | Acceptance criterion (PRD §8.7 / §10.3) | Where it lands |
 |---|---|
-| Lots and little data | the four-row fixture and the 50 000 × 6 one |
+| Lots and little data | the four-row fixture and the $50\,000 \times 6$ one |
 | Under concurrency | `model_serves_concurrent_predictions` + `Send + Sync` assertion |
 | Model export | the model is the distinct, backend-carrying export boundary (Safetensors/JSON deferred to Phase 7) |
-| Metrics | the `SKSupervisedScorer` contract is ready; the metrics suite (W6.3) exercises R² against these models |
+| Metrics | the `SKSupervisedScorer` contract is ready; the metrics suite (W6.3) exercises $R^2$ against these models |
 
 The change also paid two debts forward. The **Gram kernels** (`sk_gram_matrix`, `sk_gram_vector`)
 are reusable substrate — ridge and PCA's covariance accumulator will consume the same
@@ -329,7 +324,7 @@ batch.
 - The dense fit goes through the backend's **SVD least-squares** kernel, never the normal
   equations, and surfaces `rank` and `singular_values`.
 - The **intercept** is a design-matrix column, solved jointly.
-- `partial_fit` and `fit_streaming` accumulate the **Gram** state (`AᵀA`, `Aᵀy`) and solve once
+- `partial_fit` and `fit_streaming` accumulate the **Gram** state ($A^{\mathsf T}A$, $A^{\mathsf T}y$) and solve once
   — with the squared-condition trade-off stated, not hidden.
 - A new **supervised streaming contract** in `sciencekit_common` carries features *and* targets
   through the shared prefetch driver.

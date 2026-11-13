@@ -21,6 +21,8 @@ Every estimator in `sciencekit` follows the same skeleton:
 
 ```mermaid
 flowchart TD
+  accTitle: The estimator lifecycle taught by the tutorials
+  accDescr: A builder creates a stateless estimator, whose fit produces a fitted model. One resolved plan selects in-memory kernels, a streaming driver or a memory-mapped source. All regimes feed the transform and predict operations.
     classDef buildNode fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e,stroke-width:2px
     classDef fitNode fill:#f0fdf4,stroke:#16a34a,color:#14532d,stroke-width:2px
     classDef regNode fill:#fff7ed,stroke:#ea580c,color:#7c2d12,stroke-width:2px
@@ -39,7 +41,7 @@ flowchart TD
 ```
 
 The key that makes all of this cohere: the algorithm is first designed as a function of a
-**combinable state** (Σ sums, Welford moments, a gradient accumulator, a set of stored
+**combinable state** ($\Sigma$ sums, Welford moments, a gradient accumulator, a set of stored
 neighbor vectors). Once the state exists, the in-memory path is "the streaming path with one
 batch that happens to hold everything" — the two regimes share the same math, and the user
 never picks a code path, only a [`SKExecutionMode`](how-to-add-an-algorithm.md) — usually the default
