@@ -98,9 +98,16 @@ opencl`) exits `4` naming the feature; nothing falls back silently.
 ## Gates
 
 - `cargo fmt --all --check` — clean.
-- `cargo clippy --workspace --all-targets -- -D warnings` — see PR #405.
-- `cargo test --workspace` — see PR #405.
+- `cargo clippy --workspace --all-targets -- -D warnings` — clean (finished with no
+  warnings).
+- `cargo test --workspace` — exit 0, 53 suites passed. One earlier run tripped a
+  pre-existing flake in `sciencekit_decomposition`
+  (`truncated_representation_wide_sparse_matrix_fits_without_densification`):
+  its tracing-capture guard is global, so a parallel test can inject a warning
+  event. The test passes in isolation and the full suite passes on rerun; the
+  crate is untouched by this change and the flake is reported here rather than
+  fixed.
 - `mdbook build docs` (docs worktree) — clean.
-- `openspec validate workflows-cli --strict` — see the openspec PR.
+- `openspec validate workflows-cli --strict` — valid.
 
 Verdict: the change meets the `workflows-cli` spec; task 4.4 is complete.
