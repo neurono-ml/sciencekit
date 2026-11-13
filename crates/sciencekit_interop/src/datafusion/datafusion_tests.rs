@@ -128,8 +128,9 @@ fn datafusion_missing_values_follow_the_policy() {
     let categorical_batch =
         sk_tabular_batch_from_datafusion_record_batch(&record_batch, &categorical_config, 0, true)
             .unwrap();
-    let categorical_dataset: SKTabularDataset<f64> =
-        categorical_batch.to_tabular_dataset(&categorical_config).unwrap();
+    let categorical_dataset: SKTabularDataset<f64> = categorical_batch
+        .to_tabular_dataset(&categorical_config)
+        .unwrap();
     assert_eq!(
         categorical_dataset.categorical().unwrap().codes()[[1, 0]],
         -1
