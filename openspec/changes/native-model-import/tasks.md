@@ -12,7 +12,7 @@
 
 - [x] 2.1 Implement the ONNX native importer for the documented operator subset and
   initializer mapping; verify with `cargo test -p sciencekit_onnx native_import`.
-- [ ] 2.2 Add preprocessing/linear/tree fixtures and unsupported-operator errors; verify
+- [x] 2.2 Add preprocessing/linear/tree fixtures and unsupported-operator errors; verify
   with `cargo test -p sciencekit_onnx native_coverage`.
 
 ## 3. Retraining
