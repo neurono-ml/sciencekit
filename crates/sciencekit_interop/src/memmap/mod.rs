@@ -25,6 +25,8 @@ pub use raw_binary_source::SKRawBinaryMappableSource;
 #[cfg(feature = "arrow")]
 pub use arrow_ipc_source::SKArrowIpcMappableSource;
 
+#[cfg(all(test, feature = "arrow"))]
+mod arrow_ipc_layout_tests;
 #[cfg(test)]
 mod arrow_ipc_tests;
 #[cfg(test)]
