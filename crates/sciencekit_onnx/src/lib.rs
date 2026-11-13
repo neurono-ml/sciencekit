@@ -10,12 +10,12 @@
 //! This is a pure dispatcher module: `lib.rs` only declares and re-exports
 //! submodules.
 
-mod export;
-mod graph;
-
 #[cfg(test)]
 mod acceptance_tests;
 
+mod export;
+mod graph;
+mod import;
 pub use export::{
     SKOnnxFamilyCoverage, SKToOnnx, sk_export_state_to_onnx, sk_onnx_coverage,
     sk_onnx_supported_families,
@@ -24,4 +24,8 @@ pub use graph::{
     SK_ONNX_DEFAULT_OPSET, SK_ONNX_IR_VERSION, SK_ONNX_ML_DOMAIN, SK_ONNX_ML_TREE_OPSET,
     SKOnnxDimension, SKOnnxGraphBuilder, SKOnnxModel, SKOnnxNode, SKOnnxTensorDType,
     SKOnnxValueInfo,
+};
+pub use import::{
+    SK_ONNX_SUPPORTED_ML_OPERATORS, SK_ONNX_SUPPORTED_OPERATORS, SKOnnxImportError,
+    SKOnnxPredictor, SKOnnxPredictorBuilder, sk_onnx_supports_operator,
 };

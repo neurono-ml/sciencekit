@@ -2,10 +2,16 @@
 
 use sciencekit_common::SKError;
 
+use serde_onnx::ir::TensorData;
+
 use super::{
     SK_ONNX_DEFAULT_OPSET, SK_ONNX_ML_TREE_OPSET, SKOnnxDimension, SKOnnxGraphBuilder, SKOnnxNode,
-    SKOnnxTensorDType, SKOnnxValueInfo, proto,
+    SKOnnxTensorDType, SKOnnxValueInfo,
 };
+
+fn decode(bytes: &[u8]) -> serde_onnx::ir::Model {
+    serde_onnx::proto::decode_model(bytes).expect("the bytes decode as a shared ONNX model")
+}
 
 fn identity_builder() -> SKOnnxGraphBuilder {
     let mut builder = SKOnnxGraphBuilder::new("identity");
@@ -31,20 +37,19 @@ fn graph_identity_round_trips_through_protobuf() {
     let model = identity_builder()
         .build()
         .expect("the identity graph is valid");
-    let decoded = <proto::SkOnnxModelProto as prost::Message>::decode(model.bytes())
-        .expect("the bytes decode as a ModelProto");
+    let decoded = decode(model.bytes());
     assert_eq!(decoded.producer_name, "sciencekit");
     assert_eq!(decoded.ir_version, super::SK_ONNX_IR_VERSION);
     assert_eq!(decoded.opset_import.len(), 2);
     assert_eq!(decoded.opset_import[0].version, SK_ONNX_DEFAULT_OPSET);
     assert_eq!(decoded.opset_import[1].domain, "ai.onnx.ml");
     assert_eq!(decoded.opset_import[1].version, SK_ONNX_ML_TREE_OPSET);
-    let graph = decoded.graph.expect("the model carries a graph");
+    let graph = &decoded.graph;
     assert_eq!(graph.name, "identity");
-    assert_eq!(graph.node.len(), 1);
-    assert_eq!(graph.node[0].op_type, "Identity");
-    assert_eq!(graph.input.len(), 1);
-    assert_eq!(graph.output.len(), 1);
+    assert_eq!(graph.nodes.len(), 1);
+    assert_eq!(graph.nodes[0].op_type, "Identity");
+    assert_eq!(graph.inputs.len(), 1);
+    assert_eq!(graph.outputs.len(), 1);
     assert_eq!(model.opset(), SK_ONNX_DEFAULT_OPSET);
     assert_eq!(model.node_count(), 1);
 }
@@ -81,18 +86,15 @@ fn graph_serializes_floating_initializers_as_raw_f32_bytes() {
                 .expect("a valid output"),
         );
     let model = builder.build().expect("the graph is valid");
-    let decoded = <proto::SkOnnxModelProto as prost::Message>::decode(model.bytes())
-        .expect("the bytes decode as a ModelProto");
-    let initializer = &decoded.graph.expect("a graph").initializer[0];
+    let decoded = decode(model.bytes());
+    let initializer = &decoded.graph.initializers[0];
     assert_eq!(initializer.name, "scale");
-    assert_eq!(initializer.data_type, 1);
-    assert_eq!(initializer.dims, vec![2]);
-    let values: Vec<f32> = initializer
-        .raw_data
-        .chunks_exact(4)
-        .map(|chunk| f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]))
-        .collect();
-    assert_eq!(values, vec![2.0, 4.0]);
+    assert_eq!(initializer.elem, serde_onnx::ir::ElemType::Float);
+    assert_eq!(initializer.shape, vec![serde_onnx::ir::Dim::Fixed(2)]);
+    match initializer.data() {
+        Some(TensorData::F32(values)) => assert_eq!(values, &vec![2.0, 4.0]),
+        other => panic!("expected f32 initializer data, got {other:?}"),
+    }
 }
 
 #[test]

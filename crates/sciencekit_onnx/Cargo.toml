@@ -9,10 +9,17 @@ repository = "https://github.com/neurono-ml/sciencekit"
 
 [dependencies]
 sciencekit_common = { path = "../sciencekit_common", version = "0.8.0" }
+ndarray = { workspace = true }
+half = "2"
+num-traits = "0.2"
 prost = "0.14"
+serde-onnx = { git = "https://github.com/neurono-ml/serde-onnx", rev = "0c54592", default-features = false, features = ["import", "export"] }
 
 [dev-dependencies]
 ndarray = { workspace = true }
+half = "2"
+num-traits = "0.2"
+prost = "0.14"
 sciencekit_cluster = { path = "../sciencekit_cluster", version = "0.8.0" }
 sciencekit_decomposition = { path = "../sciencekit_decomposition", version = "0.8.0" }
 sciencekit_ensemble = { path = "../sciencekit_ensemble", version = "0.8.0" }
@@ -25,4 +32,7 @@ sciencekit_preprocessing = { path = "../sciencekit_preprocessing", version = "0.
 sciencekit_svm = { path = "../sciencekit_svm", version = "0.8.0" }
 sciencekit_tree = { path = "../sciencekit_tree", version = "0.8.0" }
 serde_json = "1"
+sprs = { workspace = true }
 tempfile = "3"
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }

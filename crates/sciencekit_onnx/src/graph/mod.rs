@@ -1,5 +1,6 @@
-//! The ONNX graph builder and its protobuf encoding (spec `onnx-export`,
-//! requirement "Graph builder").
+//! The ONNX graph builder, the shared model handle and their interface types
+//! (spec `onnx-export`, requirement "Graph builder"; spec `onnx-import`,
+//! requirement "Shared ONNX IR").
 //!
 //! This is a **pure dispatcher** module: `mod.rs` only declares and re-exports
 //! submodules; every implementation lives in its own file.
@@ -8,7 +9,6 @@ mod builder;
 mod model;
 mod node;
 mod opset;
-mod proto;
 mod tensor_data_type;
 mod value_info;
 
@@ -23,5 +23,3 @@ pub use value_info::{SKOnnxDimension, SKOnnxValueInfo};
 
 #[cfg(test)]
 mod graph_tests;
-#[cfg(test)]
-mod proto_tests;
