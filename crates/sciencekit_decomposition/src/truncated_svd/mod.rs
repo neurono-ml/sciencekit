@@ -7,6 +7,7 @@
 mod builder;
 mod config;
 mod core_implementation;
+mod export;
 mod fit;
 mod model;
 mod product;

@@ -7,6 +7,7 @@ mod builder;
 mod centering;
 mod config;
 mod core_implementation;
+mod export;
 mod fit;
 mod model;
 mod solvers;
@@ -43,3 +44,6 @@ mod pca_transform_tests;
 mod pca_validation_tests;
 #[cfg(test)]
 pub(crate) mod test_tracing;
+
+#[cfg(test)]
+mod export_tests;
