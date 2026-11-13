@@ -14,6 +14,11 @@ pub enum SKOnnxImportError {
         /// The decoder's diagnosis.
         detail: String,
     },
+    /// The graph's data dependencies form a cycle.
+    GraphCycle {
+        /// The node labels along the detected cycle.
+        path: Vec<String>,
+    },
     /// The model targets an operator set the importer does not implement.
     UnsupportedOpset {
         /// The operator-set domain (`""` is the default ONNX domain).
@@ -77,6 +82,9 @@ impl core::fmt::Display for SKOnnxImportError {
         match self {
             Self::InvalidModel { detail } => {
                 write!(f, "the bytes are not a valid ONNX model: {detail}")
+            }
+            Self::GraphCycle { path } => {
+                write!(f, "the graph data dependencies form a cycle: {}", path.join(" -> "))
             }
             Self::UnsupportedOpset {
                 domain,

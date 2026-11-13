@@ -38,6 +38,8 @@ mod classifier_tests;
 #[cfg(test)]
 mod concurrency_tests;
 #[cfg(test)]
+mod graph_validation_tests;
+#[cfg(test)]
 mod interpreter_tests;
 #[cfg(test)]
 mod model_tests;

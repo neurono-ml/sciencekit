@@ -1,10 +1,6 @@
 //! Missing producers, ambiguous heads and dtype validation.
 
-use ndarray::array;
-use sciencekit_common::SKRegressorPredictor;
-
 use super::SKOnnxImportError;
-use super::SKOnnxPredictor;
 use serde_onnx::ir::{Dim, ElemType, Node, Tensor, TensorData, ValueInfo, ValueType};
 
 use crate::graph::{
@@ -25,14 +21,7 @@ fn a_node_reading_an_undefined_value_names_the_missing_tensor() {
         )],
         vec![],
     );
-    let model = SKOnnxModel::from_bytes(bytes).expect("the interface is decodable");
-    let predictor = SKOnnxPredictor::<f64>::builder()
-        .model(model)
-        .build()
-        .expect("the interface is still decodable");
-    let error = predictor
-        .predict(array![[1.0, 2.0]].view())
-        .expect_err("must fail");
+    let error = SKOnnxModel::from_bytes(bytes).expect_err("must fail while loading");
     match error {
         SKOnnxImportError::MissingInitializer { name, .. } => assert_eq!(name, "ghost"),
         other => panic!("expected a missing-initializer error, got {other}"),

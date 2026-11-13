@@ -29,6 +29,7 @@ impl SKOnnxModel {
 
 /// Validate every construct the importer cannot execute.
 pub(crate) fn validate(model: &SKOnnxModel) -> Result<(), SKOnnxImportError> {
+    structural(model)?;
     let graph = &model.model().graph;
     if graph.nodes.is_empty() {
         return Err(SKOnnxImportError::UnsupportedOutput {
@@ -67,4 +68,33 @@ pub(crate) fn validate(model: &SKOnnxModel) -> Result<(), SKOnnxImportError> {
     }
     interface(model)?;
     Ok(())
+}
+
+/// Run the shared IR's structural validator and translate its diagnoses.
+///
+/// A cycle is the construct the interpreter cannot explain on its own: walking
+/// a graph in dependency order would stall and report the first unproduced
+/// operand, hiding the real defect. Duplicated outputs and malformed shapes are
+/// likewise rejected before inference.
+fn structural(model: &SKOnnxModel) -> Result<(), SKOnnxImportError> {
+    use serde_onnx::ir::ValidationError;
+    let report = serde_onnx::ir::validate_model(model.model());
+    // A cycle also surfaces as an undefined value in the validator's linear
+    // scan, so the cycle diagnosis takes precedence over the symptom.
+    if let Some(ValidationError::Cycle { path }) = report
+        .errors
+        .iter()
+        .find(|error| matches!(error, ValidationError::Cycle { .. }))
+    {
+        return Err(SKOnnxImportError::GraphCycle { path: path.clone() });
+    }
+    match report.errors.into_iter().next() {
+        Some(ValidationError::UndefinedValue { node_index, name }) => {
+            Err(SKOnnxImportError::MissingInitializer { name, node_index })
+        }
+        Some(other) => Err(SKOnnxImportError::InvalidModel {
+            detail: other.to_string(),
+        }),
+        None => Ok(()),
+    }
 }
