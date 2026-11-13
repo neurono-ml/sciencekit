@@ -28,6 +28,7 @@ members = [
     "crates/sciencekit_ensemble",
     "crates/sciencekit_ffi",
     "crates/sciencekit_gpu",
+    "crates/sciencekit_gpu_opencl",
     "crates/sciencekit_impute",
     "crates/sciencekit_interop",
     "crates/sciencekit_linear_model",
