@@ -7,22 +7,22 @@ use sciencekit_common::SKFloat;
 /// Raw decomposition state shared by every PCA solver before wrapping into the
 /// public fitted model.
 #[derive(Debug, Clone)]
-pub(in crate::pca) struct SKPCADecomposition<F: SKFloat> {
+pub(crate) struct SKPCADecomposition<F: SKFloat> {
     /// Principal axes in feature space, with shape `k × d`.
-    pub(in crate::pca) components: Array2<F>,
+    pub(crate) components: Array2<F>,
     /// Unbiased variance explained by each retained component.
-    pub(in crate::pca) explained_variance: Array1<F>,
+    pub(crate) explained_variance: Array1<F>,
     /// Fraction of total centered variance explained by each component.
-    pub(in crate::pca) explained_variance_ratio: Array1<F>,
+    pub(crate) explained_variance_ratio: Array1<F>,
     /// Retained non-increasing singular values of the centered design.
-    pub(in crate::pca) singular_values: Array1<F>,
+    pub(crate) singular_values: Array1<F>,
 }
 
 /// Ensures every component row is a unit vector orthogonal to preceding rows
 /// (completing zero-norm directions deterministically on rank-deficient inputs)
 /// and applies the PCA sign convention so the largest-magnitude coordinate of
 /// every row is non-negative (ties broken by smallest feature index).
-pub(super) fn sk_orient_components<F: SKFloat>(components: &mut Array2<F>) {
+pub(crate) fn sk_orient_components<F: SKFloat>(components: &mut Array2<F>) {
     let (number_of_components, number_of_features) = components.dim();
     let mut completed: Vec<Array1<F>> = Vec::with_capacity(number_of_components);
 
@@ -103,7 +103,7 @@ pub(super) fn sk_from_singular_values<F: SKFloat>(
 
 /// Divides each component's variance by `total_variance`, returning zeros when
 /// the input design is constant (`total_variance <= 0`).
-pub(super) fn sk_compute_variance_ratio<F: SKFloat>(
+pub(crate) fn sk_compute_variance_ratio<F: SKFloat>(
     explained_variance: &Array1<F>,
     total_variance: F,
 ) -> Array1<F> {

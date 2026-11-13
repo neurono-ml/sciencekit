@@ -34,6 +34,9 @@ pub mod batch;
 pub mod bridge;
 pub mod columns;
 pub mod json;
+#[cfg(feature = "memmap")]
+#[allow(unsafe_code)]
+pub mod memmap;
 pub mod missing;
 pub mod observability;
 pub mod safetensors;

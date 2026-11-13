@@ -22,6 +22,11 @@ snap = { version = "1.1", optional = true }
 tracing = { workspace = true }
 tokio = { version = "=1.53.1", features = ["rt"] }
 
+# Optional memory-mapped sources (feature `memmap`). `memmap2` supplies the
+# read-only mapping and `npyz` parses the NumPy `.npy` header.
+memmap2 = { version = "0.9", optional = true }
+npyz = { version = "0.8", default-features = false, optional = true }
+
 # Optional Arrow adapter (feature `arrow`). Versions are pinned to the last
 # release whose MSRV is Rust 1.85, the workspace toolchain (PRD §3.6).
 arrow-array = { version = "=58.3.0", features = ["ffi"], optional = true }
@@ -79,7 +84,9 @@ arrow = [
 parquet = ["arrow"]
 polars = ["dep:polars", "dep:psm"]
 datafusion = ["dep:datafusion", "dep:comfy-table", "dep:futures"]
-memmap = []
+# Memory-mapped raw binary, NumPy `.npy` and Arrow IPC sources. Arrow IPC uses
+# the `arrow` adapter, so the flag enables it as well.
+memmap = ["dep:memmap2", "dep:npyz", "arrow"]
 compression-gzip = ["dep:flate2"]
 compression-brotli = ["dep:brotli"]
 compression-snappy = ["dep:snap"]

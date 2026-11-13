@@ -9,16 +9,14 @@ use sciencekit_common::{
 use sciencekit_math::backend::{SKBackendSelection, sk_math_backend_for_kind};
 use sciencekit_math::kernels::SK_AXIS_SUM_GRAIN;
 
-use super::centering::{
-    sk_centered_dense_or_reject, sk_feature_means, sk_total_centered_variance, sk_view_dimensions,
-};
+use super::centering::{sk_centered_dense_or_reject, sk_feature_means, sk_total_centered_variance};
 use super::config::SKPCASolver;
 use super::core_implementation::SKPCA;
 use super::model::SKPCAModel;
 use super::solvers::{
     sk_resolve_pca_solver, sk_solve_covariance_eigh, sk_solve_full_svd, sk_solve_randomized_svd,
 };
-use super::validation::{sk_validate_finiteness, sk_validate_fit_shape};
+use super::validation::{sk_validate_finiteness, sk_validate_fit_shape, sk_view_dimensions};
 
 impl<F: SKBackendSelection> SKUnsupervisedFit<F> for SKPCA<F> {
     type Model = SKPCAModel<F>;

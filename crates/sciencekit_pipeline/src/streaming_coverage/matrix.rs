@@ -109,6 +109,13 @@ pub(super) const STREAMING_COVERAGE: &[StreamingCoverage] = &[
         note: "one epoch per pass, sparse epoch driver",
     },
     StreamingCoverage {
+        estimator: "SKIncrementalPCA",
+        partial_fit: true,
+        numeric_streaming: true,
+        sparse_streaming: true,
+        note: "Chan-Golub-LeVeque scatter merge with Neumaier-compensated CSR Gram accumulation",
+    },
+    StreamingCoverage {
         estimator: "SKMiniBatchKMeans",
         partial_fit: true,
         numeric_streaming: true,
@@ -118,7 +125,7 @@ pub(super) const STREAMING_COVERAGE: &[StreamingCoverage] = &[
 ];
 
 /// The number of streaming estimators the audit expects.
-pub(super) const STREAMING_ESTIMATORS: usize = 14;
+pub(super) const STREAMING_ESTIMATORS: usize = 15;
 
 /// The number of `partial_fit` methods the audit expects.
-pub(super) const PARTIAL_FIT_METHODS: usize = 12;
+pub(super) const PARTIAL_FIT_METHODS: usize = 13;

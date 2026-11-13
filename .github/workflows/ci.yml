@@ -90,6 +90,8 @@ jobs:
             cargo test -p sciencekit_interop --features "$feature"
           done
           cargo test -p sciencekit_interop --features "compression-gzip,compression-brotli,compression-snappy"
+      - name: Memory-mapped source tests
+        run: cargo test -p sciencekit_interop --features memmap
       - name: Each optional engine feature builds
         run: |
           for feature in arrow polars datafusion memmap; do
