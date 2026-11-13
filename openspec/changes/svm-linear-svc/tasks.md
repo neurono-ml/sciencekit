@@ -61,7 +61,7 @@
   10 000 features in a sparse fixture), both losses, multiclass, class weights, dense and
   sparse paths, parallel-equals-sequential prediction and metric production through
   `sciencekit_metrics`; verify with `cargo test -p sciencekit_svm`.
-- [ ] 5.2 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
+- [x] 5.2 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
   warnings` and `cargo test --workspace`; fix every failure before pushing.
 
 ## 6. Documentation, changelog and review
