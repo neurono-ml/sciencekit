@@ -103,6 +103,11 @@ impl<F: SKFloat> SKLogisticRegression<F> {
         self.config.maximum_number_of_iterations
     }
 
+    /// The seed of every stochastic choice in the fit.
+    pub fn random_seed(&self) -> u64 {
+        self.config.random_seed
+    }
+
     /// Fit on a sequential supervised source, retaining each batch's design and
     /// solving the whole accumulated design once at the end.
     pub fn fit_streaming<Provider>(

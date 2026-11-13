@@ -13,3 +13,5 @@ pub use error_kind::SKError;
 
 #[cfg(test)]
 mod errors_tests;
+#[cfg(test)]
+mod interop_errors_tests;

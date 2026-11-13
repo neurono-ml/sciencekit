@@ -17,7 +17,6 @@ mod loss;
 pub(crate) mod objective;
 mod penalty;
 mod row;
-mod shuffle;
 mod state;
 mod update;
 
@@ -39,7 +38,6 @@ pub(crate) use learning_rate::schedule::SKLearningRateSchedule;
 pub(crate) use learning_rate::sk_optimal_offset;
 pub(crate) use loss::regressor::{SKSGDRegressorLossAdapter, sk_regressor_loss_adapter};
 pub(crate) use objective::sk_objective_improved;
-pub(crate) use shuffle::SKRandomGenerator;
 pub(crate) use state::SKLearningState;
 
 #[cfg(test)]
