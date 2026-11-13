@@ -12,7 +12,7 @@
 
 - [x] 2.1 Implement linear-regression adapter fitting and a training-loss reduction test;
   verify with `cargo test -p sciencekit_linear_model lora_fit`.
-- [ ] 2.2 Implement logistic adapter fitting and a classification-loss test; verify with
+- [x] 2.2 Implement logistic adapter fitting and a classification-loss test; verify with
   `cargo test -p sciencekit_linear_model lora_logistic`.
 - [ ] 2.3 Implement adapter prediction and base-frozen invariance tests; verify with
   `cargo test -p sciencekit_linear_model lora_predict`.
