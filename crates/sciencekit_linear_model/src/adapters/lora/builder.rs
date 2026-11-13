@@ -7,8 +7,9 @@ use sciencekit_common::{
 
 use super::config::SKLoraTargetModule;
 use super::core_implementation::{
-    SKLoraAdapter, SK_LORA_DEFAULT_ALPHA, SK_LORA_DEFAULT_LEARNING_RATE,
+    SK_LORA_DEFAULT_ALPHA, SK_LORA_DEFAULT_LEARNING_RATE,
     SK_LORA_DEFAULT_MAXIMUM_NUMBER_OF_ITERATIONS, SK_LORA_DEFAULT_RANK, SK_LORA_DEFAULT_TOLERANCE,
+    SKLoraAdapter,
 };
 
 /// Builder for [`SKLoraAdapter`]: the only construction surface.
