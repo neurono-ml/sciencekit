@@ -52,12 +52,20 @@ encoded bytes **and** that decoded model; `from_bytes` decodes into the very sam
 type. The exporter and importer therefore share `Node`, `Attribute`, `Tensor`,
 `ElemType` and the typed `ai.onnx.ml` operator structs.
 
-One wrinkle is worth recording. The pinned decoder decides "this attribute has a
-value" from the encoded protobuf field, and protobuf omits scalar fields equal to
-zero. Legal ONNX graphs use `axis = 0` and `keepdims = 0`, so those attributes
-looked empty. `import/decode.rs` substitutes a sentinel before decoding and
-restores the zero afterwards. The guard is documented as removable once the
-pinned revision is bumped.
+One wrinkle is worth recording precisely, because it is an **upstream bug** in
+revision `0c54592`, not a limitation of ONNX. `decode_attribute` in
+`serde-onnx/src/proto/codec.rs` decides whether an attribute carries a value
+from the encoded protobuf field: it tests `proto.i != 0`, `proto.f != 0.0` and
+`!proto.s.is_empty()` instead of consulting `AttributeProto.type`. Protobuf omits
+scalar fields equal to their default, so a legal `INT 0`, `FLOAT 0.0` or empty
+`STRING` is indistinguishable from an absent field and decoding fails with
+`attribute "axis" carries no value`. Legal ONNX graphs use `axis = 0` and
+`keepdims = 0` constantly. `import/decode.rs` therefore substitutes a sentinel
+before decoding and restores the zero afterwards. The shim is deliberately
+narrow (only `AttributeType::Int/Float/String` with the default value), and
+`decode_tests.rs` proves both halves: the pinned decoder rejects the same bytes,
+and the shim restores exactly the zero without touching non-zero attributes.
+The guard is removable once the pinned revision is bumped.
 
 ## Why import is stricter than export
 
@@ -67,6 +75,7 @@ refuses, up front and with a **typed** error, everything it cannot honestly run:
 | Situation | Error variant |
 |---|---|
 | Bytes that are not a `ModelProto` | `SKOnnxImportError::InvalidModel` |
+| Graph data dependencies form a cycle | `GraphCycle` (names the node path) |
 | Opset or IR version above the ceiling | `UnsupportedOpset` |
 | An operator outside the documented subset | `UnsupportedOperator` (names domain, operator and node index) |
 | A value no initializer or earlier node defines | `MissingInitializer` (names the tensor) |
@@ -79,7 +88,13 @@ refuses, up front and with a **typed** error, everything it cannot honestly run:
 The rule mirrors the library's philosophy: a precise refusal beats a silent
 guess. `a_node_reading_an_undefined_value_names_the_missing_tensor` and
 `an_external_initializer_is_rejected_by_name` in `validation_tests.rs` and
-`model_tests.rs` are the executable proof.
+`model_tests.rs` are the executable proof, and the structural validator comes
+from the shared IR (`serde_onnx::ir::validate_model`) so a cycle is reported as a
+cycle instead of as a stalled topological walk. Malformed nodes and shape
+metadata are validated before any `ndarray` call that would panic:
+`operand_tests.rs`, `shape_validation_tests.rs` and `graph_validation_tests.rs`
+cover missing operands, an initializer width that disagrees with the declared
+input, invalid `Transpose`/`Squeeze` axes and a cyclic graph.
 
 ## The operator dispatch table
 
@@ -176,6 +191,15 @@ float output is a regression (one column for `predict`, any width for
 `predict_arrays`); an integer-only output is labels-only. Anything else is
 `UnsupportedOutput`.
 
+Like every other estimator, the predictor builder exposes `backend` and
+`execution_mode` (defaults `Faer` and `Automatic`). Imported models use neither
+choice for heavy algebra — the interpreter walks the graph — but the selection
+surface is uniform and every public prediction operation records the configured
+kind in a `sciencekit.operation` span through `sk_run_operation`. The span also
+carries the row and column counts and never a hardcoded backend;
+`observability_tests.rs` asserts the override (`MatrixMultiply`) reaches the
+span and that the default is `Faer`.
+
 ## The decisions and the roads not taken
 
 - **`tract-onnx 0.22`** was spiked. It builds on Rust 1.85, but it brings its own
@@ -219,6 +243,23 @@ The companion tests are the executable truth of this chapter:
   `decision_tree_classifier_round_trips_through_export_and_import` and
   `pipeline_regressor_round_trips_through_export_and_import`
   (`round_trip_tests.rs`) close the loop against the original Rust model.
+- `binary_rbf_svc_round_trips_labels_and_decision_values`,
+  `multiclass_rbf_svc_round_trips_labels_and_decision_values`,
+  `pca_round_trips_the_transform`, `truncated_svd_round_trips_the_transform`,
+  `standard_scaler_without_mean_round_trips_the_transform` and
+  `dense_knn_classifier_round_trips_labels_and_probabilities`
+  (`round_trip_families_tests.rs`) extend that loop to the remaining exported
+  families.
+- The same file documents two round trips that **cannot** exist yet, as
+  executable expectations of the typed refusal: boosting states (the
+  `histogram_gradient_boosting` exporter is outside `sk_onnx_coverage`) and a
+  CSR-trained KNN (the neighbour exporter translates only a dense training
+  design). Both return `UnsupportedOperation` naming the reason; no import code
+  pretends to round-trip them.
+- `the_pinned_decoder_rejects_a_legal_zero_integer_attribute`,
+  `the_shim_restores_zero_integer_and_float_attributes` and
+  `the_shim_leaves_non_zero_attributes_untouched` (`decode_tests.rs`) keep the
+  sentinel shim honest.
 - `concurrent_predictions_match_the_sequential_result`
   (`concurrency_tests.rs`) proves a loaded predictor is `Send + Sync` and
   deterministic.
