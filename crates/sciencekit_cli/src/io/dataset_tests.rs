@@ -30,8 +30,17 @@ fn the_format_is_inferred_from_the_extension_and_validated_by_name() {
     use super::SKDatasetFormat;
     use std::path::Path;
 
-    assert_eq!(SKDatasetFormat::from_path(Path::new("data.parquet")), SKDatasetFormat::Parquet);
-    assert_eq!(SKDatasetFormat::from_path(Path::new("data.csv")), SKDatasetFormat::Csv);
-    assert_eq!(SKDatasetFormat::from_name("CSV").expect("csv"), SKDatasetFormat::Csv);
+    assert_eq!(
+        SKDatasetFormat::from_path(Path::new("data.parquet")),
+        SKDatasetFormat::Parquet
+    );
+    assert_eq!(
+        SKDatasetFormat::from_path(Path::new("data.csv")),
+        SKDatasetFormat::Csv
+    );
+    assert_eq!(
+        SKDatasetFormat::from_name("CSV").expect("csv"),
+        SKDatasetFormat::Csv
+    );
     assert!(SKDatasetFormat::from_name("arff").is_err());
 }
