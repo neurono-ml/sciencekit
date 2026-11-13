@@ -137,4 +137,14 @@ impl<F: SKFloat> SKLogisticRegressionModel<F> {
     pub(crate) fn feature_mismatch(&self, rows: usize, columns: usize) -> SKError {
         SKError::shape_mismatch_2d(rows, self.feature_count(), rows, columns)
     }
+
+    /// A clone of this model carrying a replacement coefficient block.
+    ///
+    /// Used by the adapter merge: the intercepts, class table, strategy,
+    /// configuration and retained design are preserved.
+    pub(crate) fn with_coefficients(&self, coefficients: Array2<F>) -> Self {
+        let mut merged = self.clone();
+        merged.coefficients = coefficients;
+        merged
+    }
 }
