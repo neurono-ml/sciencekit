@@ -9,10 +9,12 @@ repository = "https://github.com/neurono-ml/sciencekit"
 
 [dependencies]
 sciencekit_common = { path = "../sciencekit_common", version = "0.8.0" }
+sciencekit_interop = { path = "../sciencekit_interop", version = "0.8.0" }
 ndarray = { workspace = true }
 half = "2"
 num-traits = "0.2"
 prost = "0.14"
+tracing = { workspace = true }
 serde-onnx = { git = "https://github.com/neurono-ml/serde-onnx", rev = "0c54592", default-features = false, features = ["import", "export"] }
 
 [dev-dependencies]
