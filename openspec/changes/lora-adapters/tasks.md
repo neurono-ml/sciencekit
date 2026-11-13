@@ -19,7 +19,7 @@
 
 ## 3. Merge and persistence
 
-- [ ] 3.1 Implement merge/unmerge with prediction-parity tests; verify with
+- [x] 3.1 Implement merge/unmerge with prediction-parity tests; verify with
   `cargo test -p sciencekit_linear_model lora_merge`.
 - [ ] 3.2 Implement adapter export/import through the interop state and round-trip tests;
   verify with `cargo test -p sciencekit_linear_model lora_state`.
