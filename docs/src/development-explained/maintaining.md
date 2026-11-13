@@ -262,7 +262,11 @@ implicit centering and the accuracy bound against the exact decomposition. The
 [random forest chapter](./ch40-random-forest.html) opens `sciencekit_ensemble` with
 seeded per-tree bootstrap sampling, de-correlated `Sqrt` feature subsampling, lock-free
 parallel CART fitting, out-of-bag accuracy and $R^2$ scoring, normalized mean feature
-importances and non-densifying CSR parity.
+importances and non-densifying CSR parity. The
+[support-vector machines chapter](./ch41-svm.html) adds the Mercer and similarity kernel
+catalogue in `sciencekit_math`, the pure-Rust second-order SMO solver with a bounded LRU
+kernel-row cache, one-vs-one `SKSVC` with Platt scaling and Wu–Lin–Weng pairwise coupling,
+and $\varepsilon$-insensitive `SKSVR` over support-vector-only dense and CSR blocks.
 The [DBSCAN chapter](./ch42-dbscan.html) adds density reachability over spatial trees and
 sparse brute force, the core/border/noise taxonomy with typed `SKClusterLabel::Noise`,
 deterministic component numbering and the nearest-core `predict_clusters` extension.
@@ -287,11 +291,21 @@ The [generic bagging chapter](./ch46-bagging.html) extends `sciencekit_ensemble`
 any base estimator, independent row and feature bootstrap streams, non-densifying CSR
 feature-subset routing, two-tier `SKBaggingError<E>` propagation and out-of-bag accuracy
 and $R^2$ scoring.
+The [gradient boosting chapter](./ch47-gradient-boosting.html) extends `sciencekit_ensemble` with
+`SKGradientBoostingClassifier<F>` and `SKGradientBoostingRegressor<F>`: a loss-agnostic stage loop
+that fits structure-only trees to the negative gradient, replaces leaves with damped Newton steps
+`-Σg / (Σh + λ)`, shrinks every stage by the learning rate, subsamples rows without replacement from
+per-stage seeds, and early-stops by truncating back to the best held-out validation stage, over dense
+and non-densified CSR input for binary, multiclass and all three regression losses.
 The [outlier detection chapter](./ch48-outlier-detection.html) closes Wave 5 in
 `sciencekit_outlier` and `sciencekit_common`: the one-byte `SKOutlierLabel` and
 `SKOutlierPredictor<F>` contract, seeded random isolation trees over `SKTree`, harmonic BST
 path-length scoring, `Auto` and quantile contamination offsets, and non-densifying CSR-to-CSC
 representation parity.
+The [incremental PCA chapter](./ch50-incremental-pca.html) extends `sciencekit_decomposition`
+out-of-core with `SKIncrementalPCA`: exact Chan-Golub-LeVeque scatter merging, Neumaier-compensated
+sparse CSR Gram updates without densification, symmetric `eigh` finalization matching `SKPCA`,
+chained `partial_fit` updates and reopenable multi-epoch `fit_streaming`.
 The [mini-batch k-means chapter](./ch51-minibatch-kmeans-streaming.html) adds
 `SKMiniBatchKMeans<F>` in `sciencekit_cluster`: the exact per-center learning-rate update in
 closed form over dense and non-densified CSR batches, seeded bounded-sample initialization with
@@ -316,6 +330,12 @@ telemetry in `sciencekit_telemetry`: builder-validated OTLP gRPC and HTTP config
 resource metadata propagation, error-enriched trace spans, trace-correlated structured logs,
 closed-vocabulary operation metrics and the process-wide `SKTelemetry` `init`, `force_flush`,
 `shutdown` and `Drop` lifecycle with a silent zero-traffic default.
+The [streaming pipelines chapter](./ch56-streaming-pipeline.html) extends `sciencekit_pipeline`
+with an out-of-core composition layer: the `SKStreamingTransformer` contract, the
+`SKStreamingPipeline` builder and its chained fitting through the shared prefetch executor,
+one-shot materialization within `memory_budget_bytes`, multi-epoch replay on reopenable providers,
+the bounded `SKFinalizerBuffer` that preserves CSR, stage-indexed error propagation and the
+`Send + Sync` fitted pipeline with its `SKStreamingFitReport`.
 The [Polars and DataFusion sources chapter](./ch57-polars-datafusion-sources.html) adds the
 feature-gated tabular sources in `sciencekit_interop`: the materialized
 `SKTabularDataset<F>` with `SKColumnKind`, `SKTabularSourceConfig` and the owned
@@ -323,3 +343,10 @@ feature-gated tabular sources in `sciencekit_interop`: the materialized
 from their strings; DataFusion 46 `DataFrame`/`RecordBatch` conversion plus a true
 record-batch stream and Parquet-through-DataFusion; and the missing-value mapping shared by
 both engines.
+The [memory-mapped sources chapter](./ch58-memory-mapped-interop.html) adds the `memmap` feature of
+`sciencekit_interop`: read-only `memmap2` mappings behind `SKMappableSource` and `SKLazySource`,
+raw binary matrices with explicit descriptors and exact length validation, zero-copy NumPy `.npy`
+float rows with Fortran-order, endianness and alignment rejection plus an explicit casting path,
+footer-indexed Arrow IPC random access with per-batch decoding, bounded sequential blocks and
+`Send + Sync` concurrent readers.
+
