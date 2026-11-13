@@ -20,6 +20,11 @@
 #![warn(missing_docs)]
 
 pub mod adapters;
+#[cfg(test)]
+pub(crate) mod sparse_streaming_test_datasets;
+#[cfg(test)]
+pub(crate) mod test_datasets;
+
 pub mod class_weight;
 pub mod coordinate_descent;
 pub mod elastic_net;
@@ -34,6 +39,4 @@ pub mod sgd_regressor;
 pub use sgd::SKConvergencePolicy;
 
 #[cfg(test)]
-pub(crate) mod sparse_streaming_test_datasets;
-#[cfg(test)]
-pub(crate) mod test_datasets;
+mod native_retrain_tests;

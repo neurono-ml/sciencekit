@@ -9,3 +9,7 @@ mod partial_fit;
 mod prediction;
 
 pub use core_implementation::SKSGDClassifierModel;
+pub use export::{
+    SK_SGD_CLASSIFIER_COEFFICIENTS_TENSOR, SK_SGD_CLASSIFIER_ESTIMATOR_NAME,
+    SK_SGD_CLASSIFIER_INTERCEPTS_TENSOR,
+};

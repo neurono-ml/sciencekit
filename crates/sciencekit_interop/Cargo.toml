@@ -9,12 +9,21 @@ repository = "https://github.com/neurono-ml/sciencekit"
 
 [dependencies]
 sciencekit_common = { path = "../sciencekit_common", version = "0.8.0" }
+# Native model import needs the concrete fitted model types: a neutral state is
+# only useful once it becomes a model the caller can predict with and retrain.
+# No model crate depends on the interop layer, so the direction stays acyclic.
+sciencekit_cluster = { path = "../sciencekit_cluster", version = "0.8.0" }
+sciencekit_ensemble = { path = "../sciencekit_ensemble", version = "0.8.0" }
+sciencekit_linear_model = { path = "../sciencekit_linear_model", version = "0.8.0" }
+sciencekit_math = { path = "../sciencekit_math", version = "0.8.0" }
+sciencekit_preprocessing = { path = "../sciencekit_preprocessing", version = "0.8.0" }
+sciencekit_tree = { path = "../sciencekit_tree", version = "0.8.0" }
 
 ndarray = { workspace = true }
 sprs = { workspace = true }
 num-traits = "0.2"
 serde = { version = "1", features = ["derive"] }
-serde_json = "1"
+serde_json = { version = "1", features = ["float_roundtrip"] }
 safetensors = "0.8"
 flate2 = { version = "1.1", optional = true }
 brotli = { version = "9", optional = true }

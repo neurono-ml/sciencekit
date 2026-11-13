@@ -25,6 +25,9 @@ pub use crate::bootstrap::SKMaximumSamples;
 pub use classifier::SKRandomForestClassifier;
 pub use classifier_builder::SKRandomForestClassifierBuilder;
 pub use classifier_model::SKRandomForestClassifierModel;
+pub use export::{
+    SK_RANDOM_FOREST_CLASSIFIER_ESTIMATOR_NAME, SK_RANDOM_FOREST_REGRESSOR_ESTIMATOR_NAME,
+};
 pub use regressor::SKRandomForestRegressor;
 pub use regressor_builder::SKRandomForestRegressorBuilder;
 pub use regressor_model::SKRandomForestRegressorModel;

@@ -24,6 +24,7 @@ pub(crate) mod validation;
 pub use builder::SKKMeansBuilder;
 pub use config::{SKKMeansAlgorithm, SKKMeansInitialization};
 pub use core_implementation::SKKMeans;
+pub use export::{SK_KMEANS_CENTERS_TENSOR, SK_KMEANS_ESTIMATOR_NAME, SK_KMEANS_LABELS_TENSOR};
 pub use model::SKKMeansModel;
 
 #[cfg(test)]

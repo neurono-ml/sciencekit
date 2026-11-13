@@ -16,6 +16,7 @@ mod acceptance_tests;
 mod export;
 mod graph;
 mod import;
+mod native;
 pub use export::{
     SKOnnxFamilyCoverage, SKToOnnx, sk_export_state_to_onnx, sk_onnx_coverage,
     sk_onnx_supported_families,
@@ -29,3 +30,4 @@ pub use import::{
     SK_ONNX_SUPPORTED_ML_OPERATORS, SK_ONNX_SUPPORTED_OPERATORS, SKOnnxImportError,
     SKOnnxPredictor, SKOnnxPredictorBuilder, sk_onnx_supports_operator,
 };
+pub use native::{SKOnnxNativeError, SKOnnxNativeImporter};

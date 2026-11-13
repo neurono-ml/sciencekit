@@ -19,6 +19,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `SKLoraAdapterRegistry<F>` rejects duplicate identifiers; unsupported base
   families, target mismatches, rank zero, shape mismatches and non-finite data
   return typed errors without panicking.
+- Native model import (spec `native-model-import`): `SKNativeImport<F>` turns a
+  neutral state into the matching fitted type — linear/logistic/SGD models,
+  decision trees and forests, scalers and k-means — with a descriptor that keeps
+  the estimator name, feature count, class table, backend and retraining rule.
+  `sk_import_native_model_from_bytes`/`..._from_path` accept Safetensors or the
+  JSON debug format after structural format detection, and
+  `SKOnnxNativeImporter` maps the documented ONNX subset (affine regressors and
+  classifiers, per-column scalers, decision trees and forest regressors) onto the
+  same state.
+- Typed rejection at the import trust boundary: wrong container magic, truncated
+  files, unknown format versions, missing and unexpected tensors, shape and dtype
+  mismatches, invalid class tables and unsupported families/operators — every
+  failure leaves no partially initialized model, and concurrent conversions are
+  deterministic.
+- Continued fitting for imported `SKSGDRegressor`, `SKSGDClassifier` and
+  `SKLogisticRegression` models; inference-only families reject `partial_fit`
+  with typed guidance instead of silently resetting the imported coefficients.
+
 
 ## [0.8.0] — 2026-11-13
 
