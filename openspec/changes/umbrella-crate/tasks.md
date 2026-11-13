@@ -4,7 +4,7 @@
 
 - [x] 1.1 Create `crates/sciencekit` with `Cargo.toml`, `lib.rs` and the family modules;
   add it to `[workspace.members]`; verify `cargo test -p sciencekit` compiles.
-- [ ] 1.2 Re-export every sub-crate's stable public surface and add compile tests for
+- [x] 1.2 Re-export every sub-crate's stable public surface and add compile tests for
   common types and family modules; verify with `cargo test -p sciencekit reexports`.
 - [ ] 1.3 Implement the prelude and a basic build→fit→predict example test; verify with
   `cargo test -p sciencekit prelude`.
