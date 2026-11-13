@@ -30,7 +30,7 @@
 
 - [x] 4.1 Add tiny/large data acceptance tests, deterministic fit and `Send + Sync` checks;
   verify with `cargo test -p sciencekit_linear_model`.
-- [ ] 4.2 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
+- [x] 4.2 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
   warnings` and `cargo test --workspace`; fix every failure before pushing.
 - [ ] 4.3 Update `CHANGELOG.md` and the companion mdBook chapter (including a
   `Development Explained` chapter on low-rank adapters and frozen bases); verify with
