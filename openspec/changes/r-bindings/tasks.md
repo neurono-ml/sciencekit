@@ -40,6 +40,30 @@
   `mdbook build docs`.
 - [x] 3.4 Independent review by a separate agent validating every scenario in
   `r-bindings`; address every finding and re-run the gates.
+- [x] 3.5 Packaging audit follow-up: keep `tools/native/libsciencekit_ffi.a` out of the
+  source tarball (`.Rbuildignore` + `SCIENCEKIT_LIB_DIR` in CI and documented for tarball
+  checks) and drop the duplicated CI check run; verify `R CMD check` on the tarball no
+  longer reports the "apparent object files/libraries" NOTE and still passes the suite.
+- [x] 3.6 Documentation audit follow-up: cover the public `print` S3 methods and the
+  builder configuration toggles (`include_intercept`, `with_mean`, `with_std`) with new
+  `testthat` coverage and a mdBook chapter, registered in `SUMMARY.md`; verify with
+  `mdbook build docs`.
+
+## Deferred
+
+The following are intentionally out of scope for this change and are tracked as future
+work, not as gaps in the delivered surface:
+
+- **`f32`, sparse and zero-copy matrices** — explicit proposal non-goals; the R boundary
+  is `f64`-only and copies into row-major C buffers.
+- **R-native accessors (`coef()`, `fitted()`, `residuals()`)** — not part of the planned
+  surface; the plan exposes `fit`/`predict`/`transform`/`score`/`save_model`/`load_model`
+  only.
+- **CRAN submission** — the package links a static `sciencekit_ffi` archive built from a
+  checkout of the main repository, which CRAN cannot express; distribution stays
+  GitHub/Git-based until `sciencekit_ffi` is published on crates.io or ships prebuilt
+  artifacts.
+- **Arrow / data-frame zero-copy input** — listed as future work in `design.md`.
 
 ## Workflow follow-up
 
