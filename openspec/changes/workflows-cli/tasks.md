@@ -4,7 +4,7 @@
 
 - [x] 1.1 Create `crates/sciencekit_cli` with `main.rs`, `clap` commands and exit-code
   mapping; verify `cargo test -p sciencekit_cli cli`.
-- [ ] 1.2 Implement `fit`, `predict`, `transform`, `evaluate`, `export` and `inspect` on
+- [x] 1.2 Implement `fit`, `predict`, `transform`, `evaluate`, `export` and `inspect` on
   small CSV fixtures; verify with integration tests.
 - [ ] 1.3 Implement the `run` command and workflow step dispatch; verify with a golden
   workflow.
