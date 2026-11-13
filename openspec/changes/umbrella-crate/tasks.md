@@ -20,7 +20,7 @@
 
 ## 3. Gates and review
 
-- [ ] 3.1 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
+- [x] 3.1 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
   warnings` and `cargo test --workspace`; fix every failure before pushing.
 - [ ] 3.2 Update `CHANGELOG.md` under `Unreleased → Added` for the umbrella crate.
 - [ ] 3.3 Independent review by a separate agent validating every scenario in
