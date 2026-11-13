@@ -70,7 +70,10 @@ fn hist_growth_splits_the_leaf_with_the_largest_own_gain() {
     let left = &result.tree.nodes()[root.left_child().expect("root left child")];
     let right = &result.tree.nodes()[root.right_child().expect("root right child")];
     assert!(left.is_leaf(), "the lower-gain left child must stay a leaf");
-    assert!(!right.is_leaf(), "the higher-gain right child must be split");
+    assert!(
+        !right.is_leaf(),
+        "the higher-gain right child must be split"
+    );
 }
 
 #[test]
