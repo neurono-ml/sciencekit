@@ -92,4 +92,5 @@
   - [OpenCL backend: command queues, kernels and honest device work](development-explained/ch61-gpu-opencl-backend.md)
   - [One export contract for every fitted model: export, import and round-trip evidence](development-explained/ch62-model-export-retrofit.md)
   - [ONNX export: turning a fitted model into a portable graph](development-explained/ch63-onnx-export.md)
+  - [ONNX import: reading a foreign graph as a model](development-explained/ch64-onnx-import.md)
   - [Maintaining this book](development-explained/maintaining.md)
