@@ -7,7 +7,7 @@
 
 ## 2. pandas and Arrow PyCapsule
 
-- [ ] 2.1 TDD `pyarrow.Table`/`RecordBatch`/`RecordBatchReader` import through the Arrow C stream; batch-by-batch consumption.
+- [x] 2.1 TDD `pyarrow.Table`/`RecordBatch`/`RecordBatchReader` import through the Arrow C stream; batch-by-batch consumption.
 - [ ] 2.2 TDD pandas DataFrame/Series through `__arrow_c_stream__`: columns, values, index ignored, feature/target roles.
 - [ ] 2.3 TDD pandas nullable dtypes: `pd.NA` under reject/NaN/fill policies.
 - [ ] 2.4 TDD pandas categorical target: label table, predictions mapped back to categories.
