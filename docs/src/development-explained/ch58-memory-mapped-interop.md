@@ -92,7 +92,7 @@ random-access estimator or the streaming driver without opening the file twice.
 | Decision | Why | Alternatives discarded |
 |---|---|---|
 | **`Arc<Mmap>` inside each source** | A `Mmap` is stable when moved and is `Send + Sync`; an `Arc` lets concurrent readers share it. | `Box<Mmap>` (cannot clone for threads), a bare slice (lifetime cannot outlive the file). |
-| **`unsafe` confined to two helpers** | Producing `&[F]` from raw bytes requires `from_raw_parts`. `sk_scalar_slice` validates alignment and length once; the Arrow row view relies on a cache whose boxed slices are never moved or replaced. Both carry `SAFETY` comments. | Scattering `unsafe` through the sources; pretending `transmute` is safe. |
+| **`unsafe` confined to one byte-to-scalar helper** | Producing `&[F]` from raw bytes requires `from_raw_parts`. `sk_scalar_slice` validates alignment and length once and carries a `SAFETY` comment. The Arrow cache uses `OnceLock`, so its row views need no `unsafe` at all. | Scattering `unsafe` through the sources; pretending `transmute` is safe. |
 | **Descriptor instead of guessing a raw shape** | `rows × columns` has many factorisations; any guess would be plausible and wrong half the time. A sidecar JSON (`{"rows": 1024, "columns": 8, "dtype": "f64"}`) is explicit and detectable. | Inferring the shape from file length. |
 | **Zero-copy only when the dtype matches** | An `f64` view cannot alias `f4` bytes. The documented cast path materialises the matrix once. | Silently converting per row (a hidden copy per access), rejecting all casts. |
 | **Alignment checked before exposing views** | `.npy` pads its header to 64 bytes, which is *usually* but not necessarily a multiple of the element size. An unaligned `&f64` is undefined behaviour. | `read_unaligned` per value (a copy and a different API), assuming headers are always friendly. |
@@ -159,7 +159,11 @@ start at that exact byte. It then applies a small policy:
 
 The header parser itself is tested for a corrupt magic (`malformed_header_is_rejected_without_panicking`),
 a file ending inside the framing (`truncated_header_is_rejected`) and a payload shorter or longer
-than the declared shape (`length_mismatch_is_rejected`).
+than the declared shape (`length_mismatch_is_rejected`). Because a file is untrusted input, the
+byte-length multiplication is `checked`: `absurd_npy_dimension_is_a_typed_error` declares a shape
+whose element count fits `usize` while its byte count does not, and expects
+`MalformedMappedHeader` instead of an overflow panic. The hostile-input suite pairs it with a
+truncated raw file and a wrong raw shape descriptor, each returning a typed error.
 
 ---
 
@@ -175,18 +179,23 @@ The footer lists every record batch's offset, metadata length and body length, p
 `sk_read_ipc_layout` reads only that footer and, for each block, parses the encapsulated message
 metadata to obtain the row count — the body buffers are never touched. It builds a cumulative index
 `first_row → number_of_rows` and validates that every block lies inside the file, so a truncated
-file fails **on open** (`MalformedMappedHeader`) rather than faulting later.
+file fails **on open** (`MalformedMappedHeader`) rather than faulting later. The row-count
+accumulation uses `checked_add`, so a crafted footer cannot wrap the row space; the
+`arrow_ipc_layout_tests` cover both the normal accumulation and the overflow rejection.
 
 `SKArrowIpcMappableSource::row(index)` then:
 
 1. binary-searches the cumulative offsets (`partition_point`) to find the containing batch;
 2. decodes that one batch through `FileReader`, materialises it as row-major `F` values in a boxed
-   slice, and caches it in a `Mutex<Vec<Option<Box<[F]>>>>`;
-3. returns an `ArrayView1` over the cached slice.
+   slice, and caches it in a `Vec<OnceLock<Box<[F]>>>`;
+3. returns an `ArrayView1` over the cached slice through an ordinary shared reference.
 
-The cache is the one place where a returned view is produced from interior mutability. It is sound
-because a slot is filled once and never replaced or removed, so the boxed slice's heap address is
-stable while the source is alive. Concurrent readers are exercised by
+The cache is the one place where a returned view is produced from interior mutability. It needs no
+`unsafe`: `OnceLock::get` hands out `&Box<[F]>` tied to the source's lifetime, and a slot is filled
+once and never replaced or removed, so a concurrent reader either wins the race or drops its
+identical copy. Before slicing, the row offset is multiplied with `checked_mul` and bounded against
+the decoded batch length, so crafted batch metadata becomes `UnreadableMappedBatch` instead of an
+out-of-bounds read. Concurrent readers are exercised by
 `eight_threads_read_disjoint_rows_from_an_ipc_file`; `opening_indexes_batches_without_decoding_them`
 asserts `decoded_batch_count() == 0` right after open and
 `row_lookup_decodes_only_the_containing_batch` shows the count rise only for the batches actually
@@ -213,7 +222,7 @@ All three sources are `Send + Sync` (asserted at compile time by
 `mapped_sources_are_send_and_sync`) and are read by eight threads over disjoint rows in
 `eight_threads_read_disjoint_rows_from_a_raw_file`,
 `..._from_a_numpy_file` and `..._from_an_ipc_file`. Reading is shared; only the sequential cursor and
-the Arrow batch cache mutate, and both do so behind synchronisation.
+the per-batch `OnceLock` slots change, and each slot is written at most once.
 
 ---
 
