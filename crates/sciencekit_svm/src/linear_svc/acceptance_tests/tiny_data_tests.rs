@@ -5,14 +5,14 @@ use ndarray::array;
 use sciencekit_common::{SKBuilder, SKClassifierPredictor, SKSupervisedFit};
 
 use crate::SKLinearSVC;
-use crate::linear_svc::SKLinearSvcLoss;
+use crate::linear_svc::SKLinearSVCLoss;
 
 #[test]
 fn acceptance_two_rows_fit_and_predict_for_both_losses() {
     let features = array![[-1.0_f64], [1.0]];
     let labels = array![0_i64, 1];
 
-    [SKLinearSvcLoss::Hinge, SKLinearSvcLoss::SquaredHinge]
+    [SKLinearSVCLoss::Hinge, SKLinearSVCLoss::SquaredHinge]
         .into_iter()
         .for_each(|loss| {
             let model = SKLinearSVC::<f64>::build()

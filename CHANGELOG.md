@@ -44,8 +44,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   support-vector classifier (`C`, `loss`, `class_weight`, `include_intercept`,
   `tolerance`, `maximum_number_of_iterations`, `backend`, `execution_mode`)
   backed by a LIBLINEAR-style dual coordinate-descent solver for the L1-hinge
-  and L2-squared-hinge losses. It exposes `SKLinearSvcLoss` (`Hinge`,
-  `SquaredHinge`), `SKLinearSvcHead<F>` and `SKLinearSVCModel<F>` with
+  and L2-squared-hinge losses. It exposes `SKLinearSVCLoss` (`Hinge`,
+  `SquaredHinge`), `SKLinearSVCHead<F>` and `SKLinearSVCModel<F>` with
   `decision_function`, deterministic `predict_labels` and an explicit
   `UnsupportedOperation` from `predict_probabilities` (no calibrated
   probability model). Fitting runs one-vs-rest heads in parallel with

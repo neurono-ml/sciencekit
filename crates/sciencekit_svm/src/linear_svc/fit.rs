@@ -11,7 +11,7 @@ use sciencekit_common::{
 use super::config::SKLinearSVCConfiguration;
 use super::core_implementation::SKLinearSVC;
 use super::design::{SKLinearSvcDesign, sk_linear_svc_design_access};
-use super::model::{SKLinearSVCModel, SKLinearSvcHead};
+use super::model::{SKLinearSVCHead, SKLinearSVCModel};
 use super::solver::sk_solve_linear_svc_dual;
 use super::validation::{
     sk_canonicalize_linear_svc_targets, sk_validate_linear_svc_training_features,
@@ -49,7 +49,7 @@ pub(crate) fn sk_fit_linear_svc_head<F: SKFloat>(
     row_weights: &[F],
     configuration: &SKLinearSVCConfiguration<F>,
     maximum_number_of_iterations: usize,
-) -> Result<SKLinearSvcHead<F>, SKError> {
+) -> Result<SKLinearSVCHead<F>, SKError> {
     let access = sk_linear_svc_design_access(design);
     let outcome = sk_solve_linear_svc_dual(
         access,
@@ -66,7 +66,7 @@ pub(crate) fn sk_fit_linear_svc_head<F: SKFloat>(
     } else {
         F::zero()
     };
-    Ok(SKLinearSvcHead {
+    Ok(SKLinearSVCHead {
         coefficients: Array1::from_vec(outcome.coefficients[..columns].to_vec()),
         intercept,
         iterations: outcome.iterations,

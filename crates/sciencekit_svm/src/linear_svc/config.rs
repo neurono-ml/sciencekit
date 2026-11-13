@@ -13,7 +13,7 @@ use crate::svc::SKClassWeight;
 /// solved by LIBLINEAR: the classic L1 hinge loss and its squared variant.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 #[non_exhaustive]
-pub enum SKLinearSvcLoss {
+pub enum SKLinearSVCLoss {
     /// L1 hinge loss, `max(0, 1 - y · f(x))`, with dual bound `U = C`.
     Hinge,
     /// L2 squared hinge loss, `max(0, 1 - y · f(x))²`, with unbounded dual and
@@ -22,26 +22,26 @@ pub enum SKLinearSvcLoss {
     SquaredHinge,
 }
 
-impl SKLinearSvcLoss {
+impl SKLinearSVCLoss {
     /// Human-readable loss name, used in diagnostics and model accessors.
     pub fn name(self) -> &'static str {
         match self {
-            SKLinearSvcLoss::Hinge => "hinge",
-            SKLinearSvcLoss::SquaredHinge => "squared_hinge",
+            SKLinearSVCLoss::Hinge => "hinge",
+            SKLinearSVCLoss::SquaredHinge => "squared_hinge",
         }
     }
 }
 
 /// Translate a binding-level loss discriminator (`0` hinge, `1` squared hinge)
-/// into a validated [`SKLinearSvcLoss`].
+/// into a validated [`SKLinearSVCLoss`].
 ///
 /// Language bindings receive untrusted integers; any value outside the known
 /// discriminator set fails closed with the central
 /// [`SKError::InvalidHyperparameter`] variant.
-pub fn sk_linear_svc_loss_from_code(code: u8) -> Result<SKLinearSvcLoss, SKError> {
+pub fn sk_linear_svc_loss_from_code(code: u8) -> Result<SKLinearSVCLoss, SKError> {
     match code {
-        0 => Ok(SKLinearSvcLoss::Hinge),
-        1 => Ok(SKLinearSvcLoss::SquaredHinge),
+        0 => Ok(SKLinearSVCLoss::Hinge),
+        1 => Ok(SKLinearSVCLoss::SquaredHinge),
         _ => Err(SKError::InvalidHyperparameter {
             name: "loss",
             reason: format!(
@@ -57,7 +57,7 @@ pub fn sk_linear_svc_loss_from_code(code: u8) -> Result<SKLinearSvcLoss, SKError
 #[derive(Debug, Clone)]
 pub(crate) struct SKLinearSVCConfiguration<F: SKFloat> {
     pub(crate) regularization_c: F,
-    pub(crate) loss: SKLinearSvcLoss,
+    pub(crate) loss: SKLinearSVCLoss,
     pub(crate) class_weight: SKClassWeight<F>,
     pub(crate) include_intercept: bool,
     pub(crate) tolerance: F,

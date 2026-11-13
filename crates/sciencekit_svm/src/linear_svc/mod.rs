@@ -15,9 +15,9 @@ mod solver;
 mod validation;
 
 pub use builder::SKLinearSVCBuilder;
-pub use config::{SKLinearSvcLoss, sk_linear_svc_loss_from_code};
+pub use config::{SKLinearSVCLoss, sk_linear_svc_loss_from_code};
 pub use core_implementation::SKLinearSVC;
-pub use model::{SKLinearSVCModel, SKLinearSvcHead};
+pub use model::{SKLinearSVCHead, SKLinearSVCModel};
 
 #[cfg(test)]
 mod acceptance_tests;

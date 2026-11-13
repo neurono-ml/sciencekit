@@ -4,7 +4,7 @@
 use sciencekit_common::{SKBackendKind, SKExecutionMode, SKFloat};
 
 use super::builder::SKLinearSVCBuilder;
-use super::config::{SKLinearSVCConfiguration, SKLinearSvcLoss};
+use super::config::{SKLinearSVCConfiguration, SKLinearSVCLoss};
 use crate::svc::SKClassWeight;
 
 /// L2-regularized linear support-vector classifier.
@@ -34,7 +34,7 @@ impl<F: SKFloat> SKLinearSVC<F> {
     }
 
     /// Configured loss function.
-    pub fn loss(&self) -> SKLinearSvcLoss {
+    pub fn loss(&self) -> SKLinearSVCLoss {
         self.configuration.loss
     }
 

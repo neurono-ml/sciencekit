@@ -4,7 +4,7 @@
 use ndarray::array;
 use sciencekit_common::{SKBuilder, SKSupervisedFit};
 
-use super::{SKLinearSVC, SKLinearSvcLoss};
+use super::{SKLinearSVC, SKLinearSVCLoss};
 use crate::svc::SKClassWeight;
 
 #[test]
@@ -23,7 +23,7 @@ fn explicit_class_weights_reach_the_solver_in_their_own_class_role() {
         .into_iter()
         .for_each(|(class_zero_weight, class_one_weight)| {
             let model = SKLinearSVC::<f64>::build()
-                .loss(SKLinearSvcLoss::SquaredHinge)
+                .loss(SKLinearSVCLoss::SquaredHinge)
                 .include_intercept(false)
                 .tolerance(1e-12)
                 .class_weight(SKClassWeight::Explicit(vec![
@@ -54,7 +54,7 @@ fn explicit_zero_weight_class_is_ignored_without_breaking_convergence() {
     let features = array![[-2.0_f64], [-1.0], [-0.5], [0.2], [0.4], [0.8]];
     let labels = array![0_i64, 0, 0, 0, 1, 1];
 
-    [SKLinearSvcLoss::Hinge, SKLinearSvcLoss::SquaredHinge]
+    [SKLinearSVCLoss::Hinge, SKLinearSVCLoss::SquaredHinge]
         .into_iter()
         .for_each(|loss| {
             let model = SKLinearSVC::<f64>::build()

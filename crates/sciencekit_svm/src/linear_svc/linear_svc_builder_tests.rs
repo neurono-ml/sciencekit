@@ -3,14 +3,14 @@
 
 use sciencekit_common::{SKBackendKind, SKBuilder, SKError, SKExecutionMode};
 
-use super::{SKLinearSVC, SKLinearSvcLoss};
+use super::{SKLinearSVC, SKLinearSVCLoss};
 use crate::svc::SKClassWeight;
 
 #[test]
 fn linear_svc_builder_applies_documented_defaults() {
     let estimator = SKLinearSVC::<f64>::build().build().unwrap();
     assert!((estimator.C() - 1.0).abs() < 1e-12);
-    assert_eq!(estimator.loss(), SKLinearSvcLoss::SquaredHinge);
+    assert_eq!(estimator.loss(), SKLinearSVCLoss::SquaredHinge);
     assert_eq!(estimator.class_weight(), &SKClassWeight::None);
     assert!(estimator.include_intercept());
     assert!((estimator.tolerance() - 1e-4).abs() < 1e-15);
@@ -23,7 +23,7 @@ fn linear_svc_builder_applies_documented_defaults() {
 fn linear_svc_builder_honors_every_setter() {
     let estimator = SKLinearSVC::<f64>::build()
         .C(2.5)
-        .loss(SKLinearSvcLoss::Hinge)
+        .loss(SKLinearSVCLoss::Hinge)
         .class_weight(SKClassWeight::Balanced)
         .include_intercept(false)
         .tolerance(1e-3)
@@ -34,7 +34,7 @@ fn linear_svc_builder_honors_every_setter() {
         .unwrap();
 
     assert!((estimator.C() - 2.5).abs() < 1e-12);
-    assert_eq!(estimator.loss(), SKLinearSvcLoss::Hinge);
+    assert_eq!(estimator.loss(), SKLinearSVCLoss::Hinge);
     assert_eq!(estimator.class_weight(), &SKClassWeight::Balanced);
     assert!(!estimator.include_intercept());
     assert!((estimator.tolerance() - 1e-3).abs() < 1e-15);

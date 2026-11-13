@@ -4,23 +4,23 @@
 use ndarray::array;
 use sciencekit_common::{SKBuilder, SKError, SKSupervisedFit};
 
-use super::{SKLinearSVC, SKLinearSvcLoss, sk_linear_svc_loss_from_code};
+use super::{SKLinearSVC, SKLinearSVCLoss, sk_linear_svc_loss_from_code};
 use crate::svc::SKClassWeight;
 
 #[test]
 fn linear_svc_config_defaults_to_squared_hinge() {
     let estimator = SKLinearSVC::<f64>::build().build().unwrap();
-    assert_eq!(estimator.loss(), SKLinearSvcLoss::SquaredHinge);
+    assert_eq!(estimator.loss(), SKLinearSVCLoss::SquaredHinge);
     assert_eq!(estimator.loss().name(), "squared_hinge");
 }
 
 #[test]
 fn linear_svc_config_honors_explicit_hinge_loss() {
     let estimator = SKLinearSVC::<f64>::build()
-        .loss(SKLinearSvcLoss::Hinge)
+        .loss(SKLinearSVCLoss::Hinge)
         .build()
         .unwrap();
-    assert_eq!(estimator.loss(), SKLinearSvcLoss::Hinge);
+    assert_eq!(estimator.loss(), SKLinearSVCLoss::Hinge);
     assert_eq!(estimator.loss().name(), "hinge");
 }
 
@@ -28,11 +28,11 @@ fn linear_svc_config_honors_explicit_hinge_loss() {
 fn linear_svc_config_translates_binding_loss_codes() {
     assert_eq!(
         sk_linear_svc_loss_from_code(0).unwrap(),
-        SKLinearSvcLoss::Hinge
+        SKLinearSVCLoss::Hinge
     );
     assert_eq!(
         sk_linear_svc_loss_from_code(1).unwrap(),
-        SKLinearSvcLoss::SquaredHinge
+        SKLinearSVCLoss::SquaredHinge
     );
     assert!(matches!(
         sk_linear_svc_loss_from_code(7).unwrap_err(),
@@ -78,7 +78,7 @@ fn linear_svc_config_carries_the_backend_and_execution_mode() {
 }
 
 fn primal_objective(
-    loss: SKLinearSvcLoss,
+    loss: SKLinearSVCLoss,
     features: &ndarray::Array2<f64>,
     labels: &ndarray::Array1<i64>,
     coefficients: &[f64],
@@ -96,8 +96,8 @@ fn primal_objective(
             + intercept;
         let residual = (1.0 - signed * margin).max(0.0);
         let loss_term = match loss {
-            SKLinearSvcLoss::Hinge => residual,
-            SKLinearSvcLoss::SquaredHinge => residual * residual,
+            SKLinearSVCLoss::Hinge => residual,
+            SKLinearSVCLoss::SquaredHinge => residual * residual,
         };
         accumulator + regularization_c * loss_term
     });
@@ -115,7 +115,7 @@ fn each_loss_minimizes_its_own_objective_better_than_the_other() {
         [2.0, -0.2]
     ];
     let labels = array![0_i64, 0, 0, 1, 1, 1];
-    let fit = |loss: SKLinearSvcLoss| {
+    let fit = |loss: SKLinearSVCLoss| {
         SKLinearSVC::<f64>::build()
             .C(1.0)
             .loss(loss)
@@ -125,8 +125,8 @@ fn each_loss_minimizes_its_own_objective_better_than_the_other() {
             .fit(features.view(), labels.view())
             .unwrap()
     };
-    let squared = fit(SKLinearSvcLoss::SquaredHinge);
-    let hinge = fit(SKLinearSvcLoss::Hinge);
+    let squared = fit(SKLinearSVCLoss::SquaredHinge);
+    let hinge = fit(SKLinearSVCLoss::Hinge);
 
     let squared_head = &squared.heads()[0];
     let hinge_head = &hinge.heads()[0];
@@ -140,7 +140,7 @@ fn each_loss_minimizes_its_own_objective_better_than_the_other() {
 
     let squared_objective_of = |weights: &[f64], intercept: f64| {
         primal_objective(
-            SKLinearSvcLoss::SquaredHinge,
+            SKLinearSVCLoss::SquaredHinge,
             &features,
             &labels,
             weights,
@@ -150,7 +150,7 @@ fn each_loss_minimizes_its_own_objective_better_than_the_other() {
     };
     let hinge_objective_of = |weights: &[f64], intercept: f64| {
         primal_objective(
-            SKLinearSvcLoss::Hinge,
+            SKLinearSVCLoss::Hinge,
             &features,
             &labels,
             weights,

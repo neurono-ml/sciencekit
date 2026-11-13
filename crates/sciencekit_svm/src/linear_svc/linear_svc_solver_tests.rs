@@ -3,7 +3,7 @@
 
 use ndarray::array;
 
-use super::config::SKLinearSvcLoss;
+use super::config::SKLinearSVCLoss;
 use sciencekit_common::SKDataView;
 
 use super::design::{SKLinearSvcDesign, sk_linear_svc_design_access};
@@ -18,7 +18,7 @@ fn solve_hinge(
     solve_loss(
         features,
         labels,
-        SKLinearSvcLoss::Hinge,
+        SKLinearSVCLoss::Hinge,
         intercept,
         tolerance,
     )
@@ -27,7 +27,7 @@ fn solve_hinge(
 fn solve_loss(
     features: &ndarray::Array2<f64>,
     labels: &[f64],
-    loss: SKLinearSvcLoss,
+    loss: SKLinearSVCLoss,
     intercept: bool,
     tolerance: f64,
 ) -> (super::solver::SKLinearSvcSolverOutcome<f64>, usize) {
@@ -116,11 +116,11 @@ fn hinge_and_squared_hinge_converge_on_the_same_separable_fixture() {
     ];
     let labels = [-1.0_f64, -1.0, -1.0, 1.0, 1.0, 1.0];
 
-    let (hinge, _) = solve_loss(&features, &labels, SKLinearSvcLoss::Hinge, true, 1e-10);
+    let (hinge, _) = solve_loss(&features, &labels, SKLinearSVCLoss::Hinge, true, 1e-10);
     let (squared, _) = solve_loss(
         &features,
         &labels,
-        SKLinearSvcLoss::SquaredHinge,
+        SKLinearSVCLoss::SquaredHinge,
         true,
         1e-10,
     );
@@ -162,7 +162,7 @@ fn exhausted_iteration_budget_reports_not_converged_with_the_executed_count() {
         design,
         &labels,
         &weights,
-        SKLinearSvcLoss::Hinge,
+        SKLinearSVCLoss::Hinge,
         1.0,
         1e-12,
         1,
