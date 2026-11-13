@@ -6,7 +6,7 @@ use sciencekit_common::{
     SKBackendKind, SKBuilder, SKBuilderState, SKError, SKExecutionMode, SKFloat,
 };
 
-use super::config::{SKLinearSVCConfiguration, SKLinearSvcLoss};
+use super::config::{SKLinearSVCConfiguration, SKLinearSVCLoss};
 use super::core_implementation::SKLinearSVC;
 use crate::svc::{SKClassWeight, sk_validate_static_class_weight};
 
@@ -23,7 +23,7 @@ impl<F: SKFloat> SKLinearSVCBuilder<F> {
         Self {
             configuration: SKLinearSVCConfiguration {
                 regularization_c: F::one(),
-                loss: SKLinearSvcLoss::SquaredHinge,
+                loss: SKLinearSVCLoss::SquaredHinge,
                 class_weight: SKClassWeight::None,
                 include_intercept: true,
                 tolerance: F::from(1e-4).expect("1e-4 fits SKFloat"),
@@ -42,7 +42,7 @@ impl<F: SKFloat> SKLinearSVCBuilder<F> {
     }
 
     /// Set the loss function (default `SquaredHinge`).
-    pub fn loss(mut self, value: SKLinearSvcLoss) -> Self {
+    pub fn loss(mut self, value: SKLinearSVCLoss) -> Self {
         self.configuration.loss = value;
         self
     }
@@ -61,6 +61,13 @@ impl<F: SKFloat> SKLinearSVCBuilder<F> {
 
     /// Set the convergence tolerance on the maximum projected gradient
     /// (default `1e-4`).
+    ///
+    /// The stopping rule compares an **absolute** projected gradient against
+    /// this value, not a value relative to the scale of the problem. Data with
+    /// large feature magnitudes or a large offset can therefore keep the
+    /// gradient above a strict tolerance and end in `NotConverged`; standardize
+    /// the features first (for example with `SKStandardScaler`) rather than
+    /// merely loosening the tolerance.
     pub fn tolerance(mut self, value: F) -> Self {
         self.configuration.tolerance = value;
         self
