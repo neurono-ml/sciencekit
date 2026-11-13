@@ -36,7 +36,7 @@
 - [x] 4.4 Update `CHANGELOG.md` and the companion mdBook chapter (including a
   `Development Explained` chapter on generic ONNX inference and supported ops); verify with
   `mdbook build docs`.
-- [ ] 4.5 Independent review by a separate agent validating every scenario in
+- [x] 4.5 Independent review by a separate agent validating every scenario in
   `onnx-import`; address every finding and re-run the gates.
 
 ## Workflow follow-up

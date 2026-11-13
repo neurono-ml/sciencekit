@@ -53,6 +53,13 @@ operator or model construct with `UnsupportedOperation` naming it.
 - **WHEN** a model uses an operator outside the supported set
 - **THEN** loading or inference returns `UnsupportedOperation` with the operator name
 
+#### Scenario: Malformed graph structure
+
+- **WHEN** the graph's data dependencies form a cycle, a node declares too few
+  operands, or shape metadata disagrees with a learned tensor
+- **THEN** loading or inference returns a typed `SKOnnxImportError` naming the
+  construct and the library never panics
+
 ### Requirement: Batch behavior
 
 Inference SHALL preserve the input row count and SHALL support batches of arbitrary size
