@@ -121,6 +121,29 @@ impl<F: SKFloat> SKLoraAttachedModel<F> {
         Ok(self.base.coefficients()? + self.delta())
     }
 
+    /// Rebuild an attached model from stored factors (unmerge and import).
+    pub(super) fn from_factors(
+        adapter: SKLoraAdapter<F>,
+        base: SKLoraBaseModel<F>,
+        a_matrix: Array2<F>,
+        b_matrix: Array2<F>,
+        fitted: bool,
+    ) -> SKLoraAttachedModel<F> {
+        SKLoraAttachedModel {
+            adapter,
+            base,
+            a_matrix,
+            b_matrix,
+            fitted,
+        }
+    }
+
+    /// Overwrite the factors with known values (tests and persistence import).
+    pub(crate) fn set_factors(&mut self, a_matrix: Array2<F>, b_matrix: Array2<F>) {
+        self.a_matrix = a_matrix;
+        self.b_matrix = b_matrix;
+    }
+
     /// Mark the adapter as fitted after a successful optimization.
     pub(crate) fn mark_fitted(&mut self) {
         self.fitted = true;
