@@ -401,3 +401,14 @@ families explicit. When you add an exporter, extend `sk_onnx_coverage`, add a
 Rust-parity test that writes a fixture, and rerun
 `crates/sciencekit_onnx/validation/compare_with_onnxruntime.py` so the claim
 stays backed by a real runtime.
+
+The [ONNX import chapter](./ch64-onnx-import.html) closes the interoperability
+loop: `sciencekit_onnx` decodes a model into the shared `serde-onnx` IR (the
+exporter now assembles that same IR), validates the opset, the documented
+operator subset, external data and the interface, and runs the graph with a
+dependency-ordered interpreter behind `SKOnnxPredictor<F>` and
+`SKOnnxPredictorBuilder<F>`. When you add an importer operator, extend
+`SK_ONNX_SUPPORTED_OPERATORS` (or `SK_ONNX_SUPPORTED_ML_OPERATORS`), add the
+dispatch arm and a companion test, then rerun the three-way harness after
+`cargo run -p sciencekit_onnx --example validate_import <fixture-root>` so the
+imported prediction stays proven against both the Rust model and `onnxruntime`.
