@@ -45,7 +45,7 @@
 
 ## 5. Clustering, decomposition and outliers
 
-- [ ] 5.1 Implement export/import for KMeans, MiniBatchKMeans and DBSCAN (centers, counts,
+- [x] 5.1 Implement export/import for KMeans, MiniBatchKMeans and DBSCAN (centers, counts,
   labels/core indices, typed assignment metadata); verify with
   `cargo test -p sciencekit_cluster export`.
 - [ ] 5.2 Implement export/import for PCA, TruncatedSVD and IncrementalPCA (components,
