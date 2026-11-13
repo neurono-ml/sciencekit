@@ -76,7 +76,7 @@
   `mdbook build docs`.
 - [x] 6.3 Record the deferred `memmap2`/export work and the deliberate absence of
   probabilities in `docs/PRD.md`; verify the amended paragraphs render.
-- [ ] 6.4 Independent review by a separate agent validating every scenario in
+- [x] 6.4 Independent review by a separate agent validating every scenario in
   `linear-support-vector-classifier` against the code and tests; address every finding
   and re-run the gates.
 
