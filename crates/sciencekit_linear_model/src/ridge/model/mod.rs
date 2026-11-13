@@ -2,7 +2,11 @@
 //! Carries no implementation logic.
 
 mod core_implementation;
+mod export;
 mod partial_fit;
 mod predictor;
 
 pub use core_implementation::SKRidgeModel;
+
+#[cfg(test)]
+mod export_tests;
