@@ -2,9 +2,9 @@
 //! (spec `linear-support-vector-classifier`).
 
 use ndarray::array;
-use sciencekit_common::{SKBuilder, SKSupervisedFit};
+use sciencekit_common::{SKBuilder, SKError, SKSupervisedFit};
 
-use super::SKLinearSVC;
+use super::{SKLinearSVC, SKLinearSvcLoss};
 
 fn margin(head: &super::SKLinearSvcHead<f64>, row: &[f64], label: f64) -> f64 {
     let dot: f64 = head
@@ -96,4 +96,34 @@ fn binary_fit_without_intercept_keeps_the_intercept_at_zero() {
     assert_eq!(model.heads()[0].intercept(), 0.0);
     assert!(!model.include_intercept());
     assert!(model.heads()[0].coefficients()[0] > 0.0);
+}
+
+#[test]
+fn fit_reports_the_exhausted_iteration_budget_through_the_public_surface() {
+    // Overlapping fixture from the solver suite: one sweep cannot reach the
+    // tolerance, so the public `fit` must surface the solver error instead of
+    // building a half-fitted model.
+    let features = array![
+        [-1.5_f64, -0.5],
+        [-0.5, -1.2],
+        [0.2, 0.3],
+        [1.0, 1.1],
+        [1.4, 0.4],
+        [-0.2, -0.6]
+    ];
+    let labels = array![0_i64, 0, 1, 1, 1, 0];
+
+    let error = SKLinearSVC::<f64>::build()
+        .loss(SKLinearSvcLoss::Hinge)
+        .tolerance(1e-12)
+        .maximum_number_of_iterations(1)
+        .build()
+        .unwrap()
+        .fit(features.view(), labels.view())
+        .unwrap_err();
+
+    assert!(
+        matches!(error, SKError::NotConverged { iterations: 1 }),
+        "expected NotConverged carrying one executed sweep, got {error:?}"
+    );
 }
