@@ -18,6 +18,11 @@ pub struct SKNumericBinning<F> {
 }
 
 impl<F: SKFloat> SKNumericBinning<F> {
+    /// Rebuild a numeric binning from its exported edges and missing bin.
+    pub(crate) fn from_exported(edges: Vec<F>, missing_bin: u8) -> Self {
+        Self { edges, missing_bin }
+    }
+
     /// Derive at most `maximum_bins` numeric bins from the finite observed
     /// `values`; `NaN` values are the missing marker and are ignored.
     ///

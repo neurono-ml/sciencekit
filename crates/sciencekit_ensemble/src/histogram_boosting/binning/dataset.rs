@@ -35,6 +35,22 @@ impl<F: SKFloat> SKFeatureBinning<F> {
         }
     }
 
+    /// Rebuild a numeric binning from its exported edges and missing bin.
+    pub(crate) fn from_exported_numeric(edges: Vec<F>, missing_bin: u8) -> Self {
+        Self {
+            numeric: Some(SKNumericBinning::from_exported(edges, missing_bin)),
+            categories: Vec::new(),
+        }
+    }
+
+    /// Rebuild a categorical binning from its exported category codes.
+    pub(crate) fn from_exported_categorical(categories: Vec<i64>) -> Self {
+        Self {
+            numeric: None,
+            categories,
+        }
+    }
+
     /// Whether this feature is treated as categorical.
     pub fn is_categorical(&self) -> bool {
         self.numeric.is_none()
