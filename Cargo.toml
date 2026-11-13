@@ -37,6 +37,7 @@ members = [
     "crates/sciencekit_neighbors",
     "crates/sciencekit_outlier",
     "crates/sciencekit_pipeline",
+    "crates/sciencekit_svm",
     "crates/sciencekit_telemetry",
     "crates/sciencekit_tree",
     "crates/sciencekit_preprocessing",

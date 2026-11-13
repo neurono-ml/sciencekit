@@ -27,6 +27,77 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Companion tests cover random/sequential equivalence, `f32`/`f64`,
   concurrent `Send + Sync` readers, large files with bounded batches,
   Fortran order, truncated files and misaligned headers.
+- `sciencekit_math` gains the Mercer and similarity kernel catalogue (spec
+  `kernel-functions`): `SKKernel` (`Linear`, `Polynomial`,
+  `RadialBasisFunction`, `Sigmoid`, `Precomputed`), `SKKernelGamma<F>`
+  (`Scale`, `Auto`, `Value`), `SKKernelParameters<F>`,
+  `SK_KERNEL_PARALLEL_GRAIN`, `sk_validate_kernel_hyperparameters`,
+  `sk_resolve_kernel_gamma`, `sk_resolve_kernel_parameters`,
+  `sk_feature_population_variance`, `sk_linear_kernel_matrix`,
+  `sk_polynomial_kernel_matrix`, `sk_radial_basis_function_kernel_matrix`,
+  `sk_sigmoid_kernel_matrix`, `sk_precomputed_kernel_matrix`,
+  `sk_validate_precomputed_query_kernel`, `sk_kernel_matrix` and
+  `sk_kernel_matrix_sequential`. Every feature kernel dispatches once across all
+  four dense/CSR representation pairs without densifying sparse inputs, clamps
+  floating-point squared-distance cancellation in the RBF path, and evaluates
+  independent rows in parallel with rayon.
+- New crate `sciencekit_svm` delivering kernel support-vector machines (spec
+  `support-vector-machines`): `SKSVC<F>`, `SKSVCBuilder<F>`, `SKSVCModel<F>`,
+  `SKBinarySVCModel<F>`, `SKClassWeight<F>` (`None`, `Balanced`, `Explicit`,
+  `LabelMap` / `from_labels`), `SKSVR<F>`, `SKSVRBuilder<F>` and
+  `SKSVRModel<F>`, backed by a deterministic pure-Rust second-order SMO solver
+  (`SKSmoState`, `SKSmoWorkingPair`, `SKSmoTracker`, `SKSmoSolution`,
+  `SKSmoOptions`, `SKKernelRowCache`, `SKBinarySvcSmoResult`,
+  `SKEpsilonSvrSmoResult`, `sk_solve_smo_quadratic_program`,
+  `sk_solve_binary_c_svc`, `sk_solve_epsilon_svr`), owned dense/CSR
+  support-vector storage (`SKOwnedFeatureBlock`), one-vs-one multiclass fitting,
+  deterministic vote resolution (`sk_resolve_one_vs_one_votes`) and
+  `decision_function` / `pairwise_decision_function` margins, plus
+  deterministic five-fold Platt scaling and Wu-Lin-Weng pairwise coupling
+  (`SKPlattParameters`, `sk_fit_platt_sigmoid`, `sk_calibrate_binary_platt`,
+  `sk_couple_pairwise_probabilities`,
+  `sk_couple_pairwise_probabilities_with_budget`).
+- Stage-wise gradient boosting in `sciencekit_ensemble` (spec `gradient-boosting`):
+  builder-only `SKGradientBoostingClassifier<F>` / `SKGradientBoostingRegressor<F>` with
+  `number_of_estimators` (default `100`), `learning_rate` (default `0.1`), `maximum_depth`
+  (default `3`), `minimum_samples_leaf` (default `1`), `maximum_features` (default `All`),
+  `subsample` (default `1.0`), `l2_regularization` (default `0.0`), `random_seed`
+  (default `0`), `validation_fraction` (default `0.1`), `n_iter_no_change` (default off)
+  and `tolerance` (default `1e-4`), plus the mandatory `backend` (default `Faer`) and
+  `execution_mode` (default `Automatic`) parameters recorded in every `fit` and `predict`
+  span and carried into the fitted model. The classifier covers `LogLoss` with a logistic
+  sigmoid link for two classes and a softmax link for multiclass (one tree per class per
+  stage); the regressor covers `SquaredError`, `AbsoluteError` and `Huber` with a
+  configurable `huber_delta`. Every stage fits a regression tree to the negative gradient
+  and writes damped Newton leaves `-Σg / (Σh + λ)`, starting from the loss-optimal constant
+  prediction; `subsample < 1.0` draws rows without replacement per stage and
+  `n_iter_no_change` early-stops on a held-out validation fraction. Integer and nominal
+  targets are canonicalized through an `SKLabelTable`, dense and zero-copy CSR fits and
+  predictions never densify a sparse input, and the fitted
+  `SKGradientBoostingClassifierModel` / `SKGradientBoostingRegressorModel` expose
+  `number_of_stages`, the per-stage trees, `initial_prediction(s)`, `learning_rate`,
+  `classes`, `number_of_classes`, `feature_importances` and per-stage feature importances.
+- Streaming pipelines (spec `streaming-pipeline`): `sciencekit_pipeline::streaming`
+  adds `SKStreamingTransformer`, `SKStreamingPipeline` /
+  `SKStreamingPipelineBuilder`, `SKStreamingPipelineConfigured`,
+  `SKFittedStreamingPipeline` and `SKStreamingFitReport`. A pipeline composes
+  streaming stages erased behind object-safe adapters, fits them in order by
+  reading an `SKSourceProvider` through the shared prefetch executor (each stage
+  seeing the previous stage's transformed batches), and exposes a per-batch
+  `transform_batch` that preserves dense/CSR without densifying. A reopenable
+  provider replays each configured `epochs` pass; a one-shot provider is
+  materialized once within `memory_budget_bytes`, and an over-budget
+  materialization returns `SKError::BatchBufferOversize`. The batch finalizer
+  accumulates the transformed blocks within the same budget and fits an
+  `SKUnsupervisedFit` estimator, preserving CSR when every block is sparse.
+  Source failures surface the central taxonomy error, stage failures carry the
+  zero-based stage index, multi-epoch requests on a one-shot provider return a
+  structured `SKError::UnsupportedOperation`, empty stage lists and zero
+  epochs/budget return `SKError::InvalidHyperparameter`, and the fitted
+  pipeline is `Send + Sync` for concurrent transformation. Every `fit` and
+  `transform` span records the configured `backend` (default `Faer`) and
+  `execution_mode` (default `Automatic`).
+
 - `sciencekit_decomposition` gains uncentered low-rank Singular Value
   Decomposition (spec `truncated-svd`): `SKTruncatedSVD<F>`, a builder-only
   estimator with `number_of_components` (default `2`), `algorithm`
@@ -176,6 +247,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `compression-snappy` wrap whole files (`.safetensors.gz`,
   `.safetensors.brotli`, `.snappy.safetensors`) with magic-byte auto-detection
   and explicit `UnsupportedOperation` guidance when disabled.
+
+- `sciencekit_decomposition` gains out-of-core Principal Component Analysis
+  (spec `incremental-pca`): `SKIncrementalPCA<F>`, `SKIncrementalPCABuilder<F>`
+  and `SKIncrementalPCAModel<F>`, builder-only with `number_of_components`
+  (default `None`, meaning `min(n_samples, n_features)` up to the feature
+  count), `batch_size` (default `1024`), `whiten` (default `false`),
+  `maximum_number_of_epochs` (default `1`), `backend` (default `Faer`) and
+  `execution_mode` (default `Automatic`). Dense batches accumulate exact
+  `(samples_seen, mean, scatter)` statistics via the Chan-Golub-LeVeque merge
+  across fixed 256-row parallel chunks without retaining rows; sparse CSR
+  batches accumulate Neumaier-compensated column sums and Gram products
+  (`Gram - n * mean * mean^T`) without ever densifying sparse storage.
+  Finalization divides the scatter matrix by `n - 1`, runs the configured
+  backend's symmetric eigensolver (`eigh`), sorts eigenvalues non-increasingly
+  and orients principal component rows deterministically to match `SKPCA`.
+  `fit` chunks in-memory dense/CSR matrices into `batch_size` blocks (coalescing
+  undersized trailing remainders), `SKIncrementalPCAModel::partial_fit` chains
+  dense and CSR batch updates, `fit_streaming` drives `SKSourceProvider`
+  through the shared prefetch executor across one pass for one-shot providers
+  and `maximum_number_of_epochs` passes for reopenable providers, and
+  `SKIncrementalPCAModel` implements `SKFeatureTransformer`, `transform`,
+  `inverse_transform` and format-agnostic `SKExportable`/`SKImportable` state
+  round-tripping.
 
 - `sciencekit_outlier` sub-crate and `sciencekit_common` outlier prediction
   contract (specs `outlier-prediction` and `isolation-forest`): one-byte typed

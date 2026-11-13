@@ -26,14 +26,13 @@ mod design;
 mod growth;
 mod splitter;
 
+pub mod classifier;
 pub mod impurity;
 pub mod node;
+pub mod regressor;
+pub mod structure;
 
 pub use class_weight::SKClassWeight;
-
-pub mod classifier;
-pub mod regressor;
-
 pub use classifier::{
     SKDecisionTreeClassifier, SKDecisionTreeClassifierBuilder, SKDecisionTreeClassifierModel,
 };
@@ -43,6 +42,7 @@ pub use regressor::{
     SKDecisionTreeRegressor, SKDecisionTreeRegressorBuilder, SKDecisionTreeRegressorModel,
 };
 pub use splitter::{SKMaximumFeatures, SKSplitCandidate, SKSplitter};
+pub use structure::{SKStructureConstraints, SKStructureConstraintsBuilder, SKTreeStructure};
 
 #[cfg(test)]
 mod acceptance_tests;

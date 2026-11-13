@@ -11,11 +11,11 @@ use sciencekit_math::backend::{SKBackendSelection, sk_math_backend_for_kind};
 use sciencekit_math::sparse_ops::sk_csr_dense_product;
 
 use super::reconstruction::sk_resolve_model_plan;
-use crate::pca::centering::{sk_center_dense, sk_view_dimensions};
+use crate::pca::centering::sk_center_dense;
 use crate::pca::core_implementation::SKPCA;
 use crate::pca::fit::sk_fit_pca;
 use crate::pca::model::SKPCAModel;
-use crate::pca::validation::sk_validate_matrix_input;
+use crate::pca::validation::{sk_validate_matrix_input, sk_view_dimensions};
 
 const DENSE_TRANSFORM_ROW_CHUNK: usize = 256;
 

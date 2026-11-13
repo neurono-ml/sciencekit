@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 license = "Apache-2.0"
 rust-version = "1.85"
-description = "Ensemble estimators for sciencekit: random forests and generic bagging classifiers/regressors with bootstrap sampling, feature routing, out-of-bag estimation and dense/sparse parity."
+description = "Ensemble estimators for sciencekit: random forests, generic bagging and stage-wise gradient boosting with dense/sparse representation parity."
 repository = "https://github.com/neurono-ml/sciencekit"
 
 [dependencies]

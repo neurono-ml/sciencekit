@@ -121,7 +121,7 @@ sciencekit/
 │   ├── sciencekit_tree/             # decision trees
 │   ├── sciencekit_ensemble/         # random forest, bagging, gradient boosting
 │   ├── sciencekit_cluster/          # SKKMeans, SKDBSCAN, SKMiniBatchKMeans
-│   ├── sciencekit_decomposition/    # SKPCA, SKTruncatedSVD
+│   ├── sciencekit_decomposition/    # SKPCA, SKIncrementalPCA, SKTruncatedSVD
 │   ├── sciencekit_outlier/          # anomaly detection
 │   ├── sciencekit_model_selection/  # SKKFold, sk_train_test_split, SKGridSearchCV
 │   ├── sciencekit_pipeline/         # type-safe SKPipeline, DAGs
@@ -564,8 +564,8 @@ Order faithful to the scikit-learn mapping (from the handoff), respecting depend
    - Incremental (`partial_fit`) and out-of-core (`fit_streaming`) index maintenance are **out of scope here**: the fitted models own an immutable training design, and a later out-of-core change can rebuild the index from it. Radius-neighbour estimators and metric learning are also future changes.
    - `memmap2`-backed tree indexes are **out of scope here** and delivered by Phase 7 (interop), like all persistence and export.
 9. `sciencekit_svm`: SKSVC, SKSVR, SKLinearSVC.
-   - `SKSVC`/`SKSVR` keep representation parity through the sparse-aware kernel and `SKLinearSVC` through the sparse linear path; neither needs the dense-only exception.
-   - SVM kernel caches backed by `memmap2` are **out of scope here** and delivered by Phase 7 (interop).
+   - `SKSVC`/`SKSVR` keep representation parity through the sparse-aware kernel and `SKLinearSVC` through the sparse linear path; neither needs the dense-only exception. Precomputed Gram matrices are the sole dense-only input wrapper (`UnsupportedRepresentation` on sparse).
+   - `memmap2`-backed kernel caches, model persistence and model export are **out of scope here** and delivered by Phase 7 (the interop wave), not by the `svm-svc-svr` algorithm change; SMO retains an in-memory bounded LRU kernel-row cache (`cache_size` in MiB) and support-vector-only model state (`SKOwnedFeatureBlock`).
 
 ### Phase 4 — Trees and ensembles
 10. `sciencekit_tree`: SKDecisionTreeClassifier/SKDecisionTreeRegressor.
@@ -601,9 +601,9 @@ Order faithful to the scikit-learn mapping (from the handoff), respecting depend
       and `memmap2` remain Phase 7 work; format-agnostic `SKExportable` /
       `SKImportable` state emission is already provided).
     - Clusterers expose typed assignments (`SKClusterLabel`: a cluster identifier or explicit noise) through `SKClustererPredictor`; the unsupervised scorer evaluates those assignments directly and documents whether it excludes or rejects noise.
-13. `sciencekit_decomposition`: SKPCA, SKTruncatedSVD.
-    - Representation parity (§4.5.1 / §4.5.2): `SKPCA` supports sparse CSR fitting without densification on `SKPCASolver::Randomized` via implicit centering; `Full` and `CovarianceEigh` invoke the documented dense-only exception because they materialize the centered design or its covariance, rejecting CSR with `UnsupportedRepresentation` (naming `Randomized` and `SKTruncatedSVD`) unless `allow_densification(true)` is explicitly set (with a warning reporting the byte cost).
-    - Sparse exact full/eigh solvers, kernel PCA, streaming/incremental PCA (`SKIncrementalPCA`, delivered by its own change), GPU acceleration, `memmap2`-backed storage and model export (Phase 7) are explicit `SKPCA` non-goals.
+13. `sciencekit_decomposition`: SKPCA, SKIncrementalPCA, SKTruncatedSVD.
+    - Representation parity (§4.5.1 / §4.5.2): `SKPCA` supports sparse CSR fitting without densification on `SKPCASolver::Randomized` via implicit centering; `Full` and `CovarianceEigh` invoke the documented dense-only exception because they materialize the centered design or its covariance, rejecting CSR with `UnsupportedRepresentation` (naming `Randomized` and `SKTruncatedSVD`) unless `allow_densification(true)` is explicitly set (with a warning reporting the byte cost). `SKIncrementalPCA` accepts dense and sparse CSR inputs natively on `fit`, `partial_fit`, `fit_streaming`, `transform` and `inverse_transform` without densification via Chan-Golub-LeVeque scatter merging and Neumaier-compensated CSR Gram accumulation.
+    - Sparse exact full/eigh solvers and kernel PCA remain `SKPCA` non-goals. Missing values, rank-adaptive component counts, GPU acceleration, `memmap2`-backed storage and binary file persistence/ONNX/SafeTensors export (Phase 7) are explicit non-goals of both `SKPCA` and `SKIncrementalPCA` (`SKIncrementalPCAModel` exposes format-agnostic `SKExportable`/`SKImportable` state).
     - `SKTruncatedSVD` computes uncentered low-rank Singular Value Decomposition via `SKRandomizedSvdBuilder` (`SKTruncatedSVDAlgorithm::Randomized`) directly on dense and sparse CSR views with single-dispatch `fit`, `fit_transform`, `transform` and `inverse_transform`, never densifying sparse storage. Feature centering (provided by `SKPCA`), ARPACK/IRLBA solvers (`SKTruncatedSVDAlgorithm::Arpack`), missing-value handling, GPU acceleration, `memmap2`-backed storage and model export (Phase 7) are explicit `SKTruncatedSVD` non-goals.
 14. `sciencekit_outlier`: anomaly detection (`SKIsolationForest`).
     - Outlier detectors expose typed one-byte assignments (`SKOutlierLabel { Inlier, Outlier }`) plus `score_samples`, `decision_function` and `offset` through `SKOutlierPredictor<F>`; external `-1`/`1` codes exist only at the explicit `to_i64`/`from_i64` interop boundary.
