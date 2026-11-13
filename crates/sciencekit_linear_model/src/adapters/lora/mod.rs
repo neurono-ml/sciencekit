@@ -25,3 +25,5 @@ mod lora_attach_tests;
 mod lora_fit_tests;
 #[cfg(test)]
 mod lora_logistic_tests;
+#[cfg(test)]
+mod lora_predict_tests;
