@@ -10,6 +10,8 @@
 //! - `SKClassWeight`: three distinct policies share the name (tree/ensemble,
 //!   linear-model logistic and SVM). Import the one you mean from its family
 //!   module.
+//! - `SKSplitter`: a split-selection enum in [`crate::tree`] and the train/test
+//!   partition trait in [`crate::model_selection`]. Neither is a prelude name.
 //! - The full model catalogue: reach for [`crate::ensemble`],
 //!   [`crate::decomposition`] or any other family module when you need more.
 //! - Engine adapters and device contracts: those live in [`crate::interop`] and

@@ -120,12 +120,99 @@ fn colliding_names_live_in_their_family_modules() {
     sized::<crate::linear_model::SKClassWeight<f64>>();
     sized::<crate::svm::SKClassWeight<f64>>();
 
+    // `SKSplitter` is a second, lower-risk collision: a split-selection enum in
+    // `tree` and a train/test partition trait in `model_selection`. The prelude
+    // exports neither, so the bare name never reaches a program unqualified.
+    sized::<crate::tree::SKSplitter>();
+    fn partition_strategy<T: crate::model_selection::SKSplitter<f64>>() {}
+    let _ = partition_strategy::<crate::model_selection::SKKFold>;
+
     // `SKFeatureBlock` and the device vocabulary are single types re-exported by
     // several modules; the same identity is what makes the duplication safe.
     sized::<crate::SKFeatureBlock<f64>>();
     sized::<crate::pipeline::SKFeatureBlock<f64>>();
     sized::<crate::SKDeviceInfo>();
     sized::<crate::accelerators::SKDeviceInfo>();
+}
+
+/// Compile-time proof that a name re-exported through two paths is one type.
+///
+/// Each function body only type-checks when the two spellings denote the same
+/// type; a second definition in either crate would fail the build.
+#[allow(dead_code)]
+mod shared_identities_are_one_type {
+    pub(crate) fn feature_block(
+        value: crate::SKFeatureBlock<f64>,
+    ) -> crate::pipeline::SKFeatureBlock<f64> {
+        value
+    }
+
+    fn into_feature_block<T>()
+    where
+        T: crate::SKIntoFeatureBlock<f64> + crate::pipeline::SKIntoFeatureBlock<f64>,
+    {
+    }
+
+    fn device_info(value: crate::SKDeviceInfo) -> crate::accelerators::SKDeviceInfo {
+        value
+    }
+
+    fn device_capabilities(
+        value: crate::SKDeviceCapabilities,
+    ) -> crate::accelerators::SKDeviceCapabilities {
+        value
+    }
+
+    fn gpu_kernel(value: crate::SKGpuKernel) -> crate::accelerators::SKGpuKernel {
+        value
+    }
+
+    fn fallback_reason(value: crate::SKFallbackReason) -> crate::accelerators::SKFallbackReason {
+        value
+    }
+
+    fn outlier_label(value: crate::SKOutlierLabel) -> crate::outlier::SKOutlierLabel {
+        value
+    }
+
+    fn outlier_predictor<
+        T: crate::SKOutlierPredictor<f64> + crate::outlier::SKOutlierPredictor<f64>,
+    >() {
+    }
+
+    fn kernel(value: crate::math::SKKernel) -> crate::svm::SKKernel {
+        value
+    }
+
+    fn kernel_gamma(value: crate::math::SKKernelGamma<f64>) -> crate::svm::SKKernelGamma<f64> {
+        value
+    }
+
+    fn kernel_parameters(
+        value: crate::math::SKKernelParameters<f64>,
+    ) -> crate::svm::SKKernelParameters<f64> {
+        value
+    }
+
+    fn tree_criterion(value: crate::tree::SKTreeCriterion) -> crate::ensemble::SKTreeCriterion {
+        value
+    }
+
+    fn maximum_features(
+        value: crate::tree::SKMaximumFeatures<f64>,
+    ) -> crate::ensemble::SKMaximumFeatures<f64> {
+        value
+    }
+
+    fn class_weight(value: crate::tree::SKClassWeight<f64>) -> crate::ensemble::SKClassWeight<f64> {
+        value
+    }
+}
+
+#[test]
+fn shared_identities_are_one_type() {
+    // The proof is compile-time; referencing the module keeps it linked.
+    let _ = shared_identities_are_one_type::feature_block;
 }
 
 #[test]
