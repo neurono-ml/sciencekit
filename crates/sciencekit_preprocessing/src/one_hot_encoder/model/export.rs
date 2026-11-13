@@ -46,7 +46,7 @@ impl<F: SKFloat> SKExportable<F> for SKOneHotEncoderModel {
                     kinds.push(SKParameterValue::from("nominal"));
                     let labels = table
                         .labels()
-                        .map(|label| SKParameterValue::from(label))
+                        .map(SKParameterValue::from)
                         .collect();
                     metadata = metadata.with_parameter(
                         format!("one_hot.categories.{column}"),
