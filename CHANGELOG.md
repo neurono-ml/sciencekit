@@ -34,6 +34,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   streaming pipelines erase their fitted stage types and therefore refuse at
   export with the same typed error. Refusal is the spec-mandated behaviour, never
   a partial model; no model is claimed to round-trip when it cannot.
+- ONNX export (spec `onnx-export`): new `sciencekit_onnx` crate with
+  `SKToOnnx<F>`, blanket-implemented over `SKExportable<F>`, so any fitted model
+  translates its neutral state into an ONNX `ModelProto`. The validated
+  `SKOnnxGraphBuilder` writes IR 8 / opset 17 over opset 3 of `ai.onnx.ml`
+  using `prost`-declared messages (no `protoc`). Exported families: the three
+  scalers, the integer one-hot encoder, linear/ridge/lasso/elastic-net/SGD
+  regressors, logistic regression (binary, multinomial and one-versus-rest),
+  SVC (binary and one-vs-one multiclass with linear/polynomial/rbf/sigmoid
+  kernel expansions), SVR and LinearSVC, decision trees and random forests
+  through ONNX-ML tree ensembles, k-nearest neighbours, k-means/mini-batch
+  k-means, PCA, truncated SVD and the typed pipelines. Metadata records the producer, estimator name, format version,
+  scalar dtype, feature count and the class table. Unsupported families (SVM,
+  boosting, isolation forest, DBSCAN) return `UnsupportedOperation` and are
+  listed in `sk_onnx_coverage`. Predictions are validated against the reference
+  `onnxruntime` by the committed harness
+  `crates/sciencekit_onnx/validation/compare_with_onnxruntime.py`.
 - Shared helpers for the retrofit: `sk_assert_export_round_trip`,
   `sk_states_equal`, the tensor readers and the backend/metadata parameter
   parsers.
