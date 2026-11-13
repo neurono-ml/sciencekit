@@ -22,6 +22,10 @@ pub fn sk_run_export(arguments: SKExportArguments) -> Result<(), SKCliError> {
         ..SKConfigurationOverrides::default()
     };
     let configuration = sk_resolve_command_configuration(&arguments.configuration, extra)?;
+    let flag_format = match &arguments.model_format {
+        Some(name) => Some(SKModelFormat::from_name(name)?),
+        None => None,
+    };
     if sk_dry_run_requested(&configuration)? {
         return Ok(());
     }
@@ -40,8 +44,8 @@ pub fn sk_run_export(arguments: SKExportArguments) -> Result<(), SKCliError> {
         "--output",
         "command.output",
     )?;
-    let format = match &arguments.model_format {
-        Some(name) => SKModelFormat::from_name(name)?,
+    let format = match flag_format {
+        Some(format) => format,
         None => SKModelFormat::from_path(Path::new(&output_path)),
     };
 

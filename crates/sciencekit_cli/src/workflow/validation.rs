@@ -23,7 +23,7 @@ const SK_SEARCH_KEYS: [&str; 4] = ["kind", "alphas", "folds", "scoring"];
 const SK_OUTPUT_KEYS: [&str; 3] = ["model", "predictions", "format"];
 const SK_SUPPORTED_TRANSFORMERS: [&str; 3] = ["standard_scaler", "minmax_scaler", "robust_scaler"];
 const SK_SUPPORTED_ESTIMATORS: [&str; 2] = ["ridge", "linear_regression"];
-const SK_SUPPORTED_METRICS: [&str; 4] = ["r2", "rmse", "mse", "mae"];
+pub(crate) const SK_SUPPORTED_METRICS: [&str; 4] = ["r2", "rmse", "mse", "mae"];
 
 fn sk_object<'a>(value: &'a Value, path: &str) -> Result<&'a Map<String, Value>, SKWorkflowError> {
     value

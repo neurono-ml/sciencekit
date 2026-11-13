@@ -16,10 +16,7 @@ use crate::io::sk_load_dataset;
 use crate::io::sk_load_native;
 
 /// The output formats the evaluate command accepts for its metrics document.
-fn sk_resolve_metrics_format(
-    arguments: &SKEvaluateArguments,
-    output: Option<&str>,
-) -> Result<(), SKCliError> {
+fn sk_resolve_metrics_format(output: Option<&str>) -> Result<(), SKCliError> {
     if let Some(output) = output {
         if !output.ends_with(".json") {
             return Err(SKCliError::validation(
@@ -28,7 +25,6 @@ fn sk_resolve_metrics_format(
             ));
         }
     }
-    let _ = arguments;
     Ok(())
 }
 
@@ -46,6 +42,11 @@ pub fn sk_run_evaluate(arguments: SKEvaluateArguments) -> Result<(), SKCliError>
         ..SKConfigurationOverrides::default()
     };
     let configuration = sk_resolve_command_configuration(&arguments.configuration, extra)?;
+    let output_path = arguments
+        .output
+        .as_ref()
+        .map(|path| path.display().to_string());
+    sk_resolve_metrics_format(output_path.as_deref())?;
     if sk_dry_run_requested(&configuration)? {
         return Ok(());
     }
@@ -65,11 +66,6 @@ pub fn sk_run_evaluate(arguments: SKEvaluateArguments) -> Result<(), SKCliError>
         "--target",
         "configuration.target",
     )?;
-    let output_path = arguments
-        .output
-        .as_ref()
-        .map(|path| path.display().to_string());
-    sk_resolve_metrics_format(&arguments, output_path.as_deref())?;
 
     let dataset = sk_load_dataset(
         Path::new(&dataset_path),
