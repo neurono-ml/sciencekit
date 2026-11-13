@@ -38,6 +38,7 @@ pub mod json;
 #[allow(unsafe_code)]
 pub mod memmap;
 pub mod missing;
+pub mod native;
 pub mod observability;
 pub mod safetensors;
 pub mod schema;
