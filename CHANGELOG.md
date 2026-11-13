@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] — 2026-11-13
+
+Algorithms and capabilities landed since 0.7.0: the SVM family (kernel SVC/SVR
+and LinearSVC), ensemble learning (random forests, bagging, stage-wise and
+histogram gradient boosting), clustering (DBSCAN and streaming mini-batch
+k-means), decomposition (PCA, truncated SVD and incremental out-of-core PCA),
+successive-halving model selection, DAG and streaming pipelines, the expanded
+interoperability layer (Polars/DataFusion sources, memory-mapped files,
+safetensors and JSON debug formats), the OpenCL 3.0 device backend, opt-in
+OpenTelemetry export, isolation forests and workspace-wide model export.
+
 ### Added
 
 - Model export coverage (spec `model-export-coverage`): all 47 fitted model
