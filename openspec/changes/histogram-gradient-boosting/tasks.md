@@ -80,9 +80,9 @@
   `mdbook build docs`.
 - [x] 7.3 Record the deferred `memmap2` streaming store, constraints and export in
   `docs/PRD.md`; verify the amended paragraphs render.
-- [ ] 7.4 Independent review by a separate agent validating every scenario in
+- [x] 7.4 Independent review by a separate agent validating every scenario in
   `histogram-gradient-boosting` against the code and tests; address every finding and
-  re-run the gates.
+  re-run the gates. Verdict matrix and fixed defects: `verification.md`.
 
 ## Workflow follow-up
 
