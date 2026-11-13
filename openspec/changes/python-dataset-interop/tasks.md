@@ -31,7 +31,7 @@
 
 ## 5. Results, threading, errors, validation
 
-- [ ] 5.1 TDD result formats: numpy default, pandas, pyarrow, Polars, SciPy sparse; values round-trip.
+- [x] 5.1 TDD result formats: numpy default, pandas, pyarrow, Polars, SciPy sparse; values round-trip.
 - [ ] 5.2 TDD Arrow-backed results implement `__arrow_c_stream__` and are consumable by pyarrow/polars.
 - [ ] 5.3 TDD GIL release: two Python threads fit concurrently; both succeed; no deadlock.
 - [ ] 5.4 TDD error mapping: unknown column → `KeyError`, unsupported dtype → `TypeError`, shape mismatch → `ValueError`.
