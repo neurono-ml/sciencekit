@@ -380,3 +380,12 @@ pairwise-distance, tiled GEMM, elementwise and tree-prediction kernels with CPU-
 concurrent dispatch parity, span fields recording `opencl`, the device and the bytes moved, and
 an honest `SKFallbackReason::NoDeviceAvailable` for feature-off, device-less and failed-build
 configurations.
+
+The [model export retrofit chapter](./ch62-model-export-retrofit.html) adds the shared
+`SKExportable` / `SKImportable` round trip to every retrofitted family: the single
+`SK_MODEL_FORMAT_VERSION`, the dotted tensor naming scheme, the dense/CSR-preserving
+support-vector and training-design codecs, the NaN-aware determinism check
+(`sk_states_equal`), and the companion tests that fit, export, import and compare
+predictions — including the nested tree states of the forests and gradient boosters.
+The chapter's coverage table names the families still pending so the book never claims
+more than the code delivers.
