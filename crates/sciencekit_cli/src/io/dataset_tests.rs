@@ -24,3 +24,14 @@ fn an_unknown_target_is_a_validation_error() {
     let error = sk_load_dataset(&path, None, Some("absent")).expect_err("the target is absent");
     assert_eq!(error.exit_code(), crate::cli::exit_codes::SKExitCode::Usage);
 }
+
+#[test]
+fn the_format_is_inferred_from_the_extension_and_validated_by_name() {
+    use super::SKDatasetFormat;
+    use std::path::Path;
+
+    assert_eq!(SKDatasetFormat::from_path(Path::new("data.parquet")), SKDatasetFormat::Parquet);
+    assert_eq!(SKDatasetFormat::from_path(Path::new("data.csv")), SKDatasetFormat::Csv);
+    assert_eq!(SKDatasetFormat::from_name("CSV").expect("csv"), SKDatasetFormat::Csv);
+    assert!(SKDatasetFormat::from_name("arff").is_err());
+}
