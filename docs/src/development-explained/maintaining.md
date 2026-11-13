@@ -389,3 +389,15 @@ support-vector and training-design codecs, the NaN-aware determinism check
 predictions — including the nested tree states of the forests and gradient boosters.
 The chapter's coverage table names the families still pending so the book never claims
 more than the code delivers.
+
+The [ONNX export chapter](./ch63-onnx-export.html) extends the neutral export
+contract with a translator to ONNX: the `sciencekit_onnx` crate, the
+`SKToOnnx<F>` blanket implementation over `SKExportable<F>`, the validated
+`SKOnnxGraphBuilder` over `prost`-declared protobuf messages, opset 17 plus
+`ai.onnx.ml` 3, the per-family operator subset (scalers, one-hot, linear and
+logistic, ONNX-ML tree ensembles, neighbours, k-means, PCA/SVD and pipelines),
+the dtype/metadata rules, and the coverage matrix that keeps unsupported
+families explicit. When you add an exporter, extend `sk_onnx_coverage`, add a
+Rust-parity test that writes a fixture, and rerun
+`crates/sciencekit_onnx/validation/compare_with_onnxruntime.py` so the claim
+stays backed by a real runtime.

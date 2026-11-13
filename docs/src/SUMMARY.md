@@ -91,4 +91,5 @@
   - [Histogram gradient boosting: bins, histograms and leaves grown on the smaller child](development-explained/ch60-histogram-gradient-boosting.md)
   - [OpenCL backend: command queues, kernels and honest device work](development-explained/ch61-gpu-opencl-backend.md)
   - [One export contract for every fitted model: export, import and round-trip evidence](development-explained/ch62-model-export-retrofit.md)
+  - [ONNX export: turning a fitted model into a portable graph](development-explained/ch63-onnx-export.md)
   - [Maintaining this book](development-explained/maintaining.md)
