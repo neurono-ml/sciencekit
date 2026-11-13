@@ -158,11 +158,13 @@ and the leaf with the best gain splits next. This is `growth/leaf_wise.rs`.
 
 The algorithm is short enough to follow:
 
-1. Accumulate the root histogram; the root starts as a pending leaf.
-2. Pick the pending leaf with the largest outstanding gain. Ties resolve by lower node index, so the
-   result does not depend on iteration order.
-3. Scan the selected features. Feature subsampling (`maximum_features`) is seeded from
-   `random_seed` and the node index, and the sampled indices are sorted so the scan order is stable.
+1. Accumulate the root histogram and its best candidate split; the root starts as a pending leaf.
+2. Pick the pending leaf whose **own** best candidate gain is largest. Ties resolve by lower node
+   index, so the result does not depend on iteration order.
+3. For every leaf that is created, scan the selected features. Feature subsampling
+   (`maximum_features`) is seeded from `random_seed` and the node index, and the sampled indices are
+   sorted so the scan order is stable. The resulting candidate travels with the leaf, so the
+   priority list never ranks a child by the gain that produced it.
 4. If no split is valid, the leaf keeps its Newton value.
 5. Otherwise partition rows by the split condition, accumulate the smaller child, subtract the larger
    child, store both children as leaves and push them onto the pending list.
@@ -174,9 +176,12 @@ that array with a closure that returns the bin of one feature — exactly the sh
 
 `hist_growth_splits_the_highest_gain_leaf` grows the four-row example into three nodes: a root with
 split `maximum_bin = 1` and leaf values `+1` and `−1`, with a normalized importance of `1.0` on the
-only used feature. `hist_growth_respects_the_maximum_leaf_budget` grows 16 alternating rows with a
-budget of three leaves and checks that the tree stops at five nodes (three leaves and two internal
-nodes). `hist_growth_creates_a_leaf_node_without_a_split` pins down the leaf constructor.
+only used feature. `hist_growth_splits_the_leaf_with_the_largest_own_gain` is the ordering guard: the
+root splits after bin 3, its left child can still improve by `0.75` and its right child by `2.0`, so
+with a budget of three leaves the right child must be the one split. `hist_growth_respects_the_maximum_leaf_budget`
+grows 16 alternating rows with a budget of three leaves and checks that the tree stops at exactly
+three leaves and five nodes. `hist_growth_creates_a_leaf_node_without_a_split` pins down the leaf
+constructor.
 
 ---
 
@@ -197,7 +202,9 @@ leaves only three rows and removes every partition.
 
 At prediction time `SKHistogramTree` reads the membership bit for the query's category bin. A query
 category absent from the fitted list maps to `unknown_bin`, falls outside the mask and follows the
-documented right direction.
+documented right direction. `hist_growth_routes_an_unknown_category_away_from_the_left_mask` builds
+the minimal categorical tree by hand and checks both sides of that traversal: the unknown bin and a
+masked-out observed category reach the right leaf, while a masked-in category reaches the left one.
 
 ---
 
@@ -233,12 +240,21 @@ existing gradient-boosting pieces:
   held-out split;
 - `sk_select_stage_rows` for without-replacement row subsampling.
 
+Every stage recomputes the negative gradients and Hessians from the **current** raw scores, for both
+the scalar and the multiclass loops; reusing the initial scores would refit the same trees forever.
+`hist_multiclass_refreshes_gradients_between_stages` compares the first two stage trees of every class
+and fails if the second stage simply repeats the first. The same `subsample` fraction is drawn per
+stage and per class before growth, and `hist_multiclass_applies_row_subsampling` checks that the root
+of a `0.5`-subsampled multiclass tree holds fewer than all training rows.
+
 Early stopping is on by default with patience `10`, exactly as the specification's default scenario
 requires. `hist_early_stop_reports_the_fitted_iteration_count` fits a constant target and shows the
 model keeps only the single best stage even though 20 were allowed.
 `hist_early_stop_disabled_fits_every_iteration` checks that `without_early_stopping` fits all seven
-requested stages, and `hist_early_stop_is_seed_deterministic` fits the same seeded configuration
-twice and compares the reported stage count.
+requested stages, `hist_early_stop_keeps_every_stage_when_no_validation_split_is_possible` covers the
+three-row, three-class case where no stratified hold-out exists and all five stages must survive, and
+`hist_early_stop_is_seed_deterministic` fits the same seeded configuration twice and compares the
+reported stage count.
 
 Prediction bins each raw query row on the fly through the stored `SKFeatureBinning`, so no binned
 matrix has to be stored or rebuilt. Dense rows read their cells; CSR rows read only stored entries
@@ -294,13 +310,15 @@ The executable contract lives beside the implementation, in `*_tests.rs` modules
 - `binning/binning_tests.rs` — `hist_binning_derives_at_most_maximum_bins`,
   `hist_binning_routes_missing_to_dedicated_bin`, `hist_binning_is_deterministic`.
 - `binning/dataset_tests.rs` — `hist_dataset_stores_columns_with_u8_bins`,
-  `hist_dataset_maps_categories_and_unknown_bin`, `hist_dataset_does_not_densify_sparse_input`.
+  `hist_dataset_maps_categories_and_unknown_bin`,
+  `hist_dataset_rejects_out_of_range_maximum_bins`, `hist_dataset_does_not_densify_sparse_input`.
 - `histogram/accumulate_tests.rs`, `gain_tests.rs`, `subtract_tests.rs`, `categorical_tests.rs` — the
   hand-computed sums, the gain formula, subtraction equivalence and the bit-mask partition.
 - `growth/growth_tests.rs`, `missing_tests.rs` — the hand-computed growth sequence, the leaf budget
   and both learned missing directions.
-- `classifier_tests.rs`, `regressor_tests.rs`, `early_stopping_tests.rs` — defaults, binary,
-  multiclass, squared/absolute error, regularization and the fitted-iteration count.
+- `classifier_tests.rs`, `regressor_tests.rs`, `early_stopping_tests.rs`,
+  `multiclass_loop_tests.rs` — defaults, binary, multiclass, squared/absolute error, regularization,
+  the fitted-iteration count, refreshed multiclass gradients and per-stage subsampling.
 - `representation_tests.rs`, `validation_tests.rs`, `determinism_tests.rs` — dense/CSR parity, every
   documented error, repeated-fit and thread-count determinism, concurrent prediction and `Send + Sync`.
 - `acceptance_tests/{tiny_tests,large_tests,metric_tests}.rs` — tiny designs, categorical and missing
