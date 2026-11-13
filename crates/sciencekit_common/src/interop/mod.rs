@@ -26,7 +26,7 @@ pub use shared::{
 };
 pub use state::SKModelState;
 pub use tensor::{SKTensor, SKTensorDataType, SKTensorValues};
-pub use testing::{sk_assert_export_round_trip, sk_assert_state_names};
+pub use testing::{sk_assert_export_round_trip, sk_assert_state_names, sk_states_equal};
 pub use traits::{SKExportable, SKImportable, sk_validate_import_metadata};
 
 #[cfg(test)]

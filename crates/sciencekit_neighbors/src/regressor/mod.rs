@@ -5,6 +5,7 @@
 
 mod builder;
 mod core_implementation;
+mod export;
 mod fit;
 mod model;
 mod predict;

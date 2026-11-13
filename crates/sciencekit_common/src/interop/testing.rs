@@ -29,7 +29,7 @@
 use crate::SKError;
 use crate::sk_float::SKFloat;
 
-use super::{SKExportable, SKImportable, SKModelState};
+use super::{SKExportable, SKImportable, SKModelState, SKTensorValues};
 
 /// Export `model` twice, assert the two states are byte-for-byte equal, import
 /// the state and assert the imported metadata is preserved.
@@ -51,7 +51,7 @@ where
 {
     let first_state = model.export_state()?;
     let second_state = model.export_state()?;
-    if first_state != second_state {
+    if !sk_states_equal(&first_state, &second_state) {
         return Err(SKError::InvalidHyperparameter {
             name: "export_determinism",
             reason: "two exports of the same fitted model produced different states".to_string(),
@@ -77,6 +77,33 @@ where
         });
     }
     Ok(imported)
+}
+
+/// Compare two states, treating two NaNs as equal.
+///
+/// Missing-value markers and imputation statistics legitimately store NaN; a
+/// derived `PartialEq` would report two identical exports as different.
+pub fn sk_states_equal<F: SKFloat>(first: &SKModelState<F>, second: &SKModelState<F>) -> bool {
+    if first.metadata() != second.metadata() || first.tensors().len() != second.tensors().len() {
+        return false;
+    }
+    first.tensors().iter().all(|(name, left)| {
+        let Some(right) = second.tensor(name) else {
+            return false;
+        };
+        if left.data_type() != right.data_type() || left.shape() != right.shape() {
+            return false;
+        }
+        match (left.values(), right.values()) {
+            (SKTensorValues::Floating(a), SKTensorValues::Floating(b)) => a
+                .iter()
+                .zip(b.iter())
+                .all(|(x, y)| x == y || (x.is_nan() && y.is_nan())),
+            (SKTensorValues::Integer(a), SKTensorValues::Integer(b)) => a == b,
+            (SKTensorValues::Boolean(a), SKTensorValues::Boolean(b)) => a == b,
+            _ => false,
+        }
+    })
 }
 
 /// Assert a state carries at least one tensor and every name is a dotted path.
