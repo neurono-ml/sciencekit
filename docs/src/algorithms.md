@@ -143,6 +143,7 @@ and receives a Python binding as soon as it is validated on CPU.
 | Memory-mapped sources (`memmap` feature) | `sciencekit_interop` | Zero-copy `SKMappableSource`/`SKLazySource` over raw binary, NumPy `.npy` and footer-indexed Arrow IPC files, with descriptor, length, endianness, alignment and truncation validation | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | OpenCL backend (`opencl` feature) | `sciencekit_gpu`, `sciencekit_gpu_opencl` | First real device backend behind `SKComputeBackend`: ICD-loader device discovery, builder-only construction, device buffers with memory/capacity validation, explicit accounted transfers, runtime-compiled pairwise/GEMM/elementwise/tree kernels with CPU parity, concurrent dispatch and honest CPU fallback | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 | `SKTelemetry` / `SKTelemetryPipeline` | `sciencekit_telemetry` | Opt-in OTLP trace, log and metric export pipelines, resource attributes, sampling and bounded lifecycle (silent no-op default) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
+| `sciencekit` CLI (`workflows-cli`) | `sciencekit_cli` | `fit`, `predict`, `transform`, `evaluate`, `export`, `inspect` and `run`; versioned JSON/TOML/YAML workflow records, flags > environment > file > defaults resolution, dry-run, CSV/Parquet datasets, Safetensors/JSON/ONNX models and stable exit codes | <span class="sk-pill sk-pill--emerald">Implemented</span> |
 
 ## One entry point · `sciencekit`
 
