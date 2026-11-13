@@ -8,6 +8,7 @@ mod config;
 mod core_implementation;
 mod decision;
 mod design;
+mod export;
 mod fit;
 mod model;
 mod predict;

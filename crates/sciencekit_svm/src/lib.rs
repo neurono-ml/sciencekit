@@ -14,6 +14,7 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+mod export_support;
 pub mod kernel;
 pub mod linear_svc;
 pub mod probability;
