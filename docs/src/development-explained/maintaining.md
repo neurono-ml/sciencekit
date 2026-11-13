@@ -369,6 +369,18 @@ learned `default_left` missing routing, and the `SKHistGradientBoostingClassifie
 `SKHistGradientBoostingRegressor` builders, models and prediction surface that reuse the W4.4 loss
 contract and early-stopping monitor while binning dense and CSR queries without densification.
 
+The [OpenCL backend chapter](./ch61-gpu-opencl-backend.html) adds the first real device backend
+behind the contracts of `sciencekit_gpu`: the `opencl` feature (re-exported by the
+`sciencekit_gpu_opencl` package through `gpu-opencl`), the exact `opencl3` 0.12.0 pin whose
+dynamic loader opens `libOpenCL.so.1`, deterministic enumeration through the ICD loader,
+capability reporting with the full kernel catalogue, `SKOpenClBackendBuilder` with strict and
+fallback construction, resident `SKOpenClBuffer<F>` allocations with device-memory and capacity
+validation, explicit accounted transfers (`SKOpenClTransferReport`), runtime-compiled and cached
+pairwise-distance, tiled GEMM, elementwise and tree-prediction kernels with CPU-parity tests,
+concurrent dispatch parity, span fields recording `opencl`, the device and the bytes moved, and
+an honest `SKFallbackReason::NoDeviceAvailable` for feature-off, device-less and failed-build
+configurations.
+
 The [model export retrofit chapter](./ch62-model-export-retrofit.html) adds the shared
 `SKExportable` / `SKImportable` round trip to every retrofitted family: the single
 `SK_MODEL_FORMAT_VERSION`, the dotted tensor naming scheme, the dense/CSR-preserving

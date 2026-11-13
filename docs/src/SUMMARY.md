@@ -89,5 +89,6 @@
   - [Memory-mapped sources: raw binary, NumPy npy and Arrow IPC without copying](development-explained/ch58-memory-mapped-interop.md)
   - [Linear support-vector machines: coordinate descent, one sweep at a time](development-explained/ch59-svm-linear-svc.md)
   - [Histogram gradient boosting: bins, histograms and leaves grown on the smaller child](development-explained/ch60-histogram-gradient-boosting.md)
+  - [OpenCL backend: command queues, kernels and honest device work](development-explained/ch61-gpu-opencl-backend.md)
   - [One model state for every fitted model: export, import and round-trip evidence](development-explained/ch62-model-export-retrofit.md)
   - [Maintaining this book](development-explained/maintaining.md)
