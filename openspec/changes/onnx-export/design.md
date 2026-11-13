@@ -27,6 +27,23 @@ The protobuf choice is a spike task; the architecture does not depend on it.
 
 ## Decisions
 
+### Decision 0 — protobuf encoding: `prost` with declared messages (spike result)
+
+The spike evaluated the three candidates under MSRV 1.85 and license policy
+(Apache-2.0 project):
+
+| Candidate | License | MSRV | Finding |
+|---|---|---|---|
+| `prost` 0.14.5 | Apache-2.0 | 1.85 | Already in the workspace lock (gRPC). Messages can be declared with `#[derive(prost::Message)]` directly, so no `protoc` or `prost-build` runs and no vendored `.proto` file is needed. |
+| `onnx-protobuf` 0.2.3 | MPL-2.0 | — | Depends on the old `protobuf 3.4` line; the file-level copyleft is a licensing complication the project avoids. |
+| `axonml-onnx` 0.6.2 | MIT OR Apache-2.0 | 1.85 | Admissible license, but pulls `axonml-core`, `axonml-nn`, `axonml-tensor` and `axonml-serialize` — a whole foreign ML framework for a pure encoder. |
+
+**Decision:** `prost` 0.14 with hand-declared ONNX message structs. Evidence:
+`cargo test -p sciencekit_onnx` compiles and passes on Rust 1.85, and
+`onnx.checker.check_model` plus `onnxruntime` accept the produced bytes for the
+identity graph (`validation/compare_with_onnxruntime.py`). The builder API stays
+backend-agnostic: only `graph/proto.rs` knows about protobuf.
+
 ### Decision 1 — `sciencekit_onnx` owns the trait and the exporters
 
 `SKToOnnx<F>` lives here, not in `sciencekit_common` (which must stay ONNX-free) and not in

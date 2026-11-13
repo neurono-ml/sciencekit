@@ -2,10 +2,10 @@
 
 ## 1. Dependency spike and crate
 
-- [ ] 1.1 Spike the protobuf backend (`prost` + vendored proto, `onnx-protobuf`,
+- [x] 1.1 Spike the protobuf backend (`prost` + vendored proto, `onnx-protobuf`,
   `axonml-onnx`) under MSRV 1.85 and Apache-2.0-compatible licensing; record the choice and
   evidence in `design.md`.
-- [ ] 1.2 Create `crates/sciencekit_onnx` with `Cargo.toml`, `lib.rs` and the graph
+- [x] 1.2 Create `crates/sciencekit_onnx` with `Cargo.toml`, `lib.rs` and the graph
   dispatcher; add it to `[workspace.members]`; verify `cargo test -p sciencekit_onnx`
   compiles.
 - [ ] 1.3 Implement the graph builder (inputs, initializers, nodes, outputs, metadata) and
