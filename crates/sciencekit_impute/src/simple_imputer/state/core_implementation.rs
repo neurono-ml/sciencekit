@@ -72,6 +72,21 @@ impl<F: SKFloat> SKImputationState<F> {
         }
     }
 
+    /// Rebuild the state an imported model carries: the observed counts and
+    /// the missing-column flags are enough for `transform`; the strategy
+    /// accumulators start empty because only `partial_fit` reads them.
+    pub(in crate::simple_imputer) fn from_exported(
+        counts: Vec<u64>,
+        missing_columns: Vec<bool>,
+        strategy: SKImputationStrategy,
+    ) -> Self {
+        let columns_count = counts.len();
+        let mut state = Self::new(columns_count, strategy);
+        state.counts = counts;
+        state.missing_columns = missing_columns;
+        state
+    }
+
     /// The observed count of every column: zero means the column carries no
     /// statistic and, unless retained, is dropped from the output.
     pub(in crate::simple_imputer) fn counts(&self) -> &[u64] {
