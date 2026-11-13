@@ -12,10 +12,19 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
-description = "Machine Learning library in Rust reimplementing all of scikit-learn — extreme performance, zero-copy and native out-of-core."
+description = "Machine learning in Rust, reimplementing scikit-learn: one umbrella crate over the sciencekit_* family, with extreme performance, zero-copy and native out-of-core."
 repository.workspace = true
 homepage.workspace = true
 documentation.workspace = true
+readme = "README.md"
+keywords = ["machine-learning", "scikit-learn", "statistics", "ndarray", "data-science"]
+categories = ["science", "algorithms"]
+# docs.rs builds the whole integration surface so every feature-gated adapter
+# has a rendered page; the crate itself stays core-only by default.
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
 # The language bindings live in their own repositories
 # (`neurono-ml/sciencekit-go` and `neurono-ml/sciencekit-lua`); only the Rust
 # core and the shared C ABI (`sciencekit_ffi`) stay here.

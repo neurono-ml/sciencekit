@@ -60,11 +60,7 @@ Names below are the public types that ship in `crates/` today.
 
 ```rust,no_run
 use ndarray::array;
-use sciencekit_common::{
-    SKBuilder, SKFeatureTransformer, SKRegressorPredictor, SKSupervisedFit, SKUnsupervisedFit,
-};
-use sciencekit_linear_model::linear_regression::core_implementation::SKLinearRegression;
-use sciencekit_preprocessing::standard_scaler::core_implementation::SKStandardScaler;
+use sciencekit::prelude::*;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let features = array![[1.0_f64, 2.0], [2.0, 1.0], [3.0, 4.0], [4.0, 3.0]];
@@ -96,15 +92,23 @@ the learned state.
 
 ## Installation
 
-The umbrella `sciencekit` crate is still being assembled (PRD §12 Phase 7), so
-add the sub-crate that provides what you need:
+Add the umbrella crate — it re-exports the stable surface of every sub-crate
+under family modules and a curated `prelude`:
 
 ```sh
-cargo add sciencekit_preprocessing sciencekit_linear_model
-cargo add sciencekit_interop --features arrow,polars,datafusion,memmap
-cargo add sciencekit_gpu --features opencl
-cargo add sciencekit_telemetry --features telemetry
+cargo add sciencekit
 ```
+
+Optional integrations are feature flags forwarded to the owning sub-crate:
+
+```sh
+cargo add sciencekit --features onnx,telemetry
+cargo add sciencekit --features polars,datafusion,memmap,parquet
+cargo add sciencekit --features opencl
+```
+
+A single family is still available on its own (for example
+`cargo add sciencekit_preprocessing`) when you do not want the whole graph.
 
 Requires Rust 1.85 (edition 2024), pinned by `rust-toolchain.toml`. The default
 build is pure Rust; no system BLAS or GPU runtime is needed.

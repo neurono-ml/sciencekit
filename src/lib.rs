@@ -44,6 +44,36 @@
 //!
 //! [`prelude`] gathers the traits, types and estimators needed by typical code.
 //!
+//! # Installation
+//!
+//! ```toml
+//! [dependencies]
+//! sciencekit = "0.8"
+//! ```
+//!
+//! `ndarray` is part of the public data boundary; add it to the same manifest
+//! when you build or inspect matrices. Every sub-crate stays independently
+//! consumable, so an application that needs one family can depend on it alone
+//! and skip the umbrella's dependency graph.
+//!
+//! # Features
+//!
+//! The default build is core-only. Each optional integration forwards to the
+//! sub-crate that owns it:
+//!
+//! | Feature | Enables |
+//! | --- | --- |
+//! | `opencl` | the OpenCL device backend (`sciencekit_gpu`, `sciencekit_gpu_opencl`) |
+//! | `telemetry` | OpenTelemetry export pipelines (`sciencekit_telemetry`) |
+//! | `onnx` | ONNX graph export and import (`sciencekit_onnx`) |
+//! | `polars` | the Polars DataFrame adapter (`sciencekit_interop`) |
+//! | `datafusion` | the DataFusion adapter (`sciencekit_interop`) |
+//! | `memmap` | memory-mapped raw binary, NumPy `.npy` and Arrow IPC sources |
+//! | `parquet` | Arrow/Parquet file paths (`sciencekit_interop`) |
+//!
+//! Python bindings are a separate crate, not a feature: a C-ABI consumer uses
+//! [`ffi`] directly.
+//!
 //! # Documentation
 //!
 //! The full book — API, guides and the algorithms explained from scratch — lives
