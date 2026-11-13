@@ -160,3 +160,24 @@ openspec validate model-export-retrofit --strict          -> Change 'model-expor
    boxes, so import needs an architectural change (a serialisable stage descriptor), not a
    test.
 3. The 200-line folder-module rule and the histogram node-array index loops remain style debt.
+
+## 7. Spec conformance reading (unambiguous record)
+
+Re-read against `specs/model-export-coverage/spec.md` after the truthfulness correction:
+
+- **Export is universal.** All 47 fitted model types implement `SKExportable` (spec "Every
+  fitted model exports state"). 45 produce a state; the 2 type-erased pipeline types
+  (`SKPipelineGraphModel`, `SKFittedStreamingPipeline`) return a typed `UnsupportedOperation`
+  with guidance instead of a partial state.
+- **Import is conditional.** 35 of the 47 round-trip exactly (fit → export → import →
+  bit-identical output). The 10 composites (bagging C/R, grid-search C/R, successive-halving
+  C/R, typed pipeline C/R, feature union) export but return `UnsupportedOperation` with
+  guidance, per spec "Native import where reconstructible".
+- **Refusal is explicit.** Every non-importable or non-exportable model returns
+  `UnsupportedOperation` with a message naming the missing state and a suggested path; no
+  partial model is ever produced (spec "Unsupported model is explicit").
+- **Pipeline and grid-search export.** Pipelines export stage-qualified nested stage states and
+  the final model; grid-search and halving models export the best candidate index, score and
+  refitted model tensors (spec "Pipeline and grid-search export").
+
+No claim in the change states or implies that every model round-trips.

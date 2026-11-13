@@ -100,6 +100,29 @@ never a partial model:
   cannot recover their concrete states; feature-union member states export, but the configured
   member chain cannot be rebuilt from data.
 
+### Decision 5c — Honest coverage table
+
+The change covers **47 fitted model types**. Export is universal (all 47 implement
+`SKExportable`); native import is conditional. This is the exact reading of the
+`model-export-coverage` spec: "Every fitted model exports state" is satisfied by the export
+surface, "Native import where reconstructible" is satisfied by the 35 exact round-trips plus
+the 10 typed refusals, and "Unsupported model is explicit" is satisfied because every refusal
+is `UnsupportedOperation` with guidance and no partial model is ever produced.
+
+| Model family / model type | Export | Import |
+|---|---|---|
+| The 35 exact-round-trip types: standard/min-max/robust scalers, one-hot encoder, polynomial features, simple imputer, missing indicator, KNN imputer, linear regression, ridge, lasso, elastic net, logistic regression, SGD classifier and regressor, KNN classifier and regressor, SVC, SVR, LinearSVC, decision tree classifier and regressor, random forest classifier and regressor, gradient boosting classifier and regressor, histogram gradient boosting classifier and regressor, KMeans, MiniBatchKMeans, DBSCAN, PCA, IncrementalPCA, TruncatedSVD, IsolationForest | yes | yes — bit-identical output (tolerance `0`) |
+| `SKBaggingClassifierModel` / `SKBaggingRegressorModel` | yes | no — typed `UnsupportedOperation`: member metadata is not embedded |
+| `SKGridSearchCVClassifierModel` / `SKGridSearchCVRegressorModel` | yes | no — typed `UnsupportedOperation`: winner tensors and selection metadata, not the winner configuration |
+| `SKHalvingGridSearchClassifierModel` / `SKHalvingGridSearchRegressorModel` | yes | no — typed `UnsupportedOperation`: same winner-configuration gap |
+| `SKPipelineClassifier` / `SKPipelineRegressor` (typed pipeline) | yes | no — typed `UnsupportedOperation`: configured stage chain holds live estimator values |
+| `SKFeatureUnionModel` (static tuple) | yes | no — typed `UnsupportedOperation`: configured member chain holds live estimator values |
+| `SKPipelineGraphModel` | no — typed `UnsupportedOperation`: stages behind `Any` boxes | — |
+| `SKFittedStreamingPipeline` | no — typed `UnsupportedOperation`: type-erased fitted stages | — |
+
+Totals: 35 exact round-trip; 10 composites export-only; 2 type-erased pipelines refuse at
+export. No document claims that "every model round-trips".
+
 ### Decision 6 — File layout
 
 Per crate, a `model/export.rs` and optional `model/import.rs`; the family's `mod.rs`
