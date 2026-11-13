@@ -29,7 +29,7 @@
   tests; verify with `cargo test -p sciencekit_onnx export_remaining`.
 - [x] 3.3 Implement pipeline composition and grid-search best-model export; verify with
   `cargo test -p sciencekit_onnx export_pipeline`.
-- [ ] 3.4 Record the family/operator coverage matrix and add unsupported-family errors;
+- [x] 3.4 Record the family/operator coverage matrix and add unsupported-family errors;
   verify with `cargo test -p sciencekit_onnx export_coverage`.
 
 ## 4. Validation, acceptance and review
