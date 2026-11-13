@@ -27,7 +27,7 @@
   `cargo test -p sciencekit_onnx export_svm`.
 - [x] 3.2 Implement neighbour, clustering, decomposition and outlier exporters with parity
   tests; verify with `cargo test -p sciencekit_onnx export_remaining`.
-- [ ] 3.3 Implement pipeline composition and grid-search best-model export; verify with
+- [x] 3.3 Implement pipeline composition and grid-search best-model export; verify with
   `cargo test -p sciencekit_onnx export_pipeline`.
 - [ ] 3.4 Record the family/operator coverage matrix and add unsupported-family errors;
   verify with `cargo test -p sciencekit_onnx export_coverage`.
