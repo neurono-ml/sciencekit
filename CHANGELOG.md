@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Umbrella `sciencekit` crate: one dependency that re-exports the stable public
+  surface of all 21 `sciencekit_*` sub-crates under family modules
+  (`preprocessing`, `impute`, `linear_model`, `neighbors`, `svm`, `tree`,
+  `ensemble`, `cluster`, `decomposition`, `outlier`, `math`, `model_selection`,
+  `pipeline`, `metrics`, `interop`, `accelerators`, `telemetry`, `ffi`) plus a
+  curated `prelude`. Re-exports add no logic and no version line; name
+  collisions are resolved per family (three distinct `SKClassWeight` policies
+  stay in their modules) and shared identities stay single types. `opencl`,
+  `telemetry`, `onnx`, `polars`, `datafusion`, `memmap` and `parquet` are
+  optional features forwarded with `dep:` to the owning crate, so the default
+  build stays core-only. The umbrella lives in the existing workspace-root
+  package because Cargo cannot host a second package named `sciencekit`.
 - Native model import (spec `native-model-import`): `SKNativeImport<F>` turns a
   neutral state into the matching fitted type — linear/logistic/SGD models,
   decision trees and forests, scalers and k-means — with a descriptor that keeps
