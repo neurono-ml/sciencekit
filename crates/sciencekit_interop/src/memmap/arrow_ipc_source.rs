@@ -4,8 +4,9 @@
 use std::io::Cursor;
 use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
+use std::sync::OnceLock;
 use std::sync::atomic::AtomicUsize;
-use std::sync::{Arc, Mutex};
 
 use arrow_array::{Array, Float32Array, Float64Array, RecordBatch};
 use arrow_ipc::reader::FileReader;
@@ -29,12 +30,15 @@ pub struct SKArrowIpcMappableSource<F> {
     layout: SKArrowIpcLayout,
     block_size: usize,
     cursor: AtomicUsize,
-    cache: Mutex<Vec<Option<Box<[F]>>>>,
+    cache: Vec<OnceLock<Box<[F]>>>,
     marker: PhantomData<F>,
 }
 
 impl<F: SKFloat> SKArrowIpcMappableSource<F> {
     /// Open and index an Arrow IPC file without decoding its data batches.
+    ///
+    /// The file must not be truncated or rewritten while the source is alive;
+    /// see the module-level file-stability contract for the failure mode.
     ///
     /// # Errors
     /// Returns a structured error for a missing file, a malformed header, a
@@ -44,7 +48,9 @@ impl<F: SKFloat> SKArrowIpcMappableSource<F> {
         let file = sk_open_file(path)?;
         let mapping = Arc::new(sk_map_read_only(&file, path)?);
         let layout = sk_read_ipc_layout(&mapping, &path.display().to_string())?;
-        let cache = Mutex::new(vec![None; layout.number_of_batches()]);
+        let cache = (0..layout.number_of_batches())
+            .map(|_| OnceLock::new())
+            .collect();
         Ok(SKArrowIpcMappableSource {
             path: path.to_path_buf(),
             mapping,
@@ -86,10 +92,8 @@ impl<F: SKFloat> SKArrowIpcMappableSource<F> {
     /// Opening leaves this at zero; a row access decodes only its own batch.
     pub fn decoded_batch_count(&self) -> usize {
         self.cache
-            .lock()
-            .expect("the batch cache is never poisoned")
             .iter()
-            .filter(|entry| entry.is_some())
+            .filter(|entry| entry.get().is_some())
             .count()
     }
 
@@ -127,7 +131,13 @@ impl<F: SKFloat> SKArrowIpcMappableSource<F> {
                 batch: index,
                 reason: error.to_string(),
             })?;
-        sk_materialize_batch::<F>(&record_batch, number_of_columns, &self.path, index)
+        sk_materialize_batch::<F>(
+            &record_batch,
+            number_of_columns,
+            self.layout.batches[index].number_of_rows,
+            &self.path,
+            index,
+        )
     }
 }
 
@@ -148,34 +158,36 @@ impl<F: SKFloat> SKMappableSource<F> for SKArrowIpcMappableSource<F> {
         }
         let batch_index = self.layout.batch_index_for(index);
         let row_in_batch = index - self.layout.batches[batch_index].first_row;
-        {
-            let mut cache = self
-                .cache
-                .lock()
-                .map_err(|_| SKError::Conversion("the batch cache is poisoned".to_string()))?;
-            if cache[batch_index].is_none() {
-                cache[batch_index] = Some(self.sk_decode_batch(batch_index)?);
-            }
+        let entry = &self.cache[batch_index];
+        if entry.get().is_none() {
+            let decoded = self.sk_decode_batch(batch_index)?;
+            // A concurrent reader may have won the race; either decoded batch
+            // is identical, and the losing value is simply dropped.
+            let _ = entry.set(decoded);
         }
-        let pointer = {
-            let cache = self
-                .cache
-                .lock()
-                .map_err(|_| SKError::Conversion("the batch cache is poisoned".to_string()))?;
-            cache[batch_index]
-                .as_deref()
-                .expect("the batch was decoded above")
-                .as_ptr()
-        };
+        let values = entry.get().expect("the batch was decoded above");
         let number_of_columns = self.number_of_columns();
-        let start = row_in_batch * number_of_columns;
-        // SAFETY: the boxed slice behind `pointer` is stable for the life of
-        // the source (entries are inserted once and never removed or replaced),
-        // so a view that borrows `&self` cannot dangle. The cache is never
-        // mutated through a shared reference to this slice.
-        let row = unsafe { std::slice::from_raw_parts(pointer.add(start), number_of_columns) };
-        Ok(ArrayView1::from_shape(number_of_columns, row)
-            .expect("a row slice always reshapes to a one-dimensional view"))
+        let number_of_values = values.len();
+        let start = row_in_batch
+            .checked_mul(number_of_columns)
+            .filter(|start| {
+                start
+                    .checked_add(number_of_columns)
+                    .is_some_and(|end| end <= number_of_values)
+            })
+            .ok_or_else(|| SKError::UnreadableMappedBatch {
+                path: self.path.display().to_string(),
+                batch: batch_index,
+                reason: format!(
+                    "row {row_in_batch} of {} does not fit the {number_of_values} decoded values",
+                    self.layout.batches[batch_index].number_of_rows
+                ),
+            })?;
+        let end = start + number_of_columns;
+        Ok(
+            ArrayView1::from_shape(number_of_columns, &values[start..end])
+                .expect("a row slice always reshapes to a one-dimensional view"),
+        )
     }
 }
 
@@ -190,10 +202,20 @@ impl<F: SKFloat> SKLazySource<F> for SKArrowIpcMappableSource<F> {
 fn sk_materialize_batch<F: SKFloat>(
     record_batch: &RecordBatch,
     number_of_columns: usize,
+    expected_rows: usize,
     path: &Path,
     batch: usize,
 ) -> Result<Box<[F]>, SKError> {
     let number_of_rows = record_batch.num_rows();
+    if number_of_rows != expected_rows {
+        return Err(SKError::UnreadableMappedBatch {
+            path: path.display().to_string(),
+            batch,
+            reason: format!(
+                "the batch metadata declares {expected_rows} rows but the decoded batch carries {number_of_rows}"
+            ),
+        });
+    }
     let mut matrix = Array2::<F>::zeros((number_of_rows, number_of_columns));
     for (column_index, array) in record_batch.columns().iter().enumerate() {
         let values = sk_column_values::<F>(array, path, batch)?;

@@ -452,6 +452,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   shape/value-count disagreements (`SKError::ShapeMismatch`) are rejected up
   front before materializing model state.
 
+### Fixed
+
+- `sciencekit_interop` `memmap` NumPy sources reject `.npy` byte lengths whose element-count multiplication overflows the address space, using `checked_mul` and reporting `SKError::MalformedMappedHeader` instead of wrapping into an undersized mapping.
+- `sciencekit_interop` `memmap` Arrow IPC row access validates crafted batch metadata with checked arithmetic and a safe shared cache, rejecting out-of-range offsets with structured errors rather than reading past a batch.
+- New `hostile_input_tests` and Arrow IPC layout tests exercise truncated raw files, absurd `.npy` dimensions, wrong-shape descriptors and tampered batch metadata as typed errors.
+
 ## [0.7.0] — 2026-11-11
 
 Arrow interop, the GPU compute contracts, the randomized SVD kernel and the language bindings moving to their own repositories.

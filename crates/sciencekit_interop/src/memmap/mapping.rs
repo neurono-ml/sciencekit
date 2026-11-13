@@ -29,11 +29,16 @@ pub(crate) fn sk_open_file(path: &Path) -> Result<File, SKError> {
 /// Map a file read-only after its length has been validated.
 ///
 /// # Safety
-/// The caller must have validated the file length against the declared layout;
-/// the mapping is never written to and lives as long as the owning source.
+/// The caller must have validated the file length against the declared layout,
+/// and must guarantee that the file is not truncated or rewritten while the
+/// mapping is alive (see the module-level file-stability contract). The mapping
+/// is never written to by sciencekit and lives as long as the owning source.
 pub(crate) fn sk_map_read_only(file: &File, path: &Path) -> Result<Mmap, SKError> {
-    // SAFETY: the mapping is read-only. Callers validate the length before
-    // exposing any view, so a truncated file surfaces as an opening error
-    // rather than a fault on access.
+    // SAFETY: the mapping is read-only and nothing in sciencekit writes to it.
+    // Callers validate the length before exposing any view, so a truncated file
+    // surfaces as an opening error rather than a fault on access. The remaining
+    // invariant — the file is not truncated or rewritten while mapped — cannot
+    // be enforced portably and is part of the documented file-stability
+    // contract on the module and on every `open` method.
     unsafe { Mmap::map(file) }.map_err(|error| sk_classify_open_error(path, error))
 }

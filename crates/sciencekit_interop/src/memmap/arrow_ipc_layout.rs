@@ -127,13 +127,34 @@ pub(crate) fn sk_read_ipc_layout(bytes: &[u8], path: &str) -> Result<SKArrowIpcL
             first_row: number_of_rows,
             number_of_rows: metadata,
         });
-        number_of_rows += metadata;
+        number_of_rows = sk_add_batch_rows(number_of_rows, metadata, index, path)?;
     }
     Ok(SKArrowIpcLayout {
         schema,
         batches,
         number_of_rows,
     })
+}
+
+/// Add one batch's row count to the running total with overflow checked.
+///
+/// A crafted footer can declare large row counts per batch; the accumulation
+/// must surface a structured error instead of wrapping the row space.
+pub(super) fn sk_add_batch_rows(
+    current: usize,
+    batch_rows: usize,
+    index: usize,
+    path: &str,
+) -> Result<usize, SKError> {
+    current
+        .checked_add(batch_rows)
+        .ok_or_else(|| SKError::MalformedMappedHeader {
+            path: path.to_string(),
+            format: "arrow-ipc",
+            reason: format!(
+                "the cumulative row count overflows the platform's address space at batch {index}"
+            ),
+        })
 }
 
 /// Read one batch's row count from its message metadata, never its body.
