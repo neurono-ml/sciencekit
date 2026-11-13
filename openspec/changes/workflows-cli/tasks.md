@@ -13,7 +13,7 @@
 
 - [x] 2.1 Implement the versioned workflow schema (JSON/TOML) and unknown-field/version
   validation; verify with `cargo test -p sciencekit_cli workflow_schema`.
-- [ ] 2.2 Implement configuration precedence (flags > env > file > defaults) and dry-run
+- [x] 2.2 Implement configuration precedence (flags > env > file > defaults) and dry-run
   output; verify with `cargo test -p sciencekit_cli config`.
 - [ ] 2.3 Add the optional YAML feature after the `serde_yaml_ng` spike; verify with a
   YAML fixture.
