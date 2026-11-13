@@ -18,7 +18,11 @@ mod preprocessing_tests;
 #[cfg(test)]
 mod remaining_tests;
 #[cfg(test)]
+mod svm_tests;
+#[cfg(test)]
 mod tree_tests;
+
+pub mod svm;
 
 mod cluster;
 mod contract;

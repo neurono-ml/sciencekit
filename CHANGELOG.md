@@ -41,9 +41,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   using `prost`-declared messages (no `protoc`). Exported families: the three
   scalers, the integer one-hot encoder, linear/ridge/lasso/elastic-net/SGD
   regressors, logistic regression (binary, multinomial and one-versus-rest),
-  decision trees and random forests through ONNX-ML tree ensembles, k-nearest
-  neighbours, k-means/mini-batch k-means, PCA, truncated SVD and the typed
-  pipelines. Metadata records the producer, estimator name, format version,
+  SVC (binary and one-vs-one multiclass with linear/polynomial/rbf/sigmoid
+  kernel expansions), SVR and LinearSVC, decision trees and random forests
+  through ONNX-ML tree ensembles, k-nearest neighbours, k-means/mini-batch
+  k-means, PCA, truncated SVD and the typed pipelines. Metadata records the producer, estimator name, format version,
   scalar dtype, feature count and the class table. Unsupported families (SVM,
   boosting, isolation forest, DBSCAN) return `UnsupportedOperation` and are
   listed in `sk_onnx_coverage`. Predictions are validated against the reference

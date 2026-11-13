@@ -13,6 +13,7 @@ use super::neighbors::append_neighbors;
 use super::pipeline::append_pipeline;
 use super::preprocessing::append_preprocessing;
 use super::stage::{SKOnnxStageKind, SKOnnxStageOutput};
+use super::svm::append_svm;
 use super::tree::append_tree;
 
 /// The single graph input every exported model declares.
@@ -88,6 +89,9 @@ pub(crate) fn append_estimator<F: SKFloat>(
     if let Some(output) = append_pipeline(estimator_name, state, builder, input, namespace)? {
         return Ok(output);
     }
+    if let Some(output) = append_svm(estimator_name, state, builder, input, namespace)? {
+        return Ok(output);
+    }
     Err(unsupported(
         estimator_name,
         "no exporter is registered for this family; `sk_onnx_coverage` lists every supported estimator",
@@ -118,6 +122,25 @@ pub(crate) fn declare_outputs(
                 vec![
                     crate::graph::SKOnnxDimension::batch(),
                     crate::graph::SKOnnxDimension::Fixed(output.width),
+                ],
+            )?);
+        }
+        SKOnnxStageKind::DecisionValues {
+            label_tensor,
+            decision_tensor,
+            decision_width,
+        } => {
+            builder.add_output(SKOnnxValueInfo::new(
+                label_tensor.clone(),
+                SKOnnxTensorDType::Int64,
+                vec![crate::graph::SKOnnxDimension::batch()],
+            )?);
+            builder.add_output(SKOnnxValueInfo::new(
+                decision_tensor.clone(),
+                element_type,
+                vec![
+                    crate::graph::SKOnnxDimension::batch(),
+                    crate::graph::SKOnnxDimension::Fixed(*decision_width),
                 ],
             )?);
         }

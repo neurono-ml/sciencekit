@@ -36,6 +36,9 @@ fn export_coverage_lists_every_implemented_estimator() {
         "SKTruncatedSVD",
         "SKPipelineClassifier",
         "SKPipelineRegressor",
+        "SKSVC",
+        "SKSVR",
+        "SKLinearSVC",
     ] {
         assert!(
             supported.contains(&estimator),
@@ -57,8 +60,8 @@ fn export_coverage_marks_unsupported_families_explicitly() {
 
 #[test]
 fn export_coverage_rejects_an_unregistered_family_with_its_name() {
-    let state: SKModelState<f32> = sk_state_named("SKSVC", 2);
-    let error = sk_export_state_to_onnx(&state).expect_err("SKSVC has no exporter");
+    let state: SKModelState<f32> = sk_state_named("SKGradientBoostingClassifier", 2);
+    let error = sk_export_state_to_onnx(&state).expect_err("gradient boosting has no exporter");
     let reason = match error {
         SKError::UnsupportedOperation {
             operation: "onnx_export",
@@ -66,7 +69,7 @@ fn export_coverage_rejects_an_unregistered_family_with_its_name() {
         } => reason,
         other => panic!("unexpected error: {other}"),
     };
-    assert!(reason.contains("SKSVC"));
+    assert!(reason.contains("SKGradientBoostingClassifier"));
     assert!(reason.contains("sk_onnx_coverage"));
 }
 

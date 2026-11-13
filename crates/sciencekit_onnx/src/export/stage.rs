@@ -21,6 +21,12 @@ pub(crate) enum SKOnnxStageKind {
         probability_tensor: String,
         class_count: usize,
     },
+    /// A label output plus raw decision values (score-based classifiers).
+    DecisionValues {
+        label_tensor: String,
+        decision_tensor: String,
+        decision_width: usize,
+    },
     /// A single integer label output (clustering).
     Labels {
         label_tensor: String,
