@@ -89,9 +89,9 @@ pub fn sk_onnx_coverage() -> &'static [SKOnnxFamilyCoverage] {
         SKOnnxFamilyCoverage {
             family: "composites",
             estimators: &["SKPipelineClassifier", "SKPipelineRegressor"],
-            operators: &[],
-            supported: false,
-            note: "pipeline composition wires the per-stage subgraphs in order once the nested stage identity is recovered",
+            operators: &["composed stage subgraphs"],
+            supported: true,
+            note: "stages are recovered from their documented tensor signatures and wired in order; the final estimator produces the outputs",
         },
         SKOnnxFamilyCoverage {
             family: "trees",

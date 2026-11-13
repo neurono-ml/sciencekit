@@ -198,7 +198,10 @@ fn append_logistic_regression<F: SKFloat>(
         .metadata()
         .class_labels()
         .map(<[String]>::len)
-        .unwrap_or(heads);
+        .unwrap_or_else(|| {
+            super::helpers::integer_parameter(state, "number_of_classes", heads as i64).max(1)
+                as usize
+        });
     let strategy = string_parameter(state, "strategy", "binary");
     if strategy == "binary" && heads != 1 {
         return Err(SKError::ShapeMismatch {

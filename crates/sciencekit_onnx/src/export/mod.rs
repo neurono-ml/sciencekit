@@ -10,6 +10,8 @@ mod coverage_tests;
 #[cfg(test)]
 mod linear_tests;
 #[cfg(test)]
+mod pipeline_tests;
+#[cfg(test)]
 mod preprocessing_tests;
 #[cfg(test)]
 mod remaining_tests;
@@ -25,6 +27,7 @@ mod helpers;
 mod linear;
 mod metadata;
 mod neighbors;
+mod pipeline;
 mod preprocessing;
 mod stage;
 mod tree;

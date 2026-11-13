@@ -10,6 +10,7 @@ use super::helpers::unsupported;
 use super::linear::append_linear;
 use super::metadata::attach_metadata;
 use super::neighbors::append_neighbors;
+use super::pipeline::append_pipeline;
 use super::preprocessing::append_preprocessing;
 use super::stage::{SKOnnxStageKind, SKOnnxStageOutput};
 use super::tree::append_tree;
@@ -82,6 +83,9 @@ pub(crate) fn append_estimator<F: SKFloat>(
         return Ok(output);
     }
     if let Some(output) = append_decomposition(estimator_name, state, builder, input, namespace)? {
+        return Ok(output);
+    }
+    if let Some(output) = append_pipeline(estimator_name, state, builder, input, namespace)? {
         return Ok(output);
     }
     Err(unsupported(

@@ -2,8 +2,8 @@
 
 use ndarray::{Array2, array};
 use sciencekit_common::{
-    SKBuilder, SKClassifierPredictor, SKClustererPredictor,
-    SKRegressorPredictor, SKSupervisedFit, SKUnsupervisedFit,
+    SKBuilder, SKClassifierPredictor, SKClustererPredictor, SKRegressorPredictor, SKSupervisedFit,
+    SKUnsupervisedFit,
 };
 
 use crate::acceptance_tests::write_fixture;
