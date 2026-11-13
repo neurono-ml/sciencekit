@@ -33,7 +33,7 @@
   `cargo test -p sciencekit_onnx onnx_concurrency`.
 - [x] 4.3 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
   warnings` and `cargo test --workspace`; fix every failure before pushing.
-- [ ] 4.4 Update `CHANGELOG.md` and the companion mdBook chapter (including a
+- [x] 4.4 Update `CHANGELOG.md` and the companion mdBook chapter (including a
   `Development Explained` chapter on generic ONNX inference and supported ops); verify with
   `mdbook build docs`.
 - [ ] 4.5 Independent review by a separate agent validating every scenario in
