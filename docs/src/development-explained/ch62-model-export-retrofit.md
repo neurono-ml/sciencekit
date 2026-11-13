@@ -136,6 +136,9 @@ repository's folder-module rule: a pure-dispatcher `mod.rs` declares
   forests and gradient boosting.
 - `sciencekit_neighbors::neighbors::export_helpers` and
   `sciencekit_svm::export_support` — the dense/CSR-preserving block codecs.
+- `sciencekit_common::interop::nested` — `sk_embed_state` / `sk_extract_state`,
+  reused by the composed imputer, the forests, gradient boosting and the typed
+  pipeline to nest one model's whole state under a namespace.
 
 ## Walking the companion tests
 
@@ -166,6 +169,17 @@ compares predictions — never merely "export returned Ok".
 - `random_forest_classifier_round_trips_members_and_oob` and
   `gradient_boosting_regressor_round_trips_stages` compare predictions across
   nested tree states.
+- `histogram_regressor_round_trips_binning_and_missing_routing` compares the
+  exported bin edges and predictions with NaN routing, while
+  `histogram_classifier_round_trips_categorical_masks` checks the categorical
+  table; `histogram_regressor_round_trips_a_sparse_design` proves a CSR design
+  stays sparse.
+- `kmeans_round_trips_centers_labels_and_backend`,
+  `dbscan_round_trips_labels_and_nearest_core_assignment`,
+  `pca_round_trips_components_mean_and_whitening`,
+  `truncated_svd_round_trips_components_and_projection` and
+  `isolation_forest_round_trips_trees_offset_and_scores` cover the remaining
+  learned-state families.
 
 ## Coverage in this change
 
@@ -180,13 +194,23 @@ The retrofit lands family by family, each family in its own commit:
 | K-nearest neighbours (dense and CSR) | Implemented |
 | SVC, SVR, LinearSVC | Implemented |
 | Decision trees, random forests, gradient boosting, bagging | Implemented |
-| Histogram gradient boosting | Pending |
-| Clustering, decomposition, outlier detection | Pending |
-| Pipelines and model-selection winners | Pending |
+| Histogram gradient boosting | Implemented (binning tables, categorical masks, missing routing) |
+| Clustering (KMeans, MiniBatchKMeans, DBSCAN) | Implemented |
+| Decomposition (PCA, TruncatedSVD, IncrementalPCA) | Implemented |
+| Outlier detection (IsolationForest) | Implemented |
+| Typed pipelines | Export implemented; import is unsupported by design |
+| Grid-search and halving winners | Implemented (best model plus selection metadata) |
 
-The pending families follow the same recipe: a `model/export.rs` beside the
-model, dotted names recorded in the family's task, the shared readers, and a
-round-trip test comparing predictions on dense and sparse fixtures.
+The workspace-wide coverage test in the umbrella crate asserts at compile time
+that every fitted model type implements the contract, and at run time that the
+shared format version is used and concurrent exports agree
+(`concurrent_export_agrees_with_the_single_threaded_state`).
+
+A typed pipeline exports its stages and final model but cannot reconstruct its
+configured stage chain from a state — those are live estimator values, not data
+— so import is deliberately not implemented there. The graph pipeline has the
+same limitation through its type-erased boxes. This is the documented
+"reconstructible" boundary of the contract.
 
 ## Roads not taken
 
