@@ -111,6 +111,8 @@ lanes:
   merge_order:
   - julia-dataset-interop
 - id: jvm
+  deferred: true
+  deferred_reason: "No JVM repository, JNI/FFM layer or owner; see ADR #381."
   merge_order:
   - jvm-dataset-interop
 - id: r
@@ -348,6 +350,8 @@ changes:
   status: superseded
   superseded_by:
   - jvm-dataset-interop
+  deferred: true
+  deferred_reason: "Superseded by jvm-dataset-interop, which is itself deferred; see ADR #381."
 - id: knn-classifier-regressor
   group: wave3
   lane: neighbors
@@ -854,6 +858,8 @@ changes:
     - ./gradlew test
     - sbt test
     - cargo test -p sciencekit_jvm_abi
+  deferred: true
+  deferred_reason: "The JVM lane is deferred until a dedicated repository and owner exist; see ADR #381."
 - id: r-bindings
   group: cross-cutting
   lane: r

@@ -1,3 +1,8 @@
+## Status
+
+Deferred — see ADR #381. The JVM lane has no `sciencekit-jvm` repository, no JNI layer and
+no owner; the plan below is preserved as design material, not as committed near-term work.
+
 ## Why
 
 The JVM is where enterprise data lives: Apache Spark's `Dataset`/`DataFrame`, Smile's `DataFrame`,
