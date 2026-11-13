@@ -45,10 +45,18 @@ pub(crate) fn forest_regressor<F: SKFloat>(
     ];
     for (index, tree) in trees.iter().enumerate() {
         let scaled = scale_tree(tree, count as f64);
-        tensors.extend(tree_tensors::<F>(
-            &scaled,
-            &format!("forest.tree.{index}.t.tree"),
-        )?);
+        let prefix = format!("forest.tree.{index}.t.tree");
+        tensors.extend(tree_tensors::<F>(&scaled, &prefix)?);
+        // The embedded tree is imported as a real decision-tree model, whose
+        // state carries its own (here unweighted) feature importances.
+        tensors.push(
+            SKTensor::floating(
+                format!("{prefix}.feature_importances"),
+                vec![features],
+                vec![F::zero(); features],
+            )
+            .map_err(native)?,
+        );
     }
     SKModelState::new(metadata, tensors).map_err(native)
 }

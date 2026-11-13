@@ -14,6 +14,8 @@ mod native_coverage_tests;
 #[cfg(test)]
 mod native_external_fixture_tests;
 #[cfg(test)]
+mod native_forest_tests;
+#[cfg(test)]
 mod native_import_tests;
 #[cfg(test)]
 mod native_validation_tests;
