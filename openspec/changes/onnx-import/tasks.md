@@ -6,7 +6,7 @@
   it builds and runs, otherwise choose the minimal interpreter; update `design.md`.
 - [x] 1.2 Implement `SKOnnxModel` parsing/metadata (input/output names, shapes, dtypes) and
   invalid-bytes tests; verify with `cargo test -p sciencekit_onnx onnx_model`.
-- [ ] 1.3 Implement the runtime/interpreter adapter and an identity-graph inference test;
+- [x] 1.3 Implement the runtime/interpreter adapter and an identity-graph inference test;
   verify with `cargo test -p sciencekit_onnx onnx_runtime`.
 
 ## 2. Predictor
