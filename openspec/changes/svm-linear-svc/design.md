@@ -66,15 +66,33 @@ scope) and one-vs-one (more models, no advantage for the linear case).
 
 `Balanced` computes `n_samples / (n_classes · class_count)` and explicit weights are used
 as supplied. The weight multiplies the class's effective `C`, matching scikit-learn's
-class-weighted linear SVC. The intercept is unpenalized and recovered from the dual
-solution.
+class-weighted linear SVC.
+
+The intercept enters the dual as an augmented constant column, so the L2 term penalizes it
+along with the feature weights: the dual solve produces an **effectively regularized**
+intercept, not an unpenalized bias. After convergence, `sk_recover_linear_svc_intercept`
+re-optimizes the intercept for the fixed weights the dual produced by bisecting the
+derivative of the loss along that single direction. That polish removes the bias error for
+those weights but cannot undo the regularization that shaped them; the fitted pair is not the
+minimizer of a primal objective with a truly unpenalized bias. LIBLINEAR's `-B -1` default
+takes the other road with a different formulation.
+
+Practical consequence: scaling matters. The augmented column has magnitude 1 while feature
+columns can have any magnitude, so on unscaled data with a large offset the relative cost of
+the intercept is distorted and the absolute stopping rule can exhaust the budget and return
+`NotConverged`. Centering and standardizing the features first (for example with
+`SKStandardScaler`) is the documented remedy.
 
 ### Decision 5 — Convergence and determinism
 
 The solver starts from zero dual coefficients, sweeps coordinates in a deterministic
 order, and stops when the maximum projected gradient falls below `tolerance` or the
-iteration budget is exhausted. Exhaustion returns `NotConverged { iterations }`. No
-randomness is used, so repeated fits are identical.
+iteration budget is exhausted. The comparison is **absolute**, not relative to the scale of
+the data, so unscaled features with a large offset can fail to reach the default tolerance
+and end in `NotConverged`; the builder documentation and the book chapter both advise
+standardizing the features (for example with `SKStandardScaler`) before loosening the
+tolerance. Exhaustion returns `NotConverged { iterations }`. No randomness is used, so
+repeated fits are identical.
 
 ### Decision 6 — Prediction surface
 
