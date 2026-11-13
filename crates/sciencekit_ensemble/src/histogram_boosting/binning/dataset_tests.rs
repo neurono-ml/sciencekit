@@ -35,6 +35,24 @@ fn hist_dataset_maps_categories_and_unknown_bin() {
 }
 
 #[test]
+fn hist_dataset_rejects_out_of_range_maximum_bins() {
+    let dense = Array2::from_shape_vec((3, 1), vec![0.0, f64::NAN, 2.0]).expect("fixture");
+    [0usize, 256].iter().for_each(|&maximum_bins| {
+        assert!(matches!(
+            super::dataset::SKBinnedDataset::<f64>::build(
+                &SKDataView::Dense(dense.view()),
+                &[],
+                maximum_bins
+            ),
+            Err(sciencekit_common::SKError::InvalidHyperparameter {
+                name: "maximum_bins",
+                ..
+            })
+        ));
+    });
+}
+
+#[test]
 fn hist_dataset_does_not_densify_sparse_input() {
     let dense =
         Array2::from_shape_vec((3, 2), vec![0.0, 5.0, 0.0, 0.0, 2.0, 7.0]).expect("fixture");

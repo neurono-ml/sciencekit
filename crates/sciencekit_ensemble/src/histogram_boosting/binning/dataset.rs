@@ -106,6 +106,12 @@ impl<F: SKFloat> SKBinnedDataset<F> {
         categorical_features: &[usize],
         maximum_bins: usize,
     ) -> Result<Self, SKError> {
+        if !(1..=255).contains(&maximum_bins) {
+            return Err(SKError::InvalidHyperparameter {
+                name: "maximum_bins",
+                reason: "maximum_bins must be in 1..=255".to_string(),
+            });
+        }
         let (number_of_rows, number_of_features) = match features {
             SKDataView::Dense(dense) => (dense.nrows(), dense.ncols()),
             SKDataView::Sparse(sparse) if sparse.is_csr() => (sparse.rows(), sparse.cols()),
