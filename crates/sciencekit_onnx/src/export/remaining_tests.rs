@@ -158,3 +158,62 @@ fn export_remaining_truncated_svd_matches_the_rust_transform() {
         1e-9,
     );
 }
+
+#[test]
+fn export_remaining_minibatch_kmeans_matches_the_rust_labels() {
+    use sciencekit_cluster::minibatch_kmeans::SKMiniBatchKMeans;
+
+    let features = features();
+    let model = SKMiniBatchKMeans::<f64>::build()
+        .number_of_clusters(2)
+        .batch_size(3)
+        .maximum_number_of_iterations(8)
+        .random_seed(3)
+        .build()
+        .expect("the clustering configuration is valid")
+        .fit(&features)
+        .expect("the clusters fit");
+    let predicted = model
+        .predict_clusters(features.view())
+        .expect("the clusters predict");
+    let onnx = model.to_onnx().expect("the clusters export");
+    write_fixture(
+        "minibatch_kmeans_f64",
+        &onnx,
+        "features",
+        json_matrix(&features),
+        serde_json::json!({ onnx.outputs()[0].name(): predicted.iter().map(|value| value.to_i64()).collect::<Vec<i64>>() }),
+        0.0,
+    );
+}
+
+#[test]
+fn export_remaining_neighbors_classifier_resolves_distance_ties_like_the_rust_model() {
+    use sciencekit_neighbors::SKKNeighborsClassifier;
+
+    let training: Array2<f64> = array![[-1.0, 0.0], [1.0, 0.0], [0.0, 2.0], [0.0, -2.0]];
+    let labels = ["a", "b", "c", "d"];
+    let model = SKKNeighborsClassifier::<f64>::build()
+        .nearest_neighbors_count(1)
+        .build()
+        .expect("the classifier configuration is valid")
+        .fit(training.view(), labels.as_slice())
+        .expect("the classifier fits");
+    let query: Array2<f64> = array![[0.0, 0.0]];
+    let probabilities = model
+        .predict_probabilities(query.view())
+        .expect("the classifier predicts");
+    let predicted = model.predict_labels(query.view()).expect("the labels");
+    let onnx = model.to_onnx().expect("the classifier exports");
+    write_fixture(
+        "knn_classifier_distance_tie_f64",
+        &onnx,
+        "features",
+        json_matrix(&query),
+        serde_json::json!({
+            "label": predicted.to_vec(),
+            "probabilities": json_matrix(&probabilities),
+        }),
+        1e-9,
+    );
+}

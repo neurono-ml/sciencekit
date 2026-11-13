@@ -8,7 +8,7 @@ use sciencekit_common::{SKError, SKFloat, SKModelState};
 
 use crate::graph::{SKOnnxGraphBuilder, SKOnnxNode};
 
-use super::helpers::floating_tensor;
+use super::helpers::{floating_tensor, require_feature_width};
 use super::stage::{SKOnnxStageKind, SKOnnxStageOutput};
 
 pub(crate) const SK_KMEANS_NAME: &str = "SKKMeans";
@@ -25,13 +25,19 @@ pub(crate) fn append_cluster<F: SKFloat>(
     if estimator_name != SK_KMEANS_NAME && estimator_name != SK_MINIBATCH_KMEANS_NAME {
         return Ok(None);
     }
-    let (center_shape, centers) = floating_tensor(state, "kmeans.cluster_centers")?;
+    let center_tensor = if estimator_name == SK_MINIBATCH_KMEANS_NAME {
+        "minibatch_kmeans.centers"
+    } else {
+        "kmeans.cluster_centers"
+    };
+    let (center_shape, centers) = floating_tensor(state, center_tensor)?;
     let &[cluster_count, feature_count] = center_shape.as_slice() else {
         return Err(SKError::ShapeMismatch {
             expected: vec![state.metadata().feature_count()],
             found: center_shape,
         });
     };
+    require_feature_width(state, feature_count)?;
     builder.add_floating_initializer(
         format!("{namespace}kmeans.centers"),
         vec![cluster_count, feature_count],
