@@ -4,7 +4,7 @@
 
 - [x] 1.1 Add the shared export round-trip test helper and document the dotted-name scheme;
   verify the helper with a mock model.
-- [ ] 1.2 Add a metadata-version constant and a test that every family uses it; verify with
+- [x] 1.2 Add a metadata-version constant and a test that every family uses it; verify with
   `cargo test --workspace export_metadata`.
 
 ## 2. Preprocessing and impute
