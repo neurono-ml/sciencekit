@@ -71,14 +71,14 @@
 
 ## 7. Documentation, changelog and review
 
-- [ ] 7.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under `Unreleased →
+- [x] 7.1 Update `CHANGELOG.md` (English, keep-a-changelog 1.1.0) under `Unreleased →
   Added` for the histogram boosters, binning, categorical partitions and missing routing.
 - [ ] 7.2 Companion documentation change on its own `docs/*` branch (merged into
   `docs/documentations`): add the histogram-boosting chapter, register it in `SUMMARY.md`,
   add a `Development Explained` chapter covering binning, histograms, leaf-wise growth,
   categorical bitmasks and missing routing, update `maintaining.md`, and verify with
   `mdbook build docs`.
-- [ ] 7.3 Record the deferred `memmap2` streaming store, constraints and export in
+- [x] 7.3 Record the deferred `memmap2` streaming store, constraints and export in
   `docs/PRD.md`; verify the amended paragraphs render.
 - [ ] 7.4 Independent review by a separate agent validating every scenario in
   `histogram-gradient-boosting` against the code and tests; address every finding and
