@@ -35,7 +35,7 @@
 - [x] 4.3 Update `CHANGELOG.md` and the companion mdBook chapter (including a
   `Development Explained` chapter on tabular schemas, missing mapping and feature-gated
   integrations); verify with `mdbook build docs`.
-- [ ] 4.4 Independent review by a separate agent validating every scenario in
+- [x] 4.4 Independent review by a separate agent validating every scenario in
   `tabular-sources`; address every finding and re-run the gates.
 
 ## Workflow follow-up
