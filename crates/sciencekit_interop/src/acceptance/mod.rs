@@ -10,3 +10,5 @@ pub(crate) mod fixtures;
 mod conversion_tests;
 #[cfg(test)]
 mod error_tests;
+#[cfg(test)]
+mod tabular_source_tests;
