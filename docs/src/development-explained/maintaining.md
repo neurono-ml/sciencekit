@@ -412,3 +412,15 @@ dependency-ordered interpreter behind `SKOnnxPredictor<F>` and
 dispatch arm and a companion test, then rerun the three-way harness after
 `cargo run -p sciencekit_onnx --example validate_import <fixture-root>` so the
 imported prediction stays proven against both the Rust model and `onnxruntime`.
+
+The [native model import chapter](./ch65-native-model-import.html) closes the
+round trip: `SKNativeImport<F>` rebuilds a real fitted type from a neutral
+state, with structural format detection, typed rejections at the trust
+boundary, exact tensor-set and class-table validation, continued fitting for
+the families that keep a learning state, and an ONNX mapper for the documented
+affine/scaler/tree subset. When you add a family, extend
+`sk_native_import_coverage` and the ONNX mapper, add a round-trip test that
+compares predictions with the original, keep the external fixture in
+`crates/sciencekit_onnx/validation/external/` reproducible with
+`validation/compare_native_import.py`, and update this chapter rather than
+adding a parallel one.
