@@ -15,10 +15,10 @@ implementation, refactor with the gates green.
 
 ## 2. Declaration retrofit
 
-- [ ] 2.1 Implement the declaration for the preprocessing and imputation estimators and
+- [x] 2.1 Implement the declaration for the preprocessing and imputation estimators and
   remove their inline pattern assignments; verify with
   `cargo test -p sciencekit_preprocessing -p sciencekit_impute access_pattern`.
-- [ ] 2.2 Implement the declaration for the linear-model estimators; verify with
+- [x] 2.2 Implement the declaration for the linear-model estimators; verify with
   `cargo test -p sciencekit_linear_model access_pattern`.
 - [ ] 2.3 Implement the declaration for decomposition, clustering, neighbors, trees,
   ensembles, SVM, outlier and pipeline estimators; verify with
