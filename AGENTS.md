@@ -73,6 +73,11 @@ Instructions for agents working in this repository. Product source of truth: `do
 - Main documentation branch: `docs/documentations`. Docs worktrees are merged into it (not into `main`).
 - That branch hosts an mdBook compatible with GitHub Pages containing: API, usage examples and a description of every function.
 - **Every code change ships its documentation change.** When a code change introduces or changes public behavior, a companion doc change updates the mdBook for it (new/edited chapters under `docs/src/`), on a doc branch whose PR merges into `docs/documentations`. The doc branch is created at the same time as the code change (see Workflow). This is a separate concern from the `-openspec` planning branch, which only holds the OpenSpec artifacts.
+- **Temporary deferral (implementation-dag policy, `documentation_policy`):** during the
+  parity program, `Development Explained` chapters are **not** written per change. Every
+  shipped change instead records one ADR (a new issue or an amendment of an existing one),
+  linked from its PRs with closing keywords; the book is rebuilt from the ADRs afterwards.
+  The per-change documentation below resumes when the book rebuild change starts.
 - **`Development Explained` book must stay in lockstep with the code.** The `docs/src/development-explained/` chapters are a didactic, order-of-PRs textbook explaining the *why* behind every code change, for a reader with no Rust or numerical-computing background. Every code change that ships a doc change must also keep this book truthful:
   - **New feature / new algorithm / new kernel or method** → add a **new** chapter (`chNN-<slug>.md`) telling the story, the decisions and the roads not taken, the concepts from zero, each public object, and a walk-through of the real companion tests.
   - **Bug fix / refactor that changes existing behavior** → **edit the existing chapter** that covers that behavior; do **not** add a parallel chapter (fixes amend, they do not duplicate).

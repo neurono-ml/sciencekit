@@ -53,9 +53,17 @@ catalog row into a concrete, testable plan.
   outside `(0, 0.5]`, `nu` outside `(0, 1]`, invalid kernel parameters, non-finite values,
   feature-count mismatch, prediction before fit and prediction on new data in fit-only
   mode.
-- Explicit non-goals: missing values, streaming/`partial_fit`, GPU execution, `memmap2`,
-  precomputed kernels, multi-class novelty, local outlier probability (LoOP) and
-  incremental LOF.
+- Access-pattern contract: both detectors declare their pattern (`RandomAccess` for LOF,
+  `Iterative` for the one-class SMO) through the shared declaration and record it in the
+  operation span, per `access-pattern-contract`.
+- Mappable fit: LOF accepts an `SKMappableSource` through the shared mappable contract
+  (`mappable-fit`): the neighbour search reads the mapped rows without materializing the
+  design, and the model keeps the shared handle for its lifetime.
+- Neighbour metrics come from the extended metric registry (`pairwise-metric-extension`).
+- Explicit non-goals: missing values, sequential streaming/`partial_fit` (LOF is a
+  `RandomAccess` estimator; its out-of-core path is the mappable fit above, not a lazy
+  stream), GPU execution, precomputed kernels, multi-class novelty, local outlier
+  probability (LoOP) and incremental LOF.
 
 No existing estimator API changes beyond the additive estimators.
 

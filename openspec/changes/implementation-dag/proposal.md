@@ -2,8 +2,9 @@
 
 ## Why
 
-There are 61 active OpenSpec changes across Waves 3–7, cross-cutting work and the newly
-added dataset interop changes. Agents need one authoritative dependency graph, with
+There are 66 active OpenSpec changes across Waves 3–7 and cross-cutting work, plus 168
+changes from the scikit-learn parity program (Waves 8–13, including sixteen shared
+primitives and the `reopenable-fit-path` retrofit), for 234 graph nodes. Agents need one authoritative dependency graph, with
 completion checks, so they can start independent changes in parallel, block on real
 dependencies, and avoid merge conflicts in shared crates. Today the ordering is spread
 across wave-plan prose and per-change designs.
@@ -28,6 +29,19 @@ across wave-plan prose and per-change designs.
   `r` lane, alongside the `python`, `julia` and `jvm` lanes).
 - Superseded nodes retained for traceability: `polars-datafusion-sources`,
   `julia-bindings`, `jvm-bindings`.
+- Extend the graph with the scikit-learn 1.9.1 parity program: structural contracts and
+  shared primitives first, then one change per algorithm family in Waves 8–13, with the
+  inventory owned by `sklearn-parity-matrix/parity.yaml` and the reuse map by
+  `sklearn-parity-matrix/reuse-map.md`.
+- Mark every node with `state` (shipped, closing, in-progress, planned, deferred,
+  superseded) and add the execution waves (W0–W9) that order the program toward the
+  target: every parity change shipped.
+- Record the immutable clauses, the downstream-mutability rule, the documentation policy
+  (book chapters deferred; one ADR per shipped change), the acceptance policy (end-to-end
+  tests with and without lazy inputs, memory guards, export/reload) and the tracing policy
+  (nested spans, a trace per inference) in the DAG policy block.
+- Add the `structured-tracing` change (span hierarchy: pipeline > stage > operation >
+  step > epoch/batch) to the contracts lane.
 - No application code and no runtime behavior change; `.openspec.yaml` sets
   `skip_specs: true`.
 

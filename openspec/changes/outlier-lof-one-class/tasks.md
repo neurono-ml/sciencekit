@@ -18,6 +18,14 @@ confirm the failure, implement the minimum that passes and refactor with the gat
   `fit_predict` and the negative outlier factor vector; verify with
   `cargo test -p sciencekit_outlier lof_fit`.
 
+## 1b. LOF contract and mappable fit
+
+- [ ] 1.5 Declare the `RandomAccess` pattern for LOF and record it in the span; verify with
+  `cargo test -p sciencekit_outlier lof_access_pattern`.
+- [ ] 1.6 Implement the mappable fit over the shared mapped handle with the parity harness
+  (in-memory vs mapped) on dense and CSR fixtures; verify with
+  `cargo test -p sciencekit_outlier lof_mappable`.
+
 ## 2. LOF novelty, representation and exports
 
 - [ ] 2.1 Implement the fit-only typed refusal and the novelty prediction path with

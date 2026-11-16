@@ -3,6 +3,47 @@ generated_for: sciencekit
 source_of_truth: openspec/changes/implementation-dag/dag.yaml
 policy:
   max_parallel_changes_per_lane: 1
+  target: every parity-program change shipped with the global gates green
+  scheduling:
+    downstream_changes_mutable: true
+    downstream_mutation_rule: >-
+      Implementing an earlier wave may amend a later change's proposal, design, tasks or
+      dependencies when the implementation evidence demands it, provided every immutable
+      clause still holds. The amendment is recorded in the later change and the ADR.
+  documentation_policy:
+    book_chapters_deferred: true
+    deferral_reason: >-
+      The Development Explained book changes format after the program; chapters are not
+      written per change during execution.
+    replaced_by: >-
+      One ADR per shipped change (a new Architecture Decision Record issue or an amendment
+      of an existing one), linked from the change PR with a closing keyword. The book is
+      rebuilt from the ADRs afterwards.
+    retained: [README, CHANGELOG, coverage page, API docs]
+  acceptance_policy:
+    - end-to-end tests with and without lazy/out-of-core inputs
+    - memory and resource guard tests (batch guard, mapped budget, concurrency)
+    - model export and reload round-trip where the family is exportable
+    - large and small data fixtures
+  tracing_policy:
+    - nested spans: pipeline > stage > operation > step > epoch > batch
+    - every inference (predict, transform, score) emits its own trace
+    - fit and predict share one span vocabulary
+    - batch spans at TRACE with a per-epoch cap and an aggregated summary event
+    - errors mark the whole ancestor chain with status ERROR
+    - the trace context crosses the FFI via a W3C traceparent
+  immutable_clauses:
+    - full scikit-learn 1.9.1 parity per parity.yaml, with the access-pattern doctrine
+    - builder pattern with backend and execution_mode on every estimator
+    - no abbreviations in public names; SK prefix rules
+    - zero-copy on public APIs; representation parity; sparse never densified
+    - TDD with companion *_tests.rs modules; one commit per task
+    - worktree workflow: no direct commits on main; code and openspec PRs per change
+    - an ADR issue per change, referenced by both PRs with closing keywords
+    - CHANGELOG updated on every merged change
+    - the tracing policy above
+  parity_matrix: openspec/changes/sklearn-parity-matrix/parity.yaml
+  one_algorithm_per_change: true
   merge_requires:
   - all tasks checked
   - openspec validate green
@@ -18,6 +59,103 @@ policy:
   docs_gate: mdbook build docs
   rebase_before_merge: true
   no_direct_main_commits: true
+
+execution_waves:
+- id: W0-close-in-flight
+  goal: close the nineteen closing changes (ADR + PR merge; book chapters deferred)
+  parallel: true
+  changes: [sparse-streaming-batches, sparse-streaming-coverage, sgd-classifier-regressor,
+            sparse-pairwise-distances, model-selection-core, metrics-clustering,
+            lua-bindings, knn-classifier-regressor, knn-imputer, kd-tree-and-ball-tree,
+            kmeans-lloyd-elkan, julia-dataset-interop, interop-contracts, grid-search-cv,
+            gpu-compute-contracts, go-bindings, deterministic-randomness,
+            extract-language-bindings, arrow-interop]
+- id: W1-dataset-interop
+  goal: finish the dataset interop lane (Polars, DataFusion; Julia closes in W0; JVM stays deferred)
+  parallel: true
+  changes: [polars-interop, datafusion-interop]
+- id: W2-foundations
+  goal: parity matrix, contracts, tracing and the shared primitives
+  parallel: true
+  changes: [sklearn-parity-matrix, access-pattern-contract, structured-tracing,
+            pairwise-kernel-functions,
+            mappable-fit-path, reopenable-fit-path, sample-weight-support,
+            estimator-tags-and-callbacks, label-and-indicator-primitives,
+            boxed-predictor-contract, multiclass-strategy, multioutput-strategy,
+            resampling-primitives, frozen-estimator, dataset-generators, dataset-loaders,
+            pairwise-metric-extension, sparse-symmetric-eigensolver,
+            composable-kernel-algebra, lbfgs-optimizer, streaming-moments,
+            distribution-and-em-kernels, robust-statistics-kernels, binning-primitives,
+            graph-construction-and-algorithms, penalized-glm-solver,
+            regularization-path-solver, matrix-factorization-kernels,
+            text-tokenization-and-vocabulary]
+- id: W3-model-selection-and-metrics
+  goal: selection utilities, curves, threshold tuning, calibration metrics, outlier detectors
+  parallel: true
+  changes: [parameter-grid, randomized-search, halving-random-search,
+            leave-one-out-splitters, shuffle-splitters, group-shuffle-split, repeated-kfold,
+            stratified-group-kfold, time-series-split, predefined-split,
+            cross-validate-functions, learning-curve, validation-curve,
+            permutation-test-score, threshold-tuning, metrics-regression-completion,
+            metrics-classification-completion, metrics-ranking-completion,
+            metrics-calibration-multilabel, outlier-lof-one-class]
+- id: W4-preprocessing-selection-bayes
+  goal: preprocessing completion, feature selection, naive Bayes, meta baselines
+  parallel: true
+  changes: [max-abs-scaler, normalizer, binarizer, function-transformer, kernel-centerer,
+            label-encoder, label-binarizer, multi-label-binarizer, ordinal-encoder,
+            k-bins-discretizer, power-transformer, quantile-transformer, spline-transformer,
+            target-encoder, preprocessing-functions, variance-threshold,
+            univariate-score-functions, univariate-selectors, select-from-model, rfe,
+            sequential-feature-selector, gaussian-naive-bayes, multinomial-naive-bayes,
+            complement-naive-bayes, bernoulli-naive-bayes, categorical-naive-bayes,
+            dummy-estimators, isotonic-regression, iterative-imputer]
+- id: W5-linear-models
+  goal: the remaining linear-model family
+  parallel: true
+  changes: [ridge-classifier, ridge-cv, lasso-cv, elastic-net-cv, logistic-regression-cv,
+            multitask-linear, lars-family, orthogonal-matching-pursuit, bayesian-ridge,
+            ard-regression, generalized-linear-regressors, quantile-regressor,
+            huber-regressor, ransac-regressor, theil-sen-regressor, passive-aggressive,
+            perceptron, sgd-one-class-svm]
+- id: W6-kernel-neural-text-ensemble
+  goal: kernel methods, GP, neural networks, semi-supervised, text, compose, ensemble extras
+  parallel: true
+  changes: [nusvm, linear-svr, kernel-ridge, kernel-approximation, gaussian-process,
+            kernel-pca, multilayer-perceptron, bernoulli-rbm, label-propagation,
+            label-spreading, self-training, text-vectorizers, dict-vectorizer,
+            feature-hasher, column-transformer, transformed-target-regressor,
+            extremely-randomized-tree, extra-trees, adaboost, voting, stacking,
+            random-trees-embedding, calibrated-classifier, permutation-importance,
+            partial-dependence, image-patch-extraction, tree-text-export]
+- id: W7-unsupervised
+  goal: clustering, decomposition, mixtures, discriminant, covariance, cross-decomposition
+  parallel: true
+  changes: [agglomerative-clustering, feature-agglomeration, spectral-clustering,
+            spectral-biclustering, spectral-coclustering, affinity-propagation, mean-shift,
+            birch, bisecting-kmeans, optics, hdbscan, nmf, minibatch-nmf, fast-ica,
+            factor-analysis, sparse-pca, minibatch-sparse-pca, dictionary-learning,
+            minibatch-dictionary-learning, sparse-coder, latent-dirichlet-allocation,
+            random-projection, gaussian-mixture, bayesian-gaussian-mixture,
+            linear-discriminant-analysis, quadratic-discriminant-analysis,
+            empirical-covariance, shrunk-covariance, ledoit-wolf, oas, min-cov-det,
+            graphical-lasso, elliptic-envelope, pls-svd, pls-regression, pls-canonical,
+            canonical-correlation-analysis]
+- id: W8-manifold-and-neighbors
+  goal: manifold learning and the remaining neighbor estimators
+  parallel: true
+  changes: [multidimensional-scaling, classical-mds, isomap, locally-linear-embedding,
+            spectral-embedding, tsne, radius-neighbors, neighbor-transformers,
+            kernel-density, nearest-centroid, neighborhood-components-analysis]
+- id: W8.5-gpu-accelerators
+  goal: CUDA and ROCm device backends over the completed OpenCL backend
+  parallel: true
+  changes: [gpu-cuda-backend, gpu-rocm-backend]
+- id: W9-joins
+  goal: umbrella, bindings and CLI over the completed families
+  parallel: false
+  changes: [umbrella-crate, python-bindings-complete, workflows-cli]
+
 lanes:
 - id: common
   merge_order:
@@ -33,14 +171,24 @@ lanes:
   merge_order:
   - sparse-pairwise-distances
   - randomized-svd-kernel
+  - pairwise-metric-extension
+  - sparse-symmetric-eigensolver
+  - composable-kernel-algebra
+  - lbfgs-optimizer
 - id: metrics
   merge_order:
+  - metrics-foundation
   - metrics-ranking
   - metrics-clustering
   - metrics-calibration-multilabel
+  - metrics-regression-completion
+  - metrics-classification-completion
+  - metrics-ranking-completion
 - id: tree
   merge_order:
   - decision-tree-cart
+  - extremely-randomized-tree
+  - tree-text-export
   - random-forest
   - bagging
   - gradient-boosting
@@ -54,27 +202,72 @@ lanes:
   - knn-imputer
   - svm-svc-svr
   - svm-linear-svc
+  - radius-neighbors
+  - neighbor-transformers
+  - kernel-density
+  - nearest-centroid
+  - neighborhood-components-analysis
 - id: cluster
   merge_order:
   - kmeans-lloyd-elkan
   - minibatch-kmeans-streaming
   - dbscan
+  - agglomerative-clustering
+  - feature-agglomeration
+  - affinity-propagation
+  - mean-shift
+  - birch
+  - bisecting-kmeans
+  - optics
+  - hdbscan
+  - spectral-clustering
+  - spectral-biclustering
+  - spectral-coclustering
 - id: decomposition
   merge_order:
   - pca
   - truncated-svd
   - incremental-pca
+  - matrix-factorization-kernels
+  - nmf
+  - minibatch-nmf
+  - fast-ica
+  - factor-analysis
+  - sparse-pca
+  - minibatch-sparse-pca
+  - dictionary-learning
+  - minibatch-dictionary-learning
+  - sparse-coder
+  - latent-dirichlet-allocation
+  - random-projection
 - id: model-selection
   merge_order:
   - model-selection-core
   - grid-search-cv
   - halving-grid-search
+  - parameter-grid
+  - randomized-search
+  - halving-random-search
+  - leave-one-out-splitters
+  - shuffle-splitters
+  - group-shuffle-split
+  - repeated-kfold
+  - stratified-group-kfold
+  - time-series-split
+  - predefined-split
+  - cross-validate-functions
+  - learning-curve
+  - validation-curve
+  - permutation-test-score
+  - threshold-tuning
 - id: pipeline
   merge_order:
   - type-safe-pipeline
   - feature-union
   - pipeline-dag
   - streaming-pipeline
+  - column-transformer
+  - transformed-target-regressor
 - id: interop
   merge_order:
   - arrow-interop
@@ -100,10 +293,13 @@ lanes:
 - id: bindings
   merge_order:
   - ffi-core
+  - extract-language-bindings
   - lua-bindings
   - go-bindings
 - id: streaming
   merge_order:
+  - streaming-source-provider
+  - sparse-streaming-batches
   - sparse-streaming-coverage
 - id: product
   merge_order:
@@ -124,8 +320,175 @@ lanes:
 - id: r
   merge_order:
   - r-bindings
+- id: planning
+  merge_order:
+  - sklearn-parity-matrix
+- id: contracts
+  merge_order:
+  - access-pattern-contract
+  - structured-tracing
+  - mappable-fit-path
+  - reopenable-fit-path
+  - sample-weight-support
+  - estimator-tags-and-callbacks
+  - label-and-indicator-primitives
+  - boxed-predictor-contract
+  - multiclass-strategy
+  - multioutput-strategy
+  - resampling-primitives
+  - frozen-estimator
+- id: datasets
+  merge_order:
+  - dataset-generators
+  - dataset-loaders
+- id: preprocessing
+  merge_order:
+  - max-abs-scaler
+  - normalizer
+  - binarizer
+  - function-transformer
+  - kernel-centerer
+  - label-encoder
+  - label-binarizer
+  - multi-label-binarizer
+  - ordinal-encoder
+  - k-bins-discretizer
+  - power-transformer
+  - quantile-transformer
+  - spline-transformer
+  - target-encoder
+  - preprocessing-functions
+- id: feature-selection
+  merge_order:
+  - variance-threshold
+  - univariate-score-functions
+  - univariate-selectors
+  - select-from-model
+  - rfe
+  - sequential-feature-selector
+- id: naive-bayes
+  merge_order:
+  - gaussian-naive-bayes
+  - multinomial-naive-bayes
+  - complement-naive-bayes
+  - bernoulli-naive-bayes
+  - categorical-naive-bayes
+- id: linear-model
+  merge_order:
+  - sgd-classifier-regressor
+  - penalized-glm-solver
+  - regularization-path-solver
+  - ridge-classifier
+  - ridge-cv
+  - lasso-cv
+  - elastic-net-cv
+  - logistic-regression-cv
+  - multitask-linear
+  - lars-family
+  - orthogonal-matching-pursuit
+  - bayesian-ridge
+  - ard-regression
+  - generalized-linear-regressors
+  - quantile-regressor
+  - huber-regressor
+  - ransac-regressor
+  - theil-sen-regressor
+  - passive-aggressive
+  - perceptron
+  - sgd-one-class-svm
+- id: kernel
+  merge_order:
+  - pairwise-kernel-functions
+  - nusvm
+  - linear-svr
+  - kernel-ridge
+  - kernel-approximation
+  - gaussian-process
+  - kernel-pca
+- id: neural-network
+  merge_order:
+  - multilayer-perceptron
+  - bernoulli-rbm
+- id: semi-supervised
+  merge_order:
+  - label-propagation
+  - label-spreading
+  - self-training
+- id: text
+  merge_order:
+  - text-tokenization-and-vocabulary
+  - text-vectorizers
+  - dict-vectorizer
+  - feature-hasher
+- id: ensemble
+  merge_order:
+  - extra-trees
+  - adaboost
+  - voting
+  - stacking
+  - random-trees-embedding
+- id: meta
+  merge_order:
+  - dummy-estimators
+  - isotonic-regression
+- id: calibration
+  merge_order:
+  - calibrated-classifier
+- id: inspection
+  merge_order:
+  - permutation-importance
+  - partial-dependence
+- id: mixture
+  merge_order:
+  - gaussian-mixture
+  - bayesian-gaussian-mixture
+- id: discriminant
+  merge_order:
+  - linear-discriminant-analysis
+  - quadratic-discriminant-analysis
+- id: covariance
+  merge_order:
+  - empirical-covariance
+  - shrunk-covariance
+  - ledoit-wolf
+  - oas
+  - min-cov-det
+  - graphical-lasso
+  - elliptic-envelope
+- id: cross-decomposition
+  merge_order:
+  - pls-svd
+  - pls-regression
+  - pls-canonical
+  - canonical-correlation-analysis
+- id: manifold
+  merge_order:
+  - multidimensional-scaling
+  - classical-mds
+  - isomap
+  - locally-linear-embedding
+  - spectral-embedding
+  - tsne
+- id: stats
+  merge_order:
+  - streaming-moments
+  - distribution-and-em-kernels
+  - robust-statistics-kernels
+  - binning-primitives
+- id: graph
+  merge_order:
+  - graph-construction-and-algorithms
+- id: impute
+  merge_order:
+  - iterative-imputer
+
+- id: image
+  merge_order:
+  - image-patch-extraction
+
 changes:
 - id: representation-parity
+  state: shipped
   group: foundation-docs
   lane: common
   depends_on: []
@@ -136,6 +499,7 @@ changes:
     - openspec validate representation-parity
     - mdbook build docs
 - id: wave-seven-deferrals
+  state: shipped
   group: foundation-docs
   lane: common
   depends_on: []
@@ -146,6 +510,7 @@ changes:
     - openspec validate wave-seven-deferrals
     - mdbook build docs
 - id: deterministic-randomness
+  state: closing
   group: foundation
   lane: common
   depends_on: []
@@ -155,6 +520,7 @@ changes:
     - cargo test -p sciencekit_common random
     - cargo test -p sciencekit_linear_model sgd
 - id: clustering-contracts
+  state: shipped
   group: foundation
   lane: common
   depends_on: []
@@ -164,6 +530,7 @@ changes:
     - cargo test -p sciencekit_common clusterer
     - cargo test -p sciencekit_common scorer
 - id: interop-contracts
+  state: closing
   group: foundation
   lane: common
   depends_on: []
@@ -173,6 +540,7 @@ changes:
     - cargo test -p sciencekit_common interop
     - cargo test -p sciencekit_interop
 - id: gpu-compute-contracts
+  state: closing
   group: foundation
   lane: common
   depends_on: []
@@ -182,6 +550,7 @@ changes:
     - cargo test -p sciencekit_gpu
     - cargo test -p sciencekit_common backend_kind
 - id: telemetry-export
+  state: shipped
   group: foundation
   lane: common
   depends_on: []
@@ -190,6 +559,7 @@ changes:
     tests:
     - cargo test -p sciencekit_telemetry
 - id: ffi-core
+  state: shipped
   group: foundation
   lane: bindings
   depends_on: []
@@ -199,6 +569,7 @@ changes:
     - cargo test -p sciencekit_ffi
     - cc tests/c_smoke.c -lsciencekit_ffi -o /tmp/sciencekit_c_smoke
 - id: sparse-pairwise-distances
+  state: closing
   group: foundation
   lane: math
   depends_on: []
@@ -207,6 +578,7 @@ changes:
     tests:
     - cargo test -p sciencekit_math sparse_
 - id: randomized-svd-kernel
+  state: shipped
   group: foundation
   lane: math
   depends_on:
@@ -216,6 +588,7 @@ changes:
     tests:
     - cargo test -p sciencekit_math randomized
 - id: model-selection-core
+  state: closing
   group: wave6
   lane: model-selection
   depends_on:
@@ -226,6 +599,7 @@ changes:
     tests:
     - cargo test -p sciencekit_model_selection
 - id: type-safe-pipeline
+  state: shipped
   group: wave6
   lane: pipeline
   depends_on: []
@@ -234,6 +608,7 @@ changes:
     tests:
     - cargo test -p sciencekit_pipeline
 - id: sparse-streaming-coverage
+  state: closing
   group: cross-cutting
   lane: streaming
   depends_on: []
@@ -242,6 +617,7 @@ changes:
     tests:
     - cargo test --workspace sparse_streaming
 - id: kd-tree-and-ball-tree
+  state: closing
   group: wave3
   lane: neighbors
   depends_on: []
@@ -250,6 +626,7 @@ changes:
     tests:
     - cargo test -p sciencekit_neighbors
 - id: decision-tree-cart
+  state: shipped
   group: wave4
   lane: tree
   depends_on:
@@ -259,6 +636,7 @@ changes:
     tests:
     - cargo test -p sciencekit_tree
 - id: knn-imputer
+  state: closing
   group: wave3
   lane: neighbors
   depends_on: []
@@ -267,6 +645,7 @@ changes:
     tests:
     - cargo test -p sciencekit_impute knn
 - id: metrics-ranking
+  state: shipped
   group: wave6
   lane: metrics
   depends_on: []
@@ -275,6 +654,7 @@ changes:
     tests:
     - cargo test -p sciencekit_metrics ranking
 - id: metrics-clustering
+  state: closing
   group: wave6
   lane: metrics
   depends_on:
@@ -285,17 +665,20 @@ changes:
     tests:
     - cargo test -p sciencekit_metrics clustering
 - id: metrics-calibration-multilabel
+  state: planned
   group: wave6
   lane: metrics
   depends_on:
   - metrics-ranking
   - metrics-clustering
+  - binning-primitives
   completion:
     openspec: openspec status --change metrics-calibration-multilabel --json
     tests:
     - cargo test -p sciencekit_metrics calibration
     - cargo test -p sciencekit_metrics multilabel
 - id: gpu-opencl-backend
+  state: shipped
   group: cross-cutting
   lane: gpu
   depends_on:
@@ -305,6 +688,7 @@ changes:
     tests:
     - cargo test -p sciencekit_gpu_opencl --features gpu-opencl
 - id: gpu-cuda-backend
+  state: planned
   group: cross-cutting
   lane: gpu
   depends_on:
@@ -318,6 +702,7 @@ changes:
     project; OpenCL already ships and is the only validated device backend. Deferred for
     community hardware; see ADR #408 and tracking issue #409."
 - id: gpu-rocm-backend
+  state: planned
   group: cross-cutting
   lane: gpu
   depends_on:
@@ -331,6 +716,7 @@ changes:
     node; OpenCL already ships and is the only validated device backend. Deferred for community
     hardware; see ADR #408 and tracking issue #410."
 - id: lua-bindings
+  state: closing
   group: cross-cutting
   lane: bindings
   depends_on:
@@ -341,6 +727,7 @@ changes:
     - cargo test -p sciencekit_lua
     - lua tests/run.lua
 - id: julia-bindings
+  state: superseded
   group: cross-cutting
   lane: bindings
   depends_on:
@@ -353,6 +740,7 @@ changes:
   superseded_by:
   - julia-dataset-interop
 - id: go-bindings
+  state: closing
   group: cross-cutting
   lane: bindings
   depends_on:
@@ -362,6 +750,7 @@ changes:
     tests:
     - go test ./go/...
 - id: jvm-bindings
+  state: superseded
   group: cross-cutting
   lane: bindings
   depends_on:
@@ -378,6 +767,7 @@ changes:
   deferred: true
   deferred_reason: "Superseded by jvm-dataset-interop, which is itself deferred; see ADR #381."
 - id: knn-classifier-regressor
+  state: closing
   group: wave3
   lane: neighbors
   depends_on:
@@ -389,6 +779,7 @@ changes:
     tests:
     - cargo test -p sciencekit_neighbors
 - id: svm-svc-svr
+  state: shipped
   group: wave3
   lane: neighbors
   depends_on:
@@ -400,6 +791,7 @@ changes:
     tests:
     - cargo test -p sciencekit_svm
 - id: svm-linear-svc
+  state: shipped
   group: wave3
   lane: neighbors
   depends_on:
@@ -410,6 +802,7 @@ changes:
     tests:
     - cargo test -p sciencekit_svm
 - id: dbscan
+  state: shipped
   group: wave5
   lane: cluster
   depends_on:
@@ -421,6 +814,7 @@ changes:
     tests:
     - cargo test -p sciencekit_cluster dbscan
 - id: random-forest
+  state: shipped
   group: wave4
   lane: tree
   depends_on:
@@ -431,6 +825,7 @@ changes:
     tests:
     - cargo test -p sciencekit_ensemble forest
 - id: bagging
+  state: shipped
   group: wave4
   lane: tree
   depends_on:
@@ -441,6 +836,7 @@ changes:
     tests:
     - cargo test -p sciencekit_ensemble bagging
 - id: gradient-boosting
+  state: shipped
   group: wave4
   lane: tree
   depends_on:
@@ -451,6 +847,7 @@ changes:
     tests:
     - cargo test -p sciencekit_ensemble boosting
 - id: histogram-gradient-boosting
+  state: shipped
   group: wave4
   lane: tree
   depends_on:
@@ -462,6 +859,7 @@ changes:
     tests:
     - cargo test -p sciencekit_ensemble hist_
 - id: outlier-detection
+  state: shipped
   group: wave5
   lane: tree
   depends_on:
@@ -472,17 +870,22 @@ changes:
     tests:
     - cargo test -p sciencekit_outlier
 - id: outlier-lof-one-class
+  state: planned
   group: wave5
   lane: tree
   depends_on:
   - outlier-detection
   - kd-tree-and-ball-tree
   - svm-svc-svr
+  - access-pattern-contract
+  - mappable-fit-path
+  - pairwise-metric-extension
   completion:
     openspec: openspec status --change outlier-lof-one-class --json
     tests:
     - cargo test -p sciencekit_outlier
 - id: kmeans-lloyd-elkan
+  state: closing
   group: wave5
   lane: cluster
   depends_on:
@@ -493,6 +896,7 @@ changes:
     tests:
     - cargo test -p sciencekit_cluster kmeans
 - id: minibatch-kmeans-streaming
+  state: shipped
   group: wave5
   lane: cluster
   depends_on:
@@ -504,6 +908,7 @@ changes:
     tests:
     - cargo test -p sciencekit_cluster minibatch
 - id: pca
+  state: shipped
   group: wave5
   lane: decomposition
   depends_on:
@@ -514,6 +919,7 @@ changes:
     tests:
     - cargo test -p sciencekit_decomposition pca
 - id: truncated-svd
+  state: shipped
   group: wave5
   lane: decomposition
   depends_on:
@@ -524,6 +930,7 @@ changes:
     tests:
     - cargo test -p sciencekit_decomposition truncated
 - id: incremental-pca
+  state: shipped
   group: wave5
   lane: decomposition
   depends_on:
@@ -533,6 +940,7 @@ changes:
     tests:
     - cargo test -p sciencekit_decomposition incremental
 - id: grid-search-cv
+  state: closing
   group: wave6
   lane: model-selection
   depends_on:
@@ -543,6 +951,7 @@ changes:
     tests:
     - cargo test -p sciencekit_model_selection grid_
 - id: halving-grid-search
+  state: shipped
   group: wave6
   lane: model-selection
   depends_on:
@@ -553,6 +962,7 @@ changes:
     tests:
     - cargo test -p sciencekit_model_selection halving
 - id: feature-union
+  state: shipped
   group: wave6
   lane: pipeline
   depends_on:
@@ -562,6 +972,7 @@ changes:
     tests:
     - cargo test -p sciencekit_pipeline union
 - id: pipeline-dag
+  state: shipped
   group: wave6
   lane: pipeline
   depends_on:
@@ -571,6 +982,7 @@ changes:
     tests:
     - cargo test -p sciencekit_pipeline graph
 - id: streaming-pipeline
+  state: shipped
   group: wave6
   lane: pipeline
   depends_on:
@@ -580,6 +992,7 @@ changes:
     tests:
     - cargo test -p sciencekit_pipeline streaming
 - id: model-export-retrofit
+  state: shipped
   group: wave7
   lane: interop
   join: all
@@ -612,6 +1025,7 @@ changes:
     tests:
     - cargo test --workspace export_coverage
 - id: safetensors-internal-format
+  state: shipped
   group: wave7
   lane: interop
   depends_on:
@@ -624,6 +1038,7 @@ changes:
     tests:
     - cargo test -p sciencekit_interop safetensors
 - id: json-debug-format
+  state: shipped
   group: wave7
   lane: interop
   depends_on:
@@ -636,6 +1051,7 @@ changes:
     tests:
     - cargo test -p sciencekit_interop json
 - id: onnx-export
+  state: shipped
   group: wave7
   lane: interop
   depends_on:
@@ -646,6 +1062,7 @@ changes:
     tests:
     - cargo test -p sciencekit_onnx export
 - id: onnx-import
+  state: shipped
   group: wave7
   lane: interop
   depends_on:
@@ -655,6 +1072,7 @@ changes:
     tests:
     - cargo test -p sciencekit_onnx onnx_
 - id: polars-datafusion-sources
+  state: superseded
   group: wave7
   lane: interop
   depends_on:
@@ -670,6 +1088,7 @@ changes:
   - datafusion-interop
   - memory-mapped-interop
 - id: native-model-import
+  state: shipped
   group: cross-cutting
   lane: interop
   depends_on:
@@ -683,6 +1102,7 @@ changes:
     - cargo test -p sciencekit_interop native
     - cargo test -p sciencekit_onnx native
 - id: lora-adapters
+  state: shipped
   group: cross-cutting
   lane: interop
   depends_on:
@@ -692,6 +1112,7 @@ changes:
     tests:
     - cargo test -p sciencekit_linear_model lora
 - id: umbrella-crate
+  state: planned
   group: wave7
   lane: product
   join: all
@@ -747,6 +1168,7 @@ changes:
     tests:
     - cargo test -p sciencekit
 - id: python-bindings-complete
+  state: planned
   group: wave7
   lane: python
   join: all
@@ -787,6 +1209,7 @@ changes:
     - pytest python/tests
     - maturin build --release
 - id: workflows-cli
+  state: planned
   group: cross-cutting
   lane: product
   join: all
@@ -812,6 +1235,7 @@ changes:
     tests:
     - cargo test -p sciencekit_cli
 - id: interop-foundation
+  state: shipped
   group: foundation
   lane: common
   depends_on: []
@@ -821,6 +1245,7 @@ changes:
     - cargo test -p sciencekit_interop
     - cargo test -p sciencekit_common interop
 - id: arrow-interop
+  state: closing
   group: wave7
   lane: interop
   depends_on:
@@ -830,6 +1255,7 @@ changes:
     tests:
     - cargo test -p sciencekit_interop --features arrow
 - id: polars-interop
+  state: planned
   group: wave7
   lane: interop
   depends_on:
@@ -840,6 +1266,7 @@ changes:
     tests:
     - cargo test -p sciencekit_interop --features polars
 - id: datafusion-interop
+  state: planned
   group: wave7
   lane: interop
   depends_on:
@@ -850,6 +1277,7 @@ changes:
     tests:
     - cargo test -p sciencekit_interop --features datafusion
 - id: memory-mapped-interop
+  state: shipped
   group: wave7
   lane: interop
   depends_on:
@@ -860,6 +1288,7 @@ changes:
     tests:
     - cargo test -p sciencekit_interop --features memmap
 - id: python-dataset-interop
+  state: shipped
   group: cross-cutting
   lane: python
   depends_on:
@@ -872,6 +1301,7 @@ changes:
     - maturin develop --release
     - pytest python/tests/datasets
 - id: julia-dataset-interop
+  state: closing
   group: cross-cutting
   lane: julia
   depends_on:
@@ -883,6 +1313,7 @@ changes:
     - julia --project=julia/ScienceKit -e 'using Pkg; Pkg.test()'
     - cargo test -p sciencekit_julia_abi
 - id: jvm-dataset-interop
+  state: deferred
   group: cross-cutting
   lane: jvm
   depends_on:
@@ -897,6 +1328,7 @@ changes:
   deferred: true
   deferred_reason: "The JVM lane is deferred until a dedicated repository and owner exist; see ADR #381."
 - id: r-bindings
+  state: shipped
   group: cross-cutting
   lane: r
   depends_on:
@@ -908,3 +1340,2154 @@ changes:
     - R CMD check .
     extra:
     - openspec validate r-bindings
+- id: sklearn-parity-matrix
+  state: in-progress
+  group: foundation-docs
+  lane: planning
+  depends_on: []
+  completion:
+    openspec: openspec status --change sklearn-parity-matrix --json
+    tests: []
+    extra:
+    - openspec validate sklearn-parity-matrix
+    - python3 scripts/check-parity-matrix.py
+    - mdbook build docs
+- id: access-pattern-contract
+  state: planned
+  group: foundation
+  lane: contracts
+  depends_on:
+  - sklearn-parity-matrix
+  completion:
+    openspec: openspec status --change access-pattern-contract --json
+    tests:
+    - cargo test -p sciencekit_common access_pattern
+- id: sample-weight-support
+  state: planned
+  group: foundation
+  lane: contracts
+  depends_on:
+  - sklearn-parity-matrix
+  completion:
+    openspec: openspec status --change sample-weight-support --json
+    tests:
+    - cargo test -p sciencekit_common sample_weight
+- id: estimator-tags-and-callbacks
+  state: planned
+  group: foundation
+  lane: contracts
+  depends_on:
+  - sklearn-parity-matrix
+  completion:
+    openspec: openspec status --change estimator-tags-and-callbacks --json
+    tests:
+    - cargo test -p sciencekit_common estimator_tags
+- id: multiclass-strategy
+  state: planned
+  group: foundation
+  lane: contracts
+  depends_on:
+  - sample-weight-support
+  - estimator-tags-and-callbacks
+  completion:
+    openspec: openspec status --change multiclass-strategy --json
+    tests:
+    - cargo test -p sciencekit_common multiclass
+- id: multioutput-strategy
+  state: planned
+  group: foundation
+  lane: contracts
+  depends_on:
+  - multiclass-strategy
+  completion:
+    openspec: openspec status --change multioutput-strategy --json
+    tests:
+    - cargo test -p sciencekit_common multioutput
+- id: frozen-estimator
+  state: planned
+  group: foundation
+  lane: contracts
+  depends_on:
+  - estimator-tags-and-callbacks
+  completion:
+    openspec: openspec status --change frozen-estimator --json
+    tests:
+    - cargo test -p sciencekit_common frozen
+- id: dataset-generators
+  state: planned
+  group: wave8
+  lane: datasets
+  depends_on:
+  - resampling-primitives
+  completion:
+    openspec: openspec status --change dataset-generators --json
+    tests:
+    - cargo test -p sciencekit_datasets generators
+- id: dataset-loaders
+  state: planned
+  group: wave8
+  lane: datasets
+  depends_on:
+  - dataset-generators
+  completion:
+    openspec: openspec status --change dataset-loaders --json
+    tests:
+    - cargo test -p sciencekit_datasets loaders
+- id: max-abs-scaler
+  state: planned
+  group: wave9
+  lane: preprocessing
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  completion:
+    openspec: openspec status --change max-abs-scaler --json
+    tests:
+    - cargo test -p sciencekit_preprocessing max_abs_scaler
+- id: normalizer
+  state: planned
+  group: wave9
+  lane: preprocessing
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  completion:
+    openspec: openspec status --change normalizer --json
+    tests:
+    - cargo test -p sciencekit_preprocessing normalizer
+- id: binarizer
+  state: planned
+  group: wave9
+  lane: preprocessing
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  completion:
+    openspec: openspec status --change binarizer --json
+    tests:
+    - cargo test -p sciencekit_preprocessing binarizer
+- id: function-transformer
+  state: planned
+  group: wave9
+  lane: preprocessing
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  completion:
+    openspec: openspec status --change function-transformer --json
+    tests:
+    - cargo test -p sciencekit_preprocessing function_transformer
+- id: kernel-centerer
+  state: planned
+  group: wave9
+  lane: preprocessing
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  completion:
+    openspec: openspec status --change kernel-centerer --json
+    tests:
+    - cargo test -p sciencekit_preprocessing kernel_centerer
+- id: label-encoder
+  state: planned
+  group: wave9
+  lane: preprocessing
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - label-and-indicator-primitives
+  completion:
+    openspec: openspec status --change label-encoder --json
+    tests:
+    - cargo test -p sciencekit_preprocessing label_encoder
+- id: label-binarizer
+  state: planned
+  group: wave9
+  lane: preprocessing
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - label-and-indicator-primitives
+  completion:
+    openspec: openspec status --change label-binarizer --json
+    tests:
+    - cargo test -p sciencekit_preprocessing label_binarizer
+- id: multi-label-binarizer
+  state: planned
+  group: wave9
+  lane: preprocessing
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - label-and-indicator-primitives
+  completion:
+    openspec: openspec status --change multi-label-binarizer --json
+    tests:
+    - cargo test -p sciencekit_preprocessing multi_label_binarizer
+- id: ordinal-encoder
+  state: planned
+  group: wave9
+  lane: preprocessing
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - label-and-indicator-primitives
+  completion:
+    openspec: openspec status --change ordinal-encoder --json
+    tests:
+    - cargo test -p sciencekit_preprocessing ordinal_encoder
+- id: k-bins-discretizer
+  state: planned
+  group: wave9
+  lane: preprocessing
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - binning-primitives
+  completion:
+    openspec: openspec status --change k-bins-discretizer --json
+    tests:
+    - cargo test -p sciencekit_preprocessing k_bins_discretizer
+- id: power-transformer
+  state: planned
+  group: wave9
+  lane: preprocessing
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - streaming-moments
+  completion:
+    openspec: openspec status --change power-transformer --json
+    tests:
+    - cargo test -p sciencekit_preprocessing power_transformer
+- id: quantile-transformer
+  state: planned
+  group: wave9
+  lane: preprocessing
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - binning-primitives
+  - streaming-moments
+  completion:
+    openspec: openspec status --change quantile-transformer --json
+    tests:
+    - cargo test -p sciencekit_preprocessing quantile_transformer
+- id: spline-transformer
+  state: planned
+  group: wave9
+  lane: preprocessing
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  completion:
+    openspec: openspec status --change spline-transformer --json
+    tests:
+    - cargo test -p sciencekit_preprocessing spline_transformer
+- id: target-encoder
+  state: planned
+  group: wave9
+  lane: preprocessing
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - streaming-moments
+  - label-and-indicator-primitives
+  completion:
+    openspec: openspec status --change target-encoder --json
+    tests:
+    - cargo test -p sciencekit_preprocessing target_encoder
+- id: preprocessing-functions
+  state: planned
+  group: wave9
+  lane: preprocessing
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - label-and-indicator-primitives
+  completion:
+    openspec: openspec status --change preprocessing-functions --json
+    tests:
+    - cargo test -p sciencekit_preprocessing preprocessing_functions
+- id: variance-threshold
+  state: planned
+  group: wave9
+  lane: feature-selection
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - streaming-moments
+  completion:
+    openspec: openspec status --change variance-threshold --json
+    tests:
+    - cargo test -p sciencekit_feature_selection variance
+- id: univariate-score-functions
+  state: planned
+  group: wave9
+  lane: feature-selection
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - sparse-pairwise-distances
+  - streaming-moments
+  completion:
+    openspec: openspec status --change univariate-score-functions --json
+    tests:
+    - cargo test -p sciencekit_feature_selection scores
+- id: univariate-selectors
+  state: planned
+  group: wave9
+  lane: feature-selection
+  depends_on:
+  - univariate-score-functions
+  - label-and-indicator-primitives
+  completion:
+    openspec: openspec status --change univariate-selectors --json
+    tests:
+    - cargo test -p sciencekit_feature_selection univariate
+- id: select-from-model
+  state: planned
+  group: wave9
+  lane: feature-selection
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - model-selection-core
+  - boxed-predictor-contract
+  completion:
+    openspec: openspec status --change select-from-model --json
+    tests:
+    - cargo test -p sciencekit_feature_selection from_model
+- id: rfe
+  state: planned
+  group: wave9
+  lane: feature-selection
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - model-selection-core
+  - boxed-predictor-contract
+  completion:
+    openspec: openspec status --change rfe --json
+    tests:
+    - cargo test -p sciencekit_feature_selection rfe
+- id: sequential-feature-selector
+  state: planned
+  group: wave9
+  lane: feature-selection
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - model-selection-core
+  - boxed-predictor-contract
+  completion:
+    openspec: openspec status --change sequential-feature-selector --json
+    tests:
+    - cargo test -p sciencekit_feature_selection sequential
+- id: gaussian-naive-bayes
+  state: planned
+  group: wave9
+  lane: naive-bayes
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - streaming-moments
+  - distribution-and-em-kernels
+  completion:
+    openspec: openspec status --change gaussian-naive-bayes --json
+    tests:
+    - cargo test -p sciencekit_naive_bayes gaussian
+- id: multinomial-naive-bayes
+  state: planned
+  group: wave9
+  lane: naive-bayes
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - streaming-moments
+  - distribution-and-em-kernels
+  completion:
+    openspec: openspec status --change multinomial-naive-bayes --json
+    tests:
+    - cargo test -p sciencekit_naive_bayes multinomial
+- id: complement-naive-bayes
+  state: planned
+  group: wave9
+  lane: naive-bayes
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - streaming-moments
+  - distribution-and-em-kernels
+  completion:
+    openspec: openspec status --change complement-naive-bayes --json
+    tests:
+    - cargo test -p sciencekit_naive_bayes complement
+- id: bernoulli-naive-bayes
+  state: planned
+  group: wave9
+  lane: naive-bayes
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - streaming-moments
+  - distribution-and-em-kernels
+  completion:
+    openspec: openspec status --change bernoulli-naive-bayes --json
+    tests:
+    - cargo test -p sciencekit_naive_bayes bernoulli
+- id: categorical-naive-bayes
+  state: planned
+  group: wave9
+  lane: naive-bayes
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - streaming-moments
+  - distribution-and-em-kernels
+  - label-and-indicator-primitives
+  completion:
+    openspec: openspec status --change categorical-naive-bayes --json
+    tests:
+    - cargo test -p sciencekit_naive_bayes categorical
+- id: dummy-estimators
+  state: planned
+  group: wave9
+  lane: meta
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - boxed-predictor-contract
+  completion:
+    openspec: openspec status --change dummy-estimators --json
+    tests:
+    - cargo test -p sciencekit_meta dummy
+- id: isotonic-regression
+  state: planned
+  group: wave9
+  lane: meta
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  completion:
+    openspec: openspec status --change isotonic-regression --json
+    tests:
+    - cargo test -p sciencekit_meta isotonic
+- id: metrics-regression-completion
+  state: planned
+  group: wave9
+  lane: metrics
+  depends_on:
+  - metrics-ranking
+  - metrics-clustering
+  completion:
+    openspec: openspec status --change metrics-regression-completion --json
+    tests:
+    - cargo test -p sciencekit_metrics regression
+- id: metrics-classification-completion
+  state: planned
+  group: wave9
+  lane: metrics
+  depends_on:
+  - metrics-ranking
+  - metrics-clustering
+  - label-and-indicator-primitives
+  completion:
+    openspec: openspec status --change metrics-classification-completion --json
+    tests:
+    - cargo test -p sciencekit_metrics classification
+- id: metrics-ranking-completion
+  state: planned
+  group: wave9
+  lane: metrics
+  depends_on:
+  - metrics-ranking
+  - metrics-calibration-multilabel
+  completion:
+    openspec: openspec status --change metrics-ranking-completion --json
+    tests:
+    - cargo test -p sciencekit_metrics ranking
+- id: ridge-classifier
+  state: planned
+  group: wave10
+  lane: linear-model
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - multiclass-strategy
+  completion:
+    openspec: openspec status --change ridge-classifier --json
+    tests:
+    - cargo test -p sciencekit_linear_model ridge
+- id: ridge-cv
+  state: planned
+  group: wave10
+  lane: linear-model
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - model-selection-core
+  completion:
+    openspec: openspec status --change ridge-cv --json
+    tests:
+    - cargo test -p sciencekit_linear_model ridge
+- id: lasso-cv
+  state: planned
+  group: wave10
+  lane: linear-model
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - model-selection-core
+  - regularization-path-solver
+  completion:
+    openspec: openspec status --change lasso-cv --json
+    tests:
+    - cargo test -p sciencekit_linear_model lasso
+- id: elastic-net-cv
+  state: planned
+  group: wave10
+  lane: linear-model
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - model-selection-core
+  - regularization-path-solver
+  completion:
+    openspec: openspec status --change elastic-net-cv --json
+    tests:
+    - cargo test -p sciencekit_linear_model elastic
+- id: logistic-regression-cv
+  state: planned
+  group: wave10
+  lane: linear-model
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - model-selection-core
+  - regularization-path-solver
+  completion:
+    openspec: openspec status --change logistic-regression-cv --json
+    tests:
+    - cargo test -p sciencekit_linear_model logistic
+- id: multitask-linear
+  state: planned
+  group: wave10
+  lane: linear-model
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - regularization-path-solver
+  - streaming-moments
+  completion:
+    openspec: openspec status --change multitask-linear --json
+    tests:
+    - cargo test -p sciencekit_linear_model multitask
+- id: lars-family
+  state: planned
+  group: wave10
+  lane: linear-model
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - regularization-path-solver
+  completion:
+    openspec: openspec status --change lars-family --json
+    tests:
+    - cargo test -p sciencekit_linear_model lars
+- id: orthogonal-matching-pursuit
+  state: planned
+  group: wave10
+  lane: linear-model
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - regularization-path-solver
+  completion:
+    openspec: openspec status --change orthogonal-matching-pursuit --json
+    tests:
+    - cargo test -p sciencekit_linear_model orthogonal
+- id: bayesian-ridge
+  state: planned
+  group: wave10
+  lane: linear-model
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  completion:
+    openspec: openspec status --change bayesian-ridge --json
+    tests:
+    - cargo test -p sciencekit_linear_model bayesian
+- id: ard-regression
+  state: planned
+  group: wave10
+  lane: linear-model
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  completion:
+    openspec: openspec status --change ard-regression --json
+    tests:
+    - cargo test -p sciencekit_linear_model ard
+- id: generalized-linear-regressors
+  state: planned
+  group: wave10
+  lane: linear-model
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - penalized-glm-solver
+  - streaming-moments
+  completion:
+    openspec: openspec status --change generalized-linear-regressors --json
+    tests:
+    - cargo test -p sciencekit_linear_model generalized
+- id: quantile-regressor
+  state: planned
+  group: wave10
+  lane: linear-model
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - penalized-glm-solver
+  completion:
+    openspec: openspec status --change quantile-regressor --json
+    tests:
+    - cargo test -p sciencekit_linear_model quantile
+- id: huber-regressor
+  state: planned
+  group: wave10
+  lane: linear-model
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - penalized-glm-solver
+  completion:
+    openspec: openspec status --change huber-regressor --json
+    tests:
+    - cargo test -p sciencekit_linear_model huber
+- id: ransac-regressor
+  state: planned
+  group: wave10
+  lane: linear-model
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - deterministic-randomness
+  - resampling-primitives
+  - robust-statistics-kernels
+  completion:
+    openspec: openspec status --change ransac-regressor --json
+    tests:
+    - cargo test -p sciencekit_linear_model ransac
+- id: theil-sen-regressor
+  state: planned
+  group: wave10
+  lane: linear-model
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - deterministic-randomness
+  - resampling-primitives
+  - robust-statistics-kernels
+  completion:
+    openspec: openspec status --change theil-sen-regressor --json
+    tests:
+    - cargo test -p sciencekit_linear_model theil
+- id: passive-aggressive
+  state: planned
+  group: wave10
+  lane: linear-model
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - multiclass-strategy
+  completion:
+    openspec: openspec status --change passive-aggressive --json
+    tests:
+    - cargo test -p sciencekit_linear_model passive
+- id: perceptron
+  state: planned
+  group: wave10
+  lane: linear-model
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - multiclass-strategy
+  completion:
+    openspec: openspec status --change perceptron --json
+    tests:
+    - cargo test -p sciencekit_linear_model perceptron
+- id: sgd-one-class-svm
+  state: planned
+  group: wave10
+  lane: linear-model
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  completion:
+    openspec: openspec status --change sgd-one-class-svm --json
+    tests:
+    - cargo test -p sciencekit_linear_model sgd
+- id: parameter-grid
+  state: planned
+  group: wave10
+  lane: model-selection
+  depends_on:
+  - model-selection-core
+  completion:
+    openspec: openspec status --change parameter-grid --json
+    tests:
+    - cargo test -p sciencekit_model_selection parameter
+- id: randomized-search
+  state: planned
+  group: wave10
+  lane: model-selection
+  depends_on:
+  - parameter-grid
+  - grid-search-cv
+  - resampling-primitives
+  completion:
+    openspec: openspec status --change randomized-search --json
+    tests:
+    - cargo test -p sciencekit_model_selection randomized
+- id: halving-random-search
+  state: planned
+  group: wave10
+  lane: model-selection
+  depends_on:
+  - randomized-search
+  - halving-grid-search
+  completion:
+    openspec: openspec status --change halving-random-search --json
+    tests:
+    - cargo test -p sciencekit_model_selection halving
+- id: leave-one-out-splitters
+  state: planned
+  group: wave10
+  lane: model-selection
+  depends_on:
+  - model-selection-core
+  completion:
+    openspec: openspec status --change leave-one-out-splitters --json
+    tests:
+    - cargo test -p sciencekit_model_selection leave
+- id: shuffle-splitters
+  state: planned
+  group: wave10
+  lane: model-selection
+  depends_on:
+  - model-selection-core
+  - resampling-primitives
+  completion:
+    openspec: openspec status --change shuffle-splitters --json
+    tests:
+    - cargo test -p sciencekit_model_selection shuffle
+- id: repeated-kfold
+  state: planned
+  group: wave10
+  lane: model-selection
+  depends_on:
+  - model-selection-core
+  - resampling-primitives
+  completion:
+    openspec: openspec status --change repeated-kfold --json
+    tests:
+    - cargo test -p sciencekit_model_selection repeated
+- id: stratified-group-kfold
+  state: planned
+  group: wave10
+  lane: model-selection
+  depends_on:
+  - model-selection-core
+  - resampling-primitives
+  completion:
+    openspec: openspec status --change stratified-group-kfold --json
+    tests:
+    - cargo test -p sciencekit_model_selection stratified
+- id: time-series-split
+  state: planned
+  group: wave10
+  lane: model-selection
+  depends_on:
+  - model-selection-core
+  completion:
+    openspec: openspec status --change time-series-split --json
+    tests:
+    - cargo test -p sciencekit_model_selection time
+- id: predefined-split
+  state: planned
+  group: wave10
+  lane: model-selection
+  depends_on:
+  - model-selection-core
+  completion:
+    openspec: openspec status --change predefined-split --json
+    tests:
+    - cargo test -p sciencekit_model_selection predefined
+- id: cross-validate-functions
+  state: planned
+  group: wave10
+  lane: model-selection
+  depends_on:
+  - model-selection-core
+  - metrics-ranking
+  - resampling-primitives
+  completion:
+    openspec: openspec status --change cross-validate-functions --json
+    tests:
+    - cargo test -p sciencekit_model_selection cross
+- id: learning-curve
+  state: planned
+  group: wave10
+  lane: model-selection
+  depends_on:
+  - cross-validate-functions
+  - resampling-primitives
+  completion:
+    openspec: openspec status --change learning-curve --json
+    tests:
+    - cargo test -p sciencekit_model_selection learning
+- id: validation-curve
+  state: planned
+  group: wave10
+  lane: model-selection
+  depends_on:
+  - cross-validate-functions
+  - resampling-primitives
+  completion:
+    openspec: openspec status --change validation-curve --json
+    tests:
+    - cargo test -p sciencekit_model_selection validation
+- id: permutation-test-score
+  state: planned
+  group: wave10
+  lane: model-selection
+  depends_on:
+  - cross-validate-functions
+  - metrics-ranking
+  - resampling-primitives
+  completion:
+    openspec: openspec status --change permutation-test-score --json
+    tests:
+    - cargo test -p sciencekit_model_selection permutation
+- id: threshold-tuning
+  state: planned
+  group: wave10
+  lane: model-selection
+  depends_on:
+  - calibrated-classifier
+  - estimator-tags-and-callbacks
+  - boxed-predictor-contract
+  - binning-primitives
+  completion:
+    openspec: openspec status --change threshold-tuning --json
+    tests:
+    - cargo test -p sciencekit_model_selection threshold
+- id: pairwise-kernel-functions
+  state: planned
+  group: wave11
+  lane: kernel
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - sparse-pairwise-distances
+  completion:
+    openspec: openspec status --change pairwise-kernel-functions --json
+    tests:
+    - cargo test -p sciencekit_kernel_methods pairwise
+- id: nusvm
+  state: planned
+  group: wave11
+  lane: kernel
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - svm-svc-svr
+  completion:
+    openspec: openspec status --change nusvm --json
+    tests:
+    - cargo test -p sciencekit_kernel_methods nusvm
+- id: linear-svr
+  state: planned
+  group: wave11
+  lane: kernel
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - svm-linear-svc
+  completion:
+    openspec: openspec status --change linear-svr --json
+    tests:
+    - cargo test -p sciencekit_kernel_methods linear
+- id: kernel-ridge
+  state: planned
+  group: wave11
+  lane: kernel
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - pairwise-kernel-functions
+  - composable-kernel-algebra
+  completion:
+    openspec: openspec status --change kernel-ridge --json
+    tests:
+    - cargo test -p sciencekit_kernel_methods kernel
+- id: kernel-approximation
+  state: planned
+  group: wave11
+  lane: kernel
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - pairwise-kernel-functions
+  - randomized-svd-kernel
+  - pairwise-metric-extension
+  - composable-kernel-algebra
+  completion:
+    openspec: openspec status --change kernel-approximation --json
+    tests:
+    - cargo test -p sciencekit_kernel_methods kernel
+- id: gaussian-process
+  state: planned
+  group: wave11
+  lane: kernel
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - pairwise-kernel-functions
+  - deterministic-randomness
+  - composable-kernel-algebra
+  - lbfgs-optimizer
+  completion:
+    openspec: openspec status --change gaussian-process --json
+    tests:
+    - cargo test -p sciencekit_kernel_methods gaussian
+- id: kernel-pca
+  state: planned
+  group: wave11
+  lane: kernel
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - pairwise-kernel-functions
+  - randomized-svd-kernel
+  - pca
+  - composable-kernel-algebra
+  completion:
+    openspec: openspec status --change kernel-pca --json
+    tests:
+    - cargo test -p sciencekit_kernel_methods kernel
+- id: multilayer-perceptron
+  state: planned
+  group: wave11
+  lane: neural-network
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - deterministic-randomness
+  - lbfgs-optimizer
+  - resampling-primitives
+  completion:
+    openspec: openspec status --change multilayer-perceptron --json
+    tests:
+    - cargo test -p sciencekit_neural_network perceptron
+- id: bernoulli-rbm
+  state: planned
+  group: wave11
+  lane: neural-network
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - deterministic-randomness
+  - resampling-primitives
+  completion:
+    openspec: openspec status --change bernoulli-rbm --json
+    tests:
+    - cargo test -p sciencekit_neural_network rbm
+- id: label-propagation
+  state: planned
+  group: wave11
+  lane: semi-supervised
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - sparse-pairwise-distances
+  - multiclass-strategy
+  - graph-construction-and-algorithms
+  - pairwise-metric-extension
+  completion:
+    openspec: openspec status --change label-propagation --json
+    tests:
+    - cargo test -p sciencekit_semi_supervised label
+- id: label-spreading
+  state: planned
+  group: wave11
+  lane: semi-supervised
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - sparse-pairwise-distances
+  - multiclass-strategy
+  - graph-construction-and-algorithms
+  - pairwise-metric-extension
+  completion:
+    openspec: openspec status --change label-spreading --json
+    tests:
+    - cargo test -p sciencekit_semi_supervised label
+- id: self-training
+  state: planned
+  group: wave11
+  lane: semi-supervised
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - multiclass-strategy
+  - model-selection-core
+  - boxed-predictor-contract
+  completion:
+    openspec: openspec status --change self-training --json
+    tests:
+    - cargo test -p sciencekit_semi_supervised self
+- id: text-vectorizers
+  state: planned
+  group: wave11
+  lane: text
+  depends_on:
+  - access-pattern-contract
+  - sparse-streaming-coverage
+  - text-tokenization-and-vocabulary
+  completion:
+    openspec: openspec status --change text-vectorizers --json
+    tests:
+    - cargo test -p sciencekit_text vectorizer
+- id: dict-vectorizer
+  state: planned
+  group: wave11
+  lane: text
+  depends_on:
+  - access-pattern-contract
+  - label-and-indicator-primitives
+  completion:
+    openspec: openspec status --change dict-vectorizer --json
+    tests:
+    - cargo test -p sciencekit_text dict
+- id: feature-hasher
+  state: planned
+  group: wave11
+  lane: text
+  depends_on:
+  - access-pattern-contract
+  - text-tokenization-and-vocabulary
+  completion:
+    openspec: openspec status --change feature-hasher --json
+    tests:
+    - cargo test -p sciencekit_text hasher
+- id: column-transformer
+  state: planned
+  group: wave11
+  lane: pipeline
+  depends_on:
+  - type-safe-pipeline
+  - ordinal-encoder
+  completion:
+    openspec: openspec status --change column-transformer --json
+    tests:
+    - cargo test -p sciencekit_pipeline column_transformer
+- id: transformed-target-regressor
+  state: planned
+  group: wave11
+  lane: pipeline
+  depends_on:
+  - type-safe-pipeline
+  - access-pattern-contract
+  - boxed-predictor-contract
+  completion:
+    openspec: openspec status --change transformed-target-regressor --json
+    tests:
+    - cargo test -p sciencekit_pipeline transformed_target
+- id: extra-trees
+  state: planned
+  group: wave11
+  lane: ensemble
+  depends_on:
+  - random-forest
+  - extremely-randomized-tree
+  completion:
+    openspec: openspec status --change extra-trees --json
+    tests:
+    - cargo test -p sciencekit_ensemble extra
+- id: adaboost
+  state: planned
+  group: wave11
+  lane: ensemble
+  depends_on:
+  - decision-tree-cart
+  - sample-weight-support
+  completion:
+    openspec: openspec status --change adaboost --json
+    tests:
+    - cargo test -p sciencekit_ensemble adaboost
+- id: voting
+  state: planned
+  group: wave11
+  lane: ensemble
+  depends_on:
+  - multiclass-strategy
+  - model-selection-core
+  - boxed-predictor-contract
+  completion:
+    openspec: openspec status --change voting --json
+    tests:
+    - cargo test -p sciencekit_ensemble voting
+- id: stacking
+  state: planned
+  group: wave11
+  lane: ensemble
+  depends_on:
+  - multiclass-strategy
+  - cross-validate-functions
+  - boxed-predictor-contract
+  - resampling-primitives
+  completion:
+    openspec: openspec status --change stacking --json
+    tests:
+    - cargo test -p sciencekit_ensemble stacking
+- id: random-trees-embedding
+  state: planned
+  group: wave11
+  lane: ensemble
+  depends_on:
+  - random-forest
+  completion:
+    openspec: openspec status --change random-trees-embedding --json
+    tests:
+    - cargo test -p sciencekit_ensemble random
+- id: calibrated-classifier
+  state: planned
+  group: wave11
+  lane: calibration
+  depends_on:
+  - model-selection-core
+  - multiclass-strategy
+  - isotonic-regression
+  - boxed-predictor-contract
+  - resampling-primitives
+  - binning-primitives
+  completion:
+    openspec: openspec status --change calibrated-classifier --json
+    tests:
+    - cargo test -p sciencekit_calibration calibrated
+- id: permutation-importance
+  state: planned
+  group: wave11
+  lane: inspection
+  depends_on:
+  - model-selection-core
+  - metrics-ranking
+  - boxed-predictor-contract
+  - resampling-primitives
+  completion:
+    openspec: openspec status --change permutation-importance --json
+    tests:
+    - cargo test -p sciencekit_metrics permutation_importance
+- id: partial-dependence
+  state: planned
+  group: wave11
+  lane: inspection
+  depends_on:
+  - model-selection-core
+  - grid-search-cv
+  - boxed-predictor-contract
+  - binning-primitives
+  completion:
+    openspec: openspec status --change partial-dependence --json
+    tests:
+    - cargo test -p sciencekit_metrics partial_dependence
+- id: agglomerative-clustering
+  state: planned
+  group: wave12
+  lane: cluster
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - sparse-pairwise-distances
+  - kd-tree-and-ball-tree
+  completion:
+    openspec: openspec status --change agglomerative-clustering --json
+    tests:
+    - cargo test -p sciencekit_cluster agglomerative
+- id: feature-agglomeration
+  state: planned
+  group: wave12
+  lane: cluster
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - agglomerative-clustering
+  completion:
+    openspec: openspec status --change feature-agglomeration --json
+    tests:
+    - cargo test -p sciencekit_cluster feature
+- id: affinity-propagation
+  state: planned
+  group: wave12
+  lane: cluster
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - sparse-pairwise-distances
+  - deterministic-randomness
+  completion:
+    openspec: openspec status --change affinity-propagation --json
+    tests:
+    - cargo test -p sciencekit_cluster affinity
+- id: mean-shift
+  state: planned
+  group: wave12
+  lane: cluster
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - kd-tree-and-ball-tree
+  - pairwise-metric-extension
+  completion:
+    openspec: openspec status --change mean-shift --json
+    tests:
+    - cargo test -p sciencekit_cluster mean
+- id: birch
+  state: planned
+  group: wave12
+  lane: cluster
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - clustering-contracts
+  - streaming-moments
+  completion:
+    openspec: openspec status --change birch --json
+    tests:
+    - cargo test -p sciencekit_cluster birch
+- id: bisecting-kmeans
+  state: planned
+  group: wave12
+  lane: cluster
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - kmeans-lloyd-elkan
+  completion:
+    openspec: openspec status --change bisecting-kmeans --json
+    tests:
+    - cargo test -p sciencekit_cluster bisecting
+- id: optics
+  state: planned
+  group: wave12
+  lane: cluster
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - dbscan
+  - kd-tree-and-ball-tree
+  - graph-construction-and-algorithms
+  completion:
+    openspec: openspec status --change optics --json
+    tests:
+    - cargo test -p sciencekit_cluster optics
+- id: hdbscan
+  state: planned
+  group: wave12
+  lane: cluster
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - dbscan
+  - kd-tree-and-ball-tree
+  - graph-construction-and-algorithms
+  completion:
+    openspec: openspec status --change hdbscan --json
+    tests:
+    - cargo test -p sciencekit_cluster hdbscan
+- id: spectral-clustering
+  state: planned
+  group: wave12
+  lane: cluster
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - randomized-svd-kernel
+  - sparse-pairwise-distances
+  - kd-tree-and-ball-tree
+  - graph-construction-and-algorithms
+  - sparse-symmetric-eigensolver
+  completion:
+    openspec: openspec status --change spectral-clustering --json
+    tests:
+    - cargo test -p sciencekit_cluster spectral
+- id: spectral-biclustering
+  state: planned
+  group: wave12
+  lane: cluster
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - spectral-clustering
+  - graph-construction-and-algorithms
+  - sparse-symmetric-eigensolver
+  completion:
+    openspec: openspec status --change spectral-biclustering --json
+    tests:
+    - cargo test -p sciencekit_cluster spectral
+- id: spectral-coclustering
+  state: planned
+  group: wave12
+  lane: cluster
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - spectral-clustering
+  - graph-construction-and-algorithms
+  - sparse-symmetric-eigensolver
+  completion:
+    openspec: openspec status --change spectral-coclustering --json
+    tests:
+    - cargo test -p sciencekit_cluster spectral
+- id: nmf
+  state: planned
+  group: wave12
+  lane: decomposition
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - randomized-svd-kernel
+  - matrix-factorization-kernels
+  completion:
+    openspec: openspec status --change nmf --json
+    tests:
+    - cargo test -p sciencekit_decomposition nmf
+- id: minibatch-nmf
+  state: planned
+  group: wave12
+  lane: decomposition
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - nmf
+  - sparse-streaming-coverage
+  - matrix-factorization-kernels
+  completion:
+    openspec: openspec status --change minibatch-nmf --json
+    tests:
+    - cargo test -p sciencekit_decomposition minibatch
+- id: fast-ica
+  state: planned
+  group: wave12
+  lane: decomposition
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - randomized-svd-kernel
+  - deterministic-randomness
+  - matrix-factorization-kernels
+  completion:
+    openspec: openspec status --change fast-ica --json
+    tests:
+    - cargo test -p sciencekit_decomposition fast
+- id: factor-analysis
+  state: planned
+  group: wave12
+  lane: decomposition
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - pca
+  - randomized-svd-kernel
+  - distribution-and-em-kernels
+  - streaming-moments
+  completion:
+    openspec: openspec status --change factor-analysis --json
+    tests:
+    - cargo test -p sciencekit_decomposition factor
+- id: sparse-pca
+  state: planned
+  group: wave12
+  lane: decomposition
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - pca
+  - randomized-svd-kernel
+  - matrix-factorization-kernels
+  completion:
+    openspec: openspec status --change sparse-pca --json
+    tests:
+    - cargo test -p sciencekit_decomposition sparse
+- id: minibatch-sparse-pca
+  state: planned
+  group: wave12
+  lane: decomposition
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - sparse-pca
+  - sparse-streaming-coverage
+  - matrix-factorization-kernels
+  completion:
+    openspec: openspec status --change minibatch-sparse-pca --json
+    tests:
+    - cargo test -p sciencekit_decomposition minibatch
+- id: dictionary-learning
+  state: planned
+  group: wave12
+  lane: decomposition
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - randomized-svd-kernel
+  - matrix-factorization-kernels
+  completion:
+    openspec: openspec status --change dictionary-learning --json
+    tests:
+    - cargo test -p sciencekit_decomposition dictionary
+- id: minibatch-dictionary-learning
+  state: planned
+  group: wave12
+  lane: decomposition
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - dictionary-learning
+  - sparse-streaming-coverage
+  - matrix-factorization-kernels
+  completion:
+    openspec: openspec status --change minibatch-dictionary-learning --json
+    tests:
+    - cargo test -p sciencekit_decomposition minibatch
+- id: sparse-coder
+  state: planned
+  group: wave12
+  lane: decomposition
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - dictionary-learning
+  - matrix-factorization-kernels
+  completion:
+    openspec: openspec status --change sparse-coder --json
+    tests:
+    - cargo test -p sciencekit_decomposition sparse
+- id: latent-dirichlet-allocation
+  state: planned
+  group: wave12
+  lane: decomposition
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - text-vectorizers
+  - deterministic-randomness
+  - distribution-and-em-kernels
+  - text-tokenization-and-vocabulary
+  completion:
+    openspec: openspec status --change latent-dirichlet-allocation --json
+    tests:
+    - cargo test -p sciencekit_decomposition latent
+- id: random-projection
+  state: planned
+  group: wave12
+  lane: decomposition
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - randomized-svd-kernel
+  - resampling-primitives
+  completion:
+    openspec: openspec status --change random-projection --json
+    tests:
+    - cargo test -p sciencekit_decomposition random
+- id: gaussian-mixture
+  state: planned
+  group: wave12
+  lane: mixture
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - deterministic-randomness
+  - distribution-and-em-kernels
+  - streaming-moments
+  - resampling-primitives
+  completion:
+    openspec: openspec status --change gaussian-mixture --json
+    tests:
+    - cargo test -p sciencekit_mixture gaussian
+- id: bayesian-gaussian-mixture
+  state: planned
+  group: wave12
+  lane: mixture
+  depends_on:
+  - gaussian-mixture
+  - distribution-and-em-kernels
+  - streaming-moments
+  completion:
+    openspec: openspec status --change bayesian-gaussian-mixture --json
+    tests:
+    - cargo test -p sciencekit_mixture bayesian
+- id: linear-discriminant-analysis
+  state: planned
+  group: wave12
+  lane: discriminant
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - sparse-pairwise-distances
+  - streaming-moments
+  - pairwise-metric-extension
+  completion:
+    openspec: openspec status --change linear-discriminant-analysis --json
+    tests:
+    - cargo test -p sciencekit_discriminant_analysis linear
+- id: quadratic-discriminant-analysis
+  state: planned
+  group: wave12
+  lane: discriminant
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - sparse-pairwise-distances
+  - streaming-moments
+  - pairwise-metric-extension
+  completion:
+    openspec: openspec status --change quadratic-discriminant-analysis --json
+    tests:
+    - cargo test -p sciencekit_discriminant_analysis quadratic
+- id: empirical-covariance
+  state: planned
+  group: wave12
+  lane: covariance
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - sparse-pairwise-distances
+  - streaming-moments
+  - pairwise-metric-extension
+  completion:
+    openspec: openspec status --change empirical-covariance --json
+    tests:
+    - cargo test -p sciencekit_covariance empirical
+- id: shrunk-covariance
+  state: planned
+  group: wave12
+  lane: covariance
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - empirical-covariance
+  - streaming-moments
+  completion:
+    openspec: openspec status --change shrunk-covariance --json
+    tests:
+    - cargo test -p sciencekit_covariance shrunk
+- id: ledoit-wolf
+  state: planned
+  group: wave12
+  lane: covariance
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - shrunk-covariance
+  - streaming-moments
+  completion:
+    openspec: openspec status --change ledoit-wolf --json
+    tests:
+    - cargo test -p sciencekit_covariance ledoit
+- id: oas
+  state: planned
+  group: wave12
+  lane: covariance
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - shrunk-covariance
+  - streaming-moments
+  completion:
+    openspec: openspec status --change oas --json
+    tests:
+    - cargo test -p sciencekit_covariance oas
+- id: min-cov-det
+  state: planned
+  group: wave12
+  lane: covariance
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - empirical-covariance
+  - deterministic-randomness
+  - streaming-moments
+  - robust-statistics-kernels
+  completion:
+    openspec: openspec status --change min-cov-det --json
+    tests:
+    - cargo test -p sciencekit_covariance min
+- id: graphical-lasso
+  state: planned
+  group: wave12
+  lane: covariance
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - empirical-covariance
+  - streaming-moments
+  completion:
+    openspec: openspec status --change graphical-lasso --json
+    tests:
+    - cargo test -p sciencekit_covariance graphical
+- id: elliptic-envelope
+  state: planned
+  group: wave12
+  lane: covariance
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - min-cov-det
+  - outlier-detection
+  - robust-statistics-kernels
+  completion:
+    openspec: openspec status --change elliptic-envelope --json
+    tests:
+    - cargo test -p sciencekit_covariance elliptic
+- id: pls-svd
+  state: planned
+  group: wave12
+  lane: cross-decomposition
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - sparse-pairwise-distances
+  - randomized-svd-kernel
+  - streaming-moments
+  - pairwise-metric-extension
+  - sparse-symmetric-eigensolver
+  completion:
+    openspec: openspec status --change pls-svd --json
+    tests:
+    - cargo test -p sciencekit_cross_decomposition pls
+- id: pls-regression
+  state: planned
+  group: wave12
+  lane: cross-decomposition
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - pls-svd
+  - streaming-moments
+  completion:
+    openspec: openspec status --change pls-regression --json
+    tests:
+    - cargo test -p sciencekit_cross_decomposition pls
+- id: pls-canonical
+  state: planned
+  group: wave12
+  lane: cross-decomposition
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - pls-svd
+  - streaming-moments
+  completion:
+    openspec: openspec status --change pls-canonical --json
+    tests:
+    - cargo test -p sciencekit_cross_decomposition pls
+- id: canonical-correlation-analysis
+  state: planned
+  group: wave12
+  lane: cross-decomposition
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - pls-svd
+  - streaming-moments
+  completion:
+    openspec: openspec status --change canonical-correlation-analysis --json
+    tests:
+    - cargo test -p sciencekit_cross_decomposition canonical
+- id: multidimensional-scaling
+  state: planned
+  group: wave13
+  lane: manifold
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - sparse-pairwise-distances
+  - deterministic-randomness
+  - pairwise-metric-extension
+  - sparse-symmetric-eigensolver
+  - resampling-primitives
+  completion:
+    openspec: openspec status --change multidimensional-scaling --json
+    tests:
+    - cargo test -p sciencekit_manifold multidimensional
+- id: classical-mds
+  state: planned
+  group: wave13
+  lane: manifold
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - multidimensional-scaling
+  completion:
+    openspec: openspec status --change classical-mds --json
+    tests:
+    - cargo test -p sciencekit_manifold classical
+- id: isomap
+  state: planned
+  group: wave13
+  lane: manifold
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - sparse-pairwise-distances
+  - kd-tree-and-ball-tree
+  - graph-construction-and-algorithms
+  - sparse-symmetric-eigensolver
+  completion:
+    openspec: openspec status --change isomap --json
+    tests:
+    - cargo test -p sciencekit_manifold isomap
+- id: locally-linear-embedding
+  state: planned
+  group: wave13
+  lane: manifold
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - kd-tree-and-ball-tree
+  - graph-construction-and-algorithms
+  - sparse-symmetric-eigensolver
+  completion:
+    openspec: openspec status --change locally-linear-embedding --json
+    tests:
+    - cargo test -p sciencekit_manifold locally
+- id: spectral-embedding
+  state: planned
+  group: wave13
+  lane: manifold
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - sparse-pairwise-distances
+  - randomized-svd-kernel
+  - graph-construction-and-algorithms
+  - sparse-symmetric-eigensolver
+  completion:
+    openspec: openspec status --change spectral-embedding --json
+    tests:
+    - cargo test -p sciencekit_manifold spectral
+- id: tsne
+  state: planned
+  group: wave13
+  lane: manifold
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - sparse-pairwise-distances
+  - deterministic-randomness
+  - graph-construction-and-algorithms
+  - resampling-primitives
+  completion:
+    openspec: openspec status --change tsne --json
+    tests:
+    - cargo test -p sciencekit_manifold tsne
+- id: radius-neighbors
+  state: planned
+  group: wave13
+  lane: neighbors
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - knn-classifier-regressor
+  - pairwise-metric-extension
+  completion:
+    openspec: openspec status --change radius-neighbors --json
+    tests:
+    - cargo test -p sciencekit_neighbors radius
+- id: neighbor-transformers
+  state: planned
+  group: wave13
+  lane: neighbors
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - knn-classifier-regressor
+  - pairwise-metric-extension
+  completion:
+    openspec: openspec status --change neighbor-transformers --json
+    tests:
+    - cargo test -p sciencekit_neighbors neighbor
+- id: kernel-density
+  state: planned
+  group: wave13
+  lane: neighbors
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - kd-tree-and-ball-tree
+  - pairwise-metric-extension
+  completion:
+    openspec: openspec status --change kernel-density --json
+    tests:
+    - cargo test -p sciencekit_neighbors kernel
+- id: nearest-centroid
+  state: planned
+  group: wave13
+  lane: neighbors
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - access-pattern-contract
+  - streaming-moments
+  completion:
+    openspec: openspec status --change nearest-centroid --json
+    tests:
+    - cargo test -p sciencekit_neighbors nearest
+- id: neighborhood-components-analysis
+  state: planned
+  group: wave13
+  lane: neighbors
+  depends_on:
+  - access-pattern-contract
+  - sample-weight-support
+  - knn-classifier-regressor
+  - deterministic-randomness
+  - lbfgs-optimizer
+  - pairwise-metric-extension
+  completion:
+    openspec: openspec status --change neighborhood-components-analysis --json
+    tests:
+    - cargo test -p sciencekit_neighbors neighborhood
+
+- id: streaming-moments
+  state: planned
+  group: foundation
+  lane: stats
+  depends_on:
+  - access-pattern-contract
+  completion:
+    openspec: openspec status --change streaming-moments --json
+    tests:
+    - cargo test -p sciencekit_stats moments
+
+- id: distribution-and-em-kernels
+  state: planned
+  group: foundation
+  lane: stats
+  depends_on:
+  - streaming-moments
+  - deterministic-randomness
+  completion:
+    openspec: openspec status --change distribution-and-em-kernels --json
+    tests:
+    - cargo test -p sciencekit_stats distributions
+    - cargo test -p sciencekit_stats em
+
+- id: robust-statistics-kernels
+  state: planned
+  group: foundation
+  lane: stats
+  depends_on:
+  - streaming-moments
+  - deterministic-randomness
+  completion:
+    openspec: openspec status --change robust-statistics-kernels --json
+    tests:
+    - cargo test -p sciencekit_stats robust
+
+- id: binning-primitives
+  state: planned
+  group: foundation
+  lane: stats
+  depends_on:
+  - streaming-moments
+  completion:
+    openspec: openspec status --change binning-primitives --json
+    tests:
+    - cargo test -p sciencekit_stats binning
+
+- id: pairwise-metric-extension
+  state: planned
+  group: foundation
+  lane: math
+  depends_on:
+  - sparse-pairwise-distances
+  completion:
+    openspec: openspec status --change pairwise-metric-extension --json
+    tests:
+    - cargo test -p sciencekit_math pairwise_
+
+- id: sparse-symmetric-eigensolver
+  state: planned
+  group: foundation
+  lane: math
+  depends_on:
+  - randomized-svd-kernel
+  completion:
+    openspec: openspec status --change sparse-symmetric-eigensolver --json
+    tests:
+    - cargo test -p sciencekit_math eigen
+
+- id: composable-kernel-algebra
+  state: planned
+  group: foundation
+  lane: math
+  depends_on:
+  - pairwise-metric-extension
+  completion:
+    openspec: openspec status --change composable-kernel-algebra --json
+    tests:
+    - cargo test -p sciencekit_math kernel_composition
+
+- id: lbfgs-optimizer
+  state: planned
+  group: foundation
+  lane: math
+  depends_on: []
+  completion:
+    openspec: openspec status --change lbfgs-optimizer --json
+    tests:
+    - cargo test -p sciencekit_math lbfgs
+
+- id: graph-construction-and-algorithms
+  state: planned
+  group: foundation
+  lane: graph
+  depends_on:
+  - pairwise-metric-extension
+  - deterministic-randomness
+  completion:
+    openspec: openspec status --change graph-construction-and-algorithms --json
+    tests:
+    - cargo test -p sciencekit_graph
+
+- id: penalized-glm-solver
+  state: planned
+  group: foundation
+  lane: linear-model
+  depends_on:
+  - streaming-moments
+  completion:
+    openspec: openspec status --change penalized-glm-solver --json
+    tests:
+    - cargo test -p sciencekit_linear_model glm
+
+- id: regularization-path-solver
+  state: planned
+  group: foundation
+  lane: linear-model
+  depends_on:
+  - streaming-moments
+  completion:
+    openspec: openspec status --change regularization-path-solver --json
+    tests:
+    - cargo test -p sciencekit_linear_model path
+
+- id: matrix-factorization-kernels
+  state: planned
+  group: foundation
+  lane: decomposition
+  depends_on:
+  - randomized-svd-kernel
+  completion:
+    openspec: openspec status --change matrix-factorization-kernels --json
+    tests:
+    - cargo test -p sciencekit_decomposition factorization
+
+- id: resampling-primitives
+  state: planned
+  group: foundation
+  lane: contracts
+  depends_on:
+  - deterministic-randomness
+  completion:
+    openspec: openspec status --change resampling-primitives --json
+    tests:
+    - cargo test -p sciencekit_common resampling
+
+- id: boxed-predictor-contract
+  state: planned
+  group: foundation
+  lane: contracts
+  depends_on:
+  - estimator-tags-and-callbacks
+  completion:
+    openspec: openspec status --change boxed-predictor-contract --json
+    tests:
+    - cargo test -p sciencekit_common boxed_predictor
+
+- id: label-and-indicator-primitives
+  state: planned
+  group: foundation
+  lane: contracts
+  depends_on: []
+  completion:
+    openspec: openspec status --change label-and-indicator-primitives --json
+    tests:
+    - cargo test -p sciencekit_common labels
+
+- id: text-tokenization-and-vocabulary
+  state: planned
+  group: foundation
+  lane: text
+  depends_on:
+  - label-and-indicator-primitives
+  completion:
+    openspec: openspec status --change text-tokenization-and-vocabulary --json
+    tests:
+    - cargo test -p sciencekit_text vocabulary
+
+- id: iterative-imputer
+  state: planned
+  group: wave9
+  lane: impute
+  depends_on:
+  - boxed-predictor-contract
+  - streaming-moments
+  - resampling-primitives
+  - sample-weight-support
+  completion:
+    openspec: openspec status --change iterative-imputer --json
+    tests:
+    - cargo test -p sciencekit_impute iterative
+
+- id: extremely-randomized-tree
+  state: planned
+  group: wave9
+  lane: tree
+  depends_on:
+  - decision-tree-cart
+  - deterministic-randomness
+  completion:
+    openspec: openspec status --change extremely-randomized-tree --json
+    tests:
+    - cargo test -p sciencekit_tree extra_tree
+
+- id: tree-text-export
+  state: planned
+  group: wave9
+  lane: tree
+  depends_on:
+  - decision-tree-cart
+  completion:
+    openspec: openspec status --change tree-text-export --json
+    tests:
+    - cargo test -p sciencekit_tree export_text
+
+- id: group-shuffle-split
+  state: planned
+  group: wave10
+  lane: model-selection
+  depends_on:
+  - model-selection-core
+  - resampling-primitives
+  completion:
+    openspec: openspec status --change group-shuffle-split --json
+    tests:
+    - cargo test -p sciencekit_model_selection group_shuffle
+
+- id: image-patch-extraction
+  state: planned
+  group: wave11
+  lane: image
+  depends_on:
+  - access-pattern-contract
+  completion:
+    openspec: openspec status --change image-patch-extraction --json
+    tests:
+    - cargo test -p sciencekit_image patches
+
+- id: reopenable-fit-path
+  state: planned
+  group: foundation
+  lane: contracts
+  depends_on:
+  - access-pattern-contract
+  completion:
+    openspec: openspec status --change reopenable-fit-path --json
+    tests:
+    - cargo test --workspace reopenable_fit
+
+- id: mappable-fit-path
+  state: planned
+  group: foundation
+  lane: contracts
+  depends_on:
+  - access-pattern-contract
+  - memory-mapped-interop
+  completion:
+    openspec: openspec status --change mappable-fit-path --json
+    tests:
+    - cargo test --workspace mappable_fit
+
+- id: structured-tracing
+  state: planned
+  group: foundation
+  lane: contracts
+  depends_on:
+  - access-pattern-contract
+  - telemetry-export
+  - ffi-core
+  completion:
+    openspec: openspec status --change structured-tracing --json
+    tests:
+    - cargo test -p sciencekit_common tracing_hierarchy
+    - cargo test -p sciencekit_pipeline tracing_hierarchy
+
+- id: streaming-source-provider
+  state: shipped
+  group: foundation
+  lane: streaming
+  depends_on: []
+  completion:
+    openspec: openspec status --change streaming-source-provider --json
+    tests:
+    - cargo test -p sciencekit_common source_provider
+
+- id: sparse-streaming-batches
+  state: closing
+  group: cross-cutting
+  lane: streaming
+  depends_on:
+  - streaming-source-provider
+  completion:
+    openspec: openspec status --change sparse-streaming-batches --json
+    tests:
+    - cargo test -p sciencekit_common sparse_batch
+
+- id: sgd-classifier-regressor
+  state: closing
+  group: wave2
+  lane: linear-model
+  depends_on:
+  - deterministic-randomness
+  completion:
+    openspec: openspec status --change sgd-classifier-regressor --json
+    tests:
+    - cargo test -p sciencekit_linear_model sgd
+
+- id: extract-language-bindings
+  state: closing
+  group: cross-cutting
+  lane: bindings
+  depends_on:
+  - ffi-core
+  completion:
+    openspec: openspec status --change extract-language-bindings --json
+    tests:
+    - cargo test -p sciencekit_ffi
+
+- id: metrics-foundation
+  state: shipped
+  group: wave6
+  lane: metrics
+  depends_on: []
+  completion:
+    openspec: openspec status --change metrics-foundation --json
+    tests:
+    - cargo test -p sciencekit_metrics accumulators
