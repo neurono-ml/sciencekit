@@ -123,10 +123,21 @@ below are not the only work still to be planned.
 | Full metrics | `sciencekit_metrics` | accuracy, f1, MSE, confusion matrix and the remaining sklearn metrics | <span class="sk-pill sk-pill--neutral">Planned</span> |
 | Calibration and multilabel metrics | `sciencekit_metrics` | Calibration curves, Brier score, expected calibration error and multilabel losses (Hamming, Jaccard, subset accuracy, averaged precision/recall/F1, label-ranking average precision) | <a href="https://github.com/neurono-ml/sciencekit/tree/main/openspec/changes/metrics-calibration-multilabel"><span class="sk-pill sk-pill--neutral">Planned</span></a> |
 
+## Accelerators
+
+| Backend | Crate | Description | Status |
+|---|---|---|---|
+| OpenCL | `sciencekit_gpu_opencl` | Vendor-transparent device backend behind `SKComputeBackend`, validated on real hardware (NVIDIA RTX 3070 Ti) | <span class="sk-pill sk-pill--emerald">Implemented</span> |
+| CUDA | `sciencekit_gpu_cuda` | NVIDIA device backend behind the same contracts; needs a CUDA toolkit with NVRTC to build and verify | <a href="https://github.com/neurono-ml/sciencekit/issues/408"><span class="sk-pill sk-pill--amber">Deferred (hardware)</span></a> |
+| ROCm | `sciencekit_gpu_rocm` | AMD device backend behind the same contracts; needs a ROCm runtime and a gfx-architecture GPU to build and verify | <a href="https://github.com/neurono-ml/sciencekit/issues/408"><span class="sk-pill sk-pill--amber">Deferred (hardware)</span></a> |
+
 <div class="sk-box sk-box--info">
 <strong>Continuous acceleration:</strong> every completed algorithm receives, in separate changes,
-a Python binding (<code>sciencekit_python</code>) and GPU backends (OpenCL → CUDA → ROCm) behind
-<code>SKComputeBackend</code>. The CPU is the default backend, always present.
+a Python binding (<code>sciencekit_python</code>) and device backends (OpenCL → CUDA → ROCm) behind
+<code>SKComputeBackend</code>. The CPU is the default backend, always present. Only OpenCL ships:
+CUDA and ROCm wait for contributors with the required hardware and toolchains
+(<a href="https://github.com/neurono-ml/sciencekit/issues/408">ADR #408</a>), and every operation
+falls back to the CPU with a recorded reason while they do not exist.
 </div>
 
 <div class="sk-btn-row">

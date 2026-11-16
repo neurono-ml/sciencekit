@@ -89,6 +89,10 @@ lanes:
   - native-model-import
   - lora-adapters
 - id: gpu
+  deferred: false
+  partially_deferred: true
+  note: "OpenCL shipped and was validated on real hardware (RTX 3070 Ti); CUDA and ROCm are
+    blocked on hardware and toolchains and wait for community support; see ADR #408."
   merge_order:
   - gpu-opencl-backend
   - gpu-cuda-backend
@@ -309,6 +313,10 @@ changes:
     openspec: openspec status --change gpu-cuda-backend --json
     tests:
     - cargo test -p sciencekit_gpu_cuda --features gpu-cuda
+  deferred: true
+  deferred_reason: "No CUDA toolkit (including NVRTC) and no verifiable GPU toolchain in this
+    project; OpenCL already ships and is the only validated device backend. Deferred for
+    community hardware; see ADR #408 and tracking issue #409."
 - id: gpu-rocm-backend
   group: cross-cutting
   lane: gpu
@@ -318,6 +326,10 @@ changes:
     openspec: openspec status --change gpu-rocm-backend --json
     tests:
     - cargo test -p sciencekit_gpu_rocm --features gpu-rocm
+  deferred: true
+  deferred_reason: "No ROCm runtime (/opt/rocm empty, no rocminfo/hipcc) on the only AMD-capable
+    node; OpenCL already ships and is the only validated device backend. Deferred for community
+    hardware; see ADR #408 and tracking issue #410."
 - id: lua-bindings
   group: cross-cutting
   lane: bindings
