@@ -37,7 +37,7 @@
   thread-count invariance and the reproducibility scope; verify with `mdbook build docs`.
 - [x] 3.3 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
   warnings` and `cargo test --workspace`; fix every failure before pushing.
-- [ ] 3.4 Independent review by a separate agent validating every scenario in
+- [x] 3.4 Independent review by a separate agent validating every scenario in
   `deterministic-randomness`; address every finding and re-run the gates.
 
 ## Workflow follow-up
