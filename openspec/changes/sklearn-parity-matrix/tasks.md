@@ -29,29 +29,29 @@
 
 ## 3. Consistency tooling
 
-- [ ] 3.1 Add the parity checker (single-status, exhaustive coverage, tier presence,
+- [x] 3.1 Add the parity checker (single-status, exhaustive coverage, tier presence,
   owner resolution, absence reasons) and a failing fixture per violation; verify each
   fixture fails with the offending row named.
-- [ ] 3.2 Add the implemented-entry coverage check (every `implemented` row maps to its
+- [x] 3.2 Add the implemented-entry coverage check (every `implemented` row maps to its
   change's completion test) and a fixture for a stale row; verify it reports both the row
   and the missing test.
-- [ ] 3.3 Wire the checker into CI before the workspace gates; verify a deliberately
+- [x] 3.3 Wire the checker into CI before the workspace gates; verify a deliberately
   broken matrix fails the job.
 
 ## 4. Documentation and roadmap
 
-- [ ] 4.1 Add a documentation page with the coverage counts per family and per status,
+- [x] 4.1 Add a documentation page with the coverage counts per family and per status,
   generated from `parity.yaml`; verify `mdbook build docs` and that the page is registered
   in `SUMMARY.md`.
-- [ ] 4.2 Revise PRD §12 to reference the matrix as the authority and reconcile the §1.1
+- [x] 4.2 Revise PRD §12 to reference the matrix as the authority and reconcile the §1.1
   "all algorithms" promise with the enumerated roadmap; verify no remaining contradiction.
 
 ## 5. Graph
 
-- [ ] 5.1 Extend `openspec/changes/implementation-dag/dag.yaml` with the parity program
+- [x] 5.1 Extend `openspec/changes/implementation-dag/dag.yaml` with the parity program
   (structural changes first, then one change per algorithm family) and its lanes;
   verify the graph parses, every dependency resolves and the lane merge orders match.
-- [ ] 5.2 Update the `implementation-dag` design tables (lane orders and parity waves) to
+- [x] 5.2 Update the `implementation-dag` design tables (lane orders and parity waves) to
   match the YAML; verify with the consistency check.
 - [x] 5.3 Add the sixteen shared primitives and the `iterative-imputer` gap to the graph,
   rewire 104 algorithm changes onto them, and add the `stats`, `graph` and `impute`
