@@ -74,6 +74,20 @@ class ConsistencyCheckTests(unittest.TestCase):
         errors = dag_tooling.check_dag(dag, design_path=None)
         self.assertTrue(any("wave" in error for error in errors), errors)
 
+    def test_empty_tests_need_docs_only(self) -> None:
+        dag = load_fixture()
+        dag["changes"][1]["completion"]["tests"] = []
+        errors = dag_tooling.check_dag(dag, design_path=None)
+        self.assertTrue(any("docs_only" in error for error in errors), errors)
+        dag["changes"][1]["docs_only"] = True
+        self.assertEqual(dag_tooling.check_dag(dag, design_path=None), [])
+
+    def test_dependency_in_a_later_wave_is_reported(self) -> None:
+        dag = load_fixture()
+        dag["changes"][2]["depends_on"] = ["delta"]
+        errors = dag_tooling.check_dag(dag, design_path=None)
+        self.assertTrue(any("later wave" in error for error in errors), errors)
+
     def test_superseded_change_needs_a_resolution(self) -> None:
         dag = load_fixture()
         dag["changes"][3]["state"] = "superseded"
@@ -110,6 +124,18 @@ class ReadinessTests(unittest.TestCase):
         next_changes = dag_tooling.next_per_lane(dag, merged={"alpha"})
         self.assertEqual(next_changes["lane-one"], "beta")
         self.assertEqual(next_changes["lane-two"], "gamma")
+
+    def test_blocked_lane_head_stops_the_lane(self) -> None:
+        dag = load_fixture()
+        epsilon = copy.deepcopy(dag["changes"][1])
+        epsilon["id"] = "epsilon"
+        epsilon["depends_on"] = ["alpha"]
+        dag["changes"].append(epsilon)
+        dag["execution_waves"][0]["changes"].append("epsilon")
+        dag["lanes"][0]["merge_order"].append("epsilon")
+        dag["changes"][1]["depends_on"] = ["gamma"]
+        next_changes = dag_tooling.next_per_lane(dag, merged={"alpha"})
+        self.assertIsNone(next_changes["lane-one"])
 
     def test_occupied_lane_has_no_next(self) -> None:
         dag = load_fixture()

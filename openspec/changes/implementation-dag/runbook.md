@@ -20,11 +20,19 @@ python3 scripts/dag-readiness.py             # done/ready/blocked + next per lan
 `deferred` changes are never scheduled. A lane whose merge order still holds an
 `in-progress` or `closing` change reports no next change: the lane is occupied.
 
+**The `next` column is the only concurrency authority.** The `states` map is a raw
+dependency computation (several changes can be `ready` at once); scheduling from it can
+double-book a lane. Always start the change named in `next`.
+
 ## 2. Pick the next change
 
+The graph is regenerated documentation as well: `python3 scripts/check-dag.py` also fails
+when the generated layer and lane blocks in `design.md` drift from `dag.yaml`; refresh them
+with `python3 scripts/render-dag-design.py`.
+
 Walk the `next` column of `dag-readiness.py` in wave order (`execution_waves` in
-`dag.yaml`). Prefer the earliest wave; inside a lane respect `merge_order`. Start at most
-one change per lane.
+`dag.yaml`). `next` already enforces the lane prefix: if an earlier `merge_order` member
+is still blocked, the lane reports `-` and must wait. Start at most one change per lane.
 
 ## 3. Announce the change and create the worktrees
 
@@ -57,8 +65,9 @@ step.
 python3 scripts/check-completion.py --change <change>
 ```
 
-That runs, in order: the OpenSpec status command, every `completion.tests` entry from
-`dag.yaml`, the global gates (`cargo fmt --all --check`, `cargo clippy --workspace
+That runs, in order: the OpenSpec status command, every `completion.tests` entry, every
+`completion.extra` entry (for example `openspec validate <change>` and
+`python3 scripts/check-parity-matrix.py`), the global gates (`cargo fmt --all --check`, `cargo clippy --workspace
 --all-targets -- -D warnings`, `cargo test --workspace`) and `mdbook build docs` when the
 change lists it. `--dry-run` prints the plan; `--skip-global` runs only the change's own
 checks while iterating. A failing check keeps the change `in-progress`.

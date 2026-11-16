@@ -2,10 +2,10 @@
 
 ## Context
 
-See `proposal.md` — Why. The source of truth is `dag.yaml` (240 nodes: 66 from the
-original program, five recovered omissions, plus 168 from the scikit-learn parity
-program, plus three superseded nodes kept for traceability). This design explains the layers, lanes and the automated
-cycle; it must stay in sync with the YAML.
+See `proposal.md` — Why. The source of truth is `dag.yaml`: 240 nodes = 40 shipped, 19
+closing, 3 superseded, 3 deferred, 1 in-progress, 174 planned. This design explains the
+layers, lanes and the automated cycle; the layer and lane blocks are generated from the
+YAML and `scripts/check-dag.py` fails when they drift.
 
 ## Goals / Non-Goals
 
@@ -21,76 +21,78 @@ cycle; it must stay in sync with the YAML.
 
 ## Layers
 
-Computed from `depends_on` only (soft dependencies do not block start):
+Computed from `depends_on` only (soft dependencies do not block start; superseded nodes are
+excluded). The block below is generated from `dag.yaml`; a hand edit fails
+`scripts/check-dag.py`.
 
-| Layer | Changes ready at this layer |
+<!-- dag-layers:start -->
+| Layer | Changes |
 |---|---|
-| L0 | representation-parity, wave-seven-deferrals, deterministic-randomness, clustering-contracts, interop-contracts, interop-foundation, gpu-compute-contracts, telemetry-export, ffi-core, sparse-pairwise-distances, kd-tree-and-ball-tree, knn-imputer, metrics-ranking, type-safe-pipeline, sparse-streaming-coverage |
-| L1 | randomized-svd-kernel, r-bindings, model-selection-core, metrics-clustering, decision-tree-cart, dbscan, kmeans-lloyd-elkan, knn-classifier-regressor, svm-svc-svr, gpu-opencl-backend, gpu-cuda-backend, gpu-rocm-backend, lua-bindings, go-bindings, arrow-interop, safetensors-internal-format, json-debug-format, feature-union, pipeline-dag, streaming-pipeline |
-| L2 | pca, random-forest, gradient-boosting, minibatch-kmeans-streaming, svm-linear-svc, grid-search-cv, outlier-detection, polars-interop, datafusion-interop, memory-mapped-interop, julia-dataset-interop, jvm-dataset-interop |
-| L3 | truncated-svd, incremental-pca, bagging, histogram-gradient-boosting, halving-grid-search |
-| L4 | model-export-retrofit (join over all model families) |
-| L5 | onnx-export |
+| L0 | clustering-contracts, deterministic-randomness, ffi-core, gpu-compute-contracts, interop-contracts, interop-foundation, kd-tree-and-ball-tree, knn-imputer, label-and-indicator-primitives, lbfgs-optimizer, metrics-foundation, metrics-ranking, representation-parity, sklearn-parity-matrix, sparse-pairwise-distances, sparse-streaming-coverage, streaming-source-provider, telemetry-export, type-safe-pipeline, wave-seven-deferrals |
+| L1 | access-pattern-contract, arrow-interop, dbscan, decision-tree-cart, estimator-tags-and-callbacks, extract-language-bindings, feature-union, go-bindings, gpu-cuda-backend, gpu-opencl-backend, gpu-rocm-backend, json-debug-format, kmeans-lloyd-elkan, knn-classifier-regressor, lua-bindings, metrics-clustering, model-selection-core, pairwise-metric-extension, pipeline-dag, r-bindings, randomized-svd-kernel, resampling-primitives, safetensors-internal-format, sample-weight-support, sgd-classifier-regressor, sparse-streaming-batches, streaming-pipeline, svm-svc-svr, text-tokenization-and-vocabulary |
+| L2 | adaboost, affinity-propagation, agglomerative-clustering, ard-regression, bayesian-ridge, bernoulli-rbm, binarizer, bisecting-kmeans, boxed-predictor-contract, composable-kernel-algebra, cross-validate-functions, datafusion-interop, dataset-generators, dict-vectorizer, extremely-randomized-tree, feature-hasher, frozen-estimator, function-transformer, gradient-boosting, graph-construction-and-algorithms, grid-search-cv, group-shuffle-split, image-patch-extraction, isotonic-regression, julia-dataset-interop, jvm-dataset-interop, kernel-centerer, kernel-density, label-binarizer, label-encoder, leave-one-out-splitters, matrix-factorization-kernels, max-abs-scaler, mean-shift, memory-mapped-interop, metrics-classification-completion, metrics-regression-completion, minibatch-kmeans-streaming, multi-label-binarizer, multiclass-strategy, multilayer-perceptron, neighbor-transformers, neighborhood-components-analysis, normalizer, nusvm, ordinal-encoder, outlier-detection, pairwise-kernel-functions, parameter-grid, pca, polars-interop, predefined-split, preprocessing-functions, radius-neighbors, random-forest, random-projection, reopenable-fit-path, repeated-kfold, ridge-cv, sgd-one-class-svm, shuffle-splitters, sparse-symmetric-eigensolver, spline-transformer, stratified-group-kfold, streaming-moments, structured-tracing, svm-linear-svc, text-vectorizers, time-series-split, tree-text-export |
+| L3 | bagging, binning-primitives, birch, column-transformer, dataset-loaders, dictionary-learning, distribution-and-em-kernels, dummy-estimators, empirical-covariance, extra-trees, fast-ica, feature-agglomeration, gaussian-process, halving-grid-search, hdbscan, histogram-gradient-boosting, incremental-pca, isomap, iterative-imputer, kernel-approximation, kernel-pca, kernel-ridge, label-propagation, label-spreading, learning-curve, linear-discriminant-analysis, linear-svr, locally-linear-embedding, mappable-fit-path, multidimensional-scaling, multioutput-strategy, nearest-centroid, nmf, optics, passive-aggressive, penalized-glm-solver, perceptron, permutation-importance, permutation-test-score, pls-svd, power-transformer, quadratic-discriminant-analysis, random-trees-embedding, randomized-search, regularization-path-solver, rfe, ridge-classifier, robust-statistics-kernels, select-from-model, self-training, sequential-feature-selector, sparse-pca, spectral-clustering, spectral-embedding, stacking, target-encoder, transformed-target-regressor, truncated-svd, tsne, univariate-score-functions, validation-curve, variance-threshold, voting |
+| L4 | bernoulli-naive-bayes, calibrated-classifier, canonical-correlation-analysis, categorical-naive-bayes, classical-mds, complement-naive-bayes, elastic-net-cv, factor-analysis, gaussian-mixture, gaussian-naive-bayes, generalized-linear-regressors, graphical-lasso, halving-random-search, huber-regressor, k-bins-discretizer, lars-family, lasso-cv, latent-dirichlet-allocation, logistic-regression-cv, metrics-calibration-multilabel, min-cov-det, minibatch-dictionary-learning, minibatch-nmf, minibatch-sparse-pca, model-export-retrofit, multinomial-naive-bayes, multitask-linear, orthogonal-matching-pursuit, outlier-lof-one-class, partial-dependence, pls-canonical, pls-regression, quantile-regressor, quantile-transformer, ransac-regressor, shrunk-covariance, sparse-coder, spectral-biclustering, spectral-coclustering, theil-sen-regressor, threshold-tuning, univariate-selectors |
+| L5 | bayesian-gaussian-mixture, elliptic-envelope, ledoit-wolf, metrics-ranking-completion, oas, onnx-export |
 | L6 | onnx-import |
 | L7 | native-model-import, python-bindings-complete |
 | L8 | lora-adapters, python-dataset-interop |
 | L9 | umbrella-crate |
 | L10 | workflows-cli |
-
-`polars-datafusion-sources`, `julia-bindings` and `jvm-bindings` are marked
-`superseded_by` in `dag.yaml` and are skipped by the scheduler.
-
-The full edge list lives in `dag.yaml`; the layers are a cache, not a second source of truth.
+<!-- dag-layers:end -->
 
 ## Parallel groups
 
-All changes in the same layer with disjoint lanes can start together. Within a lane, only
-one change is `in_progress` at a time (merge-order hazard). `∥` means parallel.
+All changes in the same layer with disjoint lanes can start together. Within a lane only
+one change is `in-progress` at a time and the lane order is the `merge_order` below; the
+block is generated from `dag.yaml` and a hand edit fails `scripts/check-dag.py`.
 
-| Lane | Order and parallelism |
+<!-- dag-lanes:start -->
+| Lane | Merge order |
 |---|---|
 | common | representation-parity → wave-seven-deferrals → deterministic-randomness → clustering-contracts → interop-contracts → interop-foundation → gpu-compute-contracts → telemetry-export |
-| math | sparse-pairwise-distances ∥ randomized-svd-kernel → pairwise-metric-extension → {sparse-symmetric-eigensolver; composable-kernel-algebra} ∥ lbfgs-optimizer |
-| metrics | metrics-foundation → metrics-ranking ∥ metrics-clustering → metrics-calibration-multilabel ∥ metrics-regression-completion ∥ metrics-classification-completion ∥ metrics-ranking-completion |
-| neighbors | kd-tree-and-ball-tree ∥ knn-imputer ∥ svm-svc-svr → knn-classifier-regressor → svm-linear-svc → {radius-neighbors; neighbor-transformers; kernel-density; nearest-centroid; neighborhood-components-analysis} |
-| tree | decision-tree-cart → {random-forest → bagging; gradient-boosting → histogram-gradient-boosting; outlier-detection} |
-| cluster | kmeans-lloyd-elkan → minibatch-kmeans-streaming; dbscan → agglomerative-clustering → {feature-agglomeration; spectral-clustering → {spectral-biclustering; spectral-coclustering}}; affinity-propagation ∥ mean-shift ∥ birch ∥ bisecting-kmeans ∥ optics → hdbscan |
-| decomposition | randomized-svd-kernel → pca → {truncated-svd; incremental-pca}; nmf → minibatch-nmf ∥ sparse-pca → minibatch-sparse-pca ∥ dictionary-learning → {minibatch-dictionary-learning; sparse-coder} ∥ fast-ica ∥ factor-analysis ∥ latent-dirichlet-allocation ∥ random-projection |
-| model-selection | model-selection-core → grid-search-cv → halving-grid-search; parameter-grid → randomized-search → halving-random-search; {leave-one-out-splitters; shuffle-splitters; repeated-kfold; stratified-group-kfold; time-series-split; predefined-split} ∥ cross-validate-functions → {learning-curve; validation-curve; permutation-test-score}; threshold-tuning |
-| pipeline | type-safe-pipeline → {feature-union; pipeline-dag; streaming-pipeline; column-transformer; transformed-target-regressor} |
-| interop | interop-foundation → arrow-interop → {polars-interop; datafusion-interop; memory-mapped-interop} → {safetensors-internal-format; json-debug-format} → model-export-retrofit → onnx-export → onnx-import → native-model-import → lora-adapters |
-| gpu | gpu-compute-contracts → {gpu-opencl-backend; gpu-cuda-backend → deferred; gpu-rocm-backend → deferred} |
-| bindings | ffi-core → extract-language-bindings → {lua-bindings; go-bindings} |
-| python | python-bindings-complete → python-dataset-interop |
-| julia | julia-dataset-interop |
-| jvm | jvm-dataset-interop |
-| r | r-bindings |
+| math | sparse-pairwise-distances → randomized-svd-kernel → pairwise-metric-extension → sparse-symmetric-eigensolver → composable-kernel-algebra → lbfgs-optimizer |
+| metrics | metrics-foundation → metrics-ranking → metrics-clustering → metrics-calibration-multilabel → metrics-regression-completion → metrics-classification-completion → metrics-ranking-completion |
+| tree | decision-tree-cart → extremely-randomized-tree → tree-text-export → random-forest → bagging → gradient-boosting → histogram-gradient-boosting → outlier-detection → outlier-lof-one-class |
+| neighbors | kd-tree-and-ball-tree → knn-classifier-regressor → knn-imputer → svm-svc-svr → svm-linear-svc → radius-neighbors → neighbor-transformers → kernel-density → nearest-centroid → neighborhood-components-analysis |
+| cluster | kmeans-lloyd-elkan → minibatch-kmeans-streaming → dbscan → agglomerative-clustering → feature-agglomeration → affinity-propagation → mean-shift → birch → bisecting-kmeans → optics → hdbscan → spectral-clustering → spectral-biclustering → spectral-coclustering |
+| decomposition | pca → truncated-svd → incremental-pca → matrix-factorization-kernels → nmf → minibatch-nmf → fast-ica → factor-analysis → sparse-pca → minibatch-sparse-pca → dictionary-learning → minibatch-dictionary-learning → sparse-coder → latent-dirichlet-allocation → random-projection |
+| model-selection | model-selection-core → grid-search-cv → halving-grid-search → parameter-grid → randomized-search → halving-random-search → leave-one-out-splitters → shuffle-splitters → group-shuffle-split → repeated-kfold → stratified-group-kfold → time-series-split → predefined-split → cross-validate-functions → learning-curve → validation-curve → permutation-test-score → threshold-tuning |
+| pipeline | type-safe-pipeline → feature-union → pipeline-dag → streaming-pipeline → column-transformer → transformed-target-regressor |
+| interop | arrow-interop → polars-interop → datafusion-interop → memory-mapped-interop → safetensors-internal-format → json-debug-format → model-export-retrofit → onnx-export → onnx-import → native-model-import → lora-adapters |
+| gpu | gpu-opencl-backend → gpu-cuda-backend → gpu-rocm-backend |
+| bindings | ffi-core → extract-language-bindings → lua-bindings → go-bindings |
 | streaming | streaming-source-provider → sparse-streaming-batches → sparse-streaming-coverage |
 | product | umbrella-crate → workflows-cli |
+| python | python-bindings-complete → python-dataset-interop |
+| julia | julia-dataset-interop |
+| jvm | jvm-dataset-interop (deferred) |
+| r | r-bindings |
 | planning | sklearn-parity-matrix |
-| contracts | access-pattern-contract → structured-tracing → {mappable-fit-path ∥ reopenable-fit-path} → sample-weight-support → estimator-tags-and-callbacks → {label-and-indicator-primitives → boxed-predictor-contract → multiclass-strategy → multioutput-strategy}; resampling-primitives ∥ frozen-estimator |
+| contracts | access-pattern-contract → structured-tracing → mappable-fit-path → reopenable-fit-path → sample-weight-support → estimator-tags-and-callbacks → label-and-indicator-primitives → boxed-predictor-contract → multiclass-strategy → multioutput-strategy → resampling-primitives → frozen-estimator |
 | datasets | dataset-generators → dataset-loaders |
 | preprocessing | max-abs-scaler → normalizer → binarizer → function-transformer → kernel-centerer → label-encoder → label-binarizer → multi-label-binarizer → ordinal-encoder → k-bins-discretizer → power-transformer → quantile-transformer → spline-transformer → target-encoder → preprocessing-functions |
-| feature-selection | variance-threshold ∥ univariate-score-functions → univariate-selectors; select-from-model; rfe → sequential-feature-selector |
-| naive-bayes | gaussian ∥ multinomial ∥ complement ∥ bernoulli ∥ categorical |
+| feature-selection | variance-threshold → univariate-score-functions → univariate-selectors → select-from-model → rfe → sequential-feature-selector |
+| naive-bayes | gaussian-naive-bayes → multinomial-naive-bayes → complement-naive-bayes → bernoulli-naive-bayes → categorical-naive-bayes |
 | linear-model | sgd-classifier-regressor → penalized-glm-solver → regularization-path-solver → ridge-classifier → ridge-cv → lasso-cv → elastic-net-cv → logistic-regression-cv → multitask-linear → lars-family → orthogonal-matching-pursuit → bayesian-ridge → ard-regression → generalized-linear-regressors → quantile-regressor → huber-regressor → ransac-regressor → theil-sen-regressor → passive-aggressive → perceptron → sgd-one-class-svm |
-| kernel | pairwise-kernel-functions → nusvm ∥ linear-svr ∥ kernel-ridge ∥ kernel-approximation ∥ gaussian-process ∥ kernel-pca |
-| neural-network | multilayer-perceptron ∥ bernoulli-rbm |
-| semi-supervised | label-propagation ∥ label-spreading ∥ self-training |
-| text | text-tokenization-and-vocabulary → {text-vectorizers; feature-hasher}; dict-vectorizer |
-| ensemble | extra-trees ∥ adaboost ∥ voting ∥ stacking ∥ random-trees-embedding |
-| meta | dummy-estimators ∥ isotonic-regression |
+| kernel | pairwise-kernel-functions → nusvm → linear-svr → kernel-ridge → kernel-approximation → gaussian-process → kernel-pca |
+| neural-network | multilayer-perceptron → bernoulli-rbm |
+| semi-supervised | label-propagation → label-spreading → self-training |
+| text | text-tokenization-and-vocabulary → text-vectorizers → dict-vectorizer → feature-hasher |
+| ensemble | extra-trees → adaboost → voting → stacking → random-trees-embedding |
+| meta | dummy-estimators → isotonic-regression |
 | calibration | calibrated-classifier |
-| inspection | permutation-importance ∥ partial-dependence |
+| inspection | permutation-importance → partial-dependence |
 | mixture | gaussian-mixture → bayesian-gaussian-mixture |
-| discriminant | linear-discriminant-analysis ∥ quadratic-discriminant-analysis |
-| covariance | empirical-covariance → {shrunk-covariance → {ledoit-wolf; oas}; min-cov-det → elliptic-envelope; graphical-lasso} |
-| cross-decomposition | pls-svd → {pls-regression; pls-canonical; canonical-correlation-analysis} |
-| manifold | multidimensional-scaling → classical-mds; isomap ∥ locally-linear-embedding ∥ spectral-embedding ∥ tsne |
-| stats | streaming-moments → {distribution-and-em-kernels; robust-statistics-kernels; binning-primitives} |
+| discriminant | linear-discriminant-analysis → quadratic-discriminant-analysis |
+| covariance | empirical-covariance → shrunk-covariance → ledoit-wolf → oas → min-cov-det → graphical-lasso → elliptic-envelope |
+| cross-decomposition | pls-svd → pls-regression → pls-canonical → canonical-correlation-analysis |
+| manifold | multidimensional-scaling → classical-mds → isomap → locally-linear-embedding → spectral-embedding → tsne |
+| stats | streaming-moments → distribution-and-em-kernels → robust-statistics-kernels → binning-primitives |
 | graph | graph-construction-and-algorithms |
 | impute | iterative-imputer |
 | image | image-patch-extraction |
+<!-- dag-lanes:end -->
 
 ## Parity program (scikit-learn 1.9.1)
 
@@ -138,7 +140,7 @@ lane capacities; `dag.yaml` remains the source of truth.
 | Wave | Goal | Parallel |
 |---|---|---|
 | W0 close-in-flight | close the nineteen `closing` changes (ADR + PR; book chapters deferred) | per lane |
-| W1 dataset-interop | Polars, DataFusion, Julia dataset paths (JVM stays deferred) | yes |
+| W1 dataset-interop | Polars and DataFusion interop (Julia closes in W0; JVM stays deferred) | yes |
 | W2 foundations | parity matrix, contracts, structured tracing, the shared primitives | yes, per lane |
 | W3 model-selection-and-metrics | selection utilities, curves, calibration, outlier detectors | yes |
 | W4 preprocessing-selection-bayes | preprocessing completion, feature selection, naive Bayes, meta baselines | yes |

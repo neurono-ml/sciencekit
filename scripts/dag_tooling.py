@@ -125,16 +125,21 @@ def check_dag(
             errors.append(f"{identifier}: missing lane")
         elif change["lane"] not in known_lanes:
             errors.append(f"{identifier}: unknown lane {change['lane']!r}")
-        if change.get("state") not in VALID_STATES | {None}:
-            errors.append(f"{identifier}: unknown state {change.get('state')!r}")
+        if change.get("state") not in VALID_STATES:
+            errors.append(f"{identifier}: unknown or missing state {change.get('state')!r}")
         completion = change.get("completion")
         if not isinstance(completion, dict):
             errors.append(f"{identifier}: missing completion block")
         else:
             if not completion.get("openspec"):
                 errors.append(f"{identifier}: completion.openspec is empty")
-            if completion.get("tests") is None:
+            tests = completion.get("tests")
+            if tests is None:
                 errors.append(f"{identifier}: completion.tests is missing")
+            elif not tests and not change.get("docs_only"):
+                errors.append(
+                    f"{identifier}: empty completion.tests needs docs_only: true"
+                )
         for dependency in change.get("depends_on") or []:
             if dependency not in known:
                 errors.append(f"{identifier}: dependency {dependency!r} is unresolved")
@@ -180,6 +185,23 @@ def check_dag(
                 f"{identifier}: active change belongs to several waves ({', '.join(waves)})"
             )
 
+    wave_index: dict[str, int] = {}
+    for index, wave in enumerate(dag.get("execution_waves") or []):
+        for member in wave.get("changes") or []:
+            wave_index[member] = index
+    for change in changes:
+        identifier = change.get("id")
+        if change.get("state") in DONE_STATES | {"superseded", "deferred"}:
+            continue
+        for dependency in change.get("depends_on") or []:
+            if dependency not in wave_index or identifier not in wave_index:
+                continue
+            if wave_index[dependency] > wave_index[identifier]:
+                errors.append(
+                    f"{identifier}: depends on {dependency!r} scheduled in a later wave"
+                )
+
+    members_of_lane: dict[str, set[str]] = {lane.get("id"): set() for lane in dag.get("lanes") or []}
     positions: dict[str, dict[str, int]] = {}
     for lane in dag.get("lanes") or []:
         lane_id = lane.get("id")
@@ -191,6 +213,7 @@ def check_dag(
             if member in positions[lane_id]:
                 errors.append(f"lane {lane_id}: duplicate merge_order member {member!r}")
             positions[lane_id][member] = index
+            members_of_lane[lane_id].add(member)
             owning = known.get(member)
             if owning is not None and owning.get("lane") != lane_id:
                 errors.append(
@@ -209,12 +232,93 @@ def check_dag(
                         "that comes later"
                     )
 
+    for change in changes:
+        identifier = change.get("id")
+        if change.get("state") in DONE_STATES | {"superseded", "deferred"}:
+            continue
+        lane_id = change.get("lane")
+        if lane_id in members_of_lane and identifier not in members_of_lane[lane_id]:
+            errors.append(f"{identifier}: active change is absent from {lane_id} merge_order")
+
     if design_path is not None and design_path.exists():
         documented = _design_lane_rows(design_path)
         for lane in lanes:
             if lane not in documented:
                 errors.append(f"design.md: lane {lane!r} is not documented")
 
+    return errors
+
+
+def compute_layers(dag: dict[str, Any]) -> dict[int, list[str]]:
+    """Longest-path layer per change over ``depends_on`` (superseded nodes excluded)."""
+
+    known = changes_by_id(dag)
+    depth: dict[str, int] = {}
+
+    def resolve(identifier: str) -> int:
+        if identifier in depth:
+            return depth[identifier]
+        dependencies = [
+            dependency
+            for dependency in known[identifier].get("depends_on") or []
+            if dependency in known
+            and known[dependency].get("state") != "superseded"
+        ]
+        depth[identifier] = 0 if not dependencies else 1 + max(resolve(dep) for dep in dependencies)
+        return depth[identifier]
+
+    for identifier, change in known.items():
+        if change.get("state") != "superseded":
+            resolve(identifier)
+    layers: dict[int, list[str]] = {}
+    for identifier, level in depth.items():
+        layers.setdefault(level, []).append(identifier)
+    return {level: sorted(members) for level, members in sorted(layers.items())}
+
+
+def render_layers(dag: dict[str, Any]) -> str:
+    lines = ["| Layer | Changes |", "|---|---|"]
+    for level, members in compute_layers(dag).items():
+        lines.append(f"| L{level} | {', '.join(members)} |")
+    return "\n".join(lines)
+
+
+def render_lanes(dag: dict[str, Any]) -> str:
+    lines = ["| Lane | Merge order |", "|---|---|"]
+    for lane in dag.get("lanes") or []:
+        order = " → ".join(lane.get("merge_order") or [])
+        note = " (deferred)" if lane.get("deferred") else ""
+        lines.append(f"| {lane.get('id')} | {order}{note} |")
+    return "\n".join(lines)
+
+
+LAYERS_MARKER = ("<!-- dag-layers:start -->", "<!-- dag-layers:end -->")
+LANES_MARKER = ("<!-- dag-lanes:start -->", "<!-- dag-lanes:end -->")
+
+
+def replace_block(text: str, markers: tuple[str, str], body: str) -> str:
+    start, end = markers
+    if start not in text or end not in text:
+        raise ValueError(f"missing marker {start} / {end}")
+    prefix, rest = text.split(start, 1)
+    _, suffix = rest.split(end, 1)
+    return f"{prefix}{start}\n{body}\n{end}{suffix}"
+
+
+def design_sync_errors(dag: dict[str, Any], design_path: pathlib.Path) -> list[str]:
+    text = design_path.read_text(encoding="utf-8")
+    errors: list[str] = []
+    for markers, expected, label in (
+        (LAYERS_MARKER, render_layers(dag), "layers"),
+        (LANES_MARKER, render_lanes(dag), "lanes"),
+    ):
+        start, end = markers
+        if start not in text or end not in text:
+            errors.append(f"design.md: missing the generated {label} block")
+            continue
+        current = text.split(start, 1)[1].split(end, 1)[0].strip()
+        if current != expected:
+            errors.append(f"design.md: the {label} block is stale; rerender it")
     return errors
 
 
@@ -269,14 +373,17 @@ def next_per_lane(dag: dict[str, Any], merged: Iterable[str]) -> dict[str, str |
         if occupied:
             result[lane_id] = None
             continue
-        result[lane_id] = next(
-            (
-                member
-                for member in order
-                if member in known and states.get(member) == "ready"
-            ),
-            None,
-        )
+        chosen: str | None = None
+        for member in order:
+            if member not in known:
+                continue
+            state = states.get(member)
+            if state in {"done", "deferred"}:
+                continue
+            if state == "ready":
+                chosen = member
+            break
+        result[lane_id] = chosen
     return result
 
 
@@ -285,6 +392,7 @@ class CompletionPlan:
     change_id: str
     openspec_command: str
     test_commands: tuple[str, ...]
+    extra_commands: tuple[str, ...]
     global_gate_commands: tuple[str, ...]
     docs_command: str | None
 
@@ -313,6 +421,7 @@ def completion_plan(
         change_id=change_id,
         openspec_command=str(completion.get("openspec", "")),
         test_commands=tuple(str(command) for command in completion.get("tests") or []),
+        extra_commands=tuple(str(command) for command in extra),
         global_gate_commands=gates,
         docs_command=docs_command,
     )
@@ -341,9 +450,14 @@ def report(name: str, status: int, output: str, verbose: bool = True) -> None:
         print(tail)
 
 
-def main_check(dag_path: str | pathlib.Path = DAG_PATH) -> int:
+def main_check(
+    dag_path: str | pathlib.Path = DAG_PATH,
+    design_path: pathlib.Path | None = DESIGN_PATH,
+) -> int:
     dag = load_dag(dag_path)
     errors = check_dag(dag)
+    if design_path is not None and design_path.exists():
+        errors.extend(design_sync_errors(dag, design_path))
     if errors:
         print(f"{len(errors)} consistency error(s):")
         for error in errors:
@@ -395,9 +509,8 @@ def main_completion(
     except KeyError:
         print(f"unknown change: {change_id}")
         return 2
-    commands = [plan.openspec_command, *plan.test_commands, *plan.global_gate_commands]
-    if plan.docs_command:
-        commands.append(plan.docs_command)
+    commands = [plan.openspec_command, *plan.test_commands, *plan.extra_commands]
+    commands.extend(plan.global_gate_commands)
     commands = [command for command in commands if command]
     if dry_run:
         print(f"completion plan for {change_id}:")

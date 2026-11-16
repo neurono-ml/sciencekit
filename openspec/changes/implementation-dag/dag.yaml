@@ -489,6 +489,7 @@ lanes:
 changes:
 - id: representation-parity
   state: shipped
+  docs_only: true
   group: foundation-docs
   lane: common
   depends_on: []
@@ -500,6 +501,7 @@ changes:
     - mdbook build docs
 - id: wave-seven-deferrals
   state: shipped
+  docs_only: true
   group: foundation-docs
   lane: common
   depends_on: []
@@ -1342,6 +1344,7 @@ changes:
     - openspec validate r-bindings
 - id: sklearn-parity-matrix
   state: in-progress
+  docs_only: true
   group: foundation-docs
   lane: planning
   depends_on: []
@@ -2176,10 +2179,11 @@ changes:
   group: wave10
   lane: model-selection
   depends_on:
-  - calibrated-classifier
   - estimator-tags-and-callbacks
   - boxed-predictor-contract
   - binning-primitives
+  soft_depends_on:
+  - calibrated-classifier
   completion:
     openspec: openspec status --change threshold-tuning --json
     tests:
