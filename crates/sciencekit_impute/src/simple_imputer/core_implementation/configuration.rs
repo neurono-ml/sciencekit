@@ -4,6 +4,7 @@
 use sciencekit_common::{
     SKBackendKind, SKBuilderState, SKError, SKExecutionContext, SKExecutionMode, SKExecutionPlan,
     SKFloat,
+    execution::{SKAccessPattern, SKDeclaredAccessPattern},
 };
 
 use crate::simple_imputer::builder::SKSimpleImputerBuilder;
@@ -20,6 +21,12 @@ pub struct SKSimpleImputer<F> {
     pub(in crate::simple_imputer) keep_empty_features: bool,
     pub(in crate::simple_imputer) add_indicator: bool,
     pub(in crate::simple_imputer) backend: SKBackendKind,
+}
+
+impl<F: SKFloat> SKDeclaredAccessPattern for SKSimpleImputer<F> {
+    fn access_pattern(&self) -> SKAccessPattern {
+        SKAccessPattern::Sequential
+    }
 }
 
 impl<F: SKFloat> SKSimpleImputer<F> {

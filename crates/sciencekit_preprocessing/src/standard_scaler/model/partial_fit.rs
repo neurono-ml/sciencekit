@@ -2,7 +2,7 @@
 
 use sciencekit_common::{
     SKDataView, SKError, SKExecutionContext, SKFloat, SKOperationAttributes, SKOperationKind,
-    observability::sk_run_operation,
+    execution::SKDeclaredAccessPattern, observability::sk_run_operation,
 };
 
 use super::super::streaming::batches::{batch_moments, batch_parallelism, sparse_batch_moments};
@@ -48,8 +48,12 @@ impl<F: SKFloat> SKStandardScalerModel<F> {
             let (batch_mean, batch_deviations) = match &view {
                 SKDataView::Dense(dense) => {
                     let machine = SKExecutionContext::real();
-                    let parallelism =
-                        batch_parallelism(dense, machine.available_memory_bytes, machine.cpu_cores);
+                    let parallelism = batch_parallelism(
+                        dense,
+                        machine.available_memory_bytes,
+                        machine.cpu_cores,
+                        self.access_pattern(),
+                    );
                     batch_moments(dense, parallelism)
                 }
                 SKDataView::Sparse(sparse) => sparse_batch_moments(sparse),

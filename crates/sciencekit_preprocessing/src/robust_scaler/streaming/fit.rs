@@ -5,7 +5,7 @@ use ndarray::{ArrayView2, Axis};
 use sciencekit_common::{
     SKDataBatch, SKError, SKExecutionContext, SKExecutionMode, SKExecutionPlan, SKFloat,
     SKLazySource, SKOperationAttributes, SKOperationKind, SKSourceProvider,
-    execution::{SKAccessPattern, SKStreamingPassPolicy, sk_run_streaming_provider},
+    execution::{SKDeclaredAccessPattern, SKStreamingPassPolicy, sk_run_streaming_provider},
     observability::sk_run_operation,
 };
 use sciencekit_math::kernels::SK_AXIS_SUM_GRAIN;
@@ -60,7 +60,7 @@ impl<F: SKFloat> SKRobustScaler<F> {
         context.dataset_size_bytes = u64::MAX;
         context.scalar_size_bytes = 8;
         context.dataset_elements = None;
-        context.access_pattern = SKAccessPattern::Sequential;
+        context.access_pattern = self.access_pattern();
         context.grain = SK_AXIS_SUM_GRAIN;
         self.resolve_plan(&context)
     }

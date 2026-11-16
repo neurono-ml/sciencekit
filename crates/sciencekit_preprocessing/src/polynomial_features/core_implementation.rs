@@ -6,7 +6,8 @@ use sciencekit_common::{
     SKExecutionMode, SKExecutionPlan, SKFloat, SKOperationAttributes, SKOperationKind,
     SKSourceProvider,
     execution::{
-        SKAccessPattern, SKStreamDecision, SKStreamingPassPolicy, sk_run_streaming_provider,
+        SKAccessPattern, SKDeclaredAccessPattern, SKStreamDecision, SKStreamingPassPolicy,
+        sk_run_streaming_provider,
     },
     sk_run_operation,
 };
@@ -23,6 +24,12 @@ pub struct SKPolynomialFeatures {
     pub(super) include_bias: bool,
     pub(super) sparse_output: bool,
     pub(super) backend: SKBackendKind,
+}
+
+impl SKDeclaredAccessPattern for SKPolynomialFeatures {
+    fn access_pattern(&self) -> SKAccessPattern {
+        SKAccessPattern::Sequential
+    }
 }
 
 impl SKPolynomialFeatures {
@@ -138,7 +145,7 @@ impl SKPolynomialFeatures {
         context.dataset_size_bytes = u64::MAX;
         context.scalar_size_bytes = 8;
         context.dataset_elements = None;
-        context.access_pattern = SKAccessPattern::Sequential;
+        context.access_pattern = self.access_pattern();
         self.state.resolve_plan(&context)
     }
 }

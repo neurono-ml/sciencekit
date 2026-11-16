@@ -47,3 +47,12 @@ fn the_builder_chains_every_option() {
     let defaulted = SKMissingIndicatorBuilder::<f64>::new().build().unwrap();
     assert_eq!(defaulted.features(), SKMissingFeatureScope::MissingOnly);
 }
+
+/// The indicator declares a sequential pattern before fit (spec `access-pattern`).
+#[test]
+fn missing_indicator_declares_sequential_access_pattern() {
+    use sciencekit_common::execution::{SKAccessPattern, SKDeclaredAccessPattern};
+
+    let estimator = SKMissingIndicator::<f64>::build().build().unwrap();
+    assert_eq!(estimator.access_pattern(), SKAccessPattern::Sequential);
+}

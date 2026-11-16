@@ -158,7 +158,10 @@ fn resolve_fit_plan<F: SKFloat>(
     context.dataset_size_bytes = stored_elements * size_of::<F>() as u64;
     context.scalar_size_bytes = size_of::<F>() as u64;
     context.dataset_elements = Some(stored_elements);
-    context.access_pattern = sciencekit_common::execution::SKAccessPattern::Sequential;
+    context.access_pattern = {
+        use sciencekit_common::execution::SKDeclaredAccessPattern;
+        estimator.access_pattern()
+    };
     context.grain = sciencekit_math::kernels::SK_AXIS_SUM_GRAIN;
     estimator.resolve_plan(&context)
 }

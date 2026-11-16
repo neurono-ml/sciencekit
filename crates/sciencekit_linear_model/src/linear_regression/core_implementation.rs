@@ -5,7 +5,9 @@ use ndarray::{Array2, ArrayView2, s};
 use sciencekit_common::{
     SKBackendKind, SKBuilderState, SKDataView, SKError, SKExecutionContext, SKExecutionMode,
     SKExecutionPlan, SKFloat, SKOperationAttributes, SKOperationKind, SKSupervisedFit,
-    SKTargetView, execution::SKAccessPattern, sk_run_operation,
+    SKTargetView,
+    execution::{SKAccessPattern, SKDeclaredAccessPattern},
+    sk_run_operation,
 };
 use sciencekit_math::SKBackendSelection;
 use sciencekit_math::kernels::SK_AXIS_SUM_GRAIN;
@@ -26,6 +28,12 @@ pub struct SKLinearRegression {
     pub(super) plan: SKBuilderState,
     pub(super) include_intercept: bool,
     pub(super) backend: SKBackendKind,
+}
+
+impl SKDeclaredAccessPattern for SKLinearRegression {
+    fn access_pattern(&self) -> SKAccessPattern {
+        SKAccessPattern::Iterative
+    }
 }
 
 impl SKLinearRegression {
@@ -149,7 +157,7 @@ fn resolve_fit_plan<F: SKFloat>(
     context.dataset_size_bytes = features.len() as u64 * size_of::<F>() as u64;
     context.scalar_size_bytes = size_of::<F>() as u64;
     context.dataset_elements = Some(features.len() as u64);
-    context.access_pattern = SKAccessPattern::Sequential;
+    context.access_pattern = estimator.access_pattern();
     context.grain = SK_AXIS_SUM_GRAIN;
     estimator.resolve_plan(&context)
 }

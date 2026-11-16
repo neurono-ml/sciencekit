@@ -3,7 +3,9 @@
 
 use sciencekit_common::{
     SKBackendKind, SKBuilderState, SKCategoricalView, SKError, SKExecutionMode,
-    SKOperationAttributes, SKOperationKind, sk_run_operation,
+    SKOperationAttributes, SKOperationKind,
+    execution::{SKAccessPattern, SKDeclaredAccessPattern},
+    sk_run_operation,
 };
 
 use crate::one_hot_encoder::builder::SKOneHotEncoderBuilder;
@@ -19,6 +21,12 @@ pub struct SKOneHotEncoder {
     pub(super) sparse_output: bool,
     pub(super) handle_unknown: SKUnknownPolicy,
     pub(super) backend: SKBackendKind,
+}
+
+impl SKDeclaredAccessPattern for SKOneHotEncoder {
+    fn access_pattern(&self) -> SKAccessPattern {
+        SKAccessPattern::Sequential
+    }
 }
 
 impl SKOneHotEncoder {

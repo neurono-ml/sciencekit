@@ -26,6 +26,14 @@ pub struct SKStandardScalerModel<F> {
     pub(super) execution_intent: SKExecutionMode,
 }
 
+impl<F: SKFloat> sciencekit_common::execution::SKDeclaredAccessPattern
+    for SKStandardScalerModel<F>
+{
+    fn access_pattern(&self) -> sciencekit_common::execution::SKAccessPattern {
+        sciencekit_common::execution::SKAccessPattern::Sequential
+    }
+}
+
 impl<F: SKFloat> SKStandardScalerModel<F> {
     /// Build a fitted model from learned moments: per-column mean, sum of
     /// squared deviations and row count. Crate-internal: models are produced

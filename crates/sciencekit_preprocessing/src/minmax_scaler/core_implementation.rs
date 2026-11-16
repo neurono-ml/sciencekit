@@ -2,7 +2,8 @@ use ndarray::{Array1, ArrayView2};
 use sciencekit_common::{
     SKBackendKind, SKBuilderState, SKDataView, SKError, SKExecutionContext, SKExecutionMode,
     SKExecutionPlan, SKFloat, SKOperationAttributes, SKOperationKind, SKUnsupervisedFit,
-    execution::SKAccessPattern, sk_run_operation,
+    execution::{SKAccessPattern, SKDeclaredAccessPattern},
+    sk_run_operation,
 };
 use sciencekit_math::kernels::{SK_AXIS_SUM_GRAIN, sk_axis_min_max};
 
@@ -18,6 +19,12 @@ pub struct SKMinMaxScaler<F> {
     pub(super) feature_maximum: F,
     pub(super) clip: bool,
     pub(super) backend: SKBackendKind,
+}
+
+impl<F: SKFloat> SKDeclaredAccessPattern for SKMinMaxScaler<F> {
+    fn access_pattern(&self) -> SKAccessPattern {
+        SKAccessPattern::Sequential
+    }
 }
 
 impl<F: SKFloat> SKMinMaxScaler<F> {
@@ -114,7 +121,7 @@ fn resolve_fit_plan<F: SKFloat>(
     context.dataset_size_bytes = features.len() as u64 * size_of::<F>() as u64;
     context.scalar_size_bytes = size_of::<F>() as u64;
     context.dataset_elements = Some(features.len() as u64);
-    context.access_pattern = SKAccessPattern::Sequential;
+    context.access_pattern = estimator.access_pattern();
     context.grain = SK_AXIS_SUM_GRAIN;
     estimator.resolve_plan(&context)
 }

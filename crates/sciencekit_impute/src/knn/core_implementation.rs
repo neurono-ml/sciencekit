@@ -4,6 +4,7 @@
 use sciencekit_common::{
     SKBackendKind, SKBuilderState, SKError, SKExecutionContext, SKExecutionMode, SKExecutionPlan,
     SKFloat,
+    execution::{SKAccessPattern, SKDeclaredAccessPattern},
 };
 
 use crate::knn::builder::SKKNNImputerBuilder;
@@ -23,6 +24,12 @@ pub struct SKKNNImputer<F> {
     pub(in crate::knn) add_indicator: bool,
     pub(in crate::knn) keep_empty_features: bool,
     pub(in crate::knn) backend: SKBackendKind,
+}
+
+impl<F: SKFloat> SKDeclaredAccessPattern for SKKNNImputer<F> {
+    fn access_pattern(&self) -> SKAccessPattern {
+        SKAccessPattern::Iterative
+    }
 }
 
 impl<F: SKFloat> SKKNNImputer<F> {

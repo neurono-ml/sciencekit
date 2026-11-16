@@ -4,7 +4,9 @@ use ndarray::{Array1, ArrayView2};
 use sciencekit_common::{
     SKDataBatch, SKDataView, SKError, SKExecutionContext, SKExecutionMode, SKFloat,
     SKOperationAttributes, SKOperationKind,
-    execution::{SKAccessPattern, SKStreamDecision, sk_resolve_execution_plan},
+    execution::{
+        SKAccessPattern, SKDeclaredAccessPattern, SKStreamDecision, sk_resolve_execution_plan,
+    },
     observability::sk_run_operation,
 };
 use sciencekit_math::kernels::{SK_AXIS_SUM_GRAIN, sk_axis_sum, sk_axis_sum_squares};
@@ -58,8 +60,12 @@ pub(super) fn update_moments<F: SKFloat>(
     sk_run_operation(attributes, || -> Result<(), SKError> {
         let (batch_mean, batch_deviations) = match view {
             SKDataView::Dense(data) => {
-                let parallelism =
-                    batch_parallelism(&data, state.available_memory_bytes, state.cpu_cores);
+                let parallelism = batch_parallelism(
+                    &data,
+                    state.available_memory_bytes,
+                    state.cpu_cores,
+                    estimator.access_pattern(),
+                );
                 batch_moments(&data, parallelism)
             }
             SKDataView::Sparse(data) => sparse_batch_moments(&data),
@@ -79,6 +85,7 @@ pub(crate) fn batch_parallelism<F: SKFloat>(
     data: &ArrayView2<F>,
     available_memory_bytes: u64,
     cpu_cores: usize,
+    access_pattern: SKAccessPattern,
 ) -> usize {
     let context = SKExecutionContext {
         available_memory_bytes,
@@ -87,7 +94,7 @@ pub(crate) fn batch_parallelism<F: SKFloat>(
         dataset_elements: Some(data.len() as u64),
         scalar_size_bytes: size_of::<F>() as u64,
         grain: SK_AXIS_SUM_GRAIN,
-        access_pattern: SKAccessPattern::Sequential,
+        access_pattern,
         batch_size_hint: None,
         batch_byte_size_hint: None,
         device: None,

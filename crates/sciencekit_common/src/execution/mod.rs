@@ -10,24 +10,6 @@
 //! This is a **pure dispatcher** module: `mod.rs` only declares and re-exports
 //! submodules; every implementation lives in its own file.
 
-mod batch_guard;
-mod context;
-mod device_plan;
-mod modes;
-mod plan;
-mod resolve;
-mod streaming_driver;
-
-pub use batch_guard::sk_check_batch_buffer_guard;
-pub use context::SKExecutionContext;
-pub use modes::{SKAccessPattern, SKExecutionMode};
-pub use plan::SKExecutionPlan;
-pub use resolve::sk_resolve_execution_plan;
-pub use streaming_driver::{
-    SKStreamDecision, SKStreamingPassPolicy, sk_run_streaming_driver, sk_run_streaming_provider,
-    sk_run_supervised_streaming_driver, sk_run_supervised_streaming_provider,
-};
-
 #[cfg(test)]
 mod execution_tests;
 #[cfg(test)]
@@ -40,3 +22,27 @@ mod streaming_driver_batch_guard_tests;
 mod streaming_driver_sparse_tests;
 #[cfg(test)]
 mod streaming_driver_tests;
+
+mod batch_guard;
+mod context;
+mod declaration;
+mod device_plan;
+mod modes;
+mod plan;
+mod resolve;
+mod streaming_driver;
+pub use batch_guard::sk_check_batch_buffer_guard;
+pub use context::SKExecutionContext;
+pub use declaration::SKDeclaredAccessPattern;
+pub use modes::{SKAccessPattern, SKExecutionMode};
+pub use plan::SKExecutionPlan;
+pub use resolve::sk_resolve_execution_plan;
+pub use streaming_driver::{
+    SKStreamDecision, SKStreamingPassPolicy, sk_run_streaming_driver, sk_run_streaming_provider,
+    sk_run_supervised_streaming_driver, sk_run_supervised_streaming_provider,
+};
+
+#[cfg(test)]
+mod declaration_tests;
+#[cfg(test)]
+mod modes_tests;

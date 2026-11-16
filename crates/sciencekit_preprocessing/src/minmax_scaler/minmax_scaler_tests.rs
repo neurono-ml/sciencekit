@@ -234,3 +234,12 @@ fn estimator_and_model_are_safe_under_concurrency() {
         assert_eq!(handle.join().expect("worker thread joins"), expected);
     }
 }
+
+/// The estimator declares a sequential pattern before fit (spec `access-pattern`).
+#[test]
+fn minmax_scaler_declares_sequential_access_pattern() {
+    use sciencekit_common::execution::{SKAccessPattern, SKDeclaredAccessPattern};
+
+    let estimator = SKMinMaxScaler::<f64>::build().build().expect("build");
+    assert_eq!(estimator.access_pattern(), SKAccessPattern::Sequential);
+}

@@ -93,3 +93,12 @@ fn trait_execution_mode_setter_matches_the_chainable_one() {
         SKExecutionMode::OutOfCoreStreaming
     );
 }
+
+/// The imputer declares a sequential pattern before fit (spec `access-pattern`).
+#[test]
+fn simple_imputer_declares_sequential_access_pattern() {
+    use sciencekit_common::execution::{SKAccessPattern, SKDeclaredAccessPattern};
+
+    let estimator = SKSimpleImputer::<f64>::build().build().expect("build");
+    assert_eq!(estimator.access_pattern(), SKAccessPattern::Sequential);
+}

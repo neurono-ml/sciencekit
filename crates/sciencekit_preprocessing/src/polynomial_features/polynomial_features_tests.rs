@@ -131,3 +131,12 @@ fn backend_default_and_override() {
         .unwrap();
     assert_eq!(custom.backend(), SKBackendKind::MatrixMultiply);
 }
+
+/// The expander declares a sequential pattern before fit (spec `access-pattern`).
+#[test]
+fn polynomial_features_declares_sequential_access_pattern() {
+    use sciencekit_common::execution::{SKAccessPattern, SKDeclaredAccessPattern};
+
+    let estimator = SKPolynomialFeatures::build().build().expect("build");
+    assert_eq!(estimator.access_pattern(), SKAccessPattern::Sequential);
+}

@@ -4,6 +4,7 @@
 use sciencekit_common::{
     SKBackendKind, SKBuilderState, SKDataView, SKError, SKExecutionContext, SKExecutionMode,
     SKExecutionPlan, SKFloat, SKSupervisedFit, SKTargetView,
+    execution::{SKAccessPattern, SKDeclaredAccessPattern},
 };
 use sciencekit_math::SKBackendSelection;
 
@@ -27,6 +28,12 @@ pub struct SKRidge<F> {
     pub(super) tolerance: F,
     pub(super) maximum_number_of_iterations: usize,
     pub(super) backend: SKBackendKind,
+}
+
+impl<F: SKFloat> SKDeclaredAccessPattern for SKRidge<F> {
+    fn access_pattern(&self) -> SKAccessPattern {
+        SKAccessPattern::Iterative
+    }
 }
 
 impl<F: SKFloat> SKRidge<F> {

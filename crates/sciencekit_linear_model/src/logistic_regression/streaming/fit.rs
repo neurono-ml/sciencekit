@@ -29,6 +29,7 @@ pub(crate) fn sk_fit_streaming<F, Provider>(
     config: &SKLogisticConfig<F>,
     backend: SKBackendKind,
     execution_intent: SKExecutionMode,
+    access_pattern: SKAccessPattern,
 ) -> Result<SKLogisticRegressionModel<F>, SKError>
 where
     F: SKFloat,
@@ -42,7 +43,7 @@ where
         backend,
     };
     sk_run_operation(attributes, || {
-        let plan = sk_resolve_streaming_plan()?;
+        let plan = sk_resolve_streaming_plan(access_pattern)?;
         let mut accumulator = SKLogisticStreamAccumulator::new();
         sk_run_supervised_streaming_provider(
             &mut provider,
@@ -100,12 +101,12 @@ pub(super) fn sk_float_label<F: SKFloat>(value: F) -> String {
 }
 
 /// Resolve the plan for an unbounded stream (Sequential access pattern).
-fn sk_resolve_streaming_plan() -> Result<SKExecutionPlan, SKError> {
+fn sk_resolve_streaming_plan(access_pattern: SKAccessPattern) -> Result<SKExecutionPlan, SKError> {
     let mut context = SKExecutionContext::real();
     context.dataset_size_bytes = u64::MAX;
     context.scalar_size_bytes = 8;
     context.dataset_elements = None;
-    context.access_pattern = SKAccessPattern::Sequential;
+    context.access_pattern = access_pattern;
     context.grain = SK_AXIS_SUM_GRAIN;
     sk_resolve_execution_plan(SKExecutionMode::Automatic, &context)
 }

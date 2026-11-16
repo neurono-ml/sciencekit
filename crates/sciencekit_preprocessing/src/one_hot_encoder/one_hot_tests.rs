@@ -441,3 +441,12 @@ fn ragged_nominal_transform_errors() {
     let result: Result<Array2<f64>, _> = model.transform_dense(ragged);
     assert!(result.is_err());
 }
+
+/// The encoder declares a sequential pattern before fit (spec `access-pattern`).
+#[test]
+fn one_hot_encoder_declares_sequential_access_pattern() {
+    use sciencekit_common::execution::{SKAccessPattern, SKDeclaredAccessPattern};
+
+    let estimator = SKOneHotEncoder::build().build().expect("build");
+    assert_eq!(estimator.access_pattern(), SKAccessPattern::Sequential);
+}
