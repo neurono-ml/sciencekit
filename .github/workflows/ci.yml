@@ -49,8 +49,26 @@ jobs:
       - name: cargo clippy --workspace --all-targets -- -D warnings
         run: cargo clippy --workspace --all-targets -- -D warnings
 
+  parity:
+    name: Parity matrix consistency (before the workspace gates)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Install PyYAML
+        run: python3 -m pip install --user pyyaml
+      - name: Check the scikit-learn parity matrix
+        run: python3 scripts/check-parity-matrix.py
+      - name: Check the generated coverage page
+        run: python3 scripts/render-parity-coverage.py --check
+      - name: Test the parity and DAG tooling
+        run: python3 -m unittest discover -s scripts/tests -v
+
   test:
     name: Workspace tests + doctests
+    needs: parity
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository

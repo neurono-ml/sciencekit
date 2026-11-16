@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Parity matrix tooling and coverage page: `scripts/check-parity-matrix.py`
+  mechanically enforces the exhaustive single-status matrix (every pinned
+  scikit-learn 1.9.1 class exactly once, closed status vocabulary, tier on every
+  implemented/planned row, resolved crate and change owners, self-explaining
+  absent rows) and the coverage linkage of every implemented row to its change's
+  completion test; `scripts/render-parity-coverage.py` generates
+  `docs/src/parity-coverage.md` and CI fails when the page goes stale. The 48
+  implemented rows now name their owning change (archived changes included), and
+  the PRD names the matrix as the authority over the phase narrative.
 - Umbrella `sciencekit` crate: one dependency that re-exports the stable public
   surface of all 21 `sciencekit_*` sub-crates under family modules
   (`preprocessing`, `impute`, `linear_model`, `neighbors`, `svm`, `tree`,

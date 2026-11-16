@@ -29,7 +29,13 @@ Status: Approved for implementation
 
 ### 1.1. Goal
 
-`sciencekit` is a Machine Learning library written natively in Rust exposing **all scikit-learn algorithms and utilities**, rewritten from scratch in an optimized form. Its competitive differentiators are:
+`sciencekit` is a Machine Learning library written natively in Rust targeting **full
+parity with the pinned scikit-learn 1.9.1 release**, rewritten from scratch in an
+optimized form. "All algorithms" means every estimator, transformer and function family
+enumerated in `openspec/changes/sklearn-parity-matrix/parity.yaml` for that baseline —
+not an open-ended promise about future scikit-learn releases — and each row is either
+`implemented`, `planned` on the roadmap or `absent` with a recorded reason
+(`docs/src/parity-coverage.md`). Its competitive differentiators are:
 
 - **Extreme performance:** native code, SIMD, data parallelism, custom allocators.
 - **Memory safety:** Rust guarantees without a garbage collector.
@@ -546,6 +552,14 @@ current estimators.
 ---
 
 ## 12. Implementation Roadmap
+
+The **authority** for what must be implemented, its current status and its access-pattern
+tier is the parity matrix at `openspec/changes/sklearn-parity-matrix/parity.yaml`,
+pinned to scikit-learn 1.9.1; the machine-readable schedule is
+`openspec/changes/implementation-dag/dag.yaml`. The phase list below records the order in
+which the families were built and the dependency reasoning behind it — it is a narrative
+of that order, not a second inventory. When this section and the matrix disagree, the
+matrix wins, and a change that implements a matrix row flips its status in the same PR.
 
 Order faithful to the scikit-learn mapping (from the handoff), respecting dependencies between crates:
 

@@ -5,6 +5,7 @@
 - [Home](index.md)
 - [Project Vision](vision.md)
 - [Algorithms](algorithms.md)
+- [Parity Coverage](parity-coverage.md)
 
 ## Engineering
 
