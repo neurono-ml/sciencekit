@@ -5,11 +5,11 @@ implementation, refactor with the gates green.
 
 ## 1. Vocabulary
 
-- [ ] 1.1 Add `SKAccessPattern::FullMemory` with its tier mapping and update every
+- [x] 1.1 Add `SKAccessPattern::FullMemory` with its tier mapping and update every
   exhaustive `match`; verify with `cargo test -p sciencekit_common access_pattern`.
-- [ ] 1.2 Add the tier projection (`tier()` returning the parity tier) and tests for all
+- [x] 1.2 Add the tier projection (`tier()` returning the parity tier) and tests for all
   four values; verify with `cargo test -p sciencekit_common access_pattern`.
-- [ ] 1.3 Add the declaration trait with `access_pattern` and `approximate_alternative`,
+- [x] 1.3 Add the declaration trait with `access_pattern` and `approximate_alternative`,
   plus tests asserting the default alternative is `None`; verify with
   `cargo test -p sciencekit_common declared_access_pattern`.
 
