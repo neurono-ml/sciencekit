@@ -259,6 +259,11 @@ Guardrails:
 - Hardware-gated GPU tests may be skipped when no device is present; fallback tests must
   pass.
 
+The cycle is executable: `scripts/dag-readiness.py` computes the states and the next
+change per lane, `scripts/check-dag.py` is the consistency check, and
+`scripts/check-completion.py` runs a change's completion checks. `runbook.md` holds the
+exact command sequence.
+
 ## Risks / Trade-offs
 
 - **Lane serialization reduces parallelism** → it prevents merge conflicts in shared

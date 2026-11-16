@@ -688,7 +688,7 @@ changes:
     tests:
     - cargo test -p sciencekit_gpu_opencl --features gpu-opencl
 - id: gpu-cuda-backend
-  state: planned
+  state: deferred
   group: cross-cutting
   lane: gpu
   depends_on:
@@ -702,7 +702,7 @@ changes:
     project; OpenCL already ships and is the only validated device backend. Deferred for
     community hardware; see ADR #408 and tracking issue #409."
 - id: gpu-rocm-backend
-  state: planned
+  state: deferred
   group: cross-cutting
   lane: gpu
   depends_on:
@@ -1112,7 +1112,7 @@ changes:
     tests:
     - cargo test -p sciencekit_linear_model lora
 - id: umbrella-crate
-  state: planned
+  state: shipped
   group: wave7
   lane: product
   join: all
