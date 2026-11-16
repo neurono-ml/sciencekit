@@ -12,3 +12,8 @@ graphify-out/
 # mdBook build output and obsolete handoff
 docs/book/
 docs/handoff.md
+# Playwright MCP scratch
+.playwright-mcp/
+
+# Python tooling caches
+__pycache__/

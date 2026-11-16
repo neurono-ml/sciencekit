@@ -1,0 +1,2154 @@
+# Machine-readable parity matrix — see specs/sklearn-parity/spec.md and reuse-map.md.
+baseline: "1.9.1"
+reference: data/sklearn-1.9.1-api.txt
+crates:
+  - sciencekit_calibration
+  - sciencekit_cluster
+  - sciencekit_common
+  - sciencekit_covariance
+  - sciencekit_cross_decomposition
+  - sciencekit_datasets
+  - sciencekit_decomposition
+  - sciencekit_discriminant_analysis
+  - sciencekit_ensemble
+  - sciencekit_feature_selection
+  - sciencekit_graph
+  - sciencekit_impute
+  - sciencekit_kernel_methods
+  - sciencekit_linear_model
+  - sciencekit_manifold
+  - sciencekit_math
+  - sciencekit_meta
+  - sciencekit_metrics
+  - sciencekit_mixture
+  - sciencekit_model_selection
+  - sciencekit_naive_bayes
+  - sciencekit_neighbors
+  - sciencekit_neural_network
+  - sciencekit_outlier
+  - sciencekit_pipeline
+  - sciencekit_preprocessing
+  - sciencekit_semi_supervised
+  - sciencekit_stats
+  - sciencekit_svm
+  - sciencekit_text
+  - sciencekit_tree
+entries:
+  - api: sklearn.calibration.CalibratedClassifierCV
+    family: calibration
+    kind: estimator
+    status: planned
+    crate: sciencekit_calibration
+    change: calibrated-classifier
+    tier: chunked
+
+  - api: sklearn.calibration.CalibrationDisplay
+    family: calibration
+    kind: estimator
+    status: absent
+    reason: "plotting object; sciencekit returns the typed calibration curve and bins, rendering is the caller's concern"
+
+  - api: sklearn.callback
+    family: callbacks
+    kind: function-family
+    status: planned
+    crate: sciencekit_common
+    change: estimator-tags-and-callbacks
+    tier: chunked
+
+  - api: sklearn.cluster.AffinityPropagation
+    family: cluster
+    kind: estimator
+    status: planned
+    crate: sciencekit_cluster
+    change: affinity-propagation
+    tier: full-memory
+    alternative: "sparse affinity graph over k-nearest neighbors"
+
+  - api: sklearn.cluster.AgglomerativeClustering
+    family: cluster
+    kind: estimator
+    status: planned
+    crate: sciencekit_cluster
+    change: agglomerative-clustering
+    tier: full-memory
+    alternative: "connectivity-constrained clustering or a coreset pre-clustering"
+
+  - api: sklearn.cluster.Birch
+    family: cluster
+    kind: estimator
+    status: planned
+    crate: sciencekit_cluster
+    change: birch
+    tier: streaming
+
+  - api: sklearn.cluster.BisectingKMeans
+    family: cluster
+    kind: estimator
+    status: planned
+    crate: sciencekit_cluster
+    change: bisecting-kmeans
+    tier: mappable
+
+  - api: sklearn.cluster.DBSCAN
+    family: cluster
+    kind: estimator
+    status: implemented
+    crate: sciencekit_cluster
+    tier: mappable
+
+  - api: sklearn.cluster.FeatureAgglomeration
+    family: cluster
+    kind: estimator
+    status: planned
+    crate: sciencekit_cluster
+    change: feature-agglomeration
+    tier: full-memory
+    alternative: "pre-aggregate features with PCA or a random projection before linkage"
+
+  - api: sklearn.cluster.HDBSCAN
+    family: cluster
+    kind: estimator
+    status: planned
+    crate: sciencekit_cluster
+    change: hdbscan
+    tier: mappable
+
+  - api: sklearn.cluster.KMeans
+    family: cluster
+    kind: estimator
+    status: implemented
+    crate: sciencekit_cluster
+    tier: mappable
+
+  - api: sklearn.cluster.MeanShift
+    family: cluster
+    kind: estimator
+    status: planned
+    crate: sciencekit_cluster
+    change: mean-shift
+    tier: mappable
+
+  - api: sklearn.cluster.MiniBatchKMeans
+    family: cluster
+    kind: estimator
+    status: implemented
+    crate: sciencekit_cluster
+    tier: streaming
+
+  - api: sklearn.cluster.OPTICS
+    family: cluster
+    kind: estimator
+    status: planned
+    crate: sciencekit_cluster
+    change: optics
+    tier: mappable
+
+  - api: sklearn.cluster.SpectralBiclustering
+    family: cluster
+    kind: estimator
+    status: planned
+    crate: sciencekit_cluster
+    change: spectral-biclustering
+    tier: chunked
+
+  - api: sklearn.cluster.SpectralClustering
+    family: cluster
+    kind: estimator
+    status: planned
+    crate: sciencekit_cluster
+    change: spectral-clustering
+    tier: chunked
+
+  - api: sklearn.cluster.SpectralCoclustering
+    family: cluster
+    kind: estimator
+    status: planned
+    crate: sciencekit_cluster
+    change: spectral-coclustering
+    tier: chunked
+
+  - api: sklearn.compose.ColumnTransformer
+    family: compose
+    kind: estimator
+    status: planned
+    crate: sciencekit_pipeline
+    change: column-transformer
+    tier: chunked
+
+  - api: sklearn.compose.TransformedTargetRegressor
+    family: compose
+    kind: estimator
+    status: planned
+    crate: sciencekit_pipeline
+    change: transformed-target-regressor
+    tier: chunked
+
+  - api: sklearn.covariance.EllipticEnvelope
+    family: covariance
+    kind: estimator
+    status: planned
+    crate: sciencekit_covariance
+    change: elliptic-envelope
+    tier: chunked
+
+  - api: sklearn.covariance.EmpiricalCovariance
+    family: covariance
+    kind: estimator
+    status: planned
+    crate: sciencekit_covariance
+    change: empirical-covariance
+    tier: chunked
+
+  - api: sklearn.covariance.GraphicalLasso
+    family: covariance
+    kind: estimator
+    status: planned
+    crate: sciencekit_covariance
+    change: graphical-lasso
+    tier: chunked
+
+  - api: sklearn.covariance.GraphicalLassoCV
+    family: covariance
+    kind: estimator
+    status: planned
+    crate: sciencekit_covariance
+    change: graphical-lasso
+    tier: chunked
+
+  - api: sklearn.covariance.LedoitWolf
+    family: covariance
+    kind: estimator
+    status: planned
+    crate: sciencekit_covariance
+    change: ledoit-wolf
+    tier: chunked
+
+  - api: sklearn.covariance.MinCovDet
+    family: covariance
+    kind: estimator
+    status: planned
+    crate: sciencekit_covariance
+    change: min-cov-det
+    tier: chunked
+
+  - api: sklearn.covariance.OAS
+    family: covariance
+    kind: estimator
+    status: planned
+    crate: sciencekit_covariance
+    change: oas
+    tier: chunked
+
+  - api: sklearn.covariance.ShrunkCovariance
+    family: covariance
+    kind: estimator
+    status: planned
+    crate: sciencekit_covariance
+    change: shrunk-covariance
+    tier: chunked
+
+  - api: sklearn.cross_decomposition.CCA
+    family: cross_decomposition
+    kind: estimator
+    status: planned
+    crate: sciencekit_cross_decomposition
+    change: canonical-correlation-analysis
+    tier: chunked
+
+  - api: sklearn.cross_decomposition.PLSCanonical
+    family: cross_decomposition
+    kind: estimator
+    status: planned
+    crate: sciencekit_cross_decomposition
+    change: pls-canonical
+    tier: chunked
+
+  - api: sklearn.cross_decomposition.PLSRegression
+    family: cross_decomposition
+    kind: estimator
+    status: planned
+    crate: sciencekit_cross_decomposition
+    change: pls-regression
+    tier: chunked
+
+  - api: sklearn.cross_decomposition.PLSSVD
+    family: cross_decomposition
+    kind: estimator
+    status: planned
+    crate: sciencekit_cross_decomposition
+    change: pls-svd
+    tier: chunked
+
+  - api: sklearn.datasets.fetchers
+    family: datasets
+    kind: function-family
+    status: absent
+    reason: "network-backed fetchers are out of scope; generators and local loaders are provided"
+
+  - api: sklearn.datasets.generators
+    family: datasets
+    kind: function-family
+    status: planned
+    crate: sciencekit_datasets
+    change: dataset-generators
+    tier: chunked
+
+  - api: sklearn.datasets.loaders
+    family: datasets
+    kind: function-family
+    status: planned
+    crate: sciencekit_datasets
+    change: dataset-loaders
+    tier: chunked
+
+  - api: sklearn.decomposition.DictionaryLearning
+    family: decomposition
+    kind: estimator
+    status: planned
+    crate: sciencekit_decomposition
+    change: dictionary-learning
+    tier: chunked
+
+  - api: sklearn.decomposition.FactorAnalysis
+    family: decomposition
+    kind: estimator
+    status: planned
+    crate: sciencekit_decomposition
+    change: factor-analysis
+    tier: chunked
+
+  - api: sklearn.decomposition.FastICA
+    family: decomposition
+    kind: estimator
+    status: planned
+    crate: sciencekit_decomposition
+    change: fast-ica
+    tier: chunked
+
+  - api: sklearn.decomposition.IncrementalPCA
+    family: decomposition
+    kind: estimator
+    status: implemented
+    crate: sciencekit_decomposition
+    tier: streaming
+
+  - api: sklearn.decomposition.KernelPCA
+    family: decomposition
+    kind: estimator
+    status: planned
+    crate: sciencekit_decomposition
+    change: kernel-pca
+    tier: full-memory
+    alternative: "Nystroem approximation of the kernel"
+
+  - api: sklearn.decomposition.LatentDirichletAllocation
+    family: decomposition
+    kind: estimator
+    status: planned
+    crate: sciencekit_decomposition
+    change: latent-dirichlet-allocation
+    tier: chunked
+
+  - api: sklearn.decomposition.MiniBatchDictionaryLearning
+    family: decomposition
+    kind: estimator
+    status: planned
+    crate: sciencekit_decomposition
+    change: minibatch-dictionary-learning
+    tier: streaming
+
+  - api: sklearn.decomposition.MiniBatchNMF
+    family: decomposition
+    kind: estimator
+    status: planned
+    crate: sciencekit_decomposition
+    change: minibatch-nmf
+    tier: streaming
+
+  - api: sklearn.decomposition.MiniBatchSparsePCA
+    family: decomposition
+    kind: estimator
+    status: planned
+    crate: sciencekit_decomposition
+    change: minibatch-sparse-pca
+    tier: streaming
+
+  - api: sklearn.decomposition.NMF
+    family: decomposition
+    kind: estimator
+    status: planned
+    crate: sciencekit_decomposition
+    change: nmf
+    tier: chunked
+
+  - api: sklearn.decomposition.PCA
+    family: decomposition
+    kind: estimator
+    status: implemented
+    crate: sciencekit_decomposition
+    tier: chunked
+
+  - api: sklearn.decomposition.SparseCoder
+    family: decomposition
+    kind: estimator
+    status: planned
+    crate: sciencekit_decomposition
+    change: sparse-coder
+    tier: chunked
+
+  - api: sklearn.decomposition.SparsePCA
+    family: decomposition
+    kind: estimator
+    status: planned
+    crate: sciencekit_decomposition
+    change: sparse-pca
+    tier: chunked
+
+  - api: sklearn.decomposition.TruncatedSVD
+    family: decomposition
+    kind: estimator
+    status: implemented
+    crate: sciencekit_decomposition
+    tier: chunked
+
+  - api: sklearn.discriminant_analysis.LinearDiscriminantAnalysis
+    family: discriminant_analysis
+    kind: estimator
+    status: planned
+    crate: sciencekit_discriminant_analysis
+    change: linear-discriminant-analysis
+    tier: chunked
+
+  - api: sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis
+    family: discriminant_analysis
+    kind: estimator
+    status: planned
+    crate: sciencekit_discriminant_analysis
+    change: quadratic-discriminant-analysis
+    tier: chunked
+
+  - api: sklearn.dummy.DummyClassifier
+    family: dummy
+    kind: estimator
+    status: planned
+    crate: sciencekit_meta
+    change: dummy-estimators
+    tier: streaming
+
+  - api: sklearn.dummy.DummyRegressor
+    family: dummy
+    kind: estimator
+    status: planned
+    crate: sciencekit_meta
+    change: dummy-estimators
+    tier: streaming
+
+  - api: sklearn.ensemble.AdaBoostClassifier
+    family: ensemble
+    kind: estimator
+    status: planned
+    crate: sciencekit_ensemble
+    change: adaboost
+    tier: mappable
+
+  - api: sklearn.ensemble.AdaBoostRegressor
+    family: ensemble
+    kind: estimator
+    status: planned
+    crate: sciencekit_ensemble
+    change: adaboost
+    tier: mappable
+
+  - api: sklearn.ensemble.BaggingClassifier
+    family: ensemble
+    kind: estimator
+    status: implemented
+    crate: sciencekit_ensemble
+    tier: mappable
+
+  - api: sklearn.ensemble.BaggingRegressor
+    family: ensemble
+    kind: estimator
+    status: implemented
+    crate: sciencekit_ensemble
+    tier: mappable
+
+  - api: sklearn.ensemble.ExtraTreesClassifier
+    family: ensemble
+    kind: estimator
+    status: planned
+    crate: sciencekit_ensemble
+    change: extra-trees
+    tier: mappable
+
+  - api: sklearn.ensemble.ExtraTreesRegressor
+    family: ensemble
+    kind: estimator
+    status: planned
+    crate: sciencekit_ensemble
+    change: extra-trees
+    tier: mappable
+
+  - api: sklearn.ensemble.GradientBoostingClassifier
+    family: ensemble
+    kind: estimator
+    status: implemented
+    crate: sciencekit_ensemble
+    tier: chunked
+
+  - api: sklearn.ensemble.GradientBoostingRegressor
+    family: ensemble
+    kind: estimator
+    status: implemented
+    crate: sciencekit_ensemble
+    tier: chunked
+
+  - api: sklearn.ensemble.HistGradientBoostingClassifier
+    family: ensemble
+    kind: estimator
+    status: implemented
+    crate: sciencekit_ensemble
+    tier: chunked
+
+  - api: sklearn.ensemble.HistGradientBoostingRegressor
+    family: ensemble
+    kind: estimator
+    status: implemented
+    crate: sciencekit_ensemble
+    tier: chunked
+
+  - api: sklearn.ensemble.IsolationForest
+    family: ensemble
+    kind: estimator
+    status: implemented
+    crate: sciencekit_outlier
+    tier: mappable
+
+  - api: sklearn.ensemble.RandomForestClassifier
+    family: ensemble
+    kind: estimator
+    status: implemented
+    crate: sciencekit_ensemble
+    tier: mappable
+
+  - api: sklearn.ensemble.RandomForestRegressor
+    family: ensemble
+    kind: estimator
+    status: implemented
+    crate: sciencekit_ensemble
+    tier: mappable
+
+  - api: sklearn.ensemble.RandomTreesEmbedding
+    family: ensemble
+    kind: estimator
+    status: planned
+    crate: sciencekit_ensemble
+    change: random-trees-embedding
+    tier: mappable
+
+  - api: sklearn.ensemble.StackingClassifier
+    family: ensemble
+    kind: estimator
+    status: planned
+    crate: sciencekit_ensemble
+    change: stacking
+    tier: chunked
+
+  - api: sklearn.ensemble.StackingRegressor
+    family: ensemble
+    kind: estimator
+    status: planned
+    crate: sciencekit_ensemble
+    change: stacking
+    tier: chunked
+
+  - api: sklearn.ensemble.VotingClassifier
+    family: ensemble
+    kind: estimator
+    status: planned
+    crate: sciencekit_ensemble
+    change: voting
+    tier: chunked
+
+  - api: sklearn.ensemble.VotingRegressor
+    family: ensemble
+    kind: estimator
+    status: planned
+    crate: sciencekit_ensemble
+    change: voting
+    tier: chunked
+
+  - api: sklearn.feature_extraction.DictVectorizer
+    family: feature_extraction
+    kind: estimator
+    status: planned
+    crate: sciencekit_text
+    change: dict-vectorizer
+    tier: streaming
+
+  - api: sklearn.feature_extraction.FeatureHasher
+    family: feature_extraction
+    kind: estimator
+    status: planned
+    crate: sciencekit_text
+    change: feature-hasher
+    tier: streaming
+
+  - api: sklearn.feature_extraction.text.CountVectorizer
+    family: feature_extraction
+    kind: estimator
+    status: planned
+    crate: sciencekit_text
+    change: text-vectorizers
+    tier: streaming
+
+  - api: sklearn.feature_extraction.text.HashingVectorizer
+    family: feature_extraction
+    kind: estimator
+    status: planned
+    crate: sciencekit_text
+    change: text-vectorizers
+    tier: streaming
+
+  - api: sklearn.feature_extraction.text.TfidfTransformer
+    family: feature_extraction
+    kind: estimator
+    status: planned
+    crate: sciencekit_text
+    change: text-vectorizers
+    tier: streaming
+
+  - api: sklearn.feature_extraction.text.TfidfVectorizer
+    family: feature_extraction
+    kind: estimator
+    status: planned
+    crate: sciencekit_text
+    change: text-vectorizers
+    tier: streaming
+
+  - api: sklearn.feature_selection.GenericUnivariateSelect
+    family: feature_selection
+    kind: estimator
+    status: planned
+    crate: sciencekit_feature_selection
+    change: univariate-selectors
+    tier: chunked
+
+  - api: sklearn.feature_selection.RFE
+    family: feature_selection
+    kind: estimator
+    status: planned
+    crate: sciencekit_feature_selection
+    change: rfe
+    tier: chunked
+
+  - api: sklearn.feature_selection.RFECV
+    family: feature_selection
+    kind: estimator
+    status: planned
+    crate: sciencekit_feature_selection
+    change: rfe
+    tier: chunked
+
+  - api: sklearn.feature_selection.SelectFdr
+    family: feature_selection
+    kind: estimator
+    status: planned
+    crate: sciencekit_feature_selection
+    change: univariate-selectors
+    tier: chunked
+
+  - api: sklearn.feature_selection.SelectFpr
+    family: feature_selection
+    kind: estimator
+    status: planned
+    crate: sciencekit_feature_selection
+    change: univariate-selectors
+    tier: chunked
+
+  - api: sklearn.feature_selection.SelectFromModel
+    family: feature_selection
+    kind: estimator
+    status: planned
+    crate: sciencekit_feature_selection
+    change: select-from-model
+    tier: chunked
+
+  - api: sklearn.feature_selection.SelectFwe
+    family: feature_selection
+    kind: estimator
+    status: planned
+    crate: sciencekit_feature_selection
+    change: univariate-selectors
+    tier: chunked
+
+  - api: sklearn.feature_selection.SelectKBest
+    family: feature_selection
+    kind: estimator
+    status: planned
+    crate: sciencekit_feature_selection
+    change: univariate-selectors
+    tier: chunked
+
+  - api: sklearn.feature_selection.SelectPercentile
+    family: feature_selection
+    kind: estimator
+    status: planned
+    crate: sciencekit_feature_selection
+    change: univariate-selectors
+    tier: chunked
+
+  - api: sklearn.feature_selection.SelectorMixin
+    family: feature_selection
+    kind: estimator
+    status: absent
+    reason: "mixin, not a user-facing estimator; selection behavior is delivered by the concrete selectors"
+
+  - api: sklearn.feature_selection.SequentialFeatureSelector
+    family: feature_selection
+    kind: estimator
+    status: planned
+    crate: sciencekit_feature_selection
+    change: sequential-feature-selector
+    tier: chunked
+
+  - api: sklearn.feature_selection.VarianceThreshold
+    family: feature_selection
+    kind: estimator
+    status: planned
+    crate: sciencekit_feature_selection
+    change: variance-threshold
+    tier: streaming
+
+  - api: sklearn.feature_selection.functions
+    family: feature-selection
+    kind: function-family
+    status: planned
+    crate: sciencekit_feature_selection
+    change: univariate-score-functions
+    tier: chunked
+
+  - api: sklearn.gaussian_process.GaussianProcessClassifier
+    family: gaussian_process
+    kind: estimator
+    status: planned
+    crate: sciencekit_kernel_methods
+    change: gaussian-process
+    tier: full-memory
+    alternative: "subset-of-regressors/inducing points, or CG on the kernel operator"
+
+  - api: sklearn.gaussian_process.GaussianProcessRegressor
+    family: gaussian_process
+    kind: estimator
+    status: planned
+    crate: sciencekit_kernel_methods
+    change: gaussian-process
+    tier: full-memory
+    alternative: "subset-of-regressors/inducing points, or CG on the kernel operator"
+
+  - api: sklearn.gaussian_process.kernels.CompoundKernel
+    family: gaussian_process
+    kind: estimator
+    status: planned
+    crate: sciencekit_kernel_methods
+    change: gaussian-process
+    tier: full-memory
+    alternative: "subset-of-regressors/inducing points, or CG on the kernel operator"
+
+  - api: sklearn.gaussian_process.kernels.ConstantKernel
+    family: gaussian_process
+    kind: estimator
+    status: planned
+    crate: sciencekit_kernel_methods
+    change: gaussian-process
+    tier: full-memory
+    alternative: "subset-of-regressors/inducing points, or CG on the kernel operator"
+
+  - api: sklearn.gaussian_process.kernels.DotProduct
+    family: gaussian_process
+    kind: estimator
+    status: planned
+    crate: sciencekit_kernel_methods
+    change: gaussian-process
+    tier: full-memory
+    alternative: "subset-of-regressors/inducing points, or CG on the kernel operator"
+
+  - api: sklearn.gaussian_process.kernels.ExpSineSquared
+    family: gaussian_process
+    kind: estimator
+    status: planned
+    crate: sciencekit_kernel_methods
+    change: gaussian-process
+    tier: full-memory
+    alternative: "subset-of-regressors/inducing points, or CG on the kernel operator"
+
+  - api: sklearn.gaussian_process.kernels.Exponentiation
+    family: gaussian_process
+    kind: estimator
+    status: planned
+    crate: sciencekit_kernel_methods
+    change: gaussian-process
+    tier: full-memory
+    alternative: "subset-of-regressors/inducing points, or CG on the kernel operator"
+
+  - api: sklearn.gaussian_process.kernels.Hyperparameter
+    family: gaussian_process
+    kind: estimator
+    status: planned
+    crate: sciencekit_kernel_methods
+    change: gaussian-process
+    tier: full-memory
+    alternative: "subset-of-regressors/inducing points, or CG on the kernel operator"
+
+  - api: sklearn.gaussian_process.kernels.Kernel
+    family: gaussian_process
+    kind: estimator
+    status: planned
+    crate: sciencekit_kernel_methods
+    change: gaussian-process
+    tier: full-memory
+    alternative: "subset-of-regressors/inducing points, or CG on the kernel operator"
+
+  - api: sklearn.gaussian_process.kernels.Matern
+    family: gaussian_process
+    kind: estimator
+    status: planned
+    crate: sciencekit_kernel_methods
+    change: gaussian-process
+    tier: full-memory
+    alternative: "subset-of-regressors/inducing points, or CG on the kernel operator"
+
+  - api: sklearn.gaussian_process.kernels.PairwiseKernel
+    family: gaussian_process
+    kind: estimator
+    status: planned
+    crate: sciencekit_kernel_methods
+    change: gaussian-process
+    tier: full-memory
+    alternative: "subset-of-regressors/inducing points, or CG on the kernel operator"
+
+  - api: sklearn.gaussian_process.kernels.Product
+    family: gaussian_process
+    kind: estimator
+    status: planned
+    crate: sciencekit_kernel_methods
+    change: gaussian-process
+    tier: full-memory
+    alternative: "subset-of-regressors/inducing points, or CG on the kernel operator"
+
+  - api: sklearn.gaussian_process.kernels.RBF
+    family: gaussian_process
+    kind: estimator
+    status: planned
+    crate: sciencekit_kernel_methods
+    change: gaussian-process
+    tier: full-memory
+    alternative: "subset-of-regressors/inducing points, or CG on the kernel operator"
+
+  - api: sklearn.gaussian_process.kernels.RationalQuadratic
+    family: gaussian_process
+    kind: estimator
+    status: planned
+    crate: sciencekit_kernel_methods
+    change: gaussian-process
+    tier: full-memory
+    alternative: "subset-of-regressors/inducing points, or CG on the kernel operator"
+
+  - api: sklearn.gaussian_process.kernels.Sum
+    family: gaussian_process
+    kind: estimator
+    status: planned
+    crate: sciencekit_kernel_methods
+    change: gaussian-process
+    tier: full-memory
+    alternative: "subset-of-regressors/inducing points, or CG on the kernel operator"
+
+  - api: sklearn.gaussian_process.kernels.WhiteKernel
+    family: gaussian_process
+    kind: estimator
+    status: planned
+    crate: sciencekit_kernel_methods
+    change: gaussian-process
+    tier: full-memory
+    alternative: "subset-of-regressors/inducing points, or CG on the kernel operator"
+
+  - api: sklearn.impute.IterativeImputer
+    family: impute
+    kind: estimator
+    status: planned
+    crate: sciencekit_impute
+    change: iterative-imputer
+    tier: chunked
+
+  - api: sklearn.impute.KNNImputer
+    family: impute
+    kind: estimator
+    status: implemented
+    crate: sciencekit_impute
+    tier: chunked
+
+  - api: sklearn.impute.MissingIndicator
+    family: impute
+    kind: estimator
+    status: implemented
+    crate: sciencekit_impute
+    tier: streaming
+
+  - api: sklearn.impute.SimpleImputer
+    family: impute
+    kind: estimator
+    status: implemented
+    crate: sciencekit_impute
+    tier: streaming
+
+  - api: sklearn.inspection.displays
+    family: inspection
+    kind: function-family
+    status: absent
+    reason: "plotting objects; partial-dependence and decision-surface data is returned instead"
+
+  - api: sklearn.inspection.partial_dependence
+    family: inspection
+    kind: function-family
+    status: planned
+    crate: sciencekit_metrics
+    change: partial-dependence
+    tier: chunked
+
+  - api: sklearn.inspection.permutation
+    family: inspection
+    kind: function-family
+    status: planned
+    crate: sciencekit_metrics
+    change: permutation-importance
+    tier: chunked
+
+  - api: sklearn.isotonic.IsotonicRegression
+    family: isotonic
+    kind: estimator
+    status: planned
+    crate: sciencekit_meta
+    change: isotonic-regression
+    tier: streaming
+
+  - api: sklearn.isotonic.functions
+    family: isotonic
+    kind: function-family
+    status: planned
+    crate: sciencekit_meta
+    change: isotonic-regression
+    tier: streaming
+
+  - api: sklearn.kernel_approximation.AdditiveChi2Sampler
+    family: kernel_approximation
+    kind: estimator
+    status: planned
+    crate: sciencekit_kernel_methods
+    change: kernel-approximation
+    tier: streaming
+
+  - api: sklearn.kernel_approximation.Nystroem
+    family: kernel_approximation
+    kind: estimator
+    status: planned
+    crate: sciencekit_kernel_methods
+    change: kernel-approximation
+    tier: streaming
+
+  - api: sklearn.kernel_approximation.PolynomialCountSketch
+    family: kernel_approximation
+    kind: estimator
+    status: planned
+    crate: sciencekit_kernel_methods
+    change: kernel-approximation
+    tier: streaming
+
+  - api: sklearn.kernel_approximation.RBFSampler
+    family: kernel_approximation
+    kind: estimator
+    status: planned
+    crate: sciencekit_kernel_methods
+    change: kernel-approximation
+    tier: streaming
+
+  - api: sklearn.kernel_approximation.SkewedChi2Sampler
+    family: kernel_approximation
+    kind: estimator
+    status: planned
+    crate: sciencekit_kernel_methods
+    change: kernel-approximation
+    tier: streaming
+
+  - api: sklearn.kernel_ridge.KernelRidge
+    family: kernel_ridge
+    kind: estimator
+    status: planned
+    crate: sciencekit_kernel_methods
+    change: kernel-ridge
+    tier: full-memory
+    alternative: "Nystroem features followed by a linear ridge solve"
+
+  - api: sklearn.linear_model.ARDRegression
+    family: linear_model
+    kind: estimator
+    status: planned
+    crate: sciencekit_linear_model
+    change: ard-regression
+    tier: chunked
+
+  - api: sklearn.linear_model.BayesianRidge
+    family: linear_model
+    kind: estimator
+    status: planned
+    crate: sciencekit_linear_model
+    change: bayesian-ridge
+    tier: chunked
+
+  - api: sklearn.linear_model.ElasticNet
+    family: linear_model
+    kind: estimator
+    status: implemented
+    crate: sciencekit_linear_model
+    tier: chunked
+
+  - api: sklearn.linear_model.ElasticNetCV
+    family: linear_model
+    kind: estimator
+    status: planned
+    crate: sciencekit_linear_model
+    change: elastic-net-cv
+    tier: chunked
+
+  - api: sklearn.linear_model.GammaRegressor
+    family: linear_model
+    kind: estimator
+    status: planned
+    crate: sciencekit_linear_model
+    change: generalized-linear-regressors
+    tier: chunked
+
+  - api: sklearn.linear_model.HuberRegressor
+    family: linear_model
+    kind: estimator
+    status: planned
+    crate: sciencekit_linear_model
+    change: huber-regressor
+    tier: chunked
+
+  - api: sklearn.linear_model.Lars
+    family: linear_model
+    kind: estimator
+    status: planned
+    crate: sciencekit_linear_model
+    change: lars-family
+    tier: chunked
+
+  - api: sklearn.linear_model.LarsCV
+    family: linear_model
+    kind: estimator
+    status: planned
+    crate: sciencekit_linear_model
+    change: lars-family
+    tier: chunked
+
+  - api: sklearn.linear_model.Lasso
+    family: linear_model
+    kind: estimator
+    status: implemented
+    crate: sciencekit_linear_model
+    tier: chunked
+
+  - api: sklearn.linear_model.LassoCV
+    family: linear_model
+    kind: estimator
+    status: planned
+    crate: sciencekit_linear_model
+    change: lasso-cv
+    tier: chunked
+
+  - api: sklearn.linear_model.LassoLars
+    family: linear_model
+    kind: estimator
+    status: planned
+    crate: sciencekit_linear_model
+    change: lars-family
+    tier: chunked
+
+  - api: sklearn.linear_model.LassoLarsCV
+    family: linear_model
+    kind: estimator
+    status: planned
+    crate: sciencekit_linear_model
+    change: lars-family
+    tier: chunked
+
+  - api: sklearn.linear_model.LassoLarsIC
+    family: linear_model
+    kind: estimator
+    status: planned
+    crate: sciencekit_linear_model
+    change: lars-family
+    tier: chunked
+
+  - api: sklearn.linear_model.LinearRegression
+    family: linear_model
+    kind: estimator
+    status: implemented
+    crate: sciencekit_linear_model
+    tier: chunked
+
+  - api: sklearn.linear_model.LogisticRegression
+    family: linear_model
+    kind: estimator
+    status: implemented
+    crate: sciencekit_linear_model
+    tier: chunked
+
+  - api: sklearn.linear_model.LogisticRegressionCV
+    family: linear_model
+    kind: estimator
+    status: planned
+    crate: sciencekit_linear_model
+    change: logistic-regression-cv
+    tier: chunked
+
+  - api: sklearn.linear_model.MultiTaskElasticNet
+    family: linear_model
+    kind: estimator
+    status: planned
+    crate: sciencekit_linear_model
+    change: multitask-linear
+    tier: chunked
+
+  - api: sklearn.linear_model.MultiTaskElasticNetCV
+    family: linear_model
+    kind: estimator
+    status: planned
+    crate: sciencekit_linear_model
+    change: multitask-linear
+    tier: chunked
+
+  - api: sklearn.linear_model.MultiTaskLasso
+    family: linear_model
+    kind: estimator
+    status: planned
+    crate: sciencekit_linear_model
+    change: multitask-linear
+    tier: chunked
+
+  - api: sklearn.linear_model.MultiTaskLassoCV
+    family: linear_model
+    kind: estimator
+    status: planned
+    crate: sciencekit_linear_model
+    change: multitask-linear
+    tier: chunked
+
+  - api: sklearn.linear_model.OrthogonalMatchingPursuit
+    family: linear_model
+    kind: estimator
+    status: planned
+    crate: sciencekit_linear_model
+    change: orthogonal-matching-pursuit
+    tier: chunked
+
+  - api: sklearn.linear_model.OrthogonalMatchingPursuitCV
+    family: linear_model
+    kind: estimator
+    status: planned
+    crate: sciencekit_linear_model
+    change: orthogonal-matching-pursuit
+    tier: chunked
+
+  - api: sklearn.linear_model.PassiveAggressiveClassifier
+    family: linear_model
+    kind: estimator
+    status: planned
+    crate: sciencekit_linear_model
+    change: passive-aggressive
+    tier: streaming
+
+  - api: sklearn.linear_model.PassiveAggressiveRegressor
+    family: linear_model
+    kind: estimator
+    status: planned
+    crate: sciencekit_linear_model
+    change: passive-aggressive
+    tier: streaming
+
+  - api: sklearn.linear_model.Perceptron
+    family: linear_model
+    kind: estimator
+    status: planned
+    crate: sciencekit_linear_model
+    change: perceptron
+    tier: streaming
+
+  - api: sklearn.linear_model.PoissonRegressor
+    family: linear_model
+    kind: estimator
+    status: planned
+    crate: sciencekit_linear_model
+    change: generalized-linear-regressors
+    tier: chunked
+
+  - api: sklearn.linear_model.QuantileRegressor
+    family: linear_model
+    kind: estimator
+    status: planned
+    crate: sciencekit_linear_model
+    change: quantile-regressor
+    tier: chunked
+
+  - api: sklearn.linear_model.RANSACRegressor
+    family: linear_model
+    kind: estimator
+    status: planned
+    crate: sciencekit_linear_model
+    change: ransac-regressor
+    tier: chunked
+
+  - api: sklearn.linear_model.Ridge
+    family: linear_model
+    kind: estimator
+    status: implemented
+    crate: sciencekit_linear_model
+    tier: chunked
+
+  - api: sklearn.linear_model.RidgeCV
+    family: linear_model
+    kind: estimator
+    status: planned
+    crate: sciencekit_linear_model
+    change: ridge-cv
+    tier: chunked
+
+  - api: sklearn.linear_model.RidgeClassifier
+    family: linear_model
+    kind: estimator
+    status: planned
+    crate: sciencekit_linear_model
+    change: ridge-classifier
+    tier: chunked
+
+  - api: sklearn.linear_model.RidgeClassifierCV
+    family: linear_model
+    kind: estimator
+    status: planned
+    crate: sciencekit_linear_model
+    change: ridge-classifier
+    tier: chunked
+
+  - api: sklearn.linear_model.SGDClassifier
+    family: linear_model
+    kind: estimator
+    status: implemented
+    crate: sciencekit_linear_model
+    tier: streaming
+
+  - api: sklearn.linear_model.SGDOneClassSVM
+    family: linear_model
+    kind: estimator
+    status: planned
+    crate: sciencekit_linear_model
+    change: sgd-one-class-svm
+    tier: streaming
+
+  - api: sklearn.linear_model.SGDRegressor
+    family: linear_model
+    kind: estimator
+    status: implemented
+    crate: sciencekit_linear_model
+    tier: streaming
+
+  - api: sklearn.linear_model.TheilSenRegressor
+    family: linear_model
+    kind: estimator
+    status: planned
+    crate: sciencekit_linear_model
+    change: theil-sen-regressor
+    tier: chunked
+
+  - api: sklearn.linear_model.TweedieRegressor
+    family: linear_model
+    kind: estimator
+    status: planned
+    crate: sciencekit_linear_model
+    change: generalized-linear-regressors
+    tier: chunked
+
+  - api: sklearn.manifold.ClassicalMDS
+    family: manifold
+    kind: estimator
+    status: planned
+    crate: sciencekit_manifold
+    change: classical-mds
+    tier: full-memory
+    alternative: "landmark MDS"
+
+  - api: sklearn.manifold.Isomap
+    family: manifold
+    kind: estimator
+    status: planned
+    crate: sciencekit_manifold
+    change: isomap
+    tier: full-memory
+    alternative: "landmark Isomap"
+
+  - api: sklearn.manifold.LocallyLinearEmbedding
+    family: manifold
+    kind: estimator
+    status: planned
+    crate: sciencekit_manifold
+    change: locally-linear-embedding
+    tier: full-memory
+    alternative: "landmark LLE or a sparse kNN graph"
+
+  - api: sklearn.manifold.MDS
+    family: manifold
+    kind: estimator
+    status: planned
+    crate: sciencekit_manifold
+    change: multidimensional-scaling
+    tier: full-memory
+    alternative: "landmark MDS"
+
+  - api: sklearn.manifold.SpectralEmbedding
+    family: manifold
+    kind: estimator
+    status: planned
+    crate: sciencekit_manifold
+    change: spectral-embedding
+    tier: chunked
+
+  - api: sklearn.manifold.TSNE
+    family: manifold
+    kind: estimator
+    status: planned
+    crate: sciencekit_manifold
+    change: tsne
+    tier: full-memory
+    alternative: "Barnes-Hut or FFT-accelerated t-SNE"
+
+  - api: sklearn.metrics.classification
+    family: metrics
+    kind: function-family
+    status: planned
+    crate: sciencekit_metrics
+    change: metrics-classification-completion
+    tier: chunked
+
+  - api: sklearn.metrics.clustering
+    family: metrics
+    kind: function-family
+    status: implemented
+    crate: sciencekit_metrics
+    tier: chunked
+
+  - api: sklearn.metrics.displays
+    family: metrics
+    kind: function-family
+    status: absent
+    reason: "plotting objects; the typed metric data (curves, confusion matrix, residuals) is returned instead"
+
+  - api: sklearn.metrics.multilabel
+    family: metrics
+    kind: function-family
+    status: planned
+    crate: sciencekit_metrics
+    change: metrics-calibration-multilabel
+    tier: chunked
+
+  - api: sklearn.metrics.pairwise
+    family: metrics
+    kind: function-family
+    status: planned
+    crate: sciencekit_math
+    change: pairwise-metric-extension
+    tier: chunked
+
+  - api: sklearn.metrics.ranking
+    family: metrics
+    kind: function-family
+    status: planned
+    crate: sciencekit_metrics
+    change: metrics-ranking-completion
+    tier: chunked
+
+  - api: sklearn.metrics.regression
+    family: metrics
+    kind: function-family
+    status: planned
+    crate: sciencekit_metrics
+    change: metrics-regression-completion
+    tier: chunked
+
+  - api: sklearn.mixture.BayesianGaussianMixture
+    family: mixture
+    kind: estimator
+    status: planned
+    crate: sciencekit_mixture
+    change: bayesian-gaussian-mixture
+    tier: streaming
+
+  - api: sklearn.mixture.GaussianMixture
+    family: mixture
+    kind: estimator
+    status: planned
+    crate: sciencekit_mixture
+    change: gaussian-mixture
+    tier: streaming
+
+  - api: sklearn.model_selection.FixedThresholdClassifier
+    family: model_selection
+    kind: estimator
+    status: planned
+    crate: sciencekit_model_selection
+    change: threshold-tuning
+    tier: chunked
+
+  - api: sklearn.model_selection.GridSearchCV
+    family: model_selection
+    kind: estimator
+    status: implemented
+    crate: sciencekit_model_selection
+    tier: chunked
+
+  - api: sklearn.model_selection.GroupKFold
+    family: model_selection
+    kind: estimator
+    status: implemented
+    crate: sciencekit_model_selection
+    tier: chunked
+
+  - api: sklearn.model_selection.GroupShuffleSplit
+    family: model_selection
+    kind: estimator
+    status: planned
+    crate: sciencekit_model_selection
+    change: group-shuffle-split
+    tier: chunked
+
+  - api: sklearn.model_selection.HalvingGridSearchCV
+    family: model_selection
+    kind: estimator
+    status: implemented
+    crate: sciencekit_model_selection
+    tier: chunked
+
+  - api: sklearn.model_selection.HalvingRandomSearchCV
+    family: model_selection
+    kind: estimator
+    status: planned
+    crate: sciencekit_model_selection
+    change: halving-random-search
+    tier: chunked
+
+  - api: sklearn.model_selection.KFold
+    family: model_selection
+    kind: estimator
+    status: implemented
+    crate: sciencekit_model_selection
+    tier: chunked
+
+  - api: sklearn.model_selection.LearningCurveDisplay
+    family: model_selection
+    kind: estimator
+    status: absent
+    reason: "plotting object; the learning-curve values are returned as data"
+
+  - api: sklearn.model_selection.LeaveOneGroupOut
+    family: model_selection
+    kind: estimator
+    status: planned
+    crate: sciencekit_model_selection
+    change: leave-one-out-splitters
+    tier: chunked
+
+  - api: sklearn.model_selection.LeaveOneOut
+    family: model_selection
+    kind: estimator
+    status: planned
+    crate: sciencekit_model_selection
+    change: leave-one-out-splitters
+    tier: chunked
+
+  - api: sklearn.model_selection.LeavePGroupsOut
+    family: model_selection
+    kind: estimator
+    status: planned
+    crate: sciencekit_model_selection
+    change: leave-one-out-splitters
+    tier: chunked
+
+  - api: sklearn.model_selection.LeavePOut
+    family: model_selection
+    kind: estimator
+    status: planned
+    crate: sciencekit_model_selection
+    change: leave-one-out-splitters
+    tier: chunked
+
+  - api: sklearn.model_selection.ParameterGrid
+    family: model_selection
+    kind: estimator
+    status: planned
+    crate: sciencekit_model_selection
+    change: parameter-grid
+    tier: chunked
+
+  - api: sklearn.model_selection.ParameterSampler
+    family: model_selection
+    kind: estimator
+    status: planned
+    crate: sciencekit_model_selection
+    change: parameter-grid
+    tier: chunked
+
+  - api: sklearn.model_selection.PredefinedSplit
+    family: model_selection
+    kind: estimator
+    status: planned
+    crate: sciencekit_model_selection
+    change: predefined-split
+    tier: chunked
+
+  - api: sklearn.model_selection.RandomizedSearchCV
+    family: model_selection
+    kind: estimator
+    status: planned
+    crate: sciencekit_model_selection
+    change: randomized-search
+    tier: chunked
+
+  - api: sklearn.model_selection.RepeatedKFold
+    family: model_selection
+    kind: estimator
+    status: planned
+    crate: sciencekit_model_selection
+    change: repeated-kfold
+    tier: chunked
+
+  - api: sklearn.model_selection.RepeatedStratifiedKFold
+    family: model_selection
+    kind: estimator
+    status: planned
+    crate: sciencekit_model_selection
+    change: repeated-kfold
+    tier: chunked
+
+  - api: sklearn.model_selection.ShuffleSplit
+    family: model_selection
+    kind: estimator
+    status: planned
+    crate: sciencekit_model_selection
+    change: shuffle-splitters
+    tier: chunked
+
+  - api: sklearn.model_selection.StratifiedGroupKFold
+    family: model_selection
+    kind: estimator
+    status: planned
+    crate: sciencekit_model_selection
+    change: stratified-group-kfold
+    tier: chunked
+
+  - api: sklearn.model_selection.StratifiedKFold
+    family: model_selection
+    kind: estimator
+    status: implemented
+    crate: sciencekit_model_selection
+    tier: chunked
+
+  - api: sklearn.model_selection.StratifiedShuffleSplit
+    family: model_selection
+    kind: estimator
+    status: planned
+    crate: sciencekit_model_selection
+    change: shuffle-splitters
+    tier: chunked
+
+  - api: sklearn.model_selection.TimeSeriesSplit
+    family: model_selection
+    kind: estimator
+    status: planned
+    crate: sciencekit_model_selection
+    change: time-series-split
+    tier: chunked
+
+  - api: sklearn.model_selection.TunedThresholdClassifierCV
+    family: model_selection
+    kind: estimator
+    status: planned
+    crate: sciencekit_model_selection
+    change: threshold-tuning
+    tier: chunked
+
+  - api: sklearn.model_selection.ValidationCurveDisplay
+    family: model_selection
+    kind: estimator
+    status: absent
+    reason: "plotting object; the validation-curve values are returned as data"
+
+  - api: sklearn.multiclass.OneVsOneClassifier
+    family: multiclass
+    kind: estimator
+    status: planned
+    crate: sciencekit_common
+    change: multiclass-strategy
+    tier: chunked
+
+  - api: sklearn.multiclass.OneVsRestClassifier
+    family: multiclass
+    kind: estimator
+    status: planned
+    crate: sciencekit_common
+    change: multiclass-strategy
+    tier: chunked
+
+  - api: sklearn.multiclass.OutputCodeClassifier
+    family: multiclass
+    kind: estimator
+    status: planned
+    crate: sciencekit_common
+    change: multiclass-strategy
+    tier: chunked
+
+  - api: sklearn.multioutput.ClassifierChain
+    family: multioutput
+    kind: estimator
+    status: planned
+    crate: sciencekit_common
+    change: multioutput-strategy
+    tier: chunked
+
+  - api: sklearn.multioutput.MultiOutputClassifier
+    family: multioutput
+    kind: estimator
+    status: planned
+    crate: sciencekit_common
+    change: multioutput-strategy
+    tier: chunked
+
+  - api: sklearn.multioutput.MultiOutputRegressor
+    family: multioutput
+    kind: estimator
+    status: planned
+    crate: sciencekit_common
+    change: multioutput-strategy
+    tier: chunked
+
+  - api: sklearn.multioutput.RegressorChain
+    family: multioutput
+    kind: estimator
+    status: planned
+    crate: sciencekit_common
+    change: multioutput-strategy
+    tier: chunked
+
+  - api: sklearn.naive_bayes.BernoulliNB
+    family: naive_bayes
+    kind: estimator
+    status: planned
+    crate: sciencekit_naive_bayes
+    change: bernoulli-naive-bayes
+    tier: streaming
+
+  - api: sklearn.naive_bayes.CategoricalNB
+    family: naive_bayes
+    kind: estimator
+    status: planned
+    crate: sciencekit_naive_bayes
+    change: categorical-naive-bayes
+    tier: streaming
+
+  - api: sklearn.naive_bayes.ComplementNB
+    family: naive_bayes
+    kind: estimator
+    status: planned
+    crate: sciencekit_naive_bayes
+    change: complement-naive-bayes
+    tier: streaming
+
+  - api: sklearn.naive_bayes.GaussianNB
+    family: naive_bayes
+    kind: estimator
+    status: planned
+    crate: sciencekit_naive_bayes
+    change: gaussian-naive-bayes
+    tier: streaming
+
+  - api: sklearn.naive_bayes.MultinomialNB
+    family: naive_bayes
+    kind: estimator
+    status: planned
+    crate: sciencekit_naive_bayes
+    change: multinomial-naive-bayes
+    tier: streaming
+
+  - api: sklearn.neighbors.BallTree
+    family: neighbors
+    kind: estimator
+    status: implemented
+    crate: sciencekit_neighbors
+    tier: mappable
+
+  - api: sklearn.neighbors.KDTree
+    family: neighbors
+    kind: estimator
+    status: implemented
+    crate: sciencekit_neighbors
+    tier: mappable
+
+  - api: sklearn.neighbors.KNeighborsClassifier
+    family: neighbors
+    kind: estimator
+    status: implemented
+    crate: sciencekit_neighbors
+    tier: mappable
+
+  - api: sklearn.neighbors.KNeighborsRegressor
+    family: neighbors
+    kind: estimator
+    status: implemented
+    crate: sciencekit_neighbors
+    tier: mappable
+
+  - api: sklearn.neighbors.KNeighborsTransformer
+    family: neighbors
+    kind: estimator
+    status: planned
+    crate: sciencekit_neighbors
+    change: neighbor-transformers
+    tier: mappable
+
+  - api: sklearn.neighbors.KernelDensity
+    family: neighbors
+    kind: estimator
+    status: planned
+    crate: sciencekit_neighbors
+    change: kernel-density
+    tier: mappable
+
+  - api: sklearn.neighbors.LocalOutlierFactor
+    family: neighbors
+    kind: estimator
+    status: planned
+    crate: sciencekit_outlier
+    change: outlier-lof-one-class
+    tier: mappable
+
+  - api: sklearn.neighbors.NearestCentroid
+    family: neighbors
+    kind: estimator
+    status: planned
+    crate: sciencekit_neighbors
+    change: nearest-centroid
+    tier: streaming
+
+  - api: sklearn.neighbors.NearestNeighbors
+    family: neighbors
+    kind: estimator
+    status: implemented
+    crate: sciencekit_neighbors
+    tier: mappable
+
+  - api: sklearn.neighbors.NeighborhoodComponentsAnalysis
+    family: neighbors
+    kind: estimator
+    status: planned
+    crate: sciencekit_neighbors
+    change: neighborhood-components-analysis
+    tier: full-memory
+    alternative: "subsample the pairs or initialize from a linear metric such as LDA"
+
+  - api: sklearn.neighbors.RadiusNeighborsClassifier
+    family: neighbors
+    kind: estimator
+    status: planned
+    crate: sciencekit_neighbors
+    change: radius-neighbors
+    tier: mappable
+
+  - api: sklearn.neighbors.RadiusNeighborsRegressor
+    family: neighbors
+    kind: estimator
+    status: planned
+    crate: sciencekit_neighbors
+    change: radius-neighbors
+    tier: mappable
+
+  - api: sklearn.neighbors.RadiusNeighborsTransformer
+    family: neighbors
+    kind: estimator
+    status: planned
+    crate: sciencekit_neighbors
+    change: neighbor-transformers
+    tier: mappable
+
+  - api: sklearn.neighbors.functions
+    family: neighbors
+    kind: function-family
+    status: planned
+    crate: sciencekit_neighbors
+    change: neighbor-transformers
+    tier: mappable
+
+  - api: sklearn.neural_network.BernoulliRBM
+    family: neural_network
+    kind: estimator
+    status: planned
+    crate: sciencekit_neural_network
+    change: bernoulli-rbm
+    tier: streaming
+
+  - api: sklearn.neural_network.MLPClassifier
+    family: neural_network
+    kind: estimator
+    status: planned
+    crate: sciencekit_neural_network
+    change: multilayer-perceptron
+    tier: streaming
+
+  - api: sklearn.neural_network.MLPRegressor
+    family: neural_network
+    kind: estimator
+    status: planned
+    crate: sciencekit_neural_network
+    change: multilayer-perceptron
+    tier: streaming
+
+  - api: sklearn.pipeline.FeatureUnion
+    family: pipeline
+    kind: estimator
+    status: implemented
+    crate: sciencekit_pipeline
+    tier: chunked
+
+  - api: sklearn.pipeline.Pipeline
+    family: pipeline
+    kind: estimator
+    status: implemented
+    crate: sciencekit_pipeline
+    tier: chunked
+
+  - api: sklearn.pipeline.functions
+    family: pipeline
+    kind: function-family
+    status: absent
+    reason: "the builder pattern replaces the make_pipeline/make_union factory functions"
+
+  - api: sklearn.preprocessing.Binarizer
+    family: preprocessing
+    kind: estimator
+    status: planned
+    crate: sciencekit_preprocessing
+    change: binarizer
+    tier: streaming
+
+  - api: sklearn.preprocessing.FunctionTransformer
+    family: preprocessing
+    kind: estimator
+    status: planned
+    crate: sciencekit_preprocessing
+    change: function-transformer
+    tier: streaming
+
+  - api: sklearn.preprocessing.KBinsDiscretizer
+    family: preprocessing
+    kind: estimator
+    status: planned
+    crate: sciencekit_preprocessing
+    change: k-bins-discretizer
+    tier: streaming
+
+  - api: sklearn.preprocessing.KernelCenterer
+    family: preprocessing
+    kind: estimator
+    status: planned
+    crate: sciencekit_preprocessing
+    change: kernel-centerer
+    tier: streaming
+
+  - api: sklearn.preprocessing.LabelBinarizer
+    family: preprocessing
+    kind: estimator
+    status: planned
+    crate: sciencekit_preprocessing
+    change: label-binarizer
+    tier: streaming
+
+  - api: sklearn.preprocessing.LabelEncoder
+    family: preprocessing
+    kind: estimator
+    status: planned
+    crate: sciencekit_preprocessing
+    change: label-encoder
+    tier: streaming
+
+  - api: sklearn.preprocessing.MaxAbsScaler
+    family: preprocessing
+    kind: estimator
+    status: planned
+    crate: sciencekit_preprocessing
+    change: max-abs-scaler
+    tier: streaming
+
+  - api: sklearn.preprocessing.MinMaxScaler
+    family: preprocessing
+    kind: estimator
+    status: implemented
+    crate: sciencekit_preprocessing
+    tier: streaming
+
+  - api: sklearn.preprocessing.MultiLabelBinarizer
+    family: preprocessing
+    kind: estimator
+    status: planned
+    crate: sciencekit_preprocessing
+    change: multi-label-binarizer
+    tier: streaming
+
+  - api: sklearn.preprocessing.Normalizer
+    family: preprocessing
+    kind: estimator
+    status: planned
+    crate: sciencekit_preprocessing
+    change: normalizer
+    tier: streaming
+
+  - api: sklearn.preprocessing.OneHotEncoder
+    family: preprocessing
+    kind: estimator
+    status: implemented
+    crate: sciencekit_preprocessing
+    tier: streaming
+
+  - api: sklearn.preprocessing.OrdinalEncoder
+    family: preprocessing
+    kind: estimator
+    status: planned
+    crate: sciencekit_preprocessing
+    change: ordinal-encoder
+    tier: streaming
+
+  - api: sklearn.preprocessing.PolynomialFeatures
+    family: preprocessing
+    kind: estimator
+    status: implemented
+    crate: sciencekit_preprocessing
+    tier: streaming
+
+  - api: sklearn.preprocessing.PowerTransformer
+    family: preprocessing
+    kind: estimator
+    status: planned
+    crate: sciencekit_preprocessing
+    change: power-transformer
+    tier: streaming
+
+  - api: sklearn.preprocessing.QuantileTransformer
+    family: preprocessing
+    kind: estimator
+    status: planned
+    crate: sciencekit_preprocessing
+    change: quantile-transformer
+    tier: streaming
+
+  - api: sklearn.preprocessing.RobustScaler
+    family: preprocessing
+    kind: estimator
+    status: implemented
+    crate: sciencekit_preprocessing
+    tier: streaming
+
+  - api: sklearn.preprocessing.SplineTransformer
+    family: preprocessing
+    kind: estimator
+    status: planned
+    crate: sciencekit_preprocessing
+    change: spline-transformer
+    tier: streaming
+
+  - api: sklearn.preprocessing.StandardScaler
+    family: preprocessing
+    kind: estimator
+    status: implemented
+    crate: sciencekit_preprocessing
+    tier: streaming
+
+  - api: sklearn.preprocessing.TargetEncoder
+    family: preprocessing
+    kind: estimator
+    status: planned
+    crate: sciencekit_preprocessing
+    change: target-encoder
+    tier: streaming
+
+  - api: sklearn.preprocessing.functions
+    family: preprocessing
+    kind: function-family
+    status: planned
+    crate: sciencekit_preprocessing
+    change: preprocessing-functions
+    tier: streaming
+
+  - api: sklearn.random_projection.GaussianRandomProjection
+    family: random_projection
+    kind: estimator
+    status: planned
+    crate: sciencekit_decomposition
+    change: random-projection
+    tier: streaming
+
+  - api: sklearn.random_projection.SparseRandomProjection
+    family: random_projection
+    kind: estimator
+    status: planned
+    crate: sciencekit_decomposition
+    change: random-projection
+    tier: streaming
+
+  - api: sklearn.random_projection.functions
+    family: random_projection
+    kind: function-family
+    status: planned
+    crate: sciencekit_decomposition
+    change: random-projection
+    tier: streaming
+
+  - api: sklearn.semi_supervised.LabelPropagation
+    family: semi_supervised
+    kind: estimator
+    status: planned
+    crate: sciencekit_semi_supervised
+    change: label-propagation
+    tier: chunked
+
+  - api: sklearn.semi_supervised.LabelSpreading
+    family: semi_supervised
+    kind: estimator
+    status: planned
+    crate: sciencekit_semi_supervised
+    change: label-spreading
+    tier: chunked
+
+  - api: sklearn.semi_supervised.SelfTrainingClassifier
+    family: semi_supervised
+    kind: estimator
+    status: planned
+    crate: sciencekit_semi_supervised
+    change: self-training
+    tier: chunked
+
+  - api: sklearn.svm.LinearSVC
+    family: svm
+    kind: estimator
+    status: implemented
+    crate: sciencekit_svm
+    tier: chunked
+
+  - api: sklearn.svm.LinearSVR
+    family: svm
+    kind: estimator
+    status: planned
+    crate: sciencekit_svm
+    change: linear-svr
+    tier: chunked
+
+  - api: sklearn.svm.NuSVC
+    family: svm
+    kind: estimator
+    status: planned
+    crate: sciencekit_svm
+    change: nusvm
+    tier: chunked
+
+  - api: sklearn.svm.NuSVR
+    family: svm
+    kind: estimator
+    status: planned
+    crate: sciencekit_svm
+    change: nusvm
+    tier: chunked
+
+  - api: sklearn.svm.OneClassSVM
+    family: svm
+    kind: estimator
+    status: planned
+    crate: sciencekit_outlier
+    change: outlier-lof-one-class
+    tier: mappable
+
+  - api: sklearn.svm.SVC
+    family: svm
+    kind: estimator
+    status: implemented
+    crate: sciencekit_svm
+    tier: chunked
+
+  - api: sklearn.svm.SVR
+    family: svm
+    kind: estimator
+    status: implemented
+    crate: sciencekit_svm
+    tier: chunked
+
+  - api: sklearn.svm.functions
+    family: svm
+    kind: function-family
+    status: planned
+    crate: sciencekit_svm
+    change: linear-svr
+    tier: chunked
+
+  - api: sklearn.tree.DecisionTreeClassifier
+    family: tree
+    kind: estimator
+    status: implemented
+    crate: sciencekit_tree
+    tier: mappable
+
+  - api: sklearn.tree.DecisionTreeRegressor
+    family: tree
+    kind: estimator
+    status: implemented
+    crate: sciencekit_tree
+    tier: mappable
+
+  - api: sklearn.tree.ExtraTreeClassifier
+    family: tree
+    kind: estimator
+    status: planned
+    crate: sciencekit_tree
+    change: extremely-randomized-tree
+    tier: mappable
+
+  - api: sklearn.tree.ExtraTreeRegressor
+    family: tree
+    kind: estimator
+    status: planned
+    crate: sciencekit_tree
+    change: extremely-randomized-tree
+    tier: mappable
+
+  - api: sklearn.tree.export
+    family: tree
+    kind: function-family
+    status: planned
+    crate: sciencekit_tree
+    change: tree-text-export
+    tier: chunked
+
+  - api: sklearn.tree.plot
+    family: tree
+    kind: function-family
+    status: absent
+    reason: "graphical tree rendering is out of scope; text and DOT export are provided by tree-text-export"
+
+  - api: sklearn.utils
+    family: utils
+    kind: function-family
+    status: absent
+    reason: "internal helpers; the equivalents are private to the crates"
