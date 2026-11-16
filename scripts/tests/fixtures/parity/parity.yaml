@@ -1,0 +1,24 @@
+baseline: "1.9.1"
+reference: sklearn-api.txt
+crates:
+  - sciencekit_alpha
+entries:
+  - api: sklearn.alpha.A
+    family: alpha
+    kind: estimator
+    status: implemented
+    crate: sciencekit_alpha
+    change: alpha
+    tier: mappable
+  - api: sklearn.alpha.B
+    family: alpha
+    kind: estimator
+    status: planned
+    crate: sciencekit_alpha
+    change: beta
+    tier: streaming
+  - api: sklearn.beta.C
+    family: beta
+    kind: estimator
+    status: absent
+    reason: "plotting object; sciencekit returns the data instead"
