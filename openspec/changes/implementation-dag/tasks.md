@@ -54,8 +54,10 @@
 - [x] 3.1 Keep `design.md` layers/parallel tables in sync with `dag.yaml`; verify with the
   consistency check.
 - [x] 3.2 Run `openspec validate implementation-dag` and `mdbook build docs`.
-- [ ] 3.3 Independent review by a separate agent validating that every active change is in
+- [x] 3.3 Independent review by a separate agent validating that every active change is in
   the graph, every dependency is real and the parallel groups do not share a lane.
+  Verdict PASS after the findings on layers, wave order, lane scheduling and completion
+  extras were fixed (re-review in PR #415).
 
 ## Workflow follow-up
 
