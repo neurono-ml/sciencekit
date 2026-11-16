@@ -34,7 +34,7 @@
   `mdbook build docs`.
 - [x] 4.2 Run `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
   warnings` and `cargo test --workspace`; fix every failure before pushing.
-- [ ] 4.3 Independent review by a separate agent validating every scenario in
+- [x] 4.3 Independent review by a separate agent validating every scenario in
   `gpu-compute-contracts`; address every finding and re-run the gates.
 
 ## Workflow follow-up
