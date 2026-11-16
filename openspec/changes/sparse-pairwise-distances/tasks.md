@@ -77,7 +77,7 @@
   `docs/src/math-kernel.md`, add a `Development Explained` chapter on sparse distance
   computation (algorithms, dispatch, no-densification and the mixed-representation paths),
   register it in `SUMMARY.md`, update `maintaining.md`, and verify with `mdbook build docs`.
-- [ ] 8.3 Independent review by a separate agent validating every `pairwise-distances`
+- [x] 8.3 Independent review by a separate agent validating every `pairwise-distances`
   scenario and the design decisions; address every finding and re-run the gates.
 
 ## Workflow follow-up
