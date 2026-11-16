@@ -3,6 +3,7 @@
 use sciencekit_common::{
     SKBackendKind, SKBuilderState, SKError, SKExecutionContext, SKExecutionMode, SKExecutionPlan,
     SKFloat, SKSupervisedFit, SKTargetView,
+    execution::{SKAccessPattern, SKDeclaredAccessPattern},
 };
 
 use crate::coordinate_descent::SKCoordinateDescentConfig;
@@ -24,6 +25,12 @@ pub struct SKElasticNet<F> {
     pub(super) include_intercept: bool,
     pub(super) config: SKCoordinateDescentConfig<F>,
     pub(super) backend: SKBackendKind,
+}
+
+impl<F: SKFloat> SKDeclaredAccessPattern for SKElasticNet<F> {
+    fn access_pattern(&self) -> SKAccessPattern {
+        SKAccessPattern::Iterative
+    }
 }
 
 impl<F: SKFloat> SKElasticNet<F> {
@@ -111,6 +118,7 @@ impl<F: SKFloat> SKElasticNet<F> {
             self.include_intercept,
             self.backend,
             self.execution_intent(),
+            self.access_pattern(),
             self.config.clone(),
         )?;
         Ok(SKElasticNetModel::from_core(core))

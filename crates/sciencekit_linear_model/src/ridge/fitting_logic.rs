@@ -5,7 +5,7 @@
 use ndarray::{Array1, ArrayView1, ArrayView2};
 use sciencekit_common::{
     SKDataView, SKError, SKExecutionContext, SKExecutionPlan, SKFloat, SKOperationAttributes,
-    SKOperationKind, execution::SKAccessPattern, sk_run_operation,
+    SKOperationKind, execution::SKDeclaredAccessPattern, sk_run_operation,
 };
 use sciencekit_math::SKBackendSelection;
 use sciencekit_math::kernels::SK_AXIS_SUM_GRAIN;
@@ -172,7 +172,7 @@ fn resolve_dense_fit_plan<F: SKFloat>(
     context.dataset_size_bytes = features.len() as u64 * size_of::<F>() as u64;
     context.scalar_size_bytes = size_of::<F>() as u64;
     context.dataset_elements = Some(features.len() as u64);
-    context.access_pattern = SKAccessPattern::Sequential;
+    context.access_pattern = estimator.access_pattern();
     context.grain = SK_AXIS_SUM_GRAIN;
     estimator.resolve_plan(&context)
 }

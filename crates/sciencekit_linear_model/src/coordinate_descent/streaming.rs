@@ -22,6 +22,7 @@ use super::core::SKCoordinateDescentModelCore;
 /// The result equals the dense `fit` on the concatenated data within floating
 /// point tolerance, regardless of batch order or size. An empty source is
 /// rejected with a structured error.
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn sk_fit_streaming<F, Provider>(
     mut provider: Provider,
     alphas: &[F],
@@ -29,6 +30,7 @@ pub(crate) fn sk_fit_streaming<F, Provider>(
     include_intercept: bool,
     backend: SKBackendKind,
     execution_intent: SKExecutionMode,
+    access_pattern: SKAccessPattern,
     config: SKCoordinateDescentConfig<F>,
 ) -> Result<SKCoordinateDescentModelCore<F>, SKError>
 where
@@ -45,7 +47,7 @@ where
         backend,
     };
     sk_run_operation(attributes, || {
-        let plan = sk_resolve_streaming_plan()?;
+        let plan = sk_resolve_streaming_plan(access_pattern)?;
         let mut accumulator = SKCoordinateDescentStreamAccumulator::new();
         sk_run_supervised_streaming_provider(
             &mut provider,
@@ -149,12 +151,12 @@ impl<F: SKFloat> SKCoordinateDescentStreamAccumulator<F> {
 }
 
 /// Resolve the plan for an unbounded stream (Sequential access pattern).
-fn sk_resolve_streaming_plan() -> Result<SKExecutionPlan, SKError> {
+fn sk_resolve_streaming_plan(access_pattern: SKAccessPattern) -> Result<SKExecutionPlan, SKError> {
     let mut context = SKExecutionContext::real();
     context.dataset_size_bytes = u64::MAX;
     context.scalar_size_bytes = 8;
     context.dataset_elements = None;
-    context.access_pattern = SKAccessPattern::Sequential;
+    context.access_pattern = access_pattern;
     context.grain = SK_AXIS_SUM_GRAIN;
     sk_resolve_execution_plan(SKExecutionMode::Automatic, &context)
 }

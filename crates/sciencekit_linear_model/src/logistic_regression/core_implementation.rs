@@ -4,7 +4,9 @@
 use sciencekit_common::{
     SKBackendKind, SKBuilderState, SKDataView, SKError, SKExecutionContext, SKExecutionMode,
     SKExecutionPlan, SKFloat, SKOperationAttributes, SKOperationKind, SKSupervisedFit,
-    SKSupervisedSourceProvider, SKTargetView, sk_run_operation,
+    SKSupervisedSourceProvider, SKTargetView,
+    execution::{SKAccessPattern, SKDeclaredAccessPattern},
+    sk_run_operation,
 };
 
 use crate::logistic::SKLogisticState;
@@ -30,6 +32,12 @@ pub struct SKLogisticRegression<F> {
     pub(super) config: SKLogisticConfig<F>,
     pub(super) warm_start_solution: Option<crate::logistic::SKLogisticSolution<F>>,
     pub(super) backend: SKBackendKind,
+}
+
+impl<F: SKFloat> SKDeclaredAccessPattern for SKLogisticRegression<F> {
+    fn access_pattern(&self) -> SKAccessPattern {
+        SKAccessPattern::Iterative
+    }
 }
 
 impl<F: SKFloat> SKLogisticRegression<F> {
@@ -122,6 +130,7 @@ impl<F: SKFloat> SKLogisticRegression<F> {
             &self.config,
             self.backend,
             self.execution_intent(),
+            self.access_pattern(),
         )
     }
 }

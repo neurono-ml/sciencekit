@@ -5,7 +5,7 @@ use ndarray::{Array1, ArrayView1, ArrayView2, Axis};
 use sciencekit_common::{
     SKError, SKExecutionContext, SKExecutionMode, SKExecutionPlan, SKFloat, SKOperationAttributes,
     SKOperationKind, SKSupervisedBatch, SKSupervisedLazySource, SKSupervisedSourceProvider,
-    execution::SKAccessPattern,
+    execution::SKDeclaredAccessPattern,
     execution::{SKStreamingPassPolicy, sk_run_supervised_streaming_provider},
     sk_run_operation,
 };
@@ -63,7 +63,7 @@ impl SKLinearRegression {
         context.dataset_size_bytes = u64::MAX;
         context.scalar_size_bytes = 8;
         context.dataset_elements = None;
-        context.access_pattern = SKAccessPattern::Sequential;
+        context.access_pattern = self.access_pattern();
         context.grain = SK_AXIS_SUM_GRAIN;
         self.resolve_plan(&context)
     }

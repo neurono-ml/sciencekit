@@ -3,6 +3,7 @@
 use sciencekit_common::{
     SKBackendKind, SKBuilderState, SKError, SKExecutionContext, SKExecutionMode, SKExecutionPlan,
     SKFloat, SKSupervisedFit, SKTargetView,
+    execution::{SKAccessPattern, SKDeclaredAccessPattern},
 };
 
 use crate::coordinate_descent::SKCoordinateDescentConfig;
@@ -28,6 +29,12 @@ pub struct SKLasso<F> {
     pub(super) maximum_number_of_iterations: usize,
     pub(super) random_seed: u64,
     pub(super) backend: SKBackendKind,
+}
+
+impl<F: SKFloat> SKDeclaredAccessPattern for SKLasso<F> {
+    fn access_pattern(&self) -> SKAccessPattern {
+        SKAccessPattern::Iterative
+    }
 }
 
 impl<F: SKFloat> SKLasso<F> {
@@ -119,6 +126,7 @@ impl<F: SKFloat> SKLasso<F> {
             self.include_intercept,
             self.backend,
             self.execution_intent(),
+            self.access_pattern(),
             self.coordinate_descent_config(),
         )?;
         Ok(SKLassoModel::from_core(core))

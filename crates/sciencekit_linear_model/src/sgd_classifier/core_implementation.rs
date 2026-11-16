@@ -4,7 +4,9 @@
 use sciencekit_common::{
     SKBackendKind, SKBuilderState, SKDataView, SKError, SKExecutionContext, SKExecutionMode,
     SKExecutionPlan, SKFloat, SKOperationAttributes, SKOperationKind, SKSupervisedFit,
-    SKTargetView, sk_run_operation,
+    SKTargetView,
+    execution::{SKAccessPattern, SKDeclaredAccessPattern},
+    sk_run_operation,
 };
 
 use super::builder::SKSGDClassifierBuilder;
@@ -29,6 +31,12 @@ pub struct SKSGDClassifier<F> {
     pub(super) class_weight: SKClassWeight<F>,
     pub(super) warm_start: Option<SKSGDClassifierCoefficients<F>>,
     pub(super) backend: SKBackendKind,
+}
+
+impl<F: SKFloat> SKDeclaredAccessPattern for SKSGDClassifier<F> {
+    fn access_pattern(&self) -> SKAccessPattern {
+        SKAccessPattern::Sequential
+    }
 }
 
 impl<F: SKFloat> SKSGDClassifier<F> {
@@ -72,6 +80,7 @@ impl<F: SKFloat> SKSGDClassifier<F> {
             self.warm_start.as_ref(),
             self.backend,
             self.execution_intent(),
+            self.access_pattern(),
         )
     }
 }
