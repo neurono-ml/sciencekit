@@ -81,7 +81,8 @@ impl SKOpenClBackend {
             SKGpuKernel::PairwiseDistance => {
                 let left = argument_matrix(arguments, 0, "pairwise-distance")?;
                 let right = argument_matrix(arguments, 1, "pairwise-distance")?;
-                self.pairwise_distances(
+                self.pairwise_distances_with_span(
+                    span,
                     SKOpenClDistanceMetric::Euclidean,
                     left.view(),
                     right.view(),
@@ -90,17 +91,17 @@ impl SKOpenClBackend {
             SKGpuKernel::Gemm => {
                 let left = argument_matrix(arguments, 0, "gemm")?;
                 let right = argument_matrix(arguments, 1, "gemm")?;
-                self.gemm(left.view(), right.view())?
+                self.gemm_with_span(span, left.view(), right.view())?
             }
             SKGpuKernel::Elementwise => {
                 let left = argument_matrix(arguments, 0, "elementwise")?;
                 let right = argument_matrix(arguments, 1, "elementwise")?;
-                self.combine(left.view(), right.view())?
+                self.combine_with_span(span, left.view(), right.view())?
             }
             SKGpuKernel::TreePredict => {
                 let features = argument_matrix(arguments, 0, "tree-predict")?;
                 let nodes = argument_matrix(arguments, 1, "tree-predict")?;
-                self.predict_trees(features.view(), nodes.view())?
+                self.predict_trees_with_span(span, features.view(), nodes.view())?
             }
         };
         observability::record_device(span, session.device().index);

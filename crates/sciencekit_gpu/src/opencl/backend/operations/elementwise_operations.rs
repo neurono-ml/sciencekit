@@ -17,20 +17,20 @@ impl SKOpenClBackend {
         factor: F,
         offset: F,
     ) -> Result<Array2<F>, SKError> {
-        let span = self.operation_span("elementwise_transform");
-        let _entered = span.enter();
-        let session = self.session()?;
-        ensure_scalar_supported::<F>(session)?;
-        let input_resident = buffer::upload_view(session, input)?;
-        let output = buffer::allocate_resident::<F>(session, input_resident.shape())?;
-        kernels::run_transform(session, &input_resident, &output, factor, offset)?;
-        let result = buffer::download_buffer(session, &output)?;
-        let upload_bytes = element_bytes::<F>(input.len());
-        let output_bytes = element_bytes::<F>(output.element_count());
-        self.charge(upload_bytes, output_bytes);
-        observability::record_device(&span, session.device().index);
-        observability::record_transfer(&span, upload_bytes + output_bytes);
-        Ok(result)
+        self.run_operation("elementwise_transform", |span| {
+            let session = self.session()?;
+            ensure_scalar_supported::<F>(session)?;
+            let input_resident = buffer::upload_view(session, input)?;
+            let output = buffer::allocate_resident::<F>(session, input_resident.shape())?;
+            kernels::run_transform(session, &input_resident, &output, factor, offset)?;
+            let result = buffer::download_buffer(session, &output)?;
+            let upload_bytes = element_bytes::<F>(input.len());
+            let output_bytes = element_bytes::<F>(output.element_count());
+            self.charge(upload_bytes, output_bytes);
+            observability::record_device(span, session.device().index);
+            observability::record_transfer(span, upload_bytes + output_bytes);
+            Ok(result)
+        })
     }
 
     /// Elementwise combination `left + right`.
@@ -39,8 +39,18 @@ impl SKOpenClBackend {
         left: ArrayView2<'_, F>,
         right: ArrayView2<'_, F>,
     ) -> Result<Array2<F>, SKError> {
-        let span = self.operation_span("elementwise_combine");
-        let _entered = span.enter();
+        self.run_operation("elementwise_combine", |span| {
+            self.combine_with_span(span, left, right)
+        })
+    }
+
+    /// Elementwise combination recorded on the span an enclosing operation opened.
+    pub(crate) fn combine_with_span<F: SKFloat>(
+        &self,
+        span: &tracing::Span,
+        left: ArrayView2<'_, F>,
+        right: ArrayView2<'_, F>,
+    ) -> Result<Array2<F>, SKError> {
         let session = self.session()?;
         ensure_scalar_supported::<F>(session)?;
         if left.shape() != right.shape() {
@@ -57,8 +67,8 @@ impl SKOpenClBackend {
         let upload_bytes = element_bytes::<F>(left.len() + right.len());
         let output_bytes = element_bytes::<F>(output.element_count());
         self.charge(upload_bytes, output_bytes);
-        observability::record_device(&span, session.device().index);
-        observability::record_transfer(&span, upload_bytes + output_bytes);
+        observability::record_device(span, session.device().index);
+        observability::record_transfer(span, upload_bytes + output_bytes);
         Ok(result)
     }
 }

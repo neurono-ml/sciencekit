@@ -19,17 +19,17 @@ impl SKOpenClBackend {
         &self,
         host: ArrayView2<'_, F>,
     ) -> Result<SKOpenClBuffer<F>, SKError> {
-        let span = self.operation_span("upload_resident");
-        let _entered = span.enter();
-        let session = self.session()?;
-        ensure_scalar_supported::<F>(session)?;
-        let resident = buffer::upload_view(session, host)?;
-        let bytes = element_bytes::<F>(resident.element_count());
-        self.upload_bytes
-            .fetch_add(bytes, std::sync::atomic::Ordering::Relaxed);
-        observability::record_device(&span, session.device().index);
-        observability::record_transfer(&span, bytes);
-        Ok(resident)
+        self.run_operation("upload_resident", |span| {
+            let session = self.session()?;
+            ensure_scalar_supported::<F>(session)?;
+            let resident = buffer::upload_view(session, host)?;
+            let bytes = element_bytes::<F>(resident.element_count());
+            self.upload_bytes
+                .fetch_add(bytes, std::sync::atomic::Ordering::Relaxed);
+            observability::record_device(span, session.device().index);
+            observability::record_transfer(span, bytes);
+            Ok(resident)
+        })
     }
 
     /// Download a resident buffer into an owned host matrix.
@@ -37,16 +37,16 @@ impl SKOpenClBackend {
         &self,
         buffer: &SKOpenClBuffer<F>,
     ) -> Result<Array2<F>, SKError> {
-        let span = self.operation_span("download_resident");
-        let _entered = span.enter();
-        let session = self.session()?;
-        let matrix = buffer::download_buffer(session, buffer)?;
-        let bytes = element_bytes::<F>(buffer.element_count());
-        self.download_bytes
-            .fetch_add(bytes, std::sync::atomic::Ordering::Relaxed);
-        observability::record_device(&span, session.device().index);
-        observability::record_transfer(&span, bytes);
-        Ok(matrix)
+        self.run_operation("download_resident", |span| {
+            let session = self.session()?;
+            let result = buffer::download_buffer(session, buffer)?;
+            let bytes = element_bytes::<F>(buffer.element_count());
+            self.download_bytes
+                .fetch_add(bytes, std::sync::atomic::Ordering::Relaxed);
+            observability::record_device(span, session.device().index);
+            observability::record_transfer(span, bytes);
+            Ok(result)
+        })
     }
 
     /// Pairwise distances between the rows of two matrices.
@@ -56,8 +56,19 @@ impl SKOpenClBackend {
         left: ArrayView2<'_, F>,
         right: ArrayView2<'_, F>,
     ) -> Result<Array2<F>, SKError> {
-        let span = self.operation_span("pairwise_distance");
-        let _entered = span.enter();
+        self.run_operation("pairwise_distance", |span| {
+            self.pairwise_distances_with_span(span, metric, left, right)
+        })
+    }
+
+    /// Pairwise distances recorded on the span an enclosing operation opened.
+    pub(crate) fn pairwise_distances_with_span<F: SKFloat>(
+        &self,
+        span: &tracing::Span,
+        metric: SKOpenClDistanceMetric,
+        left: ArrayView2<'_, F>,
+        right: ArrayView2<'_, F>,
+    ) -> Result<Array2<F>, SKError> {
         let session = self.session()?;
         ensure_scalar_supported::<F>(session)?;
         if left.ncols() != right.ncols() {
@@ -74,8 +85,8 @@ impl SKOpenClBackend {
         let upload_bytes = element_bytes::<F>(left.len() + right.len());
         let output_bytes = element_bytes::<F>(output.element_count());
         self.charge(upload_bytes, output_bytes);
-        observability::record_device(&span, session.device().index);
-        observability::record_transfer(&span, upload_bytes + output_bytes);
+        observability::record_device(span, session.device().index);
+        observability::record_transfer(span, upload_bytes + output_bytes);
         Ok(result)
     }
 
@@ -85,8 +96,16 @@ impl SKOpenClBackend {
         left: ArrayView2<'_, F>,
         right: ArrayView2<'_, F>,
     ) -> Result<Array2<F>, SKError> {
-        let span = self.operation_span("gemm");
-        let _entered = span.enter();
+        self.run_operation("gemm", |span| self.gemm_with_span(span, left, right))
+    }
+
+    /// GEMM recorded on the span an enclosing operation opened.
+    pub(crate) fn gemm_with_span<F: SKFloat>(
+        &self,
+        span: &tracing::Span,
+        left: ArrayView2<'_, F>,
+        right: ArrayView2<'_, F>,
+    ) -> Result<Array2<F>, SKError> {
         let session = self.session()?;
         ensure_scalar_supported::<F>(session)?;
         if left.ncols() != right.nrows() {
@@ -103,8 +122,8 @@ impl SKOpenClBackend {
         let upload_bytes = element_bytes::<F>(left.len() + right.len());
         let output_bytes = element_bytes::<F>(output.element_count());
         self.charge(upload_bytes, output_bytes);
-        observability::record_device(&span, session.device().index);
-        observability::record_transfer(&span, upload_bytes + output_bytes);
+        observability::record_device(span, session.device().index);
+        observability::record_transfer(span, upload_bytes + output_bytes);
         Ok(result)
     }
 }

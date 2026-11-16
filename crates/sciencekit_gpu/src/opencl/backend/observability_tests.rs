@@ -37,6 +37,11 @@ fn a_kernel_operation_records_backend_device_and_bytes() {
     });
 
     let spans = recording.spans();
+    assert_eq!(
+        spans.len(),
+        1,
+        "one public operation opens exactly one span"
+    );
     let (_, fields) = spans
         .iter()
         .find(|(name, _)| name == "opencl_operation")
