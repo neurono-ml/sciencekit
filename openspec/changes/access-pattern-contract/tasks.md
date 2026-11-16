@@ -5,20 +5,20 @@ implementation, refactor with the gates green.
 
 ## 1. Vocabulary
 
-- [ ] 1.1 Add `SKAccessPattern::FullMemory` with its tier mapping and update every
+- [x] 1.1 Add `SKAccessPattern::FullMemory` with its tier mapping and update every
   exhaustive `match`; verify with `cargo test -p sciencekit_common access_pattern`.
-- [ ] 1.2 Add the tier projection (`tier()` returning the parity tier) and tests for all
+- [x] 1.2 Add the tier projection (`tier()` returning the parity tier) and tests for all
   four values; verify with `cargo test -p sciencekit_common access_pattern`.
-- [ ] 1.3 Add the declaration trait with `access_pattern` and `approximate_alternative`,
+- [x] 1.3 Add the declaration trait with `access_pattern` and `approximate_alternative`,
   plus tests asserting the default alternative is `None`; verify with
   `cargo test -p sciencekit_common declared_access_pattern`.
 
 ## 2. Declaration retrofit
 
-- [ ] 2.1 Implement the declaration for the preprocessing and imputation estimators and
+- [x] 2.1 Implement the declaration for the preprocessing and imputation estimators and
   remove their inline pattern assignments; verify with
   `cargo test -p sciencekit_preprocessing -p sciencekit_impute access_pattern`.
-- [ ] 2.2 Implement the declaration for the linear-model estimators; verify with
+- [x] 2.2 Implement the declaration for the linear-model estimators; verify with
   `cargo test -p sciencekit_linear_model access_pattern`.
 - [ ] 2.3 Implement the declaration for decomposition, clustering, neighbors, trees,
   ensembles, SVM, outlier and pipeline estimators; verify with
