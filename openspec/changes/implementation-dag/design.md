@@ -2,8 +2,9 @@
 
 ## Context
 
-See `proposal.md` — Why. The source of truth is `dag.yaml`: 240 nodes = 40 shipped, 19
-closing, 3 superseded, 3 deferred, 1 in-progress, 174 planned. This design explains the
+See `proposal.md` — Why. The source of truth is `dag.yaml`: 240 nodes, moving from 44
+shipped and 16 closing (the rest planned, deferred or superseded) toward every scheduled
+node shipped. This design explains the
 layers, lanes and the automated cycle; the layer and lane blocks are generated from the
 YAML and `scripts/check-dag.py` fails when they drift.
 

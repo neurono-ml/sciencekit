@@ -26,8 +26,8 @@
 
 - [x] 1.9 Mark every node with `state` (shipped, closing, in-progress, planned, deferred,
   superseded) from the merge state and the openspec status; verify the counts
-  (40 shipped, 19 closing, 3 superseded, 3 deferred, 1 in-progress, 174 planned) and that
-  the readiness set excludes shipped, superseded and deferred nodes.
+  (at the time 40 shipped, 19 closing, 3 superseded, 3 deferred, 1 in-progress, 174
+  planned) and that the readiness set excludes shipped, superseded and deferred nodes.
 - [x] 1.10 Add the execution waves W0–W9 (close-in-flight, dataset interop, foundations,
   model selection, preprocessing/selection/Bayes, linear models, kernel/neural/text,
   unsupervised, manifold/neighbors, GPU accelerators, joins) with per-wave goals and

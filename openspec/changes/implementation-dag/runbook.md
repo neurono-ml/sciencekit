@@ -99,6 +99,11 @@ merge. Merge the code PR and the openspec PR in any order, then update `CHANGELO
 (Keep a Changelog 1.1.0), mark the node `shipped` in `dag.yaml`, archive the OpenSpec
 change, delete the merged branches and remove the worktrees.
 
+**Living artifacts stay active.** `implementation-dag` and `sklearn-parity-matrix` are
+never archived during the program: `dag.yaml` and `parity.yaml` are read by the scripts on
+every run. Mark their nodes `shipped` and keep the change directories; archive both when
+the program ends.
+
 ## 8. Recompute
 
 Back on `main` after the merge:

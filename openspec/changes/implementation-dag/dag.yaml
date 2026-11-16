@@ -512,7 +512,7 @@ changes:
     - openspec validate wave-seven-deferrals
     - mdbook build docs
 - id: deterministic-randomness
-  state: closing
+  state: shipped
   group: foundation
   lane: common
   depends_on: []
@@ -542,7 +542,7 @@ changes:
     - cargo test -p sciencekit_common interop
     - cargo test -p sciencekit_interop
 - id: gpu-compute-contracts
-  state: closing
+  state: shipped
   group: foundation
   lane: common
   depends_on: []
@@ -571,7 +571,7 @@ changes:
     - cargo test -p sciencekit_ffi
     - cc tests/c_smoke.c -lsciencekit_ffi -o /tmp/sciencekit_c_smoke
 - id: sparse-pairwise-distances
-  state: closing
+  state: shipped
   group: foundation
   lane: math
   depends_on: []
@@ -1343,7 +1343,7 @@ changes:
     extra:
     - openspec validate r-bindings
 - id: sklearn-parity-matrix
-  state: in-progress
+  state: shipped
   docs_only: true
   group: foundation-docs
   lane: planning
