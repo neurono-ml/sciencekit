@@ -79,3 +79,13 @@ fn knn_builder_rejects_an_infinite_marker() {
         }
     ));
 }
+
+/// The imputer declares the iterative (chunked) pattern before fit
+/// (spec `access-pattern`).
+#[test]
+fn knn_imputer_declares_iterative_access_pattern() {
+    use sciencekit_common::execution::{SKAccessPattern, SKDeclaredAccessPattern};
+
+    let imputer: SKKNNImputer<f64> = SKKNNImputer::build().build().unwrap();
+    assert_eq!(imputer.access_pattern(), SKAccessPattern::Iterative);
+}

@@ -5,7 +5,7 @@ use ndarray::{ArrayView2, Axis};
 use sciencekit_common::{
     SKDataBatch, SKError, SKExecutionContext, SKExecutionMode, SKExecutionPlan, SKFloat,
     SKLazySource, SKOperationAttributes, SKOperationKind, SKSourceProvider, SKUnsupervisedFit,
-    execution::{SKAccessPattern, SKStreamingPassPolicy, sk_run_streaming_provider},
+    execution::{SKStreamingPassPolicy, sk_run_streaming_provider},
     observability::sk_run_operation,
 };
 use sciencekit_math::kernels::SK_AXIS_SUM_GRAIN;
@@ -61,7 +61,10 @@ impl<F: SKFloat> SKSimpleImputer<F> {
         context.dataset_size_bytes = u64::MAX;
         context.scalar_size_bytes = size_of::<F>() as u64;
         context.dataset_elements = None;
-        context.access_pattern = SKAccessPattern::Sequential;
+        context.access_pattern = {
+            use sciencekit_common::execution::SKDeclaredAccessPattern;
+            self.access_pattern()
+        };
         context.grain = SK_AXIS_SUM_GRAIN;
         self.resolve_plan(&context)
     }

@@ -4,6 +4,7 @@
 use sciencekit_common::{
     SKBackendKind, SKBuilderState, SKError, SKExecutionContext, SKExecutionMode, SKExecutionPlan,
     SKFloat,
+    execution::{SKAccessPattern, SKDeclaredAccessPattern},
 };
 
 use crate::missing_indicator::builder::SKMissingIndicatorBuilder;
@@ -19,6 +20,12 @@ pub struct SKMissingIndicator<F> {
     pub(in crate::missing_indicator) sparse_output: bool,
     pub(in crate::missing_indicator) missing_values: F,
     pub(in crate::missing_indicator) backend: SKBackendKind,
+}
+
+impl<F: SKFloat> SKDeclaredAccessPattern for SKMissingIndicator<F> {
+    fn access_pattern(&self) -> SKAccessPattern {
+        SKAccessPattern::Sequential
+    }
 }
 
 impl<F: SKFloat> SKMissingIndicator<F> {

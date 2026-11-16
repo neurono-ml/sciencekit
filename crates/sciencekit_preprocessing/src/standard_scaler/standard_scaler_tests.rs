@@ -208,3 +208,16 @@ fn chunk_rows_covers_every_row_once() {
     assert_eq!(chunks[2].nrows(), 3);
     assert_eq!(chunks[1][[0, 1]], 6.0);
 }
+
+/// The estimator and its fitted model declare the same access pattern before
+/// and after fit (spec `access-pattern`).
+#[test]
+fn standard_scaler_declares_sequential_access_pattern() {
+    use sciencekit_common::execution::{SKAccessPattern, SKDeclaredAccessPattern};
+
+    let estimator = SKStandardScaler::build().build().expect("build");
+    assert_eq!(estimator.access_pattern(), SKAccessPattern::Sequential);
+    let features = array![[1.0_f64, 2.0], [3.0, 4.0], [5.0, 6.0]];
+    let model = estimator.fit(&features).expect("fit");
+    assert_eq!(model.access_pattern(), SKAccessPattern::Sequential);
+}

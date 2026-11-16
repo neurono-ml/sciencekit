@@ -26,6 +26,12 @@ pub struct SKMinMaxScalerModel<F> {
     pub(super) execution_intent: SKExecutionMode,
 }
 
+impl<F: SKFloat> sciencekit_common::execution::SKDeclaredAccessPattern for SKMinMaxScalerModel<F> {
+    fn access_pattern(&self) -> sciencekit_common::execution::SKAccessPattern {
+        sciencekit_common::execution::SKAccessPattern::Sequential
+    }
+}
+
 impl<F: SKFloat> SKMinMaxScalerModel<F> {
     /// Build a fitted model from learned extrema. Crate-internal: models are
     /// produced by `fit`/`fit_streaming`, never constructed by consumers.

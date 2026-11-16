@@ -25,6 +25,12 @@ pub struct SKRobustScalerModel<F> {
     pub(super) execution_intent: SKExecutionMode,
 }
 
+impl<F: SKFloat> sciencekit_common::execution::SKDeclaredAccessPattern for SKRobustScalerModel<F> {
+    fn access_pattern(&self) -> sciencekit_common::execution::SKAccessPattern {
+        sciencekit_common::execution::SKAccessPattern::Sequential
+    }
+}
+
 impl<F: SKFloat> SKRobustScalerModel<F> {
     /// Build a fitted model from learned center and scale plus the per-column
     /// online sketches the incremental path continues from. Crate-internal:
