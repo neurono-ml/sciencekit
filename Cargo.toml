@@ -71,13 +71,14 @@ members = [
     "crates/sciencekit_telemetry",
     "crates/sciencekit_tree",
     "crates/sciencekit_preprocessing",
+    "crates/sciencekit_cli",
 ]
 
 # Single source of truth for the workspace version and shared package metadata.
 # Every crate inherits `version` (and the umbrella crate inherits the rest), so a
 # release bumps one line and internal dependencies always resolve to it.
 [workspace.package]
-version = "0.8.0"
+version = "0.8.1"
 edition = "2024"
 license = "Apache-2.0"
 rust-version = "1.85"
@@ -130,27 +131,27 @@ petgraph = "0.7"
 # stable public surface. The sub-crates stay independently consumable, so a user
 # that wants one algorithm family can depend on it alone.
 [dependencies]
-sciencekit_common = { path = "crates/sciencekit_common", version = "0.8.0" }
-sciencekit_math = { path = "crates/sciencekit_math", version = "0.8.0" }
-sciencekit_metrics = { path = "crates/sciencekit_metrics", version = "0.8.0" }
-sciencekit_preprocessing = { path = "crates/sciencekit_preprocessing", version = "0.8.0" }
-sciencekit_impute = { path = "crates/sciencekit_impute", version = "0.8.0" }
-sciencekit_linear_model = { path = "crates/sciencekit_linear_model", version = "0.8.0" }
-sciencekit_neighbors = { path = "crates/sciencekit_neighbors", version = "0.8.0" }
-sciencekit_cluster = { path = "crates/sciencekit_cluster", version = "0.8.0" }
-sciencekit_tree = { path = "crates/sciencekit_tree", version = "0.8.0" }
-sciencekit_ensemble = { path = "crates/sciencekit_ensemble", version = "0.8.0" }
-sciencekit_decomposition = { path = "crates/sciencekit_decomposition", version = "0.8.0" }
-sciencekit_model_selection = { path = "crates/sciencekit_model_selection", version = "0.8.0" }
-sciencekit_pipeline = { path = "crates/sciencekit_pipeline", version = "0.8.0" }
-sciencekit_interop = { path = "crates/sciencekit_interop", version = "0.8.0" }
-sciencekit_svm = { path = "crates/sciencekit_svm", version = "0.8.0" }
-sciencekit_outlier = { path = "crates/sciencekit_outlier", version = "0.8.0" }
-sciencekit_gpu = { path = "crates/sciencekit_gpu", version = "0.8.0" }
-sciencekit_gpu_opencl = { path = "crates/sciencekit_gpu_opencl", version = "0.8.0", optional = true }
-sciencekit_telemetry = { path = "crates/sciencekit_telemetry", version = "0.8.0", optional = true }
-sciencekit_onnx = { path = "crates/sciencekit_onnx", version = "0.8.0", optional = true }
-sciencekit_ffi = { path = "crates/sciencekit_ffi", version = "0.8.0" }
+sciencekit_common = { path = "crates/sciencekit_common", version = "0.8.1" }
+sciencekit_math = { path = "crates/sciencekit_math", version = "0.8.1" }
+sciencekit_metrics = { path = "crates/sciencekit_metrics", version = "0.8.1" }
+sciencekit_preprocessing = { path = "crates/sciencekit_preprocessing", version = "0.8.1" }
+sciencekit_impute = { path = "crates/sciencekit_impute", version = "0.8.1" }
+sciencekit_linear_model = { path = "crates/sciencekit_linear_model", version = "0.8.1" }
+sciencekit_neighbors = { path = "crates/sciencekit_neighbors", version = "0.8.1" }
+sciencekit_cluster = { path = "crates/sciencekit_cluster", version = "0.8.1" }
+sciencekit_tree = { path = "crates/sciencekit_tree", version = "0.8.1" }
+sciencekit_ensemble = { path = "crates/sciencekit_ensemble", version = "0.8.1" }
+sciencekit_decomposition = { path = "crates/sciencekit_decomposition", version = "0.8.1" }
+sciencekit_model_selection = { path = "crates/sciencekit_model_selection", version = "0.8.1" }
+sciencekit_pipeline = { path = "crates/sciencekit_pipeline", version = "0.8.1" }
+sciencekit_interop = { path = "crates/sciencekit_interop", version = "0.8.1" }
+sciencekit_svm = { path = "crates/sciencekit_svm", version = "0.8.1" }
+sciencekit_outlier = { path = "crates/sciencekit_outlier", version = "0.8.1" }
+sciencekit_gpu = { path = "crates/sciencekit_gpu", version = "0.8.1" }
+sciencekit_gpu_opencl = { path = "crates/sciencekit_gpu_opencl", version = "0.8.1", optional = true }
+sciencekit_telemetry = { path = "crates/sciencekit_telemetry", version = "0.8.1", optional = true }
+sciencekit_onnx = { path = "crates/sciencekit_onnx", version = "0.8.1", optional = true }
+sciencekit_ffi = { path = "crates/sciencekit_ffi", version = "0.8.1" }
 
 # The default build is core-only: no GPU runtime, no OpenTelemetry SDK, no ONNX
 # translator and no engine adapter. Each optional integration forwards to the
