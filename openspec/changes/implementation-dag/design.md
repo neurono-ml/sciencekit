@@ -58,7 +58,7 @@ one change is `in_progress` at a time (merge-order hazard). `∥` means parallel
 | model-selection | model-selection-core → grid-search-cv → halving-grid-search |
 | pipeline | type-safe-pipeline → {feature-union; pipeline-dag; streaming-pipeline} |
 | interop | interop-foundation → arrow-interop → {polars-interop; datafusion-interop; memory-mapped-interop} → {safetensors-internal-format; json-debug-format} → model-export-retrofit → onnx-export → onnx-import → native-model-import → lora-adapters |
-| gpu | gpu-compute-contracts → {gpu-opencl-backend; gpu-cuda-backend; gpu-rocm-backend} |
+| gpu | gpu-compute-contracts → {gpu-opencl-backend; gpu-cuda-backend → deferred; gpu-rocm-backend → deferred} |
 | bindings | ffi-core → {lua-bindings; go-bindings} |
 | python | python-bindings-complete → python-dataset-interop |
 | julia | julia-dataset-interop |
