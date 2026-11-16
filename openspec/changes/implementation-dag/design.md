@@ -242,9 +242,10 @@ loop:
       state = ready
     else: state = blocked
   for lane in graph.lanes:
-    ready_lane = [c for c in ready if c.lane == lane.id]
-    if ready_lane and lane.in_progress is empty:
-      launch one agent with c (prefer the lane merge_order)
+    if lane.in_progress is empty:
+      head = first member of lane.merge_order not done/deferred
+      if head.state == ready:
+        launch one agent with head            # a blocked head blocks the whole lane
   for finished change:
     verify completion checks
     merge code PR, openspec PR and docs PR
@@ -257,7 +258,9 @@ Guardrails:
 - Rebase before merge; never commit directly to `main`.
 - A change whose tests fail stays `in_progress`; downstream changes stay `blocked`.
 - Docs/spec-only changes (`representation-parity`, `wave-seven-deferrals`,
-  `implementation-dag`) are `done` when their PRs merge and `mdbook build docs` is green.
+  `sklearn-parity-matrix`, `implementation-dag`) are `done` when their PRs merge and
+  `mdbook build docs` is green; they carry `docs_only: true` where they list no cargo
+  tests.
 - Hardware-gated GPU tests may be skipped when no device is present; fallback tests must
   pass.
 
@@ -272,9 +275,11 @@ exact command sequence.
   crates; the parallel groups are still broad.
 - **Join tail** → `model-export-retrofit`/`umbrella`/`python`/`cli` are late; split the
   retrofit by family and start the umbrella with core crates if needed.
-- **Stale layers** → `dag.yaml` is the source of truth; layers are documentation.
+- **Stale layers** → `dag.yaml` is the source of truth; the layer and lane blocks are
+  generated and `scripts/check-dag.py` fails when they drift.
 - **Completion drift** → checks are explicit; a change is not done until its PRs merge.
 
 ## Open Questions
 
-None blocking. The readiness script is planned in `tasks.md`.
+None blocking. The readiness, consistency, completion, design-render and parity-matrix
+scripts are implemented and covered by `scripts/tests/`.

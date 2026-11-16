@@ -427,6 +427,20 @@ def completion_plan(
     )
 
 
+def unmerged_dependencies(
+    dag: dict[str, Any], change_id: str, merged: Iterable[str] = ()
+) -> list[str]:
+    """Return the hard dependencies that are not done yet."""
+
+    states = compute_states(dag, merged)
+    change = changes_by_id(dag)[change_id]
+    return [
+        dependency
+        for dependency in change.get("depends_on") or []
+        if states.get(dependency) not in {"done", "deferred"}
+    ]
+
+
 def run_command(command: str) -> tuple[int, str]:
     """Run one check command from the repository root and return its exit status."""
 
@@ -502,6 +516,8 @@ def main_completion(
     dag_path: str | pathlib.Path = DAG_PATH,
     include_global: bool = True,
     dry_run: bool = False,
+    merged: Sequence[str] = (),
+    allow_unmerged_dependencies: bool = False,
 ) -> int:
     dag = load_dag(dag_path)
     try:
@@ -512,6 +528,10 @@ def main_completion(
     commands = [plan.openspec_command, *plan.test_commands, *plan.extra_commands]
     commands.extend(plan.global_gate_commands)
     commands = [command for command in commands if command]
+    pending = unmerged_dependencies(dag, change_id, merged)
+    if pending and not allow_unmerged_dependencies:
+        print(f"{change_id}: unmerged dependencies: {', '.join(sorted(pending))}")
+        return 1
     if dry_run:
         print(f"completion plan for {change_id}:")
         for command in commands:

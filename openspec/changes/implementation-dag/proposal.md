@@ -2,12 +2,12 @@
 
 ## Why
 
-There are 240 graph nodes: 66 from the original program, 168 from the scikit-learn parity
-program (Waves 8–13, including sixteen shared primitives and the `reopenable-fit-path`
-retrofit), three superseded nodes kept for traceability, and the later additions
-(`metrics-foundation`, `streaming-source-provider`, `extract-language-bindings`,
-`implementation-dag`-adjacent nodes). The exact set is `dag.yaml`; the sentence only
-explains where it came from. Agents need one authoritative dependency graph, with
+There are 240 graph nodes, built in layers: the original program, then the scikit-learn
+parity program (Waves 8–13, including sixteen shared primitives and the
+`reopenable-fit-path` retrofit), plus three superseded nodes kept for traceability. The
+exact set and the authoritative breakdown by state are in `dag.yaml` and restated in
+`design.md`; the counts in the historical task steps are point-in-time and do not sum to
+the current total. Agents need one authoritative dependency graph, with
 completion checks, so they can start independent changes in parallel, block on real
 dependencies, and avoid merge conflicts in shared crates. Today the ordering is spread
 across wave-plan prose and per-change designs.

@@ -152,9 +152,9 @@ execution_waves:
   parallel: true
   changes: [gpu-cuda-backend, gpu-rocm-backend]
 - id: W9-joins
-  goal: umbrella, bindings and CLI over the completed families
+  goal: bindings and CLI over the completed families (umbrella-crate already shipped)
   parallel: false
-  changes: [umbrella-crate, python-bindings-complete, workflows-cli]
+  changes: [python-bindings-complete, workflows-cli]
 
 lanes:
 - id: common

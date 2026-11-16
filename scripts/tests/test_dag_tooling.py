@@ -153,6 +153,37 @@ class CompletionTests(unittest.TestCase):
         self.assertEqual(list(plan.test_commands), ["true"])
         self.assertEqual(list(plan.global_gate_commands), ["true"])
 
+    def test_extra_commands_are_part_of_the_plan(self) -> None:
+        dag = load_fixture()
+        dag["changes"][1]["completion"]["extra"] = ["openspec validate beta"]
+        plan = dag_tooling.completion_plan(dag, "beta", include_global=False)
+        self.assertEqual(list(plan.extra_commands), ["openspec validate beta"])
+
+    def test_unmerged_dependency_is_reported(self) -> None:
+        dag = load_fixture()
+        dag["changes"][1]["depends_on"] = ["gamma"]
+        self.assertEqual(dag_tooling.unmerged_dependencies(dag, "beta", merged=set()), ["gamma"])
+        self.assertEqual(dag_tooling.unmerged_dependencies(dag, "beta", merged={"gamma"}), [])
+
+    def test_design_sync_reports_a_stale_block(self) -> None:
+        import tempfile
+
+        dag = load_fixture()
+        layers = dag_tooling.render_layers(dag)
+        lanes = dag_tooling.render_lanes(dag)
+        text = (
+            "intro\n"
+            + dag_tooling.LAYERS_MARKER[0] + "\n" + layers + "\n" + dag_tooling.LAYERS_MARKER[1] + "\n"
+            + dag_tooling.LANES_MARKER[0] + "\n" + lanes + "\n" + dag_tooling.LANES_MARKER[1] + "\n"
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            design = pathlib.Path(directory) / "design.md"
+            design.write_text(text, encoding="utf-8")
+            self.assertEqual(dag_tooling.design_sync_errors(dag, design), [])
+            design.write_text(text.replace("| L0 |", "| L0 | stale,"), encoding="utf-8")
+            errors = dag_tooling.design_sync_errors(dag, design)
+            self.assertTrue(any("layers" in error for error in errors), errors)
+
     def test_unknown_change_is_rejected(self) -> None:
         dag = load_fixture()
         with self.assertRaises(KeyError):

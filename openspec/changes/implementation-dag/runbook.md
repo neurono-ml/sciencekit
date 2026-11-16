@@ -34,10 +34,14 @@ Walk the `next` column of `dag-readiness.py` in wave order (`execution_waves` in
 `dag.yaml`). `next` already enforces the lane prefix: if an earlier `merge_order` member
 is still blocked, the lane reports `-` and must wait. Start at most one change per lane.
 
+Wave 0 (`closing` changes) is the exception: those lanes are occupied by definition, so
+`next` never names them. Pick a W0 change from the `closing` set in `dag.yaml` and finish
+its remaining review/archive task; its lane is already held by that same change.
+
 ## 3. Announce the change and create the worktrees
 
 ```sh
-python3 scripts/dag-readiness.py --json | jq '.states["<change>"]'   # ready?
+python3 scripts/dag-readiness.py --json | jq '.next'   # is <change> the lane's next?
 git worktree add temporary/worktrees/feat/<change> -b feat/<change> main
 git worktree add temporary/worktrees/feat/<change>-openspec \
   -b feat/<change>-openspec main

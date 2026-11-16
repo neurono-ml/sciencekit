@@ -22,12 +22,31 @@ parser.add_argument(
 parser.add_argument(
     "--dry-run", action="store_true", help="print the commands without running them"
 )
+parser.add_argument(
+    "--merged",
+    action="append",
+    default=[],
+    help="comma-separated change ids already merged (repeatable)",
+)
+parser.add_argument(
+    "--allow-unmerged-dependencies",
+    action="store_true",
+    help="do not fail when a hard dependency is not merged yet",
+)
 arguments = parser.parse_args()
+merged = [
+    item.strip()
+    for value in arguments.merged
+    for item in value.split(",")
+    if item.strip()
+]
 sys.exit(
     dag_tooling.main_completion(
         arguments.change,
         dag_path=arguments.dag,
         include_global=not arguments.skip_global,
         dry_run=arguments.dry_run,
+        merged=merged,
+        allow_unmerged_dependencies=arguments.allow_unmerged_dependencies,
     )
 )
