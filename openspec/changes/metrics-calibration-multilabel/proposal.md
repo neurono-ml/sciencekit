@@ -41,9 +41,15 @@ that row into a concrete, testable plan.
 - Validation: empty input, shape or length mismatch, non-indicator values in a multilabel
   matrix, empty label set, a single class for calibration, invalid bin count, invalid
   strategy and non-finite probabilities.
+- Reuse the shared binning primitives (`binning-primitives`) for the calibration bins:
+  the curve consumes the same uniform/quantile edges as KBinsDiscretizer and partial
+  dependence; this change does not introduce its own binning.
+- Metrics are reductions over batch inputs, not estimators: they declare no access
+  pattern, but the calibration curve must be computable from the existing accumulators so
+  a streamed evaluation does not hold more than the running counts.
 - Explicit non-goals: multiclass and multilabel calibration maps (isotonic, sigmoid,
   temperature scaling), Brier decomposition, NDCG/coverage/ranking loss, multilabel
-  stratification and streaming accumulators.
+  stratification and streaming accumulators (recorded for the metrics accumulator follow-up).
 - Companion tests: hand-computed calibration fixtures, empty and duplicate bins,
   dense/sparse equivalence, f32/f64 precision, large data and concurrency.
 

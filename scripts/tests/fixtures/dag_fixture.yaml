@@ -1,0 +1,47 @@
+version: 1
+policy:
+  max_parallel_changes_per_lane: 1
+  merge_requires:
+    global_gates:
+      - "true"
+  immutable_clauses:
+    - keep the fixture immutable
+execution_waves:
+  - id: W0
+    changes: [alpha, beta, gamma]
+  - id: W1
+    changes: [delta]
+lanes:
+  - id: lane-one
+    merge_order: [alpha, beta]
+  - id: lane-two
+    merge_order: [gamma, delta]
+changes:
+  - id: alpha
+    state: shipped
+    lane: lane-one
+    depends_on: []
+    completion:
+      openspec: "true"
+      tests: ["true"]
+  - id: beta
+    state: planned
+    lane: lane-one
+    depends_on: [alpha]
+    completion:
+      openspec: "true"
+      tests: ["true"]
+  - id: gamma
+    state: planned
+    lane: lane-two
+    depends_on: [alpha]
+    completion:
+      openspec: "true"
+      tests: ["true"]
+  - id: delta
+    state: planned
+    lane: lane-two
+    depends_on: [gamma]
+    completion:
+      openspec: "true"
+      tests: ["true"]
