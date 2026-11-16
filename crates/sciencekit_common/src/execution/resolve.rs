@@ -35,6 +35,7 @@ pub fn sk_resolve_execution_plan(
                     SKAccessPattern::Sequential | SKAccessPattern::Iterative => {
                         SKExecutionMode::OutOfCoreStreaming
                     }
+                    SKAccessPattern::FullMemory => SKExecutionMode::InProcessSynchronous,
                 }
             };
             let batch_size = if mode == SKExecutionMode::OutOfCoreStreaming {
@@ -67,10 +68,15 @@ pub fn sk_resolve_execution_plan(
             fallback_reason,
         }),
         SKExecutionMode::OutOfCoreStreaming => {
-            if context.access_pattern == SKAccessPattern::RandomAccess {
+            if context.access_pattern == SKAccessPattern::RandomAccess
+                || context.access_pattern == SKAccessPattern::FullMemory
+            {
                 Err(SKError::ExecutionModeIncompatible {
                     mode: "out-of-core-streaming",
-                    pattern: "random-access",
+                    pattern: match context.access_pattern {
+                        SKAccessPattern::RandomAccess => "random-access",
+                        _ => "full-memory",
+                    },
                 })
             } else {
                 check_buffer_guard(context)?;

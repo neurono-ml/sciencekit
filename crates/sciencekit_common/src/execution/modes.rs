@@ -9,6 +9,20 @@ pub enum SKAccessPattern {
     RandomAccess,
     /// Iterative passes over the data.
     Iterative,
+    /// The whole design must be resident in memory.
+    FullMemory,
+}
+
+impl SKAccessPattern {
+    /// The parity-matrix tier this pattern maps to.
+    pub fn tier(self) -> &'static str {
+        match self {
+            SKAccessPattern::Sequential => "streaming",
+            SKAccessPattern::RandomAccess => "mappable",
+            SKAccessPattern::Iterative => "chunked",
+            SKAccessPattern::FullMemory => "full-memory",
+        }
+    }
 }
 
 /// The execution intent declared by the consumer (PRD §5.3).
