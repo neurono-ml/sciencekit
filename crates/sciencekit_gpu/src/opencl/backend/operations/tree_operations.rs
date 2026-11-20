@@ -20,8 +20,18 @@ impl SKOpenClBackend {
         features: ArrayView2<'_, F>,
         nodes: ArrayView2<'_, F>,
     ) -> Result<Array2<F>, SKError> {
-        let span = self.operation_span("tree_predict");
-        let _entered = span.enter();
+        self.run_operation("tree_predict", |span| {
+            self.predict_trees_with_span(span, features, nodes)
+        })
+    }
+
+    /// Tree prediction recorded on the span an enclosing operation opened.
+    pub(crate) fn predict_trees_with_span<F: SKFloat>(
+        &self,
+        span: &tracing::Span,
+        features: ArrayView2<'_, F>,
+        nodes: ArrayView2<'_, F>,
+    ) -> Result<Array2<F>, SKError> {
         let session = self.session()?;
         ensure_scalar_supported::<F>(session)?;
         if nodes.ncols() != SK_OPENCL_TREE_NODE_COLUMNS {
@@ -38,8 +48,8 @@ impl SKOpenClBackend {
         let upload_bytes = element_bytes::<F>(features.len() + nodes.len());
         let output_bytes = element_bytes::<F>(output.element_count());
         self.charge(upload_bytes, output_bytes);
-        observability::record_device(&span, session.device().index);
-        observability::record_transfer(&span, upload_bytes + output_bytes);
+        observability::record_device(span, session.device().index);
+        observability::record_transfer(span, upload_bytes + output_bytes);
         Ok(result)
     }
 

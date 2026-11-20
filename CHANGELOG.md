@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `sciencekit_gpu` OpenCL fallback: every public operation now opens its
+  `sciencekit.operation` span exactly once through a single guarded entry point,
+  before any availability check, so an unavailable backend records `backend =
+  faer` plus its `SKFallbackReason` instead of returning without a trace. No
+  platform installed is an empty enumeration (the spec's "no platform" case)
+  instead of a loader error, and the fallback tests construct an explicitly
+  unavailable backend so they no longer depend on whether the runner exposes a
+  GPU.
+
 ### Added
 
 - Parity matrix tooling and coverage page: `scripts/check-parity-matrix.py`

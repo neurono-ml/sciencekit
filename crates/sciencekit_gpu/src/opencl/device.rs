@@ -107,13 +107,30 @@ pub(crate) fn describe_device(index: usize, device: &opencl3::device::Device) ->
 }
 
 /// Enumerate the device identifiers in the same order as the descriptions.
+///
+/// A host without an ICD loader, or with a loader but no platform installed,
+/// is not an error: the specification requires the empty enumeration that leads
+/// to the honest CPU fallback, so `CL_PLATFORM_NOT_FOUND_KHR` (-1001) and
+/// `CL_DEVICE_NOT_FOUND` (-1) become an empty list. Every other loader failure
+/// stays a structured `DeviceUnavailable` error.
 #[cfg(feature = "opencl")]
 pub(crate) fn device_identifiers() -> Result<Vec<(usize, opencl3::types::cl_device_id)>, SKError> {
     use opencl3::device::{CL_DEVICE_TYPE_ALL, get_all_devices};
 
-    let identifiers = get_all_devices(CL_DEVICE_TYPE_ALL).map_err(|code| {
-        unavailable_error(format!("OpenCL device enumeration failed with code {code}"))
-    })?;
+    const CL_DEVICE_NOT_FOUND: i32 = -1;
+    const CL_PLATFORM_NOT_FOUND_KHR: i32 = -1001;
+
+    let identifiers = match get_all_devices(CL_DEVICE_TYPE_ALL) {
+        Ok(identifiers) => identifiers,
+        Err(error) if error.0 == CL_DEVICE_NOT_FOUND || error.0 == CL_PLATFORM_NOT_FOUND_KHR => {
+            Vec::new()
+        }
+        Err(error) => {
+            return Err(unavailable_error(format!(
+                "OpenCL device enumeration failed with code {error}"
+            )));
+        }
+    };
     Ok(identifiers.into_iter().enumerate().collect())
 }
 

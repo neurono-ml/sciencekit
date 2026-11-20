@@ -151,6 +151,24 @@ impl SKOpenClBackend {
         crate::opencl::observability::operation_span(operation, backend, reason)
     }
 
+    /// Run one public operation inside its single observability span.
+    ///
+    /// This is the **only** entry point for the operation surface: the span is
+    /// opened *before* the body runs, so no availability, feature or device
+    /// check can return early and leave the trace without the operation. The
+    /// body receives the span so it can record the device and the bytes it
+    /// actually moved; the guard is dropped after the body, closing the span
+    /// exactly once.
+    pub(crate) fn run_operation<T>(
+        &self,
+        operation: &'static str,
+        body: impl FnOnce(&tracing::Span) -> Result<T, SKError>,
+    ) -> Result<T, SKError> {
+        let span = self.operation_span(operation);
+        let _entered = span.enter();
+        body(&span)
+    }
+
     /// The bytes this backend has moved so far.
     pub fn transfer_report(&self) -> SKOpenClTransferReport {
         SKOpenClTransferReport {
