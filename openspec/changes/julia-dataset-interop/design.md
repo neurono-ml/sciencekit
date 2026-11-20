@@ -66,3 +66,19 @@ thread-local `sk_ffi_last_error` `message::String`. Table lookup and shape misma
 ## Migration Plan
 
 Additive external repository (`neurono-ml/sciencekit-jl`) and documentation site; no breaking changes to `neurono-ml/sciencekit`.
+
+## Deferred work
+
+Task 4.5 (native `SparseMatrixCSC` CSR bridge and zero-copy `Arrow.Table` C stream ingestion) stays
+open and is deferred as of 2026-11-13. The Julia package can only bridge representations that the
+shared C ABI actually exposes, and `crates/sciencekit_ffi` at `origin/main` (6140ba1) publishes
+neither sparse CSR chapter nor `ArrowArrayStream` entry points:
+
+- `git grep -n "ArrowArrayStream\|csr" origin/main -- crates/sciencekit_ffi` matches only
+  `src/status_tests.rs:37` (`representation: "csr"`, an error-path test fixture).
+- `crates/sciencekit_ffi/include/sciencekit.h` declares no `Arrow`, `Sparse`, or CSR descriptor.
+
+Reactivation criteria: once `sciencekit_ffi` adds a stable CSR descriptor and an
+`ArrowArrayStream` (Arrow C Data Interface) consumer/producer to `include/sciencekit.h`, extend
+`sciencekit-jl`'s vendored header + `src/arrays.jl`/`src/tables.jl` with the bridge and cover it
+with TDD, then check 4.5. Until then the dense-only path documented in Decision 3 is the contract.
